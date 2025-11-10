@@ -1,0 +1,10 @@
+/Users/sac/chicago-tdd-tools/target/debug/deps/autocfg-28e65bde9d53b406.d: /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sac/chicago-tdd-tools/target/debug/deps/libautocfg-28e65bde9d53b406.rlib: /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sac/chicago-tdd-tools/target/debug/deps/libautocfg-28e65bde9d53b406.rmeta: /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs:
+/Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs:
+/Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs:
+/Users/sac/.asdf/installs/rust/1.86.0/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs:
