@@ -1,30 +1,35 @@
 //! Integration and resource cleanup tests for testcontainers module
 //!
-//! These tests focus on reliability:
-//! - Integration testing with real containers
+//! These tests focus on reliability and real-world scenarios:
 //! - Resource cleanup testing (all paths)
+//! - Integration testing with real containers
+//! - Multi-container scenarios
 //!
 //! Note: These tests require Docker to be running and the testcontainers feature enabled.
+//!
+//! ## Test Organization
+//!
+//! Tests are organized by category:
+//! 1. Resource cleanup testing - Tests cleanup in all code paths
+//! 2. Integration testing - Tests real container interactions
 
 #[cfg(all(feature = "testcontainers", test))]
 mod integration_tests {
+    mod common {
+        include!("common.rs");
+    }
+    use common::{docker_available, skip_if_docker_unavailable};
     use chicago_tdd_tools::assert_err;
     use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::testcontainers::*;
 
-    // Helper to check if Docker is available
-    fn docker_available() -> bool {
-        std::process::Command::new("docker")
-            .arg("ps")
-            .output()
-            .is_ok()
-    }
+    // ========================================================================
+    // 1. RESOURCE CLEANUP TESTING - Test cleanup in all code paths
+    // ========================================================================
 
-    // 3. RESOURCE CLEANUP TESTING
     #[test]
     fn test_container_cleanup_all_paths() {
-        if !docker_available() {
-            eprintln!("Skipping test: Docker not available");
+        if skip_if_docker_unavailable() {
             return;
         }
 
@@ -41,9 +46,7 @@ mod integration_tests {
             let client = ContainerClient::new();
             let _container = GenericContainer::new(client.client(), "alpine", "latest")
                 .map_err(|e| TestcontainersError::CreationFailed(e.to_string()))?;
-            Err(TestcontainersError::OperationFailed(
-                "test error".to_string(),
-            ))
+            Err(TestcontainersError::OperationFailed("test error".to_string()))
             // Container should still drop even though we return error
         })();
         assert_err!(&result, "Should return error");
@@ -60,11 +63,13 @@ mod integration_tests {
         }
     }
 
-    // 4. INTEGRATION TESTING WITH REAL CONTAINERS
+    // ========================================================================
+    // 2. INTEGRATION TESTING - Test real container interactions
+    // ========================================================================
+
     #[test]
     fn test_integration_real_container_exec() {
-        if !docker_available() {
-            eprintln!("Skipping test: Docker not available");
+        if skip_if_docker_unavailable() {
             return;
         }
 
@@ -78,10 +83,7 @@ mod integration_tests {
         assert_ok!(&result1, "Should execute echo command");
         let exec_result1 = result1.expect("Exec should succeed after assert_ok");
         assert_eq!(exec_result1.exit_code, 0, "Echo should succeed");
-        assert!(
-            exec_result1.stdout.contains("integration"),
-            "Should capture stdout"
-        );
+        assert!(exec_result1.stdout.contains("integration"), "Should capture stdout");
 
         // Execute another command (verify container is still usable)
         let result2 = container.exec("sh", &["-c", "echo 'second command'"]);

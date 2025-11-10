@@ -25,10 +25,7 @@ async fn main() {
     });
 
     // Assert: Mutations caught
-    println!(
-        "Mutation detection: {}",
-        if caught { "CAUGHT" } else { "MISSED" }
-    );
+    println!("Mutation detection: {}", if caught { "CAUGHT" } else { "MISSED" });
 
     // Test mutation score
     let mut data2 = HashMap::new();
@@ -37,10 +34,7 @@ async fn main() {
 
     // Apply mutations
     tester2.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
-    tester2.apply_mutation(MutationOperator::AddKey(
-        "key2".to_string(),
-        "value2".to_string(),
-    ));
+    tester2.apply_mutation(MutationOperator::AddKey("key2".to_string(), "value2".to_string()));
 
     // Act: Test mutation detection
     let caught2 = tester2.test_mutation_detection(|data| data.contains_key("key1"));

@@ -36,14 +36,17 @@ impl SnapshotAssert {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
     /// use chicago_tdd_tools::snapshot::SnapshotAssert;
     ///
+    /// # #[cfg(feature = "snapshot-testing")]
     /// let data = serde_json::json!({
     ///     "name": "test",
     ///     "value": 42
     /// });
     ///
+    /// # #[cfg(feature = "snapshot-testing")]
     /// SnapshotAssert::assert_matches(&data, "test_data");
     /// ```
     pub fn assert_matches<T: std::fmt::Display>(value: &T, snapshot_name: &str) {
@@ -96,9 +99,11 @@ impl SnapshotAssert {
     ///
     /// # Example
     ///
-    /// ```rust,no_run
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
     /// use chicago_tdd_tools::snapshot::SnapshotAssert;
     ///
+    /// # #[cfg(feature = "snapshot-testing")]
     /// SnapshotAssert::with_settings(|settings| {
     ///     settings.set_snapshot_path("snapshots");
     /// }, || {

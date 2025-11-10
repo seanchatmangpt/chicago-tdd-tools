@@ -77,6 +77,7 @@ impl CliTest {
 
 #[cfg(feature = "cli-testing")]
 #[cfg(test)]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::CliTest;
 

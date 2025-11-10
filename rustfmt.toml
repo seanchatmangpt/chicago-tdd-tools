@@ -1,0 +1,13 @@
+# Rustfmt configuration for consistent formatting
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+chain_width = 80
+use_small_heuristics = "Max"
+# Note: imports_granularity and group_imports are unstable features
+# Only available on nightly - removed for stable Rust
+
+# Poka-Yoke friendly formatting
+newline_style = "Unix"
+use_try_shorthand = true
+use_field_init_shorthand = true

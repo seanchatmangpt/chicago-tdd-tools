@@ -55,11 +55,7 @@ impl TestFixture<()> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        Ok(Self {
-            inner: Box::new(()),
-            test_counter: counter,
-            metadata: HashMap::new(),
-        })
+        Ok(Self { inner: Box::new(()), test_counter: counter, metadata: HashMap::new() })
     }
 }
 
@@ -69,11 +65,7 @@ impl<T> TestFixture<T> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        Self {
-            inner: Box::new(data),
-            test_counter: counter,
-            metadata: HashMap::new(),
-        }
+        Self { inner: Box::new(data), test_counter: counter, metadata: HashMap::new() }
     }
 
     /// Get reference to inner data
@@ -121,6 +113,8 @@ impl FixtureProvider for () {
 impl Default for TestFixture<()> {
     fn default() -> Self {
         // Default implementation should not fail - use unwrap_or_else with panic
+        #[allow(clippy::expect_used)]
+        // Default impl - panic is appropriate if fixture creation fails
         Self::new().unwrap_or_else(|e| panic!("Failed to create default fixture: {}", e))
     }
 }

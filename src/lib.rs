@@ -25,11 +25,11 @@
 //!
 //! ## Usage
 //!
-//! ```rust,no_run
+//! ```rust
 //! use chicago_tdd_tools::prelude::*;
 //!
-//! #[tokio::test]
-//! async fn test_example() {
+//! # #[tokio::test]
+//! # async fn test_example() {
 //!     // Arrange: Create fixture
 //!     let fixture = TestFixture::new().unwrap_or_else(|e| panic!("Failed to create fixture: {}", e));
 //!
@@ -38,7 +38,7 @@
 //!
 //!     // Assert: Verify state
 //!     assert!(counter >= 0);
-//! }
+//! # }
 //! ```
 //!
 //! ## Modules
@@ -53,7 +53,7 @@
 //! - `generator`: Test code generation
 //! - `otel`: OTEL span/metric validation (requires `otel` feature)
 //! - `performance`: RDTSC benchmarking and tick measurement
-//! - `guards`: Guard constraint enforcement (MAX_RUN_LEN ≤ 8, MAX_BATCH_SIZE)
+//! - `guards`: Guard constraint enforcement (`MAX_RUN_LEN` ≤ 8, `MAX_BATCH_SIZE`)
 //! - `jtbd`: Jobs To Be Done validation framework (validates code accomplishes intended purpose)
 //! - `weaver`: Weaver live validation integration (requires `weaver` feature)
 //!
@@ -83,6 +83,10 @@
 
 #![deny(clippy::unwrap_used)]
 #![warn(missing_docs)]
+// Poka-Yoke: pub use is necessary for procedural macro re-exports
+#![allow(clippy::pub_use, reason = "Procedural macros must be re-exported via pub use")]
+// Test code - panic is appropriate for test failures
+#![cfg_attr(test, allow(clippy::panic))]
 
 // Re-export procedural macros
 // Note: #[chicago_test] and #[chicago_fixture] are available via chicago_tdd_tools_proc_macros
@@ -94,6 +98,11 @@ pub use chicago_tdd_tools_proc_macros::TestBuilder;
 
 pub mod assertions;
 pub mod builders;
+#[cfg(feature = "cli-testing")]
+pub mod cli;
+#[cfg(feature = "concurrency-testing")]
+pub mod concurrency;
+pub mod const_assert;
 pub mod coverage;
 pub mod fixture;
 pub mod generator;
@@ -107,12 +116,21 @@ pub mod otel;
 pub mod otel_types;
 pub mod performance;
 pub mod property;
+#[cfg(feature = "snapshot-testing")]
+pub mod snapshot;
 pub mod state;
 #[cfg(feature = "testcontainers")]
 pub mod testcontainers;
 #[cfg(feature = "weaver")]
 pub mod weaver;
 pub mod weaver_types;
+
+// Re-export new "go the extra mile" types
+pub use assertions::{AssertionBuilder, ValidatedAssertion};
+pub use builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
+pub use coverage::{CoveredCount, TotalCount};
+pub use jtbd::ScenarioIndex;
+pub use performance::ValidatedTickBudget;
 
 /// Prelude module - import commonly used items
 pub mod prelude {
@@ -142,4 +160,13 @@ pub mod prelude {
 
     #[cfg(feature = "testcontainers")]
     pub use crate::testcontainers::*;
+
+    #[cfg(feature = "snapshot-testing")]
+    pub use crate::snapshot::*;
+
+    #[cfg(feature = "concurrency-testing")]
+    pub use crate::concurrency::*;
+
+    #[cfg(feature = "cli-testing")]
+    pub use crate::cli::*;
 }

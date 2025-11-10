@@ -160,10 +160,7 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
 
     // Generate builder methods (with_*)
     let builder_methods = fields.iter().map(|field| {
-        let field_name = field
-            .ident
-            .as_ref()
-            .expect("Named fields should always have ident");
+        let field_name = field.ident.as_ref().expect("Named fields should always have ident");
         let field_type = &field.ty;
         let method_name = syn::Ident::new(&format!("with_{}", field_name), field_name.span());
         quote! {
@@ -176,10 +173,7 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
 
     // Generate build method
     let build_fields = fields.iter().map(|field| {
-        let field_name = field
-            .ident
-            .as_ref()
-            .expect("Named fields should always have ident");
+        let field_name = field.ident.as_ref().expect("Named fields should always have ident");
         quote! {
             #field_name: self.#field_name.ok_or_else(|| {
                 format!("Required field '{}' not set", stringify!(#field_name))
@@ -189,10 +183,7 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
 
     // Generate initializer for builder
     let initializer_fields = fields.iter().map(|field| {
-        let field_name = field
-            .ident
-            .as_ref()
-            .expect("Named fields should always have ident");
+        let field_name = field.ident.as_ref().expect("Named fields should always have ident");
         quote! {
             #field_name: None,
         }

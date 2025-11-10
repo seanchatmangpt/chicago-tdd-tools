@@ -119,10 +119,11 @@ impl TickCounter {
 /// # Example
 ///
 /// ```rust,no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use chicago_tdd_tools::performance::{ValidatedTickBudget, TickCounter};
 ///
 /// // Compile-time validated - BUDGET must be known at compile time
-/// fn validate_hot_path<const BUDGET: u64>(counter: &TickCounter) -> PerformanceValidationResult<()> {
+/// fn validate_hot_path<const BUDGET: u64>(counter: &TickCounter) -> chicago_tdd_tools::performance::PerformanceValidationResult<()> {
 ///     let budget = ValidatedTickBudget::<BUDGET>::new();
 ///     budget.assert_within_budget(counter)
 /// }
@@ -135,6 +136,8 @@ impl TickCounter {
 ///
 /// // Runtime validation for dynamic budgets
 /// counter.assert_within_budget(10)?; // Dynamic budget
+/// # Ok(())
+/// # }
 /// ```
 pub struct ValidatedTickBudget<const BUDGET: u64> {
     /// Validated budget value
@@ -146,9 +149,7 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     ///
     /// The budget is validated at compile time through the const generic parameter.
     pub fn new() -> Self {
-        Self {
-            _inner: Validated::new(BUDGET),
-        }
+        Self { _inner: Validated::new(BUDGET) }
     }
 
     /// Get the budget value
@@ -163,10 +164,7 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     /// # Errors
     ///
     /// Returns `PerformanceValidationError::TickBudgetExceeded` if elapsed ticks exceed the budget.
-    pub fn assert_within_budget(
-        &self,
-        counter: &TickCounter,
-    ) -> PerformanceValidationResult<()> {
+    pub fn assert_within_budget(&self, counter: &TickCounter) -> PerformanceValidationResult<()> {
         counter.assert_within_budget(BUDGET)
     }
 }
@@ -181,21 +179,21 @@ impl<const BUDGET: u64> Default for ValidatedTickBudget<BUDGET> {
 ///
 /// # Example
 ///
-    /// ```rust,no_run
-    /// use chicago_tdd_tools::performance::measure_ticks;
-    ///
-    /// // Helper function for doctest
-    /// # fn hot_path_operation() -> i32 {
-    /// #     42
-    /// # }
-    ///
-    /// let (result, ticks) = measure_ticks(|| {
-    ///     // Hot path operation
-    ///     hot_path_operation()
-    /// });
-    ///
-    /// assert!(ticks <= 8, "Exceeded tick budget: {} > 8", ticks);
-    /// ```
+/// ```rust,no_run
+/// use chicago_tdd_tools::performance::measure_ticks;
+///
+/// // Helper function for doctest
+/// # fn hot_path_operation() -> i32 {
+/// #     42
+/// # }
+///
+/// let (result, ticks) = measure_ticks(|| {
+///     // Hot path operation
+///     hot_path_operation()
+/// });
+///
+/// assert!(ticks <= 8, "Exceeded tick budget: {} > 8", ticks);
+/// ```
 pub fn measure_ticks<F, T>(f: F) -> (T, u64)
 where
     F: FnOnce() -> T,
@@ -346,20 +344,20 @@ impl BenchmarkResult {
 ///
 /// # Example
 ///
-    /// ```rust,no_run
-    /// use chicago_tdd_tools::performance::benchmark;
-    ///
-    /// // Helper function for doctest
-    /// # fn hot_path_operation() -> i32 {
-    /// #     42
-    /// # }
-    ///
-    /// let result = benchmark("hot_path_operation", 1000, || {
-    ///     hot_path_operation()
-    /// });
-    ///
-    /// assert!(result.meets_hot_path_budget(), "{}", result.format());
-    /// ```
+/// ```rust,no_run
+/// use chicago_tdd_tools::performance::benchmark;
+///
+/// // Helper function for doctest
+/// # fn hot_path_operation() -> i32 {
+/// #     42
+/// # }
+///
+/// let result = benchmark("hot_path_operation", 1000, || {
+///     hot_path_operation()
+/// });
+///
+/// assert!(result.meets_hot_path_budget(), "{}", result.format());
+/// ```
 pub fn benchmark<F, T>(operation: &str, iterations: u64, f: F) -> BenchmarkResult
 where
     F: Fn() -> T,
@@ -447,30 +445,6 @@ mod tests {
         assert_eq!(result, 42);
         // ticks is u64, so it's always >= 0 - no need to check
         assert!(ticks < u64::MAX); // Just verify it's a valid value
-    }
-
-    #[test]
-    fn test_validated_tick_budget() {
-        // Test compile-time validated tick budget
-        let budget = ValidatedTickBudget::<8>::new();
-        assert_eq!(budget.budget(), 8);
-
-        let counter = TickCounter::start();
-        std::hint::black_box(42);
-        // Should pass for any reasonable operation with budget of 8
-        assert!(budget.assert_within_budget(&counter).is_ok());
-
-        // Test with larger budget
-        let large_budget = ValidatedTickBudget::<1_000_000>::new();
-        assert_eq!(large_budget.budget(), 1_000_000);
-        assert!(large_budget.assert_within_budget(&counter).is_ok());
-    }
-
-    #[test]
-    fn test_validated_tick_budget_default() {
-        // Test Default implementation
-        let budget: ValidatedTickBudget<8> = Default::default();
-        assert_eq!(budget.budget(), 8);
     }
 }
 

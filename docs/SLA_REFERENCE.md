@@ -1,220 +1,83 @@
-# Service Level Agreement (SLA) Reference
+# SLA Reference - SPR
 
-This document provides a comprehensive reference for all timeout SLAs in the chicago-tdd-tools project.
+Comprehensive reference for all timeout SLAs in chicago-tdd-tools project.
 
 ## Overview
 
-All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. Timeouts are enforced at multiple layers:
-1. **Task-level**: Unix `timeout` command wraps each task
-2. **Test-level**: ntest crate and tokio::time::timeout for individual tests
-3. **Test-runner**: cargo-nextest profiles with timeout configuration
-4. **Git hooks**: Individual checks wrapped with timeouts
+All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. Timeouts enforced at multiple layers: Task-level (Unix `timeout` command), test-level (ntest crate, tokio::time::timeout), test-runner (cargo-nextest profiles), git hooks (individual checks wrapped with timeouts).
 
 ## Test SLAs
 
-### Unit Tests
-- **SLA**: 1s per test execution
-- **Actual**: ~0.05s (well under SLA)
-- **Profile**: `default` in `.config/nextest.toml`
-- **Tasks**: `test`, `test-unit`
-- **Note**: Excludes testcontainers integration tests (too slow, require Docker)
+**Unit Tests**: 1s per test execution. Actual: ~0.05s (well under SLA). Profile: `default` in `.config/nextest.toml`. Tasks: `test`, `test-unit`. Note: Excludes testcontainers integration tests (too slow, require Docker).
 
-### Integration Tests
-- **SLA**: 30s per test execution
-- **Profile**: `integration` in `.config/nextest.toml`
-- **Tasks**: `test-integration`
-- **Note**: Requires Docker, only run when needed
+**Integration Tests**: 30s per test execution. Profile: `integration` in `.config/nextest.toml`. Tasks: `test-integration`. Note: Requires Docker, only run when needed.
 
 ## Build SLAs
 
-### Check
-- **SLA**: 5s
-- **Actual**: ~0.8s
-- **Task**: `check`
-
-### Build (Debug)
-- **SLA**: 5s
-- **Task**: `build`
-
-### Build (Release)
-- **SLA**: 30s (release builds are slower)
-- **Task**: `build-release`
-
-### Clean
-- **SLA**: 5s
-- **Task**: `clean`
+**Check**: 5s SLA, ~0.8s actual. Task: `check`. **Build (Debug)**: 5s SLA. Task: `build`. **Build (Release)**: 30s SLA (release builds slower). Task: `build-release`. **Clean**: 5s SLA. Task: `clean`.
 
 ## Code Quality SLAs
 
-### Formatting
-- **SLA**: 5s
-- **Actual**: ~0.6s
-- **Task**: `fmt`
-- **Git Hook**: Pre-commit and pre-push (5s timeout)
+**Formatting**: 5s SLA, ~0.6s actual. Task: `fmt`. Git Hook: Pre-commit and pre-push (5s timeout).
 
-### Linting (Clippy)
-- **SLA**: 5s
-- **Actual**: ~1.2s
-- **Task**: `lint`
-- **Git Hook**: Pre-commit (5s timeout for cargo check and clippy)
+**Linting (Clippy)**: 5s SLA, ~1.2s actual. Task: `lint`. Git Hook: Pre-commit (5s timeout for cargo check and clippy).
 
 ## Coverage SLAs
 
 **Note**: Coverage tasks are manual only, NOT part of commit/push verification.
 
-### Coverage (cargo-llvm-cov)
-- **SLA**: 30s
-- **Task**: `coverage`
-
-### Coverage Report (HTML)
-- **SLA**: 30s
-- **Task**: `coverage-report`
-
-### Coverage (cargo-tarpaulin)
-- **SLA**: 30s
-- **Task**: `coverage-tarpaulin`
+**Coverage (cargo-llvm-cov)**: 30s SLA. Task: `coverage`. **Coverage Report (HTML)**: 30s SLA. Task: `coverage-report`. **Coverage (cargo-tarpaulin)**: 30s SLA. Task: `coverage-tarpaulin`.
 
 ## Security SLAs
 
-### Audit
-- **SLA**: 15s (network operations can take longer)
-- **Task**: `audit`
-- **Note**: Fetches advisory database from network
+**Audit**: 15s SLA (network operations can take longer). Task: `audit`. Note: Fetches advisory database from network.
 
-### Audit Outdated
-- **SLA**: 15s (network operations can take longer)
-- **Task**: `audit-outdated`
-- **Note**: Queries crates.io index
+**Audit Outdated**: 15s SLA (network operations can take longer). Task: `audit-outdated`. Note: Queries crates.io index.
 
 ## Documentation SLAs
 
-### Docs (with open)
-- **SLA**: 20s (documentation generation can take longer)
-- **Task**: `docs`
-
-### Docs Build
-- **SLA**: 20s
-- **Task**: `docs-build`
+**Docs (with open)**: 20s SLA (documentation generation can take longer). Task: `docs`. **Docs Build**: 20s SLA. Task: `docs-build`.
 
 ## Workflow SLAs
 
-### Pre-Commit
-- **Expected Total**: ~10s
-  - fmt: 5s
-  - lint: 5s
-  - test-unit: 1s
-- **Task**: `pre-commit`
-- **Git Hook**: Pre-commit hook (individual checks have 5s timeouts)
+**Pre-Commit**: ~10s expected total (fmt: 5s, lint: 5s, test-unit: 1s). Task: `pre-commit`. Git Hook: Pre-commit hook (individual checks have 5s timeouts).
 
-### Pre-Push
-- **Expected Total**: ~60s
-  - check: 5s
-  - lint: 5s
-  - TODO/error handling: <1s
-  - fmt: 5s
-  - test-unit: 1s
-  - audit: 15s
-- **Git Hook**: Pre-push hook (individual checks use cargo make with timeouts)
+**Pre-Push**: ~60s expected total (check: 5s, lint: 5s, TODO/error handling: <1s, fmt: 5s, test-unit: 1s, audit: 15s). Git Hook: Pre-push hook (individual checks use cargo make with timeouts).
 
-### CI Pipeline
-- **Expected Total**: ~120s
-  - fmt: 5s
-  - lint: 5s
-  - test-unit: 1s
-  - audit-all: 30s (audit + audit-outdated)
-- **Task**: `ci`
+**CI Pipeline**: ~120s expected total (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s). Task: `ci`.
 
-### Release
-- **Expected Total**: ~180s
-  - ci: 120s
-  - docs-build: 20s
-- **Task**: `release`
+**Release**: ~180s expected total (ci: 120s, docs-build: 20s). Task: `release`.
 
-### Development Workflow
-- **Expected Total**: ~15s
-  - check: 5s
-  - fmt: 5s
-  - test-unit: 1s
-- **Task**: `dev`
+**Development Workflow**: ~15s expected total (check: 5s, fmt: 5s, test-unit: 1s). Task: `dev`.
 
-### Full Validation
-- **Expected Total**: ~20s
-  - build: 5s
-  - test: 1s
-  - lint: 5s
-- **Task**: `all`
+**Full Validation**: ~20s expected total (build: 5s, test: 1s, lint: 5s). Task: `all`.
 
 ## Git Hook SLAs
 
-### Pre-Commit Hook
-- **Target**: 2-5s (incremental checks only)
-- **Individual Checks**:
-  - unwrap/expect/TODO checks: <1s (grep operations)
-  - formatting: 5s timeout
-  - clippy: 5s timeout (cargo check + clippy)
-- **Note**: Only checks staged files, skips unnecessary checks
+**Pre-Commit Hook**: 2-5s target (incremental checks only). Individual checks: unwrap/expect/TODO checks: <1s (grep operations), formatting: 5s timeout, clippy: 5s timeout (cargo check + clippy). Note: Only checks staged files, skips unnecessary checks.
 
-### Pre-Push Hook
-- **Target**: 30-60s (comprehensive validation)
-- **Gates**:
-  - Gate 1: Cargo check (5s via cargo make)
-  - Gate 2: Clippy (5s via cargo make)
-  - Gate 2.5: TODO/error handling (<1s)
-  - Gate 3: Formatting (5s timeout)
-  - Gate 4: Unit tests (1s via cargo make)
-  - Gate 5: Security audit (15s via cargo make)
+**Pre-Push Hook**: 30-60s target (comprehensive validation). Gates: Gate 1: Cargo check (5s via cargo make), Gate 2: Clippy (5s via cargo make), Gate 2.5: TODO/error handling (<1s), Gate 3: Formatting (5s timeout), Gate 4: Unit tests (1s via cargo make), Gate 5: Security audit (15s via cargo make).
 
 ## Rationale
 
-### Why 1s for Unit Tests?
-- Fast feedback loop for developers
-- Forces test optimization
-- Prevents slow tests from accumulating
-- Actual execution is ~0.05s, well under SLA
+**1s for Unit Tests**: Fast feedback loop, forces test optimization, prevents slow tests from accumulating, actual execution ~0.05s (well under SLA).
 
-### Why 30s for Integration Tests?
-- Docker container startup takes 5-10s
-- Network operations can take time
-- Integration tests are excluded from normal iteration
-- Only run when needed (not in pre-commit/pre-push)
+**30s for Integration Tests**: Docker container startup takes 5-10s, network operations can take time, integration tests excluded from normal iteration, only run when needed.
 
-### Why 5s for General Tasks?
-- Fast enough for normal operations
-- Actual times are 0.6-1.2s, well under SLA
-- Prevents hangs without being too restrictive
+**5s for General Tasks**: Fast enough for normal operations, actual times 0.6-1.2s (well under SLA), prevents hangs without being too restrictive.
 
-### Why 15s for Security Audit?
-- Network operations (fetching advisories, querying crates.io)
-- Can take 5-10s on slow networks
-- Non-blocking in pre-push (warning only)
+**15s for Security Audit**: Network operations (fetching advisories, querying crates.io), can take 5-10s on slow networks, non-blocking in pre-push (warning only).
 
-### Why 20s for Documentation?
-- Documentation generation can take 10-20s
-- Not part of normal iteration
-- Only run for releases
+**20s for Documentation**: Documentation generation can take 10-20s, not part of normal iteration, only run for releases.
 
-### Why 30s for Coverage?
-- Coverage analysis is computationally expensive
-- Can take 10-30s for larger projects
-- Manual task only, not part of commit/push verification
+**30s for Coverage**: Coverage analysis computationally expensive, can take 10-30s for larger projects, manual task only, not part of commit/push verification.
 
 ## Monitoring
 
-To verify SLAs are being met:
-```bash
-# Check actual execution times
-time cargo make test-unit
-time cargo make check
-time cargo make lint
+**Verify SLAs**: `time cargo make test-unit`, `time cargo make check`, `time cargo make lint`, `time .git/hooks/pre-commit`, `time .git/hooks/pre-push`.
 
-# Check git hook times
-time .git/hooks/pre-commit
-time .git/hooks/pre-push
-```
+## Summary
 
-## Future Enhancements
+**Key Associations**: Unit Tests = 1s = Fast Feedback. Integration Tests = 30s = Docker Operations. Build Tasks = 5s = Normal Operations. Security Audit = 15s = Network Operations. Documentation = 20s = Generation Time. Coverage = 30s = Analysis Time.
 
-- Add timing output to tasks to track SLA compliance
-- Add SLA violation alerts
-- Consider per-test timeout configuration
-- Add timeout statistics and reporting
+**Pattern**: All tasks have explicit timeout SLAs. Timeouts enforced at multiple layers (task-level, test-level, runner-level, hook-level). Actual times well under SLA. Timeouts prevent hangs and ensure fast feedback.

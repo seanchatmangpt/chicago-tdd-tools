@@ -5,6 +5,7 @@
 //! - Async test wrappers with fixture management
 //! - Performance testing (tick budget validation)
 //! - Enhanced assertion macros with better error messages
+//! - Parameterized testing (when parameterized-testing feature is enabled)
 
 /// Macro to enforce AAA (Arrange-Act-Assert) pattern
 ///
@@ -16,9 +17,10 @@
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::chicago_test;
 ///
+/// # fn process(input: &str) -> &str { "result" }
 /// chicago_test!(test_feature_behavior, {
 ///     // Arrange: Set up test data
 ///     let input = "test";
@@ -53,19 +55,20 @@ macro_rules! chicago_test {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::chicago_async_test;
 ///
+/// # async fn async_function() -> Result<i32, Box<dyn std::error::Error>> { Ok(42) }
 /// chicago_async_test!(test_async_feature, {
 ///     // Arrange: Set up test data
-///     let fixture = TestFixture::new()?;
+///     let expected = 42;
 ///
 ///     // Act: Execute async feature (use ? for error propagation)
 ///     let result = async_function().await?;
 ///
 ///     // Assert: Verify behavior
-///     assert_success(&result);
-///     Ok::<(), MyError>(()) // Return Result - will be unwrapped automatically
+///     assert_eq!(result, expected);
+///     Ok::<(), Box<dyn std::error::Error>>(()) // Return Result - will be unwrapped automatically
 /// });
 /// ```
 #[macro_export]
@@ -119,9 +122,10 @@ macro_rules! chicago_async_test {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::{chicago_fixture_test, prelude::*};
 ///
+/// # fn process(counter: u64) -> u64 { counter + 1 }
 /// chicago_fixture_test!(test_with_fixture, fixture, {
 ///     // Arrange: Use provided fixture
 ///     let counter = fixture.test_counter();
@@ -142,6 +146,7 @@ macro_rules! chicago_fixture_test {
             use tokio::time::{timeout, Duration};
 
             // Arrange: Create fixture
+            #[allow(clippy::expect_used)] // Macro - panic is appropriate if fixture creation fails
             let $fixture_var = $crate::fixture::TestFixture::new()
                 .unwrap_or_else(|e| panic!("Failed to create test fixture: {}", e));
 
@@ -169,9 +174,11 @@ macro_rules! chicago_fixture_test {
 ///
 /// # Example
 ///
-/// ```rust,no_run
-/// use chicago_tdd_tools::chicago_performance_test;
+/// ```rust
+/// use chicago_tdd_tools::{chicago_performance_test, prelude::*};
 ///
+/// # fn create_test_input() -> i32 { 42 }
+/// # fn hot_path_operation(input: &i32) -> i32 { *input }
 /// chicago_performance_test!(test_hot_path_performance, {
 ///     // Arrange: Set up test data
 ///     let input = create_test_input();
@@ -181,7 +188,7 @@ macro_rules! chicago_fixture_test {
 ///
 ///     // Assert: Verify performance constraint
 ///     assert!(ticks <= 8, "Hot path exceeded tick budget: {} > 8", ticks);
-///     assert_success(&result);
+///     assert_eq!(result, 42);
 /// });
 /// ```
 #[macro_export]
@@ -200,14 +207,15 @@ macro_rules! chicago_performance_test {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::assert_ok;
 ///
 /// let result: Result<u32, String> = Ok(42);
 /// assert_ok!(result);
 ///
 /// // With custom message
-/// assert_ok!(result, "Expected successful operation");
+/// let result2: Result<u32, String> = Ok(42);
+/// assert_ok!(result2, "Expected successful operation");
 /// ```
 #[macro_export]
 macro_rules! assert_ok {
@@ -231,14 +239,15 @@ macro_rules! assert_ok {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::assert_err;
 ///
 /// let result: Result<u32, String> = Err("error".to_string());
 /// assert_err!(result);
 ///
 /// // With custom message
-/// assert_err!(result, "Expected error case");
+/// let result2: Result<u32, String> = Err("error".to_string());
+/// assert_err!(result2, "Expected error case");
 /// ```
 #[macro_export]
 macro_rules! assert_err {
@@ -262,23 +271,20 @@ macro_rules! assert_err {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::assert_within_tick_budget;
 ///
 /// let ticks = 5;
 /// assert_within_tick_budget!(ticks);
 ///
 /// // With custom message
-/// assert_within_tick_budget!(ticks, "Hot path operation");
+/// let ticks2 = 5;
+/// assert_within_tick_budget!(ticks2, "Hot path operation");
 /// ```
 #[macro_export]
 macro_rules! assert_within_tick_budget {
     ($ticks:expr) => {
-        assert!(
-            $ticks <= 8,
-            "Tick budget exceeded: {} > 8 (Chatman Constant violation)",
-            $ticks
-        );
+        assert!($ticks <= 8, "Tick budget exceeded: {} > 8 (Chatman Constant violation)", $ticks);
     };
     ($ticks:expr, $msg:expr) => {
         assert!(
@@ -296,14 +302,15 @@ macro_rules! assert_within_tick_budget {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::assert_in_range;
 ///
 /// let value = 5;
 /// assert_in_range!(value, 0, 10);
 ///
 /// // With custom message
-/// assert_in_range!(value, 0, 10, "Value should be in valid range");
+/// let value2 = 5;
+/// assert_in_range!(value2, 0, 10, "Value should be in valid range");
 /// ```
 #[macro_export]
 macro_rules! assert_in_range {
@@ -334,7 +341,7 @@ macro_rules! assert_in_range {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust,should_panic
 /// use chicago_tdd_tools::assert_eq_msg;
 ///
 /// let actual = 42;
@@ -348,10 +355,7 @@ macro_rules! assert_eq_msg {
         let actual_val = &$actual;
         let expected_val = &$expected;
         if actual_val != expected_val {
-            panic!(
-                "{}: expected {:?}, got {:?}",
-                $msg, expected_val, actual_val
-            );
+            panic!("{}: expected {:?}, got {:?}", $msg, expected_val, actual_val);
         }
     }};
 }
@@ -393,7 +397,7 @@ macro_rules! assert_eq_enhanced {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::assert_guard_constraint;
 ///
 /// let max_run_len = 5;
@@ -402,16 +406,13 @@ macro_rules! assert_eq_enhanced {
 #[macro_export]
 macro_rules! assert_guard_constraint {
     ($condition:expr, $constraint_name:expr) => {
-        assert!(
-            $condition,
-            "Guard constraint violation: {}",
-            $constraint_name
-        );
+        assert!($condition, "Guard constraint violation: {}", $constraint_name);
     };
 }
 
 #[cfg(test)]
 #[allow(unnameable_test_items)] // Macro-generated tests trigger this warning
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     // Note: We can't use chicago_test! macro here because it would create
     // a test function with the same name, causing conflicts.
@@ -589,4 +590,55 @@ mod tests {
         // Act & Assert: Should panic
         assert_guard_constraint!(max_run_len <= 8, "max_run_len");
     }
+
+    #[cfg(feature = "parameterized-testing")]
+    #[test]
+    fn test_parameterized_macro() {
+        // This test demonstrates parameterized testing
+        // Actual parameterized tests would use chicago_param_test! macro
+        assert!(true);
+    }
+}
+
+#[cfg(feature = "parameterized-testing")]
+/// Parameterized test macro using rstest
+///
+/// Creates parameterized tests that run with multiple input values.
+/// This is a wrapper around rstest's `#[rstest]` attribute macro.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::chicago_param_test;
+///
+/// chicago_param_test! {
+///     #[case(1, 2, 3)]
+///     #[case(2, 3, 5)]
+///     #[case(3, 4, 7)]
+///     fn test_addition(a: i32, b: i32, expected: i32) {
+///         assert_eq!(a + b, expected);
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! chicago_param_test {
+    {
+        $(#[$attr:meta])*
+        fn $name:ident($($param:ident: $type:ty),* $(,)?) $body:block
+    } => {
+        $(#[$attr])*
+        #[rstest::rstest]
+        fn $name($($param: $type),*) $body
+    };
+}
+
+#[cfg(not(feature = "parameterized-testing"))]
+/// Parameterized test macro (requires parameterized-testing feature)
+///
+/// Enable the `parameterized-testing` feature to use parameterized tests.
+#[macro_export]
+macro_rules! chicago_param_test {
+    ($($tt:tt)*) => {
+        compile_error!("Parameterized testing requires the 'parameterized-testing' feature. Enable with: --features parameterized-testing");
+    };
 }

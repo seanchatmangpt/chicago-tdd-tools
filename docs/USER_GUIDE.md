@@ -1,1298 +1,213 @@
-# User Guide
+# User Guide - SPR
 
-Complete guide to using Chicago TDD Tools for testing Rust applications. This guide is organized by user journey, from beginner to advanced patterns.
-
-## Table of Contents
-
-### Beginner Level
-- [Test Fixtures](#test-fixtures)
-- [Test Data Builders](#test-data-builders)
-- [Macros](#macros)
-- [Assertions](#assertions)
-
-### Intermediate Level
-- [Property-Based Testing](#property-based-testing)
-- [Mutation Testing](#mutation-testing)
-- [Performance Testing](#performance-testing)
-
-### Advanced Level
-- [Guards and Constraints](#guards-and-constraints)
-- [JTBD Validation](#jtbd-validation)
-- [Testcontainers Integration](#testcontainers-integration)
-- [OTEL/Weaver Integration](#otelweaver-integration)
-
-### Reference
-- [Best Practices](#best-practices)
-- [Common Patterns](#common-patterns)
-- [Anti-patterns](#anti-patterns)
-- [Troubleshooting](#troubleshooting)
-
----
+Complete guide to using Chicago TDD Tools, organized by user journey (beginner to advanced).
 
 ## Test Fixtures
 
-Test fixtures provide reusable test setup with automatic cleanup. Use fixtures when you need isolated test state or shared setup across multiple tests.
+Test fixtures: Reusable setup with automatic cleanup. RAII patterns. Isolated test state.
 
-### When to Use
+**When to Use**: Isolated test state, automatic cleanup, test metadata, integration tests. **Avoid**: Simple unit tests, no state needed, one-off data.
 
-✅ **Use fixtures when:**
-- You need isolated test state
-- You want automatic cleanup
-- You need test metadata
-- You're writing integration tests
+**Basic Usage**: `TestFixture::new()?` for basic fixture, `TestFixture::with_data(data)` for custom data, `fixture.test_counter() -> u64` for unique counter, `fixture.set_metadata(key, value)` / `fixture.get_metadata(key)` for metadata.
 
-❌ **Avoid fixtures when:**
-- Simple unit tests with no state
-- Tests that don't need isolation
-- One-off test data
+**Automatic Setup**: `chicago_fixture_test!(name, fixture, { /* AAA */ })` for auto setup/teardown. Prefer over manual creation.
 
-### Basic Usage
+**Patterns**: Shared setup (auto fixture), metadata tracking (test identification), isolation (unique counters).
 
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_with_fixture, {
-    // Arrange: Create fixture
-    let fixture = TestFixture::new().unwrap();
-    
-    // Act: Use fixture
-    let counter = fixture.test_counter();
-    
-    // Assert: Verify state
-    assert!(counter >= 0);
-});
-```
-
-**Performance Note**: Fixtures use atomic counters for isolation, adding minimal overhead (~1-2 nanoseconds per test).
-
-### Fixture with Metadata
-
-Store test-specific metadata in fixtures:
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_fixture_metadata, {
-    // Arrange: Create fixture and set metadata
-    let mut fixture = TestFixture::new().unwrap();
-    fixture.set_metadata("test_key".to_string(), "test_value".to_string());
-    
-    // Act: Retrieve metadata
-    let value = fixture.get_metadata("test_key");
-    
-    // Assert: Verify metadata
-    assert_eq!(value, Some(&"test_value".to_string()));
-});
-```
-
-**Common Pattern**: Use metadata to track test context or pass data between test phases.
-
-### Automatic Fixture Setup
-
-Use `chicago_fixture_test!` macro for automatic fixture setup/teardown:
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_fixture_test!(test_auto_fixture, fixture, {
-    // Arrange: Fixture automatically created
-    let counter = fixture.test_counter();
-    
-    // Act: Execute test
-    let result = counter + 1;
-    
-    // Assert: Verify behavior
-    assert!(result > 0);
-    // Fixture automatically cleaned up on drop
-});
-```
-
-**Best Practice**: Prefer `chicago_fixture_test!` over manual fixture creation for consistency.
-
-### Common Patterns
-
-**Pattern: Shared Setup**
-```rust
-chicago_fixture_test!(test_with_shared_setup, fixture, {
-    // Fixture provides shared setup automatically
-    let counter = fixture.test_counter();
-    // Use counter for test isolation
-});
-```
-
-**Pattern: Metadata Tracking**
-```rust
-chicago_test!(test_with_metadata, {
-    let mut fixture = TestFixture::new().unwrap();
-    fixture.set_metadata("test_id".to_string(), "test_001".to_string());
-    // Use metadata for test identification
-});
-```
-
-### Anti-patterns
-
-❌ **Don't create fixtures unnecessarily:**
-```rust
-// Bad: Fixture not needed
-chicago_test!(test_simple, {
-    let fixture = TestFixture::new().unwrap(); // Unnecessary
-    assert_eq!(2 + 2, 4);
-});
-```
-
-✅ **Do use fixtures only when needed:**
-```rust
-// Good: No fixture needed
-chicago_test!(test_simple, {
-    assert_eq!(2 + 2, 4);
-});
-```
-
----
+**Anti-patterns**: Don't create fixtures unnecessarily for simple tests. Don't use fixtures when no state needed.
 
 ## Test Data Builders
 
-Fluent builders for creating test data structures. Use builders when you need to construct complex test data with multiple fields.
+Fluent builders for test data. JSON/HashMap output. Domain-specific helpers.
 
-### When to Use
+**When to Use**: Complex test data, many fields, fluent readable creation, reusable patterns. **Avoid**: Simple data (use literals), one-off structures, no JSON needed.
 
-✅ **Use builders when:**
-- Creating complex test data
-- Building data with many fields
-- Need fluent, readable test data creation
-- Want reusable data patterns
+**Basic Builder**: `TestDataBuilder::new().with_var(key, value).build_json()` or `.build()` for HashMap.
 
-❌ **Avoid builders when:**
-- Simple test data (use literals)
-- One-off data structures
-- Data doesn't need to be JSON
+**Business Helpers**: `with_order_data(order_id, amount)`, `with_customer_data(customer_id)`, `with_approval_data(request_id, amount)`. Create domain-specific extensions.
 
-### Basic Builder
+**Patterns**: Reusable test data (helper functions), JSON for APIs, HashMap for internal use.
 
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_data_builder, {
-    // Arrange: Create test data
-    let data = TestDataBuilder::new()
-        .with_var("key1", "value1")
-        .with_var("key2", "value2")
-        .build_json();
-    
-    // Assert: Verify data
-    assert_eq!(data["key1"], "value1");
-    assert_eq!(data["key2"], "value2");
-});
-```
-
-**Performance Note**: Builders use `HashMap<String, String>` internally, converting to JSON only when `build_json()` is called.
-
-### Business Data Helpers
-
-Use business-specific helpers for common patterns:
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_business_data, {
-    // Arrange: Use business-specific helpers
-    let data = TestDataBuilder::new()
-        .with_order_data("ORD-001", "100.00")
-        .with_customer_data("CUST-001")
-        .with_approval_data("REQ-001", "50.00")
-        .build_json();
-    
-    // Assert: Verify business data
-    assert_eq!(data["order_id"], "ORD-001");
-    assert_eq!(data["total_amount"], "100.00");
-    assert_eq!(data["customer_id"], "CUST-001");
-    assert_eq!(data["request_id"], "REQ-001");
-});
-```
-
-**Best Practice**: Create domain-specific builder extensions for your project.
-
-### Building HashMap
-
-Build as `HashMap<String, String>` when you don't need JSON:
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_build_hashmap, {
-    // Arrange: Build as HashMap
-    let data = TestDataBuilder::new()
-        .with_var("key", "value")
-        .build(); // Returns HashMap<String, String>
-    
-    // Assert: Verify HashMap
-    assert_eq!(data.get("key"), Some(&"value".to_string()));
-});
-```
-
-**Performance Note**: `build()` is faster than `build_json()` since it skips JSON conversion.
-
-### Common Patterns
-
-**Pattern: Reusable Test Data**
-```rust
-fn create_test_order() -> serde_json::Value {
-    TestDataBuilder::new()
-        .with_order_data("ORD-001", "100.00")
-        .with_customer_data("CUST-001")
-        .build_json()
-}
-
-chicago_test!(test_order_processing, {
-    let order = create_test_order();
-    // Use order in multiple tests
-});
-```
-
-**Pattern: Conditional Data**
-```rust
-chicago_test!(test_conditional_data, {
-    let mut builder = TestDataBuilder::new();
-    if some_condition {
-        builder = builder.with_var("key", "value");
-    }
-    let data = builder.build_json();
-});
-```
-
-### Anti-patterns
-
-❌ **Don't build unnecessary JSON:**
-```rust
-// Bad: JSON conversion not needed
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_json(); // Unnecessary if you only need HashMap
-```
-
-✅ **Do use appropriate build method:**
-```rust
-// Good: Use HashMap when JSON not needed
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build(); // Faster, no JSON conversion
-```
-
----
+**Anti-patterns**: Don't use builders for simple literals. Don't convert to JSON unnecessarily.
 
 ## Macros
 
-Macros reduce boilerplate and enforce Chicago TDD principles. Use macros for all tests to ensure consistency.
+Test macros: AAA pattern enforcement. Zero-boilerplate tests. Assertion macros.
 
-### When to Use
+**When to Use**: All tests (enforces AAA), async tests, fixture tests, performance tests. **Always use**: Reduces boilerplate, enforces patterns.
 
-✅ **Always use macros for:**
-- All test functions
-- AAA pattern enforcement
-- Consistent test structure
-- Reduced boilerplate
+**Test Macros**: `chicago_test!(name, { /* AAA */ })` (synchronous), `chicago_async_test!(name, { /* AAA */ })` (async), `chicago_fixture_test!(name, fixture, { /* AAA */ })` (auto fixture), `chicago_performance_test!(name, { /* AAA */ })` (tick budget).
 
-### Test Macros
+**Assertion Macros**: `assert_ok!(result)` / `assert_ok!(result, message)`, `assert_err!(result)` / `assert_err!(result, message)`, `assert_within_tick_budget!(ticks)` / `assert_within_tick_budget!(ticks, message)`, `assert_in_range!(value, min, max)` / `assert_in_range!(value, min, max, message)`, `assert_eq_msg!(actual, expected, message)`, `assert_guard_constraint!(condition, constraint_name)`.
 
-#### Synchronous Test
+**Patterns**: AAA structure (Arrange-Act-Assert), macro usage (all tests), assertion macros (better messages).
 
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_sync, {
-    // Arrange: Set up test data
-    let input = 5;
-    
-    // Act: Execute feature
-    let result = input * 2;
-    
-    // Assert: Verify behavior
-    assert_eq!(result, 10);
-});
-```
-
-**Best Practice**: Always include AAA comments for clarity.
-
-#### Async Test
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_async_test!(test_async, {
-    // Arrange: Set up test data
-    let fixture = TestFixture::new().unwrap();
-    
-    // Act: Execute async operation
-    let counter = fixture.test_counter();
-    
-    // Assert: Verify behavior
-    assert!(counter >= 0);
-    
-    // Supports ? operator for error propagation
-    // Ok::<(), MyError>(()) // Return Result - unwrapped automatically
-});
-```
-
-**Performance Note**: Async tests have minimal overhead compared to standard `#[tokio::test]`.
-
-#### Fixture Test
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_fixture_test!(test_with_fixture, fixture, {
-    // Arrange: Fixture automatically created
-    let counter = fixture.test_counter();
-    
-    // Act: Execute test
-    let result = counter + 1;
-    
-    // Assert: Verify behavior
-    assert!(result > 0);
-});
-```
-
-**Best Practice**: Use `chicago_fixture_test!` when you need fixtures - it's cleaner than manual setup.
-
-#### Performance Test
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_performance_test!(test_performance, {
-    // Arrange: Set up test data
-    let input = vec![1, 2, 3];
-    
-    // Act: Execute hot path and measure ticks
-    let (result, ticks) = measure_ticks(|| {
-        input.iter().sum::<i32>()
-    });
-    
-    // Assert: Verify performance constraint (≤8 ticks)
-    assert_within_tick_budget!(ticks, "Hot path operation");
-    assert_eq!(result, 6);
-});
-```
-
-**Performance Note**: RDTSC provides cycle-accurate measurement on x86_64; falls back to `std::time::Instant` on other platforms.
-
-### Assertion Macros
-
-#### Result Assertions
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_result_assertions, {
-    // Arrange: Create results
-    let ok_result: Result<u32, String> = Ok(42);
-    let err_result: Result<u32, String> = Err("error".to_string());
-    
-    // Assert: Use assertion macros
-    assert_ok!(&ok_result);
-    assert_ok!(&ok_result, "Operation should succeed");
-    
-    assert_err!(&err_result);
-    assert_err!(&err_result, "Operation should fail");
-});
-```
-
-**Best Practice**: Always include custom messages for better error output.
-
-#### Range Assertions
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_range_assertions, {
-    // Arrange: Test value
-    let value = 5;
-    
-    // Assert: Verify in range
-    assert_in_range!(value, 0, 10);
-    assert_in_range!(value, 0, 10, "Value should be valid");
-});
-```
-
-#### Equality Assertions
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_equality_assertions, {
-    // Arrange: Test values
-    let actual = 42;
-    let expected = 42;
-    
-    // Assert: Verify equality with message
-    assert_eq_msg!(actual, expected, "Values should match");
-});
-```
-
-#### Guard Constraint Assertions
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_guard_constraints, {
-    // Arrange: Test constraint
-    let max_run_len = 5;
-    
-    // Assert: Verify guard constraint (max_run_len ≤ 8)
-    assert_guard_constraint!(max_run_len <= 8, "max_run_len");
-});
-```
-
-#### Tick Budget Assertions
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_tick_budget, {
-    // Arrange: Measure ticks
-    let ticks = 5;
-    
-    // Assert: Verify tick budget (≤8 ticks)
-    assert_within_tick_budget!(ticks);
-    assert_within_tick_budget!(ticks, "Hot path operation");
-});
-```
-
-### Common Patterns
-
-**Pattern: Error Propagation**
-```rust
-chicago_async_test!(test_with_error_propagation, {
-    let result = fallible_operation().await?;
-    assert_eq!(result, expected);
-    Ok::<(), MyError>(()) // Automatically unwrapped
-});
-```
-
-**Pattern: Multiple Assertions**
-```rust
-chicago_test!(test_multiple_assertions, {
-    let result = operation();
-    assert_ok!(&result, "Operation should succeed");
-    let value = result.unwrap();
-    assert_eq!(value, expected, "Value should match");
-    assert_in_range!(value, 0, 100, "Value should be in range");
-});
-```
-
-### Anti-patterns
-
-❌ **Don't skip AAA comments:**
-```rust
-// Bad: No AAA structure
-chicago_test!(test_bad, {
-    let x = 5;
-    assert_eq!(x * 2, 10);
-});
-```
-
-✅ **Do use AAA structure:**
-```rust
-// Good: Clear AAA structure
-chicago_test!(test_good, {
-    // Arrange
-    let x = 5;
-    
-    // Act
-    let result = x * 2;
-    
-    // Assert
-    assert_eq!(result, 10);
-});
-```
-
----
+**Anti-patterns**: Don't skip AAA comments. Don't use raw `#[test]` when macros available. Don't skip assertion macros.
 
 ## Assertions
 
-Helper functions for common assertion patterns. Use when you need more flexibility than macros provide.
+Assertion helpers: Result assertions, predicates with HRTB, range assertions.
 
-### When to Use
+**When to Use**: Result validation, predicate testing, range validation, custom messages. **Always use**: Better error messages than standard assertions.
 
-✅ **Use assertion helpers when:**
-- You need custom predicate logic
-- You want reusable assertion functions
-- You need HRTB (Higher-Ranked Trait Bounds) flexibility
+**Result Assertions**: `assert_success<T, E>(&Result<T, E>)`, `assert_error<T, E>(&Result<T, E>)`.
 
-### Result Assertions
+**Predicate Assertions**: `assert_that<T, F>(value, predicate)` (HRTB), `assert_that_with_msg<T, F>(value, predicate, msg)`.
 
-```rust
-use chicago_tdd_tools::assertions::*;
+**Range Assertions**: `assert_in_range<T>(value, min, max, msg)`, `assert_eq_with_msg<T>(actual, expected, msg)`.
 
-chicago_test!(test_result_helpers, {
-    // Arrange: Create results
-    let ok_result: Result<u32, String> = Ok(42);
-    let err_result: Result<u32, String> = Err("error".to_string());
-    
-    // Assert: Use helper functions
-    assert_success(&ok_result);
-    assert_error(&err_result);
-});
-```
-
-### Predicate Assertions
-
-Use HRTB for flexible predicates:
-
-```rust
-use chicago_tdd_tools::assertions::*;
-
-chicago_test!(test_predicate_assertions, {
-    // Arrange: Test value
-    let value = 42;
-    
-    // Assert: Use predicate assertions
-    assert_that(&value, |v| *v > 0);
-    assert_that_with_msg(&value, |v| *v > 0, "Value should be positive");
-});
-```
-
-**Best Practice**: Use `assert_that` when standard assertions don't fit your needs.
-
-### Range Assertions
-
-```rust
-use chicago_tdd_tools::assertions::*;
-
-chicago_test!(test_range_helpers, {
-    // Arrange: Test value
-    let value = 5;
-    
-    // Assert: Verify in range
-    assert_in_range(&value, &0, &10, "Value should be in range");
-});
-```
-
----
+**Patterns**: Result validation (assert_success/assert_error), predicate testing (assert_that), range validation (assert_in_range).
 
 ## Property-Based Testing
 
-Validate invariants with randomly generated test data. Use property-based testing to find edge cases automatically.
+Property-based testing: Const generics. Reproducible with seeds. Invariant testing.
 
-### When to Use
+**When to Use**: Invariant testing, edge case discovery, random test data generation. **Avoid**: Deterministic tests, simple unit tests.
 
-✅ **Use property-based testing when:**
-- You need to find edge cases
-- Testing mathematical properties
-- Validating invariants
-- Testing with random inputs
+**Basic Usage**: `PropertyTestGenerator::<MAX_ITEMS, MAX_DEPTH>::new().with_seed(seed).generate_test_data()`. Use `property_all_data_valid(generator, num_tests)` for validation.
 
-❌ **Avoid property-based testing when:**
-- Testing specific scenarios
-- Need deterministic test data
-- Testing UI or external APIs
+**Custom Properties**: Create custom property functions for domain invariants. Use fixed seeds for reproducibility. Increase iterations for thorough testing.
 
-### Basic Property Testing
+**Patterns**: Invariant testing (reverse twice is identity), edge case discovery (random data), reproducible tests (fixed seeds).
 
-```rust
-use chicago_tdd_tools::prelude::*;
-
-#[cfg(feature = "property-testing")]
-chicago_test!(test_property_basic, {
-    // Arrange: Create generator
-    let mut generator = PropertyTestGenerator::<10, 3>::new()
-        .with_seed(42);
-    
-    // Act & Assert: Test property
-    assert!(
-        property_all_data_valid(&mut generator, 100),
-        "Property: All generated data is valid"
-    );
-});
-```
-
-**Performance Note**: Property tests run multiple iterations; use `with_seed()` for reproducibility.
-
-### Custom Property Functions
-
-Create custom property functions for your domain:
-
-```rust
-use chicago_tdd_tools::prelude::*;
-use std::collections::HashMap;
-
-#[cfg(feature = "property-testing")]
-fn property_all_keys_non_empty(
-    generator: &mut PropertyTestGenerator<10, 3>,
-    num_tests: usize,
-) -> bool {
-    for _ in 0..num_tests {
-        let data = generator.generate_test_data();
-        for key in data.keys() {
-            if key.is_empty() {
-                return false; // Property violated
-            }
-        }
-    }
-    true // Property holds
-}
-
-#[cfg(feature = "property-testing")]
-chicago_test!(test_custom_property, {
-    let mut generator = PropertyTestGenerator::<10, 3>::new();
-    assert!(property_all_keys_non_empty(&mut generator, 100));
-});
-```
-
-**Best Practice**: Use fixed seeds for reproducible tests; increase iterations for thorough testing.
-
-### Common Patterns
-
-**Pattern: Invariant Testing**
-```rust
-#[cfg(feature = "property-testing")]
-fn property_reverse_twice_is_identity(
-    generator: &mut PropertyTestGenerator<10, 3>,
-    num_tests: usize,
-) -> bool {
-    for _ in 0..num_tests {
-        let data = generator.generate_test_data();
-        let reversed: HashMap<_, _> = data.iter()
-            .map(|(k, v)| (v.clone(), k.clone()))
-            .collect();
-        let double_reversed: HashMap<_, _> = reversed.iter()
-            .map(|(k, v)| (v.clone(), k.clone()))
-            .collect();
-        if data != double_reversed {
-            return false;
-        }
-    }
-    true
-}
-```
-
-### Anti-patterns
-
-❌ **Don't use property testing for specific scenarios:**
-```rust
-// Bad: Property testing for specific case
-#[cfg(feature = "property-testing")]
-chicago_test!(test_specific_case, {
-    let mut generator = PropertyTestGenerator::<10, 3>::new();
-    // Testing specific scenario - use regular test instead
-});
-```
-
-✅ **Do use property testing for invariants:**
-```rust
-// Good: Property testing for invariant
-#[cfg(feature = "property-testing")]
-chicago_test!(test_invariant, {
-    let mut generator = PropertyTestGenerator::<10, 3>::new();
-    assert!(property_all_data_valid(&mut generator, 100));
-});
-```
-
----
+**Anti-patterns**: Don't use for deterministic tests. Don't skip seed setting. Don't use insufficient iterations.
 
 ## Mutation Testing
 
-Validate test quality by introducing mutations. Use mutation testing to ensure your tests actually catch bugs.
+Mutation testing: Quality validation. Operators and scores. Test quality metrics.
 
-### When to Use
+**When to Use**: Test quality validation, CI/CD pipelines, finding weak tests. **Avoid**: Development loop (too slow), simple tests.
 
-✅ **Use mutation testing when:**
-- Validating test quality
-- Ensuring tests catch bugs
-- Measuring test effectiveness
-- CI/CD quality gates
+**Basic Usage**: `MutationTester::new(data).apply_mutation(operator).test_mutation_detection(test_fn)`. Use `MutationScore::calculate(caught, total).is_acceptable()` (≥80%).
 
-❌ **Avoid mutation testing when:**
-- Early development (too slow)
-- Simple tests (overkill)
-- Non-deterministic code
+**Operators**: `MutationOperator::RemoveKey(key)`, `MutationOperator::AddKey(key, value)`, `MutationOperator::ChangeValue(key, value)`.
 
-### Basic Mutation Testing
+**Patterns**: Quality validation (CI/CD), score tracking (≥80% acceptable), operator testing (all operators).
 
-```rust
-use chicago_tdd_tools::prelude::*;
-use std::collections::HashMap;
+**Anti-patterns**: Don't use in development loop. Don't accept scores <80%. Don't skip operator testing.
 
-#[cfg(feature = "mutation-testing")]
-chicago_test!(test_mutation_basic, {
-    // Arrange: Create tester with original data
-    let mut data = HashMap::new();
-    data.insert("key1".to_string(), "value1".to_string());
-    let mut tester = MutationTester::new(data);
-    
-    // Act: Apply mutations
-    tester.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
-    
-    // Assert: Test mutation detection
-    let caught = tester.test_mutation_detection(|data| {
-        !data.is_empty() // Test should catch empty data
-    });
-    
-    // Calculate mutation score
-    let score = MutationScore::calculate(
-        if caught { 1 } else { 0 },
-        1
-    );
-    
-    // Verify score is acceptable (≥80%)
-    assert!(score.is_acceptable());
-});
-```
+## Snapshot Testing
 
-**Performance Note**: Mutation testing is slower than regular tests; use in CI/CD, not in development loop.
+Snapshot testing: Output capture and comparison. Review workflow. Multiple formats (JSON/YAML/TOML).
 
-### Mutation Operators
+**When to Use**: Complex data structures, output stability, regression testing, API response validation. **Avoid**: Simple unit tests, frequently changing outputs.
 
-```rust
-use chicago_tdd_tools::mutation::*;
-use std::collections::HashMap;
+**Basic Usage**: `SnapshotAssert::assert_matches(&value, "snapshot_name")` for Display, `SnapshotAssert::assert_debug_matches(&value, "snapshot_name")` for Debug, `SnapshotAssert::assert_json_matches(&json_value, "snapshot_name")` for JSON.
 
-#[cfg(feature = "mutation-testing")]
-chicago_test!(test_mutation_operators, {
-    // Arrange: Create tester
-    let mut data = HashMap::new();
-    data.insert("key1".to_string(), "value1".to_string());
-    let mut tester = MutationTester::new(data);
-    
-    // Act: Apply different mutations
-    tester.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
-    tester.apply_mutation(MutationOperator::AddKey("key2".to_string(), "value2".to_string()));
-    tester.apply_mutation(MutationOperator::ChangeValue("key1".to_string(), "new_value".to_string()));
-    
-    // Assert: Verify mutations applied
-    assert_eq!(tester.mutations.len(), 3);
-});
-```
+**Review Workflow**: Run tests → `cargo make snapshot-review` → Accept/reject changes → Commit snapshots. Use `cargo make snapshot-accept` to accept all, `cargo make snapshot-reject` to reject all.
 
-**Best Practice**: Aim for ≥80% mutation score; improve tests if score is lower.
+**Custom Settings**: `SnapshotAssert::with_settings(|settings| { settings.set_snapshot_path("custom"); }, || { /* test */ })` for custom paths.
 
-### Common Patterns
+**Patterns**: Output stability (snapshot comparison), regression testing (capture outputs), review workflow (cargo insta review), multiple formats (JSON/YAML/TOML).
 
-**Pattern: Comprehensive Mutation Testing**
-```rust
-#[cfg(feature = "mutation-testing")]
-chicago_test!(test_comprehensive_mutations, {
-    let mut data = create_test_data();
-    let mut tester = MutationTester::new(data);
-    
-    // Apply all mutation types
-    tester.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
-    tester.apply_mutation(MutationOperator::AddKey("key2".to_string(), "value2".to_string()));
-    tester.apply_mutation(MutationOperator::ChangeValue("key1".to_string(), "changed".to_string()));
-    
-    // Test detection
-    let caught = tester.test_mutation_detection(|d| {
-        d.contains_key("key1") && d.get("key1") != Some(&"changed".to_string())
-    });
-    
-    let score = MutationScore::calculate(if caught { 3 } else { 0 }, 3);
-    assert!(score.is_acceptable(), "Mutation score: {}%", score.score());
-});
-```
-
-### Anti-patterns
-
-❌ **Don't use mutation testing in fast feedback loops:**
-```rust
-// Bad: Mutation testing in development loop
-#[cfg(feature = "mutation-testing")]
-chicago_test!(test_dev_loop, {
-    // Too slow for development
-});
-```
-
-✅ **Do use mutation testing in CI/CD:**
-```rust
-// Good: Mutation testing in CI/CD
-#[cfg(feature = "mutation-testing")]
-#[cfg(test)]
-mod mutation_tests {
-    // Run in CI/CD, not in development
-}
-```
-
----
+**Anti-patterns**: Don't use for frequently changing outputs. Don't skip review workflow. Don't commit snapshots without review.
 
 ## Performance Testing
 
-Validate hot path performance with tick measurement. Use performance testing to ensure operations meet the Chatman Constant (≤8 ticks).
+Performance testing: RDTSC benchmarking. Tick budget (≤8 ticks = 2ns). Hot path validation.
 
-### When to Use
+**When to Use**: Hot path validation, performance-critical code, tick budget enforcement. **Avoid**: Non-critical paths, development loop.
 
-✅ **Use performance testing when:**
-- Validating hot path performance
-- Ensuring operations meet tick budget
-- Performance regression testing
-- Critical path optimization
+**Tick Measurement**: `TickCounter::start().elapsed_ticks()`, `measure_ticks(|| operation()) -> (result, ticks)`. Use `HOT_PATH_TICK_BUDGET = 8`.
 
-❌ **Avoid performance testing when:**
-- Non-critical paths
-- Operations that don't need to be fast
-- External I/O operations
+**Validation**: `assert_within_tick_budget!(ticks)` for hot path validation. RDTSC on x86_64, falls back to `std::time::Instant` on other platforms.
 
-### Tick Measurement
+**Patterns**: Hot path validation (tick budget), performance measurement (measure_ticks), platform-specific (RDTSC fallback).
 
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_tick_measurement, {
-    // Arrange: Set up test data
-    let input = vec![1, 2, 3, 4, 5];
-    
-    // Act: Measure ticks for hot path
-    let (result, ticks) = measure_ticks(|| {
-        input.iter().sum::<i32>()
-    });
-    
-    // Assert: Verify performance constraint (≤8 ticks)
-    assert_within_tick_budget!(ticks, "Hot path operation");
-    assert_eq!(result, 15);
-});
-```
-
-**Performance Note**: RDTSC provides cycle-accurate measurement on x86_64; falls back to `std::time::Instant` on other platforms.
-
-### Performance Validation
-
-```rust
-use chicago_tdd_tools::performance::*;
-
-chicago_test!(test_performance_validation, {
-    // Arrange: Create tick counter
-    let counter = TickCounter::start();
-    
-    // Act: Execute operation
-    let _result = expensive_operation();
-    
-    // Assert: Verify tick budget
-    let ticks = counter.elapsed_ticks();
-    assert!(ticks <= HOT_PATH_TICK_BUDGET);
-});
-```
-
-**Best Practice**: Use `HOT_PATH_TICK_BUDGET` constant (8 ticks) for consistency.
-
-### Common Patterns
-
-**Pattern: Hot Path Validation**
-```rust
-chicago_performance_test!(test_hot_path_validation, {
-    let input = create_hot_path_input();
-    let (result, ticks) = measure_ticks(|| hot_path_operation(&input));
-    assert_within_tick_budget!(ticks, "Hot path must be fast");
-    assert_ok!(&result, "Operation must succeed");
-});
-```
-
-**Pattern: Performance Regression Testing**
-```rust
-chicago_performance_test!(test_performance_regression, {
-    let input = create_test_input();
-    let (_, ticks) = measure_ticks(|| operation(&input));
-    // Fail if performance degrades
-    assert!(ticks <= PREVIOUS_BEST_TICKS, "Performance regression detected");
-});
-```
-
-### Anti-patterns
-
-❌ **Don't test non-critical paths:**
-```rust
-// Bad: Performance testing non-critical path
-chicago_performance_test!(test_slow_operation, {
-    let (_, ticks) = measure_ticks(|| slow_io_operation());
-    // IO operations don't need tick budget validation
-});
-```
-
-✅ **Do test hot paths only:**
-```rust
-// Good: Performance testing hot path
-chicago_performance_test!(test_hot_path, {
-    let (_, ticks) = measure_ticks(|| fast_hot_path_operation());
-    assert_within_tick_budget!(ticks, "Hot path must be fast");
-});
-```
-
----
+**Anti-patterns**: Don't use for non-critical paths. Don't ignore platform differences. Don't skip tick budget validation.
 
 ## Guards and Constraints
 
-Enforce guard constraints at ingress points. Use guards to prevent invalid data from entering your system.
+Guard constraints: Chatman Constant (≤8). Batch size limits. Input validation.
 
-### When to Use
+**When to Use**: Input validation, constraint enforcement, guard validation. **Always use**: Prevents invalid data at ingress.
 
-✅ **Use guards when:**
-- Validating input at boundaries
-- Enforcing MAX_RUN_LEN ≤ 8 (Chatman Constant)
-- Enforcing MAX_BATCH_SIZE constraints
-- Input validation
+**Guard Validation**: `GuardValidator::new().validate_run_length(length)?`, `validate_batch_size(size)?`. Use `MAX_RUN_LEN = 8`, `MAX_BATCH_SIZE = 1000`.
 
-### Guard Validation
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_guard_validation, {
-    // Arrange: Create validator
-    let validator = GuardValidator::new();
-    
-    // Act: Validate constraints
-    let result = validator.validate_run_length(5);
-    
-    // Assert: Verify validation
-    assert_ok!(&result, "Run length should be valid");
-});
-```
-
-### Constraint Constants
-
-```rust
-use chicago_tdd_tools::guards::*;
-
-chicago_test!(test_constraint_constants, {
-    // Assert: Verify constants
-    assert_eq!(MAX_RUN_LEN, 8); // Chatman Constant
-    assert_eq!(MAX_BATCH_SIZE, 1000);
-});
-```
-
-**Best Practice**: Use constants instead of magic numbers.
-
----
+**Patterns**: Input validation (guard constraints), constraint enforcement (MAX_RUN_LEN), guard validation (all ingress points).
 
 ## JTBD Validation
 
-Validate that code accomplishes its intended purpose. Use JTBD validation to ensure code does the job it's supposed to do.
+JTBD validation: Scenario validation. Real-world testing. Purpose validation.
 
-### When to Use
+**When to Use**: Real-world scenario testing, purpose validation, end-to-end validation. **Avoid**: Simple unit tests.
 
-✅ **Use JTBD validation when:**
-- Validating end-to-end workflows
-- Ensuring code accomplishes intended purpose
-- Real-world scenario testing
-- Business logic validation
+**Basic Usage**: `JtbdValidator::new().register_scenario(scenario).validate_all()`. Use `JtbdScenario` with setup_context, validate_result, expected_behavior.
 
-### Basic JTBD Validation
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_jtbd_validation, {
-    // Arrange: Create validator
-    let mut validator = JtbdValidator::new();
-    
-    // Register scenario
-    validator.register_scenario(JtbdScenario {
-        name: "Order Processing".to_string(),
-        setup_context: Box::new(|| {
-            create_test_context()
-        }),
-        validate_result: Box::new(|ctx, result| {
-            // Validate that order was actually processed
-            result.success && result.variables.contains_key("order_id")
-        }),
-        expected_behavior: "Process order and update state".to_string(),
-    });
-    
-    // Act: Validate all scenarios
-    let results = validator.validate_all();
-    
-    // Assert: Verify all scenarios pass
-    assert!(results.iter().all(|r| r.jtbd_success));
-});
-```
-
----
+**Patterns**: Scenario validation (real-world), purpose validation (JTBD), end-to-end validation (complete workflows).
 
 ## Testcontainers Integration
 
-Integration testing with Docker containers. Use testcontainers for real integration tests with actual services.
+Testcontainers: Docker container support. Port mapping. Command execution. Auto-cleanup.
 
-### When to Use
+**When to Use**: Integration testing, Docker services, real dependencies. **Avoid**: Unit tests, mocked dependencies.
 
-✅ **Use testcontainers when:**
-- Integration testing with databases
-- Testing with external services
-- Real collaborator testing
-- End-to-end testing
+**Basic Usage**: `GenericContainer::new(client.client(), image, tag)?`, `container.get_host_port(port)?`, `container.exec(cmd, args)?`. Use `ContainerClient::new()` for client.
 
-❌ **Avoid testcontainers when:**
-- Unit tests
-- Fast feedback loops
-- Tests that don't need real services
+**Command Execution**: `container.exec(cmd, args) -> ExecResult` (stdout, stderr, exit_code). Use for service containers that stay running.
 
-### Basic Container Usage
+**Wait Conditions**: `GenericContainer::with_wait_for(client, image, tag, WaitFor::http(path, port))?` for HTTP services. Verify observable behavior (HTTP responses).
 
-```rust
-use chicago_tdd_tools::testcontainers::*;
+**Patterns**: Integration testing (real containers), port mapping (get_host_port), command execution (exec), wait conditions (HTTP services).
 
-#[cfg(feature = "testcontainers")]
-chicago_test!(test_with_container, {
-    // Arrange: Create client and container
-    let client = ContainerClient::new();
-    let container = GenericContainer::new(
-        client.client(),
-        "alpine",
-        "latest"
-    ).unwrap();
-    
-    // Act: Use container
-    let host_port = container.get_host_port(80).unwrap();
-    
-    // Assert: Verify port is valid
-    assert!(host_port > 0);
-    
-    // Container automatically cleaned up on drop
-});
-```
-
-**Performance Note**: Container startup adds overhead; use sparingly.
-
-### Command Execution
-
-```rust
-use chicago_tdd_tools::testcontainers::*;
-
-#[cfg(feature = "testcontainers")]
-chicago_test!(test_container_exec, {
-    // Arrange: Create container
-    let client = ContainerClient::new();
-    let container = GenericContainer::new(
-        client.client(),
-        "alpine",
-        "latest"
-    ).unwrap();
-    
-    // Act: Execute command
-    let result = container.exec("echo", &["hello"]).unwrap();
-    
-    // Assert: Verify command output
-    assert_eq!(result.stdout.trim(), "hello");
-    assert_eq!(result.exit_code, 0);
-});
-```
-
----
+**Anti-patterns**: Don't use for unit tests. Don't skip cleanup. Don't use containers that exit immediately.
 
 ## OTEL/Weaver Integration
 
-Validate OpenTelemetry spans and metrics. Use OTEL/Weaver validation to ensure telemetry conforms to schema.
+OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 
-### When to Use
+**When to Use**: OTEL validation, schema conformance, live validation. **Requires**: `otel` feature, `weaver` feature (requires otel).
 
-✅ **Use OTEL/Weaver validation when:**
-- Validating telemetry schema
-- Ensuring spans/metrics conform to conventions
-- Live validation with Weaver
-- Telemetry quality assurance
+**OTEL Validation**: `SpanValidator::new().with_required_attributes(attrs).validate(span)?`, `MetricValidator::new().validate(metric)?`.
 
-### OTEL Span Validation
+**Weaver Validation**: `WeaverValidator::new(registry_path).start()?` / `stop()?`. Use `with_config(registry_path, otlp_grpc_port, admin_port)` for custom config.
 
-```rust
-use chicago_tdd_tools::otel::*;
-
-#[cfg(feature = "otel")]
-chicago_test!(test_otel_validation, {
-    // Arrange: Create validator
-    let validator = SpanValidator::new()
-        .with_required_attributes(vec!["service.name".to_string()])
-        .with_non_zero_id_validation(true);
-    
-    // Act: Validate span
-    let span = create_test_span();
-    let result = validator.validate(&span);
-    
-    // Assert: Verify validation
-    assert_ok!(&result, "Span should be valid");
-});
-```
-
-### Weaver Live Validation
-
-```rust
-use chicago_tdd_tools::weaver::*;
-
-#[cfg(feature = "weaver")]
-chicago_test!(test_weaver_validation, {
-    // Arrange: Create validator
-    let mut validator = WeaverValidator::new(
-        PathBuf::from("./otel-registry")
-    );
-    
-    // Act: Start Weaver and validate
-    validator.start().unwrap();
-    
-    // Run tests that generate telemetry...
-    
-    // Stop Weaver
-    validator.stop().unwrap();
-    
-    // Assert: Verify validation passed
-    // (Weaver reports are generated automatically)
-});
-```
-
----
+**Patterns**: Span validation (required attributes), metric validation (schema conformance), live validation (weaver).
 
 ## Best Practices
 
-### AAA Pattern
+**AAA Pattern**: Arrange-Act-Assert structure required. Use AAA comments. Verify observable outputs.
 
-Always follow Arrange-Act-Assert pattern:
+**Use Macros**: Always use `chicago_test!`, `chicago_async_test!`, `chicago_fixture_test!`. Never use raw `#[test]`.
 
-```rust
-chicago_test!(test_aaa_pattern, {
-    // Arrange: Set up test data
-    let input = 5;
-    let expected = 10;
-    
-    // Act: Execute feature
-    let result = input * 2;
-    
-    // Assert: Verify behavior
-    assert_eq!(result, expected);
-});
-```
+**Real Collaborators**: Use real objects, minimize mocks. Use testcontainers for integration tests.
 
-### Use Macros
+**State Verification**: Verify outputs and state, not implementation. Verify observable behavior.
 
-Prefer macros over manual test setup:
-
-```rust
-// Good: Use macro
-chicago_fixture_test!(test_with_fixture, fixture, {
-    // Test code
-});
-
-// Avoid: Manual setup
-#[tokio::test]
-async fn test_manual() {
-    let fixture = TestFixture::new().unwrap();
-    // Test code
-}
-```
-
-### Real Collaborators
-
-Use real dependencies, not mocks:
-
-```rust
-// Good: Real container
-let container = GenericContainer::new(client.client(), "postgres", "latest").unwrap();
-
-// Avoid: Mock
-let mock_db = MockDatabase::new();
-```
-
-### State Verification
-
-Verify outputs and state, not implementation:
-
-```rust
-// Good: Verify state
-assert_eq!(result.order_id, "ORD-001");
-assert_eq!(result.status, "processed");
-
-// Avoid: Verify implementation
-assert_eq!(result.internal_counter, 1);
-```
-
----
+**Behavior Verification**: Tests verify what code does, not how. Verify state changes, outputs, execution order.
 
 ## Common Patterns
 
-### Pattern: Test Isolation
+**Test Isolation**: `chicago_fixture_test!` provides unique fixtures. Tests don't interfere.
 
-```rust
-chicago_fixture_test!(test_isolation, fixture, {
-    // Each test gets unique fixture
-    let counter = fixture.test_counter();
-    // Tests don't interfere with each other
-});
-```
+**Reusable Test Data**: Helper functions for common test data. `fn create_test_order() -> Value`.
 
-### Pattern: Reusable Test Data
-
-```rust
-fn create_test_order() -> serde_json::Value {
-    TestDataBuilder::new()
-        .with_order_data("ORD-001", "100.00")
-        .build_json()
-}
-```
-
-### Pattern: Error Handling
-
-```rust
-chicago_async_test!(test_error_handling, {
-    let result = fallible_operation().await?;
-    assert_ok!(&result, "Operation should succeed");
-    Ok::<(), MyError>(())
-});
-```
-
----
+**Error Handling**: Use `?` operator in async tests. Use `assert_ok!` / `assert_err!` for Result validation.
 
 ## Anti-patterns
 
-### ❌ Don't Skip AAA Comments
+**Don't Skip AAA Comments**: Always use Arrange-Act-Assert structure with comments.
 
-```rust
-// Bad: No AAA structure
-chicago_test!(test_bad, {
-    let x = 5;
-    assert_eq!(x * 2, 10);
-});
-```
+**Don't Use Fixtures Unnecessarily**: Only use fixtures when state/isolation needed.
 
-### ❌ Don't Use Fixtures Unnecessarily
+**Don't Test Implementation Details**: Verify outputs and state, not internal counters/state.
 
-```rust
-// Bad: Fixture not needed
-chicago_test!(test_simple, {
-    let fixture = TestFixture::new().unwrap(); // Unnecessary
-    assert_eq!(2 + 2, 4);
-});
-```
+**Don't Use Mocks When Real Available**: Use real collaborators (testcontainers, real dependencies).
 
-### ❌ Don't Test Implementation Details
-
-```rust
-// Bad: Testing implementation
-chicago_test!(test_implementation, {
-    assert_eq!(internal_counter, 1); // Implementation detail
-});
-```
-
----
+**Don't Skip Behavior Verification**: Tests must verify observable outputs, not just function existence.
 
 ## Troubleshooting
 
-### Common Issues
+**TestFixture::new() fails**: Ensure tokio runtime available for async tests.
 
-**Issue**: `TestFixture::new()` fails
-- **Solution**: Ensure tokio runtime is available for async tests
+**Property-based tests don't compile**: Enable `property-testing` feature flag.
 
-**Issue**: Property-based tests don't compile
-- **Solution**: Enable `property-testing` feature flag
+**Testcontainers tests fail**: Ensure Docker running and `testcontainers` feature enabled.
 
-**Issue**: Testcontainers tests fail
-- **Solution**: Ensure Docker is running and `testcontainers` feature is enabled
+**Performance tests fail on non-x86_64**: RDTSC is x86_64-specific; falls back to `std::time::Instant`.
 
-**Issue**: Performance tests fail on non-x86_64
-- **Solution**: RDTSC is x86_64-specific; tests fall back to `std::time::Instant` on other platforms
+## Summary
 
-### Getting Help
+**Key Associations**: Fixtures = RAII = Auto-cleanup. Builders = Fluent = JSON/HashMap. Macros = AAA = Zero-boilerplate. Property = Const generics = Reproducible. Mutation = Quality = Operators. Performance = RDTSC = Tick budget. Guards = Constraints = Chatman Constant. Testcontainers = Docker = Auto-cleanup. OTEL/Weaver = Validation = Schema.
 
-- Check [API Reference](API_REFERENCE.md) for complete API documentation
-- Review [Architecture](ARCHITECTURE.md) for design principles
-- See `examples/` directory for working code examples
-
----
-
-## Next Steps
-
-- Read [API Reference](API_REFERENCE.md) for complete API documentation
-- Review [Architecture](ARCHITECTURE.md) for design principles
-- Check `examples/` directory for more examples
+**Pattern**: All features follow consistent patterns: when to use, basic usage, common patterns, anti-patterns. Use macros for all tests. Verify observable outputs. Use real collaborators.

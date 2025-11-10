@@ -27,7 +27,11 @@ async fn main() {
     let data = TestDataBuilder::new()
         .with_var("key1", "value1")
         .with_order_data("ORD-001", "100.00")
-        .build_json();
+        .build_json()
+        .unwrap_or_else(|e| {
+            eprintln!("Failed to build JSON: {}", e);
+            std::process::exit(1);
+        });
 
     // Assert: Verify data created
     println!("Test data created: {}", data.is_object());

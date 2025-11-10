@@ -27,6 +27,35 @@ chrono = "0.4"
 testcontainers = { version = "0.25", optional = true, features = ["blocking"] }
 thiserror = "2.0"
 
+# HTTP client for Weaver admin endpoint (optional, weaver feature)
+reqwest = { version = "0.11", optional = true, features = ["blocking"] }
+
+# OpenTelemetry SDK for sending telemetry (optional, weaver feature)
+opentelemetry = { version = "0.31", optional = true, default-features = false }
+opentelemetry_sdk = { version = "0.31", optional = true, default-features = false }
+opentelemetry-otlp = { version = "0.31", optional = true, default-features = false, features = [
+  "http-proto",
+] }
+
+# Snapshot testing (optional, snapshot-testing feature)
+insta = { version = "1.40", optional = true }
+
+# Property-based testing (optional, property-testing feature)
+proptest = { version = "1.5", optional = true }
+arbitrary = { version = "1.4", optional = true }
+
+# Fake data generation (optional, fake-data feature)
+fake = { version = "3.0", optional = true, features = ["derive"] }
+
+# Concurrency testing (optional, concurrency-testing feature)
+loom = { version = "0.7", optional = true }
+
+# Parameterized testing (optional, parameterized-testing feature)
+rstest = { version = "0.19", optional = true }
+
+# CLI testing (optional, cli-testing feature)
+trycmd = { version = "0.15", optional = true }
+
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.0.0" }
 
@@ -36,23 +65,63 @@ chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.0.0" }
 [dev-dependencies]
 tokio-test = "0.4"
 tempfile = "3.0"
-ntest = "0.9"  # Test timeout enforcement
+ntest = "0.9"      # Test timeout enforcement
+# Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
+# criterion = { version = "0.5", features = ["async_tokio"] }  # Statistical benchmarking
 
 [features]
 default = []
 workflow-engine = [] # Enable workflow-specific features
-property-testing = [] # Enable property-based testing
+property-testing = ["dep:proptest", "dep:arbitrary"] # Enable property-based testing with proptest
 mutation-testing = [] # Enable mutation testing
+snapshot-testing = ["dep:insta"] # Enable snapshot testing with insta
+fake-data = ["dep:fake"] # Enable fake data generation
+concurrency-testing = ["dep:loom"] # Enable concurrency testing with loom
+parameterized-testing = ["dep:rstest"] # Enable parameterized testing with rstest
+cli-testing = ["dep:trycmd"] # Enable CLI testing with trycmd
+benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
 otel = [] # Enable OTEL validation features (uses internal otel_types)
 weaver = [
   "otel",
+  "dep:reqwest",
+  "dep:opentelemetry",
+  "dep:opentelemetry_sdk",
+  "dep:opentelemetry-otlp",
 ] # Enable Weaver live validation (requires otel, uses internal weaver_types)
 async = [] # Enable async performance measurement utilities
-testcontainers = ["dep:testcontainers"] # Enable testcontainers support for integration testing
+testcontainers = [
+  "dep:testcontainers",
+] # Enable testcontainers support for integration testing
 
 [lib]
 name = "chicago_tdd_tools"
 path = "src/lib.rs"
+
+[build]
+build = "build.rs"
+
+# Maximized linting configuration (Rust 1.78+)
+# Note: Individual lint configuration is done via attributes in code
+# This section sets global lint levels
+[lints.rust]
+warnings = "warn"
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+# Set lint groups to lower priority so individual lints can override
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+# Deny critical lints for Poka-Yoke (error prevention)
+# These have higher priority (0) and will override the groups
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
 
 [[example]]
 name = "basic_test"
@@ -72,3 +141,15 @@ path = "examples/macro_examples.rs"
 [[example]]
 name = "testcontainers_example"
 path = "examples/testcontainers_example.rs"
+[[example]]
+name = "go_extra_mile"
+path = "examples/go_extra_mile.rs"
+[[example]]
+name = "snapshot_testing"
+path = "examples/snapshot_testing.rs"
+[[example]]
+name = "concurrency_testing"
+path = "examples/concurrency_testing.rs"
+[[example]]
+name = "cli_testing"
+path = "examples/cli_testing.rs"

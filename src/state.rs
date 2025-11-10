@@ -19,7 +19,7 @@ pub struct Assert;
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::state::{TestState, Arrange, Act, Assert};
 ///
 /// // Start with Arrange phase
@@ -30,6 +30,10 @@ pub struct Assert;
 ///
 /// // Transition to Assert phase
 /// let assert_state = act_state.assert();
+///
+/// // Verify state transitions work (type system enforces order)
+/// // arrange_state can only transition to act_state
+/// // act_state can only transition to assert_state
 /// ```
 pub struct TestState<Phase> {
     /// Phase marker (zero-sized type)
@@ -50,10 +54,7 @@ struct TestData {
 impl TestState<Arrange> {
     /// Create a new test state in Arrange phase
     pub fn new() -> Self {
-        Self {
-            _phase: std::marker::PhantomData,
-            data: TestData::default(),
-        }
+        Self { _phase: std::marker::PhantomData, data: TestData::default() }
     }
 
     /// Add arrange data
@@ -67,10 +68,7 @@ impl TestState<Arrange> {
     /// This consumes the Arrange state and returns an Act state.
     /// This ensures that Act can only be called after Arrange.
     pub fn act(self) -> TestState<Act> {
-        TestState {
-            _phase: std::marker::PhantomData,
-            data: self.data,
-        }
+        TestState { _phase: std::marker::PhantomData, data: self.data }
     }
 }
 
@@ -90,10 +88,7 @@ impl TestState<Act> {
     /// This consumes the Act state and returns an Assert state.
     /// This ensures that Assert can only be called after Act.
     pub fn assert(self) -> TestState<Assert> {
-        TestState {
-            _phase: std::marker::PhantomData,
-            data: self.data,
-        }
+        TestState { _phase: std::marker::PhantomData, data: self.data }
     }
 }
 
@@ -124,6 +119,7 @@ impl Default for TestState<Arrange> {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
 

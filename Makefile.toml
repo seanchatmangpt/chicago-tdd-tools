@@ -38,7 +38,7 @@ command = "timeout"
 args = ["5s", "cargo", "fmt", "--all"]
 
 [tasks.lint]
-description = "Run clippy with strict settings"
+description = "Run clippy with maximized linting (all, pedantic, nursery, cargo)"
 command = "timeout"
 args = [
   "5s",
@@ -47,6 +47,14 @@ args = [
   "--all-targets",
   "--all-features",
   "--",
+  "-W",
+  "clippy::all",
+  "-W",
+  "clippy::pedantic",
+  "-W",
+  "clippy::nursery",
+  "-W",
+  "clippy::cargo",
   "-D",
   "warnings",
 ]
@@ -97,11 +105,13 @@ args = [
   "nextest",
   "run",
   "--test",
-  "testcontainers_error_tests",
+  "testcontainers_tests",
   "--test",
   "testcontainers_integration_tests",
   "--test",
-  "testcontainers_feature_tests",
+  "testcontainers_expert_tests",
+  "--test",
+  "testcontainers_weaver_tests",
   "--profile",
   "integration",
   "--features",
@@ -136,6 +146,31 @@ args = ["10s", "cargo", "nextest", "run", "--features", "property-testing"]
 description = "Run mutation testing using cargo-nextest"
 command = "timeout"
 args = ["10s", "cargo", "nextest", "run", "--features", "mutation-testing"]
+
+[tasks.test-mutation-mutants]
+description = "Run mutation testing using cargo-mutants (60s timeout, requires cargo-mutants)"
+command = "timeout"
+args = ["60s", "cargo", "mutants", "--all-features"]
+
+[tasks.test-snapshot]
+description = "Run snapshot tests using cargo-nextest (requires snapshot-testing feature)"
+command = "timeout"
+args = ["10s", "cargo", "nextest", "run", "--features", "snapshot-testing"]
+
+[tasks.snapshot-review]
+description = "Review and accept/reject snapshot changes using cargo-insta (requires cargo-insta: cargo install cargo-insta)"
+command = "timeout"
+args = ["30s", "cargo", "insta", "review", "--all-features"]
+
+[tasks.snapshot-accept]
+description = "Accept all pending snapshot changes (requires cargo-insta: cargo install cargo-insta)"
+command = "timeout"
+args = ["30s", "cargo", "insta", "accept", "--all-features"]
+
+[tasks.snapshot-reject]
+description = "Reject all pending snapshot changes (requires cargo-insta: cargo install cargo-insta)"
+command = "timeout"
+args = ["30s", "cargo", "insta", "reject", "--all-features"]
 
 [tasks.test-single-threaded]
 description = "Run tests in single-threaded mode for deterministic execution"

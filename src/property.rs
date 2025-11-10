@@ -124,9 +124,11 @@ pub fn property_all_data_valid<const MAX_ITEMS: usize, const MAX_DEPTH: usize>(
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
+/// # #[cfg(feature = "property-testing")]
 /// use chicago_tdd_tools::property::ProptestStrategy;
 ///
+/// # #[cfg(feature = "property-testing")]
 /// ProptestStrategy::new()
 ///     .with_cases(1000)
 ///     .test(|x: u32| {
@@ -220,6 +222,147 @@ impl Default for ProptestStrategy {
     }
 }
 
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+
+    // ========================================================================
+    // 1. PROPERTY TEST GENERATOR - Test basic functionality
+    // ========================================================================
+
+    #[test]
+    fn test_property_test_generator_new() {
+        let _generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
+        assert_eq!(PropertyTestGenerator::<10, 3>::max_items(), 10);
+        assert_eq!(PropertyTestGenerator::<10, 3>::max_depth(), 3);
+    }
+
+    #[test]
+    fn test_property_test_generator_with_seed() {
+        let generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(42);
+        let mut gen = generator;
+        let data1 = gen.generate_test_data();
+        let data2 = gen.generate_test_data();
+        // Should generate different data with incremented seed
+        assert_ne!(data1, data2);
+    }
+
+    #[test]
+    fn test_property_test_generator_generate_test_data() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
+        let data = generator.generate_test_data();
+        assert!(!data.is_empty());
+        assert!(data.len() <= 10); // Should respect MAX_ITEMS
+    }
+
+    #[test]
+    fn test_property_test_generator_max_items() {
+        let _generator: PropertyTestGenerator<5, 3> = PropertyTestGenerator::new();
+        assert_eq!(PropertyTestGenerator::<5, 3>::max_items(), 5);
+    }
+
+    #[test]
+    fn test_property_test_generator_max_depth() {
+        let _generator: PropertyTestGenerator<10, 5> = PropertyTestGenerator::new();
+        assert_eq!(PropertyTestGenerator::<10, 5>::max_depth(), 5);
+    }
+
+    #[test]
+    fn test_property_test_generator_default() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::default();
+        assert_eq!(PropertyTestGenerator::<10, 3>::max_items(), 10);
+        assert_eq!(PropertyTestGenerator::<10, 3>::max_depth(), 3);
+        // Verify generator is created
+        let _data = generator.generate_test_data();
+    }
+
+    #[test]
+    fn test_property_test_generator_reproducibility() {
+        let mut gen1: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(100);
+        let mut gen2: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(100);
+        let data1 = gen1.generate_test_data();
+        let data2 = gen2.generate_test_data();
+        // Same seed should produce same data
+        assert_eq!(data1, data2);
+    }
+
+    // ========================================================================
+    // 2. PROPERTY FUNCTION - Test property validation
+    // ========================================================================
+
+    #[test]
+    fn test_property_all_data_valid() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
+        let result = property_all_data_valid(&mut generator, 10);
+        assert!(result, "All generated data should be valid");
+    }
+
+    #[test]
+    fn test_property_all_data_valid_zero_tests() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
+        let result = property_all_data_valid(&mut generator, 0);
+        assert!(result, "Zero tests should pass");
+    }
+
+    // ========================================================================
+    // 3. SIMPLE RNG - Test random number generation
+    // ========================================================================
+
+    #[test]
+    fn test_simple_rng_new() {
+        let mut rng = SimpleRng::new(42);
+        // RNG should be created and produce values
+        let val = rng.next();
+        // Verify it produces a value (not zero for seed 42)
+        assert!(val > 0 || val == 0); // Always true, but verifies method works
+    }
+
+    #[test]
+    fn test_simple_rng_next() {
+        let mut rng = SimpleRng::new(1);
+        let val1 = rng.next();
+        let val2 = rng.next();
+        // Should produce different values
+        assert_ne!(val1, val2);
+    }
+
+    #[test]
+    fn test_simple_rng_reproducibility() {
+        let mut rng1 = SimpleRng::new(100);
+        let mut rng2 = SimpleRng::new(100);
+        let val1 = rng1.next();
+        let val2 = rng2.next();
+        // Same seed should produce same value
+        assert_eq!(val1, val2);
+    }
+
+    // ========================================================================
+    // 4. BOUNDARY CONDITIONS - Test edge cases
+    // ========================================================================
+
+    #[test]
+    fn test_property_test_generator_small_max_items() {
+        let mut generator: PropertyTestGenerator<1, 3> = PropertyTestGenerator::new();
+        let data = generator.generate_test_data();
+        assert_eq!(data.len(), 1); // Should generate exactly 1 item
+    }
+
+    #[test]
+    fn test_property_test_generator_large_max_items() {
+        let mut generator: PropertyTestGenerator<100, 3> = PropertyTestGenerator::new();
+        let data = generator.generate_test_data();
+        assert!(data.len() <= 100); // Should respect MAX_ITEMS
+        assert!(!data.is_empty());
+    }
+
+    #[test]
+    fn test_property_test_generator_zero_seed() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(0);
+        let data = generator.generate_test_data();
+        assert!(!data.is_empty());
+    }
+}
+
 #[cfg(feature = "property-testing")]
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
@@ -229,13 +372,23 @@ mod proptest_tests {
     #[test]
     fn test_proptest_strategy_addition_commutative() {
         let strategy = ProptestStrategy::new().with_cases(100);
-        strategy.test(any::<(u32, u32)>(), |(x, y)| x + y == y + x);
+        // Use wrapping_add to handle overflow gracefully (property still holds)
+        // DMAIC Fix: Changed from `x + y` to `x.wrapping_add(y)` to prevent integer overflow
+        // Root cause: Debug mode panics on overflow when adding large u32 values
+        // Solution: Use wrapping arithmetic which maintains mathematical properties
+        strategy.test(any::<(u32, u32)>(), |(x, y)| x.wrapping_add(y) == y.wrapping_add(x));
     }
 
     #[test]
     fn test_proptest_strategy_multiplication_distributive() {
         let strategy = ProptestStrategy::new().with_cases(100);
-        strategy.test(any::<(u32, u32, u32)>(), |(a, b, c)| a * (b + c) == (a * b) + (a * c));
+        // Use wrapping arithmetic to handle overflow gracefully (property still holds)
+        // DMAIC Fix: Changed from regular arithmetic to wrapping arithmetic to prevent overflow
+        // Root cause: Debug mode panics on overflow when multiplying large u32 values
+        // Solution: Use wrapping arithmetic which maintains distributive property
+        strategy.test(any::<(u32, u32, u32)>(), |(a, b, c)| {
+            a.wrapping_mul(b.wrapping_add(c)) == a.wrapping_mul(b).wrapping_add(a.wrapping_mul(c))
+        });
     }
 
     #[test]

@@ -1,627 +1,95 @@
-# Chicago TDD Tools Cursor Rules - Elite Rust Developer Standards
+# Chicago TDD Tools - Elite Rust Developer Standards (SPR)
 
-## Core Principle: No Placeholders, Real Implementations
+## Core Principles
 
-All code must be production-ready with proper error handling. Focus on critical path implementations that provide 80% of value.
-
-**Key Principle**: "Never trust the text, only trust test results" - All implementations must be verifiable through tests.
-
-## Elite Rust Developer Mindset
-
-**Think like a top 99.999996 percentile Rust developer**: Your code should demonstrate mastery of Rust's type system, zero-cost abstractions, and performance characteristics. Every decision should leverage Rust's strengths.
-
-### Type-First Thinking
-
-**Elite developers think in types, not values**. The type system is your design tool, not a constraint.
-
-**Principles**:
-- **Types encode invariants**: Use types to make invalid states unrepresentable
-- **Compiler as design tool**: If it compiles, it's correct (for type-level guarantees)
-- **Type-level state machines**: Use PhantomData and type parameters for compile-time state tracking
-- **Const generics over runtime values**: Prefer compile-time configuration when possible
-
-**Think**: "What can I express in the type system?" before "What values do I need?"
-
-**Example mindset**:
-```rust
-// ❌ NON-ELITE: Think in values
-struct Counter {
-    value: i32, // Can be negative - runtime check needed
-}
-
-// ✅ ELITE: Think in types
-struct Counter {
-    value: u32, // Cannot be negative - type prevents it
-}
-// Type system enforces invariant, no runtime check needed
-```
-
-### Zero-Cost Abstraction Awareness
-
-**Elite developers know when abstractions are free and when they cost**. Understand monomorphization, trait objects, and when to use each.
-
-**Principles**:
-- **Generics are zero-cost**: Monomorphization generates specialized code
-- **Trait objects have cost**: Dynamic dispatch, but enable polymorphism
-- **Const generics are zero-cost**: Compile-time configuration, zero runtime overhead
-- **Macros expand to efficient code**: No runtime overhead
-
-**Think**: "Is this abstraction zero-cost?" before using it.
-
-**Example mindset**:
-```rust
-// ✅ ELITE: Zero-cost abstraction
-fn process<T: Display>(value: T) { /* ... */ }
-// Monomorphized - zero runtime cost
-
-// ⚠️ ELITE AWARENESS: Trait object has cost
-fn process(value: &dyn Display) { /* ... */ }
-// Dynamic dispatch - use when polymorphism needed
-```
-
-### Performance Intuition
-
-**Elite developers have performance intuition without profiling**. They know what's fast and what's slow.
-
-**Principles**:
-- **References over owned values**: Zero-cost when possible
-- **Stack over heap**: Prefer stack allocation
-- **Cache locality matters**: Sequential access patterns
-- **Minimize allocations**: Reuse buffers, use references
-- **Hot path optimization**: Optimize the 20% that matters
-
-**Think**: "What's the performance characteristic?" before implementing.
-
-**Example mindset**:
-```rust
-// ❌ NON-ELITE: Unnecessary allocation
-fn process(data: Vec<u8>) { /* ... */ }
-
-// ✅ ELITE: Zero-cost reference
-fn process(data: &[u8]) { /* ... */ }
-// No allocation, works with any slice
-```
-
-### Memory Safety Expertise
-
-**Elite developers deeply understand ownership, borrowing, and lifetimes**. They use Rust's memory safety guarantees effectively.
-
-**Principles**:
-- **Ownership is explicit**: Know who owns what
-- **Borrowing enables zero-cost**: References don't transfer ownership
-- **Lifetimes prevent use-after-free**: Compiler enforces memory safety
-- **Rc/Arc when needed**: Shared ownership when necessary
-- **Unsafe boundaries**: Encapsulate unsafe code in safe APIs
-
-**Think**: "What are the ownership semantics?" before designing APIs.
-
-**Example mindset**:
-```rust
-// ✅ ELITE: Clear ownership semantics
-fn process<'a>(data: &'a str) -> &'a str {
-    // Lifetime ties return to input - prevents use-after-free
-    data
-}
-```
-
-### API Design Philosophy
-
-**Elite developers design ergonomic, type-safe, composable APIs**. APIs should guide correct usage.
-
-**Principles**:
-- **Type-safe by default**: Make errors impossible through types
-- **Ergonomic interfaces**: Easy to use correctly, hard to misuse
-- **Composable design**: APIs work well together
-- **Self-documenting**: Types and names convey meaning
-- **Error handling explicit**: Result types, not panics
-
-**Think**: "How can I make this impossible to misuse?" when designing APIs.
-
-**Example mindset**:
-```rust
-// ❌ NON-ELITE: Easy to misuse
-fn parse(input: &str) -> u32 {
-    input.parse().unwrap() // Panics on error
-}
-
-// ✅ ELITE: Impossible to misuse
-fn parse(input: &str) -> Result<u32, ParseError> {
-    // Error handling explicit in type
-    input.parse().map_err(ParseError::from)
-}
-```
-
-## Workflow Commands
-
-**Use these commands for complex workflows**:
-- **[ACP Command](.cursor/commands/acp.md)** - Add, commit, push workflow with validation
-- **[Verify Tests Command](.cursor/commands/verify-tests.md)** - Test verification workflow
-- **[Expert Testing Patterns](.cursor/commands/expert-testing-patterns.md)** - Expert-level testing workflows
-
-**Lean Six Sigma Commands** (expert-level coding behavior):
-- **[Eliminate Muda](.cursor/commands/eliminate-muda.md)** - Identify and eliminate waste in code
-- **[Gemba Walk](.cursor/commands/gemba-walk.md)** - Go to source, verify actual behavior
-- **[Poka-Yoke Design](.cursor/commands/poka-yoke-design.md)** - Design code to prevent errors at compile time
-- **[DMAIC Problem Solving](.cursor/commands/dmaic-problem-solving.md)** - Systematic problem-solving methodology
-- **[Kaizen Improvement](.cursor/commands/kaizen-improvement.md)** - Continuous small improvements
-- **[Eliminate Mura](.cursor/commands/eliminate-mura.md)** - Eliminate unevenness and inconsistency
-- **[Andon Signals](.cursor/commands/andon-signals.md)** - Treat compiler errors and test failures as stop signals
-- **[Root Cause Analysis](.cursor/commands/root-cause-analysis.md)** - Use 5 Whys to find root causes
+Never trust text, only test results. All code is production-ready with error handling. Focus on 80% value paths. Types encode invariants; compiler enforces correctness. Zero-cost abstractions are free; trait objects have cost. References over owned values; stack over heap. Ownership is explicit; lifetimes prevent use-after-free. APIs guide correct usage through types.
 
 ## Critical Non-Negotiables
 
-### Build System: ALWAYS Use Cargo Make
+**Build System**: Always use `cargo make` commands, never direct `cargo` commands. Cargo-make handles proc-macro crates, includes timeouts, ensures consistency.
 
-**NEVER use these directly:**
-- ❌ `cargo check`, `cargo build`, `cargo test`, `cargo clippy`, `cargo fmt`
+**Timeout SLA**: Every CLI command MUST have timeout wrapper to prevent freezing. Quick checks: `timeout 5s`. Compilation: `timeout 10s`. Unit tests: `timeout 1s`. Integration: `timeout 30s`. Long ops: `timeout 60s`. Timeouts indicate issues early.
 
-**ALWAYS use these instead:**
-- ✅ `cargo make check` - Check compilation
-- ✅ `cargo make build` - Build crate
-- ✅ `cargo make test` - Run all tests
-- ✅ `cargo make lint` - Lint code
-- ✅ `cargo make fmt` - Format code
-- ✅ `cargo make pre-commit` - Pre-commit validation
+**Behavior Verification**: Tests verify observable outputs/state changes, not just function existence. No tests that only check `assert_ok!()` without verifying behavior. Tests check state changes, outputs, execution order, actual effects.
 
-**Rationale**: Cargo-make handles proc-macro crate correctly, includes timeouts, and ensures consistent configuration.
+**Chicago TDD**: State-based testing (verify outputs, not implementation). Real collaborators (use real objects, minimize mocks). Behavior verification (verify what code does, not how). AAA pattern required (Arrange-Act-Assert).
 
-### Behavior Verification: Tests Must Verify Observable Outputs
+## Elite Rust Mindset
 
-**Prohibited**:
-- ❌ Tests that only verify `assert_ok!()` or `assert_err!()` without checking outputs
-- ❌ Tests that don't verify state changes, outputs, execution order, or actual effects
+**Type-First Thinking**: Types encode invariants; compiler as design tool. Use types to make invalid states unrepresentable. PhantomData for type-level state machines. Const generics over runtime values. Ask: "What can I express in types?" before "What values do I need?"
 
-**Required**:
-- ✅ Tests verify what code does (observable outputs/state), not just that functions exist
-- ✅ Tests check state changes, outputs, execution order, or actual effects
+**Zero-Cost Awareness**: Generics monomorphize (zero-cost). Const generics are zero-cost. Macros expand efficiently. References are zero-cost. Trait objects have dynamic dispatch cost. Heap allocation has cost. Ask: "Is this abstraction zero-cost?"
 
-**Example**:
-```rust
-// ❌ BAD: Only checks function exists
-chicago_test!(test_function, {
-    let result = function();
-    assert_ok!(result); // Doesn't verify behavior
-});
+**Performance Intuition**: References over owned values. Stack over heap. Cache locality matters. Minimize allocations. Optimize hot paths (20% that matters). Ask: "What's the performance characteristic?"
 
-// ✅ GOOD: Verifies observable behavior
-chicago_test!(test_function, {
-    let input = 5;
-    let result = function(input);
-    assert_eq!(result, 10); // Verifies actual behavior
-});
-```
+**Memory Safety**: Ownership is explicit. Borrowing enables zero-cost. Lifetimes prevent use-after-free. Rc/Arc for shared ownership. Encapsulate unsafe in safe APIs. Ask: "What are the ownership semantics?"
 
-### Chicago TDD Principles
-
-1. **State-Based Testing**: Tests verify outputs and state, not implementation details
-2. **Real Collaborators**: Use real objects, minimize mocks
-3. **Behavior Verification**: Tests verify what code does, not how
-4. **AAA Pattern**: Arrange-Act-Assert structure required
-
-**Reference**: See [Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc) for complete principles
+**API Design**: Type-safe by default (errors impossible through types). Ergonomic interfaces (easy to use correctly, hard to misuse). Composable design. Self-documenting types. Explicit error handling (Result types, not panics). Ask: "How can I make misuse impossible?"
 
 ## Elite Thinking Patterns
 
-### Type-First Design Process
-
-**Elite developers design with types first**:
-
-1. **Identify invariants**: What states are invalid?
-2. **Encode in types**: Use types to prevent invalid states
-3. **Design APIs**: APIs should guide correct usage
-4. **Verify at compile time**: If it compiles, invariants are enforced
-
-**Example process**:
-```rust
-// Step 1: Identify invariant - counter cannot be negative
-// Step 2: Encode in type - use u32 instead of i32
-struct Counter {
-    value: u32, // Type prevents negative
-}
+**Type-First Design**: Identify invariants → Encode in types → Design APIs → Verify at compile time. If it compiles, invariants are enforced.
 
-// Step 3: Design API - methods enforce invariants
-impl Counter {
-    fn new(value: u32) -> Self { Self { value } }
-    fn increment(&mut self) {
-        self.value = self.value.saturating_add(1); // Prevents overflow
-    }
-}
-
-// Step 4: Compiler enforces - cannot create negative counter
-```
-
-### Compile-Time vs Runtime Tradeoffs
-
-**Elite developers prefer compile-time guarantees**:
-
-- **Compile-time**: Type safety, const generics, zero-cost abstractions
-- **Runtime**: When compile-time impossible (user input, network data)
-
-**Think**: "Can I move this to compile time?" before accepting runtime checks.
-
-**Example**:
-```rust
-// ❌ NON-ELITE: Runtime check
-fn process_size(size: usize) {
-    if size > 1000 { panic!("Too large"); }
-}
-
-// ✅ ELITE: Compile-time guarantee
-fn process_size<const N: usize>() 
-where
-    ConstAssert<N, { N <= 1000 }>: True,
-{
-    // Size known at compile time, guaranteed <= 1000
-}
-```
-
-### Zero-Cost Abstraction Identification
-
-**Elite developers recognize zero-cost abstractions**:
-
-**Zero-cost**:
-- Generics (monomorphization)
-- Const generics
-- Macros (expand to efficient code)
-- References (no allocation)
-- Type state patterns (PhantomData is zero-sized)
-
-**Has cost**:
-- Trait objects (dynamic dispatch)
-- Heap allocation (Box, Vec, String)
-- Closures that capture (may allocate)
-- Async (runtime overhead)
-
-**Think**: "Is this abstraction zero-cost?" before using.
-
-### API Ergonomic Principles
-
-**Elite developers design ergonomic APIs**:
-
-1. **Type-safe**: Errors impossible through types
-2. **Self-documenting**: Types and names convey meaning
-3. **Composable**: APIs work well together
-4. **Fail-fast**: Errors at compile time, not runtime
-5. **Guided usage**: Types guide correct usage
-
-**Example**:
-```rust
-// ✅ ELITE: Ergonomic API
-pub struct Parser<State> {
-    _state: PhantomData<State>,
-}
-
-impl Parser<Initial> {
-    pub fn parse(self) -> Result<Parser<Complete>, ParseError> {
-        // Can only parse from Initial state
-    }
-}
-
-// Type system guides usage - impossible to misuse
-```
-
-## Maximizing Results: How Elite Developers Think
-
-### Go the Extra Mile: Multiple Ideas, 80/20 Thinking
-
-**Elite developers don't stop at the first idea**. They generate multiple alternatives and use 80/20 thinking to go bigger.
-
-**Process**:
-1. **First idea**: Your initial solution - solve the problem
-2. **Second idea**: Go bigger - what if you solved 80% of related problems?
-3. **Third idea**: Go even bigger - what's the maximum value approach?
-
-**80/20 Principle**: Focus on the 20% of effort that provides 80% of value. Each idea should leverage this principle more effectively.
-
-**Action**: After your first idea, ask:
-- "What if I solved this AND related problems?"
-- "What's the 80/20 approach that maximizes value?"
-- "How can I go bigger while keeping effort reasonable?"
-
-**Example**:
-```rust
-// First idea: Fix the immediate problem
-fn parse_number(input: &str) -> Result<u32, ParseError> {
-    input.parse().map_err(ParseError::from)
-}
-
-// Second idea: Go bigger - handle multiple number types
-fn parse_number<T: FromStr>(input: &str) -> Result<T, ParseError> {
-    input.parse().map_err(ParseError::from)
-}
-// Now works for u32, i32, u64, f64, etc. - 80% more value, minimal effort
-
-// Third idea: Go even bigger - type-level validation + parsing
-pub struct ValidatedNumber<T>(T);
-
-impl<T: FromStr> ValidatedNumber<T> {
-    pub fn parse(input: &str) -> Result<Self, ParseError> {
-        // Parse AND validate in one step
-        // Type system prevents invalid numbers
-    }
-}
-// Maximum value: Type-safe, validated numbers, prevents entire class of errors
-```
-
-**Think**: "What's the 80/20 approach that maximizes value?" Don't stop at solving the immediate problem - solve the class of problems.
-
-### Questions Elite Developers Ask
-
-**Before writing code**:
-1. "What invariants can I encode in types?"
-2. "Is this abstraction zero-cost?"
-3. "What are the ownership semantics?"
-4. "Can I move this to compile time?"
-5. "How can I make misuse impossible?"
-6. **"What's my second idea? Third idea? How can I go bigger with 80/20?"**
-
-**During design**:
-1. "Does this leverage Rust's type system?"
-2. "Are there unnecessary allocations?"
-3. "Can I use const generics here?"
-4. "Is this API ergonomic?"
-5. "What errors can the type system prevent?"
-6. **"What if I solved this AND related problems? What's the 80/20 approach?"**
-
-**During review**:
-1. "Are there type-level improvements?"
-2. "Can I eliminate runtime checks?"
-3. "Is this the most ergonomic API?"
-4. "Are there zero-cost abstraction opportunities?"
-5. "Does this demonstrate Rust mastery?"
-6. **"Could I go bigger? What's the maximum value approach?"**
-
-### Patterns Elite Developers Recognize
-
-**Type-level patterns**:
-- Type state machines (PhantomData)
-- Newtype patterns (enforce invariants)
-- Const generics (compile-time configuration)
-- HRTB (Higher-Ranked Trait Bounds)
-- Zero-sized types (PhantomData, marker types)
-
-**Performance patterns**:
-- References over owned values
-- Stack over heap allocation
-- Reuse buffers
-- Minimize allocations in hot paths
-- Cache-friendly data structures
-
-**API design patterns**:
-- Builder patterns (type-safe construction)
-- Type state APIs (compile-time state tracking)
-- Error types (explicit error handling)
-- Generic APIs (zero-cost polymorphism)
-
-### How to Leverage Rust's Strengths
-
-**Elite developers maximize Rust's unique advantages**:
-
-1. **Type system**: Use types to prevent entire classes of errors
-2. **Zero-cost abstractions**: Use generics, macros, const generics
-3. **Memory safety**: Leverage ownership/borrowing for safety
-4. **Performance**: Minimize allocations, use references
-5. **Compile-time guarantees**: Move checks to compile time
-
-**Think**: "How can I leverage Rust's strengths?" not "How do I work around Rust's constraints?"
-
-### Going the Extra Mile: Idea Generation Process
-
-**Elite developers generate multiple ideas before implementing**:
-
-**Step 1: First Idea - Solve the Problem**
-- Address the immediate need
-- Get it working
-- **Don't stop here**
-
-**Step 2: Second Idea - Go Bigger (80/20)**
-- Ask: "What if I solved this AND related problems?"
-- Identify the 20% of effort that provides 80% more value
-- Leverage Rust's strengths more effectively
-- **This is usually the sweet spot**
-
-**Step 3: Third Idea - Maximum Value**
-- Ask: "What's the maximum value approach?"
-- Consider: Type-level solutions, compile-time guarantees, preventing entire classes of errors
-- May require more effort, but provides maximum value
-- **Evaluate if worth it**
-
-**Decision Framework**:
-- **First idea**: Works, but may be narrow
-- **Second idea**: Usually best - 80% more value, reasonable effort
-- **Third idea**: Maximum value, but evaluate effort vs. benefit
-
-**Action**: Always generate at least 3 ideas, then choose the best using 80/20 thinking.
-
-**Example Process**:
-```rust
-// Problem: Need to parse a number
-
-// First idea: Parse u32
-fn parse(input: &str) -> Result<u32, ParseError> { /* ... */ }
-
-// Second idea: Go bigger - parse any number type (80/20)
-fn parse<T: FromStr>(input: &str) -> Result<T, ParseError> { /* ... */ }
-// 80% more value (works for all number types), minimal extra effort
-
-// Third idea: Maximum value - type-level validation
-pub struct ValidatedNumber<T>(T);
-impl<T: FromStr> ValidatedNumber<T> {
-    pub fn parse(input: &str) -> Result<Self, ParseError> {
-        // Parse + validate + type safety
-        // Prevents entire class of errors
-    }
-}
-// Maximum value: Type-safe, validated, prevents errors at compile time
-
-// Decision: Second idea is usually best - 80/20 sweet spot
-// But third idea if type safety is critical
-```
-
-## Completion Workflow - MANDATORY STEPS
-
-### Step 1: Run Tests Immediately
-
-**Action**: Run tests before making any completion claims.
-
-```bash
-cargo make test
-```
-
-**If tests fail**: 
-- **STOP** - Do not mark work complete
-- Extract failing test names
-- Create rich todos (see below)
-- Fix tests
-- Re-run `cargo make test`
-- Only proceed when all tests pass
-
-**Reference**: See [Verify Tests Command](.cursor/commands/verify-tests.md) for complete workflow
-
-### Step 2: Create Rich Todos for Failures
-
-**Action**: Create detailed todos for each failing test.
-
-**Rich Todo Format**:
-```markdown
-- [ ] Fix failing test: `test_fixture_creation`
-  - Error: `assertion failed: expected 1, got 0`
-  - File: `src/fixture.rs:123`
-  - Root cause: Counter initialization issue
-  - Fix: Initialize counter to 1 instead of 0
-  - Status: `pending`
-```
-
-**Include**: Test name, error message, file/line, root cause, proposed fix, status
-
-**Batch Creation**: Create 5-10+ related todos in a single `TodoWrite` call, not one at a time.
-
-### Step 3: Fix Tests Systematically
-
-**Action**: Fix each failing test one at a time.
-
-1. Read test failure message
-2. Identify root cause
-3. Fix the issue
-4. Run specific test: `cargo make test test_name`
-5. Verify fix works
-6. Update todo status to `completed`
-7. Remove from todo list when fixed
-
-### Step 4: Re-Run All Tests
-
-**Action**: Verify all fixes worked.
-
-```bash
-cargo make test
-```
-
-**If still failing**: Return to Step 2, create new todos for remaining failures
-
-### Step 5: Verify Completion Criteria
-
-**Check all of these**:
-- ✅ All tests pass (`cargo make test` exits with code 0)
-- ✅ No compilation errors (`cargo make check` succeeds)
-- ✅ No test failures
-- ✅ All failing tests have been fixed and removed from todo list
-- ✅ No pending todos related to test failures
-
-**Only then**: Mark work as complete
-
-**CRITICAL**: Never mark todos as complete without running `cargo make test` first.
-
-## Running Tests Quickly
-
-### Quick Feedback Commands
-
-**Action**: Run only what you need for fast feedback.
-
-```bash
-cargo make check          # Fast: Check compilation only (~1s)
-cargo make test-unit      # Fast: Unit tests only (~1s)
-cargo make test-examples  # Fast: Examples only (~1s)
-cargo make test test_name # Fast: Single test for rapid iteration
-```
-
-**Full validation**:
-```bash
-cargo make test           # Complete: All tests
-cargo make pre-commit     # Complete: Format, lint, test
-```
-
-### Test Failure Workflow
-
-1. Run tests: `cargo make test`
-2. If failures found, run specific test: `cargo make test test_failing_name`
-3. Fix and verify quickly: `cargo make check` then `cargo make test test_failing_name`
-4. Run all tests before completion: `cargo make test`
-
-## Prohibited Patterns ❌
-
-1. **Placeholders** - No "In production, this would..." comments
-2. **TODOs** - No TODO comments except clearly documented future enhancements
-3. **Unhandled errors** - No `unwrap()`, `expect()`, or panics in production code
-4. **Stubs** - No functions that always succeed without implementation
-5. **Simulated behavior** - Use real libraries when available
-6. **Claims without verification** - Never claim code works without test validation
-7. **Meaningless tests** - No tests that only verify `assert_ok!()` or `assert_err!()` without checking observable outputs
-8. **Direct cargo commands** - NEVER use `cargo check`, `cargo build`, `cargo test` directly
-9. **Type system misuse** - Don't ignore type system capabilities (use types to prevent errors)
-10. **Unnecessary allocations** - Don't allocate when references suffice
-11. **Runtime checks when compile-time possible** - Don't check at runtime what types can enforce
-
-## Required Patterns ✅
-
-1. **Real library integrations** - Use actual dependencies when available
-2. **Error handling** - `Result<T, E>` for all fallible operations
-3. **Feature gating** - `#[cfg(feature = "...")]` for optional dependencies
-4. **Test verification** - All code must be testable and tested
-5. **Behavior verification** - Tests must verify observable outputs/state, not just function existence
-6. **Chicago TDD principles** - State-based testing, real collaborators, behavior verification
-7. **Type-first design** - Use types to encode invariants and prevent errors
-8. **Zero-cost abstractions** - Prefer generics, const generics, macros when appropriate
-9. **Performance awareness** - Use references over owned values, minimize allocations
-10. **Ergonomic APIs** - Design APIs that are type-safe and guide correct usage
+**Compile-Time vs Runtime**: Prefer compile-time guarantees (type safety, const generics). Use runtime only when compile-time impossible (user input, network data). Ask: "Can I move this to compile time?"
+
+**Zero-Cost Identification**: Zero-cost: generics, const generics, macros, references, type state patterns. Has cost: trait objects, heap allocation, closures that capture, async. Ask: "Is this abstraction zero-cost?"
+
+**API Ergonomics**: Type-safe, self-documenting, composable, fail-fast (compile-time errors), guided usage (types guide correct usage).
+
+## 80/20 Thinking: Go the Extra Mile
+
+**Idea Generation**: Always generate 3 ideas. First idea: solve immediate problem. Second idea: go bigger (solve 80% of related problems with 20% effort). Third idea: maximum value (type-level solutions, compile-time guarantees). Second idea is usually sweet spot (80% more value, reasonable effort).
+
+**Questions to Ask**: "What invariants can I encode in types?" "Is this abstraction zero-cost?" "What are the ownership semantics?" "Can I move this to compile time?" "How can I make misuse impossible?" **"What's my second idea? Third idea? How can I go bigger with 80/20?"**
+
+**Patterns**: Type state machines (PhantomData), newtype patterns, const generics, HRTB, zero-sized types. References over owned, stack over heap, reuse buffers, minimize allocations, cache-friendly structures. Builder patterns, type state APIs, error types, generic APIs.
+
+**Leverage Rust's Strengths**: Type system prevents error classes. Zero-cost abstractions (generics, macros, const generics). Memory safety (ownership/borrowing). Performance (minimize allocations, references). Compile-time guarantees. Ask: "How can I leverage Rust's strengths?" not "How do I work around constraints?"
+
+## Completion Workflow (Mandatory)
+
+1. **Run Tests Immediately**: `cargo make test` before completion claims. If tests fail: STOP, extract failing test names, create rich todos, fix tests, re-run tests. Only proceed when all tests pass.
+
+2. **Rich Todos**: For each failing test, include: test name, error message, file/line, root cause, proposed fix, status. Batch create 5-10+ related todos in single call.
+
+3. **Fix Systematically**: Read failure message → Identify root cause → Fix issue → Run specific test → Verify fix → Update todo status → Remove when fixed.
+
+4. **Re-Run All Tests**: `cargo make test` to verify all fixes worked. If still failing, return to step 2.
+
+5. **Verify Completion**: All tests pass, no compilation errors, no test failures, all failing tests fixed and removed from todos, no pending test-related todos. Never mark complete without running tests first.
+
+**Quick Feedback**: `cargo make check` (~1s), `cargo make test-unit` (~1s), `cargo make test test_name` (single test). Full validation: `cargo make test`, `cargo make pre-commit`.
+
+## Prohibited Patterns
+
+Placeholders, TODOs (except documented future enhancements), unhandled errors (unwrap/expect/panics in production), stubs, simulated behavior, claims without verification, meaningless tests (only assert_ok without behavior check), direct cargo commands, type system misuse, unnecessary allocations, runtime checks when compile-time possible.
+
+## Required Patterns
+
+Real library integrations, error handling (Result<T,E>), feature gating, test verification, behavior verification (observable outputs/state), Chicago TDD principles, type-first design, zero-cost abstractions, performance awareness, ergonomic APIs.
 
 ## Expert Testing
 
-**Action**: Test the 20% of cases that catch 80% of bugs:
-- Error paths (not just happy path)
-- Boundary conditions (empty, single, max, zero, negative)
-- Resource cleanup (error paths and panic paths)
-- Concurrency (if applicable)
-- Real dependencies (not just mocks)
+Test the 20% that catches 80% of bugs: error paths, boundary conditions (empty/single/max/zero/negative), resource cleanup (error and panic paths), concurrency, real dependencies (not mocks).
 
-**Reference**: See [Expert Testing Patterns Command](.cursor/commands/expert-testing-patterns.md) for complete workflows and examples
+## Workflow Commands
+
+**Complex Workflows**: ACP Command (add/commit/push with validation), Verify Tests Command, Expert Testing Patterns.
+
+**Lean Six Sigma**: Eliminate Muda (waste), Gemba Walk (verify actual behavior), Poka-Yoke Design (prevent errors at compile time), DMAIC Problem Solving, Kaizen Improvement, Eliminate Mura (unevenness), Andon Signals (compiler errors/test failures are stop signals), Root Cause Analysis (5 Whys).
 
 ## Documentation References
 
-- **[Getting Started Guide](docs/GETTING_STARTED.md)** - Quick start with verified examples
-- **[User Guide](docs/USER_GUIDE.md)** - Comprehensive usage guide
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
-- **[Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc)** - Testing methodology
-- **[Build System Practices](.cursor/rules/build-system-practices.mdc)** - Build commands and workflows
+Getting Started Guide, User Guide, API Reference, Chicago TDD Standards, Build System Practices.
 
 ## Summary
 
-**Elite Rust Developer Mindset**:
-- ✅ Think in types first, not values
-- ✅ Use zero-cost abstractions appropriately
-- ✅ Have performance intuition
-- ✅ Design ergonomic, type-safe APIs
-- ✅ Leverage Rust's type system to prevent errors
-- ✅ Maximize Rust's strengths, don't work around constraints
-- ✅ Go the extra mile: Generate multiple ideas (1st, 2nd, 3rd) and use 80/20 to go bigger
-- ✅ Don't stop at the first solution - explore alternatives and maximize value
+**Elite Mindset**: Think in types first, zero-cost abstractions, performance intuition, ergonomic APIs, leverage type system, maximize Rust's strengths, go extra mile (3 ideas, 80/20 thinking).
 
-**Critical Requirements**:
-- ✅ Use `cargo make` commands, never direct `cargo` commands
-- ✅ Tests must verify observable outputs/state, not just function existence
-- ✅ Run `cargo make test` before marking work complete
-- ✅ Create rich todos for test failures
-- ✅ Follow Chicago TDD principles: state-based, real collaborators, behavior verification
+**Critical Requirements**: Use `cargo make` commands, timeout SLAs for all CLI commands, behavior verification in tests, test before completion, rich todos for failures, Chicago TDD principles.
 
-**Workflow Commands**: Use [ACP Command](.cursor/commands/acp.md), [Verify Tests Command](.cursor/commands/verify-tests.md), and [Expert Testing Patterns](.cursor/commands/expert-testing-patterns.md) for complex workflows.
+**Key Associations**: Types = invariants = compile-time guarantees. Zero-cost = generics/macros/const generics. Performance = references/stack/minimize allocations. Ownership = explicit = memory safety. APIs = type-safe = ergonomic = composable. Tests = observable outputs = behavior verification. 80/20 = second idea = sweet spot = maximum value.
 
-**Lean Six Sigma Commands**: Use [Eliminate Muda](.cursor/commands/eliminate-muda.md), [Gemba Walk](.cursor/commands/gemba-walk.md), [Poka-Yoke Design](.cursor/commands/poka-yoke-design.md), [DMAIC Problem Solving](.cursor/commands/dmaic-problem-solving.md), [Kaizen Improvement](.cursor/commands/kaizen-improvement.md), [Eliminate Mura](.cursor/commands/eliminate-mura.md), [Andon Signals](.cursor/commands/andon-signals.md), and [Root Cause Analysis](.cursor/commands/root-cause-analysis.md) for expert-level coding behavior.
+TODO LISTS ARE ALWAYS 10 ITEMS OR MORE. THEY ARE ALWAYS FULLY COMPLETED BEFORE PROGRESSING TO THE NEXT TASK.
+
+Always show the build button after planning.

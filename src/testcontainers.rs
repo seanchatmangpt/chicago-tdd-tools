@@ -249,15 +249,12 @@ mod implementation {
         ///
         /// Returns error if port mapping fails or port is not mapped
         pub fn get_host_port(&self, container_port: u16) -> TestcontainersResult<u16> {
-            let port = self
-                .container
-                .get_host_port_ipv4(container_port)
-                .map_err(|e| {
-                    TestcontainersError::OperationFailed(format!(
-                        "Failed to get host port for container port {}: {}",
-                        container_port, e
-                    ))
-                })?;
+            let port = self.container.get_host_port_ipv4(container_port).map_err(|e| {
+                TestcontainersError::OperationFailed(format!(
+                    "Failed to get host port for container port {}: {}",
+                    container_port, e
+                ))
+            })?;
             Ok(port)
         }
 
@@ -333,31 +330,22 @@ mod implementation {
             let mut cmd_args = vec![command.to_string()];
             cmd_args.extend(args.iter().map(|s| s.to_string()));
 
-            let mut exec_result = self
-                .container
-                .exec(ExecCommand::new(cmd_args))
-                .map_err(|e| {
-                    TestcontainersError::CommandExecutionFailed(format!(
-                        "Failed to execute command '{}': {}",
-                        command, e
-                    ))
-                })?;
+            let mut exec_result = self.container.exec(ExecCommand::new(cmd_args)).map_err(|e| {
+                TestcontainersError::CommandExecutionFailed(format!(
+                    "Failed to execute command '{}': {}",
+                    command, e
+                ))
+            })?;
 
             let mut stdout = String::new();
-            exec_result
-                .stdout()
-                .read_to_string(&mut stdout)
-                .map_err(|e| {
-                    TestcontainersError::StdoutReadFailed(format!("Failed to read stdout: {}", e))
-                })?;
+            exec_result.stdout().read_to_string(&mut stdout).map_err(|e| {
+                TestcontainersError::StdoutReadFailed(format!("Failed to read stdout: {}", e))
+            })?;
 
             let mut stderr = String::new();
-            exec_result
-                .stderr()
-                .read_to_string(&mut stderr)
-                .map_err(|e| {
-                    TestcontainersError::StderrReadFailed(format!("Failed to read stderr: {}", e))
-                })?;
+            exec_result.stderr().read_to_string(&mut stderr).map_err(|e| {
+                TestcontainersError::StderrReadFailed(format!("Failed to read stderr: {}", e))
+            })?;
 
             // exit_code() returns Result<Option<i64>, ...>, convert to i32
             let exit_code_i64 = exec_result
@@ -373,11 +361,7 @@ mod implementation {
                 TestcontainersError::ExitCodeFailed("Exit code out of i32 range".to_string())
             })?;
 
-            Ok(ExecResult {
-                stdout,
-                stderr,
-                exit_code,
-            })
+            Ok(ExecResult { stdout, stderr, exit_code })
         }
     }
 }
@@ -473,6 +457,7 @@ mod stubs {
 pub use stubs::*;
 
 #[cfg(test)]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
 
@@ -491,7 +476,7 @@ mod tests {
         ];
 
         for error in errors {
-            let display = format!("{}", error);
+            let display = format!("{error}");
             assert!(!display.is_empty(), "Error should have display message");
             assert!(display.contains("test"), "Error should contain message");
         }
@@ -500,11 +485,8 @@ mod tests {
     #[test]
     fn test_exec_result_structure() {
         // Test ExecResult creation and access
-        let result = ExecResult {
-            stdout: "output".to_string(),
-            stderr: "error".to_string(),
-            exit_code: 0,
-        };
+        let result =
+            ExecResult { stdout: "output".to_string(), stderr: "error".to_string(), exit_code: 0 };
 
         assert_eq!(result.stdout, "output");
         assert_eq!(result.stderr, "error");
@@ -514,11 +496,8 @@ mod tests {
     #[test]
     fn test_exec_result_clone() {
         // Test ExecResult is cloneable
-        let result1 = ExecResult {
-            stdout: "output".to_string(),
-            stderr: "error".to_string(),
-            exit_code: 0,
-        };
+        let result1 =
+            ExecResult { stdout: "output".to_string(), stderr: "error".to_string(), exit_code: 0 };
 
         let result2 = result1.clone();
         assert_eq!(result1.stdout, result2.stdout);
@@ -529,13 +508,10 @@ mod tests {
     #[test]
     fn test_exec_result_debug() {
         // Test ExecResult is debuggable
-        let result = ExecResult {
-            stdout: "output".to_string(),
-            stderr: "error".to_string(),
-            exit_code: 0,
-        };
+        let result =
+            ExecResult { stdout: "output".to_string(), stderr: "error".to_string(), exit_code: 0 };
 
-        let debug = format!("{:?}", result);
+        let debug = format!("{result:?}");
         assert!(debug.contains("output"));
         assert!(debug.contains("error"));
         assert!(debug.contains("0"));

@@ -19,10 +19,21 @@
 //! 3. **End-to-end validation**: Complete workflows from execution to analysis
 //! 4. **JTBD focus**: Validate actual use cases, not just technical integration
 //!
+//! # Poka-Yoke: Type-Level Validation
+//!
+//! This module uses newtypes to prevent index errors at compile time.
+//! Use `ScenarioIndex` instead of `usize` for scenario indices.
+//!
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use chicago_tdd_tools::jtbd::{JtbdValidator, JtbdScenario, JtbdValidationResult};
+//! use chicago_tdd_tools::jtbd::{JtbdValidator, JtbdScenario, JtbdValidationResult, ScenarioIndex, ExecutionContext, ExecutionResult};
+//! use std::collections::HashMap;
+//!
+//! // Helper function for doctest
+//! # fn create_test_context() -> ExecutionContext {
+//! #     ExecutionContext::default()
+//! # }
 //!
 //! // Create validator
 //! let mut validator = JtbdValidator::new();
@@ -31,19 +42,111 @@
 //! validator.register_scenario(JtbdScenario {
 //!     name: "Order Processing".to_string(),
 //!     setup_context: Box::new(|| create_test_context()),
-//!     validate_result: Box::new(|ctx, result| {
+//!     execute: Box::new(|_ctx| {
+//!         let mut vars = HashMap::new();
+//!         vars.insert("order_id".to_string(), "ORD-001".to_string());
+//!         ExecutionResult::ok(vars)
+//!     }),
+//!     validate_result: Box::new(|_ctx, result| {
 //!         // Validate that order was actually processed
 //!         result.success && result.variables.contains_key("order_id")
 //!     }),
 //!     expected_behavior: "Process order and update state".to_string(),
 //! });
 //!
-//! // Validate
+//! // Validate using type-safe index
+//! let index = ScenarioIndex::new(0).unwrap();
+//! let result = validator.validate_scenario(index);
+//!
+//! // Validate all
 //! let results = validator.validate_all();
 //! assert!(results.iter().all(|r| r.jtbd_success));
 //! ```
 
 use std::collections::HashMap;
+
+// ============================================================================
+// Poka-Yoke: Type-Level Validation
+// ============================================================================
+
+/// Scenario index newtype
+///
+/// **Poka-Yoke**: Use this newtype instead of `usize` to prevent index errors.
+/// Ensures indices are valid for the scenario collection.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::jtbd::ScenarioIndex;
+///
+/// // Create validated index
+/// let index = ScenarioIndex::new(0).unwrap();
+/// assert_eq!(index.get(), 0);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScenarioIndex(usize);
+
+impl ScenarioIndex {
+    /// Create a new scenario index
+    ///
+    /// Returns `None` if the index is out of bounds for the given collection size.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::jtbd::ScenarioIndex;
+    ///
+    /// // Valid index
+    /// let index = ScenarioIndex::new(0).unwrap();
+    /// assert_eq!(index.get(), 0);
+    ///
+    /// // Invalid index (would be out of bounds)
+    /// let result = ScenarioIndex::new_for_collection(5, 3); // None - index 5 >= size 3
+    /// assert!(result.is_none());
+    /// ```
+    pub fn new(value: usize) -> Option<Self> {
+        Some(Self(value))
+    }
+
+    /// Create a new scenario index validated against collection size
+    ///
+    /// Returns `None` if the index is out of bounds.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::jtbd::ScenarioIndex;
+    ///
+    /// let collection_size = 3;
+    /// let index = ScenarioIndex::new_for_collection(0, collection_size).unwrap(); // Valid
+    /// assert_eq!(index.get(), 0);
+    /// let invalid = ScenarioIndex::new_for_collection(5, collection_size); // None
+    /// assert!(invalid.is_none());
+    /// ```
+    pub fn new_for_collection(index: usize, collection_size: usize) -> Option<Self> {
+        if index < collection_size {
+            Some(Self(index))
+        } else {
+            None
+        }
+    }
+
+    /// Get the index value
+    pub fn get(&self) -> usize {
+        self.0
+    }
+
+    /// Convert to usize
+    pub fn into_usize(self) -> usize {
+        self.0
+    }
+}
+
+impl From<ScenarioIndex> for usize {
+    fn from(index: ScenarioIndex) -> Self {
+        index.0
+    }
+}
 
 /// JTBD validation result for a single scenario
 #[derive(Debug, Clone)]
@@ -121,22 +224,14 @@ pub struct ExecutionResult {
 impl ExecutionResult {
     /// Create a successful result
     pub fn ok(variables: HashMap<String, String>) -> Self {
-        Self {
-            success: true,
-            variables,
-            metadata: HashMap::new(),
-        }
+        Self { success: true, variables, metadata: HashMap::new() }
     }
 
     /// Create a failed result
     pub fn err(message: String) -> Self {
         let mut metadata = HashMap::new();
         metadata.insert("error".to_string(), message);
-        Self {
-            success: false,
-            variables: HashMap::new(),
-            metadata,
-        }
+        Self { success: false, variables: HashMap::new(), metadata }
     }
 }
 
@@ -166,9 +261,7 @@ pub struct JtbdValidator {
 impl JtbdValidator {
     /// Create a new JTBD validator
     pub fn new() -> Self {
-        Self {
-            scenarios: Vec::new(),
-        }
+        Self { scenarios: Vec::new() }
     }
 
     /// Register a JTBD scenario
@@ -177,8 +270,10 @@ impl JtbdValidator {
     }
 
     /// Validate a single scenario's JTBD
-    pub fn validate_scenario(&self, index: usize) -> Option<JtbdValidationResult> {
-        let scenario = self.scenarios.get(index)?;
+    ///
+    /// **Poka-Yoke**: Uses `ScenarioIndex` newtype to prevent index errors.
+    pub fn validate_scenario(&self, index: ScenarioIndex) -> Option<JtbdValidationResult> {
+        let scenario = self.scenarios.get(index.get())?;
 
         // Setup execution context
         let context = (scenario.setup_context)();
@@ -211,10 +306,7 @@ impl JtbdValidator {
                 scenario.name.clone(),
                 execution_result.success,
                 scenario.expected_behavior.clone(),
-                format!(
-                    "Execution: {}, JTBD: {}",
-                    execution_result.success, jtbd_valid
-                ),
+                format!("Execution: {}, JTBD: {}", execution_result.success, jtbd_valid),
                 details,
             ))
         }
@@ -225,8 +317,11 @@ impl JtbdValidator {
         let mut results = Vec::new();
 
         for i in 0..self.scenarios.len() {
-            if let Some(result) = self.validate_scenario(i) {
-                results.push(result);
+            // SAFETY: i is always < scenarios.len(), so ScenarioIndex::new(i) is always Some
+            if let Some(index) = ScenarioIndex::new(i) {
+                if let Some(result) = self.validate_scenario(index) {
+                    results.push(result);
+                }
             }
         }
 
@@ -295,6 +390,7 @@ impl JtbdValidationSummary {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
 
@@ -332,5 +428,53 @@ mod tests {
 
         assert!(summary.all_passed());
         assert_eq!(summary.pass_rate(), 1.0);
+    }
+
+    #[test]
+    fn test_scenario_index() {
+        // Test basic creation
+        let index = ScenarioIndex::new(0).unwrap();
+        assert_eq!(index.get(), 0);
+
+        // Test collection validation
+        let collection_size = 5;
+        let valid_index = ScenarioIndex::new_for_collection(0, collection_size).unwrap();
+        assert_eq!(valid_index.get(), 0);
+
+        let valid_index2 = ScenarioIndex::new_for_collection(4, collection_size).unwrap();
+        assert_eq!(valid_index2.get(), 4);
+
+        // Test invalid index (out of bounds)
+        let invalid_index = ScenarioIndex::new_for_collection(5, collection_size);
+        assert!(invalid_index.is_none());
+
+        // Test conversion
+        let index = ScenarioIndex::new(42).unwrap();
+        let usize_value: usize = index.into();
+        assert_eq!(usize_value, 42);
+    }
+
+    #[test]
+    fn test_validate_scenario_with_index() {
+        let mut validator = JtbdValidator::new();
+
+        validator.register_scenario(JtbdScenario {
+            name: "Test Scenario".to_string(),
+            setup_context: Box::new(ExecutionContext::default),
+            execute: Box::new(|_ctx| ExecutionResult::ok(HashMap::new())),
+            validate_result: Box::new(|_ctx, result| result.success),
+            expected_behavior: "Should succeed".to_string(),
+        });
+
+        // Test with ScenarioIndex
+        let index = ScenarioIndex::new(0).unwrap();
+        let result = validator.validate_scenario(index);
+        assert!(result.is_some());
+        assert!(result.unwrap().jtbd_success);
+
+        // Test with invalid index
+        let invalid_index = ScenarioIndex::new(1).unwrap();
+        let result = validator.validate_scenario(invalid_index);
+        assert!(result.is_none());
     }
 }

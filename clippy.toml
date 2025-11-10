@@ -1,0 +1,9 @@
+# Clippy configuration for maximized linting
+# MSRV: Rust 1.90.0
+msrv = "1.90"
+
+# Allow breaking changes in internal APIs (for Poka-Yoke refactoring)
+avoid-breaking-exported-api = false
+
+# Poka-Yoke specific lint configurations
+# Encourage type-level prevention over runtime checks

@@ -79,6 +79,7 @@ impl ConcurrencyTest {
 
 #[cfg(feature = "concurrency-testing")]
 #[cfg(test)]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
     use loom::sync::{Arc, Mutex};
@@ -91,9 +92,11 @@ mod tests {
             let counter_clone = Arc::clone(&counter);
 
             thread::spawn(move || {
+                #[allow(clippy::unwrap_used)] // Test code - Mutex lock should not fail in tests
                 *counter_clone.lock().unwrap() += 1;
             });
 
+            // Test code - Mutex lock should not fail in tests
             *counter.lock().unwrap() += 1;
         });
     }
@@ -105,9 +108,11 @@ mod tests {
             let vec_clone = Arc::clone(&vec);
 
             thread::spawn(move || {
+                #[allow(clippy::unwrap_used)] // Test code - Mutex lock should not fail in tests
                 vec_clone.lock().unwrap().push(1);
             });
 
+            #[allow(clippy::unwrap_used)] // Test code - Mutex lock should not fail in tests
             vec.lock().unwrap().push(2);
         });
     }

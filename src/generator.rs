@@ -41,10 +41,13 @@ impl Default for TestGenerator {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
 /// use chicago_tdd_tools::generator::generate_test_array;
 ///
 /// const TEST_DATA: [u8; 10] = generate_test_array::<10>();
+/// assert_eq!(TEST_DATA.len(), 10);
+/// assert_eq!(TEST_DATA[0], 0);
+/// assert_eq!(TEST_DATA[1], 1);
 /// ```
 pub const fn generate_test_array<const N: usize>() -> [u8; N] {
     let mut array = [0u8; N];
