@@ -108,7 +108,6 @@ mod implementation {
     use super::*;
     use std::io::Read;
     use testcontainers::core::ContainerPort;
-    use testcontainers::core::ContainerRequest;
     use testcontainers::core::ExecCommand;
     use testcontainers::core::WaitFor;
     use testcontainers::runners::SyncRunner;
@@ -173,8 +172,7 @@ mod implementation {
             tag: &str,
         ) -> TestcontainersResult<Self> {
             let image = GenericImage::new(image, tag);
-            let container_request: ContainerRequest<GenericImage> = image.into();
-            let container = container_request.start().map_err(|e| {
+            let container = image.start().map_err(|e| {
                 TestcontainersError::CreationFailed(format!("Failed to start container: {}", e))
             })?;
 
@@ -188,7 +186,7 @@ mod implementation {
         /// * `_client` - Container client instance (unused in minimal implementation)
         /// * `image` - Docker image name
         /// * `tag` - Docker image tag
-        /// * `env_vars` - Environment variables to set in container
+        /// * `env_vars` - Environment variables to set in the container
         ///
         /// # Errors
         ///
@@ -200,27 +198,26 @@ mod implementation {
             env_vars: HashMap<String, String>,
         ) -> TestcontainersResult<Self> {
             let image = GenericImage::new(image, tag);
-            let mut container_request: ContainerRequest<GenericImage> = image.into();
-
-            // Add environment variables
+            // Build container request with all env vars
+            let mut request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
             for (key, value) in env_vars {
-                container_request = container_request.with_env_var(&key, &value);
+                request = request.with_env_var(key, value);
             }
-
-            let container = container_request.start().map_err(|e| {
+            let container = request.start().map_err(|e| {
                 TestcontainersError::CreationFailed(format!("Failed to start container: {}", e))
             })?;
+
             Ok(Self { container })
         }
 
-        /// Create a new generic container with exposed ports
+        /// Create a new generic container with port mappings
         ///
         /// # Arguments
         ///
         /// * `_client` - Container client instance (unused in minimal implementation)
         /// * `image` - Docker image name
         /// * `tag` - Docker image tag
-        /// * `ports` - Container ports to expose
+        /// * `ports` - Container ports to map to host ports
         ///
         /// # Errors
         ///
@@ -232,58 +229,50 @@ mod implementation {
             ports: &[u16],
         ) -> TestcontainersResult<Self> {
             let mut image = GenericImage::new(image, tag);
-
-            // Expose ports on the image before converting to ContainerRequest
-            for &port in ports {
-                image = image.with_exposed_port(ContainerPort::Tcp(port));
+            for port in ports {
+                image = image.with_exposed_port(ContainerPort::Tcp(*port));
             }
-
-            let container_request: ContainerRequest<GenericImage> = image.into();
-            let container = container_request.start().map_err(|e| {
+            let container = image.start().map_err(|e| {
                 TestcontainersError::CreationFailed(format!("Failed to start container: {}", e))
             })?;
+
             Ok(Self { container })
         }
 
-        /// Get host port for a container port
+        /// Get the host port for a container port
         ///
         /// # Arguments
         ///
-        /// * `container_port` - Port number inside the container
-        ///
-        /// # Returns
-        ///
-        /// Host port number that maps to the container port
+        /// * `container_port` - The container port to get the host port for
         ///
         /// # Errors
         ///
-        /// Returns error if the port was not exposed when creating the container
+        /// Returns error if port mapping fails or port is not mapped
         pub fn get_host_port(&self, container_port: u16) -> TestcontainersResult<u16> {
-            self.container
-                .get_host_port_ipv4(ContainerPort::Tcp(container_port))
+            let port = self
+                .container
+                .get_host_port_ipv4(container_port)
                 .map_err(|e| {
                     TestcontainersError::OperationFailed(format!(
                         "Failed to get host port for container port {}: {}",
                         container_port, e
                     ))
-                })
+                })?;
+            Ok(port)
         }
 
-        /// Create a new generic container with wait condition
-        ///
-        /// Wait conditions allow waiting for containers to be ready before use.
-        /// Common use cases include waiting for HTTP endpoints or log messages.
+        /// Create a new generic container with wait conditions
         ///
         /// # Arguments
         ///
         /// * `_client` - Container client instance (unused in minimal implementation)
         /// * `image` - Docker image name
         /// * `tag` - Docker image tag
-        /// * `wait_for` - Wait condition (e.g., `WaitFor::http` for HTTP health checks)
+        /// * `wait_for` - Wait condition to wait for before considering container ready
         ///
         /// # Errors
         ///
-        /// Returns error if container creation fails
+        /// Returns error if container creation fails or wait condition times out
         ///
         /// # Example
         ///
@@ -292,12 +281,11 @@ mod implementation {
         /// use testcontainers::core::WaitFor;
         ///
         /// let client = ContainerClient::new();
-        /// // Wait for HTTP endpoint to be ready
         /// let container = GenericContainer::with_wait_for(
         ///     client.client(),
         ///     "nginx",
         ///     "latest",
-        ///     WaitFor::http("/", 80),
+        ///     WaitFor::message_on_stdout("ready"),
         /// )?;
         /// ```
         pub fn with_wait_for(
@@ -307,70 +295,54 @@ mod implementation {
             wait_for: WaitFor,
         ) -> TestcontainersResult<Self> {
             let image = GenericImage::new(image, tag).with_wait_for(wait_for);
-            let container_request: ContainerRequest<GenericImage> = image.into();
-            let container = container_request.start().map_err(|e| {
+            let container = image.start().map_err(|e| {
                 TestcontainersError::CreationFailed(format!("Failed to start container: {}", e))
             })?;
 
             Ok(Self { container })
         }
 
+        /// Get the underlying testcontainers Container
+        ///
+        /// Allows access to advanced testcontainers features if needed.
+        pub fn container(&self) -> &Container<GenericImage> {
+            &self.container
+        }
+
         /// Execute a command in the container
-        ///
-        /// Executes a command inside the running container and returns stdout, stderr, and exit code.
-        ///
-        /// # Important
-        ///
-        /// The container must be running for exec to work. This works best with:
-        /// - Service containers (postgres, redis, nginx, etc.) that stay running
-        /// - Containers with long-running default commands
-        ///
-        /// For containers that exit immediately, consider using service images or
-        /// accessing the underlying container via `container()` for advanced configuration.
         ///
         /// # Arguments
         ///
-        /// * `command` - Command to execute (e.g., "sh", "echo", "ls")
-        /// * `args` - Command arguments (e.g., ["-c", "echo hello"])
+        /// * `command` - The command to execute (e.g., "echo", "sh")
+        /// * `args` - Command arguments
         ///
         /// # Errors
         ///
-        /// Returns error if:
-        /// - Command execution fails
-        /// - Reading stdout/stderr fails
-        /// - Getting exit code fails
+        /// Returns error if command execution fails (command not found, container not running, etc.)
         ///
-        /// # Example
+        /// # Returns
         ///
-        /// ```rust,no_run
-        /// use chicago_tdd_tools::testcontainers::*;
+        /// Returns `ExecResult` with stdout, stderr, and exit code
         ///
-        /// let client = ContainerClient::new();
-        /// let container = GenericContainer::new(client.client(), "alpine", "latest")?;
+        /// # Note
         ///
-        /// // Execute a command
-        /// let result = container.exec("echo", &["hello", "world"])?;
-        /// assert_eq!(result.stdout.trim(), "hello world");
-        /// assert_eq!(result.exit_code, 0);
-        /// ```
+        /// The container must be running for exec to work. This works best with service containers
+        /// (postgres, redis, nginx, etc.) that stay running.
         pub fn exec(&self, command: &str, args: &[&str]) -> TestcontainersResult<ExecResult> {
-            // Build command arguments as Vec<&str> (like clnrm lines 512-514)
-            let cmd_args: Vec<&str> = std::iter::once(command)
-                .chain(args.iter().copied())
-                .collect();
+            // Build command + args into iterator for ExecCommand::new
+            let mut cmd_args = vec![command.to_string()];
+            cmd_args.extend(args.iter().map(|s| s.to_string()));
 
-            // Create ExecCommand (like clnrm line 519)
-            let exec_cmd = ExecCommand::new(cmd_args);
+            let mut exec_result = self
+                .container
+                .exec(ExecCommand::new(cmd_args))
+                .map_err(|e| {
+                    TestcontainersError::CommandExecutionFailed(format!(
+                        "Failed to execute command '{}': {}",
+                        command, e
+                    ))
+                })?;
 
-            // Execute command (like clnrm lines 520-522)
-            let mut exec_result = self.container.exec(exec_cmd).map_err(|e| {
-                TestcontainersError::CommandExecutionFailed(format!(
-                    "Failed to execute command '{}': {}",
-                    command, e
-                ))
-            })?;
-
-            // Read stdout (like clnrm lines 533-536)
             let mut stdout = String::new();
             exec_result
                 .stdout()
@@ -379,7 +351,6 @@ mod implementation {
                     TestcontainersError::StdoutReadFailed(format!("Failed to read stdout: {}", e))
                 })?;
 
-            // Read stderr (like clnrm lines 537-540)
             let mut stderr = String::new();
             exec_result
                 .stderr()
@@ -388,14 +359,19 @@ mod implementation {
                     TestcontainersError::StderrReadFailed(format!("Failed to read stderr: {}", e))
                 })?;
 
-            // Get exit code (like clnrm lines 545-553)
-            // exit_code() returns Result<Option<i32>, Error> - may return None
-            let exit_code = exec_result.exit_code().map_err(|e| {
-                TestcontainersError::ExitCodeFailed(format!("Failed to get exit code: {}", e))
-            })?;
+            // exit_code() returns Result<Option<i64>, ...>, convert to i32
+            let exit_code_i64 = exec_result
+                .exit_code()
+                .map_err(|e| {
+                    TestcontainersError::ExitCodeFailed(format!("Failed to get exit code: {}", e))
+                })?
+                .ok_or_else(|| {
+                    TestcontainersError::ExitCodeFailed("Exit code not available".to_string())
+                })?;
 
-            // Handle None exit code by defaulting to -1 (like clnrm lines 548-553)
-            let exit_code = exit_code.unwrap_or(-1) as i32;
+            let exit_code: i32 = exit_code_i64.try_into().map_err(|_| {
+                TestcontainersError::ExitCodeFailed("Exit code out of i32 range".to_string())
+            })?;
 
             Ok(ExecResult {
                 stdout,
@@ -403,18 +379,7 @@ mod implementation {
                 exit_code,
             })
         }
-
-        /// Get the underlying testcontainers Container
-        ///
-        /// Allows access to advanced testcontainers features if needed.
-        /// For most use cases, use the methods on GenericContainer instead.
-        pub fn container(&self) -> &Container<GenericImage> {
-            &self.container
-        }
     }
-
-    // Automatic cleanup via Drop - containers are cleaned up when GenericContainer is dropped
-    // This follows RAII principles and ensures no resource leaks
 }
 
 #[cfg(feature = "testcontainers")]
@@ -506,3 +471,109 @@ mod stubs {
 
 #[cfg(not(feature = "testcontainers"))]
 pub use stubs::*;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test error types (critical - 80% of bugs)
+    #[test]
+    fn test_testcontainers_error_display() {
+        // Test all error variants display correctly
+        let errors = vec![
+            TestcontainersError::CreationFailed("test".to_string()),
+            TestcontainersError::OperationFailed("test".to_string()),
+            TestcontainersError::InvalidConfig("test".to_string()),
+            TestcontainersError::CommandExecutionFailed("test".to_string()),
+            TestcontainersError::StdoutReadFailed("test".to_string()),
+            TestcontainersError::StderrReadFailed("test".to_string()),
+            TestcontainersError::ExitCodeFailed("test".to_string()),
+        ];
+
+        for error in errors {
+            let display = format!("{}", error);
+            assert!(!display.is_empty(), "Error should have display message");
+            assert!(display.contains("test"), "Error should contain message");
+        }
+    }
+
+    #[test]
+    fn test_exec_result_structure() {
+        // Test ExecResult creation and access
+        let result = ExecResult {
+            stdout: "output".to_string(),
+            stderr: "error".to_string(),
+            exit_code: 0,
+        };
+
+        assert_eq!(result.stdout, "output");
+        assert_eq!(result.stderr, "error");
+        assert_eq!(result.exit_code, 0);
+    }
+
+    #[test]
+    fn test_exec_result_clone() {
+        // Test ExecResult is cloneable
+        let result1 = ExecResult {
+            stdout: "output".to_string(),
+            stderr: "error".to_string(),
+            exit_code: 0,
+        };
+
+        let result2 = result1.clone();
+        assert_eq!(result1.stdout, result2.stdout);
+        assert_eq!(result1.stderr, result2.stderr);
+        assert_eq!(result1.exit_code, result2.exit_code);
+    }
+
+    #[test]
+    fn test_exec_result_debug() {
+        // Test ExecResult is debuggable
+        let result = ExecResult {
+            stdout: "output".to_string(),
+            stderr: "error".to_string(),
+            exit_code: 0,
+        };
+
+        let debug = format!("{:?}", result);
+        assert!(debug.contains("output"));
+        assert!(debug.contains("error"));
+        assert!(debug.contains("0"));
+    }
+
+    // Test stubs when feature is disabled (important for mocking)
+    #[cfg(not(feature = "testcontainers"))]
+    #[test]
+    fn test_stubs_return_errors() {
+        let client = ContainerClient::new();
+
+        // Test: All stub methods return InvalidConfig error
+        let result = GenericContainer::new(&client, "alpine", "latest");
+        assert!(result.is_err());
+        match result {
+            Err(TestcontainersError::InvalidConfig(msg)) => {
+                assert!(msg.contains("testcontainers feature is not enabled"));
+            }
+            _ => panic!("Expected InvalidConfig error"),
+        }
+
+        let container = GenericContainer;
+        let port_result = container.get_host_port(80);
+        assert!(port_result.is_err());
+
+        let exec_result = container.exec("echo", &["test"]);
+        assert!(exec_result.is_err());
+    }
+
+    #[cfg(not(feature = "testcontainers"))]
+    #[test]
+    fn test_stub_container_client() {
+        // Test: Stub client can be created
+        let client1 = ContainerClient::new();
+        let client2 = ContainerClient::default();
+
+        // Both should work (no panic)
+        let _ref1 = client1.client();
+        let _ref2 = client2.client();
+    }
+}

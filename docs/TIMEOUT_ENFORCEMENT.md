@@ -2,6 +2,8 @@
 
 This document describes the multi-layered timeout enforcement system ensuring all unit tests complete within 1 second. Integration tests (testcontainers) are excluded from normal iteration and use a separate 30s timeout profile.
 
+**For comprehensive SLA reference**: See [SLA_REFERENCE.md](./SLA_REFERENCE.md) for all timeout SLAs across the project.
+
 ## Architecture
 
 ### Layer 1: Test-Level Timeouts (ntest crate)

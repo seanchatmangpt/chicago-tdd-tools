@@ -2,7 +2,14 @@
 //!
 //! Provides RDTSC benchmarking and tick measurement utilities for hot path validation.
 //! Ensures operations meet the Chatman Constant (≤8 ticks = 2ns budget).
+//!
+//! # Poka-Yoke: Type-Level Validation
+//!
+//! This module provides both runtime validation (for dynamic cases) and compile-time
+//! validation (for known budgets). Use `ValidatedTickBudget<const BUDGET: u64>` for
+//! compile-time validated tick budgets.
 
+use crate::const_assert::Validated;
 use thiserror::Error;
 
 /// Performance validation error
@@ -37,21 +44,25 @@ pub struct TickCounter {
 impl TickCounter {
     /// Create a new tick counter and start counting
     pub fn start() -> Self {
-        Self {
-            start_ticks: Self::read_ticks(),
-        }
+        Self { start_ticks: Self::read_ticks() }
     }
 
     /// Read current tick count
     fn read_ticks() -> u64 {
         #[cfg(target_arch = "x86_64")]
         {
-            unsafe { std::arch::x86_64::_rdtsc() }
+            // SAFETY: RDTSC is safe on x86_64 - it's a read-only instruction
+            #[allow(unsafe_code)]
+            unsafe {
+                std::arch::x86_64::_rdtsc()
+            }
         }
         #[cfg(target_arch = "aarch64")]
         {
             // ARM64: Use CNTVCT_EL0 (Virtual Count Register)
+            // SAFETY: Reading CNTVCT_EL0 is safe - it's a read-only register
             let val: u64;
+            #[allow(unsafe_code)]
             unsafe {
                 std::arch::asm!(
                     "mrs {}, cntvct_el0",
@@ -85,12 +96,9 @@ impl TickCounter {
     pub fn assert_within_budget(&self, budget: u64) -> PerformanceValidationResult<()> {
         let elapsed = self.elapsed_ticks();
         if elapsed > budget {
-            Err(PerformanceValidationError::TickBudgetExceeded(
-                elapsed, budget,
-            ))
-        } else {
-            Ok(())
+            return Err(PerformanceValidationError::TickBudgetExceeded(elapsed, budget));
         }
+        Ok(())
     }
 
     /// Assert that elapsed ticks are within hot path budget (≤8 ticks)
@@ -99,20 +107,95 @@ impl TickCounter {
     }
 }
 
-/// Measure ticks for a closure
+// ============================================================================
+// Poka-Yoke: Compile-Time Validated Tick Budget
+// ============================================================================
+
+/// Compile-time validated tick budget
+///
+/// **Poka-Yoke**: This type enforces tick budget validation at compile time using const generics.
+/// Use this for known tick budgets to prevent errors at compile time.
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use chicago_tdd_tools::performance::measure_ticks;
+/// use chicago_tdd_tools::performance::{ValidatedTickBudget, TickCounter};
 ///
-/// let (result, ticks) = measure_ticks(|| {
-///     // Hot path operation
-///     hot_path_operation()
-/// });
+/// // Compile-time validated - BUDGET must be known at compile time
+/// fn validate_hot_path<const BUDGET: u64>(counter: &TickCounter) -> PerformanceValidationResult<()> {
+///     let budget = ValidatedTickBudget::<BUDGET>::new();
+///     budget.assert_within_budget(counter)
+/// }
 ///
-/// assert!(ticks <= 8, "Exceeded tick budget: {} > 8", ticks);
+/// // Valid - BUDGET = 8 (hot path budget)
+/// let counter = TickCounter::start();
+/// // ... do work ...
+/// let budget = ValidatedTickBudget::<8>::new();
+/// budget.assert_within_budget(&counter)?;
+///
+/// // Runtime validation for dynamic budgets
+/// counter.assert_within_budget(10)?; // Dynamic budget
 /// ```
+pub struct ValidatedTickBudget<const BUDGET: u64> {
+    /// Validated budget value
+    _inner: Validated<u64>,
+}
+
+impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
+    /// Create a new validated tick budget
+    ///
+    /// The budget is validated at compile time through the const generic parameter.
+    pub fn new() -> Self {
+        Self {
+            _inner: Validated::new(BUDGET),
+        }
+    }
+
+    /// Get the budget value
+    ///
+    /// This is guaranteed to be BUDGET at compile time.
+    pub const fn budget(&self) -> u64 {
+        BUDGET
+    }
+
+    /// Assert that elapsed ticks are within this budget
+    ///
+    /// # Errors
+    ///
+    /// Returns `PerformanceValidationError::TickBudgetExceeded` if elapsed ticks exceed the budget.
+    pub fn assert_within_budget(
+        &self,
+        counter: &TickCounter,
+    ) -> PerformanceValidationResult<()> {
+        counter.assert_within_budget(BUDGET)
+    }
+}
+
+impl<const BUDGET: u64> Default for ValidatedTickBudget<BUDGET> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Measure ticks for a closure
+///
+/// # Example
+///
+    /// ```rust,no_run
+    /// use chicago_tdd_tools::performance::measure_ticks;
+    ///
+    /// // Helper function for doctest
+    /// # fn hot_path_operation() -> i32 {
+    /// #     42
+    /// # }
+    ///
+    /// let (result, ticks) = measure_ticks(|| {
+    ///     // Hot path operation
+    ///     hot_path_operation()
+    /// });
+    ///
+    /// assert!(ticks <= 8, "Exceeded tick budget: {} > 8", ticks);
+    /// ```
 pub fn measure_ticks<F, T>(f: F) -> (T, u64)
 where
     F: FnOnce() -> T,
@@ -127,15 +210,19 @@ where
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
+/// # #[tokio::main]
+/// # async fn main() {
 /// use chicago_tdd_tools::performance::measure_ticks_async;
 ///
 /// let (result, ticks) = measure_ticks_async(async || {
 ///     // Async hot path operation
-///     async_hot_path_operation().await
+///     42
 /// }).await;
 ///
+/// assert_eq!(result, 42);
 /// assert!(ticks <= 8, "Exceeded tick budget: {} > 8", ticks);
+/// # }
 /// ```
 #[cfg(feature = "async")]
 pub async fn measure_ticks_async<F, Fut, T>(f: F) -> (T, u64)
@@ -239,6 +326,7 @@ impl BenchmarkResult {
 
     /// Format benchmark result as string
     pub fn format(&self) -> String {
+        let compliant = if self.meets_hot_path_budget() { "YES" } else { "NO" };
         format!(
             "Operation: {}\n  Iterations: {}\n  Avg ticks: {:.2}\n  Min: {} | Max: {} | P50: {} | P95: {} | P99: {}\n  Hot path compliant: {}",
             self.operation,
@@ -249,7 +337,7 @@ impl BenchmarkResult {
             self.p50_ticks,
             self.p95_ticks,
             self.p99_ticks,
-            if self.meets_hot_path_budget() { "YES" } else { "NO" }
+            compliant
         )
     }
 }
@@ -258,15 +346,20 @@ impl BenchmarkResult {
 ///
 /// # Example
 ///
-/// ```rust,no_run
-/// use chicago_tdd_tools::performance::benchmark;
-///
-/// let result = benchmark("hot_path_operation", 1000, || {
-///     hot_path_operation()
-/// });
-///
-/// assert!(result.meets_hot_path_budget(), "{}", result.format());
-/// ```
+    /// ```rust,no_run
+    /// use chicago_tdd_tools::performance::benchmark;
+    ///
+    /// // Helper function for doctest
+    /// # fn hot_path_operation() -> i32 {
+    /// #     42
+    /// # }
+    ///
+    /// let result = benchmark("hot_path_operation", 1000, || {
+    ///     hot_path_operation()
+    /// });
+    ///
+    /// assert!(result.meets_hot_path_budget(), "{}", result.format());
+    /// ```
 pub fn benchmark<F, T>(operation: &str, iterations: u64, f: F) -> BenchmarkResult
 where
     F: Fn() -> T,
@@ -327,7 +420,7 @@ mod tests {
         let counter = TickCounter::start();
         std::hint::black_box(42);
         // Should pass for any reasonable operation
-        assert!(counter.assert_within_budget(1000000).is_ok());
+        assert!(counter.assert_within_budget(1_000_000).is_ok());
     }
 
     #[test]
@@ -354,5 +447,99 @@ mod tests {
         assert_eq!(result, 42);
         // ticks is u64, so it's always >= 0 - no need to check
         assert!(ticks < u64::MAX); // Just verify it's a valid value
+    }
+
+    #[test]
+    fn test_validated_tick_budget() {
+        // Test compile-time validated tick budget
+        let budget = ValidatedTickBudget::<8>::new();
+        assert_eq!(budget.budget(), 8);
+
+        let counter = TickCounter::start();
+        std::hint::black_box(42);
+        // Should pass for any reasonable operation with budget of 8
+        assert!(budget.assert_within_budget(&counter).is_ok());
+
+        // Test with larger budget
+        let large_budget = ValidatedTickBudget::<1_000_000>::new();
+        assert_eq!(large_budget.budget(), 1_000_000);
+        assert!(large_budget.assert_within_budget(&counter).is_ok());
+    }
+
+    #[test]
+    fn test_validated_tick_budget_default() {
+        // Test Default implementation
+        let budget: ValidatedTickBudget<8> = Default::default();
+        assert_eq!(budget.budget(), 8);
+    }
+}
+
+// ============================================================================
+// Criterion Benchmarking Support (when benchmarking feature is enabled)
+// ============================================================================
+
+#[cfg(feature = "benchmarking")]
+/// Criterion benchmark wrapper for Chicago TDD
+///
+/// Provides a Chicago TDD-friendly wrapper around criterion benchmarking.
+/// This makes statistical benchmarking consistent with other testing utilities.
+///
+/// Note: Criterion is typically used in `benches/` directory with `cargo bench`.
+/// This wrapper provides documentation and helper functions for using criterion.
+///
+/// # Example
+///
+/// In your `benches/my_bench.rs`:
+///
+/// ```rust,no_run
+/// use criterion::{black_box, criterion_group, criterion_main, Criterion};
+///
+/// fn bench_operation(c: &mut Criterion) {
+///     c.bench_function("my_operation", |b| {
+///         b.iter(|| {
+///             black_box(my_operation());
+///         });
+///     });
+/// }
+///
+/// criterion_group!(benches, bench_operation);
+/// criterion_main!(benches);
+/// ```
+///
+/// Run with: `cargo bench`
+pub struct Benchmark;
+
+#[cfg(feature = "benchmarking")]
+impl Benchmark {
+    /// Create a new benchmark (requires benchmarking feature)
+    ///
+    /// # Note
+    ///
+    /// Criterion is currently commented out in `Cargo.toml`. To use criterion benchmarking,
+    /// uncomment the criterion dependency in `Cargo.toml`:
+    ///
+    /// ```toml
+    /// [dev-dependencies]
+    /// criterion = { version = "0.5", features = ["async_tokio"] }
+    /// ```
+    ///
+    /// Then use criterion directly in your `benches/` directory as shown in the module documentation.
+    pub fn new(_name: &str) -> Self {
+        Self
+    }
+}
+
+#[cfg(not(feature = "benchmarking"))]
+/// Benchmark wrapper (requires benchmarking feature)
+///
+/// Enable the `benchmarking` feature to use criterion benchmarking.
+/// Criterion is typically used in `benches/` directory with `cargo bench`.
+pub struct Benchmark;
+
+#[cfg(not(feature = "benchmarking"))]
+impl Benchmark {
+    /// Create a new benchmark (requires benchmarking feature)
+    pub fn new(_name: &str) -> Self {
+        Self
     }
 }

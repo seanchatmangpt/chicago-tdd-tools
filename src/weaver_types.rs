@@ -187,3 +187,110 @@ impl Default for WeaverLiveCheck {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test error types (critical - 80% of bugs)
+    #[test]
+    fn test_weaver_validation_error_display() {
+        // Test all error variants display correctly
+        let errors = vec![
+            WeaverValidationError::BinaryNotFound("test".to_string()),
+            WeaverValidationError::HealthCheckFailed("test".to_string()),
+            WeaverValidationError::StartFailed("test".to_string()),
+            WeaverValidationError::StopFailed("test".to_string()),
+        ];
+
+        for error in errors {
+            let display = format!("{}", error);
+            assert!(!display.is_empty(), "Error should have display message");
+            assert!(display.contains("test"), "Error should contain message");
+        }
+    }
+
+    #[test]
+    fn test_weaver_validation_error_debug() {
+        // Test error is debuggable
+        let error = WeaverValidationError::BinaryNotFound("test".to_string());
+        let debug = format!("{:?}", error);
+        assert!(debug.contains("BinaryNotFound"));
+        assert!(debug.contains("test"));
+    }
+
+    // Test builder pattern (important - used frequently)
+    #[test]
+    fn test_weaver_live_check_new() {
+        // Test default values
+        let check = WeaverLiveCheck::new();
+        assert_eq!(check.otlp_grpc_address, "127.0.0.1");
+        assert_eq!(check.otlp_grpc_port, 4317);
+        assert_eq!(check.admin_port, 8080);
+        assert_eq!(check.inactivity_timeout, 60);
+        assert_eq!(check.format, "json");
+        assert!(check.registry_path.is_none());
+        assert!(check.output.is_none());
+    }
+
+    #[test]
+    fn test_weaver_live_check_default() {
+        // Test Default trait implementation
+        let check = WeaverLiveCheck::default();
+        assert_eq!(check.otlp_grpc_address, "127.0.0.1");
+        assert_eq!(check.otlp_grpc_port, 4317);
+    }
+
+    #[test]
+    fn test_weaver_live_check_builder_pattern() {
+        // Test builder pattern (chaining)
+        let check = WeaverLiveCheck::new()
+            .with_registry("/path/to/registry".to_string())
+            .with_otlp_address("0.0.0.0".to_string())
+            .with_otlp_port(4318)
+            .with_admin_port(8081)
+            .with_inactivity_timeout(120)
+            .with_format("ansi".to_string())
+            .with_output("/tmp/output".to_string());
+
+        assert_eq!(check.registry_path, Some("/path/to/registry".to_string()));
+        assert_eq!(check.otlp_grpc_address, "0.0.0.0");
+        assert_eq!(check.otlp_grpc_port, 4318);
+        assert_eq!(check.admin_port, 8081);
+        assert_eq!(check.inactivity_timeout, 120);
+        assert_eq!(check.format, "ansi");
+        assert_eq!(check.output, Some("/tmp/output".to_string()));
+    }
+
+    #[test]
+    fn test_weaver_live_check_otlp_endpoint() {
+        // Test OTLP endpoint generation (important - used frequently)
+        let check = WeaverLiveCheck::new();
+        assert_eq!(check.otlp_endpoint(), "127.0.0.1:4317");
+
+        let check = WeaverLiveCheck::new()
+            .with_otlp_address("0.0.0.0".to_string())
+            .with_otlp_port(4318);
+        assert_eq!(check.otlp_endpoint(), "0.0.0.0:4318");
+    }
+
+    // Test boundary conditions (important - 80% of bugs)
+    #[test]
+    fn test_weaver_live_check_port_boundaries() {
+        // Test port boundaries (u16: 0-65535)
+        let check = WeaverLiveCheck::new()
+            .with_otlp_port(0)
+            .with_admin_port(65535);
+        assert_eq!(check.otlp_grpc_port, 0);
+        assert_eq!(check.admin_port, 65535);
+    }
+
+    #[test]
+    fn test_weaver_live_check_timeout_boundaries() {
+        // Test timeout boundaries (u64)
+        let check = WeaverLiveCheck::new()
+            .with_inactivity_timeout(0)
+            .with_inactivity_timeout(u64::MAX);
+        assert_eq!(check.inactivity_timeout, u64::MAX);
+    }
+}

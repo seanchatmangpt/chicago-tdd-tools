@@ -26,24 +26,42 @@ cat > "$HOOKS_DIR/pre-commit" << 'EOF'
 # Target: 2-5 seconds (only checks staged files, skips unnecessary checks)
 # Enforces: No unwrap/expect/TODO/FUTURE/unimplemented on MAIN branch only
 # Uses: cargo make commands (NEVER direct cargo commands)
+# CRITICAL: Overall timeout wrapper prevents infinite hangs
 
 set -e
 
-# Change to project root
-cd "$(git rev-parse --show-toplevel)"
+# Verify timeout command exists
+if ! command -v timeout &> /dev/null; then
+  echo "❌ ERROR: 'timeout' command not found. Cannot prevent freezing."
+  echo "   Install: coreutils (macOS: brew install coreutils)"
+  exit 1
+fi
+
+# Overall timeout wrapper: 30s max
+# If hook exceeds this, it will be killed and fail fast
+exec timeout 30s bash -c '
+set -e
+
+# Change to project root (with timeout)
+PROJECT_ROOT=\$(timeout 5s git rev-parse --show-toplevel 2>&1)
+if [ \$? -ne 0 ]; then
+  echo \"❌ ERROR: Failed to get project root (timeout or error)\"
+  exit 1
+fi
+cd \"\$PROJECT_ROOT\"
 
 echo "🔍 Running pre-commit validation (incremental checks only)..."
 
-# Only check if Rust files are staged
-STAGED_RUST_FILES=$(git diff --cached --name-only --diff-filter=d | grep '\.rs$' || true)
+# Only check if Rust files are staged (with timeout)
+STAGED_RUST_FILES=$(timeout 5s git diff --cached --name-only --diff-filter=d 2>&1 | grep '\.rs$' || true)
 
 if [ -z "$STAGED_RUST_FILES" ]; then
   echo "✅ No Rust files staged, skipping validation"
   exit 0
 fi
 
-# Detect current branch - strict rules only apply to main
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+# Detect current branch - strict rules only apply to main (with timeout)
+CURRENT_BRANCH=$(timeout 5s git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 IS_MAIN_BRANCH=false
 if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
   IS_MAIN_BRANCH=true
@@ -56,8 +74,8 @@ fi
 echo "   Checking staged changes for unwrap()..."
 UNWRAP_COUNT=0
 for file in $STAGED_RUST_FILES; do
-  # Skip test files, examples, benches, build scripts
-  if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then
+  # Skip test files, examples, benches, build scripts, config files
+  if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" =~ \.(cursorrules|toml|yaml|yml|json)$ ]]; then
     continue
   fi
   
@@ -66,19 +84,19 @@ for file in $STAGED_RUST_FILES; do
     continue
   fi
   
-  # Check if file has allow attribute
-  if git diff --cached "$file" | grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" || \
-     grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
+  # Check if file has allow attribute (with timeout)
+  if timeout 5s git diff --cached "$file" 2>&1 | grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" || \
+     timeout 5s grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
     continue
   fi
   
-  # Skip files with test modules (pragmatic exception for pre-commit speed)
-  if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+  # Skip files with test modules (pragmatic exception for pre-commit speed, with timeout)
+  if timeout 5s grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
     continue
   fi
   
-  # Count unwrap() calls in staged changes only
-  UNWRAPS=$(git diff --cached "$file" | grep -E "^\+" | grep -c "\.unwrap()" || echo 0)
+  # Count unwrap() calls in staged changes only (with timeout)
+  UNWRAPS=$(timeout 5s git diff --cached "$file" 2>&1 | grep -E "^\+" | grep -c "\.unwrap()" || echo 0)
   UNWRAPS=${UNWRAPS//[^0-9]/}
   if [ "${UNWRAPS:-0}" -gt 0 ]; then
     echo "     ❌ $file: $UNWRAPS unwrap() call(s)"
@@ -97,7 +115,7 @@ if [ "$IS_MAIN_BRANCH" = true ]; then
   echo "   Checking staged changes for unimplemented!()..."
   UNIMPL_COUNT=0
   for file in $STAGED_RUST_FILES; do
-    UNIMPL=$(git diff --cached "$file" | grep -E "^\+" | grep -c "unimplemented!" || echo 0)
+    UNIMPL=$(timeout 5s git diff --cached "$file" 2>&1 | grep -E "^\+" | grep -c "unimplemented!" || echo 0)
     UNIMPL=${UNIMPL//[^0-9]/}
     if [ "${UNIMPL:-0}" -gt 0 ]; then
       echo "     ❌ $file: $UNIMPL unimplemented!() placeholder(s)"
@@ -122,7 +140,7 @@ if [ "$IS_MAIN_BRANCH" = true ]; then
       continue
     fi
     
-    TODOS=$(git diff --cached "$file" | grep -E "^\+" | grep -iE "\b(TODO|FUTURE)\b" | grep -c . || echo 0)
+    TODOS=$(timeout 5s git diff --cached "$file" 2>&1 | grep -E "^\+" | grep -iE "\b(TODO|FUTURE)\b" | grep -c . || echo 0)
     TODOS=${TODOS//[^0-9]/}
     if [ "${TODOS:-0}" -gt 0 ]; then
       echo "     ❌ $file: $TODOS FUTURE/TODO comment(s)"
@@ -141,8 +159,8 @@ fi
 echo "   Checking staged changes for expect()..."
 EXPECT_COUNT=0
 for file in $STAGED_RUST_FILES; do
-  # Skip test files, examples, benches, build scripts
-  if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then
+  # Skip test files, examples, benches, build scripts, config files
+  if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" =~ \.(cursorrules|toml|yaml|yml|json)$ ]]; then
     continue
   fi
   
@@ -152,18 +170,18 @@ for file in $STAGED_RUST_FILES; do
   fi
   
   # Check if file has allow attribute
-  if grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null || \
-     git diff --cached "$file" | grep -qE "#!?\[allow\(clippy::expect_used\)\]"; then
+  if timeout 5s grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null || \
+     timeout 5s git diff --cached "$file" 2>&1 | grep -qE "#!?\[allow\(clippy::expect_used\)\]"; then
     continue
   fi
   
-  # Skip files with test modules (pragmatic exception for pre-commit speed)
-  if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+  # Skip files with test modules (pragmatic exception for pre-commit speed, with timeout)
+  if timeout 5s grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
     continue
   fi
   
-  # Count expect() calls in staged changes only
-  EXPECTS=$(git diff --cached "$file" | grep -E "^\+" | grep -c "\.expect(" || echo 0)
+  # Count expect() calls in staged changes only (with timeout)
+  EXPECTS=$(timeout 5s git diff --cached "$file" 2>&1 | grep -E "^\+" | grep -c "\.expect(" || echo 0)
   EXPECTS=${EXPECTS//[^0-9]/}
   if [ "${EXPECTS:-0}" -gt 0 ]; then
     echo "     ❌ $file: $EXPECTS expect() call(s)"
@@ -182,13 +200,13 @@ echo "   Checking formatting of staged Rust files..."
 # Use cargo fmt --check but only on staged files (faster than --all)
 FMT_FAILED=0
 # Build list of staged Rust files for cargo fmt
-STAGED_FMT_FILES=$(echo "$STAGED_RUST_FILES" | tr '\n' ' ' || true)
+STAGED_FMT_FILES=$(echo "$STAGED_RUST_FILES" | tr \"\\n\" \" \" || true)
 
 if [ -n "$STAGED_FMT_FILES" ]; then
-  # Check formatting of staged files only
-  if ! cargo fmt -- --check $STAGED_FMT_FILES 2>&1 | grep -q "Diff"; then
+  # Check formatting of staged files only (with 5s timeout)
+  if ! timeout 5s cargo fmt -- --check $STAGED_FMT_FILES 2>&1 | grep -q "Diff"; then
     # If no diff output, check exit code
-    if ! cargo fmt -- --check $STAGED_FMT_FILES 2>&1 > /dev/null; then
+    if ! timeout 5s cargo fmt -- --check $STAGED_FMT_FILES 2>&1 > /dev/null; then
       echo "     ❌ Some staged files are not formatted"
       FMT_FAILED=1
     fi
@@ -210,10 +228,10 @@ STAGED_SOURCE_FILES=$(echo "$STAGED_RUST_FILES" | grep -E "^(src|proc_macros/.*/
 
 if [ -n "$STAGED_SOURCE_FILES" ]; then
   echo "   Running incremental clippy check..."
-  # Only check if compilation succeeds (fast check)
-  if ! cargo check --lib --all-features --message-format=short 2>&1 | grep -qE "^error"; then
-    # If check passes, run clippy on lib only (fast)
-    if cargo clippy --lib --all-features -- -D warnings 2>&1 > /tmp/clippy_precommit.txt; then
+  # Only check if compilation succeeds (fast check, with 5s timeout)
+  if ! timeout 5s cargo check --lib --all-features --message-format=short 2>&1 | grep -qE "^error"; then
+    # If check passes, run clippy on lib only (fast, with 5s timeout)
+    if timeout 5s cargo clippy --lib --all-features -- -D warnings 2>&1 > /tmp/clippy_precommit.txt; then
       rm -f /tmp/clippy_precommit.txt
       echo "  ✅ Clippy checks passed"
     else
@@ -236,6 +254,7 @@ fi
 
 echo "✅ Pre-commit validation passed (incremental checks)"
 exit 0
+'
 EOF
 
 # Create pre-push hook (comprehensive: 30-60s acceptable, full validation)
@@ -244,11 +263,29 @@ cat > "$HOOKS_DIR/pre-push" << 'EOF'
 # Pre-push hook: Comprehensive validation (core team best practices)
 # Full validation before push (30-60s acceptable)
 # Uses: cargo make commands (NEVER direct cargo commands)
+# CRITICAL: Overall timeout wrapper prevents infinite hangs
 
 set -e
 
-# Change to project root
-cd "$(git rev-parse --show-toplevel)"
+# Verify timeout command exists
+if ! command -v timeout &> /dev/null; then
+  echo "❌ ERROR: 'timeout' command not found. Cannot prevent freezing."
+  echo "   Install: coreutils (macOS: brew install coreutils)"
+  exit 1
+fi
+
+# Overall timeout wrapper: 120s max (2 minutes)
+# If hook exceeds this, it will be killed and fail fast
+exec timeout 120s bash -c '
+set -e
+
+# Change to project root (with timeout)
+PROJECT_ROOT=\$(timeout 5s git rev-parse --show-toplevel 2>&1)
+if [ \$? -ne 0 ]; then
+  echo \"❌ ERROR: Failed to get project root (timeout or error)\"
+  exit 1
+fi
+cd \"\$PROJECT_ROOT\"
 
 echo "🚦 Pre-push validation (comprehensive checks)..."
 echo ""
@@ -283,14 +320,14 @@ echo ""
 # Gate 2.5: TODO & error handling check (comprehensive)
 echo "Gate 2.5/5: TODO & error handling check..."
 
-# Check for TODO comments in production code
-TODO_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
+# Check for TODO comments in production code (with timeout)
+TODO_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "/tests/" | \
   grep -v "/test/" | \
   grep -v "/example" | \
   grep -v "build.rs" | \
   grep -v "/target/" | \
-  xargs grep "TODO:" 2>/dev/null | \
+  xargs timeout 10s grep "TODO:" 2>/dev/null | \
   grep -v "FUTURE:" | \
   wc -l | tr -d ' ' || echo 0)
 
@@ -299,43 +336,49 @@ if [ "$TODO_COUNT" -gt 0 ]; then
   exit 1
 fi
 
-# Check for unwrap/expect in production code
-UNWRAP_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
+# Check for unwrap/expect in production code (with timeout)
+UNWRAP_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "/tests/" | \
   grep -v "/test/" | \
   grep -v "/example" | \
   grep -v "build.rs" | \
   grep -v "/target/" | \
   while read file; do
-    if grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
+    if [ -z "$file" ]; then
       continue
     fi
-    if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+    if timeout 5s grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
       continue
     fi
-    grep -c "\.unwrap()" "$file" 2>/dev/null || echo 0
-  done | awk '{s+=$1} END {print s}')
+    if timeout 5s grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+      continue
+    fi
+    timeout 5s grep -c "\.unwrap()" "$file" 2>/dev/null || echo 0
+  done | awk '\''{s+=$1} END {print s}'\'' || echo 0)
 
 if [ "$UNWRAP_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $UNWRAP_COUNT unwrap() calls in production code"
   exit 1
 fi
 
-EXPECT_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
+EXPECT_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "/tests/" | \
   grep -v "/test/" | \
   grep -v "/example" | \
   grep -v "build.rs" | \
   grep -v "/target/" | \
   while read file; do
-    if grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null; then
+    if [ -z "$file" ]; then
       continue
     fi
-    if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+    if timeout 5s grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null; then
       continue
     fi
-    grep -c "\.expect(" "$file" 2>/dev/null || echo 0
-  done | awk '{s+=$1} END {print s}')
+    if timeout 5s grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
+      continue
+    fi
+    timeout 5s grep -c "\.expect(" "$file" 2>/dev/null || echo 0
+  done | awk '\''{s+=$1} END {print s}'\'' || echo 0)
 
 if [ "$EXPECT_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $EXPECT_COUNT expect() calls in production code"
@@ -345,9 +388,9 @@ fi
 echo "✅ Gate 2.5 passed"
 echo ""
 
-# Gate 3: Formatting check (comprehensive)
+# Gate 3: Formatting check (comprehensive, with 5s timeout)
 echo "Gate 3/5: Formatting check..."
-if ! cargo fmt --all -- --check 2>&1; then
+if ! timeout 5s cargo fmt --all -- --check 2>&1; then
   echo "❌ ERROR: Code is not formatted"
   echo "   Run: cargo make fmt"
   exit 1
@@ -381,6 +424,7 @@ echo ""
 
 echo "✅ All gates passed - ready to push"
 exit 0
+'
 EOF
 
 # Make hooks executable

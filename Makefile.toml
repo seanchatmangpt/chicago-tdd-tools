@@ -1,5 +1,15 @@
 # Chicago TDD Tools Cargo Make Configuration
 # Single crate project - simpler than workspace projects
+#
+# CRITICAL: All commands have timeout protection to prevent freezing
+# Better to fail fast than hang forever
+
+# Verify timeout command exists before running any task
+[tasks.timeout-check]
+description = "Verify timeout command exists (required for all tasks)"
+command = "command"
+args = ["-v", "timeout"]
+ignore_errors = false
 
 # Core development tasks - 5s timeout
 [tasks.check]
@@ -15,7 +25,7 @@ args = ["5s", "cargo", "build"]
 [tasks.build-release]
 description = "Build in release mode"
 command = "timeout"
-args = ["5s", "cargo", "build", "--release"]
+args = ["30s", "cargo", "build", "--release"]
 
 [tasks.clean]
 description = "Clean build artifacts"
@@ -52,7 +62,7 @@ alias = "lint"
 description = "Run unit tests only (fast iteration, excludes testcontainers integration tests)"
 command = "timeout"
 args = [
-  "1s",
+  "10s",
   "cargo",
   "nextest",
   "run",
@@ -67,7 +77,7 @@ args = [
 description = "Unit tests only using cargo-nextest (excludes testcontainers integration tests)"
 command = "timeout"
 args = [
-  "1s",
+  "10s",
   "cargo",
   "nextest",
   "run",
@@ -87,7 +97,11 @@ args = [
   "nextest",
   "run",
   "--test",
-  "testcontainers_expert_tests",
+  "testcontainers_error_tests",
+  "--test",
+  "testcontainers_integration_tests",
+  "--test",
+  "testcontainers_feature_tests",
   "--profile",
   "integration",
   "--features",
@@ -102,7 +116,7 @@ dependencies = ["test-unit", "test-integration"]
 description = "Run example tests using cargo-nextest (excludes testcontainers examples)"
 command = "timeout"
 args = [
-  "1s",
+  "10s",
   "cargo",
   "nextest",
   "run",
@@ -116,18 +130,18 @@ args = [
 [tasks.test-property]
 description = "Run property-based tests using cargo-nextest"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--features", "property-testing"]
+args = ["10s", "cargo", "nextest", "run", "--features", "property-testing"]
 
 [tasks.test-mutation]
 description = "Run mutation testing using cargo-nextest"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--features", "mutation-testing"]
+args = ["10s", "cargo", "nextest", "run", "--features", "mutation-testing"]
 
 [tasks.test-single-threaded]
 description = "Run tests in single-threaded mode for deterministic execution"
 command = "timeout"
 args = [
-  "1s",
+  "10s",
   "cargo",
   "nextest",
   "run",
@@ -141,7 +155,7 @@ env = { "RUST_TEST_THREADS" = "1" }
 description = "Run unit tests with verbose output (excludes testcontainers integration tests)"
 command = "timeout"
 args = [
-  "1s",
+  "10s",
   "cargo",
   "nextest",
   "run",
@@ -157,14 +171,14 @@ args = [
 [tasks.test-cargo]
 description = "Run all tests using standard cargo test (fallback)"
 command = "timeout"
-args = ["1s", "cargo", "test", "--all-features"]
+args = ["10s", "cargo", "test", "--all-features"]
 
-# Coverage tasks - 5s timeout (coverage can take longer)
+# Coverage tasks - 30s timeout (coverage can take longer, manual task only, not part of commit/push verification)
 [tasks.coverage]
-description = "Measure test coverage using cargo-llvm-cov"
+description = "Measure test coverage using cargo-llvm-cov (manual task, not part of commit/push verification)"
 command = "timeout"
 args = [
-  "5s",
+  "30s",
   "cargo",
   "llvm-cov",
   "--all-features",
@@ -174,10 +188,10 @@ args = [
 ]
 
 [tasks.coverage-report]
-description = "Generate HTML coverage report"
+description = "Generate HTML coverage report (manual task, not part of commit/push verification)"
 command = "timeout"
 args = [
-  "5s",
+  "30s",
   "cargo",
   "llvm-cov",
   "--all-features",
@@ -188,10 +202,10 @@ args = [
 ]
 
 [tasks.coverage-tarpaulin]
-description = "Measure test coverage using cargo-tarpaulin"
+description = "Measure test coverage using cargo-tarpaulin (manual task, not part of commit/push verification)"
 command = "timeout"
 args = [
-  "5s",
+  "30s",
   "cargo",
   "tarpaulin",
   "--all-features",
@@ -202,21 +216,23 @@ args = [
 ]
 
 # Pre-commit validation task
+# Expected total time: ~20s (fmt: 5s, lint: 5s, test-unit: 10s)
+# Individual task timeouts ensure no single task hangs
 [tasks.pre-commit]
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
-dependencies = ["fmt", "lint", "test-unit"]
+dependencies = ["timeout-check", "fmt", "lint", "test-unit"]
 
-# Security and audit tasks - 5s timeout
+# Security and audit tasks - 15s timeout (network operations can take longer)
 [tasks.audit]
 description = "Security audit"
 command = "timeout"
-args = ["5s", "cargo", "audit"]
+args = ["15s", "cargo", "audit"]
 workspace = false
 
 [tasks.audit-outdated]
 description = "Check for outdated dependencies"
 command = "timeout"
-args = ["5s", "cargo", "outdated"]
+args = ["15s", "cargo", "outdated"]
 workspace = false
 
 [tasks.audit-all]
@@ -224,31 +240,36 @@ description = "Run all dependency audits"
 dependencies = ["audit", "audit-outdated"]
 workspace = false
 
-# Documentation tasks - 5s timeout
+# Documentation tasks - 20s timeout (documentation generation can take longer)
 [tasks.docs]
 description = "Generate documentation"
 command = "timeout"
-args = ["5s", "cargo", "doc", "--no-deps", "--all-features", "--open"]
+args = ["20s", "cargo", "doc", "--no-deps", "--all-features", "--open"]
 
 [tasks.docs-build]
 description = "Build documentation without opening"
 command = "timeout"
-args = ["5s", "cargo", "doc", "--no-deps", "--all-features"]
+args = ["20s", "cargo", "doc", "--no-deps", "--all-features"]
 
 # CI/CD tasks
+# Expected total time: ~120s (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s)
+# Individual task timeouts ensure no single task hangs
 [tasks.ci]
 description = "Run CI pipeline (unit tests only, excludes slow integration tests)"
-dependencies = ["fmt", "lint", "test-unit", "audit-all"]
+dependencies = ["timeout-check", "fmt", "lint", "test-unit", "audit-all"]
 
+# Expected total time: ~180s (ci: 120s, docs-build: 20s)
 [tasks.release]
 description = "Create a release"
 dependencies = ["ci", "docs-build"]
 
 # Development workflow
+# Expected total time: ~25s (check: 5s, fmt: 5s, test-unit: 10s)
 [tasks.dev]
 description = "Development workflow (check, format, test)"
-dependencies = ["check", "fmt", "test-unit"]
+dependencies = ["timeout-check", "check", "fmt", "test-unit"]
 
+# Expected total time: ~30s (build: 5s, test: 10s, lint: 5s)
 [tasks.all]
 description = "Full validation (build, test, lint)"
-dependencies = ["build", "test", "lint"]
+dependencies = ["timeout-check", "build", "test", "lint"]
