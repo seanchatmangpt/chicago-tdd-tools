@@ -77,12 +77,10 @@ impl SpanValidator {
     /// Validate a span
     pub fn validate(&self, span: &Span) -> OtelValidationResult<()> {
         // Validate span ID is not zero (if enabled)
-        if self.validate_non_zero_ids {
-            if span.context.span_id.0 == 0 {
-                return Err(OtelValidationError::InvalidSpanId(
-                    "Span ID cannot be zero".to_string(),
-                ));
-            }
+        if self.validate_non_zero_ids && span.context.span_id.0 == 0 {
+            return Err(OtelValidationError::InvalidSpanId(
+                "Span ID cannot be zero".to_string(),
+            ));
         }
 
         // Validate trace ID is not zero
@@ -351,7 +349,7 @@ mod tests {
     #[cfg(feature = "otel")]
     #[test]
     fn test_metric_validator_valid_metric() {
-        use knhk_otel::MetricValue;
+        use crate::otel_types::MetricValue;
 
         let validator = MetricValidator::new();
         let metric = Metric {
@@ -367,7 +365,7 @@ mod tests {
     #[cfg(feature = "otel")]
     #[test]
     fn test_metric_validator_empty_name() {
-        use knhk_otel::MetricValue;
+        use crate::otel_types::MetricValue;
 
         let validator = MetricValidator::new();
         let metric = Metric {

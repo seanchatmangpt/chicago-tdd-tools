@@ -1,0 +1,191 @@
+# Chicago TDD Tools Cargo Make Configuration
+# Single crate project - simpler than workspace projects
+
+# Core development tasks - 5s timeout
+[tasks.check]
+description = "Check code without building"
+command = "timeout"
+args = ["5s", "cargo", "check", "--all-targets"]
+
+[tasks.build]
+description = "Build in debug mode"
+command = "timeout"
+args = ["5s", "cargo", "build"]
+
+[tasks.build-release]
+description = "Build in release mode"
+command = "timeout"
+args = ["5s", "cargo", "build", "--release"]
+
+[tasks.clean]
+description = "Clean build artifacts"
+command = "timeout"
+args = ["5s", "cargo", "clean"]
+
+[tasks.fmt]
+description = "Format code"
+command = "timeout"
+args = ["5s", "cargo", "fmt", "--all"]
+
+[tasks.lint]
+description = "Run clippy with strict settings"
+command = "timeout"
+args = [
+  "5s",
+  "cargo",
+  "clippy",
+  "--all-targets",
+  "--all-features",
+  "--",
+  "-D",
+  "warnings",
+]
+
+[tasks.clippy]
+alias = "lint"
+
+# Testing tasks - 1s timeout for SLA
+# Using cargo-nextest for better timeout enforcement and faster execution
+[tasks.test]
+description = "Run all tests using cargo-nextest (1s timeout enforced)"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--all-features"]
+
+[tasks.test-unit]
+description = "Unit tests only using cargo-nextest"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--lib", "--all-features"]
+
+[tasks.test-examples]
+description = "Run example tests using cargo-nextest"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--examples", "--all-features"]
+
+[tasks.test-property]
+description = "Run property-based tests using cargo-nextest"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--features", "property-testing"]
+
+[tasks.test-mutation]
+description = "Run mutation testing using cargo-nextest"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--features", "mutation-testing"]
+
+[tasks.test-single-threaded]
+description = "Run tests in single-threaded mode for deterministic execution"
+command = "timeout"
+args = [
+  "1s",
+  "cargo",
+  "nextest",
+  "run",
+  "--test-threads",
+  "1",
+  "--all-features",
+]
+env = { "RUST_TEST_THREADS" = "1" }
+
+[tasks.test-verbose]
+description = "Run tests with verbose output using cargo-nextest"
+command = "timeout"
+args = ["1s", "cargo", "nextest", "run", "--all-features", "--", "--nocapture"]
+
+# Fallback: Standard cargo test (if nextest not available)
+[tasks.test-cargo]
+description = "Run all tests using standard cargo test (fallback)"
+command = "timeout"
+args = ["1s", "cargo", "test", "--all-features"]
+
+# Coverage tasks - 5s timeout (coverage can take longer)
+[tasks.coverage]
+description = "Measure test coverage using cargo-llvm-cov"
+command = "timeout"
+args = [
+  "5s",
+  "cargo",
+  "llvm-cov",
+  "--all-features",
+  "--",
+  "--test-threads",
+  "1",
+]
+
+[tasks.coverage-report]
+description = "Generate HTML coverage report"
+command = "timeout"
+args = [
+  "5s",
+  "cargo",
+  "llvm-cov",
+  "--all-features",
+  "--html",
+  "--",
+  "--test-threads",
+  "1",
+]
+
+[tasks.coverage-tarpaulin]
+description = "Measure test coverage using cargo-tarpaulin"
+command = "timeout"
+args = [
+  "5s",
+  "cargo",
+  "tarpaulin",
+  "--all-features",
+  "--out",
+  "Xml",
+  "--output-dir",
+  "target/coverage",
+]
+
+# Pre-commit validation task
+[tasks.pre-commit]
+description = "Run pre-commit validation checks (format, lint, unit tests only)"
+dependencies = ["fmt", "lint", "test-unit"]
+
+# Security and audit tasks - 5s timeout
+[tasks.audit]
+description = "Security audit"
+command = "timeout"
+args = ["5s", "cargo", "audit"]
+workspace = false
+
+[tasks.audit-outdated]
+description = "Check for outdated dependencies"
+command = "timeout"
+args = ["5s", "cargo", "outdated"]
+workspace = false
+
+[tasks.audit-all]
+description = "Run all dependency audits"
+dependencies = ["audit", "audit-outdated"]
+workspace = false
+
+# Documentation tasks - 5s timeout
+[tasks.docs]
+description = "Generate documentation"
+command = "timeout"
+args = ["5s", "cargo", "doc", "--no-deps", "--all-features", "--open"]
+
+[tasks.docs-build]
+description = "Build documentation without opening"
+command = "timeout"
+args = ["5s", "cargo", "doc", "--no-deps", "--all-features"]
+
+# CI/CD tasks
+[tasks.ci]
+description = "Run CI pipeline"
+dependencies = ["fmt", "lint", "test", "audit-all"]
+
+[tasks.release]
+description = "Create a release"
+dependencies = ["ci", "docs-build"]
+
+# Development workflow
+[tasks.dev]
+description = "Development workflow (check, format, test)"
+dependencies = ["check", "fmt", "test-unit"]
+
+[tasks.all]
+description = "Full validation (build, test, lint)"
+dependencies = ["build", "test", "lint"]

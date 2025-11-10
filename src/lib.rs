@@ -108,6 +108,8 @@ pub mod otel_types;
 pub mod performance;
 pub mod property;
 pub mod state;
+#[cfg(feature = "testcontainers")]
+pub mod testcontainers;
 #[cfg(feature = "weaver")]
 pub mod weaver;
 pub mod weaver_types;
@@ -137,4 +139,7 @@ pub mod prelude {
 
     #[cfg(feature = "weaver")]
     pub use crate::weaver::*;
+
+    #[cfg(feature = "testcontainers")]
+    pub use crate::testcontainers::*;
 }

@@ -279,6 +279,8 @@ where
     }
 
     // Measure
+    // Note: measure_ticks takes FnOnce, so we need a closure to call f multiple times
+    #[allow(clippy::redundant_closure)]
     for _ in 0..iterations {
         let (_, ticks) = measure_ticks(|| f());
         tick_samples.push(ticks);
@@ -316,7 +318,8 @@ mod tests {
         let counter = TickCounter::start();
         std::hint::black_box(42); // Prevent optimization
         let ticks = counter.elapsed_ticks();
-        assert!(ticks >= 0);
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
     }
 
     #[test]
@@ -331,7 +334,8 @@ mod tests {
     fn test_measure_ticks() {
         let (result, ticks) = measure_ticks(|| 42);
         assert_eq!(result, 42);
-        assert!(ticks >= 0);
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
     }
 
     #[test]
@@ -348,6 +352,7 @@ mod tests {
         let measurer = TickMeasurer::new(|| 42);
         let (result, ticks) = measurer.measure();
         assert_eq!(result, 42);
-        assert!(ticks >= 0);
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
     }
 }

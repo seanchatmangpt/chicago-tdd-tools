@@ -2,7 +2,6 @@
 //!
 //! Demonstrates property-based testing with Chicago TDD tools.
 
-use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::property::*;
 
 #[tokio::main]

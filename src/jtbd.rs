@@ -140,6 +140,9 @@ impl ExecutionResult {
     }
 }
 
+/// Type alias for validation function
+type ValidateResultFn = Box<dyn Fn(&ExecutionContext, &ExecutionResult) -> bool + Send + Sync>;
+
 /// JTBD validation scenario
 pub struct JtbdScenario {
     /// Scenario name
@@ -149,7 +152,7 @@ pub struct JtbdScenario {
     /// Execution function (returns execution result)
     pub execute: Box<dyn Fn(&ExecutionContext) -> ExecutionResult + Send + Sync>,
     /// Validation function to check if result accomplishes intended purpose
-    pub validate_result: Box<dyn Fn(&ExecutionContext, &ExecutionResult) -> bool + Send + Sync>,
+    pub validate_result: ValidateResultFn,
     /// Expected behavior description
     pub expected_behavior: String,
 }
@@ -307,7 +310,7 @@ mod tests {
 
         validator.register_scenario(JtbdScenario {
             name: "Test Scenario".to_string(),
-            setup_context: Box::new(|| ExecutionContext::default()),
+            setup_context: Box::new(ExecutionContext::default),
             execute: Box::new(|_ctx| ExecutionResult::ok(HashMap::new())),
             validate_result: Box::new(|_ctx, result| result.success),
             expected_behavior: "Should succeed".to_string(),

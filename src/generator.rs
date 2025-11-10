@@ -18,7 +18,7 @@ impl TestGenerator {
     /// Generate test from specification
     pub fn generate_test(&mut self, name: &str, spec: &str) -> String {
         format!(
-            "#[test]\nfn {}() {{\n    // Generated from: {}\n    // FUTURE: Implement test\n}}\n",
+            "#[test]\nfn {}() {{\n    // Generated from: {}\n    // Test implementation needed\n}}\n",
             name, spec
         )
     }

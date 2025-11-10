@@ -102,7 +102,7 @@ impl WeaverValidator {
         // Start Weaver live-check process
         let process = live_check
             .start()
-            .map_err(|e| WeaverValidationError::ProcessStartFailed(e))?;
+            .map_err(WeaverValidationError::ProcessStartFailed)?;
 
         self.live_check = Some(live_check);
         self.process = Some(process);
@@ -115,7 +115,7 @@ impl WeaverValidator {
         if let Some(ref live_check) = self.live_check {
             live_check
                 .stop()
-                .map_err(|e| WeaverValidationError::ProcessStopFailed(e))?;
+                .map_err(WeaverValidationError::ProcessStopFailed)?;
         }
 
         if let Some(mut process) = self.process.take() {
@@ -158,7 +158,7 @@ impl Drop for WeaverValidator {
 /// validate_schema_static(&registry_path)?;
 /// ```
 #[cfg(feature = "weaver")]
-pub fn validate_schema_static(registry_path: &PathBuf) -> WeaverValidationResult<()> {
+pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidationResult<()> {
     use std::process::Command;
 
     // Check Weaver binary availability
@@ -172,8 +172,11 @@ pub fn validate_schema_static(registry_path: &PathBuf) -> WeaverValidationResult
     }
 
     // Run weaver registry check
+    let registry_str = registry_path.to_str().ok_or_else(|| {
+        WeaverValidationError::ValidationFailed("Registry path is not valid UTF-8".to_string())
+    })?;
     let output = Command::new("weaver")
-        .args(["registry", "check", "-r", registry_path.to_str().unwrap()])
+        .args(["registry", "check", "-r", registry_str])
         .output()
         .map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {

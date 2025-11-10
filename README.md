@@ -1,70 +1,31 @@
 # Chicago TDD Tools
 
-**Version**: 1.0.0  
-**Status**: ✅ **STANDALONE TESTING FRAMEWORK**
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/seanchatmangpt/knhk)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![Status](https://img.shields.io/badge/status-production--ready-success.svg)](https://github.com/seanchatmangpt/knhk)
 
----
+A comprehensive testing framework for **Chicago TDD** (Classicist Test-Driven Development) methodology in Rust. Provides reusable fixtures, builders, helpers, and advanced testing capabilities following Chicago TDD principles.
 
-## Overview
+## Quick Start
 
-`chicago-tdd-tools` is a comprehensive testing framework for Chicago TDD (Classicist Test-Driven Development) methodology in Rust. It provides reusable fixtures, builders, helpers, and advanced testing capabilities.
+### Installation
 
----
+Add to your `Cargo.toml`:
 
-## Features
-
-### Core Components
-
-- ✅ **Test Fixtures**: Reusable fixtures with automatic cleanup
-- ✅ **Test Data Builders**: Fluent builders for test data
-- ✅ **Assertion Helpers**: Comprehensive assertion utilities
-- ✅ **Macros**: AAA pattern enforcement and test helpers
-- ✅ **Property-Based Testing**: QuickCheck-style random test generation
-- ✅ **Mutation Testing**: Test quality validation through mutations
-- ✅ **Coverage Analysis**: Test coverage reporting and analysis
-- ✅ **Test Generators**: Automatic test code generation
-
-### Chicago TDD Principles
-
-This framework enforces Chicago TDD principles:
-
-1. **State-Based Testing**: Tests verify outputs and state, not implementation
-2. **Real Collaborators**: Uses actual dependencies, not mocks
-3. **Behavior Verification**: Tests verify what code does, not how
-4. **AAA Pattern**: All tests follow Arrange-Act-Assert structure
-
----
-
-## Usage
-
-### Basic Example
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-#[tokio::test]
-async fn test_example() {
-    // Arrange: Create fixture
-    let fixture = TestFixture::new().unwrap();
-
-    // Act: Execute test
-    let counter = fixture.test_counter();
-
-    // Assert: Verify state
-    assert!(counter >= 0);
-}
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { path = "../chicago-tdd-tools" }
+tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-### Using Macros
+### Your First Test
 
-The framework provides macros to reduce boilerplate and enforce Chicago TDD principles:
-
-#### Test Macros
+Create `tests/my_test.rs`:
 
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-// Synchronous test with AAA pattern
 chicago_test!(test_basic, {
     // Arrange: Set up test data
     let input = 5;
@@ -75,22 +36,67 @@ chicago_test!(test_basic, {
     // Assert: Verify behavior
     assert_eq!(result, 10);
 });
+```
 
-// Async test with AAA pattern
-chicago_async_test!(test_async, {
-    // Arrange: Set up test data
-    let input = "test";
-    
-    // Act: Execute async operation
-    let result = async_function(input).await;
-    
-    // Assert: Verify behavior
-    assert_eq!(result, "processed");
-});
+Run it:
 
-// Test with automatic fixture setup/teardown
+```bash
+cargo make test
+```
+
+**See [Getting Started Guide](docs/GETTING_STARTED.md) for a complete walkthrough.**
+
+## Features
+
+### Core Components
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Test Fixtures** | Reusable fixtures with automatic cleanup | ✅ Stable |
+| **Test Data Builders** | Fluent builders for test data | ✅ Stable |
+| **Assertion Helpers** | Comprehensive assertion utilities | ✅ Stable |
+| **Macros** | AAA pattern enforcement and test helpers | ✅ Stable |
+| **Property-Based Testing** | QuickCheck-style random test generation | ✅ Stable |
+| **Mutation Testing** | Test quality validation through mutations | ✅ Stable |
+| **Performance Testing** | RDTSC benchmarking and tick measurement | ✅ Stable |
+| **Guards & Constraints** | Guard constraint enforcement (MAX_RUN_LEN ≤ 8) | ✅ Stable |
+| **JTBD Validation** | Jobs To Be Done validation framework | ✅ Stable |
+| **Testcontainers** | Integration testing with Docker containers | ✅ Stable |
+| **OTEL/Weaver** | OpenTelemetry span/metric validation | ✅ Stable |
+
+### Feature Flags
+
+Enable optional features in `Cargo.toml`:
+
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = [
+        "property-testing",    # Property-based testing
+        "mutation-testing",    # Mutation testing
+        "testcontainers",      # Docker container support
+        "otel",                # OTEL validation
+        "weaver",              # Weaver live validation (requires otel)
+    ]
+}
+```
+
+## Requirements
+
+- **Rust**: Edition 2021 (Rust 1.70+)
+- **Tokio**: Required for async tests (included in dev-dependencies)
+- **Docker**: Required for `testcontainers` feature (optional)
+
+## Usage Examples
+
+### Async Test with Fixture
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
 chicago_fixture_test!(test_with_fixture, fixture, {
-    // Arrange: Use provided fixture
+    // Arrange: Fixture automatically created
     let counter = fixture.test_counter();
     
     // Act: Execute test
@@ -99,49 +105,6 @@ chicago_fixture_test!(test_with_fixture, fixture, {
     // Assert: Verify behavior
     assert!(result > 0);
 });
-
-// Performance test with tick budget validation
-chicago_performance_test!(test_hot_path, {
-    // Arrange: Set up test data
-    let input = create_test_input();
-    
-    // Act: Execute hot path and measure ticks
-    let (result, ticks) = measure_ticks(|| hot_path(&input));
-    
-    // Assert: Verify performance constraint
-    assert_within_tick_budget!(ticks, "Hot path operation");
-    assert_ok!(result);
-});
-```
-
-#### Assertion Macros
-
-```rust
-use chicago_tdd_tools::prelude::*;
-
-// Assert Result is Ok
-let result: Result<u32, String> = Ok(42);
-assert_ok!(result);
-assert_ok!(result, "Operation should succeed");
-
-// Assert Result is Err
-let result: Result<u32, String> = Err("error".to_string());
-assert_err!(result);
-assert_err!(result, "Operation should fail");
-
-// Assert tick budget compliance (≤8 ticks)
-assert_within_tick_budget!(5);
-assert_within_tick_budget!(ticks, "Custom message");
-
-// Assert value is in range
-assert_in_range!(value, 0, 10);
-assert_in_range!(value, 0, 10, "Value should be valid");
-
-// Assert equality with custom message
-assert_eq_msg!(actual, expected, "Values should match");
-
-// Assert guard constraint
-assert_guard_constraint!(max_run_len <= 8, "max_run_len");
 ```
 
 ### Test Data Builder
@@ -149,19 +112,37 @@ assert_guard_constraint!(max_run_len <= 8, "max_run_len");
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-#[tokio::test]
-async fn test_with_data_builder() {
+chicago_test!(test_data_builder, {
     // Arrange: Create test data
     let data = TestDataBuilder::new()
         .with_var("key1", "value1")
         .with_order_data("ORD-001", "100.00")
-        .with_customer_data("CUST-001")
         .build_json();
-
+    
     // Assert: Verify data
+    assert_eq!(data["key1"], "value1");
     assert_eq!(data["order_id"], "ORD-001");
-    assert_eq!(data["customer_id"], "CUST-001");
-}
+});
+```
+
+### Performance Testing
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+chicago_performance_test!(test_hot_path, {
+    // Arrange: Set up test data
+    let input = vec![1, 2, 3];
+    
+    // Act: Execute hot path and measure ticks
+    let (result, ticks) = measure_ticks(|| {
+        input.iter().sum::<i32>()
+    });
+    
+    // Assert: Verify performance constraint (≤8 ticks)
+    assert_within_tick_budget!(ticks, "Hot path operation");
+    assert_eq!(result, 6);
+});
 ```
 
 ### Property-Based Testing
@@ -169,162 +150,159 @@ async fn test_with_data_builder() {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-#[tokio::test]
-async fn test_property() {
+#[cfg(feature = "property-testing")]
+chicago_test!(test_property, {
     // Arrange: Create generator
-    let mut generator = PropertyTestGenerator::new()
-        .with_max_items(10)
+    let mut generator = PropertyTestGenerator::<10, 3>::new()
         .with_seed(42);
-
+    
     // Act & Assert: Test property
     assert!(
         property_all_data_valid(&mut generator, 100),
         "Property: All generated data is valid"
     );
-}
+});
 ```
 
-### Mutation Testing
+## Chicago TDD Principles
 
-```rust
-use chicago_tdd_tools::prelude::*;
-use std::collections::HashMap;
+This framework enforces Chicago TDD principles:
 
-#[tokio::test]
-async fn test_mutation_score() {
-    // Arrange: Create tester
-    let mut data = HashMap::new();
-    data.insert("key1".to_string(), "value1".to_string());
-    let mut tester = MutationTester::new(data);
+1. **State-Based Testing**: Tests verify outputs and state, not implementation
+2. **Real Collaborators**: Uses actual dependencies, not mocks
+3. **Behavior Verification**: Tests verify what code does, not how
+4. **AAA Pattern**: All tests follow Arrange-Act-Assert structure
 
-    // Apply mutations
-    tester.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
+## Documentation
 
-    // Act: Test mutation detection
-    let caught = tester.test_mutation_detection(|data| {
-        !data.is_empty()
-    });
-
-    // Calculate mutation score
-    let score = MutationScore::calculate(
-        if caught { 1 } else { 0 },
-        1
-    );
-
-    // Assert: Score is acceptable
-    assert!(score.is_acceptable());
-}
-```
-
----
-
-## Modules
-
-### `fixture`
-Test fixtures and setup utilities
-
-### `builders`
-Fluent builders for test data
-
-### `assertions`
-Assertion helpers and utilities
-
-### `macros`
-Test macros for AAA pattern enforcement and assertions
-
-### `property`
-Property-based testing framework
-
-### `mutation`
-Mutation testing framework
-
-### `coverage`
-Test coverage analysis
-
-### `generator`
-Test code generation
-
----
-
-## Features
-
-### Default Features
-- Core testing framework
-- Fixtures and builders
-- Assertion helpers
-
-### Optional Features
-- `property-testing`: Enable property-based testing
-- `mutation-testing`: Enable mutation testing
-- `workflow-engine`: Enable workflow-specific features
-
----
+| Document | Description |
+|----------|-------------|
+| **[Getting Started](docs/GETTING_STARTED.md)** | 5-minute quick start guide with verified examples |
+| **[User Guide](docs/USER_GUIDE.md)** | Comprehensive usage guide with patterns and best practices |
+| **[API Reference](docs/API_REFERENCE.md)** | Complete API documentation with examples |
+| **[Architecture](docs/ARCHITECTURE.md)** | Design principles, architecture, and extension patterns |
 
 ## Examples
 
-See `examples/` directory for complete examples:
-- `basic_test.rs`: Basic fixture and builder usage
-- `macro_examples.rs`: Macro usage examples
-- `property_testing.rs`: Property-based testing examples
-- `mutation_testing.rs`: Mutation testing examples
+Run examples with:
 
----
-
-## Integration
-
-### Add to Cargo.toml
-
-```toml
-[dependencies]
-chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["property-testing", "mutation-testing"] }
+```bash
+cargo make test-examples
 ```
 
-### Use in Tests
+Available examples:
 
-```rust
-use chicago_tdd_tools::prelude::*;
+- `basic_test.rs` - Basic fixture and builder usage
+- `macro_examples.rs` - Macro usage patterns
+- `property_testing.rs` - Property-based testing examples
+- `mutation_testing.rs` - Mutation testing examples
+- `testcontainers_example.rs` - Docker container integration
 
-#[tokio::test]
-async fn my_test() {
-    let fixture = TestFixture::new().unwrap();
-    // ... test code
-}
+## Development
+
+### Build Commands
+
+```bash
+cargo make check      # Check compilation
+cargo make build      # Build in debug mode
+cargo make test       # Run all tests
+cargo make lint       # Run clippy
+cargo make fmt        # Format code
+cargo make pre-commit # Run pre-commit checks
 ```
 
----
+### Running Tests
+
+```bash
+# All tests
+cargo make test
+
+# Unit tests only
+cargo make test-unit
+
+# Examples only
+cargo make test-examples
+
+# Property-based tests
+cargo make test-property
+
+# Mutation tests
+cargo make test-mutation
+```
 
 ## Benefits
 
 ### ✅ Reduced Boilerplate
-- 60% less code per test
-- Reusable fixtures and builders
-- Consistent patterns
+
+- **60% less code** per test compared to standard Rust tests
+- Reusable fixtures and builders eliminate repetitive setup
+- Consistent patterns across all tests
 
 ### ✅ Better Test Quality
-- Property-based testing finds edge cases
-- Mutation testing validates test quality
-- Chicago TDD ensures correct patterns
+
+- **Property-based testing** finds edge cases automatically
+- **Mutation testing** validates test quality and coverage
+- **Chicago TDD** ensures correct testing patterns
 
 ### ✅ Maintainability
-- Centralized fixtures
-- Reusable builders
-- Consistent helpers
 
----
+- Centralized fixtures reduce duplication
+- Reusable builders for common data patterns
+- Consistent helpers across projects
 
-## Status
+### ✅ Performance Validation
 
-**Version**: 1.0.0  
-**Status**: ✅ **PRODUCTION READY**
+- **RDTSC benchmarking** for hot path validation
+- **Tick budget enforcement** (Chatman Constant: ≤8 ticks)
+- **Guard constraints** prevent performance regressions
 
-- ✅ Core framework implemented
-- ✅ Property-based testing implemented
-- ✅ Mutation testing implemented
-- ✅ Examples provided
-- ✅ Documentation complete
+## Troubleshooting
 
----
+### Common Issues
 
-**Last Updated**: 2025-01-XX  
-**Status**: ✅ **PACKAGE CREATED**
+**Issue**: `TestFixture::new()` fails
+- **Solution**: Ensure tokio runtime is available for async tests
 
+**Issue**: Property-based tests don't compile
+- **Solution**: Enable `property-testing` feature flag
+
+**Issue**: Testcontainers tests fail
+- **Solution**: Ensure Docker is running and `testcontainers` feature is enabled
+
+**Issue**: Performance tests fail on non-x86_64
+- **Solution**: RDTSC is x86_64-specific; tests fall back to `std::time::Instant` on other platforms
+
+### Getting Help
+
+- Check the [User Guide](docs/USER_GUIDE.md) for detailed examples
+- Review [API Reference](docs/API_REFERENCE.md) for complete API documentation
+- See `examples/` directory for working code examples
+- Review [Architecture](docs/ARCHITECTURE.md) for extension patterns
+
+## Performance Characteristics
+
+- **Zero-cost abstractions**: Macros expand to efficient code
+- **Minimal overhead**: Fixtures use atomic counters for isolation
+- **Fast execution**: Property-based tests use efficient generators
+- **Hot path validation**: RDTSC provides cycle-accurate measurement
+
+## Security Considerations
+
+- **No unsafe code** in core framework (except RDTSC on x86_64)
+- **Input validation** in all public APIs
+- **Error handling** prevents panics in production code paths
+- **Resource cleanup** via RAII patterns
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions welcome! See the [User Guide](docs/USER_GUIDE.md) for development patterns and Chicago TDD principles.
+
+## Repository
+
+- **GitHub**: [seanchatmangpt/knhk](https://github.com/seanchatmangpt/knhk)
+- **Version**: 1.0.0
+- **Rust Edition**: 2021

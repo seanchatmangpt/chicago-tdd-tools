@@ -1,0 +1,167 @@
+---
+description: Build system and development workflow practices for chicago-tdd-tools
+globs:
+  - "**/Makefile.toml"
+  - "**/Cargo.toml"
+alwaysApply: false
+---
+
+# Build System and Development Workflow Practices
+
+## Documentation Reference
+
+For complete documentation, see:
+- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Installation and verification
+- **[User Guide](../../docs/USER_GUIDE.md)** - Complete usage guide
+- **[API Reference](../../docs/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](../../docs/ARCHITECTURE.md)** - Design principles and architecture
+
+## CRITICAL: Use cargo make, Not Direct Cargo Commands
+
+**NEVER use these directly:**
+- ❌ `cargo check`
+- ❌ `cargo build`
+- ❌ `cargo test`
+- ❌ `cargo clippy`
+- ❌ `cargo fmt`
+
+**ALWAYS use these cargo make tasks instead:**
+- ✅ `cargo make check` - Check compilation without building
+- ✅ `cargo make build` - Build the crate
+- ✅ `cargo make test` - Run all tests
+- ✅ `cargo make lint` or `cargo make clippy` - Lint Rust code
+- ✅ `cargo make fmt` - Format Rust code (NEVER use `cargo fmt` directly)
+- ✅ `cargo make pre-commit` - Run pre-commit validation checks
+
+**Rationale:**
+- Cargo-make targets ensure consistent build configuration
+- Cargo-make targets handle proc-macro crate correctly
+- Cargo-make targets include proper timeouts and error handling
+- Cargo-make targets provide consistent output formatting
+
+## Project Structure
+
+chicago-tdd-tools is a single crate project with:
+- `src/` - Main library source code
+- `proc_macros/` - Procedural macro crate
+- `examples/` - Example usage code (see [Getting Started](../../docs/GETTING_STARTED.md))
+- `docs/` - Documentation (see [README](../../README.md) for overview)
+- `tests/` - Integration tests
+
+## Common Tasks
+
+### Development
+- `cargo make check` - Quick compilation check
+- `cargo make build` - Build debug binary
+- `cargo make build-release` - Build release binary
+- `cargo make test` - Run all tests
+- `cargo make fmt` - Format code
+- `cargo make lint` - Run clippy
+
+### Testing
+
+See [User Guide - Testing](../../docs/USER_GUIDE.md) for complete testing documentation.
+
+- `cargo make test` - Run all tests
+- `cargo make test-unit` - Unit tests only
+- `cargo make test-examples` - Example tests (see `examples/` directory)
+- `cargo make test-property` - Property-based tests (requires `property-testing` feature)
+- `cargo make test-mutation` - Mutation tests (requires `mutation-testing` feature)
+- `cargo make test-single-threaded` - Deterministic single-threaded tests
+- `cargo make test-verbose` - Tests with verbose output
+
+### Quality Assurance
+- `cargo make ci` - Full CI pipeline (fmt, lint, test, audit)
+- `cargo make audit` - Security audit
+- `cargo make audit-outdated` - Check for outdated dependencies
+- `cargo make pre-commit` - Pre-commit validation
+
+### Documentation
+- `cargo make docs` - Build and open documentation
+- `cargo make docs-build` - Build documentation without opening
+
+**Note**: Documentation is also available in `docs/` directory:
+- `docs/GETTING_STARTED.md` - Quick start guide
+- `docs/USER_GUIDE.md` - Complete user guide
+- `docs/API_REFERENCE.md` - API reference
+- `docs/ARCHITECTURE.md` - Architecture documentation
+
+## Feature Flags
+
+See [README - Features](../../README.md#features) and [Cargo.toml](../../Cargo.toml) for available features:
+
+- `default` - Core testing framework
+- `property-testing` - Property-based testing
+- `mutation-testing` - Mutation testing
+- `testcontainers` - Docker container support
+- `otel` - OTEL validation
+- `weaver` - Weaver live validation (requires `otel`)
+
+Enable features in `Cargo.toml`:
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["property-testing", "mutation-testing"]
+}
+```
+
+## Git Hooks
+
+Install git hooks with:
+```bash
+./scripts/install-git-hooks.sh
+```
+
+Hooks enforce:
+- No `unwrap()`/`expect()` in production code
+- No `unimplemented!()` placeholders (main branch)
+- No TODO/FUTURE comments (main branch)
+- Code formatting (via `cargo make fmt`)
+- Clippy checks (via `cargo make lint`)
+
+## Verification Workflow
+
+See [Verify Tests Command](../../commands/verify-tests.md) for complete testing workflow.
+
+**Before marking work complete:**
+1. Run `cargo make test` - All tests must pass
+2. Run `cargo make check` - Code must compile
+3. Run `cargo make lint` - Code must pass clippy
+4. Run `cargo make fmt` - Code must be formatted
+
+**If tests fail:**
+- See [Verify Tests Command](../../commands/verify-tests.md) for failure handling
+- Add failing tests to todo list
+- Fix tests before marking complete
+
+## Troubleshooting
+
+See [Getting Started - Troubleshooting](../../docs/GETTING_STARTED.md#troubleshooting) and [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting) for common issues.
+
+### Common Issues
+
+**Issue**: `cargo make` command not found
+- **Solution**: Install cargo-make: `cargo install cargo-make`
+
+**Issue**: Tests fail with "cannot find crate"
+- **Solution**: Run `cargo make check` to verify dependencies
+
+**Issue**: Feature flags not working
+- **Solution**: Verify features are enabled in `Cargo.toml` and run `cargo make check`
+
+## Examples
+
+Run examples with:
+```bash
+cargo make test-examples
+```
+
+See `examples/` directory for:
+- `basic_test.rs` - Basic fixture and builder usage
+- `macro_examples.rs` - Macro usage patterns
+- `property_testing.rs` - Property-based testing
+- `mutation_testing.rs` - Mutation testing
+- `testcontainers_example.rs` - Docker container integration
+
+All examples are documented in [Getting Started Guide](../../docs/GETTING_STARTED.md).

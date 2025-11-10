@@ -3,7 +3,6 @@
 //! Demonstrates mutation testing with Chicago TDD tools.
 
 use chicago_tdd_tools::mutation::*;
-use chicago_tdd_tools::prelude::*;
 use std::collections::HashMap;
 
 #[tokio::main]

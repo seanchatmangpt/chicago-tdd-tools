@@ -1,0 +1,212 @@
+---
+description: Chicago TDD testing methodology and standards
+globs:
+  - "**/*_test.rs"
+  - "tests/**/*.rs"
+  - "examples/**/*.rs"
+alwaysApply: false
+---
+
+# Chicago TDD Testing Standards
+
+## Documentation Reference
+
+For complete documentation, see:
+- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start with verified examples
+- **[User Guide](../../docs/USER_GUIDE.md)** - Comprehensive usage guide with patterns and best practices
+- **[API Reference](../../docs/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](../../docs/ARCHITECTURE.md)** - Design principles and extension patterns
+
+## Principles
+
+- **Classicist Approach**: State-based tests, not interaction-based
+- **Real Collaborators**: Use real objects, minimize mocks
+- **Verify Outputs**: Test results and invariants, not implementation details
+- **Test Results are Truth**: Never trust claims without test verification
+
+## Using chicago-tdd-tools
+
+**Required**: Use `chicago-tdd-tools` macros and utilities for all Rust tests.
+
+### Test Macros
+
+Use macros to enforce AAA pattern and reduce boilerplate. See [User Guide - Macros](../../docs/USER_GUIDE.md#macros) for complete documentation.
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Synchronous test with AAA pattern
+chicago_test!(test_basic_feature, {
+    // Arrange: Set up test data
+    let input = 5;
+    
+    // Act: Execute feature
+    let result = input * 2;
+    
+    // Assert: Verify behavior
+    assert_eq!(result, 10);
+});
+
+// Async test with AAA pattern
+chicago_async_test!(test_async_feature, {
+    // Arrange: Set up test data
+    let fixture = TestFixture::new().unwrap();
+    
+    // Act: Execute async operation
+    let result = async_function().await;
+    
+    // Assert: Verify behavior
+    assert_ok!(&result, "Operation should succeed");
+});
+
+// Test with automatic fixture setup
+chicago_fixture_test!(test_with_fixture, fixture, {
+    // Arrange: Use provided fixture
+    let counter = fixture.test_counter();
+    
+    // Act: Execute test
+    let result = counter + 1;
+    
+    // Assert: Verify behavior
+    assert!(result > 0);
+});
+```
+
+### Assertion Macros
+
+Use assertion macros for better error messages. See [User Guide - Assertions](../../docs/USER_GUIDE.md#assertions) for complete documentation.
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Assert Result is Ok
+assert_ok!(result);
+assert_ok!(result, "Operation should succeed");
+
+// Assert Result is Err
+assert_err!(result);
+assert_err!(result, "Expected error case");
+
+// Assert value is in range
+assert_in_range!(value, 0, 10);
+assert_in_range!(value, 0, 10, "Value should be valid");
+
+// Assert tick budget (performance testing)
+assert_within_tick_budget!(ticks, "Hot path operation");
+```
+
+## Behavior Verification Requirements
+
+**CRITICAL**: All tests must verify **actual behavior**, not just function existence.
+
+### Prohibited Patterns ❌
+
+1. **Meaningless tests** - No tests that only verify `assert_ok!()` or `assert_err!()` without checking observable outputs
+2. **Tests without behavior verification** - All tests must verify state changes, outputs, execution order, or actual effects
+3. **Tests that don't match JTBD** - Test names/comments must match what the test actually verifies
+
+### Required Patterns ✅
+
+1. **Observable output verification** - Tests must check:
+   - State changes (e.g., after `register()`, verify connector appears in `list()`)
+   - Output values (e.g., verify execution order, timing, data flow)
+   - Actual effects (e.g., verify tasks execute sequentially, branches run in parallel)
+2. **JTBD alignment** - Test what the comment/name claims to test
+3. **Behavior over existence** - Test what code does, not just that functions return Ok/Err
+
+### Examples
+
+#### ❌ BAD: Meaningless Test (Only checks function exists)
+
+```rust
+chicago_test!(test_fixture_creation, {
+    let result = TestFixture::new();
+    assert_ok!(&result); // ❌ Only checks Ok, doesn't verify fixture state
+});
+```
+
+#### ✅ GOOD: Behavior Verification Test
+
+```rust
+chicago_test!(test_fixture_creation, {
+    // Arrange: Create fixture
+    let fixture = TestFixture::new().unwrap();
+    
+    // Act: Get counter value
+    let counter = fixture.test_counter();
+    
+    // Assert: Verify observable state
+    assert!(counter >= 0, "Counter should be non-negative");
+    // Verify fixture provides unique counter for isolation
+});
+```
+
+## When to Use Features
+
+See [User Guide](../../docs/USER_GUIDE.md) for detailed "When to Use" guidance:
+
+- **Test Fixtures**: Use when you need isolated test state or shared setup
+- **Test Data Builders**: Use when creating complex test data with many fields
+- **Property-Based Testing**: Use when you need to find edge cases automatically
+- **Mutation Testing**: Use when validating test quality (CI/CD, not dev loop)
+- **Performance Testing**: Use when validating hot path performance
+- **Testcontainers**: Use for integration testing with real services
+
+## Common Patterns
+
+See [User Guide - Common Patterns](../../docs/USER_GUIDE.md#common-patterns) for comprehensive patterns:
+
+- Test isolation with fixtures
+- Reusable test data builders
+- Error handling in tests
+- Performance validation
+- Property-based testing
+
+## Anti-patterns
+
+See [User Guide - Anti-patterns](../../docs/USER_GUIDE.md#anti-patterns) for what to avoid:
+
+- Skipping AAA comments
+- Using fixtures unnecessarily
+- Testing implementation details
+- Only testing happy path
+
+## Validation Checklist
+
+Before submitting tests, verify:
+- [ ] Test verifies observable outputs/state changes, not just function existence
+- [ ] Test matches its JTBD comment (tests what it claims to test)
+- [ ] Test has assertions beyond `assert_ok!()` or `assert_err!()` alone
+- [ ] Test verifies actual behavior (execution order, state changes, outputs)
+- [ ] Test follows AAA pattern with clear comments
+- [ ] Test uses appropriate macros (`chicago_test!`, `chicago_async_test!`, etc.)
+- [ ] Test uses real collaborators when possible (not mocks)
+
+## Expert-Level Testing
+
+For expert-level testing patterns, see:
+- **[Expert Testing Patterns Command](../../commands/expert-testing-patterns.md)** - Comprehensive expert patterns
+- **[User Guide - Best Practices](../../docs/USER_GUIDE.md#best-practices)** - Testing best practices
+
+Expert testing focuses on:
+- Error path testing (80% of bugs)
+- Boundary condition testing
+- Resource cleanup testing
+- Concurrency testing
+- Property-based testing
+- Integration testing with real dependencies
+
+## Troubleshooting
+
+See [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting) for common issues and solutions.
+
+## Build System
+
+**CRITICAL**: Always use `cargo make` commands, never direct `cargo` commands. See [Build System Practices](../build-system-practices.mdc) for details.
+
+```bash
+cargo make test      # Run all tests
+cargo make check     # Check compilation
+cargo make lint      # Run clippy
+cargo make fmt       # Format code
+```

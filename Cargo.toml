@@ -23,6 +23,8 @@ uuid = { version = "1.0", features = ["v4"] }
 chrono = "0.4"
 
 # Error handling
+# Testcontainers support (optional)
+testcontainers = { version = "0.25", optional = true, features = ["blocking"] }
 thiserror = "2.0"
 
 # Procedural macros (internal)
@@ -34,6 +36,7 @@ chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.0.0" }
 [dev-dependencies]
 tokio-test = "0.4"
 tempfile = "3.0"
+ntest = "0.9"  # Test timeout enforcement
 
 [features]
 default = []
@@ -45,6 +48,7 @@ weaver = [
   "otel",
 ] # Enable Weaver live validation (requires otel, uses internal weaver_types)
 async = [] # Enable async performance measurement utilities
+testcontainers = ["dep:testcontainers"] # Enable testcontainers support for integration testing
 
 [lib]
 name = "chicago_tdd_tools"
@@ -65,3 +69,6 @@ path = "examples/mutation_testing.rs"
 [[example]]
 name = "macro_examples"
 path = "examples/macro_examples.rs"
+[[example]]
+name = "testcontainers_example"
+path = "examples/testcontainers_example.rs"

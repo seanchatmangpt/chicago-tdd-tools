@@ -43,36 +43,53 @@ pub struct SpanEvent {
 /// Span status
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpanStatus {
+    /// Span completed successfully
     Ok,
+    /// Span ended with an error
     Error,
+    /// Span status is unset
     Unset,
 }
 
 /// Span
 #[derive(Debug, Clone)]
 pub struct Span {
+    /// Span context (trace ID, span ID, etc.)
     pub context: SpanContext,
+    /// Span name
     pub name: String,
+    /// Start time in milliseconds since epoch
     pub start_time_ms: u64,
+    /// End time in milliseconds since epoch (None if span is still active)
     pub end_time_ms: Option<u64>,
+    /// Span attributes (key-value pairs)
     pub attributes: Attributes,
+    /// Span events (annotations)
     pub events: Vec<SpanEvent>,
+    /// Span status (Ok, Error, or Unset)
     pub status: SpanStatus,
 }
 
 /// Metric value
 #[derive(Debug, Clone)]
 pub enum MetricValue {
+    /// Counter metric (monotonically increasing)
     Counter(u64),
+    /// Gauge metric (can increase or decrease)
     Gauge(f64),
+    /// Histogram metric (distribution of values)
     Histogram(Vec<u64>),
 }
 
 /// Metric
 #[derive(Debug, Clone)]
 pub struct Metric {
+    /// Metric name
     pub name: String,
+    /// Metric value (Counter, Gauge, or Histogram)
     pub value: MetricValue,
+    /// Timestamp in milliseconds since epoch
     pub timestamp_ms: u64,
+    /// Metric attributes (key-value pairs)
     pub attributes: Attributes,
 }

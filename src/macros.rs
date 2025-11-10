@@ -11,6 +11,9 @@
 /// This macro ensures tests follow the Chicago TDD AAA pattern by requiring
 /// explicit Arrange, Act, and Assert sections.
 ///
+/// **Timeout Enforcement**: Tests are automatically wrapped with a 1s timeout
+/// to prevent hangs and ensure SLA compliance.
+///
 /// # Example
 ///
 /// ```rust,no_run
@@ -32,6 +35,7 @@
 macro_rules! chicago_test {
     ($name:ident, $body:block) => {
         #[test]
+        #[ntest::timeout(1000)] // 1s timeout for SLA compliance
         fn $name() {
             $body
         }
@@ -44,6 +48,9 @@ macro_rules! chicago_test {
 /// Supports `?` operator for error propagation - errors are converted to panics.
 /// Handles both Result and non-Result returns.
 ///
+/// **Timeout Enforcement**: Tests are automatically wrapped with tokio::time::timeout
+/// (1s) to prevent hangs and ensure SLA compliance.
+///
 /// # Example
 ///
 /// ```rust,no_run
@@ -51,7 +58,7 @@ macro_rules! chicago_test {
 ///
 /// chicago_async_test!(test_async_feature, {
 ///     // Arrange: Set up test data
-///     let fixture = TestFixture::new().unwrap();
+///     let fixture = TestFixture::new()?;
 ///
 ///     // Act: Execute async feature (use ? for error propagation)
 ///     let result = async_function().await?;
@@ -66,6 +73,8 @@ macro_rules! chicago_async_test {
     ($name:ident, $body:block) => {
         #[tokio::test]
         async fn $name() {
+            use tokio::time::{timeout, Duration};
+
             // Helper trait to handle both Result and non-Result returns
             trait TestOutput {
                 fn handle(self);
@@ -83,9 +92,20 @@ macro_rules! chicago_async_test {
                 }
             }
 
-            // Execute body and handle output
-            let output = async { $body }.await;
-            TestOutput::handle(output);
+            // Execute body with 1s timeout for SLA compliance
+            let test_future = async {
+                let output = async { $body }.await;
+                TestOutput::handle(output);
+            };
+
+            match timeout(Duration::from_secs(1), test_future).await {
+                Ok(_) => {
+                    // Test completed within timeout
+                }
+                Err(_) => {
+                    panic!("Test exceeded 1s timeout (SLA violation)");
+                }
+            }
         }
     };
 }
@@ -93,6 +113,9 @@ macro_rules! chicago_async_test {
 /// Macro for async tests with automatic fixture setup and teardown
 ///
 /// Creates a test fixture, runs the test body, and ensures cleanup.
+///
+/// **Timeout Enforcement**: Tests are automatically wrapped with tokio::time::timeout
+/// (1s) to prevent hangs and ensure SLA compliance.
 ///
 /// # Example
 ///
@@ -113,14 +136,26 @@ macro_rules! chicago_async_test {
 #[macro_export]
 macro_rules! chicago_fixture_test {
     ($name:ident, $fixture_var:ident, $body:block) => {
+        #[allow(unnameable_test_items)]
         #[tokio::test]
         async fn $name() {
+            use tokio::time::{timeout, Duration};
+
             // Arrange: Create fixture
-            let mut $fixture_var = $crate::fixture::TestFixture::new()
+            let $fixture_var = $crate::fixture::TestFixture::new()
                 .unwrap_or_else(|e| panic!("Failed to create test fixture: {}", e));
 
-            // Execute test body
-            $body
+            // Execute test body with 1s timeout for SLA compliance
+            let test_future = async { $body };
+
+            match timeout(Duration::from_secs(1), test_future).await {
+                Ok(_) => {
+                    // Test completed within timeout
+                }
+                Err(_) => {
+                    panic!("Test exceeded 1s timeout (SLA violation)");
+                }
+            }
 
             // Cleanup: Automatic teardown via Drop
         }
@@ -274,7 +309,7 @@ macro_rules! assert_within_tick_budget {
 macro_rules! assert_in_range {
     ($value:expr, $min:expr, $max:expr) => {
         assert!(
-            $value >= $min && $value <= $max,
+            ($min..=$max).contains(&$value),
             "Value {} not in range [{}, {}]",
             $value,
             $min,
@@ -283,7 +318,7 @@ macro_rules! assert_in_range {
     };
     ($value:expr, $min:expr, $max:expr, $msg:expr) => {
         assert!(
-            $value >= $min && $value <= $max,
+            ($min..=$max).contains(&$value),
             "{}: Value {} not in range [{}, {}]",
             $msg,
             $value,
@@ -376,10 +411,8 @@ macro_rules! assert_guard_constraint {
 }
 
 #[cfg(test)]
+#[allow(unnameable_test_items)] // Macro-generated tests trigger this warning
 mod tests {
-    use super::*;
-    use crate::fixture::TestFixture;
-
     // Note: We can't use chicago_test! macro here because it would create
     // a test function with the same name, causing conflicts.
     // These tests verify the macro expansion works correctly.
@@ -409,6 +442,7 @@ mod tests {
         };
     }
 
+    #[allow(dead_code)] // Test function is generated by macro, not actually dead code
     #[tokio::test]
     async fn test_chicago_fixture_test_macro() {
         chicago_fixture_test!(test_fixture_basic, fixture, {

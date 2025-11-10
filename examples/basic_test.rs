@@ -20,11 +20,8 @@ async fn main() {
 
     // Assert: Verify fixture created
     println!("Test counter: {}", counter);
-    if counter >= 0 {
-        println!("✓ Fixture created successfully");
-    } else {
-        println!("✗ Fixture creation failed");
-    }
+    // Counter is always >= 0 for u64, so just verify it exists
+    println!("✓ Fixture created successfully");
 
     // Arrange: Create test data
     let data = TestDataBuilder::new()

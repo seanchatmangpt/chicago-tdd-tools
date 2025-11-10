@@ -9,12 +9,16 @@ use thiserror::Error;
 /// Weaver validation error
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
+    /// Weaver binary not found in PATH
     #[error("Weaver binary not found: {0}")]
     BinaryNotFound(String),
+    /// Weaver health check failed
     #[error("Weaver health check failed: {0}")]
     HealthCheckFailed(String),
+    /// Failed to start Weaver process
     #[error("Failed to start Weaver: {0}")]
     StartFailed(String),
+    /// Failed to stop Weaver process
     #[error("Failed to stop Weaver: {0}")]
     StopFailed(String),
 }
