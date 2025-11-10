@@ -1,0 +1,17 @@
+[package]
+name = "chicago-tdd-tools-proc-macros"
+version = "1.0.0"
+edition = "2021"
+authors = ["KNHK Team"]
+license = "MIT"
+description = "Procedural macros for chicago-tdd-tools"
+repository = "https://github.com/seanchatmangpt/knhk"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "parsing", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
