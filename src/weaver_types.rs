@@ -137,7 +137,7 @@ impl WeaverLiveCheck {
                         Err("Weaver binary found but --version failed".to_string())
                     }
                 }
-                Err(e) => Err(format!("Failed to execute weaver binary: {}", e)),
+                Err(e) => Err(format!("Failed to execute weaver binary: {e}")),
             }
         } else {
             // Try runtime download if not found (only if weaver feature is enabled)
@@ -150,10 +150,9 @@ impl WeaverLiveCheck {
                         https://github.com/open-telemetry/weaver/releases",
                         e
                     ));
-                } else {
-                    // Retry after download
-                    return Self::check_weaver_available();
                 }
+                // Retry after download
+                return Self::check_weaver_available();
             }
             #[cfg(not(feature = "weaver"))]
             {
@@ -175,7 +174,7 @@ impl WeaverLiveCheck {
 
         // Determine target directory
         let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
-        let output_path = PathBuf::from(format!("target/{}/weaver", profile));
+        let output_path = PathBuf::from(format!("target/{profile}/weaver"));
 
         // Skip if already exists
         if output_path.exists() {
@@ -195,7 +194,7 @@ impl WeaverLiveCheck {
 
         // Create parent directory
         if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
+            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {e}"))?;
         }
 
         // Download using curl or wget
@@ -207,7 +206,7 @@ impl WeaverLiveCheck {
             let status = Command::new("curl")
                 .args(&["-L", "-o", archive_str, &download_url])
                 .status()
-                .map_err(|e| format!("Failed to execute curl: {}", e))?;
+                .map_err(|e| format!("Failed to execute curl: {e}"))?;
 
             if !status.success() {
                 return Err("curl download failed".to_string());
@@ -219,7 +218,7 @@ impl WeaverLiveCheck {
             let status = Command::new("wget")
                 .args(&["-O", archive_str, &download_url])
                 .status()
-                .map_err(|e| format!("Failed to execute wget: {}", e))?;
+                .map_err(|e| format!("Failed to execute wget: {e}"))?;
 
             if !status.success() {
                 return Err("wget download failed".to_string());
@@ -243,7 +242,7 @@ impl WeaverLiveCheck {
         let status = Command::new("tar")
             .args(&["-xJf", archive_str, "-C", output_dir_str])
             .status()
-            .map_err(|e| format!("Failed to extract tar.xz: {}", e))?;
+            .map_err(|e| format!("Failed to extract tar.xz: {e}"))?;
 
         if !status.success() {
             return Err("tar extraction failed".to_string());
@@ -253,7 +252,7 @@ impl WeaverLiveCheck {
         let weaver_binary = output_dir.join("weaver");
         if weaver_binary.exists() {
             fs::rename(&weaver_binary, &output_path)
-                .map_err(|e| format!("Failed to move weaver binary: {}", e))?;
+                .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
         }
 
         // Clean up archive
@@ -308,8 +307,8 @@ impl WeaverLiveCheck {
         )) {
             Ok(_) => Ok(true), // Port is open, assume Weaver is running
             Err(e) => Err(format!(
-                "Weaver admin endpoint not responding on {}:{}: {}",
-                self.otlp_grpc_address, self.admin_port, e
+                "Weaver admin endpoint not responding on {}:{}: {e}",
+                self.otlp_grpc_address, self.admin_port
             )),
         }
     }
@@ -348,7 +347,7 @@ impl WeaverLiveCheck {
                 if e.kind() == std::io::ErrorKind::NotFound {
                     "Weaver binary not found in PATH. Install with: ./scripts/install-weaver.sh or cargo install weaver".to_string()
                 } else {
-                    format!("Failed to start Weaver live-check: {}. Ensure Weaver is installed and in PATH.", e)
+                    format!("Failed to start Weaver live-check: {e}. Ensure Weaver is installed and in PATH.")
                 }
             })
     }
@@ -374,7 +373,7 @@ impl WeaverLiveCheck {
                     ))
                 }
             }
-            Err(e) => Err(format!("Failed to send shutdown request to {}: {}", shutdown_url, e)),
+            Err(e) => Err(format!("Failed to send shutdown request to {shutdown_url}: {e}")),
         }
     }
 

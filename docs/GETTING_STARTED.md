@@ -49,9 +49,13 @@ chicago_test!(test_basic_example, {
 
 **Run**: `cargo make test`. Runs all unit tests, integration tests, examples.
 
-## What's Next?
+## Next Steps
 
-**User Guide**: Comprehensive guide with all features. **API Reference**: Complete API documentation. **Architecture**: Design principles and patterns. **Examples**: `cargo make test-examples`.
+- **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
+- **[User Guide](USER_GUIDE.md)** - Comprehensive guide with all features
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
+- **[Examples](../examples/)** - Working code examples (`cargo make test-examples`)
 
 ## Troubleshooting
 

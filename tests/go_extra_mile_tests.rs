@@ -67,7 +67,7 @@ mod tests {
         // Verify span attributes
         assert_eq!(span.name, "test_build");
         assert_eq!(span.attributes.get("item_count"), Some(&"2".to_string()));
-        assert_eq!(span.status, chicago_tdd_tools::otel_types::SpanStatus::Ok);
+        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
     });
 
     chicago_test!(test_second_idea_assertion_builder, {
@@ -91,7 +91,7 @@ mod tests {
         let span = span.unwrap();
         let validator = SpanValidator::new();
         assert_ok!(&validator.validate(&span));
-        assert_eq!(span.status, chicago_tdd_tools::otel_types::SpanStatus::Ok);
+        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
     });
 
     // ========================================================================
@@ -131,7 +131,7 @@ mod tests {
 
         // Verify span attributes
         assert_eq!(span.attributes.get("item_count"), Some(&"2".to_string()));
-        assert_eq!(span.status, chicago_tdd_tools::otel_types::SpanStatus::Ok);
+        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
     });
 
     #[cfg(feature = "otel")]
@@ -148,7 +148,7 @@ mod tests {
         let span = validated.span();
         let span_validator = SpanValidator::new();
         assert_ok!(&span_validator.validate(span));
-        assert_eq!(span.status, chicago_tdd_tools::otel_types::SpanStatus::Ok);
+        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
 
         // Validate OTEL metric
         let metric = validated.metric();
@@ -179,7 +179,7 @@ mod tests {
     #[cfg(all(feature = "otel", feature = "weaver"))]
     chicago_test!(test_otel_spans_validated_by_helper, {
         // Test that OTEL spans can be validated using OtelTestHelper
-        use chicago_tdd_tools::otel_types::{Span, SpanContext, SpanId, SpanStatus, TraceId};
+        use chicago_tdd_tools::otel::types::{Span, SpanContext, SpanId, SpanStatus, TraceId};
 
         let span = Span {
             context: SpanContext {
@@ -203,7 +203,7 @@ mod tests {
     #[cfg(all(feature = "otel", feature = "weaver"))]
     chicago_test!(test_otel_metrics_validated_by_helper, {
         // Test that OTEL metrics can be validated using OtelTestHelper
-        use chicago_tdd_tools::otel_types::{Metric, MetricValue};
+        use chicago_tdd_tools::otel::types::{Metric, MetricValue};
         use std::time::{SystemTime, UNIX_EPOCH};
 
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;

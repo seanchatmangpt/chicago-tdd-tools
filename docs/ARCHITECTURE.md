@@ -24,21 +24,44 @@ Chicago TDD Tools: Generic testing framework base layer. Extensible for domain-s
 
 ## Module Organization
 
-**Core**: fixture (GATs, RAII), builders (fluent, JSON/HashMap), assertions (Result, predicate, range), macros (AAA pattern, async, fixture, performance), state (type-level AAA enforcement).
+Modules are organized into capability groups for better discoverability and maintainability:
 
-**Advanced Testing**: property (const generics, reproducible), mutation (quality validation, operators, scores), coverage (tracking, reports), generator (compile-time arrays).
+**Core Testing Infrastructure** (`core/`): Foundational primitives that all tests use.
+- `fixture`: Test fixtures (GATs, RAII, automatic cleanup)
+- `builders`: Fluent builders for test data (JSON/HashMap)
+- `assertions`: Assertion helpers (Result, predicate, range)
+- `macros`: Test macros (AAA pattern, async, fixture, performance)
+- `state`: Type-level AAA enforcement
+- `const_assert`: Compile-time assertions
 
-**Performance & Constraints**: performance (RDTSC, tick measurement, hot path budget), guards (input validation, Chatman Constant ≤8, batch size limits).
+**Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
+- `property`: Property-based testing (const generics, reproducible)
+- `mutation`: Mutation testing (quality validation, operators, scores)
+- `snapshot`: Snapshot testing (requires `snapshot-testing` feature)
+- `concurrency`: Concurrency testing (requires `concurrency-testing` feature)
+- `cli`: CLI testing (requires `cli-testing` feature)
+- `generator`: Test code generation
 
-**Validation**: jtbd (scenario validation, real-world testing), otel (span/metric validation, schema conformance), weaver (live validation, registry, OTLP).
+**Quality & Validation** (`validation/`): Quality assurance and constraint validation.
+- `coverage`: Test coverage analysis (tracking, reports)
+- `guards`: Guard constraints (input validation, Chatman Constant ≤8, batch size limits)
+- `jtbd`: Jobs To Be Done validation (scenario validation, real-world testing)
+- `performance`: Performance validation (RDTSC, tick measurement, hot path budget)
 
-**Integration**: testcontainers (Docker support, port mapping, exec, auto-cleanup).
+**Telemetry & Observability** (`observability/`): Telemetry validation.
+- `otel`: OTEL validation (span/metric validation, schema conformance)
+- `weaver`: Weaver live validation (live validation, registry, OTLP)
+
+**Integration Testing** (`integration/`): External system integration.
+- `testcontainers`: Docker support (port mapping, exec, auto-cleanup)
+
+**Backward Compatibility**: All modules are re-exported at the crate root. Existing code using `chicago_tdd_tools::fixture::*` continues to work. New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 
 ## Module Dependencies
 
 Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
 
-**Dependency Graph**: lib.rs → fixture (no deps), builders (serde_json), assertions (no deps), macros (fixture), property/mutation/coverage/generator/performance/guards/jtbd/state (no deps), testcontainers (optional), otel (optional, internal types), weaver (otel, optional, internal types).
+**Dependency Graph**: lib.rs → core (fixture, builders, assertions, macros, state, const_assert), testing (property, mutation, snapshot, concurrency, cli, generator), validation (coverage, guards, jtbd, performance), observability (otel, weaver), integration (testcontainers). Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
 
 ## Feature Flags
 

@@ -179,3 +179,11 @@ Re-exports commonly used items. Feature-gated exports.
 **Key Associations**: Fixtures = RAII = Auto-cleanup. Builders = Fluent = JSON/HashMap. Macros = AAA = Zero-boilerplate. Property = Const generics = Reproducible. Mutation = Quality = Operators. Performance = RDTSC = Tick budget. Guards = Constraints = Chatman Constant. State = Type-level = Compile-time. Testcontainers = Docker = Auto-cleanup. OTEL/Weaver = Validation = Schema.
 
 **Pattern**: All modules follow consistent patterns: `new() -> Self`, `Result<T, E>` for fallible operations, feature-gated optional modules, zero-cost abstractions where possible.
+
+## Next Steps
+
+- **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
+- **[User Guide](USER_GUIDE.md)** - Complete usage guide
+- **[Getting Started](GETTING_STARTED.md)** - Quick start guide
+- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
+- **[Examples](../examples/)** - Working code examples

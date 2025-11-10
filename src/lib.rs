@@ -41,21 +41,44 @@
 //! # }
 //! ```
 //!
-//! ## Modules
+//! ## Module Organization
 //!
+//! Modules are organized into capability groups for better discoverability and maintainability:
+//!
+//! ### Core Testing Infrastructure (`core`)
 //! - `fixture`: Test fixtures and setup utilities
 //! - `builders`: Fluent builders for test data
 //! - `assertions`: Assertion helpers and utilities
 //! - `macros`: Test macros for AAA pattern enforcement and assertions
+//! - `state`: Type-level AAA enforcement
+//! - `const_assert`: Compile-time assertions
+//!
+//! ### Advanced Testing Techniques (`testing`)
 //! - `property`: Property-based testing framework
 //! - `mutation`: Mutation testing framework
-//! - `coverage`: Test coverage analysis
+//! - `snapshot`: Snapshot testing (requires `snapshot-testing` feature)
+//! - `concurrency`: Concurrency testing (requires `concurrency-testing` feature)
+//! - `cli`: CLI testing (requires `cli-testing` feature)
 //! - `generator`: Test code generation
-//! - `otel`: OTEL span/metric validation (requires `otel` feature)
-//! - `performance`: RDTSC benchmarking and tick measurement
+//!
+//! ### Quality & Validation (`validation`)
+//! - `coverage`: Test coverage analysis
 //! - `guards`: Guard constraint enforcement (`MAX_RUN_LEN` ≤ 8, `MAX_BATCH_SIZE`)
 //! - `jtbd`: Jobs To Be Done validation framework (validates code accomplishes intended purpose)
+//! - `performance`: RDTSC benchmarking and tick measurement
+//!
+//! ### Telemetry & Observability (`observability`)
+//! - `otel`: OTEL span/metric validation (requires `otel` feature)
 //! - `weaver`: Weaver live validation integration (requires `weaver` feature)
+//!
+//! ### Integration Testing (`integration`)
+//! - `testcontainers`: Docker container support (requires `testcontainers` feature)
+//!
+//! ## Backward Compatibility
+//!
+//! All modules are re-exported at the crate root for backward compatibility.
+//! Existing code using `chicago_tdd_tools::fixture::*` continues to work.
+//! New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 //!
 //! ## Macros
 //!
@@ -96,77 +119,73 @@ pub use chicago_tdd_tools_proc_macros::chicago_fixture;
 // Re-export TestBuilder derive macro (users will use #[derive(TestBuilder)])
 pub use chicago_tdd_tools_proc_macros::TestBuilder;
 
-pub mod assertions;
-pub mod builders;
-#[cfg(feature = "cli-testing")]
-pub mod cli;
-#[cfg(feature = "concurrency-testing")]
-pub mod concurrency;
-pub mod const_assert;
-pub mod coverage;
-pub mod fixture;
-pub mod generator;
-pub mod guards;
-pub mod jtbd;
-#[macro_use]
+// Capability groups - organized by functionality
+pub mod core;
+pub mod integration;
+pub mod observability;
+pub mod testing;
+pub mod validation;
+
+// Macros are exported via core::macros module
+// src/macros.rs re-exports from core::macros for backward compatibility
+// Note: #[macro_use] is not needed here - macros are exported via #[macro_export] in macro definitions
 pub mod macros;
-pub mod mutation;
-#[cfg(feature = "otel")]
-pub mod otel;
-pub mod otel_types;
-pub mod performance;
-pub mod property;
-#[cfg(feature = "snapshot-testing")]
-pub mod snapshot;
-pub mod state;
-#[cfg(feature = "testcontainers")]
-pub mod testcontainers;
-#[cfg(feature = "weaver")]
-pub mod weaver;
-pub mod weaver_types;
 
 // Re-export new "go the extra mile" types
-pub use assertions::{AssertionBuilder, ValidatedAssertion};
-pub use builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
-pub use coverage::{CoveredCount, TotalCount};
-pub use jtbd::ScenarioIndex;
-pub use performance::ValidatedTickBudget;
+pub use core::assertions::{AssertionBuilder, ValidatedAssertion};
+pub use core::builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
+pub use validation::coverage::{CoveredCount, TotalCount};
+pub use validation::jtbd::ScenarioIndex;
+pub use validation::performance::ValidatedTickBudget;
+
+// Backward compatibility: Re-export modules at crate root for existing code
+// New code should use capability group paths: core::fixture, validation::guards, etc.
+pub use core::{assertions, builders, const_assert, fixture, state};
+#[cfg(feature = "testcontainers")]
+pub use integration::testcontainers;
+#[cfg(feature = "otel")]
+pub use observability::otel;
+#[cfg(feature = "weaver")]
+pub use observability::weaver;
+#[cfg(feature = "cli-testing")]
+pub use testing::cli;
+#[cfg(feature = "concurrency-testing")]
+pub use testing::concurrency;
+#[cfg(feature = "snapshot-testing")]
+pub use testing::snapshot;
+pub use testing::{generator, mutation, property};
+pub use validation::{coverage, guards, jtbd, performance};
 
 /// Prelude module - import commonly used items
 pub mod prelude {
-    pub use crate::assertions::*;
-    pub use crate::builders::*;
-    pub use crate::fixture::*;
-    pub use crate::guards::*;
-    pub use crate::jtbd::*;
-    pub use crate::performance::*;
-    pub use crate::state::*;
+    pub use crate::core::*;
+    pub use crate::validation::*;
 
     // Macros are automatically exported via #[macro_use] in lib.rs
     // They can be used directly: chicago_test!, assert_ok!, etc.
     // Or explicitly: use chicago_tdd_tools::{chicago_test, assert_ok};
 
-    #[cfg(feature = "otel")]
-    pub use crate::otel::*;
-
     #[cfg(feature = "property-testing")]
-    pub use crate::property::*;
+    pub use crate::testing::property::*;
 
     #[cfg(feature = "mutation-testing")]
-    pub use crate::mutation::*;
-
-    #[cfg(feature = "weaver")]
-    pub use crate::weaver::*;
-
-    #[cfg(feature = "testcontainers")]
-    pub use crate::testcontainers::*;
+    pub use crate::testing::mutation::*;
 
     #[cfg(feature = "snapshot-testing")]
-    pub use crate::snapshot::*;
+    pub use crate::testing::snapshot::*;
 
     #[cfg(feature = "concurrency-testing")]
-    pub use crate::concurrency::*;
+    pub use crate::testing::concurrency::*;
 
     #[cfg(feature = "cli-testing")]
-    pub use crate::cli::*;
+    pub use crate::testing::cli::*;
+
+    #[cfg(feature = "otel")]
+    pub use crate::observability::otel::*;
+
+    #[cfg(feature = "weaver")]
+    pub use crate::observability::weaver::*;
+
+    #[cfg(feature = "testcontainers")]
+    pub use crate::integration::testcontainers::*;
 }

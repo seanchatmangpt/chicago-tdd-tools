@@ -1,0 +1,8 @@
+error[E0599]: the function or associated item `new` exists for struct `ValidatedBatch<1500>`, but its trait bounds were not satisfied
+ --> tests/compile-fail/validated_batch_compile_error.rs:8:42
+  |
+8 |     let _batch = ValidatedBatch::<1500>::new(vec![0u8; 1500]);
+  |                                          ^^^ function or associated item cannot be called on `ValidatedBatch<1500>` due to unsatisfied trait bounds
+  |
+  = note: the following trait bounds were not satisfied:
+          `(): AssertBatchSize<1500>`

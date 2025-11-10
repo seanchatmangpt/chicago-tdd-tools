@@ -1,6 +1,0 @@
----
-source: src/snapshot.rs
-assertion_line: 50
-expression: value
----
-test_value

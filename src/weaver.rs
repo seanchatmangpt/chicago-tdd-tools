@@ -35,6 +35,31 @@ pub enum WeaverValidationError {
 /// Result type for Weaver validation
 pub type WeaverValidationResult<T> = Result<T, WeaverValidationError>;
 
+/// Default OTLP gRPC port (OpenTelemetry standard)
+///
+/// **Kaizen improvement**: Extracted magic number `4317` to named constant.
+/// Pattern: Use named constants instead of magic numbers for configuration values.
+/// Benefits: Improves readability, maintainability, self-documentation.
+pub const DEFAULT_OTLP_GRPC_PORT: u16 = 4317;
+
+/// Default Weaver admin port
+///
+/// **Kaizen improvement**: Extracted magic number `4320` to named constant.
+/// Pattern: Use named constants for configuration values that may change.
+pub const DEFAULT_ADMIN_PORT: u16 = 4320;
+
+/// Default inactivity timeout in seconds (5 minutes)
+///
+/// **Kaizen improvement**: Extracted magic number `300` to named constant.
+/// Pattern: Use named constants for timeouts and durations.
+pub const DEFAULT_INACTIVITY_TIMEOUT_SECONDS: u64 = 300;
+
+/// Localhost IP address for client connections
+///
+/// **Kaizen improvement**: Extracted magic string `"127.0.0.1"` to named constant.
+/// Pattern: Use named constants for network addresses and endpoints.
+pub const LOCALHOST: &str = "127.0.0.1";
+
 /// Weaver live validation helper
 #[cfg(feature = "weaver")]
 pub struct WeaverValidator {
@@ -53,8 +78,8 @@ impl WeaverValidator {
             live_check: None,
             process: None,
             registry_path,
-            otlp_grpc_port: 4317,
-            admin_port: 4320, // Match weaver default (not 8080)
+            otlp_grpc_port: DEFAULT_OTLP_GRPC_PORT,
+            admin_port: DEFAULT_ADMIN_PORT,
         }
     }
 
@@ -89,7 +114,7 @@ impl WeaverValidator {
             .with_registry(registry_str.to_string())
             .with_otlp_port(self.otlp_grpc_port)
             .with_admin_port(self.admin_port)
-            .with_inactivity_timeout(300) // 5 minutes (longer for tests)
+            .with_inactivity_timeout(DEFAULT_INACTIVITY_TIMEOUT_SECONDS) // 5 minutes (longer for tests)
             .with_format("ansi".to_string()) // Match weaver default
             .with_output("./weaver-reports".to_string());
 
@@ -118,7 +143,7 @@ impl WeaverValidator {
 
     /// Get OTLP endpoint for sending telemetry
     pub fn otlp_endpoint(&self) -> String {
-        format!("http://{}:{}", "127.0.0.1", self.otlp_grpc_port)
+        format!("http://{}:{}", LOCALHOST, self.otlp_grpc_port)
     }
 
     /// Check if Weaver process is running
@@ -146,18 +171,88 @@ impl Drop for WeaverValidator {
 ///
 /// # Example
 ///
-/// ```rust,no_run
-/// use chicago_tdd_tools::weaver::send_test_span_to_weaver;
+/// ```rust
+/// # #[cfg(feature = "weaver")]
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use chicago_tdd_tools::weaver::{send_test_span_to_weaver, LOCALHOST, DEFAULT_OTLP_GRPC_PORT};
 ///
-/// let endpoint = "http://127.0.0.1:4317";
-/// send_test_span_to_weaver(endpoint, "test.operation")?;
+/// let endpoint = format!("http://{}:{}", LOCALHOST, DEFAULT_OTLP_GRPC_PORT);
+/// send_test_span_to_weaver(&endpoint, "test.operation")?;
+/// # Ok(())
+/// # }
 /// ```
 #[cfg(feature = "weaver")]
-pub fn send_test_span_to_weaver(_endpoint: &str, _span_name: &str) -> WeaverValidationResult<()> {
-    // TODO: Re-implement with correct OpenTelemetry 0.31 API
-    // The OpenTelemetry API has changed significantly in 0.31
-    // This function needs to be updated to use the new API
-    // For now, return Ok to allow compilation
+pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValidationResult<()> {
+    use opentelemetry::KeyValue;
+    use opentelemetry_sdk::trace::SdkTracerProvider;
+    use std::time::Duration;
+
+    // Create OTLP HTTP exporter and tracer provider
+    // Using OpenTelemetry 0.31 API pattern from knhk
+    // Set endpoint via environment variable (required by exporter)
+    let base_endpoint = endpoint.trim_end_matches("/v1/traces").trim_end_matches('/');
+    std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", base_endpoint);
+
+    // Create OTLP HTTP exporter using builder pattern
+    let exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_http()
+        .build()
+        .map_err(|e| WeaverValidationError::ValidationFailed(format!(
+            "Failed to create OTLP HTTP exporter: {}", e
+        )))?;
+
+    // Create resource with service information
+    use opentelemetry_sdk::Resource;
+    let resource = Resource::builder_empty()
+        .with_service_name("chicago-tdd-tools-test")
+        .with_attributes([
+            KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+            KeyValue::new("telemetry.sdk.language", "rust"),
+            KeyValue::new("telemetry.sdk.name", "opentelemetry"),
+            KeyValue::new("telemetry.sdk.version", "0.31.0"),
+        ])
+        .build();
+
+    // Create tracer provider with batch exporter (sync pattern from knhk)
+    use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler};
+    let provider = SdkTracerProvider::builder()
+        .with_batch_exporter(exporter)
+        .with_sampler(Sampler::TraceIdRatioBased(1.0)) // Always sample for tests
+        .with_id_generator(RandomIdGenerator::default())
+        .with_resource(resource)
+        .build();
+
+    // Get tracer
+    let tracer = provider.tracer("chicago-tdd-tools");
+
+    // Create and start span using span_builder pattern
+    use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
+    let span_name_owned = span_name.to_string();
+    let mut span = tracer.span_builder(span_name_owned.clone()).start(&tracer);
+    
+    // Set test attributes
+    span.set_attribute(KeyValue::new("test.operation", span_name_owned.clone()));
+    span.set_attribute(KeyValue::new("test.framework", "chicago-tdd-tools"));
+    span.set_attribute(KeyValue::new("span.kind", "internal"));
+
+    // End span (this triggers export)
+    span.end();
+
+    // Force flush to ensure span is exported before shutdown
+    provider.force_flush()
+        .map_err(|e| WeaverValidationError::ValidationFailed(format!(
+            "Failed to flush traces: {}", e
+        )))?;
+
+    // Give async exports time to complete
+    std::thread::sleep(Duration::from_millis(500));
+
+    // Shutdown tracer provider
+    provider.shutdown()
+        .map_err(|e| WeaverValidationError::ValidationFailed(format!(
+            "Failed to shutdown tracer provider: {}", e
+        )))?;
+
     Ok(())
 }
 
@@ -167,12 +262,16 @@ pub fn send_test_span_to_weaver(_endpoint: &str, _span_name: &str) -> WeaverVali
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```rust
+/// # #[cfg(feature = "weaver")]
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use chicago_tdd_tools::weaver::validate_schema_static;
 /// use std::path::PathBuf;
 ///
 /// let registry_path = PathBuf::from("registry/");
 /// validate_schema_static(&registry_path)?;
+/// # Ok(())
+/// # }
 /// ```
 #[cfg(feature = "weaver")]
 pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidationResult<()> {
@@ -352,8 +451,11 @@ mod tests {
     fn test_weaver_validator_otlp_endpoint() {
         let registry_path = PathBuf::from("registry/");
         let validator = WeaverValidator::new(registry_path);
-        // OTLP endpoint uses 127.0.0.1 for client connections (even though server listens on 0.0.0.0)
-        assert_eq!(validator.otlp_endpoint(), "http://127.0.0.1:4317");
+        // OTLP endpoint uses LOCALHOST for client connections (even though server listens on 0.0.0.0)
+        assert_eq!(
+            validator.otlp_endpoint(),
+            format!("http://{}:{}", LOCALHOST, DEFAULT_OTLP_GRPC_PORT)
+        );
     }
 
     #[cfg(feature = "weaver")]
@@ -385,11 +487,9 @@ mod tests {
                 // Expected error variant
             }
             Err(e) => {
-                #[allow(clippy::panic)] // Test code - panic is appropriate
                 panic!("Expected RegistryNotFound, got: {:?}", e);
             }
             Ok(_) => {
-                #[allow(clippy::panic)] // Test code - panic is appropriate
                 panic!("Expected error, got success");
             }
         }

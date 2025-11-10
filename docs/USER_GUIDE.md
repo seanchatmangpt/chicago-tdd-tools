@@ -211,3 +211,11 @@ OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 **Key Associations**: Fixtures = RAII = Auto-cleanup. Builders = Fluent = JSON/HashMap. Macros = AAA = Zero-boilerplate. Property = Const generics = Reproducible. Mutation = Quality = Operators. Performance = RDTSC = Tick budget. Guards = Constraints = Chatman Constant. Testcontainers = Docker = Auto-cleanup. OTEL/Weaver = Validation = Schema.
 
 **Pattern**: All features follow consistent patterns: when to use, basic usage, common patterns, anti-patterns. Use macros for all tests. Verify observable outputs. Use real collaborators.
+
+## Next Steps
+
+- **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[Getting Started](GETTING_STARTED.md)** - Quick start guide
+- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
+- **[Examples](../examples/)** - Working code examples

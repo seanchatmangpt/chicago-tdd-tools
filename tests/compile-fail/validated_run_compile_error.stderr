@@ -1,0 +1,8 @@
+error[E0599]: the function or associated item `new` exists for struct `ValidatedRun<9>`, but its trait bounds were not satisfied
+ --> tests/compile-fail/validated_run_compile_error.rs:8:35
+  |
+8 |     let _run = ValidatedRun::<9>::new(vec![0u8; 9]);
+  |                                   ^^^ function or associated item cannot be called on `ValidatedRun<9>` due to unsatisfied trait bounds
+  |
+  = note: the following trait bounds were not satisfied:
+          `(): AssertRunLen<9>`

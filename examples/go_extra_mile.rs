@@ -9,7 +9,7 @@
 
 use chicago_tdd_tools::assert_ok;
 #[cfg(feature = "otel")]
-use chicago_tdd_tools::otel_types::{
+use chicago_tdd_tools::otel::types::{
     Metric, MetricValue, Span, SpanContext, SpanId, SpanStatus, TraceId,
 };
 
@@ -180,7 +180,7 @@ where
                 span.status = SpanStatus::Error;
                 span.attributes.insert("success".to_string(), "false".to_string());
                 span.attributes.insert("error".to_string(), e.to_string());
-                Err(e)
+                Err(e.to_string())
             }
         }
     }
