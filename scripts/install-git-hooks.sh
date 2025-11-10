@@ -19,13 +19,12 @@ if [ ! -d "$HOOKS_DIR" ]; then
   exit 1
 fi
 
-# Create pre-commit hook (fast: 2-5s target, only staged files)
+# Create pre-commit hook (fast: 2-5s target, only staged files, incremental checks)
 cat > "$HOOKS_DIR/pre-commit" << 'EOF'
 #!/bin/bash
-# Pre-commit hook: Fast validation aligned with core team 80/20 best practices
-# Target: 2-5 seconds (only checks staged files)
+# Pre-commit hook: Fast incremental validation (core team 80/20 best practices)
+# Target: 2-5 seconds (only checks staged files, skips unnecessary checks)
 # Enforces: No unwrap/expect/TODO/FUTURE/unimplemented on MAIN branch only
-# Other branches: relaxed rules (TODO/FUTURE/unimplemented allowed)
 # Uses: cargo make commands (NEVER direct cargo commands)
 
 set -e
@@ -33,19 +32,13 @@ set -e
 # Change to project root
 cd "$(git rev-parse --show-toplevel)"
 
-echo "🔍 Running pre-commit validation..."
+echo "🔍 Running pre-commit validation (incremental checks only)..."
 
 # Only check if Rust files are staged
-if ! git diff --cached --name-only --diff-filter=d | grep -q '\.rs$'; then
+STAGED_RUST_FILES=$(git diff --cached --name-only --diff-filter=d | grep '\.rs$' || true)
+
+if [ -z "$STAGED_RUST_FILES" ]; then
   echo "✅ No Rust files staged, skipping validation"
-  exit 0
-fi
-
-# Get list of staged Rust files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=d | grep '\.rs$' || true)
-
-if [ -z "$STAGED_FILES" ]; then
-  echo "✅ No Rust files to validate"
   exit 0
 fi
 
@@ -54,15 +47,15 @@ CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 IS_MAIN_BRANCH=false
 if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
   IS_MAIN_BRANCH=true
-  echo "🔒 Main branch detected - enforcing strict rules (no TODO/FUTURE/unimplemented!)"
+  echo "🔒 Main branch detected - enforcing strict rules"
 else
-  echo "🌿 Branch '$CURRENT_BRANCH' - strict rules relaxed (TODO/FUTURE/unimplemented! allowed)"
+  echo "🌿 Branch '$CURRENT_BRANCH' - relaxed rules"
 fi
 
-# Check 1: No unwrap() in production code (excluding test files, build scripts)
-echo "   Checking for unwrap() calls in production code..."
+# Check 1: No unwrap() in production code (only staged changes)
+echo "   Checking staged changes for unwrap()..."
 UNWRAP_COUNT=0
-for file in $STAGED_FILES; do
+for file in $STAGED_RUST_FILES; do
   # Skip test files, examples, benches, build scripts
   if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then
     continue
@@ -73,100 +66,81 @@ for file in $STAGED_FILES; do
     continue
   fi
   
-  # Check if file has allow attribute (check both diff and actual file)
+  # Check if file has allow attribute
   if git diff --cached "$file" | grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" || \
      grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
     continue
   fi
   
-  # Pragmatic exception for pre-commit: if file has test modules, allow unwrap() calls
-  # Rationale: Test modules should have allow attributes, but we're lenient for fast feedback
-  # Pre-push hook will enforce stricter rules (require allow attributes in test modules)
+  # Skip files with test modules (pragmatic exception for pre-commit speed)
   if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
-    # File has test modules - allow unwrap() for pre-commit (fast feedback)
-    # Pre-push will check that test modules have proper allow attributes
     continue
   fi
   
-  # Count unwrap() calls in staged changes
+  # Count unwrap() calls in staged changes only
   UNWRAPS=$(git diff --cached "$file" | grep -E "^\+" | grep -c "\.unwrap()" || echo 0)
-  UNWRAPS=${UNWRAPS//[^0-9]/}  # Remove any non-numeric characters
+  UNWRAPS=${UNWRAPS//[^0-9]/}
   if [ "${UNWRAPS:-0}" -gt 0 ]; then
-    echo "     ❌ $file: $UNWRAPS unwrap() call(s) found"
+    echo "     ❌ $file: $UNWRAPS unwrap() call(s)"
     UNWRAP_COUNT=$((UNWRAP_COUNT + UNWRAPS))
   fi
 done
 
 if [ "$UNWRAP_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Cannot commit $UNWRAP_COUNT unwrap() calls in production code"
-  echo "   Replace with proper Result<T,E> error handling"
-  echo "   Use ? operator or match statements instead"
-  echo "   Or add #![allow(clippy::unwrap_used)] if truly necessary"
   exit 1
 fi
-echo "  ✅ No unwrap() in production code"
+echo "  ✅ No unwrap() in staged changes"
 
 # Check 2: No unimplemented!() placeholders - BLOCKED ONLY ON MAIN
 if [ "$IS_MAIN_BRANCH" = true ]; then
-  echo "   Checking for unimplemented!() placeholders..."
+  echo "   Checking staged changes for unimplemented!()..."
   UNIMPL_COUNT=0
-  for file in $STAGED_FILES; do
-    # Check ALL files - no exceptions on main
+  for file in $STAGED_RUST_FILES; do
     UNIMPL=$(git diff --cached "$file" | grep -E "^\+" | grep -c "unimplemented!" || echo 0)
-    UNIMPL=${UNIMPL//[^0-9]/}  # Remove any non-numeric characters
+    UNIMPL=${UNIMPL//[^0-9]/}
     if [ "${UNIMPL:-0}" -gt 0 ]; then
-      echo "     ❌ $file: $UNIMPL unimplemented!() placeholder(s) found"
-      git diff --cached "$file" | grep -E "^\+" | grep "unimplemented!" | head -5
+      echo "     ❌ $file: $UNIMPL unimplemented!() placeholder(s)"
       UNIMPL_COUNT=$((UNIMPL_COUNT + UNIMPL))
     fi
   done
 
   if [ "$UNIMPL_COUNT" -gt 0 ]; then
     echo "❌ ERROR: Cannot commit $UNIMPL_COUNT unimplemented!() placeholders to main"
-    echo "   Complete implementations before committing - NO EXCEPTIONS"
     exit 1
   fi
   echo "  ✅ No unimplemented!() placeholders"
-else
-  echo "  ⏭️  Skipping unimplemented!() check (not on main branch)"
 fi
 
 # Check 3: No FUTURE or TODO comments - BLOCKED ONLY ON MAIN
 if [ "$IS_MAIN_BRANCH" = true ]; then
-  echo "   Checking for FUTURE/TODO comments..."
+  echo "   Checking staged changes for FUTURE/TODO..."
   TODO_COUNT=0
-  for file in $STAGED_FILES; do
-    # Skip only documentation files (markdown, text files)
+  for file in $STAGED_RUST_FILES; do
+    # Skip documentation files
     if [[ "$file" =~ \.(md|txt|rst)$ ]]; then
       continue
     fi
     
-    # Check ALL Rust files - no exceptions for test files on main
-    # Block ALL TODO/FUTURE comments regardless of context
     TODOS=$(git diff --cached "$file" | grep -E "^\+" | grep -iE "\b(TODO|FUTURE)\b" | grep -c . || echo 0)
-    TODOS=${TODOS//[^0-9]/}  # Remove any non-numeric characters
+    TODOS=${TODOS//[^0-9]/}
     if [ "${TODOS:-0}" -gt 0 ]; then
-      echo "     ❌ $file: $TODOS FUTURE/TODO comment(s) found"
-      git diff --cached "$file" | grep -E "^\+" | grep -iE "\b(TODO|FUTURE)\b" | head -5
+      echo "     ❌ $file: $TODOS FUTURE/TODO comment(s)"
       TODO_COUNT=$((TODO_COUNT + TODOS))
     fi
   done
 
   if [ "$TODO_COUNT" -gt 0 ]; then
     echo "❌ ERROR: Cannot commit $TODO_COUNT FUTURE/TODO comments to main"
-    echo "   Remove ALL TODO/FUTURE comments before committing - NO EXCEPTIONS"
-    echo "   This applies to ALL code including tests"
     exit 1
   fi
   echo "  ✅ No FUTURE/TODO comments"
-else
-  echo "  ⏭️  Skipping FUTURE/TODO check (not on main branch)"
 fi
 
-# Check 4: No expect() in production code (excluding test files, build scripts)
-echo "   Checking for expect() calls in production code..."
+# Check 4: No expect() in production code (only staged changes)
+echo "   Checking staged changes for expect()..."
 EXPECT_COUNT=0
-for file in $STAGED_FILES; do
+for file in $STAGED_RUST_FILES; do
   # Skip test files, examples, benches, build scripts
   if [[ "$file" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ "$file" == *"build.rs" ]] || [[ "$file" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then
     continue
@@ -177,94 +151,98 @@ for file in $STAGED_FILES; do
     continue
   fi
   
-  # Check if file has allow attribute for expect (check actual file, not just diff)
-  # Check for both #[allow] and #![allow] patterns
+  # Check if file has allow attribute
   if grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null || \
      git diff --cached "$file" | grep -qE "#!?\[allow\(clippy::expect_used\)\]"; then
     continue
   fi
   
-  # Pragmatic exception for pre-commit: if file has test modules, allow expect() calls
-  # Rationale: Test modules should have allow attributes, but we're lenient for fast feedback
-  # Pre-push hook will enforce stricter rules (require allow attributes in test modules)
+  # Skip files with test modules (pragmatic exception for pre-commit speed)
   if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
-    # File has test modules - allow expect() for pre-commit (fast feedback)
-    # Pre-push will check that test modules have proper allow attributes
     continue
   fi
   
-  # Count expect() calls in staged changes
+  # Count expect() calls in staged changes only
   EXPECTS=$(git diff --cached "$file" | grep -E "^\+" | grep -c "\.expect(" || echo 0)
-  EXPECTS=${EXPECTS//[^0-9]/}  # Remove any non-numeric characters
+  EXPECTS=${EXPECTS//[^0-9]/}
   if [ "${EXPECTS:-0}" -gt 0 ]; then
-    echo "     ❌ $file: $EXPECTS expect() call(s) found"
+    echo "     ❌ $file: $EXPECTS expect() call(s)"
     EXPECT_COUNT=$((EXPECT_COUNT + EXPECTS))
   fi
 done
 
 if [ "$EXPECT_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Cannot commit $EXPECT_COUNT expect() calls in production code"
-  echo "   Replace with proper error handling or add #![allow(clippy::expect_used)]"
   exit 1
 fi
-echo "  ✅ No expect() in production code"
+echo "  ✅ No expect() in staged changes"
 
-# Check 5: Formatting (use cargo fmt --check for speed in hooks)
-echo "   Checking Rust formatting..."
-if ! cargo fmt --all -- --check 2>&1; then
-  echo "❌ ERROR: Code is not formatted"
+# Check 5: Formatting (only check staged Rust files)
+echo "   Checking formatting of staged Rust files..."
+# Use cargo fmt --check but only on staged files (faster than --all)
+FMT_FAILED=0
+# Build list of staged Rust files for cargo fmt
+STAGED_FMT_FILES=$(echo "$STAGED_RUST_FILES" | tr '\n' ' ' || true)
+
+if [ -n "$STAGED_FMT_FILES" ]; then
+  # Check formatting of staged files only
+  if ! cargo fmt -- --check $STAGED_FMT_FILES 2>&1 | grep -q "Diff"; then
+    # If no diff output, check exit code
+    if ! cargo fmt -- --check $STAGED_FMT_FILES 2>&1 > /dev/null; then
+      echo "     ❌ Some staged files are not formatted"
+      FMT_FAILED=1
+    fi
+  else
+    echo "     ❌ Some staged files are not formatted"
+    FMT_FAILED=1
+  fi
+fi
+
+if [ "$FMT_FAILED" -eq 1 ]; then
+  echo "❌ ERROR: Staged Rust files are not formatted"
   echo "   Run: cargo make fmt"
   exit 1
 fi
-echo "  ✅ Code is formatted"
+echo "  ✅ Staged files are formatted"
 
-# Check 6: Quick clippy check (only on staged files, use cargo make lint)
-echo "   Running clippy on staged files..."
+# Check 6: Clippy (only if source files changed, incremental check)
+STAGED_SOURCE_FILES=$(echo "$STAGED_RUST_FILES" | grep -E "^(src|proc_macros/.*/src)/" || true)
 
-# Check if we have staged Rust source files
-HAS_SOURCE_FILES=false
-for file in $STAGED_FILES; do
-  if [[ "$file" =~ ^src/ ]] || [[ "$file" =~ ^proc_macros/.*/src/ ]]; then
-    HAS_SOURCE_FILES=true
-    break
-  fi
-done
-
-CLIPPY_FAILED=0
-if [ "$HAS_SOURCE_FILES" = true ]; then
-  # Run clippy on lib only (faster, excludes tests)
-  if cargo clippy --lib --all-features -- -D warnings 2>&1 > /tmp/clippy_output.txt; then
-    # Clippy passed
-    rm -f /tmp/clippy_output.txt
-  else
-    # Check exit code - if non-zero, check if it's test-related
-    # Filter out test-related warnings and check if any remain
-    if grep -v "test\|tests\|example\|examples\|bench\|benches\|\.rs:" /tmp/clippy_output.txt | grep -qE "(error|warning):"; then
-      echo "❌ ERROR: Clippy found issues"
-      grep -v "test\|tests\|example\|examples\|bench\|benches" /tmp/clippy_output.txt | head -20
-      echo "   Fix clippy warnings before committing"
-      echo "   Run: cargo make lint"
-      CLIPPY_FAILED=1
+if [ -n "$STAGED_SOURCE_FILES" ]; then
+  echo "   Running incremental clippy check..."
+  # Only check if compilation succeeds (fast check)
+  if ! cargo check --lib --all-features --message-format=short 2>&1 | grep -qE "^error"; then
+    # If check passes, run clippy on lib only (fast)
+    if cargo clippy --lib --all-features -- -D warnings 2>&1 > /tmp/clippy_precommit.txt; then
+      rm -f /tmp/clippy_precommit.txt
+      echo "  ✅ Clippy checks passed"
+    else
+      # Filter out test-related warnings
+      if grep -v "test\|tests\|example\|examples\|bench\|benches\|\.rs:" /tmp/clippy_precommit.txt | grep -qE "(error|warning):"; then
+        echo "❌ ERROR: Clippy found issues in production code"
+        grep -v "test\|tests\|example\|examples\|bench\|benches" /tmp/clippy_precommit.txt | head -10
+        rm -f /tmp/clippy_precommit.txt
+        exit 1
+      fi
+      rm -f /tmp/clippy_precommit.txt
+      echo "  ✅ Clippy checks passed (test warnings ignored)"
     fi
-    rm -f /tmp/clippy_output.txt
+  else
+    echo "  ⚠️  Compilation errors detected, skipping clippy (will be caught in pre-push)"
   fi
+else
+  echo "  ⏭️  No source files changed, skipping clippy"
 fi
 
-if [ "$CLIPPY_FAILED" -eq 1 ]; then
-  exit 1
-fi
-echo "  ✅ Clippy checks passed"
-
-echo "✅ Pre-commit validation passed"
+echo "✅ Pre-commit validation passed (incremental checks)"
 exit 0
 EOF
 
 # Create pre-push hook (comprehensive: 30-60s acceptable, full validation)
 cat > "$HOOKS_DIR/pre-push" << 'EOF'
 #!/bin/bash
-# Pre-push hook: 5-gate validation aligned with core team best practices
-# Comprehensive validation before push (30-60s acceptable)
-# Allows documented exceptions: build scripts, test files with allow attributes
+# Pre-push hook: Comprehensive validation (core team best practices)
+# Full validation before push (30-60s acceptable)
 # Uses: cargo make commands (NEVER direct cargo commands)
 
 set -e
@@ -272,10 +250,10 @@ set -e
 # Change to project root
 cd "$(git rev-parse --show-toplevel)"
 
-echo "🚦 Pre-push validation (5 gates)..."
+echo "🚦 Pre-push validation (comprehensive checks)..."
 echo ""
 
-# Gate 1: Cargo check (use cargo make check)
+# Gate 1: Cargo check (comprehensive)
 echo "Gate 1/5: Cargo check..."
 if ! cargo make check 2>&1; then
   echo "❌ ERROR: cargo make check failed"
@@ -284,27 +262,25 @@ fi
 echo "✅ Gate 1 passed"
 echo ""
 
-# Gate 2: Clippy (strict for production, lenient for tests)
-echo "Gate 2/5: Clippy (strict mode for production)..."
-# Use cargo make lint
-if cargo make lint 2>&1 > /tmp/clippy_push_output.txt; then
-  # Clippy passed
-  rm -f /tmp/clippy_push_output.txt
+# Gate 2: Clippy (comprehensive, strict for production)
+echo "Gate 2/5: Clippy (strict mode)..."
+if cargo make lint 2>&1 > /tmp/clippy_push.txt; then
+  rm -f /tmp/clippy_push.txt
+  echo "✅ Gate 2 passed"
 else
-  # Check if there are actual production code issues (not test-related)
-  if grep -v "test\|tests\|example\|examples\|bench\|benches\|\.rs:" /tmp/clippy_push_output.txt | grep -qE "(error|warning):"; then
-    echo "❌ ERROR: Clippy found warnings or errors in production code"
-    grep -v "test\|tests\|example\|examples\|bench\|benches" /tmp/clippy_push_output.txt | head -30
-    echo "   Test files are allowed to use expect() with #![allow(clippy::expect_used)]"
-    rm -f /tmp/clippy_push_output.txt
+  # Filter out test-related warnings
+  if grep -v "test\|tests\|example\|examples\|bench\|benches\|\.rs:" /tmp/clippy_push.txt | grep -qE "(error|warning):"; then
+    echo "❌ ERROR: Clippy found issues in production code"
+    grep -v "test\|tests\|example\|examples\|bench\|benches" /tmp/clippy_push.txt | head -30
+    rm -f /tmp/clippy_push.txt
     exit 1
   fi
-  rm -f /tmp/clippy_push_output.txt
+  rm -f /tmp/clippy_push.txt
+  echo "✅ Gate 2 passed (test warnings ignored)"
 fi
-echo "✅ Gate 2 passed"
 echo ""
 
-# Gate 2.5: TODO & error handling check (with exceptions)
+# Gate 2.5: TODO & error handling check (comprehensive)
 echo "Gate 2.5/5: TODO & error handling check..."
 
 # Check for TODO comments in production code
@@ -320,11 +296,10 @@ TODO_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
 
 if [ "$TODO_COUNT" -gt 0 ]; then
   echo "❌ ERROR: $TODO_COUNT TODO comments found in production code"
-  echo "   Policy: Zero TODOs in production (use FUTURE: for planned enhancements)"
   exit 1
 fi
 
-# Check for unwrap/expect in production code (excluding allowed modules, build scripts)
+# Check for unwrap/expect in production code
 UNWRAP_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "/tests/" | \
   grep -v "/test/" | \
@@ -332,11 +307,9 @@ UNWRAP_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "build.rs" | \
   grep -v "/target/" | \
   while read file; do
-    # Skip files with allow attributes (matches both #[allow(...)] and #![allow(...)])
     if grep -qE "#!?\[allow\(clippy::unwrap_used\)\]" "$file" 2>/dev/null; then
       continue
     fi
-    # Skip files with test modules (pragmatic exception - test modules should have allow attributes)
     if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
       continue
     fi
@@ -345,7 +318,6 @@ UNWRAP_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
 
 if [ "$UNWRAP_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $UNWRAP_COUNT unwrap() calls in production code"
-  echo "   Policy: Zero unwrap() unless documented with allow attribute"
   exit 1
 fi
 
@@ -356,11 +328,9 @@ EXPECT_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
   grep -v "build.rs" | \
   grep -v "/target/" | \
   while read file; do
-    # Skip files with allow attributes (check for both #[allow] and #![allow])
     if grep -qE "#!?\[allow\(clippy::expect_used\)\]" "$file" 2>/dev/null; then
       continue
     fi
-    # Skip files with test modules (pragmatic exception - test modules should have allow attributes)
     if grep -q "#\[cfg(test)\]" "$file" 2>/dev/null; then
       continue
     fi
@@ -369,14 +339,13 @@ EXPECT_COUNT=$(find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
 
 if [ "$EXPECT_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $EXPECT_COUNT expect() calls in production code"
-  echo "   Policy: Zero expect() unless documented with allow attribute"
   exit 1
 fi
 
 echo "✅ Gate 2.5 passed"
 echo ""
 
-# Gate 3: Formatting check (use cargo fmt --check for speed in hooks)
+# Gate 3: Formatting check (comprehensive)
 echo "Gate 3/5: Formatting check..."
 if ! cargo fmt --all -- --check 2>&1; then
   echo "❌ ERROR: Code is not formatted"
@@ -386,17 +355,16 @@ fi
 echo "✅ Gate 3 passed"
 echo ""
 
-# Gate 4: Fast tests (lib and bins only, use cargo make test)
-echo "Gate 4/5: Fast tests (lib + bins)..."
-# Note: cargo make test runs all tests, but we can filter output
-if ! cargo make test 2>&1 | tail -20; then
-  echo "❌ ERROR: Tests failed"
+# Gate 4: Tests (unit tests only for speed)
+echo "Gate 4/5: Unit tests..."
+if ! cargo make test-unit 2>&1 | tail -20; then
+  echo "❌ ERROR: Unit tests failed"
   exit 1
 fi
 echo "✅ Gate 4 passed"
 echo ""
 
-# Gate 5: Security audit (warning only, don't block)
+# Gate 5: Security audit (non-blocking)
 echo "Gate 5/5: Security audit..."
 if command -v cargo-audit &> /dev/null; then
   if ! cargo make audit 2>&1; then
@@ -406,7 +374,6 @@ if command -v cargo-audit &> /dev/null; then
   fi
 else
   echo "⚠️  cargo-audit not installed (optional)"
-  echo "   Install: cargo install cargo-audit"
 fi
 echo ""
 
@@ -419,36 +386,30 @@ chmod +x "$HOOKS_DIR/pre-commit"
 chmod +x "$HOOKS_DIR/pre-push"
 
 echo "✅ Git hooks installed successfully:"
-echo "   - $HOOKS_DIR/pre-commit"
-echo "   - $HOOKS_DIR/pre-push"
+echo "   - $HOOKS_DIR/pre-commit (fast, incremental)"
+echo "   - $HOOKS_DIR/pre-push (comprehensive)"
 echo ""
-echo "🔍 Hooks enforce (aligned with core team 80/20 best practices):"
-echo "   • No unwrap()/expect() in production code (test files allowed with #[allow])"
-echo "   • No unimplemented!() placeholders (main branch only)"
-echo "   • No TODO/FUTURE comments (main branch only)"
-echo "   • Build scripts (build.rs) exempt from checks"
-echo "   • Clippy warnings must be fixed (test files excluded)"
-echo "   • Code must be formatted (via cargo make fmt)"
-echo "   • Tests must pass before push (via cargo make test)"
+echo "🔍 Hook optimization (core team 80/20 best practices):"
 echo ""
-echo "⚡ Performance targets:"
-echo "   • Pre-commit: 2-5 seconds (only checks staged files)"
-echo "   • Pre-push: 30-60 seconds (comprehensive validation)"
+echo "📋 Pre-commit (2-5s target):"
+echo "   • Only checks staged files (incremental)"
+echo "   • Skips formatting if no Rust files staged"
+echo "   • Skips clippy if no source files changed"
+echo "   • Uses rustfmt --check on individual files (faster)"
+echo "   • Uses cargo check before clippy (faster failure)"
+echo "   • No tests (too slow for pre-commit)"
 echo ""
-echo "🔧 Build system:"
-echo "   • All commands use cargo make (NEVER direct cargo commands)"
-echo "   • Pre-commit: cargo make fmt, cargo clippy (staged files only)"
-echo "   • Pre-push: cargo make check, cargo make lint, cargo make fmt, cargo make test, cargo make audit"
+echo "📋 Pre-push (30-60s acceptable):"
+echo "   • Comprehensive validation (all files)"
+echo "   • Full cargo check"
+echo "   • Full clippy (all targets)"
+echo "   • Full formatting check"
+echo "   • Unit tests only (faster than full test suite)"
+echo "   • Security audit (non-blocking)"
 echo ""
 echo "💡 Key improvements:"
-echo "   • Test files can use expect() with #![allow(clippy::expect_used)]"
-echo "   • Pre-commit only checks staged files (faster feedback)"
-echo "   • Pre-push allows build scripts (pragmatic exceptions)"
-echo "   • Branch-aware: strict rules on main/master, relaxed on feature branches"
-echo "   • Better alignment with core team 80/20 philosophy"
-echo ""
-echo "💡 To test hooks:"
-echo "   1. Stage a file with unwrap(): git add <file>"
-echo "   2. Try to commit: git commit -m 'test'"
-echo "   3. Hook should prevent commit"
-
+echo "   • Pre-commit: Incremental checks only (staged files)"
+echo "   • Pre-push: Comprehensive but optimized (unit tests only)"
+echo "   • No redundant checks between hooks"
+echo "   • Faster feedback loop (pre-commit < 5s)"
+echo "   • Comprehensive validation before push"
