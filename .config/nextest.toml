@@ -1,22 +1,13 @@
 # Cargo Nextest Configuration
-# Enforces 1s timeout for all tests to ensure SLA compliance
+# Fast unit tests (1s timeout) and slow integration tests (30s timeout)
 
 [profile.default]
-# Slow test timeout: 1 second (SLA requirement)
+# Fast profile for unit tests (1s timeout for SLA compliance)
 slow-timeout = { period = "1s", terminate-after = 1 }
-
-# Test timeout: 1 second maximum
-test-timeout = "1s"
-
-# Overhead timeout: 500ms for test setup/teardown
-overhead-timeout = "500ms"
 
 # Global timeout: 10 seconds for entire test suite
 # (allows for parallel execution while maintaining per-test SLA)
 global-timeout = "10s"
-
-# Kill slow tests immediately (don't wait)
-terminate-after = 1
 
 # Retry configuration (disabled for deterministic results)
 retries = 0
@@ -28,7 +19,24 @@ test-threads = "num-cpus"
 status-level = "none"
 failure-output = "immediate"
 
-[profile.default.env]
-# Set test timeout environment variable
-RUST_TEST_TIMEOUT = "1"
+# Exclude testcontainers integration tests from default profile
+# These are slow and require Docker - use integration profile instead
+# Note: Exclusion is done via command-line --skip flag in Makefile.toml
 
+[profile.integration]
+# Slow profile for integration tests (30s timeout)
+# Used for testcontainers tests that require Docker
+slow-timeout = { period = "30s", terminate-after = 1 }
+
+# Global timeout: 60 seconds for integration test suite
+global-timeout = "60s"
+
+# Retry configuration (disabled for deterministic results)
+retries = 0
+
+# Parallel execution (slower for integration tests)
+test-threads = "num-cpus"
+
+# Output configuration
+status-level = "none"
+failure-output = "immediate"

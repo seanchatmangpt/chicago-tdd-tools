@@ -6,10 +6,173 @@ All code must be production-ready with proper error handling. Focus on critical 
 
 **Key Principle**: "Never trust the text, only trust test results" - All implementations must be verifiable through tests.
 
-## Identity: Chicago TDD Testing Framework
+## Workflow Commands
 
-* **Prime**: Fast, reliable testing framework for Chicago TDD methodology in Rust
-* **Non-negotiables**: Zero-cost abstractions. Memory safety. Type-level guarantees. Stable toolchain. Test behavior verification.
+**Use these commands for complex workflows**:
+- **[ACP Command](.cursor/commands/acp.md)** - Add, commit, push workflow with validation
+- **[Verify Tests Command](.cursor/commands/verify-tests.md)** - Test verification workflow
+- **[Expert Testing Patterns](.cursor/commands/expert-testing-patterns.md)** - Expert-level testing workflows
+
+**Lean Six Sigma Commands** (expert-level coding behavior):
+- **[Eliminate Muda](.cursor/commands/eliminate-muda.md)** - Identify and eliminate waste in code
+- **[Gemba Walk](.cursor/commands/gemba-walk.md)** - Go to source, verify actual behavior
+- **[Poka-Yoke Design](.cursor/commands/poka-yoke-design.md)** - Design code to prevent errors at compile time
+- **[DMAIC Problem Solving](.cursor/commands/dmaic-problem-solving.md)** - Systematic problem-solving methodology
+- **[Kaizen Improvement](.cursor/commands/kaizen-improvement.md)** - Continuous small improvements
+- **[Eliminate Mura](.cursor/commands/eliminate-mura.md)** - Eliminate unevenness and inconsistency
+- **[Andon Signals](.cursor/commands/andon-signals.md)** - Treat compiler errors and test failures as stop signals
+- **[Root Cause Analysis](.cursor/commands/root-cause-analysis.md)** - Use 5 Whys to find root causes
+
+## Critical Non-Negotiables
+
+### Build System: ALWAYS Use Cargo Make
+
+**NEVER use these directly:**
+- ❌ `cargo check`, `cargo build`, `cargo test`, `cargo clippy`, `cargo fmt`
+
+**ALWAYS use these instead:**
+- ✅ `cargo make check` - Check compilation
+- ✅ `cargo make build` - Build crate
+- ✅ `cargo make test` - Run all tests
+- ✅ `cargo make lint` - Lint code
+- ✅ `cargo make fmt` - Format code
+- ✅ `cargo make pre-commit` - Pre-commit validation
+
+**Rationale**: Cargo-make handles proc-macro crate correctly, includes timeouts, and ensures consistent configuration.
+
+### Behavior Verification: Tests Must Verify Observable Outputs
+
+**Prohibited**:
+- ❌ Tests that only verify `assert_ok!()` or `assert_err!()` without checking outputs
+- ❌ Tests that don't verify state changes, outputs, execution order, or actual effects
+
+**Required**:
+- ✅ Tests verify what code does (observable outputs/state), not just that functions exist
+- ✅ Tests check state changes, outputs, execution order, or actual effects
+
+**Example**:
+```rust
+// ❌ BAD: Only checks function exists
+chicago_test!(test_function, {
+    let result = function();
+    assert_ok!(result); // Doesn't verify behavior
+});
+
+// ✅ GOOD: Verifies observable behavior
+chicago_test!(test_function, {
+    let input = 5;
+    let result = function(input);
+    assert_eq!(result, 10); // Verifies actual behavior
+});
+```
+
+### Chicago TDD Principles
+
+1. **State-Based Testing**: Tests verify outputs and state, not implementation details
+2. **Real Collaborators**: Use real objects, minimize mocks
+3. **Behavior Verification**: Tests verify what code does, not how
+4. **AAA Pattern**: Arrange-Act-Assert structure required
+
+**Reference**: See [Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc) for complete principles
+
+## Completion Workflow - MANDATORY STEPS
+
+### Step 1: Run Tests Immediately
+
+**Action**: Run tests before making any completion claims.
+
+```bash
+cargo make test
+```
+
+**If tests fail**: 
+- **STOP** - Do not mark work complete
+- Extract failing test names
+- Create rich todos (see below)
+- Fix tests
+- Re-run `cargo make test`
+- Only proceed when all tests pass
+
+**Reference**: See [Verify Tests Command](.cursor/commands/verify-tests.md) for complete workflow
+
+### Step 2: Create Rich Todos for Failures
+
+**Action**: Create detailed todos for each failing test.
+
+**Rich Todo Format**:
+```markdown
+- [ ] Fix failing test: `test_fixture_creation`
+  - Error: `assertion failed: expected 1, got 0`
+  - File: `src/fixture.rs:123`
+  - Root cause: Counter initialization issue
+  - Fix: Initialize counter to 1 instead of 0
+  - Status: `pending`
+```
+
+**Include**: Test name, error message, file/line, root cause, proposed fix, status
+
+**Batch Creation**: Create 5-10+ related todos in a single `TodoWrite` call, not one at a time.
+
+### Step 3: Fix Tests Systematically
+
+**Action**: Fix each failing test one at a time.
+
+1. Read test failure message
+2. Identify root cause
+3. Fix the issue
+4. Run specific test: `cargo make test test_name`
+5. Verify fix works
+6. Update todo status to `completed`
+7. Remove from todo list when fixed
+
+### Step 4: Re-Run All Tests
+
+**Action**: Verify all fixes worked.
+
+```bash
+cargo make test
+```
+
+**If still failing**: Return to Step 2, create new todos for remaining failures
+
+### Step 5: Verify Completion Criteria
+
+**Check all of these**:
+- ✅ All tests pass (`cargo make test` exits with code 0)
+- ✅ No compilation errors (`cargo make check` succeeds)
+- ✅ No test failures
+- ✅ All failing tests have been fixed and removed from todo list
+- ✅ No pending todos related to test failures
+
+**Only then**: Mark work as complete
+
+**CRITICAL**: Never mark todos as complete without running `cargo make test` first.
+
+## Running Tests Quickly
+
+### Quick Feedback Commands
+
+**Action**: Run only what you need for fast feedback.
+
+```bash
+cargo make check          # Fast: Check compilation only (~1s)
+cargo make test-unit      # Fast: Unit tests only (~1s)
+cargo make test-examples  # Fast: Examples only (~1s)
+cargo make test test_name # Fast: Single test for rapid iteration
+```
+
+**Full validation**:
+```bash
+cargo make test           # Complete: All tests
+cargo make pre-commit     # Complete: Format, lint, test
+```
+
+### Test Failure Workflow
+
+1. Run tests: `cargo make test`
+2. If failures found, run specific test: `cargo make test test_failing_name`
+3. Fix and verify quickly: `cargo make check` then `cargo make test test_failing_name`
+4. Run all tests before completion: `cargo make test`
 
 ## Prohibited Patterns ❌
 
@@ -19,9 +182,8 @@ All code must be production-ready with proper error handling. Focus on critical 
 4. **Stubs** - No functions that always succeed without implementation
 5. **Simulated behavior** - Use real libraries when available
 6. **Claims without verification** - Never claim code works without test validation
-7. **Meaningless tests** - No tests that only verify `assert_ok!()` or `assert_err!()` without checking observable outputs/state changes
-8. **Tests without behavior verification** - All tests must verify state changes, outputs, execution order, or actual effects
-9. **Direct cargo commands** - NEVER use `cargo check`, `cargo build`, `cargo test` directly. ALWAYS use `cargo make check`, `cargo make build`, `cargo make test` instead
+7. **Meaningless tests** - No tests that only verify `assert_ok!()` or `assert_err!()` without checking observable outputs
+8. **Direct cargo commands** - NEVER use `cargo check`, `cargo build`, `cargo test` directly
 
 ## Required Patterns ✅
 
@@ -29,595 +191,35 @@ All code must be production-ready with proper error handling. Focus on critical 
 2. **Error handling** - `Result<T, E>` for all fallible operations
 3. **Feature gating** - `#[cfg(feature = "...")]` for optional dependencies
 4. **Test verification** - All code must be testable and tested
-5. **Behavior verification** - Tests must verify what code does (observable outputs/state), not just that functions exist
-6. **Observable outputs** - Tests must check state changes, outputs, execution order, or actual effects
-7. **Chicago TDD principles** - State-based testing, real collaborators, behavior verification
+5. **Behavior verification** - Tests must verify observable outputs/state, not just function existence
+6. **Chicago TDD principles** - State-based testing, real collaborators, behavior verification
 
-## Chicago TDD Principles
+## Expert Testing
 
-### State-Based Testing
-- Tests verify outputs and state, not implementation details
-- Use real collaborators, not mocks
-- Verify behavior, not internal structure
-
-### AAA Pattern
-- **Arrange**: Set up test data and fixtures
-- **Act**: Execute the code under test
-- **Assert**: Verify observable outputs and state changes
-
-### Test Quality
-- Tests must verify observable behavior
-- No tests that only check function existence
-- Tests must catch regressions and edge cases
-
-## Critical Best Practices
-
-### Security
-- Validate all inputs
-- Never hardcode credentials or secrets
-- Use proper error handling
-
-### Performance
-- Zero-copy when possible (references over clones)
-- Efficient test execution
-- Minimal test overhead
-
-### Error Handling
-- Use `Result<T, E>` for all fallible operations
-- Never use `unwrap()` or `expect()` in production code paths
-- Provide context in error messages
-
-### Resource Management
-- Clean up resources in error paths
-- Use RAII (Rust) or proper cleanup patterns
-- Close connections, files, handles
-
-### Testing & Validation
-- Test all public APIs
-- Test error paths and edge cases (80% of bugs are in error paths)
-- Test critical paths (aim for 80%+ coverage)
-- **Never trust claims without test verification**
-- Test results > code comments > agent claims
-- **Test behavior, not existence** - Tests must verify observable outputs/state, not just that functions return Ok/Err
-- **JTBD alignment** - Test names/comments must match what the test actually verifies
-- **Expert-level testing**: Test error paths, boundary conditions, resource cleanup, concurrency, integration with real dependencies
-- **Property-based testing**: Use random inputs to find edge cases
-- **Memory safety**: Use Miri (`cargo miri test`) to catch memory bugs
-- **Regression testing**: Test that fixed bugs don't come back
-
-### Completion Workflow
-- **MANDATORY: Run tests before marking todos as complete**
-- **ALWAYS run `cargo make test` before completing any work**
-- If tests fail, add failing test names to todo list with status "pending"
-- Fix failing tests before marking tasks complete
-- Only mark todos as complete when ALL tests pass
-- Never claim completion without running tests
-- Test results are truth - code doesn't work if tests don't pass
-
-### Determinism & Provenance
-- All operations must be deterministic and idempotent
-- Tests must be reproducible
-- Use fixed seeds for property-based tests
-
-## Language-Specific Rules
-
-### Rust
-- `Result<T, E>` for fallible operations
-- Feature gates: `#[cfg(feature = "...")]`
-- Borrow when possible: `&[u8]` over `Vec<u8>`
-- No `unwrap()` in production code paths
-- **CRITICAL**: NEVER use `cargo check`, `cargo build`, `cargo test` directly. ALWAYS use `cargo make check`, `cargo make build`, `cargo make test` instead
-
-## Build System Usage
-
-### CRITICAL: Use Cargo Make, Not Direct Cargo Commands
-
-**NEVER use these directly:**
-- ❌ `cargo check`
-- ❌ `cargo build`
-- ❌ `cargo test`
-- ❌ `cargo clippy`
-- ❌ `cargo fmt`
-
-**ALWAYS use these cargo-make targets instead:**
-- ✅ `cargo make check` - Check compilation without building
-- ✅ `cargo make build` - Build the crate
-- ✅ `cargo make test` - Run all tests
-- ✅ `cargo make lint` or `cargo make clippy` - Lint Rust code
-- ✅ `cargo make fmt` - Format Rust code (NEVER use `cargo fmt` directly)
-- ✅ `cargo make pre-commit` - Run pre-commit validation checks
-
-**Rationale:**
-- Cargo-make targets ensure consistent build configuration
-- Cargo-make targets handle proc-macro crate correctly
-- Cargo-make targets include proper timeouts and error handling
-- Cargo-make targets provide consistent output formatting
-
-## Code Review Checklist
-
-- [ ] All functions have proper error handling
-- [ ] No `unwrap()` or `panic!()` in production paths
-- [ ] Real implementations, not placeholders
-- [ ] Feature-gated when dependencies are optional
-- [ ] Tests cover critical paths
-- [ ] Resources are properly cleaned up
-- [ ] No secrets or credentials in code
-- [ ] Code verified with tests/validation
-- [ ] Tests verify observable outputs/state changes, not just function existence
-- [ ] Tests match their JTBD comments (test what they claim to test)
-- [ ] **Build system**: Used `cargo make check` instead of `cargo check` directly
-- [ ] **Tests passing**: All tests pass (`cargo make test`)
-- [ ] **Test failures tracked**: Any failing tests added to todo list
-- [ ] **Expert testing**: Error paths tested (all error variants)
-- [ ] **Expert testing**: Boundary conditions tested (empty, single, max, zero, negative)
-- [ ] **Expert testing**: Resource cleanup tested in error/panic paths
-- [ ] **Expert testing**: Concurrency tested (if applicable)
-- [ ] **Expert testing**: Integration tests use real dependencies (not just mocks)
-
-## 80/20 Focus Areas
-
-### Critical Path (80% of value)
-- Core testing framework functionality
-- Fixture management
-- Assertion helpers
-- Test macros
-- Property-based testing basics
-
-### Defer (20% edge cases)
-- Complex mutation testing strategies
-- Advanced coverage analysis
-- Exotic test generators
-
-## Examples
-
-### BAD: Placeholder Implementation
-```rust
-impl TestFixture {
-    fn new() -> Result<Self, TestError> {
-        // TODO: Implement fixture creation
-        Ok(Self {})
-    }
-}
-```
-
-### GOOD: Real Implementation
-```rust
-impl TestFixture {
-    fn new() -> Result<Self, TestError> {
-        let counter = AtomicU64::new(0);
-        Ok(Self {
-            counter,
-            created_at: SystemTime::now(),
-        })
-    }
-}
-```
-
-### BAD: Unhandled Error
-```rust
-fn process(input: &str) -> u64 {
-    input.parse().unwrap()
-}
-```
-
-### GOOD: Proper Error Handling
-```rust
-fn process(input: &str) -> Result<u64, ProcessingError> {
-    if input.is_empty() {
-        return Err(ProcessingError::EmptyInput);
-    }
-    
-    input.parse()
-        .map_err(|e| ProcessingError::ParseFailed(e.to_string()))
-}
-```
-
-### BAD: Meaningless Test
-```rust
-#[test]
-fn test_function() {
-    let result = function();
-    assert_ok!(result); // Doesn't verify what the function actually does
-}
-```
-
-### GOOD: Behavior Verification Test
-```rust
-#[test]
-fn test_function() {
-    // Arrange
-    let input = 5;
-    
-    // Act
-    let result = function(input);
-    
-    // Assert: Verify observable output
-    assert_eq!(result, 10); // Verifies actual behavior
-}
-```
-
-## Expert-Level Testing Patterns
-
-### Critical Testing Areas (80/20 Rule)
-
-The Rust core team emphasizes testing these areas that juniors commonly miss - these 20% of test cases catch 80% of production bugs:
-
-#### 1. Error Path Testing (Critical - 80% of bugs)
-
-**❌ JUNIOR**: Only tests happy path
-```rust
-#[test]
-fn test_parse_number() {
-    let result = parse_number("42");
-    assert_eq!(result.unwrap(), 42);
-}
-```
-
-**✅ EXPERT**: Tests all error variants, error propagation, error recovery
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_parse_number_all_error_paths, {
-    // Arrange: Test all error variants
-    let test_cases = vec![
-        ("", ParseError::EmptyInput),
-        ("abc", ParseError::InvalidFormat),
-        ("999999999999999999999", ParseError::Overflow),
-        ("-0", ParseError::InvalidFormat), // Edge case
-        (" 42 ", ParseError::InvalidFormat), // Whitespace
-    ];
-    
-    // Act & Assert: Verify each error path
-    for (input, expected_error) in test_cases {
-        let result = parse_number(input);
-        assert_err!(&result, format!("Should fail for input: {}", input));
-        match result {
-            Err(e) => assert_eq!(e, expected_error, "Error variant mismatch"),
-            Ok(_) => panic!("Expected error for input: {}", input),
-        }
-    }
-    
-    // Also test error recovery
-    let mut parser = NumberParser::new();
-    assert_err!(&parser.parse("invalid"));
-    // Parser should still be usable after error
-    assert_ok!(&parser.parse("42"), "Parser should recover from error");
-});
-```
-
-#### 2. Boundary Condition Testing
-
-**❌ JUNIOR**: Tests normal values only
-```rust
-#[test]
-fn test_process_collection() {
-    let items = vec![1, 2, 3];
-    assert_eq!(process_collection(&items).unwrap(), 6);
-}
-```
-
-**✅ EXPERT**: Tests empty, single item, max values, zero, negative
-```rust
-use chicago_tdd_tools::prelude::*;
-
-chicago_test!(test_collection_boundaries, {
-    // Arrange: Test empty collection
-    let empty: Vec<i32> = vec![];
-    assert_eq!(process_collection(&empty).unwrap(), 0, "Empty collection should return 0");
-    
-    // Arrange: Test single item
-    let single = vec![42];
-    assert_eq!(process_collection(&single).unwrap(), 42, "Single item should work");
-    
-    // Arrange: Test max capacity (avoid OOM in test)
-    let max_size = vec![0; usize::MAX / 8];
-    let result = process_collection(&max_size);
-    assert_ok!(&result, "Should handle large collections");
-    
-    // Arrange: Test zero values
-    let zeros = vec![0; 100];
-    assert_eq!(process_collection(&zeros).unwrap(), 0, "Zero values should work");
-    
-    // Arrange: Test negative values (if applicable)
-    let negatives = vec![-1, -2, -3];
-    let result = process_collection(&negatives);
-    match result {
-        Ok(v) => assert!(v < 0, "Negative sum should be negative"),
-        Err(e) => assert!(matches!(e, ProcessingError::NegativeNotAllowed)),
-    }
-});
-```
-
-#### 3. Resource Cleanup Testing
-
-**❌ JUNIOR**: Assumes cleanup happens automatically
-```rust
-#[test]
-fn test_create_resource() {
-    let resource = create_resource();
-    assert_ok!(&resource);
-    // Assumes resource is cleaned up
-}
-```
-
-**✅ EXPERT**: Tests cleanup in error paths, panic safety, double-drop safety
-```rust
-use chicago_tdd_tools::prelude::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
-
-static DROP_COUNT: AtomicUsize = AtomicUsize::new(0);
-
-struct TestResource {
-    id: usize,
-}
-
-impl Drop for TestResource {
-    fn drop(&mut self) {
-        DROP_COUNT.fetch_add(1, Ordering::SeqCst);
-    }
-}
-
-chicago_test!(test_resource_cleanup_all_paths, {
-    // Arrange: Reset counter
-    DROP_COUNT.store(0, Ordering::SeqCst);
-    
-    // Test 1: Normal cleanup
-    {
-        let resource = TestResource { id: 1 };
-        // Resource should drop here
-    }
-    assert_eq!(DROP_COUNT.load(Ordering::SeqCst), 1, "Resource should be dropped");
-    
-    // Test 2: Cleanup in error path
-    DROP_COUNT.store(0, Ordering::SeqCst);
-    let result: Result<(), String> = (|| {
-        let resource = TestResource { id: 2 };
-        return Err("error".to_string()); // Error path
-        // Resource should still drop
-    })();
-    assert_err!(&result);
-    assert_eq!(DROP_COUNT.load(Ordering::SeqCst), 1, "Resource should drop even in error path");
-    
-    // Test 3: Panic safety
-    DROP_COUNT.store(0, Ordering::SeqCst);
-    let result = std::panic::catch_unwind(|| {
-        let resource = TestResource { id: 3 };
-        panic!("test panic");
-        // Resource should still drop
-    });
-    assert!(result.is_err(), "Should catch panic");
-    assert_eq!(DROP_COUNT.load(Ordering::SeqCst), 1, "Resource should drop even on panic");
-});
-```
-
-#### 4. Concurrency and Race Condition Testing
-
-**❌ JUNIOR**: Tests single-threaded only
-```rust
-#[test]
-fn test_counter() {
-    let counter = Counter::new();
-    counter.increment();
-    assert_eq!(counter.value(), 1);
-}
-```
-
-**✅ EXPERT**: Tests concurrent access, race conditions, Send/Sync bounds
-```rust
-use chicago_tdd_tools::prelude::*;
-use std::sync::Arc;
-use std::thread;
-
-chicago_test!(test_concurrent_access, {
-    // Arrange: Shared state
-    let counter = Arc::new(std::sync::Mutex::new(0));
-    let mut handles = vec![];
-    
-    // Act: Spawn multiple threads
-    for _ in 0..10 {
-        let counter = Arc::clone(&counter);
-        let handle = thread::spawn(move || {
-            for _ in 0..100 {
-                let mut value = counter.lock().unwrap();
-                *value += 1;
-            }
-        });
-        handles.push(handle);
-    }
-    
-    // Wait for all threads
-    for handle in handles {
-        handle.join().unwrap();
-    }
-    
-    // Assert: Verify final state
-    let final_value = counter.lock().unwrap();
-    assert_eq!(*final_value, 1000, "All increments should be applied");
-    
-    // Also test: Verify Send + Sync bounds
-    fn assert_send<T: Send>() {}
-    fn assert_sync<T: Sync>() {}
-    assert_send::<Arc<Mutex<i32>>>();
-    assert_sync::<Arc<Mutex<i32>>>();
-});
-```
-
-#### 5. Property-Based Testing
-
-**❌ JUNIOR**: Tests fixed inputs only
-```rust
-#[test]
-fn test_reverse() {
-    assert_eq!(reverse("hello"), "olleh");
-}
-```
-
-**✅ EXPERT**: Tests random inputs, property invariants
-```rust
-use chicago_tdd_tools::prelude::*;
-
-#[cfg(feature = "property-testing")]
-chicago_test!(test_reverse_property, {
-    use chicago_tdd_tools::property::PropertyTestGenerator;
-    
-    // Arrange: Create generator
-    let mut generator = PropertyTestGenerator::new()
-        .with_max_items(1000)
-        .with_seed(42);
-    
-    // Act & Assert: Test property for all generated inputs
-    assert!(
-        property_all_reverses_correctly(&mut generator, 1000),
-        "Property: reverse(reverse(x)) == x for all inputs"
-    );
-});
-
-fn property_all_reverses_correctly(
-    generator: &mut PropertyTestGenerator,
-    iterations: usize,
-) -> bool {
-    for _ in 0..iterations {
-        let input = generator.generate_string(10, 100);
-        let reversed_once: String = input.chars().rev().collect();
-        let reversed_twice: String = reversed_once.chars().rev().collect();
-        
-        if input != reversed_twice {
-            return false; // Property violated
-        }
-    }
-    true // Property holds for all tested inputs
-}
-```
-
-#### 6. Integration Testing with Real Collaborators
-
-**❌ JUNIOR**: Uses mocks for everything
-```rust
-#[test]
-fn test_user_service() {
-    let mock_db = MockDatabase::new();
-    let service = UserService::new(mock_db);
-    // Tests with mock
-}
-```
-
-**✅ EXPERT**: Tests with real dependencies, real interactions
-```rust
-use chicago_tdd_tools::prelude::*;
-
-#[tokio::test]
-async fn test_integration_real_database() {
-    // Arrange: Use real test database (not mock)
-    let db = setup_test_database().await.unwrap();
-    
-    // Act: Execute real operations
-    let user = create_user(&db, "test_user").await.unwrap();
-    let retrieved = get_user(&db, user.id).await.unwrap();
-    
-    // Assert: Verify real state changes
-    assert_eq!(retrieved.id, user.id);
-    assert_eq!(retrieved.name, "test_user");
-    
-    // Verify: Database actually persisted data
-    let count = count_users(&db).await.unwrap();
-    assert_eq!(count, 1, "User should be persisted in database");
-    
-    // Cleanup: Real cleanup (important!)
-    cleanup_test_database(&db).await.unwrap();
-}
-```
-
-### Expert Testing Checklist
-
-Before marking tests complete, verify expert-level coverage:
-
-- [ ] **Error paths**: All error variants tested (not just happy path)
-- [ ] **Boundary conditions**: Empty, single, max, zero, negative tested
-- [ ] **Resource cleanup**: Cleanup tested in error paths and panic paths
-- [ ] **Concurrency**: Concurrent access patterns tested (if applicable)
-- [ ] **Memory safety**: No leaks, use-after-free, double-free (use Miri: `cargo miri test`)
-- [ ] **Property-based**: Key invariants tested with random inputs
-- [ ] **Regression**: Previously fixed bugs have regression tests
-- [ ] **Integration**: Real dependencies tested, not just mocks
-- [ ] **Panic safety**: Panics don't corrupt state
-- [ ] **Unsafe invariants**: Unsafe code invariants verified (if applicable)
-- [ ] **Send/Sync bounds**: Concurrency safety verified
-- [ ] **Drop behavior**: Drop implementations tested
-- [ ] **Lifetime safety**: References don't outlive data (use Miri)
-
-### Common Junior Mistakes to Avoid
-
-1. ❌ **Only testing happy path** - Most bugs are in error paths (80% of bugs)
-2. ❌ **Not testing boundary conditions** - Edge cases cause production bugs
-3. ❌ **Not testing resource cleanup** - Leaks accumulate over time
-4. ❌ **Not testing concurrency** - Race conditions are hard to reproduce
-5. ❌ **Not testing with real dependencies** - Mocks hide integration issues
-6. ❌ **Not testing panic safety** - Panics can corrupt state
-7. ❌ **Not using property-based testing** - Fixed inputs miss edge cases
-8. ❌ **Not testing regressions** - Bugs come back without regression tests
-
-### Expert Testing Tools
-
-- **Miri**: Memory safety testing (`cargo miri test`)
-- **Loom**: Concurrency testing (`cargo test --features loom`)
-- **Property-based**: `chicago-tdd-tools` property testing features
-- **Fuzzing**: `cargo fuzz` for random input testing
-- **Sanitizers**: AddressSanitizer, ThreadSanitizer
-
-### Expert Testing Philosophy
-
-**80/20 Rule**: Test the 20% of cases that cause 80% of bugs:
+**Action**: Test the 20% of cases that catch 80% of bugs:
 - Error paths (not just happy path)
-- Boundary conditions (not just normal values)
-- Resource cleanup (not just normal execution)
-- Concurrency (not just single-threaded)
+- Boundary conditions (empty, single, max, zero, negative)
+- Resource cleanup (error paths and panic paths)
+- Concurrency (if applicable)
 - Real dependencies (not just mocks)
 
-**Remember**: "Never trust the text, only trust test results" - especially for error paths and edge cases.
+**Reference**: See [Expert Testing Patterns Command](.cursor/commands/expert-testing-patterns.md) for complete workflows and examples
 
-## Completion Workflow
+## Documentation References
 
-### Before Marking Todos Complete
-
-1. **MANDATORY: Run tests**
-   ```bash
-   cargo make test
-   ```
-
-2. **If tests fail:**
-   - Extract failing test names from output
-   - Add to todo list with `status: "pending"`
-   - Fix failing tests
-   - Re-run `cargo make test`
-   - Remove from todo list when fixed
-
-3. **Only mark complete when:**
-   - All tests pass (`cargo make test` exits with code 0)
-   - No compilation errors
-   - No test failures
-   - All failing tests have been fixed and removed from todo list
-
-### Completion Criteria
-
-Work is NOT complete until:
-- ✅ All tests pass (`cargo make test`)
-- ✅ No compilation errors
-- ✅ No test failures
-- ✅ All failing tests have been fixed and removed from todo list
-
-**CRITICAL**: Never mark todos as complete without running `cargo make test` first.
+- **[Getting Started Guide](docs/GETTING_STARTED.md)** - Quick start with verified examples
+- **[User Guide](docs/USER_GUIDE.md)** - Comprehensive usage guide
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
+- **[Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc)** - Testing methodology
+- **[Build System Practices](.cursor/rules/build-system-practices.mdc)** - Build commands and workflows
 
 ## Summary
 
-**80/20 Focus**: Critical path implementations first, no placeholders, real error handling, proper validation, feature-gated dependencies.
+**Critical Requirements**:
+- ✅ Use `cargo make` commands, never direct `cargo` commands
+- ✅ Tests must verify observable outputs/state, not just function existence
+- ✅ Run `cargo make test` before marking work complete
+- ✅ Create rich todos for test failures
+- ✅ Follow Chicago TDD principles: state-based, real collaborators, behavior verification
 
-**Production-Ready**: No placeholders or stubs, real implementations, comprehensive testing, proper resource management.
-
-**Verification**: Never trust claims - verify with tests. Test results are truth.
-
-**Chicago TDD**: State-based testing, real collaborators, behavior verification, AAA pattern.
-
-**Expert Testing**: Test error paths (80% of bugs), boundary conditions, resource cleanup, concurrency, integration with real dependencies. Use property-based testing and Miri for memory safety.
-
-**Completion**: Always run `cargo make test` before marking work complete.
-
+**Workflow Commands**: Use [ACP Command](.cursor/commands/acp.md), [Verify Tests Command](.cursor/commands/verify-tests.md), and [Expert Testing Patterns](.cursor/commands/expert-testing-patterns.md) for complex workflows.

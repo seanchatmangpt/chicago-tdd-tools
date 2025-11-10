@@ -44,22 +44,74 @@ args = [
 [tasks.clippy]
 alias = "lint"
 
-# Testing tasks - 1s timeout for SLA
+# Testing tasks - Fast unit tests (1s timeout) and slow integration tests (30s timeout)
 # Using cargo-nextest for better timeout enforcement and faster execution
+# Testcontainers integration tests excluded from normal iteration (too slow, require Docker)
+
 [tasks.test]
-description = "Run all tests using cargo-nextest (1s timeout enforced)"
+description = "Run unit tests only (fast iteration, excludes testcontainers integration tests)"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--all-features"]
+args = [
+  "1s",
+  "cargo",
+  "nextest",
+  "run",
+  "--lib",
+  "--all-features",
+  "--",
+  "--skip",
+  "testcontainers",
+]
 
 [tasks.test-unit]
-description = "Unit tests only using cargo-nextest"
+description = "Unit tests only using cargo-nextest (excludes testcontainers integration tests)"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--lib", "--all-features"]
+args = [
+  "1s",
+  "cargo",
+  "nextest",
+  "run",
+  "--lib",
+  "--all-features",
+  "--",
+  "--skip",
+  "testcontainers",
+]
+
+[tasks.test-integration]
+description = "Run testcontainers integration tests only (30s timeout, requires Docker)"
+command = "timeout"
+args = [
+  "30s",
+  "cargo",
+  "nextest",
+  "run",
+  "--test",
+  "testcontainers_expert_tests",
+  "--profile",
+  "integration",
+  "--features",
+  "testcontainers",
+]
+
+[tasks.test-all]
+description = "Run all tests (unit + integration)"
+dependencies = ["test-unit", "test-integration"]
 
 [tasks.test-examples]
-description = "Run example tests using cargo-nextest"
+description = "Run example tests using cargo-nextest (excludes testcontainers examples)"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--examples", "--all-features"]
+args = [
+  "1s",
+  "cargo",
+  "nextest",
+  "run",
+  "--examples",
+  "--all-features",
+  "--",
+  "--skip",
+  "testcontainers",
+]
 
 [tasks.test-property]
 description = "Run property-based tests using cargo-nextest"
@@ -86,9 +138,20 @@ args = [
 env = { "RUST_TEST_THREADS" = "1" }
 
 [tasks.test-verbose]
-description = "Run tests with verbose output using cargo-nextest"
+description = "Run unit tests with verbose output (excludes testcontainers integration tests)"
 command = "timeout"
-args = ["1s", "cargo", "nextest", "run", "--all-features", "--", "--nocapture"]
+args = [
+  "1s",
+  "cargo",
+  "nextest",
+  "run",
+  "--lib",
+  "--all-features",
+  "--",
+  "--skip",
+  "testcontainers",
+  "--nocapture",
+]
 
 # Fallback: Standard cargo test (if nextest not available)
 [tasks.test-cargo]
@@ -174,8 +237,8 @@ args = ["5s", "cargo", "doc", "--no-deps", "--all-features"]
 
 # CI/CD tasks
 [tasks.ci]
-description = "Run CI pipeline"
-dependencies = ["fmt", "lint", "test", "audit-all"]
+description = "Run CI pipeline (unit tests only, excludes slow integration tests)"
+dependencies = ["fmt", "lint", "test-unit", "audit-all"]
 
 [tasks.release]
 description = "Create a release"

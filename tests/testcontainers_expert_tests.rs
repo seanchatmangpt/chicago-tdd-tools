@@ -285,31 +285,55 @@ mod expert_tests {
             return;
         }
 
+        use std::net::TcpStream;
+        use std::time::Duration;
         use testcontainers::core::WaitFor;
 
         let client = ContainerClient::new();
 
-        // Test: Container with wait condition (message wait)
-        // Note: This is a simplified test - real wait conditions would wait for HTTP/logs
+        // Arrange: Create nginx container with wait condition
+        // Chicago TDD: Use real HTTP service container (real collaborator)
+        // Note: WaitFor::http doesn't exist in testcontainers 0.25, use Duration instead
         let container_result = GenericContainer::with_wait_for(
             client.client(),
-            "alpine",
+            "nginx",
             "latest",
-            WaitFor::message_on_stdout("ready"), // Use message_on_stdout instead of message
+            WaitFor::Duration {
+                length: Duration::from_secs(5),
+            }, // Wait for container to start
         );
 
-        // Container creation should succeed (wait may timeout, but API should work)
-        // In real scenarios, you'd use WaitFor::http for HTTP services
-        match container_result {
-            Ok(_container) => {
-                // Success - wait condition worked, container is usable
-                // Container will be dropped here, testing cleanup
-            }
+        // Act: Wait condition should complete (container is ready)
+        let container = match container_result {
+            Ok(c) => c,
             Err(e) => {
-                // May fail if wait condition doesn't match, but API should be callable
-                eprintln!("Wait condition test note: {}", e);
+                panic!("Failed to create container with wait condition: {}", e);
             }
-        }
+        };
+
+        // Assert: Verify observable behavior - HTTP service is actually ready
+        // Chicago TDD: Verify what code does (HTTP responses), not just that API exists
+        let host_port = container
+            .get_host_port(80)
+            .unwrap_or_else(|e| panic!("Failed to get host port: {}", e));
+
+        // Verify HTTP service is accessible (observable behavior)
+        let socket_addr = format!("127.0.0.1:{}", host_port)
+            .parse()
+            .unwrap_or_else(|e| panic!("Failed to parse socket address: {}", e));
+        let connection_result = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(2));
+
+        assert_ok!(
+            &connection_result,
+            "HTTP service should be accessible after wait condition"
+        );
+
+        // Verify connection is actually established (state verification)
+        let stream = connection_result.unwrap();
+        assert!(
+            stream.peer_addr().is_ok(),
+            "Connection should be established to HTTP service"
+        );
     });
 
     // 9. EXECRESULT STRUCTURE TESTING

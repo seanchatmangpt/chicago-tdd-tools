@@ -356,6 +356,8 @@ echo "✅ Gate 3 passed"
 echo ""
 
 # Gate 4: Tests (unit tests only for speed)
+# Note: Testcontainers integration tests excluded (too slow, require Docker)
+# Run 'cargo make test-integration' manually if needed
 echo "Gate 4/5: Unit tests..."
 if ! cargo make test-unit 2>&1 | tail -20; then
   echo "❌ ERROR: Unit tests failed"
