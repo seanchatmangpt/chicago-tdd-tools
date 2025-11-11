@@ -43,13 +43,64 @@ This playground validates that all features work correctly for end users and pro
 
 ## Usage
 
-### Running Examples
+### CLI Commands
+
+The playground provides a unified CLI using the `playg` command with noun-verb patterns:
 
 ```bash
-# Run all examples
+# Show help
+playg --help
+
+# Show status of all core features
+playg core stat
+
+# List available core examples
+playg core list
+
+# Execute one or more examples
+playg core exec --names "fixtures"
+playg core exec --names "fixtures builders assert"
+
+# Show testing features status
+playg test stat
+
+# List available test examples
+playg test list
+
+# Execute test examples
+playg test exec --names "gen"
+
+# Show validation features status
+playg valid stat
+
+# Execute validation checks
+playg valid exec --names "cov guard"
+
+# Show observability features
+playg obs stat
+
+# Run OTEL demo (if otel feature enabled)
+playg obs otel
+
+# Run Weaver demo (if weaver feature enabled)
+playg obs weav
+
+# Show integration features
+playg integ stat
+
+# Run testcontainers demo (if testcontainers feature enabled)
+playg integ contain
+```
+
+All commands return JSON output by default, making them suitable for scripting and automation.
+
+### Running Examples (Legacy)
+
+```bash
+# Run all examples (legacy method)
 cargo run --bin playground
 
-# Run specific example module
+# Run specific example module (legacy method)
 cargo run --example core::fixtures
 ```
 

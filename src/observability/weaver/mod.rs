@@ -9,6 +9,8 @@ use std::path::{Path, PathBuf};
 use std::process::Child;
 use thiserror::Error;
 
+#[cfg(feature = "weaver")]
+pub mod poka_yoke;
 pub mod types;
 
 /// Weaver validation error

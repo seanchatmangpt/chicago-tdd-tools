@@ -101,6 +101,11 @@ rstest = { version = "^0.19", optional = true }
 # Note: Uses golden files (.trycmd) for CLI output comparison
 trycmd = { version = "^0.15", optional = true }
 
+# Git hooks support (optional, git-hooks feature)
+# When to use: Installing Rust-based git hooks, version-controlled hooks
+# Enables: git_hook_installer binary, git2 dependency for repository operations
+git2 = { version = "^0.20", optional = true }
+
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.0" }
 
@@ -163,6 +168,11 @@ parameterized-testing = ["dep:rstest"]
 # When to use: Testing CLI tools, verifying command output
 # Enables: testing::cli module, CliTest API, trycmd integration
 cli-testing = ["dep:trycmd"]
+
+# Git hooks support (optional, git-hooks feature)
+# When to use: Installing Rust-based git hooks, version-controlled hooks
+# Enables: git_hook_installer binary, git2 dependency for repository operations
+git-hooks = ["dep:git2"]
 
 # Observability features
 # OTEL validation: OpenTelemetry span/metric validation

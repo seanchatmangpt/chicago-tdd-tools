@@ -66,11 +66,23 @@ Never trust text, only test results. All code is production-ready with error han
 
 ## Prohibited Patterns
 
-Placeholders, TODOs (except documented future enhancements), unhandled errors (unwrap/expect/panics in production), stubs, simulated behavior, claims without verification, meaningless tests (only assert_ok without behavior check), direct cargo commands, type system misuse, unnecessary allocations, runtime checks when compile-time possible.
+Placeholders, TODOs (except documented future enhancements), unhandled errors (unwrap/expect/panics in production), stubs, simulated behavior, claims without verification, meaningless tests (only assert_ok without behavior check), direct cargo commands, type system misuse, unnecessary allocations, runtime checks when compile-time possible, `print!` and `println!` macros in library code (use `log!` macros or alert macros instead - exceptions: CLI binaries `src/bin/*.rs` for user-facing output, `build.rs` for Cargo build messages `println!("cargo:warning=...")`, test code for test output/debugging).
 
 ## Required Patterns
 
-Real library integrations, error handling (Result<T,E>), feature gating, test verification, behavior verification (observable outputs/state), Chicago TDD principles, type-first design, zero-cost abstractions, performance awareness, ergonomic APIs.
+Real library integrations, error handling (Result<T,E>), feature gating, test verification, behavior verification (observable outputs/state), Chicago TDD principles, type-first design, zero-cost abstractions, performance awareness, ergonomic APIs, structured logging (use `log!` macros `log::error!`, `log::warn!`, `log::info!`, `log::debug!` or alert macros `alert_critical!`, `alert_warning!`, `alert_info!`, etc. for library code output - allows filtering, redirection, and integration with alert system).
+
+## Output and Logging Guidelines
+
+**Library Code**: Use `log!` macros (`log::error!`, `log::warn!`, `log::info!`, `log::debug!`) or alert macros (`alert_critical!`, `alert_warning!`, `alert_info!`, etc.) for structured logging. These integrate with the alert system, can be filtered/redirected, and provide consistent formatting. When logging feature is disabled, alert macros fall back to `eprintln!`.
+
+**CLI Binaries** (`src/bin/*.rs`): Use `println!` for stdout (user-facing output) and `eprintln!` for stderr (error output). This is appropriate for CLI tools where direct output is expected.
+
+**Build Scripts** (`build.rs`): Use `println!("cargo:warning=...")` format for Cargo build-time messages. This is required by Cargo's build script protocol.
+
+**Test Code**: `println!` may be used for test output/debugging when needed, but prefer structured logging when testing logging behavior.
+
+**Error Output**: Use `eprintln!` for immediate error output or `log::error!`/`alert_critical!` for structured error logging.
 
 ## Expert Testing
 

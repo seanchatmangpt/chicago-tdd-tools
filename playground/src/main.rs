@@ -1,30 +1,14 @@
-//! Chicago TDD Tools Playground
+//! Chicago TDD Tools Playground CLI
 //!
 //! Comprehensive playground demonstrating all features of chicago-tdd-tools.
 //! This serves as both a validation suite and a reference implementation.
 
-#[macro_use]
-extern crate chicago_tdd_tools;
+use clap_noun_verb::Result;
 
-mod core;
-mod testing;
-mod validation;
-mod observability;
-mod integration;
+// Import CLI modules to trigger linkme auto-discovery
+use playground::cli;
 
-fn main() {
-    println!("Chicago TDD Tools Playground");
-    println!("============================");
-    println!();
-    println!("This playground demonstrates all features of chicago-tdd-tools.");
-    println!("Run tests with: cargo test");
-    println!("Run examples with: cargo run --bin playground");
-    println!();
-    println!("Feature Categories:");
-    println!("  - Core: Fixtures, builders, assertions, macros, state, type_level, const_assert, alert");
-    println!("  - Testing: Property, mutation, snapshot, concurrency, cli, generator, parameterized");
-    println!("  - Validation: Coverage, guards, jtbd, performance");
-    println!("  - Observability: OTEL, weaver");
-    println!("  - Integration: Testcontainers");
+fn main() -> Result<()> {
+    clap_noun_verb::run()
 }
 

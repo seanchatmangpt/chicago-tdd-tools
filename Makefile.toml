@@ -32,6 +32,19 @@ description = "Clean build artifacts"
 command = "timeout"
 args = ["5s", "cargo", "clean"]
 
+[tasks.clean-all-home]
+description = "Clean build artifacts in all Rust projects under home directory (~/)"
+# Root Cause Fix: Added explicit logging with >&2 redirection to ensure all output is visible
+# Validation: Logging shows search start, progress per project, and summary with counts
+command = "timeout"
+args = [
+  "60s",
+  "sh",
+  "-c",
+  "set -euo pipefail; HOME_DIR=\"${HOME:-}\"; if [ -z \"$HOME_DIR\" ]; then echo '❌ ERROR: HOME variable not set' >&2; exit 1; fi; echo \"🔍 Searching for Rust projects in: $HOME_DIR\" >&2; COUNT=0; SUCCESS=0; FAILED=0; PROJECTS=\"\"; for cargo_file in $(find \"$HOME_DIR\" -type f -name 'Cargo.toml' 2>/dev/null | grep -v '/target/' | grep -v '/.cargo/' | grep -v '/.rustup/' || true); do if [ -f \"$cargo_file\" ]; then dir=$(dirname \"$cargo_file\"); if [ -d \"$dir\" ]; then COUNT=$((COUNT + 1)); echo \"[${COUNT}] Cleaning: $dir\" >&2; PROJECTS=\"$PROJECTS\n  - $dir\"; if (cd \"$dir\" && timeout 10s cargo clean >/dev/null 2>&1); then SUCCESS=$((SUCCESS + 1)); echo \"✅ [${COUNT}] Success: $dir\" >&2; else FAILED=$((FAILED + 1)); echo \"⚠️  [${COUNT}] Failed: $dir\" >&2; fi; fi; fi; done; echo '' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo '📊 CLEAN SUMMARY' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo \"Total projects found: ${COUNT:-0}\" >&2; echo \"Successfully cleaned: ${SUCCESS:-0}\" >&2; echo \"Failed: ${FAILED:-0}\" >&2; if [ \"${COUNT:-0}\" -gt 0 ]; then echo '' >&2; echo 'Projects processed:' >&2; echo \"$PROJECTS\" >&2; fi; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; if [ \"${COUNT:-0}\" -eq 0 ]; then echo 'ℹ️  No Rust projects found in home directory' >&2; fi; if [ \"${FAILED:-0}\" -gt 0 ]; then exit 1; fi",
+]
+ignore_errors = true
+
 [tasks.fmt]
 description = "Format code"
 command = "timeout"
@@ -62,7 +75,7 @@ args = [
   "-W",
   "clippy::cargo",
   "-D",
-  "warnings",  # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
+  "warnings",         # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
 ]
 
 [tasks.clippy]
@@ -293,55 +306,100 @@ args = [
 [tasks.dead-code-check]
 description = "Check for undeclared modules (dead code detection)"
 command = "timeout"
-args = ["5s", "sh", "-c", "find src -name '*.rs' -type f | while read f; do dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\"; fi; fi; done"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; find src -name '*.rs' -type f 2>/dev/null | while IFS= read -r f || [ -n \"$f\" ]; do if [ -n \"$f\" ] && [ -f \"$f\" ]; then dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\"; fi; fi; fi; done",
+]
 ignore_errors = true
 
 # Code quality checks - unwrap/expect/TODO detection
 [tasks.check-unwrap-staged]
 description = "Check staged files for unwrap() calls in production code"
 command = "timeout"
-args = ["5s", "sh", "-c", "STAGED=\"$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true)\"; if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; UNWRAPS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c '\\.unwrap()' || echo 0); if [ \"$UNWRAPS\" -gt 0 ]; then echo \"❌ $f: $UNWRAPS unwrap() call(s)\"; COUNT=$((COUNT + UNWRAPS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unwrap() calls in production code\"; exit 1; fi"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; STAGED=\"$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true)\"; if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; UNWRAPS=$(timeout 3s git diff --cached \"$f\" 2>/dev/null | grep -E '^\\+' | grep -c '\\.unwrap()' 2>/dev/null | tr -d '[:space:]'); if [ -z \"$UNWRAPS\" ]; then UNWRAPS=0; fi; if [ \"$UNWRAPS\" -gt 0 ] 2>/dev/null; then echo \"❌ $f: $UNWRAPS unwrap() call(s)\"; COUNT=$((COUNT + UNWRAPS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unwrap() calls in production code\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-expect-staged]
 description = "Check staged files for expect() calls in production code"
 command = "timeout"
-args = ["5s", "sh", "-c", "STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; EXPECTS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c '\\.expect(' || echo 0); if [ \"$EXPECTS\" -gt 0 ]; then echo \"❌ $f: $EXPECTS expect() call(s)\"; COUNT=$((COUNT + EXPECTS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT expect() calls in production code\"; exit 1; fi"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; EXPECTS=$(timeout 3s git diff --cached \"$f\" 2>/dev/null | grep -E '^\\+' | grep -c '\\.expect(' 2>/dev/null | tr -d '[:space:]'); if [ -z \"$EXPECTS\" ]; then EXPECTS=0; fi; if [ \"$EXPECTS\" -gt 0 ] 2>/dev/null; then echo \"❌ $f: $EXPECTS expect() call(s)\"; COUNT=$((COUNT + EXPECTS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT expect() calls in production code\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-todo-staged]
 description = "Check staged files for TODO/FUTURE comments (main branch only)"
 command = "timeout"
-args = ["5s", "sh", "-c", "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ \\.(md|txt|rst)$ ]]; then continue; fi; TODOS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -iE '\\b(TODO|FUTURE)\\b' | grep -c . || echo 0); if [ \"$TODOS\" -gt 0 ]; then echo \"❌ $f: $TODOS FUTURE/TODO comment(s)\"; COUNT=$((COUNT + TODOS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT FUTURE/TODO comments to main\"; exit 1; fi"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ \\.(md|txt|rst)$ ]]; then continue; fi; TODOS=$(timeout 3s git diff --cached \"$f\" 2>/dev/null | grep -E '^\\+' | grep -iE '\\b(TODO|FUTURE)\\b' | grep -c . 2>/dev/null | tr -d '[:space:]'); if [ -z \"$TODOS\" ]; then TODOS=0; fi; if [ \"$TODOS\" -gt 0 ] 2>/dev/null; then echo \"❌ $f: $TODOS FUTURE/TODO comment(s)\"; COUNT=$((COUNT + TODOS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT FUTURE/TODO comments to main\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-unimplemented-staged]
 description = "Check staged files for unimplemented!() placeholders (main branch only)"
 command = "timeout"
-args = ["5s", "sh", "-c", "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do UNIMPL=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c 'unimplemented!' || echo 0); if [ \"$UNIMPL\" -gt 0 ]; then echo \"❌ $f: $UNIMPL unimplemented!() placeholder(s)\"; COUNT=$((COUNT + UNIMPL)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unimplemented!() placeholders to main\"; exit 1; fi"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do UNIMPL=$(timeout 3s git diff --cached \"$f\" 2>/dev/null | grep -E '^\\+' | grep -c 'unimplemented!' 2>/dev/null | tr -d '[:space:]'); if [ -z \"$UNIMPL\" ]; then UNIMPL=0; fi; if [ \"$UNIMPL\" -gt 0 ] 2>/dev/null; then echo \"❌ $f: $UNIMPL unimplemented!() placeholder(s)\"; COUNT=$((COUNT + UNIMPL)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unimplemented!() placeholders to main\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-unwrap-all]
 description = "Check all production files for unwrap() calls"
 command = "timeout"
-args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while read f; do if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.unwrap()' \"$f\" 2>/dev/null || echo 0; done | awk '{s+=$1} END {print s}' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Found $COUNT unwrap() calls in production code\"; exit 1; fi"]
+args = [
+  "10s",
+  "sh",
+  "-c",
+  "set -uo pipefail; COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while IFS= read -r f || [ -n \"$f\" ]; do if [ -n \"$f\" ] && [ -f \"$f\" ]; then if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.unwrap()' \"$f\" 2>/dev/null | tr -d '[:space:]' || echo '0'; fi; done | awk '{s+=$1} END {print s+0}' || echo '0'); if [ -z \"$COUNT\" ]; then COUNT=0; fi; if [ \"$COUNT\" -gt 0 ] 2>/dev/null; then echo \"❌ ERROR: Found $COUNT unwrap() calls in production code\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-expect-all]
 description = "Check all production files for expect() calls"
 command = "timeout"
-args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while read f; do if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.expect(' \"$f\" 2>/dev/null || echo 0; done | awk '{s+=$1} END {print s}' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Found $COUNT expect() calls in production code\"; exit 1; fi"]
+args = [
+  "10s",
+  "sh",
+  "-c",
+  "set -uo pipefail; COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while IFS= read -r f || [ -n \"$f\" ]; do if [ -n \"$f\" ] && [ -f \"$f\" ]; then if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.expect(' \"$f\" 2>/dev/null | tr -d '[:space:]' || echo '0'; fi; done | awk '{s+=$1} END {print s+0}' || echo '0'); if [ -z \"$COUNT\" ]; then COUNT=0; fi; if [ \"$COUNT\" -gt 0 ] 2>/dev/null; then echo \"❌ ERROR: Found $COUNT expect() calls in production code\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.check-todo-all]
 description = "Check all production files for TODO comments"
 command = "timeout"
-args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | xargs timeout 8s grep 'TODO:' 2>/dev/null | grep -v 'FUTURE:' | wc -l | tr -d '[:space:]' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: $COUNT TODO comments found in production code\"; exit 1; fi"]
+args = [
+  "10s",
+  "sh",
+  "-c",
+  "set -euo pipefail; COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | xargs timeout 8s grep 'TODO:' 2>/dev/null | grep -v 'FUTURE:' | wc -l | tr -d '[:space:]' || echo '0'); COUNT=${COUNT:-0}; if [ \"$COUNT\" -gt 0 ] 2>/dev/null; then echo \"❌ ERROR: $COUNT TODO comments found in production code\"; exit 1; fi",
+]
 ignore_errors = false
 
 [tasks.pre-commit-staged-checks]
 description = "Run staged-file-specific checks (unwrap/expect/TODO/unimplemented)"
-dependencies = ["check-unwrap-staged", "check-expect-staged", "check-todo-staged", "check-unimplemented-staged"]
+dependencies = [
+  "check-unwrap-staged",
+  "check-expect-staged",
+  "check-todo-staged",
+  "check-unimplemented-staged",
+]
 
 [tasks.pre-commit]
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
@@ -388,19 +446,34 @@ dependencies = ["timeout-check", "fmt", "lint", "test-unit", "audit-all"]
 [tasks.release-validate-git-state]
 description = "Validate git state is clean (no uncommitted changes, no WIP files) - CRITICAL BLOCKER"
 command = "timeout"
-args = ["5s", "sh", "-c", "if [ -n \"$(git status --porcelain)\" ]; then echo '🚨 CRITICAL: Git state is not clean - uncommitted changes detected'; git status --porcelain; exit 1; fi; if [ -n \"$(find . -name '*.new' -o -name '*WIP*' -o -name '*.tmp' 2>/dev/null | grep -v 'target\\|node_modules\\|\\.git')\" ]; then echo '🚨 CRITICAL: WIP files detected'; find . -name '*.new' -o -name '*WIP*' -o -name '*.tmp' 2>/dev/null | grep -v 'target\\|node_modules\\|\\.git'; exit 1; fi; echo '✅ Git state is clean'"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; if [ -n \"$(git status --porcelain 2>/dev/null || true)\" ]; then echo '🚨 CRITICAL: Git state is not clean - uncommitted changes detected'; git status --porcelain 2>/dev/null || true; exit 1; fi; WIP_FILES=$(find . -name '*.new' -o -name '*WIP*' -o -name '*.tmp' 2>/dev/null | grep -v 'target\\|node_modules\\|\\.git' || true); if [ -n \"$WIP_FILES\" ]; then echo '🚨 CRITICAL: WIP files detected'; echo \"$WIP_FILES\"; exit 1; fi; echo '✅ Git state is clean'",
+]
 ignore_errors = false
 
 [tasks.release-validate-artifacts]
 description = "Validate release artifacts exist (CHANGELOG.md, release notes)"
 command = "timeout"
-args = ["5s", "sh", "-c", "if [ ! -f CHANGELOG.md ]; then echo '🚨 CRITICAL: CHANGELOG.md missing'; exit 1; fi; if [ ! -f RELEASE_NOTES_v1.1.0.md ] && [ ! -f RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; if [ ! -f CHANGELOG.md ]; then echo '🚨 CRITICAL: CHANGELOG.md missing'; exit 1; fi; if [ ! -f RELEASE_NOTES_v1.1.0.md ] && [ ! -f RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'",
+]
 ignore_errors = true
 
 [tasks.release-validate-version]
 description = "Validate version consistency across all Cargo.toml files"
 command = "timeout"
-args = ["5s", "sh", "-c", "VERSION=$(grep '^version' Cargo.toml | cut -d'\"' -f2); PROC_VERSION=$(grep '^version' proc_macros/Cargo.toml 2>/dev/null | cut -d'\"' -f2 || echo ''); if [ -n \"$PROC_VERSION\" ] && [ \"$VERSION\" != \"$PROC_VERSION\" ]; then echo \"🚨 CRITICAL: Version mismatch - Cargo.toml: $VERSION, proc_macros/Cargo.toml: $PROC_VERSION\"; exit 1; fi; echo \"✅ Version consistent: $VERSION\""]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; VERSION=$(grep '^version' Cargo.toml 2>/dev/null | cut -d'\"' -f2 || echo ''); PROC_VERSION=$(grep '^version' proc_macros/Cargo.toml 2>/dev/null | cut -d'\"' -f2 || echo ''); if [ -z \"$VERSION\" ]; then echo '🚨 CRITICAL: Cannot read version from Cargo.toml'; exit 1; fi; if [ -n \"$PROC_VERSION\" ] && [ \"$VERSION\" != \"$PROC_VERSION\" ]; then echo \"🚨 CRITICAL: Version mismatch - Cargo.toml: $VERSION, proc_macros/Cargo.toml: $PROC_VERSION\"; exit 1; fi; echo \"✅ Version consistent: $VERSION\"",
+]
 ignore_errors = false
 
 [tasks.release-validate-compilation]
@@ -428,28 +501,38 @@ ignore_errors = true
 [tasks.release-validate-testcontainers]
 description = "Validate testcontainers tests pass (if Docker available)"
 command = "timeout"
-args = ["60s", "sh", "-c", "if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then cargo test --features testcontainers --test testcontainers 2>&1 | grep -q 'test result: ok' && echo '✅ Testcontainers tests pass' || (echo '⚠️  WARNING: Testcontainers tests failed (not blocking if Docker unavailable)' && exit 0); else echo '⚠️  SKIP: Docker not available, skipping testcontainers tests'; fi"]
+args = [
+  "60s",
+  "sh",
+  "-c",
+  "set -uo pipefail; if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then if cargo test --features testcontainers --test testcontainers 2>&1 | grep -q 'test result: ok'; then echo '✅ Testcontainers tests pass'; else echo '⚠️  WARNING: Testcontainers tests failed (not blocking if Docker unavailable)'; exit 0; fi; else echo '⚠️  SKIP: Docker not available, skipping testcontainers tests'; fi",
+]
 ignore_errors = true
 
 [tasks.release-validate-git-push]
 description = "Validate code and artifacts are pushed to remote (check remote is ahead)"
 command = "timeout"
-args = ["5s", "sh", "-c", "if [ -n \"$(git log origin/main..HEAD 2>/dev/null || git log origin/master..HEAD 2>/dev/null)\" ]; then echo '⚠️  WARNING: Local commits not pushed to remote'; git log --oneline origin/main..HEAD 2>/dev/null || git log --oneline origin/master..HEAD 2>/dev/null; exit 1; fi; echo '✅ All commits pushed to remote'"]
+args = [
+  "5s",
+  "sh",
+  "-c",
+  "set -uo pipefail; UNPUSHED=$(git log origin/main..HEAD 2>/dev/null || git log origin/master..HEAD 2>/dev/null || true); if [ -n \"$UNPUSHED\" ]; then echo '⚠️  WARNING: Local commits not pushed to remote'; git log --oneline origin/main..HEAD 2>/dev/null || git log --oneline origin/master..HEAD 2>/dev/null || true; exit 1; fi; echo '✅ All commits pushed to remote'",
+]
 ignore_errors = true
 
 # Comprehensive release validation task
 [tasks.release-validate]
 description = "Comprehensive release validation (all FMEA failure mode checks)"
 dependencies = [
-    "timeout-check",
-    "release-validate-git-state",
-    "release-validate-artifacts",
-    "release-validate-version",
-    "release-validate-compilation",
-    "release-validate-examples",
-    "release-validate-precommit",
-    "release-validate-security",
-    "release-validate-testcontainers",
+  "timeout-check",
+  "release-validate-git-state",
+  "release-validate-artifacts",
+  "release-validate-version",
+  "release-validate-compilation",
+  "release-validate-examples",
+  "release-validate-precommit",
+  "release-validate-security",
+  "release-validate-testcontainers",
 ]
 ignore_errors = false
 
@@ -473,46 +556,24 @@ dependencies = ["timeout-check", "build", "test", "lint"]
 description = "Build the pattern cookbook (mdBook)"
 dependencies = ["timeout-check"]
 command = "timeout"
-args = [
-  "10s",
-  "mdbook",
-  "build",
-  "cookbook"
-]
+args = ["10s", "mdbook", "build", "cookbook"]
 
 [tasks.cookbook-serve]
 description = "Serve the pattern cookbook locally"
 dependencies = ["timeout-check"]
 command = "timeout"
-args = [
-  "60s",
-  "mdbook",
-  "serve",
-  "cookbook",
-  "--open"
-]
+args = ["60s", "mdbook", "serve", "cookbook", "--open"]
 
 [tasks.cookbook-test]
 description = "Verify the cookbook builds without errors"
 dependencies = ["cookbook-build"]
 command = "timeout"
-args = [
-  "10s",
-  "mdbook",
-  "build",
-  "cookbook",
-  "--dest-dir",
-  "book-test"
-]
+args = ["10s", "mdbook", "build", "cookbook", "--dest-dir", "book-test"]
 
 [tasks.weaver-bootstrap]
 description = "Download Weaver binary and semantic convention registry"
 command = "timeout"
-args = [
-  "60s",
-  "bash",
-  "scripts/weaver-bootstrap.sh",
-]
+args = ["60s", "bash", "scripts/weaver-bootstrap.sh"]
 
 [tasks.weaver-smoke]
 description = "Run Weaver smoke test (version check + telemetry span)"
@@ -528,4 +589,3 @@ args = [
   "--features",
   "weaver",
 ]
-

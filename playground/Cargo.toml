@@ -30,6 +30,12 @@ tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
 
+# CLI
+clap = { version = "^4.5", features = ["derive"] }
+clap-noun-verb = "3.4.0"
+clap-noun-verb-macros = "3.4.0"
+linkme = "0.3"
+
 # Utilities
 uuid = { version = "^1.0", features = ["v4"] }
 chrono = "^0.4"
@@ -40,14 +46,22 @@ thiserror = "^2.0"
 # Test utilities
 tempfile = "^3.0"
 
-[[bin]]
+# Library for sharing modules with binaries
+[lib]
 name = "playground"
+path = "src/lib.rs"
+
+[[bin]]
+name = "playg"
 path = "src/main.rs"
 
 [dev-dependencies]
 # Test utilities
 tokio-test = "^0.4"
 ntest = "^0.9"
+assert_cmd = "^2.0"
+predicates = "^3.0"
+trycmd = { version = "^0.15", features = ["color-auto"] }
 
 [lints.rust]
 warnings = "warn"
