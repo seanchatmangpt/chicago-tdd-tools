@@ -638,7 +638,15 @@ impl Drop for ObservabilityTest {
     fn drop(&mut self) {
         #[cfg(feature = "weaver")]
         {
-            let _ = self.stop_weaver_process();
+            // Stop Weaver validator if present
+            if let Some(ref mut validator) = self.weaver_validator {
+                let _ = validator.stop();
+            }
+
+            // Wait for Weaver process to finish if present
+            if let Some(mut process) = self.weaver_process.take() {
+                let _ = process.wait();
+            }
         }
     }
 }
