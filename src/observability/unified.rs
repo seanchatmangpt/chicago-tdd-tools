@@ -73,7 +73,12 @@ pub enum ObservabilityError {
     FeatureDisabled(&'static str),
 }
 
-/// Result type for observability testing
+/// Result type for observability testing (when OTEL feature enabled)
+#[cfg(feature = "otel")]
+pub type ObservabilityResult<T> = Result<T, ObservabilityError>;
+
+/// Result type for observability testing (fallback when OTEL feature disabled)
+#[cfg(not(feature = "otel"))]
 pub type ObservabilityResult<T> = Result<T, ObservabilityError>;
 
 /// Type-level validation state (compile-time guarantees)

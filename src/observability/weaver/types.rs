@@ -10,7 +10,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found in PATH
-    #[error("🚨 Weaver binary not found: {0}\n   ⚠️  STOP: Cannot proceed with Weaver operations\n   💡 FIX: Install Weaver binary\n   📋 Install: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases")]
+    #[error("🚨 Weaver binary not found: {0}\n   ⚠️  STOP: Cannot proceed with Weaver operations\n   💡 FIX: Run cargo make weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound(String),
     /// Weaver health check failed
     #[error("⚠️  Weaver health check failed: {0}\n   ⚠️  WARNING: Weaver may not be responding correctly")]
@@ -157,9 +157,7 @@ impl WeaverLiveCheck {
             {
                 if let Err(e) = Self::download_weaver_runtime() {
                     return Err(format!(
-                        "Weaver binary not found. Build script download failed: {e}. \
-                        Please install weaver manually: cargo install weaver or download from \
-                        https://github.com/open-telemetry/weaver/releases"
+                        "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases ({e})."
                     ));
                 }
                 // Retry after download
@@ -168,8 +166,7 @@ impl WeaverLiveCheck {
             #[cfg(not(feature = "weaver"))]
             {
                 Err(format!(
-                    "Weaver binary not found. Please install weaver manually: cargo install weaver or download from \
-                    https://github.com/open-telemetry/weaver/releases"
+                    "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases"
                 ))
             }
         }
@@ -365,7 +362,7 @@ impl WeaverLiveCheck {
         cmd.spawn()
             .map_err(|e| {
                 if e.kind() == std::io::ErrorKind::NotFound {
-                    "Weaver binary not found in PATH. Install with: ./scripts/install-weaver.sh or cargo install weaver".to_string()
+                    "🚨 Weaver binary not found in PATH. Run cargo make weaver-bootstrap (installs CLI locally) or cargo install weaver".to_string()
                 } else {
                     format!("Failed to start Weaver live-check: {e}. Ensure Weaver is installed and in PATH.")
                 }
