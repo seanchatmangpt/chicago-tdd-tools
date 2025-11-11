@@ -1,3 +1,5 @@
+//! Tests for Weaver test macros
+
 #![cfg(all(feature = "weaver", feature = "otel"))]
 
 use chicago_tdd_tools::{weaver_async_test, weaver_test};
