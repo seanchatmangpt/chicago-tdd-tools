@@ -1,6 +1,7 @@
 //! Tests for Weaver test macros
 
 #![cfg(all(feature = "weaver", feature = "otel"))]
+#![allow(missing_docs)]
 
 use chicago_tdd_tools::{weaver_async_test, weaver_test};
 use opentelemetry::trace::Tracer as _;

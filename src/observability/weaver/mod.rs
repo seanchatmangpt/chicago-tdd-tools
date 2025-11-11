@@ -15,7 +15,7 @@ pub mod types;
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found
-    #[error("🚨 Weaver binary not found in PATH\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Install Weaver binary\n   📋 Install: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases")]
+    #[error("🚨 Weaver binary not found in PATH\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Run cargo make weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound,
     /// Docker daemon is not running or unavailable
     #[error("🚨 Docker daemon is not running or unavailable: {0}\n   ⚠️  STOP: Cannot proceed with Weaver integration\n   💡 FIX: Start Docker Desktop or Docker daemon\n   📋 macOS: Open Docker Desktop\n   📋 Linux: sudo systemctl start docker\n   📋 Windows: Start Docker Desktop")]
@@ -183,7 +183,7 @@ impl WeaverValidator {
             // Try to clone registry at runtime (matching Weaver binary runtime download pattern)
             if let Err(err) = Self::clone_registry_runtime(self.registry_path.as_path()) {
                 return Err(WeaverValidationError::RegistryNotFound(format!(
-                    "{}\n   💡 FIX: Registry will be cloned automatically during build, or run: cargo make setup-registry\n   Details: {err}",
+                    "{}\n   💡 FIX: Registry will be cloned automatically during build, or run: cargo make weaver-bootstrap\n   Details: {err}",
                     self.registry_path.display()
                 )));
             }

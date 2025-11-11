@@ -37,7 +37,7 @@ use crate::observability::otel::types::{Metric, Span};
 pub enum ObservabilityError {
     /// Weaver binary not found
     #[error(
-        "🚨 Weaver binary not found\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Install Weaver binary\n   📋 Install: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases"
+        "🚨 Weaver binary not found\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Run cargo make weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases"
     )]
     WeaverBinaryNotFound,
     /// Registry path does not exist

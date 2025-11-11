@@ -39,7 +39,7 @@ impl WeaverTestFixture {
         if let Some(ref path) = config.registry_path {
             if !path.exists() {
                 return Err(ObservabilityError::RegistryNotFound(format!(
-                    "Semantic conventions registry not found at {}. Run `cargo make setup-registry` or provide an existing registry path.",
+                    "Semantic conventions registry not found at {}. Run `cargo make weaver-bootstrap` or provide an existing registry path.",
                     path.display()
                 )));
             }
