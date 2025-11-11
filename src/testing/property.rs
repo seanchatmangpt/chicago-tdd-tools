@@ -29,21 +29,23 @@ pub struct PropertyTestGenerator<const MAX_ITEMS: usize = 10, const MAX_DEPTH: u
 impl<const MAX_ITEMS: usize, const MAX_DEPTH: usize> PropertyTestGenerator<MAX_ITEMS, MAX_DEPTH> {
     /// Create new property test generator
     ///
-    /// MAX_ITEMS and MAX_DEPTH are compile-time constants, ensuring
+    /// `MAX_ITEMS` and `MAX_DEPTH` are compile-time constants, ensuring
     /// type-safe configuration.
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { seed: 0 }
     }
 
     /// Set random seed
-    pub fn with_seed(mut self, seed: u64) -> Self {
+    #[must_use]
+    pub const fn with_seed(mut self, seed: u64) -> Self {
         self.seed = seed;
         self
     }
 
     /// Generate random test data
     ///
-    /// Uses compile-time MAX_ITEMS constant for bounds checking.
+    /// Uses compile-time `MAX_ITEMS` constant for bounds checking.
     pub fn generate_test_data(&mut self) -> HashMap<String, String> {
         let mut rng = SimpleRng::new(self.seed);
         self.seed = self.seed.wrapping_add(1);
@@ -61,12 +63,14 @@ impl<const MAX_ITEMS: usize, const MAX_DEPTH: usize> PropertyTestGenerator<MAX_I
         data
     }
 
-    /// Get compile-time MAX_ITEMS constant
+    /// Get compile-time `MAX_ITEMS` constant
+    #[must_use]
     pub const fn max_items() -> usize {
         MAX_ITEMS
     }
 
-    /// Get compile-time MAX_DEPTH constant
+    /// Get compile-time `MAX_DEPTH` constant
+    #[must_use]
     pub const fn max_depth() -> usize {
         MAX_DEPTH
     }
@@ -86,11 +90,11 @@ struct SimpleRng {
 }
 
 impl SimpleRng {
-    fn new(seed: u64) -> Self {
+    const fn new(seed: u64) -> Self {
         Self { state: seed }
     }
 
-    fn next(&mut self) -> u64 {
+    const fn next(&mut self) -> u64 {
         // Linear Congruential Generator
         self.state = self.state.wrapping_mul(1_103_515_245).wrapping_add(12_345);
         self.state
@@ -143,18 +147,21 @@ pub struct ProptestStrategy {
 #[cfg(feature = "property-testing")]
 impl ProptestStrategy {
     /// Create a new proptest strategy with default configuration
+    #[must_use]
     pub fn new() -> Self {
         Self { config: Config::default() }
     }
 
     /// Set the number of test cases to run
-    pub fn with_cases(mut self, cases: u32) -> Self {
+    #[must_use]
+    pub const fn with_cases(mut self, cases: u32) -> Self {
         self.config.cases = cases;
         self
     }
 
     /// Set the maximum number of shrink attempts
-    pub fn with_max_shrink_iters(mut self, iters: u32) -> Self {
+    #[must_use]
+    pub const fn with_max_shrink_iters(mut self, iters: u32) -> Self {
         self.config.max_shrink_iters = iters;
         self
     }
@@ -164,7 +171,8 @@ impl ProptestStrategy {
     /// Note: Seed configuration is complex in proptest. For now, use default seeding.
     /// Future versions may support custom seed configuration.
     #[allow(dead_code)] // Reserved for future use
-    pub fn with_seed(self, _seed: [u8; 32]) -> Self {
+    #[must_use]
+    pub const fn with_seed(self, _seed: [u8; 32]) -> Self {
         // Proptest seed configuration is complex - using default for now
         // Future: implement proper seed configuration
         self
@@ -192,7 +200,7 @@ impl ProptestStrategy {
                 prop_assert!(property(value));
                 Ok(())
             })
-            .unwrap_or_else(|e| panic!("Property test failed: {:?}", e));
+            .unwrap_or_else(|e| panic!("Property test failed: {e:?}"));
     }
 
     /// Run a property test with a default strategy for a type

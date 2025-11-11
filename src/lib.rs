@@ -143,7 +143,8 @@ pub use chicago_tdd_tools_proc_macros::TestBuilder;
 // All modules MUST be declared here (or in parent module's mod.rs).
 // Files not declared as modules are dead code and will be removed.
 // Pattern: Use `pub mod` for new modules, `pub use` for re-exports.
-// See docs/MUDA_INVENTORY_MARKDOWN.md for waste elimination patterns.
+// **Waste elimination**: Work reports and internal documentation don't belong in docs/.
+// Only user-facing documentation should be in docs/ (guides, API refs, architecture).
 pub mod core;
 pub mod integration;
 pub mod observability;

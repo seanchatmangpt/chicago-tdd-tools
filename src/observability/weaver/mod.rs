@@ -78,7 +78,8 @@ pub struct WeaverValidator {
 #[cfg(feature = "weaver")]
 impl WeaverValidator {
     /// Create a new Weaver validator
-    pub fn new(registry_path: PathBuf) -> Self {
+    #[must_use]
+    pub const fn new(registry_path: PathBuf) -> Self {
         Self {
             live_check: None,
             process: None,
@@ -89,7 +90,8 @@ impl WeaverValidator {
     }
 
     /// Create a Weaver validator with custom configuration
-    pub fn with_config(registry_path: PathBuf, otlp_grpc_port: u16, admin_port: u16) -> Self {
+    #[must_use]
+    pub const fn with_config(registry_path: PathBuf, otlp_grpc_port: u16, admin_port: u16) -> Self {
         Self { live_check: None, process: None, registry_path, otlp_grpc_port, admin_port }
     }
 
@@ -115,8 +117,7 @@ impl WeaverValidator {
             use crate::testcontainers::check_docker_available;
             check_docker_available().map_err(|e| {
                 WeaverValidationError::DockerUnavailable(format!(
-                    "Docker daemon is not running. Weaver integration requires Docker. Error: {}",
-                    e
+                    "Docker daemon is not running. Weaver integration requires Docker. Error: {e}"
                 ))
             })?;
             // ✅ Docker is available
@@ -167,12 +168,14 @@ impl WeaverValidator {
     }
 
     /// Get OTLP endpoint for sending telemetry
+    #[must_use]
     pub fn otlp_endpoint(&self) -> String {
         format!("http://{}:{}", LOCALHOST, self.otlp_grpc_port)
     }
 
     /// Check if Weaver process is running
-    pub fn is_running(&self) -> bool {
+    #[must_use]
+    pub const fn is_running(&self) -> bool {
         self.process.is_some()
     }
 }
@@ -222,8 +225,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
     let exporter =
         opentelemetry_otlp::SpanExporter::builder().with_http().build().map_err(|e| {
             WeaverValidationError::ValidationFailed(format!(
-                "🚨 Failed to create OTLP HTTP exporter: {}\n   ⚠️  STOP: Cannot create OTLP exporter\n   💡 FIX: Check OpenTelemetry SDK configuration and endpoint",
-                e
+                "🚨 Failed to create OTLP HTTP exporter: {e}\n   ⚠️  STOP: Cannot create OTLP exporter\n   💡 FIX: Check OpenTelemetry SDK configuration and endpoint"
             ))
         })?;
 
@@ -267,7 +269,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
 
     // Force flush to ensure span is exported before shutdown
     provider.force_flush().map_err(|e| {
-        WeaverValidationError::ValidationFailed(format!("⚠️  Failed to flush traces: {}\n   ⚠️  WARNING: Traces may not be exported\n   💡 FIX: Check OTLP endpoint connectivity", e))
+        WeaverValidationError::ValidationFailed(format!("⚠️  Failed to flush traces: {e}\n   ⚠️  WARNING: Traces may not be exported\n   💡 FIX: Check OTLP endpoint connectivity"))
     })?;
 
     // Give async exports time to complete
@@ -276,8 +278,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
     // Shutdown tracer provider
     provider.shutdown().map_err(|e| {
         WeaverValidationError::ValidationFailed(format!(
-            "⚠️  Failed to shutdown tracer provider: {}\n   ⚠️  WARNING: Tracer provider may not have shut down cleanly\n   💡 FIX: Check resource cleanup",
-            e
+            "⚠️  Failed to shutdown tracer provider: {e}\n   ⚠️  WARNING: Tracer provider may not have shut down cleanly\n   💡 FIX: Check resource cleanup"
         ))
     })?;
 
@@ -320,8 +321,8 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
 
     // Find weaver binary (may trigger runtime download)
     use crate::observability::weaver::types::WeaverLiveCheck;
-    let weaver_binary = WeaverLiveCheck::find_weaver_binary()
-        .ok_or_else(|| WeaverValidationError::BinaryNotFound)?;
+    let weaver_binary =
+        WeaverLiveCheck::find_weaver_binary().ok_or(WeaverValidationError::BinaryNotFound)?;
 
     let output = Command::new(&weaver_binary)
         .args(["registry", "check", "-r", registry_str])
@@ -331,8 +332,7 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
                 WeaverValidationError::BinaryNotFound
             } else {
                 WeaverValidationError::ValidationFailed(format!(
-                    "🚨 Failed to execute weaver check: {}\n   ⚠️  STOP: Weaver schema validation failed\n   💡 FIX: Check Weaver binary is installed and registry path is valid",
-                    e
+                    "🚨 Failed to execute weaver check: {e}\n   ⚠️  STOP: Weaver schema validation failed\n   💡 FIX: Check Weaver binary is installed and registry path is valid"
                 ))
             }
         })?;
@@ -340,8 +340,7 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(WeaverValidationError::ValidationFailed(format!(
-            "🚨 Weaver schema validation failed: {}\n   ⚠️  STOP: Schema does not conform to semantic conventions\n   💡 FIX: Check registry schema and telemetry structure",
-            stderr
+            "🚨 Weaver schema validation failed: {stderr}\n   ⚠️  STOP: Schema does not conform to semantic conventions\n   💡 FIX: Check registry schema and telemetry structure"
         )));
     }
 

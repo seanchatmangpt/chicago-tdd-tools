@@ -12,6 +12,22 @@ Test fixtures with automatic cleanup. RAII patterns. Generic with type parameter
 
 **Pattern**: `TestFixture::new()?` for basic fixture, `TestFixture::with_data(data)` for custom data.
 
+## async_fixture
+
+Async fixture providers. Async traits (Rust 1.75+). Type-safe lifecycle management with GATs. Runtime lifecycle management.
+
+**Types**: `AsyncFixtureProvider` (async trait with GATs), `AsyncFixtureManager<P>` (manager), `DefaultAsyncFixtureProvider` (default implementation).
+
+**Trait Methods**: `create_fixture(&self) -> impl Future<Output = Result<Self::Fixture<'_>, Self::Error>> + Send` (async fixture creation).
+
+**Manager Methods**: `new(provider: P) -> Self`, `setup(&self) -> impl Future<Output = Result<P::Fixture<'_>, P::Error>>` (async setup), `teardown(&self) -> impl Future<Output = FixtureResult<()>>` (async teardown).
+
+**Associated Types**: `Fixture<'a>` (GAT fixture type), `Error` (error type).
+
+**Pattern**: `AsyncFixtureManager::new(provider).setup().await?` for async setup, `manager.teardown().await?` for cleanup. Implement `AsyncFixtureProvider` with sealed trait pattern.
+
+**Requirements**: `async` feature, Rust 1.75+.
+
 ## builders
 
 Fluent builders for test data. JSON/HashMap output. Domain-specific helpers.

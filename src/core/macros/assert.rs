@@ -1,11 +1,11 @@
 //! Assertion Macros for Chicago TDD Testing
 //!
 //! Provides enhanced assertion macros with better error messages:
-//! - Result assertions (assert_ok, assert_err)
-//! - Performance assertions (assert_within_tick_budget)
-//! - Range assertions (assert_in_range)
-//! - Equality assertions (assert_eq_msg, assert_eq_enhanced)
-//! - Guard constraint assertions (assert_guard_constraint)
+//! - Result assertions (`assert_ok`, `assert_err`)
+//! - Performance assertions (`assert_within_tick_budget`)
+//! - Range assertions (`assert_in_range`)
+//! - Equality assertions (`assert_eq_msg`, `assert_eq_enhanced`)
+//! - Guard constraint assertions (`assert_guard_constraint`)
 
 /// Assert that a result is successful with detailed error message
 ///
@@ -199,7 +199,7 @@ macro_rules! assert_eq_enhanced {
 
 /// Assert that a guard constraint is satisfied
 ///
-/// Validates guard constraints like max_run_len ≤ 8.
+/// Validates guard constraints like `max_run_len` ≤ 8.
 ///
 /// # Example
 ///

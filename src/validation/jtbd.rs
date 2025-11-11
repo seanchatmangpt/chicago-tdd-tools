@@ -4,7 +4,7 @@
 //! not just returns technical success. This is the core principle: "Validate that code
 //! does the job it's supposed to do, not just that it executes without errors."
 //!
-//! Based on DFLSS research document: RESEARCH_REFLEX_WORKFLOW_JTBD_INNOVATION.md
+//! Based on DFLSS research document: `RESEARCH_REFLEX_WORKFLOW_JTBD_INNOVATION.md`
 //!
 //! JTBD validation ensures:
 //! 1. Code executes in real contexts (not isolated unit tests)
@@ -106,7 +106,8 @@ impl ScenarioIndex {
     /// let result = ScenarioIndex::new_for_collection(5, 3); // None - index 5 >= size 3
     /// assert!(result.is_none());
     /// ```
-    pub fn new(value: usize) -> Option<Self> {
+    #[must_use]
+    pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
 
@@ -125,7 +126,8 @@ impl ScenarioIndex {
     /// let invalid = ScenarioIndex::new_for_collection(5, collection_size); // None
     /// assert!(invalid.is_none());
     /// ```
-    pub fn new_for_collection(index: usize, collection_size: usize) -> Option<Self> {
+    #[must_use]
+    pub const fn new_for_collection(index: usize, collection_size: usize) -> Option<Self> {
         if index < collection_size {
             Some(Self(index))
         } else {
@@ -134,12 +136,14 @@ impl ScenarioIndex {
     }
 
     /// Get the index value
-    pub fn get(&self) -> usize {
+    #[must_use]
+    pub const fn get(&self) -> usize {
         self.0
     }
 
     /// Convert to usize
-    pub fn into_usize(self) -> usize {
+    #[must_use]
+    pub const fn into_usize(self) -> usize {
         self.0
     }
 }
@@ -171,6 +175,7 @@ pub struct JtbdValidationResult {
 
 impl JtbdValidationResult {
     /// Create a successful JTBD validation result
+    #[must_use]
     pub fn success(scenario_name: String, latency_ms: u64, details: Vec<String>) -> Self {
         Self {
             scenario_name,
@@ -184,6 +189,7 @@ impl JtbdValidationResult {
     }
 
     /// Create a failed JTBD validation result
+    #[must_use]
     pub fn failure(
         scenario_name: String,
         execution_success: bool,
@@ -225,11 +231,13 @@ pub struct ExecutionResult {
 
 impl ExecutionResult {
     /// Create a successful result
+    #[must_use]
     pub fn ok(variables: HashMap<String, String>) -> Self {
         Self { success: true, variables, metadata: HashMap::new() }
     }
 
     /// Create a failed result
+    #[must_use]
     pub fn err(message: String) -> Self {
         let mut metadata = HashMap::new();
         metadata.insert("error".to_string(), message);
@@ -262,6 +270,7 @@ pub struct JtbdValidator {
 
 impl JtbdValidator {
     /// Create a new JTBD validator
+    #[must_use]
     pub fn new() -> Self {
         Self { scenarios: Vec::new() }
     }
@@ -274,6 +283,7 @@ impl JtbdValidator {
     /// Validate a single scenario's JTBD
     ///
     /// **Poka-Yoke**: Uses `ScenarioIndex` newtype to prevent index errors.
+    #[must_use]
     pub fn validate_scenario(&self, index: ScenarioIndex) -> Option<JtbdValidationResult> {
         let scenario = self.scenarios.get(index.get())?;
 
@@ -301,10 +311,10 @@ impl JtbdValidator {
                 )],
             ))
         } else {
-            let details = if !execution_result.success {
-                vec!["Execution failed".to_string()]
-            } else {
+            let details = if execution_result.success {
                 vec!["Execution succeeded but did not accomplish intended purpose".to_string()]
+            } else {
+                vec!["Execution failed".to_string()]
             };
 
             Some(JtbdValidationResult::failure(
@@ -318,6 +328,7 @@ impl JtbdValidator {
     }
 
     /// Validate all registered scenarios
+    #[must_use]
     pub fn validate_all(&self) -> Vec<JtbdValidationResult> {
         let mut results = Vec::new();
 
@@ -334,6 +345,7 @@ impl JtbdValidator {
     }
 
     /// Get validation summary
+    #[must_use]
     pub fn get_summary(&self, results: &[JtbdValidationResult]) -> JtbdValidationSummary {
         let total = results.len();
         let execution_passed = results.iter().filter(|r| r.execution_success).count();
@@ -347,10 +359,10 @@ impl JtbdValidator {
             execution_failed,
             jtbd_passed,
             jtbd_failed,
-            avg_latency_ms: if !results.is_empty() {
-                results.iter().map(|r| r.latency_ms).sum::<u64>() / total as u64
-            } else {
+            avg_latency_ms: if results.is_empty() {
                 0
+            } else {
+                results.iter().map(|r| r.latency_ms).sum::<u64>() / total as u64
             },
         }
     }
@@ -381,11 +393,13 @@ pub struct JtbdValidationSummary {
 
 impl JtbdValidationSummary {
     /// Check if all scenarios passed JTBD validation
-    pub fn all_passed(&self) -> bool {
+    #[must_use]
+    pub const fn all_passed(&self) -> bool {
         self.execution_passed == self.total_scenarios && self.jtbd_passed == self.total_scenarios
     }
 
     /// Get pass rate (0.0 to 1.0)
+    #[must_use]
     pub fn pass_rate(&self) -> f64 {
         if self.total_scenarios == 0 {
             return 0.0;

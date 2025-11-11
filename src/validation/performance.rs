@@ -34,7 +34,7 @@ pub const HOT_PATH_TICK_BUDGET: u64 = 8;
 
 /// Tick counter using RDTSC (Read Time-Stamp Counter)
 ///
-/// On x86_64, uses `rdtsc` instruction for cycle counting.
+/// On `x86_64`, uses `rdtsc` instruction for cycle counting.
 /// On other platforms, uses `std::time::Instant` as fallback.
 pub struct TickCounter {
     /// Start tick count
@@ -43,6 +43,7 @@ pub struct TickCounter {
 
 impl TickCounter {
     /// Create a new tick counter and start counting
+    #[must_use]
     pub fn start() -> Self {
         Self { start_ticks: Self::read_ticks() }
     }
@@ -83,11 +84,13 @@ impl TickCounter {
     }
 
     /// Get elapsed ticks since start
+    #[must_use]
     pub fn elapsed_ticks(&self) -> u64 {
         Self::read_ticks().saturating_sub(self.start_ticks)
     }
 
     /// Check if elapsed ticks exceed budget
+    #[must_use]
     pub fn exceeds_budget(&self, budget: u64) -> bool {
         self.elapsed_ticks() > budget
     }
@@ -148,13 +151,15 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     /// Create a new validated tick budget
     ///
     /// The budget is validated at compile time through the const generic parameter.
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { _inner: Validated::new(BUDGET) }
     }
 
     /// Get the budget value
     ///
     /// This is guaranteed to be BUDGET at compile time.
+    #[must_use]
     pub const fn budget(&self) -> u64 {
         BUDGET
     }
@@ -247,7 +252,7 @@ pub struct TickMeasurer<F> {
 
 impl<F> TickMeasurer<F> {
     /// Create a new tick measurer
-    pub fn new(f: F) -> Self {
+    pub const fn new(f: F) -> Self {
         Self { f }
     }
 
@@ -273,7 +278,7 @@ pub struct AsyncTickMeasurer<F> {
 #[cfg(feature = "async")]
 impl<F> AsyncTickMeasurer<F> {
     /// Create a new async tick measurer
-    pub fn new(f: F) -> Self {
+    pub const fn new(f: F) -> Self {
         Self { f }
     }
 
@@ -315,16 +320,19 @@ pub struct BenchmarkResult {
 
 impl BenchmarkResult {
     /// Check if benchmark meets hot path budget
+    #[must_use]
     pub fn meets_hot_path_budget(&self) -> bool {
         self.avg_ticks <= HOT_PATH_TICK_BUDGET as f64
     }
 
     /// Check if P95 meets hot path budget
-    pub fn p95_meets_hot_path_budget(&self) -> bool {
+    #[must_use]
+    pub const fn p95_meets_hot_path_budget(&self) -> bool {
         self.p95_ticks <= HOT_PATH_TICK_BUDGET
     }
 
     /// Format benchmark result as string
+    #[must_use]
     pub fn format(&self) -> String {
         let compliant = if self.meets_hot_path_budget() { "YES" } else { "NO" };
         format!(
@@ -386,7 +394,7 @@ where
     }
 
     // Calculate statistics
-    tick_samples.sort();
+    tick_samples.sort_unstable();
 
     // Handle empty samples case
     if tick_samples.is_empty() {
@@ -485,7 +493,8 @@ impl Benchmark {
     /// ```
     ///
     /// Then use criterion directly in your `benches/` directory as shown in the module documentation.
-    pub fn new(_name: &str) -> Self {
+    #[must_use]
+    pub const fn new(_name: &str) -> Self {
         Self
     }
 }

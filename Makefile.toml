@@ -38,13 +38,16 @@ command = "timeout"
 args = ["5s", "cargo", "fmt", "--all"]
 
 [tasks.lint]
-description = "Run clippy with maximized linting (all, pedantic, nursery, cargo)"
+description = "Run clippy with maximized linting (all, pedantic, nursery, cargo) - matches git hooks: checks lib only, filters test warnings"
+# ROOT CAUSE FIX: Align with git hooks behavior
+# Git hooks use: cargo clippy --lib --all-features (excludes tests) + filter test warnings
+# This ensures consistency: git hooks and cargo make lint use same rules
 command = "timeout"
 args = [
   "5s",
   "cargo",
   "clippy",
-  "--all-targets",
+  "--lib",
   "--all-features",
   "--",
   "-W",

@@ -38,6 +38,47 @@ fixture_test!(test_with_fixture, fixture, {
 });
 ```
 
+### Async Fixture
+
+```rust
+#[cfg(feature = "async")]
+use chicago_tdd_tools::core::async_fixture::{AsyncFixtureManager, AsyncFixtureProvider};
+use chicago_tdd_tools::core::fixture::FixtureError;
+
+#[cfg(feature = "async")]
+struct DatabaseFixture {
+    connection: String,
+}
+
+#[cfg(feature = "async")]
+struct DatabaseProvider;
+
+#[cfg(feature = "async")]
+impl chicago_tdd_tools::core::async_fixture::private::Sealed for DatabaseProvider {}
+
+#[cfg(feature = "async")]
+impl AsyncFixtureProvider for DatabaseProvider {
+    type Fixture<'a> = DatabaseFixture;
+    type Error = FixtureError;
+
+    async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error> {
+        Ok(DatabaseFixture { connection: "connected".to_string() })
+    }
+}
+
+#[cfg(feature = "async")]
+async_test!(test_async_fixture, {
+    // Arrange: Create async fixture manager
+    let provider = DatabaseProvider;
+    let manager = AsyncFixtureManager::new(provider);
+    // Act: Setup async fixture
+    let fixture = manager.setup().await?;
+    // Assert: Verify fixture created
+    assert_eq!(fixture.connection, "connected");
+    Ok::<(), FixtureError>(())
+});
+```
+
 ### Data Builder
 
 ```rust

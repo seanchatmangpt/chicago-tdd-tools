@@ -6,12 +6,12 @@
 //!
 //! # Poka-Yoke: Type-Level Validation
 //!
-//! These types enforce MAX_RUN_LEN ≤ 8 and MAX_BATCH_SIZE ≤ 1000 at compile time
+//! These types enforce `MAX_RUN_LEN` ≤ 8 and `MAX_BATCH_SIZE` ≤ 1000 at compile time
 //! through trait bounds. Invalid values fail to compile.
 //!
 //! ## Examples
 //!
-//! ### ValidatedRun
+//! ### `ValidatedRun`
 //!
 //! ```rust
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,7 +27,7 @@
 //! # }
 //! ```
 //!
-//! ### ValidatedBatch
+//! ### `ValidatedBatch`
 //!
 //! ```rust
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -55,7 +55,7 @@ pub use super::{MAX_BATCH_SIZE, MAX_RUN_LEN};
 
 /// Compile-time validated run length
 ///
-/// **Poka-Yoke**: This type enforces MAX_RUN_LEN ≤ 8 at compile time using const generics.
+/// **Poka-Yoke**: This type enforces `MAX_RUN_LEN` ≤ 8 at compile time using const generics.
 /// Use this for known run lengths to prevent errors at compile time.
 ///
 /// # Example
@@ -92,7 +92,7 @@ pub struct ValidatedRun<const LEN: usize> {
 
 /// Helper trait for compile-time run length validation
 ///
-/// This trait is only implemented when LEN <= MAX_RUN_LEN.
+/// This trait is only implemented when LEN <= `MAX_RUN_LEN`.
 /// **Poka-Yoke**: Use this trait bound to enforce compile-time validation.
 pub trait AssertRunLen<const LEN: usize> {}
 
@@ -103,7 +103,7 @@ pub trait Valid {}
 impl Valid for () {}
 
 /// Manual implementations for valid run lengths (0-8)
-/// **Poka-Yoke**: Only valid run lengths (<= MAX_RUN_LEN) are implemented.
+/// **Poka-Yoke**: Only valid run lengths (<= `MAX_RUN_LEN`) are implemented.
 impl AssertRunLen<0> for () {}
 impl AssertRunLen<1> for () {}
 impl AssertRunLen<2> for () {}
@@ -141,16 +141,19 @@ where
     /// Get the run length
     ///
     /// This is guaranteed to be LEN at compile time.
+    #[must_use]
     pub const fn len(&self) -> usize {
         LEN
     }
 
     /// Get a reference to the run data
+    #[must_use]
     pub fn data(&self) -> &[u8] {
         self.inner.as_ref()
     }
 
     /// Consume the validated run and return the data
+    #[must_use]
     pub fn into_data(self) -> Vec<u8> {
         self.inner.into_inner()
     }
@@ -158,7 +161,7 @@ where
 
 /// Compile-time validated batch size
 ///
-/// **Poka-Yoke**: This type enforces MAX_BATCH_SIZE ≤ 1000 at compile time using const generics.
+/// **Poka-Yoke**: This type enforces `MAX_BATCH_SIZE` ≤ 1000 at compile time using const generics.
 /// Use this for known batch sizes to prevent errors at compile time.
 ///
 /// # Example
@@ -195,12 +198,12 @@ pub struct ValidatedBatch<const SIZE: usize> {
 
 /// Helper trait for compile-time batch size validation
 ///
-/// This trait is only implemented when SIZE <= MAX_BATCH_SIZE.
+/// This trait is only implemented when SIZE <= `MAX_BATCH_SIZE`.
 /// **Poka-Yoke**: Use this trait bound to enforce compile-time validation.
 pub trait AssertBatchSize<const SIZE: usize> {}
 
 /// Manual implementations for valid batch sizes (0-1000, in increments of 100)
-/// **Poka-Yoke**: Only valid batch sizes (<= MAX_BATCH_SIZE) are implemented.
+/// **Poka-Yoke**: Only valid batch sizes (<= `MAX_BATCH_SIZE`) are implemented.
 /// Note: For practical use, implement specific sizes as needed
 impl AssertBatchSize<0> for () {}
 impl AssertBatchSize<100> for () {}
@@ -241,16 +244,19 @@ where
     /// Get the batch size
     ///
     /// This is guaranteed to be SIZE at compile time.
+    #[must_use]
     pub const fn len(&self) -> usize {
         SIZE
     }
 
     /// Get a reference to the batch data
+    #[must_use]
     pub fn data(&self) -> &[u8] {
         self.inner.as_ref()
     }
 
     /// Consume the validated batch and return the data
+    #[must_use]
     pub fn into_data(self) -> Vec<u8> {
         self.inner.into_inner()
     }
@@ -325,6 +331,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cognitive_complexity)] // Testing multiple cases is intentional
     fn test_validated_run_all_valid_lengths() {
         // Test all valid run lengths (0-8) compile and work
         // This test verifies that all valid lengths work correctly
@@ -336,40 +343,67 @@ mod tests {
 
         // Test each length separately (each ValidatedRun<LEN> is a different type)
         let data0 = vec![0u8; 0];
-        assert!(ValidatedRun::<0>::new(data0).is_ok());
-        assert_eq!(ValidatedRun::<0>::new(vec![0u8; 0]).unwrap().len(), 0);
+        let result0 = ValidatedRun::<0>::new(data0);
+        assert!(result0.is_ok());
+        if let Ok(run0) = result0 {
+            assert_eq!(run0.len(), 0);
+        }
 
         let data1 = vec![0u8; 1];
-        assert!(ValidatedRun::<1>::new(data1).is_ok());
-        assert_eq!(ValidatedRun::<1>::new(vec![0u8; 1]).unwrap().len(), 1);
+        let result1 = ValidatedRun::<1>::new(data1);
+        assert!(result1.is_ok());
+        if let Ok(run1) = result1 {
+            assert_eq!(run1.len(), 1);
+        }
 
         let data2 = vec![0u8; 2];
-        assert!(ValidatedRun::<2>::new(data2).is_ok());
-        assert_eq!(ValidatedRun::<2>::new(vec![0u8; 2]).unwrap().len(), 2);
+        let result2 = ValidatedRun::<2>::new(data2);
+        assert!(result2.is_ok());
+        if let Ok(run2) = result2 {
+            assert_eq!(run2.len(), 2);
+        }
 
         let data3 = vec![0u8; 3];
-        assert!(ValidatedRun::<3>::new(data3).is_ok());
-        assert_eq!(ValidatedRun::<3>::new(vec![0u8; 3]).unwrap().len(), 3);
+        let result3 = ValidatedRun::<3>::new(data3);
+        assert!(result3.is_ok());
+        if let Ok(run3) = result3 {
+            assert_eq!(run3.len(), 3);
+        }
 
         let data4 = vec![0u8; 4];
-        assert!(ValidatedRun::<4>::new(data4).is_ok());
-        assert_eq!(ValidatedRun::<4>::new(vec![0u8; 4]).unwrap().len(), 4);
+        let result4 = ValidatedRun::<4>::new(data4);
+        assert!(result4.is_ok());
+        if let Ok(run4) = result4 {
+            assert_eq!(run4.len(), 4);
+        }
 
         let data5 = vec![0u8; 5];
-        assert!(ValidatedRun::<5>::new(data5).is_ok());
-        assert_eq!(ValidatedRun::<5>::new(vec![0u8; 5]).unwrap().len(), 5);
+        let result5 = ValidatedRun::<5>::new(data5);
+        assert!(result5.is_ok());
+        if let Ok(run5) = result5 {
+            assert_eq!(run5.len(), 5);
+        }
 
         let data6 = vec![0u8; 6];
-        assert!(ValidatedRun::<6>::new(data6).is_ok());
-        assert_eq!(ValidatedRun::<6>::new(vec![0u8; 6]).unwrap().len(), 6);
+        let result6 = ValidatedRun::<6>::new(data6);
+        assert!(result6.is_ok());
+        if let Ok(run6) = result6 {
+            assert_eq!(run6.len(), 6);
+        }
 
         let data7 = vec![0u8; 7];
-        assert!(ValidatedRun::<7>::new(data7).is_ok());
-        assert_eq!(ValidatedRun::<7>::new(vec![0u8; 7]).unwrap().len(), 7);
+        let result7 = ValidatedRun::<7>::new(data7);
+        assert!(result7.is_ok());
+        if let Ok(run7) = result7 {
+            assert_eq!(run7.len(), 7);
+        }
 
         let data8 = vec![0u8; 8];
-        assert!(ValidatedRun::<8>::new(data8).is_ok());
-        assert_eq!(ValidatedRun::<8>::new(vec![0u8; 8]).unwrap().len(), 8);
+        let result8 = ValidatedRun::<8>::new(data8);
+        assert!(result8.is_ok());
+        if let Ok(run8) = result8 {
+            assert_eq!(run8.len(), 8);
+        }
     }
 
     #[test]
@@ -379,16 +413,28 @@ mod tests {
         // This test verifies that all valid sizes work correctly
 
         // Test each size separately (each ValidatedBatch<SIZE> is a different type)
-        assert!(ValidatedBatch::<0>::new(vec![0u8; 0]).is_ok());
-        assert_eq!(ValidatedBatch::<0>::new(vec![0u8; 0]).unwrap().len(), 0);
+        let result0 = ValidatedBatch::<0>::new(vec![0u8; 0]);
+        assert!(result0.is_ok());
+        if let Ok(batch0) = result0 {
+            assert_eq!(batch0.len(), 0);
+        }
 
-        assert!(ValidatedBatch::<100>::new(vec![0u8; 100]).is_ok());
-        assert_eq!(ValidatedBatch::<100>::new(vec![0u8; 100]).unwrap().len(), 100);
+        let result100 = ValidatedBatch::<100>::new(vec![0u8; 100]);
+        assert!(result100.is_ok());
+        if let Ok(batch100) = result100 {
+            assert_eq!(batch100.len(), 100);
+        }
 
-        assert!(ValidatedBatch::<500>::new(vec![0u8; 500]).is_ok());
-        assert_eq!(ValidatedBatch::<500>::new(vec![0u8; 500]).unwrap().len(), 500);
+        let result500 = ValidatedBatch::<500>::new(vec![0u8; 500]);
+        assert!(result500.is_ok());
+        if let Ok(batch500) = result500 {
+            assert_eq!(batch500.len(), 500);
+        }
 
-        assert!(ValidatedBatch::<1000>::new(vec![0u8; 1000]).is_ok());
-        assert_eq!(ValidatedBatch::<1000>::new(vec![0u8; 1000]).unwrap().len(), 1000);
+        let result1000 = ValidatedBatch::<1000>::new(vec![0u8; 1000]);
+        assert!(result1000.is_ok());
+        if let Ok(batch1000) = result1000 {
+            assert_eq!(batch1000.len(), 1000);
+        }
     }
 }

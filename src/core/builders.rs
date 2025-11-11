@@ -1,7 +1,7 @@
 //! Test Data Builders
 //!
 //! Provides fluent builders for creating test data structures.
-//! Aligned with workflow engine's TestDataBuilder API for consistency.
+//! Aligned with workflow engine's `TestDataBuilder` API for consistency.
 //!
 //! # Go the Extra Mile: 1st/2nd/3rd Idea Progression
 //!
@@ -30,17 +30,20 @@ pub struct TestDataBuilder {
 
 impl TestDataBuilder {
     /// Create a new test data builder
+    #[must_use]
     pub fn new() -> Self {
         Self { data: HashMap::new() }
     }
 
     /// Add a variable
+    #[must_use]
     pub fn with_var(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.data.insert(key.into(), value.into());
         self
     }
 
     /// Add order data (common business scenario)
+    #[must_use]
     pub fn with_order_data(
         mut self,
         order_id: impl Into<String>,
@@ -54,6 +57,7 @@ impl TestDataBuilder {
     }
 
     /// Add customer data
+    #[must_use]
     pub fn with_customer_data(mut self, customer_id: impl Into<String>) -> Self {
         self.data.insert("customer_id".to_string(), customer_id.into());
         self.data
@@ -62,6 +66,7 @@ impl TestDataBuilder {
     }
 
     /// Add approval data
+    #[must_use]
     pub fn with_approval_data(
         mut self,
         request_id: impl Into<String>,
@@ -75,6 +80,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake email address
+    #[must_use]
     pub fn with_fake_email(mut self) -> Self {
         self.data.insert("email".to_string(), Faker.fake::<String>());
         self
@@ -82,6 +88,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake name
+    #[must_use]
     pub fn with_fake_name(mut self) -> Self {
         self.data.insert("name".to_string(), Faker.fake::<String>());
         self
@@ -89,6 +96,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake UUID
+    #[must_use]
     pub fn with_fake_uuid(mut self) -> Self {
         self.data.insert("uuid".to_string(), Faker.fake::<String>());
         self
@@ -96,6 +104,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake phone number
+    #[must_use]
     pub fn with_fake_phone(mut self) -> Self {
         self.data.insert("phone".to_string(), Faker.fake::<String>());
         self
@@ -103,6 +112,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake address
+    #[must_use]
     pub fn with_fake_address(mut self) -> Self {
         self.data.insert("address".to_string(), Faker.fake::<String>());
         self
@@ -110,6 +120,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake company name
+    #[must_use]
     pub fn with_fake_company(mut self) -> Self {
         self.data.insert("company".to_string(), Faker.fake::<String>());
         self
@@ -117,6 +128,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake order data with realistic values
+    #[must_use]
     pub fn with_fake_order_data(mut self) -> Self {
         self.data.insert("order_id".to_string(), Faker.fake::<String>());
         self.data
@@ -128,6 +140,7 @@ impl TestDataBuilder {
 
     #[cfg(feature = "fake-data")]
     /// Add fake customer data with realistic values
+    #[must_use]
     pub fn with_fake_customer_data(mut self) -> Self {
         self.data.insert("customer_id".to_string(), Faker.fake::<String>());
         self.data.insert("customer_email".to_string(), Faker.fake::<String>());
@@ -147,10 +160,11 @@ impl TestDataBuilder {
         serde_json::to_value(&self.data)
     }
 
-    /// Build test data as HashMap
+    /// Build test data as `HashMap`
     ///
     /// Returns the underlying `HashMap<String, String>`.
     /// Matches workflow engine API exactly.
+    #[must_use]
     pub fn build(self) -> HashMap<String, String> {
         self.data
     }
@@ -185,6 +199,7 @@ where
     V: Into<String>,
 {
     /// Create a new generic test data builder
+    #[must_use]
     pub fn new() -> Self {
         Self {
             data: HashMap::new(),
@@ -194,6 +209,7 @@ where
     }
 
     /// Add a variable with generic key and value types
+    #[must_use]
     pub fn with_var<KI, VI>(mut self, key: KI, value: VI) -> Self
     where
         KI: Into<String>,
@@ -203,7 +219,8 @@ where
         self
     }
 
-    /// Build test data as HashMap
+    /// Build test data as `HashMap`
+    #[must_use]
     pub fn build(self) -> HashMap<String, String> {
         self.data
     }
@@ -219,6 +236,7 @@ where
 
     /// Build test data with OTEL span instrumentation
     #[cfg(feature = "otel")]
+    #[must_use]
     pub fn build_with_otel(self, span_name: &str) -> (HashMap<String, String>, Span) {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
         let start_time = SystemTime::now()
@@ -249,7 +267,7 @@ where
         if let Err(e) = span.complete(end_time) {
             // Log error but don't fail - span will remain active
             #[cfg(feature = "logging")]
-            log::warn!("Failed to complete span: {}", e);
+            log::warn!("Failed to complete span: {e}");
             #[cfg(not(feature = "logging"))]
             eprintln!("Warning: Failed to complete span: {}", e);
         } else {
@@ -290,6 +308,7 @@ pub struct ValidatedTestDataBuilder<T> {
 
 impl<T> ValidatedTestDataBuilder<T> {
     /// Create a new validated test data builder
+    #[must_use]
     pub fn new() -> Self {
         Self {
             data: HashMap::new(),
@@ -300,6 +319,7 @@ impl<T> ValidatedTestDataBuilder<T> {
     }
 
     /// Add a variable (validated at compile time through type system)
+    #[must_use]
     pub fn with_var(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.data.insert(key.into(), value.into());
         self
@@ -307,6 +327,7 @@ impl<T> ValidatedTestDataBuilder<T> {
 
     /// Start OTEL span for this builder
     #[cfg(feature = "otel")]
+    #[must_use]
     pub fn start_span(mut self, span_name: &str) -> Self {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
         let start_time = SystemTime::now()
@@ -328,12 +349,14 @@ impl<T> ValidatedTestDataBuilder<T> {
     }
 
     /// Build test data with full validation
+    #[must_use]
     pub fn build(self) -> HashMap<String, String> {
         self.data
     }
 
     /// Build test data with OTEL span (if started)
     #[cfg(feature = "otel")]
+    #[must_use]
     pub fn build_with_otel(mut self) -> (HashMap<String, String>, Option<Span>) {
         let mut span = self.span.take();
 
@@ -347,7 +370,7 @@ impl<T> ValidatedTestDataBuilder<T> {
             // End time should always be >= start time in normal operation
             if let Err(e) = s.complete(end_time) {
                 // Log error but don't fail - span will remain active
-                eprintln!("Warning: Failed to complete span: {}", e);
+                eprintln!("Warning: Failed to complete span: {e}");
             } else {
                 s.status = SpanStatus::Ok;
             }
@@ -394,51 +417,61 @@ pub struct FakeDataGenerator;
 #[cfg(feature = "fake-data")]
 impl FakeDataGenerator {
     /// Create a new fake data generator
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self
     }
 
     /// Generate a fake email address
+    #[must_use]
     pub fn email(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake name
+    #[must_use]
     pub fn name(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake UUID
+    #[must_use]
     pub fn uuid(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake phone number
+    #[must_use]
     pub fn phone(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake address
+    #[must_use]
     pub fn address(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake company name
+    #[must_use]
     pub fn company(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake integer in a range
+    #[must_use]
     pub fn int(&self, min: i32, max: i32) -> i32 {
         (min..max).fake::<i32>()
     }
 
     /// Generate a fake float in a range
+    #[must_use]
     pub fn float(&self, min: f64, max: f64) -> f64 {
         (min..max).fake::<f64>()
     }
 
     /// Generate a fake string with specified length
+    #[must_use]
     pub fn string(&self, len: usize) -> String {
         (0..len).map(|_| Faker.fake::<char>()).collect()
     }

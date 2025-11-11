@@ -114,7 +114,7 @@ pub struct AssertionBuilder<T> {
 
 impl<T: std::fmt::Debug> AssertionBuilder<T> {
     /// Create a new assertion builder
-    pub fn new(value: T) -> Self {
+    pub const fn new(value: T) -> Self {
         Self {
             value,
             #[cfg(feature = "otel")]
@@ -124,6 +124,7 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
 
     /// Start OTEL span for this assertion
     #[cfg(feature = "otel")]
+    #[must_use]
     pub fn with_span(mut self, span_name: &str) -> Self {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
         let start_time = SystemTime::now()
@@ -149,6 +150,7 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
     /// # Panics
     ///
     /// Panics if the predicate returns `false` for the value.
+    #[must_use]
     pub fn assert_that<F>(self, predicate: F) -> Self
     where
         // Poka-Yoke: HRTB requires single-character lifetime for flexibility
@@ -163,6 +165,7 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
     /// # Panics
     ///
     /// Panics if the value does not equal the expected value.
+    #[must_use]
     pub fn assert_eq<U: PartialEq + std::fmt::Debug>(self, expected: &U) -> Self
     where
         T: PartialEq<U>,
@@ -176,6 +179,7 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
     /// # Panics
     ///
     /// Panics if the predicate returns `false` for the value, with the custom message.
+    #[must_use]
     pub fn assert_that_with_msg<F>(self, predicate: F, msg: &str) -> Self
     where
         // Poka-Yoke: HRTB requires single-character lifetime for flexibility
@@ -204,7 +208,7 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
             if let Err(e) = span.complete(end_time) {
                 // Log error but don't fail - span will remain active
                 #[cfg(feature = "logging")]
-                log::warn!("Failed to complete span: {}", e);
+                log::warn!("Failed to complete span: {e}");
                 #[cfg(not(feature = "logging"))]
                 eprintln!("Warning: Failed to complete span: {}", e);
             } else {
@@ -259,6 +263,7 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
     }
 
     /// Assert that the value satisfies a predicate (validated)
+    #[must_use]
     pub fn assert_that<F>(mut self, predicate: F) -> Self
     where
         F: for<'a> Fn(&'a T) -> bool,
@@ -274,7 +279,7 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
         // End time should always be >= start time in normal operation
         if let Err(e) = self.span.complete(end_time) {
             // Log error but don't fail - span will remain active
-            eprintln!("Warning: Failed to complete span: {}", e);
+            eprintln!("Warning: Failed to complete span: {e}");
         } else {
             self.span.status = if success { SpanStatus::Ok } else { SpanStatus::Error };
         }
@@ -309,12 +314,12 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
     }
 
     /// Get the OTEL span
-    pub fn span(&self) -> &Span {
+    pub const fn span(&self) -> &Span {
         &self.span
     }
 
     /// Get the OTEL metric
-    pub fn metric(&self) -> Option<&Metric> {
+    pub const fn metric(&self) -> Option<&Metric> {
         self.metric.as_ref()
     }
 }

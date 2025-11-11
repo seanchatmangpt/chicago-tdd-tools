@@ -1,7 +1,7 @@
 //! Macros Module
 //!
-//! Re-exports macros from core::macros for backward compatibility.
-//! Macros are exported at crate root via #[macro_export] in their definitions.
+//! Re-exports macros from `core::macros` for backward compatibility.
+//! Macros are exported at crate root via #[`macro_export`] in their definitions.
 
 // Re-export macro submodules - macros use #[macro_export] so they're already at crate root
 // Note: The wildcard imports appear unused but are necessary for macro re-export

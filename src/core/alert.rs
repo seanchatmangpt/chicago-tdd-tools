@@ -55,7 +55,7 @@
 //! **Note**: The `logging` feature is enabled by default. When enabled, alert macros
 //! (`alert_critical!`, `alert_warning!`, etc.) automatically use `log::error!`, `log::warn!`, etc.
 //! instead of `eprintln!`. This means you can use either the alert macros or standard log macros,
-//! and both will use the same alert format (if AlertLogger is initialized).
+//! and both will use the same alert format (if `AlertLogger` is initialized).
 
 use std::io::{self, Write};
 
@@ -420,14 +420,13 @@ pub fn write_alert<W: Write>(
         if let Some(fix_msg) = fix {
             writeln!(
                 writer,
-                "{} {}\n   {} {}\n   💡 FIX: {}",
-                severity, message, severity, stop_msg, fix_msg
+                "{severity} {message}\n   {severity} {stop_msg}\n   💡 FIX: {fix_msg}"
             )?;
         } else {
-            writeln!(writer, "{} {}\n   {} {}", severity, message, severity, stop_msg)?;
+            writeln!(writer, "{severity} {message}\n   {severity} {stop_msg}")?;
         }
     } else {
-        writeln!(writer, "{} {}", severity, message)?;
+        writeln!(writer, "{severity} {message}")?;
     }
     Ok(())
 }

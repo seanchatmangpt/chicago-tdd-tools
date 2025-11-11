@@ -6,7 +6,7 @@ use super::{TestcontainersError, TestcontainersResult};
 
 #[cfg(feature = "testcontainers")]
 mod implementation {
-    use super::*;
+    use super::{TestcontainersError, TestcontainersResult};
     use crate::integration::testcontainers::implementation::{ContainerClient, GenericContainer};
     use testcontainers::core::WaitFor;
     use testcontainers::runners::SyncRunner;
@@ -53,7 +53,7 @@ mod implementation {
                 TestcontainersError::CreationFailed(format!("🚨 Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
             })?;
 
-            Ok(GenericContainer::from_container(container))
+            Ok(Self::from_container(container))
         }
     }
 }

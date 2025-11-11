@@ -115,10 +115,10 @@ pub use exec::ExecResult;
 #[cfg(feature = "testcontainers")]
 /// Implementation module for testcontainers functionality
 ///
-/// Contains the actual implementation of ContainerClient and GenericContainer.
+/// Contains the actual implementation of `ContainerClient` and `GenericContainer`.
 /// These types are feature-gated and only available when the `testcontainers` feature is enabled.
 pub mod implementation {
-    use super::*;
+    use super::{HashMap, TestcontainersError, TestcontainersResult};
     use testcontainers::core::ContainerPort;
     use testcontainers::runners::SyncRunner;
     use testcontainers::Container;
@@ -161,8 +161,7 @@ pub mod implementation {
                 } else {
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     Err(TestcontainersError::DockerUnavailable(format!(
-                        "Docker daemon is not running. Error: {}",
-                        stderr
+                        "Docker daemon is not running. Error: {stderr}"
                     )))
                 }
             }
@@ -173,8 +172,7 @@ pub mod implementation {
                     ))
                 } else {
                     Err(TestcontainersError::DockerUnavailable(format!(
-                        "Failed to check Docker availability: {}",
-                        e
+                        "Failed to check Docker availability: {e}"
                     )))
                 }
             }
@@ -216,6 +214,7 @@ pub mod implementation {
         /// # Panics
         ///
         /// Panics if Docker is unavailable, with a clear error message.
+        #[must_use]
         pub fn new() -> Self {
             // **FMEA Fix**: Verify Docker is available at client creation (fail-fast)
             // This prevents false positives where tests pass when Docker is unavailable
@@ -235,7 +234,8 @@ pub mod implementation {
         }
 
         /// Get a reference for compatibility (no-op in minimal implementation)
-        pub fn client(&self) -> &Self {
+        #[must_use]
+        pub const fn client(&self) -> &Self {
             self
         }
     }
@@ -256,7 +256,7 @@ pub mod implementation {
     /// - Automatic cleanup on Drop
     ///
     /// For advanced features (volume mounts, resource limits, determinism),
-    /// see clnrm's TestcontainerBackend.
+    /// see clnrm's `TestcontainerBackend`.
     pub struct GenericContainer {
         container: Container<GenericImage>,
     }
@@ -268,7 +268,7 @@ pub mod implementation {
         ///
         /// # Arguments
         ///
-        /// * `_client` - Container client instance (should have been validated via ContainerClient::new())
+        /// * `_client` - Container client instance (should have been validated via `ContainerClient::new()`)
         /// * `image` - Docker image name (e.g., "alpine", "postgres")
         /// * `tag` - Docker image tag (e.g., "latest", "14")
         ///
@@ -300,11 +300,11 @@ pub mod implementation {
             Ok(Self { container })
         }
 
-        /// Create a GenericContainer from an existing Container
+        /// Create a `GenericContainer` from an existing Container
         ///
         /// This is used internally by other methods (e.g., `with_wait_for`) to construct
-        /// a GenericContainer from a Container that was created with additional configuration.
-        pub(crate) fn from_container(container: Container<GenericImage>) -> Self {
+        /// a `GenericContainer` from a Container that was created with additional configuration.
+        pub(crate) const fn from_container(container: Container<GenericImage>) -> Self {
             Self { container }
         }
 
@@ -340,7 +340,7 @@ pub mod implementation {
             // Add command if provided
             if let Some((cmd, args)) = command {
                 let mut cmd_vec = vec![cmd.to_string()];
-                cmd_vec.extend(args.iter().map(|s| s.to_string()));
+                cmd_vec.extend(args.iter().map(|s| (*s).to_string()));
                 request = request.with_cmd(cmd_vec);
             }
             let container = request.start().map_err(|e| {
@@ -443,7 +443,7 @@ pub mod implementation {
             let mut request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
             // Set command and args to keep container running
             let mut cmd_vec = vec![command.to_string()];
-            cmd_vec.extend(args.iter().map(|s| s.to_string()));
+            cmd_vec.extend(args.iter().map(|s| (*s).to_string()));
             request = request.with_cmd(cmd_vec);
 
             let container = request.start().map_err(|e| {
@@ -511,8 +511,7 @@ pub mod implementation {
         pub fn get_host_port(&self, container_port: u16) -> TestcontainersResult<u16> {
             let port = self.container.get_host_port_ipv4(container_port).map_err(|e| {
                 TestcontainersError::OperationFailed(format!(
-                    "Failed to get host port for container port {}: {}",
-                    container_port, e
+                    "Failed to get host port for container port {container_port}: {e}"
                 ))
             })?;
             Ok(port)
@@ -521,7 +520,8 @@ pub mod implementation {
         /// Get the underlying testcontainers Container
         ///
         /// Allows access to advanced testcontainers features if needed.
-        pub fn container(&self) -> &Container<GenericImage> {
+        #[must_use]
+        pub const fn container(&self) -> &Container<GenericImage> {
             &self.container
         }
     }

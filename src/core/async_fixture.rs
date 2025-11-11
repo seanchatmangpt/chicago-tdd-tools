@@ -138,7 +138,7 @@ where
     P: AsyncFixtureProvider,
 {
     /// Create a new async fixture manager
-    pub fn new(provider: P) -> Self {
+    pub const fn new(provider: P) -> Self {
         Self { provider }
     }
 
@@ -152,6 +152,7 @@ where
     /// Teardown fixture asynchronously
     ///
     /// Performs cleanup operations. Override for custom cleanup logic.
+    #[allow(clippy::unused_async)] // Part of async trait API - implementations may need async
     pub async fn teardown(&self) -> FixtureResult<()> {
         // Default: no-op cleanup
         // Override in implementations for custom cleanup

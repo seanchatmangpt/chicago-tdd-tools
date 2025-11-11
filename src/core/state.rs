@@ -5,7 +5,7 @@
 //!
 //! # Advanced Rust Features
 //!
-//! - **Type State Pattern**: Compile-time state machine using PhantomData
+//! - **Type State Pattern**: Compile-time state machine using `PhantomData`
 //! - **Sealed Traits**: API safety and extensibility control
 //! - **Zero-Sized Types**: Zero-cost abstractions for state tracking
 
@@ -85,11 +85,13 @@ struct TestData {
 
 impl TestState<Arrange> {
     /// Create a new test state in Arrange phase
+    #[must_use]
     pub fn new() -> Self {
         Self { _phase: std::marker::PhantomData, data: TestData::default() }
     }
 
     /// Add arrange data
+    #[must_use]
     pub fn with_arrange_data(mut self, data: Vec<u8>) -> Self {
         self.data.arrange_data = Some(data);
         self
@@ -99,6 +101,7 @@ impl TestState<Arrange> {
     ///
     /// This consumes the Arrange state and returns an Act state.
     /// This ensures that Act can only be called after Arrange.
+    #[must_use]
     pub fn act(self) -> TestState<Act> {
         TestState { _phase: std::marker::PhantomData, data: self.data }
     }
@@ -106,6 +109,7 @@ impl TestState<Arrange> {
 
 impl TestState<Act> {
     /// Execute act operation
+    #[must_use]
     pub fn execute<F>(mut self, f: F) -> Self
     where
         F: FnOnce(Option<Vec<u8>>) -> Vec<u8>,
@@ -119,6 +123,7 @@ impl TestState<Act> {
     ///
     /// This consumes the Act state and returns an Assert state.
     /// This ensures that Assert can only be called after Act.
+    #[must_use]
     pub fn assert(self) -> TestState<Assert> {
         TestState { _phase: std::marker::PhantomData, data: self.data }
     }
@@ -126,12 +131,14 @@ impl TestState<Act> {
 
 impl TestState<Assert> {
     /// Get act result for assertion
-    pub fn act_result(&self) -> Option<&Vec<u8>> {
+    #[must_use]
+    pub const fn act_result(&self) -> Option<&Vec<u8>> {
         self.data.act_result.as_ref()
     }
 
     /// Get arrange data for assertion
-    pub fn arrange_data(&self) -> Option<&Vec<u8>> {
+    #[must_use]
+    pub const fn arrange_data(&self) -> Option<&Vec<u8>> {
         self.data.arrange_data.as_ref()
     }
 

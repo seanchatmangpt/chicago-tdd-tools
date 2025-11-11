@@ -16,6 +16,22 @@ Test fixtures: Reusable setup with state management. Test isolation. Metadata tr
 
 **Anti-patterns**: Don't create fixtures unnecessarily for simple tests. Don't use fixtures when no state needed.
 
+## Async Fixtures
+
+Async fixtures: Async fixture creation with async traits (Rust 1.75+). Type-safe lifecycle management with GATs. Runtime lifecycle management.
+
+**When to Use**: Async fixture creation (database connections, network resources), async setup/teardown, async resource management. **Requires**: `async` feature, Rust 1.75+. **Avoid**: Synchronous fixtures (use `TestFixture`), simple fixtures, no async needed.
+
+**Basic Usage**: `AsyncFixtureProvider` trait with `async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>`, `AsyncFixtureManager::new(provider).setup().await?` for setup, `manager.teardown().await?` for teardown.
+
+**Provider Pattern**: Implement `AsyncFixtureProvider` trait with sealed trait pattern. Define `Fixture<'a>` associated type (GAT), `Error` type. Implement `create_fixture()` async method.
+
+**Manager Pattern**: `AsyncFixtureManager::new(provider)` creates manager, `manager.setup().await?` creates fixture, `manager.teardown().await?` cleans up. Use in async tests with proper error handling.
+
+**Patterns**: Async resource creation (database connections), async setup/teardown (network resources), type-safe lifecycle (GATs), sealed trait pattern (API safety).
+
+**Anti-patterns**: Don't use for synchronous fixtures. Don't skip error handling. Don't forget to implement sealed trait. Don't use without `async` feature enabled.
+
 ## Test Data Builders
 
 Fluent builders for test data. JSON/HashMap output. Domain-specific helpers.

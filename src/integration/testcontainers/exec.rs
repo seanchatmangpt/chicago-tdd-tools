@@ -23,7 +23,7 @@ pub struct ExecResult {
 
 #[cfg(feature = "testcontainers")]
 mod implementation {
-    use super::*;
+    use super::{ExecResult, TestcontainersError, TestcontainersResult};
     use crate::integration::testcontainers::implementation::GenericContainer;
     use std::io::Read;
     use testcontainers::core::ExecCommand;
@@ -60,7 +60,7 @@ mod implementation {
             // Build command + args into Vec<String> for ExecCommand::new
             // ExecCommand requires owned strings, so convert &str to String
             let mut cmd_args = vec![command.to_string()];
-            cmd_args.extend(args.iter().map(|s| s.to_string()));
+            cmd_args.extend(args.iter().map(|s| (*s).to_string()));
 
             let mut exec_result =
                 self.container().exec(ExecCommand::new(cmd_args)).map_err(|e| {

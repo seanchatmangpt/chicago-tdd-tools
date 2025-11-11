@@ -11,6 +11,7 @@ pub struct TestGenerator {
 
 impl TestGenerator {
     /// Create new test generator
+    #[must_use]
     pub fn new() -> Self {
         Self { tests: vec![] }
     }
@@ -19,12 +20,12 @@ impl TestGenerator {
     #[allow(clippy::needless_pass_by_ref_mut)] // Preserve API compatibility
     pub fn generate_test(&mut self, name: &str, spec: &str) -> String {
         format!(
-            "#[test]\nfn {}() {{\n    // Generated from: {}\n    // Test implementation needed\n}}\n",
-            name, spec
+            "#[test]\nfn {name}() {{\n    // Generated from: {spec}\n    // Test implementation needed\n}}\n"
         )
     }
 
     /// Get all generated tests
+    #[must_use]
     pub fn get_tests(&self) -> &[String] {
         &self.tests
     }
@@ -50,6 +51,7 @@ impl Default for TestGenerator {
 /// assert_eq!(TEST_DATA[0], 0);
 /// assert_eq!(TEST_DATA[1], 1);
 /// ```
+#[must_use]
 pub const fn generate_test_array<const N: usize>() -> [u8; N] {
     let mut array = [0u8; N];
     let mut i = 0;
@@ -63,6 +65,7 @@ pub const fn generate_test_array<const N: usize>() -> [u8; N] {
 /// Generate a test array with a pattern at compile time
 ///
 /// Generates an array where each element follows a pattern based on its index.
+#[must_use]
 pub const fn generate_test_array_pattern<const N: usize>(pattern: u8) -> [u8; N] {
     let mut array = [0u8; N];
     let mut i = 0;
@@ -77,16 +80,12 @@ pub const fn generate_test_array_pattern<const N: usize>(pattern: u8) -> [u8; N]
 ///
 /// Validates a condition at compile time using const assertions.
 pub const fn const_assert(condition: bool) {
-    if !condition {
-        panic!("Compile-time assertion failed");
-    }
+    assert!(condition, "Compile-time assertion failed");
 }
 
 /// Compile-time validation helper with message
 pub const fn const_assert_msg(condition: bool, _msg: &'static str) {
-    if !condition {
-        panic!("Compile-time assertion failed");
-    }
+    assert!(condition, "Compile-time assertion failed");
 }
 
 #[cfg(test)]

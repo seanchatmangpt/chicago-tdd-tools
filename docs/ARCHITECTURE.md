@@ -83,7 +83,7 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 **GATs**: Flexible fixture creation with type-safe lifetimes. Pattern: `trait FixtureProvider { type Fixture<'a>; }`.
 
-**Async Traits**: Native async trait support (Rust 1.75+). Pattern: `trait AsyncFixtureProvider { async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>; }`.
+**Async Traits**: Native async trait support (Rust 1.75+). Pattern: `trait AsyncFixtureProvider { async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>; }`. Use `AsyncFixtureManager` for lifecycle management. Requires `async` feature and Rust 1.75+. Sealed trait pattern prevents external implementations. GATs provide type-safe lifetime management. Runtime lifecycle (not compile-time). Use for async resource creation (database connections, network resources).
 
 **Const Generics**: Compile-time configuration, zero runtime cost. Pattern: `PropertyTestGenerator<const MAX_ITEMS: usize>`.
 

@@ -57,18 +57,21 @@ impl Default for SpanValidator {
 #[cfg(feature = "otel")]
 impl SpanValidator {
     /// Create a new span validator
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { required_attributes: Vec::new(), validate_non_zero_ids: true }
     }
 
     /// Require specific attributes
+    #[must_use]
     pub fn with_required_attributes(mut self, attributes: Vec<String>) -> Self {
         self.required_attributes = attributes;
         self
     }
 
     /// Enable/disable non-zero ID validation
-    pub fn with_non_zero_id_validation(mut self, enabled: bool) -> Self {
+    #[must_use]
+    pub const fn with_non_zero_id_validation(mut self, enabled: bool) -> Self {
         self.validate_non_zero_ids = enabled;
         self
     }
@@ -105,8 +108,7 @@ impl SpanValidator {
             let start_time = span.start_time_ms();
             if end_time < start_time {
                 return Err(OtelValidationError::SpanValidationFailed(format!(
-                    "Span end time {} is before start time {}",
-                    end_time, start_time
+                    "Span end time {end_time} is before start time {start_time}"
                 )));
             }
         }
@@ -145,11 +147,13 @@ impl Default for MetricValidator {
 #[cfg(feature = "otel")]
 impl MetricValidator {
     /// Create a new metric validator
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { required_attributes: Vec::new() }
     }
 
     /// Require specific attributes
+    #[must_use]
     pub fn with_required_attributes(mut self, attributes: Vec<String>) -> Self {
         self.required_attributes = attributes;
         self
@@ -231,7 +235,8 @@ impl Default for OtelTestHelper {
 #[cfg(feature = "otel")]
 impl OtelTestHelper {
     /// Create a new OTEL test helper
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { span_validator: SpanValidator::new(), metric_validator: MetricValidator::new() }
     }
 
@@ -253,7 +258,7 @@ impl OtelTestHelper {
         for span in spans {
             self.span_validator
                 .validate_spans(&[span.clone()])
-                .unwrap_or_else(|e| panic!("Span validation failed: {}", e));
+                .unwrap_or_else(|e| panic!("Span validation failed: {e}"));
         }
     }
 
@@ -263,7 +268,7 @@ impl OtelTestHelper {
         for metric in metrics {
             self.metric_validator
                 .validate_metrics(&[metric.clone()])
-                .unwrap_or_else(|e| panic!("Metric validation failed: {}", e));
+                .unwrap_or_else(|e| panic!("Metric validation failed: {e}"));
         }
     }
 }
@@ -274,7 +279,7 @@ impl OtelTestHelper {
 /// automating common patterns and reducing boilerplate.
 #[cfg(feature = "otel")]
 pub mod test_helpers {
-    use super::*;
+
     use crate::observability::otel::types::{
         Attributes, Metric, MetricValue, Span, SpanContext, SpanId, SpanStatus, TraceId,
     };
@@ -304,7 +309,7 @@ pub mod test_helpers {
         let status = SpanStatus::Ok;
 
         Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
-            .unwrap_or_else(|e| panic!("Failed to create test span: {}", e))
+            .unwrap_or_else(|e| panic!("Failed to create test span: {e}"))
     }
 
     /// Create a test span with custom attributes
@@ -335,7 +340,7 @@ pub mod test_helpers {
         let status = SpanStatus::Ok;
 
         Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
-            .unwrap_or_else(|e| panic!("Failed to create test span: {}", e))
+            .unwrap_or_else(|e| panic!("Failed to create test span: {e}"))
     }
 
     /// Create a test metric with default values

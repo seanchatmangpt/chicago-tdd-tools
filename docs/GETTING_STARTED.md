@@ -56,6 +56,7 @@ Enable individual features as needed:
 - **`testcontainers`**: Docker container support (requires Docker running)
 - **`otel`**: OpenTelemetry span/metric validation
 - **`weaver`**: Weaver live validation (requires `otel`, auto-downloads Weaver CLI)
+- **`async`**: Async fixture providers (async traits, Rust 1.75+)
 
 ### Feature Groups (Recommended)
 

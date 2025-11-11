@@ -1,6 +1,6 @@
 //! Weaver Live-Check Types
 //!
-//! WeaverLiveCheck implementation ported from knhk-otel for standalone use.
+//! `WeaverLiveCheck` implementation ported from knhk-otel for standalone use.
 //! Used for live validation of OpenTelemetry telemetry against semantic conventions.
 
 use std::process::Child;
@@ -36,6 +36,7 @@ pub struct WeaverLiveCheck {
 
 impl WeaverLiveCheck {
     /// Create a new Weaver live-check instance
+    #[must_use]
     pub fn new() -> Self {
         Self {
             registry_path: None,
@@ -49,42 +50,49 @@ impl WeaverLiveCheck {
     }
 
     /// Set the semantic convention registry path
+    #[must_use]
     pub fn with_registry(mut self, registry_path: String) -> Self {
         self.registry_path = Some(registry_path);
         self
     }
 
     /// Set the OTLP gRPC address
+    #[must_use]
     pub fn with_otlp_address(mut self, address: String) -> Self {
         self.otlp_grpc_address = address;
         self
     }
 
     /// Set the OTLP gRPC port
-    pub fn with_otlp_port(mut self, port: u16) -> Self {
+    #[must_use]
+    pub const fn with_otlp_port(mut self, port: u16) -> Self {
         self.otlp_grpc_port = port;
         self
     }
 
     /// Set the admin HTTP port
-    pub fn with_admin_port(mut self, port: u16) -> Self {
+    #[must_use]
+    pub const fn with_admin_port(mut self, port: u16) -> Self {
         self.admin_port = port;
         self
     }
 
     /// Set the inactivity timeout in seconds
-    pub fn with_inactivity_timeout(mut self, timeout: u64) -> Self {
+    #[must_use]
+    pub const fn with_inactivity_timeout(mut self, timeout: u64) -> Self {
         self.inactivity_timeout = timeout;
         self
     }
 
     /// Set the output format (json, ansi)
+    #[must_use]
     pub fn with_format(mut self, format: String) -> Self {
         self.format = format;
         self
     }
 
     /// Set the output directory (for JSON reports)
+    #[must_use]
     pub fn with_output(mut self, output: String) -> Self {
         self.output = Some(output);
         self
@@ -92,6 +100,7 @@ impl WeaverLiveCheck {
 
     /// Find weaver binary in multiple locations
     /// Checks: PATH, target/debug/weaver, target/release/weaver, vendors/weaver/target/release/weaver
+    #[must_use]
     pub fn find_weaver_binary() -> Option<std::path::PathBuf> {
         use std::path::PathBuf;
         use std::process::Command;
@@ -149,14 +158,13 @@ impl WeaverLiveCheck {
             {
                 if let Err(e) = Self::download_weaver_runtime() {
                     return Err(format!(
-                        "Weaver binary not found. Build script download failed: {}. \
+                        "Weaver binary not found. Build script download failed: {e}. \
                         Please install weaver manually: cargo install weaver or download from \
-                        https://github.com/open-telemetry/weaver/releases",
-                        e
+                        https://github.com/open-telemetry/weaver/releases"
                     ));
                 }
                 // Retry after download
-                return Self::check_weaver_available();
+                Self::check_weaver_available()
             }
             #[cfg(not(feature = "weaver"))]
             {
@@ -192,8 +200,7 @@ impl WeaverLiveCheck {
 
         // Construct download URL
         let download_url = format!(
-            "https://github.com/open-telemetry/weaver/releases/download/v{}/weaver-{}-{}.tar.xz",
-            weaver_version, arch, os
+            "https://github.com/open-telemetry/weaver/releases/download/v{weaver_version}/weaver-{arch}-{os}.tar.xz"
         );
 
         // Create parent directory
@@ -208,7 +215,7 @@ impl WeaverLiveCheck {
                 .to_str()
                 .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
             let status = Command::new("curl")
-                .args(&["-L", "-o", archive_str, &download_url])
+                .args(["-L", "-o", archive_str, &download_url])
                 .status()
                 .map_err(|e| format!("Failed to execute curl: {e}"))?;
 
@@ -220,7 +227,7 @@ impl WeaverLiveCheck {
                 .to_str()
                 .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
             let status = Command::new("wget")
-                .args(&["-O", archive_str, &download_url])
+                .args(["-O", archive_str, &download_url])
                 .status()
                 .map_err(|e| format!("Failed to execute wget: {e}"))?;
 
@@ -244,7 +251,7 @@ impl WeaverLiveCheck {
             .to_str()
             .ok_or_else(|| "Output directory path is not valid UTF-8".to_string())?;
         let status = Command::new("tar")
-            .args(&["-xJf", archive_str, "-C", output_dir_str])
+            .args(["-xJf", archive_str, "-C", output_dir_str])
             .status()
             .map_err(|e| format!("Failed to extract tar.xz: {e}"))?;
 
@@ -365,7 +372,7 @@ impl WeaverLiveCheck {
         let client = Client::builder()
             .timeout(Duration::from_secs(5))
             .build()
-            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+            .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
         // Weaver CLI uses /stop endpoint (not /shutdown)
         let stop_url = format!("http://{}:{}/stop", self.otlp_grpc_address, self.admin_port);
@@ -396,6 +403,7 @@ impl WeaverLiveCheck {
     /// Get the OTLP gRPC endpoint for sending telemetry
     /// Note: Weaver live-check listens on gRPC, but exporters typically use HTTP
     /// This returns the address:port format for configuration
+    #[must_use]
     pub fn otlp_endpoint(&self) -> String {
         format!("{}:{}", self.otlp_grpc_address, self.otlp_grpc_port)
     }

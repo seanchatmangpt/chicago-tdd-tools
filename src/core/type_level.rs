@@ -11,7 +11,7 @@
 //!
 //! # Note on Validation
 //!
-//! - **SizeValidatedArray**: Provides runtime validation with panic if SIZE > MAX_SIZE.
+//! - **`SizeValidatedArray`**: Provides runtime validation with panic if SIZE > `MAX_SIZE`.
 //!   Future: Will use Rust 1.79+ const trait bounds for compile-time validation.
 //! - **ValidatedSize/ValidatedRange**: Marker types for documentation only, no actual validation.
 //!   For actual compile-time validation, see `validation::guards::validated` module.
@@ -40,7 +40,7 @@ pub struct ValidatedSize<const SIZE: usize>;
 pub trait ConstSizeValid<const SIZE: usize> {
     /// Maximum allowed size
     const MAX_SIZE: usize;
-    /// Validate that SIZE <= MAX_SIZE
+    /// Validate that SIZE <= `MAX_SIZE`
     const IS_VALID: bool = SIZE <= Self::MAX_SIZE;
 }
 
@@ -141,26 +141,27 @@ impl<const SIZE: usize, const MAX_SIZE: usize> SizeValidatedArray<SIZE, MAX_SIZE
     ///
     /// # Panics
     ///
-    /// Panics at runtime if SIZE > MAX_SIZE. This is a temporary limitation
+    /// Panics at runtime if SIZE > `MAX_SIZE`. This is a temporary limitation
     /// until Rust 1.79+ const trait bounds are available for compile-time validation.
     ///
     /// **Future**: With Rust 1.79+, this will be validated at compile time.
+    #[must_use]
     pub const fn new(data: [u8; SIZE]) -> Self {
         // Runtime validation until const trait bounds are stable
         // This ensures safety even if type system doesn't catch it
         // Note: Cannot use formatted panic in const fn, so we use a simple panic
-        if SIZE > MAX_SIZE {
-            panic!("Array size exceeds maximum");
-        }
+        assert!((SIZE <= MAX_SIZE), "Array size exceeds maximum");
         Self { data }
     }
 
     /// Get the array data
+    #[must_use]
     pub const fn data(&self) -> &[u8; SIZE] {
         &self.data
     }
 
     /// Get the validated size
+    #[must_use]
     pub const fn size(&self) -> usize {
         SIZE
     }

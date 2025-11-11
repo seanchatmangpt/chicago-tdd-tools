@@ -361,7 +361,7 @@ TODO_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/nu
   grep -v "/target/" | \
   xargs timeout 10s grep "TODO:" 2>/dev/null | \
   grep -v "FUTURE:" | \
-  wc -l | tr -d ' ' || echo 0)
+  wc -l | tr -d '[:space:]' || echo 0)
 
 if [ "$TODO_COUNT" -gt 0 ]; then
   echo "❌ ERROR: $TODO_COUNT TODO comments found in production code"

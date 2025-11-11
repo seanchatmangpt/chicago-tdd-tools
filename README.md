@@ -156,7 +156,7 @@ cargo make test
 - **`testcontainers`**: Docker container support for integration testing
 - **`otel`**: OpenTelemetry span/metric validation
 - **`weaver`**: Weaver live validation integration (requires `otel`)
-- **`async`**: Async performance measurement utilities
+- **`async`**: Async fixture providers (async traits, Rust 1.75+)
 - **`benchmarking`**: Criterion benchmarking support
 - **`workflow-engine`**: Workflow-specific features
 
@@ -202,7 +202,7 @@ chicago-tdd-tools = {
 
 Modules are organized into capability groups for better discoverability:
 
-- **`core/`**: Core testing infrastructure (fixtures, builders, assertions, macros, state, const_assert, alert)
+- **`core/`**: Core testing infrastructure (fixtures, async_fixture, builders, assertions, macros, state, const_assert, alert)
 - **`testing/`**: Advanced testing techniques (property, mutation, snapshot, concurrency, cli, generator)
 - **`validation/`**: Quality & validation (coverage, guards, jtbd, performance)
 - **`observability/`**: Telemetry & observability (otel, weaver)

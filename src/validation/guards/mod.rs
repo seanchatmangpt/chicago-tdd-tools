@@ -1,7 +1,7 @@
 //! Guard Constraint Enforcement
 //!
 //! Provides guard constraint validation at ingress points (input boundaries).
-//! Enforces MAX_RUN_LEN ≤ 8 (Chatman Constant) and MAX_BATCH_SIZE constraints.
+//! Enforces `MAX_RUN_LEN` ≤ 8 (Chatman Constant) and `MAX_BATCH_SIZE` constraints.
 //!
 //! # Runtime Validation
 //!
@@ -67,12 +67,14 @@ impl Default for GuardValidator {
 
 impl GuardValidator {
     /// Create a new guard validator with default constraints
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { max_run_len: MAX_RUN_LEN, max_batch_size: MAX_BATCH_SIZE }
     }
 
     /// Create a guard validator with custom constraints
-    pub fn with_constraints(max_run_len: usize, max_batch_size: usize) -> Self {
+    #[must_use]
+    pub const fn with_constraints(max_run_len: usize, max_batch_size: usize) -> Self {
         Self { max_run_len, max_batch_size }
     }
 
@@ -93,7 +95,7 @@ impl GuardValidator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn validate_run_len(&self, len: usize) -> GuardConstraintResult<()> {
+    pub const fn validate_run_len(&self, len: usize) -> GuardConstraintResult<()> {
         if len > self.max_run_len {
             return Err(GuardConstraintError::MaxRunLengthExceeded(len, self.max_run_len));
         }
@@ -116,7 +118,7 @@ impl GuardValidator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn validate_batch_size(&self, size: usize) -> GuardConstraintResult<()> {
+    pub const fn validate_batch_size(&self, size: usize) -> GuardConstraintResult<()> {
         if size > self.max_batch_size {
             return Err(GuardConstraintError::MaxBatchSizeExceeded(size, self.max_batch_size));
         }
@@ -126,14 +128,14 @@ impl GuardValidator {
     /// Validate run length for a slice/array
     ///
     /// Convenience method for validating collections.
-    pub fn validate_run<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
+    pub const fn validate_run<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
         self.validate_run_len(items.len())
     }
 
     /// Validate batch for a slice/array
     ///
     /// Convenience method for validating collections.
-    pub fn validate_batch<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
+    pub const fn validate_batch<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
         self.validate_batch_size(items.len())
     }
 }
@@ -151,7 +153,7 @@ impl GuardValidator {
 pub fn assert_guard_run_len<T>(items: &[T]) {
     let validator = GuardValidator::new();
     validator.validate_run(items).unwrap_or_else(|e| {
-        panic!("Guard constraint violation: {}", e);
+        panic!("Guard constraint violation: {e}");
     });
 }
 
@@ -168,7 +170,7 @@ pub fn assert_guard_run_len<T>(items: &[T]) {
 pub fn assert_guard_batch_size<T>(items: &[T]) {
     let validator = GuardValidator::new();
     validator.validate_batch(items).unwrap_or_else(|e| {
-        panic!("Guard constraint violation: {}", e);
+        panic!("Guard constraint violation: {e}");
     });
 }
 
@@ -281,7 +283,7 @@ mod tests {
                 || display.contains("Invalid")
                 || display.contains("constraint")
                 || display.contains("Chatman");
-            assert!(is_descriptive, "Error message should be descriptive: {}", display);
+            assert!(is_descriptive, "Error message should be descriptive: {display}");
         }
     }
 
@@ -358,6 +360,7 @@ mod tests {
     // ========================================================================
 
     #[test]
+    #[allow(clippy::cognitive_complexity)] // Testing multiple cases is intentional
     fn test_validated_run_all_valid_lengths() {
         // Test all valid run lengths (0-8) compile and work
         // This test verifies that all valid lengths work correctly
@@ -369,40 +372,67 @@ mod tests {
 
         // Test each length separately (each ValidatedRun<LEN> is a different type)
         let data0 = vec![0u8; 0];
-        assert!(ValidatedRun::<0>::new(data0).is_ok());
-        assert_eq!(ValidatedRun::<0>::new(vec![0u8; 0]).unwrap().len(), 0);
+        let result0 = ValidatedRun::<0>::new(data0);
+        assert!(result0.is_ok());
+        if let Ok(run0) = result0 {
+            assert_eq!(run0.len(), 0);
+        }
 
         let data1 = vec![0u8; 1];
-        assert!(ValidatedRun::<1>::new(data1).is_ok());
-        assert_eq!(ValidatedRun::<1>::new(vec![0u8; 1]).unwrap().len(), 1);
+        let result1 = ValidatedRun::<1>::new(data1);
+        assert!(result1.is_ok());
+        if let Ok(run1) = result1 {
+            assert_eq!(run1.len(), 1);
+        }
 
         let data2 = vec![0u8; 2];
-        assert!(ValidatedRun::<2>::new(data2).is_ok());
-        assert_eq!(ValidatedRun::<2>::new(vec![0u8; 2]).unwrap().len(), 2);
+        let result2 = ValidatedRun::<2>::new(data2);
+        assert!(result2.is_ok());
+        if let Ok(run2) = result2 {
+            assert_eq!(run2.len(), 2);
+        }
 
         let data3 = vec![0u8; 3];
-        assert!(ValidatedRun::<3>::new(data3).is_ok());
-        assert_eq!(ValidatedRun::<3>::new(vec![0u8; 3]).unwrap().len(), 3);
+        let result3 = ValidatedRun::<3>::new(data3);
+        assert!(result3.is_ok());
+        if let Ok(run3) = result3 {
+            assert_eq!(run3.len(), 3);
+        }
 
         let data4 = vec![0u8; 4];
-        assert!(ValidatedRun::<4>::new(data4).is_ok());
-        assert_eq!(ValidatedRun::<4>::new(vec![0u8; 4]).unwrap().len(), 4);
+        let result4 = ValidatedRun::<4>::new(data4);
+        assert!(result4.is_ok());
+        if let Ok(run4) = result4 {
+            assert_eq!(run4.len(), 4);
+        }
 
         let data5 = vec![0u8; 5];
-        assert!(ValidatedRun::<5>::new(data5).is_ok());
-        assert_eq!(ValidatedRun::<5>::new(vec![0u8; 5]).unwrap().len(), 5);
+        let result5 = ValidatedRun::<5>::new(data5);
+        assert!(result5.is_ok());
+        if let Ok(run5) = result5 {
+            assert_eq!(run5.len(), 5);
+        }
 
         let data6 = vec![0u8; 6];
-        assert!(ValidatedRun::<6>::new(data6).is_ok());
-        assert_eq!(ValidatedRun::<6>::new(vec![0u8; 6]).unwrap().len(), 6);
+        let result6 = ValidatedRun::<6>::new(data6);
+        assert!(result6.is_ok());
+        if let Ok(run6) = result6 {
+            assert_eq!(run6.len(), 6);
+        }
 
         let data7 = vec![0u8; 7];
-        assert!(ValidatedRun::<7>::new(data7).is_ok());
-        assert_eq!(ValidatedRun::<7>::new(vec![0u8; 7]).unwrap().len(), 7);
+        let result7 = ValidatedRun::<7>::new(data7);
+        assert!(result7.is_ok());
+        if let Ok(run7) = result7 {
+            assert_eq!(run7.len(), 7);
+        }
 
         let data8 = vec![0u8; 8];
-        assert!(ValidatedRun::<8>::new(data8).is_ok());
-        assert_eq!(ValidatedRun::<8>::new(vec![0u8; 8]).unwrap().len(), 8);
+        let result8 = ValidatedRun::<8>::new(data8);
+        assert!(result8.is_ok());
+        if let Ok(run8) = result8 {
+            assert_eq!(run8.len(), 8);
+        }
     }
 
     #[test]
@@ -412,16 +442,28 @@ mod tests {
         // This test verifies that all valid sizes work correctly
 
         // Test each size separately (each ValidatedBatch<SIZE> is a different type)
-        assert!(ValidatedBatch::<0>::new(vec![0u8; 0]).is_ok());
-        assert_eq!(ValidatedBatch::<0>::new(vec![0u8; 0]).unwrap().len(), 0);
+        let result0 = ValidatedBatch::<0>::new(vec![0u8; 0]);
+        assert!(result0.is_ok());
+        if let Ok(batch0) = result0 {
+            assert_eq!(batch0.len(), 0);
+        }
 
-        assert!(ValidatedBatch::<100>::new(vec![0u8; 100]).is_ok());
-        assert_eq!(ValidatedBatch::<100>::new(vec![0u8; 100]).unwrap().len(), 100);
+        let result100 = ValidatedBatch::<100>::new(vec![0u8; 100]);
+        assert!(result100.is_ok());
+        if let Ok(batch100) = result100 {
+            assert_eq!(batch100.len(), 100);
+        }
 
-        assert!(ValidatedBatch::<500>::new(vec![0u8; 500]).is_ok());
-        assert_eq!(ValidatedBatch::<500>::new(vec![0u8; 500]).unwrap().len(), 500);
+        let result500 = ValidatedBatch::<500>::new(vec![0u8; 500]);
+        assert!(result500.is_ok());
+        if let Ok(batch500) = result500 {
+            assert_eq!(batch500.len(), 500);
+        }
 
-        assert!(ValidatedBatch::<1000>::new(vec![0u8; 1000]).is_ok());
-        assert_eq!(ValidatedBatch::<1000>::new(vec![0u8; 1000]).unwrap().len(), 1000);
+        let result1000 = ValidatedBatch::<1000>::new(vec![0u8; 1000]);
+        assert!(result1000.is_ok());
+        if let Ok(batch1000) = result1000 {
+            assert_eq!(batch1000.len(), 1000);
+        }
     }
 }

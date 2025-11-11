@@ -49,7 +49,8 @@ pub enum SpanRelationship {
 
 impl SpanRelationship {
     /// Get the parent span ID if this is a child span
-    pub fn parent_span_id(&self) -> Option<SpanId> {
+    #[must_use]
+    pub const fn parent_span_id(&self) -> Option<SpanId> {
         match self {
             Self::Root => None,
             Self::Child { parent_span_id } => Some(*parent_span_id),
@@ -57,12 +58,14 @@ impl SpanRelationship {
     }
 
     /// Check if this is a root span
-    pub fn is_root(&self) -> bool {
+    #[must_use]
+    pub const fn is_root(&self) -> bool {
         matches!(self, Self::Root)
     }
 
     /// Check if this is a child span
-    pub fn is_child(&self) -> bool {
+    #[must_use]
+    pub const fn is_child(&self) -> bool {
         matches!(self, Self::Child { .. })
     }
 }
@@ -83,27 +86,37 @@ pub struct SpanContext {
 
 impl SpanContext {
     /// Create a new root span context
-    pub fn root(trace_id: TraceId, span_id: SpanId, flags: u8) -> Self {
+    #[must_use]
+    pub const fn root(trace_id: TraceId, span_id: SpanId, flags: u8) -> Self {
         Self { trace_id, span_id, relationship: SpanRelationship::Root, flags }
     }
 
     /// Create a new child span context
-    pub fn child(trace_id: TraceId, span_id: SpanId, parent_span_id: SpanId, flags: u8) -> Self {
+    #[must_use]
+    pub const fn child(
+        trace_id: TraceId,
+        span_id: SpanId,
+        parent_span_id: SpanId,
+        flags: u8,
+    ) -> Self {
         Self { trace_id, span_id, relationship: SpanRelationship::Child { parent_span_id }, flags }
     }
 
     /// Get the parent span ID (if this is a child span)
-    pub fn parent_span_id(&self) -> Option<SpanId> {
+    #[must_use]
+    pub const fn parent_span_id(&self) -> Option<SpanId> {
         self.relationship.parent_span_id()
     }
 
     /// Check if this is a root span
-    pub fn is_root(&self) -> bool {
+    #[must_use]
+    pub const fn is_root(&self) -> bool {
         self.relationship.is_root()
     }
 
     /// Check if this is a child span
-    pub fn is_child(&self) -> bool {
+    #[must_use]
+    pub const fn is_child(&self) -> bool {
         self.relationship.is_child()
     }
 }
@@ -169,7 +182,8 @@ pub enum SpanState {
 
 impl SpanState {
     /// Get the start time
-    pub fn start_time_ms(&self) -> u64 {
+    #[must_use]
+    pub const fn start_time_ms(&self) -> u64 {
         match self {
             Self::Active { start_time_ms } | Self::Completed { start_time_ms, .. } => {
                 *start_time_ms
@@ -178,7 +192,8 @@ impl SpanState {
     }
 
     /// Get the end time (if completed)
-    pub fn end_time_ms(&self) -> Option<u64> {
+    #[must_use]
+    pub const fn end_time_ms(&self) -> Option<u64> {
         match self {
             Self::Active { .. } => None,
             Self::Completed { end_time_ms, .. } => Some(*end_time_ms),
@@ -186,12 +201,14 @@ impl SpanState {
     }
 
     /// Check if the span is active
-    pub fn is_active(&self) -> bool {
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
         matches!(self, Self::Active { .. })
     }
 
     /// Check if the span is completed
-    pub fn is_completed(&self) -> bool {
+    #[must_use]
+    pub const fn is_completed(&self) -> bool {
         matches!(self, Self::Completed { .. })
     }
 
@@ -199,14 +216,13 @@ impl SpanState {
     ///
     /// # Errors
     ///
-    /// Returns an error if the span is already completed or if end_time < start_time.
+    /// Returns an error if the span is already completed or if `end_time` < `start_time`.
     pub fn complete(self, end_time_ms: u64) -> Result<Self, String> {
         match self {
             Self::Active { start_time_ms } => {
                 if end_time_ms < start_time_ms {
                     return Err(format!(
-                        "End time {} must be >= start time {}",
-                        end_time_ms, start_time_ms
+                        "End time {end_time_ms} must be >= start time {start_time_ms}"
                     ));
                 }
                 Ok(Self::Completed { start_time_ms, end_time_ms })
@@ -236,7 +252,8 @@ pub struct Span {
 
 impl Span {
     /// Create a new active span
-    pub fn new_active(
+    #[must_use]
+    pub const fn new_active(
         context: SpanContext,
         name: String,
         start_time_ms: u64,
@@ -265,10 +282,7 @@ impl Span {
         status: SpanStatus,
     ) -> Result<Self, String> {
         if end_time_ms < start_time_ms {
-            return Err(format!(
-                "End time {} must be >= start time {}",
-                end_time_ms, start_time_ms
-            ));
+            return Err(format!("End time {end_time_ms} must be >= start time {start_time_ms}"));
         }
         Ok(Self {
             context,
@@ -281,22 +295,26 @@ impl Span {
     }
 
     /// Get the start time
-    pub fn start_time_ms(&self) -> u64 {
+    #[must_use]
+    pub const fn start_time_ms(&self) -> u64 {
         self.state.start_time_ms()
     }
 
     /// Get the end time (if completed)
-    pub fn end_time_ms(&self) -> Option<u64> {
+    #[must_use]
+    pub const fn end_time_ms(&self) -> Option<u64> {
         self.state.end_time_ms()
     }
 
     /// Check if the span is active
-    pub fn is_active(&self) -> bool {
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
         self.state.is_active()
     }
 
     /// Check if the span is completed
-    pub fn is_completed(&self) -> bool {
+    #[must_use]
+    pub const fn is_completed(&self) -> bool {
         self.state.is_completed()
     }
 
@@ -304,7 +322,7 @@ impl Span {
     ///
     /// # Errors
     ///
-    /// Returns an error if the span is already completed or if end_time < start_time.
+    /// Returns an error if the span is already completed or if `end_time` < `start_time`.
     pub fn complete(&mut self, end_time_ms: u64) -> Result<(), String> {
         self.state = self.state.complete(end_time_ms)?;
         Ok(())

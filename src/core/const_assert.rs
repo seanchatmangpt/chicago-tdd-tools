@@ -57,7 +57,7 @@ impl<T> Validated<T> {
     /// Create a validated value
     ///
     /// This constructor requires explicit validation, preventing invalid states.
-    pub fn new(value: T) -> Self {
+    pub const fn new(value: T) -> Self {
         Self { value }
     }
 
@@ -67,7 +67,7 @@ impl<T> Validated<T> {
     }
 
     /// Get a reference to the validated value
-    pub fn as_ref(&self) -> &T {
+    pub const fn as_ref(&self) -> &T {
         &self.value
     }
 }

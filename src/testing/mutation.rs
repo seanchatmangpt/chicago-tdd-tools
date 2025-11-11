@@ -25,7 +25,8 @@ pub struct MutationTester {
 
 impl MutationTester {
     /// Create new mutation tester
-    pub fn new(original: HashMap<String, String>) -> Self {
+    #[must_use]
+    pub const fn new(original: HashMap<String, String>) -> Self {
         Self { original, mutations: vec![] }
     }
 
@@ -97,6 +98,7 @@ pub struct MutationScore {
 
 impl MutationScore {
     /// Calculate mutation score
+    #[must_use]
     pub fn calculate(caught: usize, total: usize) -> Self {
         let score = if total > 0 { (caught as f64 / total as f64) * 100.0 } else { 0.0 };
 
@@ -104,11 +106,13 @@ impl MutationScore {
     }
 
     /// Get score percentage
-    pub fn score(&self) -> f64 {
+    #[must_use]
+    pub const fn score(&self) -> f64 {
         self.score
     }
 
     /// Is score acceptable? (>= 80%)
+    #[must_use]
     pub fn is_acceptable(&self) -> bool {
         self.score >= 80.0
     }

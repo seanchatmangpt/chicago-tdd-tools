@@ -16,7 +16,7 @@
 /// This timeout ensures tests fail fast rather than hanging indefinitely.
 ///
 /// Note: This constant is used in macro expansions. The value `1` is used directly
-/// in macros since constants cannot be referenced in macro_rules! expansions.
+/// in macros since constants cannot be referenced in `macro_rules`! expansions.
 pub const DEFAULT_UNIT_TEST_TIMEOUT_SECONDS: u64 = 1;
 
 /// Default integration test timeout in seconds (SLA compliance)
@@ -26,7 +26,7 @@ pub const DEFAULT_UNIT_TEST_TIMEOUT_SECONDS: u64 = 1;
 /// This timeout balances thoroughness with reasonable execution time.
 ///
 /// Note: This constant is used in macro expansions. The value `30` is used directly
-/// in macros since constants cannot be referenced in macro_rules! expansions.
+/// in macros since constants cannot be referenced in `macro_rules`! expansions.
 pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 /// Default test timeout in seconds (SLA compliance)
@@ -87,7 +87,7 @@ macro_rules! test {
 /// Handles both Result and non-Result returns.
 ///
 /// **Timeout Enforcement**:
-/// - Default: Tests are automatically wrapped with tokio::time::timeout (1s) for unit tests
+/// - Default: Tests are automatically wrapped with `tokio::time::timeout` (1s) for unit tests
 /// - Integration tests: Use `async_test_with_timeout!` with 30s timeout, or rely on cargo-nextest profile timeout
 /// - Defense in depth: Multiple timeout layers ensure enforcement even if one layer fails
 ///
@@ -123,7 +123,7 @@ macro_rules! async_test {
 /// Same as `async_test!` but allows specifying a custom timeout in seconds.
 /// Use this for integration tests that require longer timeouts (e.g., 30s for Docker operations).
 ///
-/// **Timeout Enforcement**: Tests are wrapped with tokio::time::timeout using the specified duration.
+/// **Timeout Enforcement**: Tests are wrapped with `tokio::time::timeout` using the specified duration.
 ///
 /// # Example
 ///
@@ -204,7 +204,7 @@ macro_rules! async_test_with_timeout {
 /// Creates a test fixture, runs the test body, and ensures cleanup.
 ///
 /// **Timeout Enforcement**:
-/// - Default: Tests are automatically wrapped with tokio::time::timeout (1s) for unit tests
+/// - Default: Tests are automatically wrapped with `tokio::time::timeout` (1s) for unit tests
 /// - Integration tests: Use `fixture_test_with_timeout!` with 30s timeout, or rely on cargo-nextest profile timeout
 /// - Defense in depth: Multiple timeout layers ensure enforcement even if one layer fails
 ///
@@ -239,7 +239,7 @@ macro_rules! fixture_test {
 /// Same as `fixture_test!` but allows specifying a custom timeout in seconds.
 /// Use this for integration tests that require longer timeouts (e.g., 30s for Docker operations).
 ///
-/// **Timeout Enforcement**: Tests are wrapped with tokio::time::timeout using the specified duration.
+/// **Timeout Enforcement**: Tests are wrapped with `tokio::time::timeout` using the specified duration.
 ///
 /// # Example
 ///
@@ -446,7 +446,7 @@ macro_rules! otel_test {
 /// - Test helper setup
 ///
 /// **Timeout Enforcement**:
-/// - Default: Tests are automatically wrapped with tokio::time::timeout (1s) for unit tests
+/// - Default: Tests are automatically wrapped with `tokio::time::timeout` (1s) for unit tests
 /// - Integration tests: Use `weaver_test_with_timeout!` with 30s timeout, or rely on cargo-nextest profile timeout
 /// - Defense in depth: Multiple timeout layers ensure enforcement even if one layer fails
 ///
@@ -486,7 +486,7 @@ macro_rules! weaver_test {
 /// Same as `weaver_test!` but allows specifying a custom timeout in seconds.
 /// Use this for integration tests that require longer timeouts (e.g., 30s for Docker operations).
 ///
-/// **Timeout Enforcement**: Tests are wrapped with tokio::time::timeout using the specified duration.
+/// **Timeout Enforcement**: Tests are wrapped with `tokio::time::timeout` using the specified duration.
 ///
 /// # Example
 ///

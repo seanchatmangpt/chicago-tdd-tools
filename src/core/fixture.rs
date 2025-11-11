@@ -3,7 +3,7 @@
 //! Provides reusable test fixtures with state management and test isolation.
 //! Uses Generic Associated Types (GATs) for flexible, type-safe fixture management.
 //!
-//! **Note**: TestFixture uses Rust's automatic memory management (Box drops automatically).
+//! **Note**: `TestFixture` uses Rust's automatic memory management (Box drops automatically).
 //! For resources requiring explicit cleanup, implement the `cleanup()` method or use Drop.
 
 use std::collections::HashMap;
@@ -85,6 +85,7 @@ impl<T> TestFixture<T> {
     }
 
     /// Get reference to inner data
+    #[must_use]
     pub fn inner(&self) -> &T {
         &self.inner
     }
@@ -95,7 +96,8 @@ impl<T> TestFixture<T> {
     }
 
     /// Get test counter
-    pub fn test_counter(&self) -> u64 {
+    #[must_use]
+    pub const fn test_counter(&self) -> u64 {
         self.test_counter
     }
 
@@ -105,12 +107,13 @@ impl<T> TestFixture<T> {
     }
 
     /// Get metadata
+    #[must_use]
     pub fn get_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.get(key)
     }
 
     /// Cleanup fixture resources
-    pub fn cleanup(&self) -> FixtureResult<()> {
+    pub const fn cleanup(&self) -> FixtureResult<()> {
         // Override in specific implementations
         Ok(())
     }
@@ -131,7 +134,7 @@ impl Default for TestFixture<()> {
         // Default implementation should not fail - use unwrap_or_else with panic
         #[allow(clippy::expect_used)]
         // Default impl - panic is appropriate if fixture creation fails
-        Self::new().unwrap_or_else(|e| panic!("Failed to create default fixture: {}", e))
+        Self::new().unwrap_or_else(|e| panic!("Failed to create default fixture: {e}"))
     }
 }
 

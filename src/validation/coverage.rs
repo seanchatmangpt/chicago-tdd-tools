@@ -36,17 +36,20 @@ pub struct TotalCount(usize);
 
 impl TotalCount {
     /// Create a new total count
-    pub fn new(value: usize) -> Option<Self> {
+    #[must_use]
+    pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
 
     /// Get the count value
-    pub fn get(&self) -> usize {
+    #[must_use]
+    pub const fn get(&self) -> usize {
         self.0
     }
 
     /// Convert to usize
-    pub fn into_usize(self) -> usize {
+    #[must_use]
+    pub const fn into_usize(self) -> usize {
         self.0
     }
 }
@@ -79,7 +82,8 @@ pub struct CoveredCount(usize);
 
 impl CoveredCount {
     /// Create a new covered count
-    pub fn new(value: usize) -> Option<Self> {
+    #[must_use]
+    pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
 
@@ -98,7 +102,8 @@ impl CoveredCount {
     /// let invalid = CoveredCount::new_for_total(150, total); // None - 150 > 100
     /// assert!(invalid.is_none());
     /// ```
-    pub fn new_for_total(covered: usize, total: TotalCount) -> Option<Self> {
+    #[must_use]
+    pub const fn new_for_total(covered: usize, total: TotalCount) -> Option<Self> {
         if covered <= total.get() {
             Some(Self(covered))
         } else {
@@ -107,12 +112,14 @@ impl CoveredCount {
     }
 
     /// Get the count value
-    pub fn get(&self) -> usize {
+    #[must_use]
+    pub const fn get(&self) -> usize {
         self.0
     }
 
     /// Convert to usize
-    pub fn into_usize(self) -> usize {
+    #[must_use]
+    pub const fn into_usize(self) -> usize {
         self.0
     }
 }
@@ -169,8 +176,9 @@ impl CoveragePercentage {
     /// let invalid_negative = CoveragePercentage::new(-10.0); // None - < 0%
     /// assert!(invalid_negative.is_none());
     /// ```
+    #[must_use]
     pub fn new(value: f64) -> Option<Self> {
-        if value >= Self::MIN && value <= Self::MAX {
+        if (Self::MIN..=Self::MAX).contains(&value) {
             Some(Self(value))
         } else {
             None
@@ -198,6 +206,7 @@ impl CoveragePercentage {
     /// let result = CoveragePercentage::from_counts(zero_covered, zero_total);
     /// assert!(result.is_none()); // Cannot calculate percentage for zero total
     /// ```
+    #[must_use]
     pub fn from_counts(covered: CoveredCount, total: TotalCount) -> Option<Self> {
         if total.get() == 0 {
             return None; // Division by zero
@@ -208,12 +217,14 @@ impl CoveragePercentage {
     }
 
     /// Get the percentage value
-    pub fn get(&self) -> f64 {
+    #[must_use]
+    pub const fn get(&self) -> f64 {
         self.0
     }
 
     /// Convert to f64
-    pub fn into_f64(self) -> f64 {
+    #[must_use]
+    pub const fn into_f64(self) -> f64 {
         self.0
     }
 }
@@ -243,6 +254,7 @@ pub struct CoverageReport {
 impl CoverageReport {
     /// Create new coverage report
     #[allow(clippy::expect_used)] // 0 is always valid for TotalCount and CoveredCount
+    #[must_use]
     pub fn new() -> Self {
         Self {
             // SAFETY: 0 is always valid for TotalCount and CoveredCount
@@ -258,7 +270,7 @@ impl CoverageReport {
     /// Add coverage item
     #[allow(clippy::expect_used)] // Incremented total is always valid
     pub fn add_item(&mut self, name: String, covered: bool) {
-        self.details.insert(name.clone(), covered);
+        self.details.insert(name, covered);
         let new_total = self.total.get() + 1;
         // SAFETY: new_total is always valid (incremented from valid total)
         // Incremented total is always valid
@@ -283,6 +295,7 @@ impl CoverageReport {
     }
 
     /// Generate markdown report
+    #[must_use]
     pub fn generate_markdown(&self) -> String {
         format!(
             "# Coverage Report\n\n**Coverage**: {:.2}% ({} / {})\n\n## Details\n\n",
