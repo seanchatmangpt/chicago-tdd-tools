@@ -368,8 +368,12 @@ where
 {
     let mut tick_samples = Vec::with_capacity(iterations as usize);
 
+    // Kaizen improvement: Extract magic number to named constant for clarity
+    // Number of warmup iterations before benchmarking
+    const BENCHMARK_WARMUP_ITERATIONS: u64 = 100;
+
     // Warmup
-    for _ in 0..100 {
+    for _ in 0..BENCHMARK_WARMUP_ITERATIONS {
         let _ = f();
     }
 
@@ -399,14 +403,23 @@ where
         };
     }
 
+    // Kaizen improvement: Extract magic numbers to named constants for clarity
+    const PERCENTILE_50: u8 = 50;
+    const PERCENTILE_95: u8 = 95;
+    const PERCENTILE_99: u8 = 99;
+
     let total_ticks: u64 = tick_samples.iter().sum();
     let avg_ticks = total_ticks as f64 / iterations as f64;
     let min_ticks = tick_samples[0];
     let max_ticks = tick_samples[tick_samples.len() - 1];
-    let p50_idx = (tick_samples.len() * 50 / 100).saturating_sub(1);
-    let p95_idx = (tick_samples.len() * 95 / 100).saturating_sub(1);
-    let p99_idx = (tick_samples.len() * 99 / 100).saturating_sub(1);
+    let p50_idx = (tick_samples.len() * PERCENTILE_50 as usize / 100).saturating_sub(1);
+    let p95_idx = (tick_samples.len() * PERCENTILE_95 as usize / 100).saturating_sub(1);
+    let p99_idx = (tick_samples.len() * PERCENTILE_99 as usize / 100).saturating_sub(1);
 
+    // **Kaizen improvement**: Clarified percentile fallback strategy.
+    // When percentile index is out of bounds (empty or very small sample),
+    // use max_ticks as fallback - this provides a conservative upper bound
+    // that represents the worst-case performance observed.
     BenchmarkResult {
         operation: operation.to_string(),
         iterations,

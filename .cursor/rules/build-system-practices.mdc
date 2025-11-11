@@ -135,6 +135,30 @@ See [Verify Tests Command](../../commands/verify-tests.md) for complete testing 
 - Add failing tests to todo list
 - Fix tests before marking complete
 
+## Module Cleanup Checklist
+
+**After any module reorganization or refactoring:**
+
+1. **Verify old modules removed**:
+   - Check `src/lib.rs` for module declarations
+   - Verify no duplicate modules exist (e.g., `src/otel/` and `src/observability/otel/`)
+   - Remove any undeclared modules (not in `src/lib.rs`)
+
+2. **Check for dead code**:
+   - Run `find src -name "*.rs" -type f` to list all source files
+   - Verify each file is declared as a module in `src/lib.rs` or a parent module
+   - Remove any files not declared as modules
+
+3. **Verify compilation**:
+   - Run `cargo make check` to ensure removal doesn't break compilation
+   - Run `cargo make test` to ensure tests still pass
+
+4. **Update documentation**:
+   - Update `MUDA_INVENTORY.md` with removed dead code
+   - Document module organization pattern if changed
+
+**Pattern**: Modules should only exist in one location (capability groups). Old modules must be removed immediately after reorganization.
+
 ## Troubleshooting
 
 See [Getting Started - Troubleshooting](../../docs/GETTING_STARTED.md#troubleshooting) and [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting) for common issues.

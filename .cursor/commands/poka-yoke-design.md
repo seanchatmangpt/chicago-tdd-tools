@@ -408,3 +408,5 @@ cargo make check
 
 **Poka-yoke principle**: "Prevention is better than detection" - Prevent errors at compile time rather than catching them at runtime.
 
+**DfLSS alignment**: Poka-yoke (defect prevention) is the Six Sigma component of DfLSS (Design for Lean Six Sigma). However, defect prevention alone is incomplete - DfLSS addresses both efficiency (waste elimination) AND quality (defect prevention). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. When preventing defects with types, also consider eliminating waste (unnecessary complexity, redundant checks). See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

@@ -7,10 +7,9 @@ use super::{TestcontainersError, TestcontainersResult};
 #[cfg(feature = "testcontainers")]
 mod implementation {
     use super::*;
-    use futures::executor::block_on;
-    use futures::TryFutureExt;
     use crate::integration::testcontainers::implementation::{ContainerClient, GenericContainer};
     use testcontainers::core::WaitFor;
+    use testcontainers::runners::SyncRunner;
     use testcontainers::GenericImage;
 
     impl GenericContainer {
@@ -48,8 +47,10 @@ mod implementation {
             wait_for: WaitFor,
         ) -> TestcontainersResult<Self> {
             let image = GenericImage::new(image, tag).with_wait_for(wait_for);
-            let container = image.start().map_err(|e| {
-                TestcontainersError::CreationFailed(format!("Failed to start container: {e}"))
+            // Convert GenericImage to ContainerRequest before starting
+            let request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
+            let container = request.start().map_err(|e| {
+                TestcontainersError::CreationFailed(format!("🚨 Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
             })?;
 
             Ok(GenericContainer::from_container(container))
@@ -57,9 +58,8 @@ mod implementation {
     }
 }
 
-// Re-export implementation
-#[cfg(feature = "testcontainers")]
-pub use implementation::*;
+// Implementation items are accessible through the module path
+// The impl blocks extend GenericContainer, so items are available via the type
 
 #[cfg(not(feature = "testcontainers"))]
 mod stubs {

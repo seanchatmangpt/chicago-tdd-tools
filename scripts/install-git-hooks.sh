@@ -290,8 +290,40 @@ cd \"\$PROJECT_ROOT\"
 echo "🚦 Pre-push validation (comprehensive checks)..."
 echo ""
 
+# Docker availability check function (matches Rust check_docker_available() logic)
+check_docker_available() {
+  # Check Docker command exists
+  if ! command -v docker &> /dev/null; then
+    echo "❌ ERROR: Docker command not found. Please install Docker."
+    return 1
+  fi
+  
+  # Check Docker daemon is running
+  DOCKER_OUTPUT=\$(timeout 5s docker info 2>&1)
+  DOCKER_EXIT=\$?
+  
+  if [ \$DOCKER_EXIT -ne 0 ]; then
+    echo "❌ ERROR: Docker daemon is not running"
+    echo "   Error: \$DOCKER_OUTPUT"
+    echo "   💡 FIX: Start Docker Desktop or Docker daemon"
+    echo "   📋 macOS: Open Docker Desktop"
+    echo "   📋 Linux: sudo systemctl start docker"
+    echo "   📋 Windows: Start Docker Desktop"
+    return 1
+  fi
+  
+  # Verify Docker daemon is responding
+  if echo "\$DOCKER_OUTPUT" | grep -qE "(Server Version|Docker Root Dir)"; then
+    return 0
+  else
+    echo "❌ ERROR: Docker daemon is not responding correctly"
+    echo "   Output does not contain expected Docker info"
+    return 1
+  fi
+}
+
 # Gate 1: Cargo check (comprehensive)
-echo "Gate 1/5: Cargo check..."
+echo "Gate 1/6: Cargo check..."
 if ! cargo make check 2>&1; then
   echo "❌ ERROR: cargo make check failed"
   exit 1
@@ -300,7 +332,7 @@ echo "✅ Gate 1 passed"
 echo ""
 
 # Gate 2: Clippy (comprehensive, strict for production)
-echo "Gate 2/5: Clippy (strict mode)..."
+echo "Gate 2/6: Clippy (strict mode)..."
 if cargo make lint 2>&1 > /tmp/clippy_push.txt; then
   rm -f /tmp/clippy_push.txt
   echo "✅ Gate 2 passed"
@@ -318,7 +350,7 @@ fi
 echo ""
 
 # Gate 2.5: TODO & error handling check (comprehensive)
-echo "Gate 2.5/5: TODO & error handling check..."
+echo "Gate 2.5/6: TODO & error handling check..."
 
 # Check for TODO comments in production code (with timeout)
 TODO_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/null | \
@@ -354,7 +386,7 @@ UNWRAP_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/
       continue
     fi
     timeout 5s grep -c "\.unwrap()" "$file" 2>/dev/null || echo 0
-  done | awk '\''{s+=$1} END {print s}'\'' || echo 0)
+  done | awk "{s+=\$1} END {print s}" || echo 0)
 
 if [ "$UNWRAP_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $UNWRAP_COUNT unwrap() calls in production code"
@@ -378,7 +410,7 @@ EXPECT_COUNT=$(timeout 10s find src proc_macros/src -name "*.rs" -type f 2>/dev/
       continue
     fi
     timeout 5s grep -c "\.expect(" "$file" 2>/dev/null || echo 0
-  done | awk '\''{s+=$1} END {print s}'\'' || echo 0)
+  done | awk "{s+=\$1} END {print s}" || echo 0)
 
 if [ "$EXPECT_COUNT" -gt 0 ]; then
   echo "❌ ERROR: Found $EXPECT_COUNT expect() calls in production code"
@@ -388,8 +420,29 @@ fi
 echo "✅ Gate 2.5 passed"
 echo ""
 
+# Gate 2.6: Docker availability check (if testcontainers feature enabled)
+echo "Gate 2.6/6: Docker availability check..."
+# Check if testcontainers feature is enabled or testcontainers tests exist
+HAS_TESTCONTAINERS=false
+if grep -qE "testcontainers\s*=" Cargo.toml 2>/dev/null || \
+   find tests examples -name "*.rs" -type f 2>/dev/null | grep -q "testcontainers" || \
+   find src -name "*.rs" -type f 2>/dev/null | grep -q "testcontainers"; then
+  HAS_TESTCONTAINERS=true
+fi
+
+if [ "$HAS_TESTCONTAINERS" = true ]; then
+  if ! check_docker_available; then
+    echo "❌ ERROR: Docker is required for testcontainers feature but is not available"
+    exit 1
+  fi
+  echo "✅ Gate 2.6 passed"
+else
+  echo "⏭️  Testcontainers feature not detected, skipping Docker check"
+fi
+echo ""
+
 # Gate 3: Formatting check (comprehensive, with 5s timeout)
-echo "Gate 3/5: Formatting check..."
+echo "Gate 3/6: Formatting check..."
 if ! timeout 5s cargo fmt --all -- --check 2>&1; then
   echo "❌ ERROR: Code is not formatted"
   echo "   Run: cargo make fmt"
@@ -398,19 +451,30 @@ fi
 echo "✅ Gate 3 passed"
 echo ""
 
-# Gate 4: Tests (unit tests only for speed)
-# Note: Testcontainers integration tests excluded (too slow, require Docker)
-# Run 'cargo make test-integration' manually if needed
-echo "Gate 4/5: Unit tests..."
+# Gate 4: Tests (unit + integration - full validation loop)
+echo "Gate 4/6: Unit tests..."
 if ! cargo make test-unit 2>&1 | tail -20; then
   echo "❌ ERROR: Unit tests failed"
   exit 1
 fi
-echo "✅ Gate 4 passed"
+echo "✅ Gate 4.1 passed (unit tests)"
+echo ""
+
+# Gate 4.2: Integration tests (requires Docker - checked in Gate 2.6)
+if [ "$HAS_TESTCONTAINERS" = true ]; then
+  echo "Gate 4.2/6: Integration tests (testcontainers + weaver)..."
+  if ! cargo make test-integration 2>&1 | tail -30; then
+    echo "❌ ERROR: Integration tests failed"
+    exit 1
+  fi
+  echo "✅ Gate 4.2 passed (integration tests)"
+else
+  echo "⏭️  Gate 4.2 skipped (no testcontainers feature detected)"
+fi
 echo ""
 
 # Gate 5: Security audit (non-blocking)
-echo "Gate 5/5: Security audit..."
+echo "Gate 5/6: Security audit..."
 if command -v cargo-audit &> /dev/null; then
   if ! cargo make audit 2>&1; then
     echo "⚠️  Security audit found issues (non-blocking)"

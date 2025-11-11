@@ -301,3 +301,5 @@ cargo make test
 
 **Genchi Genbutsu**: "Go and see for yourself" - Don't trust second-hand information. Verify at the source.
 
+**DfLSS alignment**: Gemba walk (going to source) supports DfLSS (Design for Lean Six Sigma) by preventing both waste (outdated information causes rework) AND defects (wrong assumptions cause bugs). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

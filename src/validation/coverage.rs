@@ -4,8 +4,8 @@
 //!
 //! # Poka-Yoke: Type-Level Validation
 //!
-//! This module uses newtypes to prevent count errors at compile time.
-//! Use `TotalCount` and `CoveredCount` instead of `usize` for counts.
+//! This module uses newtypes to prevent count and percentage errors at compile time.
+//! Use `TotalCount`, `CoveredCount`, and `CoveragePercentage` instead of raw `usize`/`f64`.
 
 use std::collections::HashMap;
 
@@ -123,6 +123,107 @@ impl From<CoveredCount> for usize {
     }
 }
 
+/// Coverage percentage newtype
+///
+/// **Poka-Yoke**: Use this newtype instead of `f64` to prevent invalid percentage values.
+/// Ensures percentage is always in range [0.0, 100.0].
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::coverage::{CoveragePercentage, TotalCount, CoveredCount};
+///
+/// let total = TotalCount::new(100).unwrap();
+/// let covered = CoveredCount::new_for_total(80, total).unwrap();
+/// let percentage = CoveragePercentage::from_counts(covered, total).unwrap();
+///
+/// assert_eq!(percentage.get(), 80.0);
+/// assert!(percentage.get() >= 0.0);
+/// assert!(percentage.get() <= 100.0);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct CoveragePercentage(f64);
+
+impl CoveragePercentage {
+    /// Minimum valid percentage value
+    pub const MIN: f64 = 0.0;
+
+    /// Maximum valid percentage value
+    pub const MAX: f64 = 100.0;
+
+    /// Create a new coverage percentage from a value
+    ///
+    /// Returns `None` if value is outside [0.0, 100.0].
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::coverage::CoveragePercentage;
+    ///
+    /// let valid = CoveragePercentage::new(80.0).unwrap();
+    /// assert_eq!(valid.get(), 80.0);
+    ///
+    /// let invalid = CoveragePercentage::new(150.0); // None - > 100%
+    /// assert!(invalid.is_none());
+    ///
+    /// let invalid_negative = CoveragePercentage::new(-10.0); // None - < 0%
+    /// assert!(invalid_negative.is_none());
+    /// ```
+    pub fn new(value: f64) -> Option<Self> {
+        if value >= Self::MIN && value <= Self::MAX {
+            Some(Self(value))
+        } else {
+            None
+        }
+    }
+
+    /// Create a coverage percentage from covered and total counts
+    ///
+    /// Returns `None` if total is 0 (division by zero) or if calculated percentage is invalid.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::coverage::{CoveragePercentage, TotalCount, CoveredCount};
+    ///
+    /// let total = TotalCount::new(100).unwrap();
+    /// let covered = CoveredCount::new_for_total(80, total).unwrap();
+    /// let percentage = CoveragePercentage::from_counts(covered, total).unwrap();
+    ///
+    /// assert_eq!(percentage.get(), 80.0);
+    ///
+    /// // Division by zero case
+    /// let zero_total = TotalCount::new(0).unwrap();
+    /// let zero_covered = CoveredCount::new(0).unwrap();
+    /// let result = CoveragePercentage::from_counts(zero_covered, zero_total);
+    /// assert!(result.is_none()); // Cannot calculate percentage for zero total
+    /// ```
+    pub fn from_counts(covered: CoveredCount, total: TotalCount) -> Option<Self> {
+        if total.get() == 0 {
+            return None; // Division by zero
+        }
+
+        let percentage = (covered.get() as f64 / total.get() as f64) * 100.0;
+        Self::new(percentage)
+    }
+
+    /// Get the percentage value
+    pub fn get(&self) -> f64 {
+        self.0
+    }
+
+    /// Convert to f64
+    pub fn into_f64(self) -> f64 {
+        self.0
+    }
+}
+
+impl From<CoveragePercentage> for f64 {
+    fn from(percentage: CoveragePercentage) -> Self {
+        percentage.0
+    }
+}
+
 /// Coverage report
 #[derive(Debug, Clone)]
 pub struct CoverageReport {
@@ -133,7 +234,8 @@ pub struct CoverageReport {
     /// **Poka-Yoke**: Uses `CoveredCount` newtype to prevent count errors
     pub covered: CoveredCount,
     /// Coverage percentage
-    pub percentage: f64,
+    /// **Poka-Yoke**: Uses `CoveragePercentage` newtype to prevent invalid percentage values
+    pub percentage: CoveragePercentage,
     /// Coverage details
     pub details: HashMap<String, bool>,
 }
@@ -146,7 +248,9 @@ impl CoverageReport {
             // SAFETY: 0 is always valid for TotalCount and CoveredCount
             total: TotalCount::new(0).expect("0 is always valid for TotalCount"),
             covered: CoveredCount::new(0).expect("0 is always valid for CoveredCount"),
-            percentage: 0.0,
+            // SAFETY: 0.0 is always valid for CoveragePercentage
+            percentage: CoveragePercentage::new(0.0)
+                .expect("0.0 is always valid for CoveragePercentage"),
             details: HashMap::new(),
         }
     }
@@ -167,14 +271,22 @@ impl CoverageReport {
                 self.covered = new_covered_count;
             }
         }
-        self.percentage = (self.covered.get() as f64 / self.total.get() as f64) * 100.0;
+        // Update percentage using Poka-Yoke validated type
+        if self.total.get() > 0 {
+            self.percentage = CoveragePercentage::from_counts(self.covered, self.total)
+                .expect("Percentage should be valid when total > 0");
+        } else {
+            // Total is 0, percentage is 0.0
+            self.percentage =
+                CoveragePercentage::new(0.0).expect("0.0 is always valid for CoveragePercentage");
+        }
     }
 
     /// Generate markdown report
     pub fn generate_markdown(&self) -> String {
         format!(
             "# Coverage Report\n\n**Coverage**: {:.2}% ({} / {})\n\n## Details\n\n",
-            self.percentage,
+            self.percentage.get(),
             self.covered.get(),
             self.total.get()
         )
@@ -249,7 +361,64 @@ mod tests {
         assert_eq!(report.total.get(), 3);
         assert_eq!(report.covered.get(), 2);
 
-        // Verify percentage
-        assert_eq!(report.percentage, (2.0 / 3.0) * 100.0);
+        // Verify percentage using Poka-Yoke validated type
+        let expected_percentage = CoveragePercentage::from_counts(
+            CoveredCount::new(2).unwrap(),
+            TotalCount::new(3).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(report.percentage.get(), expected_percentage.get());
+    }
+
+    #[test]
+    fn test_coverage_percentage_new() {
+        // Valid percentages
+        let p50 = CoveragePercentage::new(50.0).unwrap();
+        assert_eq!(p50.get(), 50.0);
+
+        let p0 = CoveragePercentage::new(0.0).unwrap();
+        assert_eq!(p0.get(), 0.0);
+
+        let p100 = CoveragePercentage::new(100.0).unwrap();
+        assert_eq!(p100.get(), 100.0);
+
+        // Invalid percentages
+        let invalid_high = CoveragePercentage::new(150.0);
+        assert!(invalid_high.is_none());
+
+        let invalid_low = CoveragePercentage::new(-10.0);
+        assert!(invalid_low.is_none());
+    }
+
+    #[test]
+    fn test_coverage_percentage_from_counts() {
+        let total = TotalCount::new(100).unwrap();
+        let covered = CoveredCount::new_for_total(80, total).unwrap();
+
+        let percentage = CoveragePercentage::from_counts(covered, total).unwrap();
+        assert_eq!(percentage.get(), 80.0);
+
+        // Edge case: 100% coverage
+        let covered_all = CoveredCount::new_for_total(100, total).unwrap();
+        let percentage_all = CoveragePercentage::from_counts(covered_all, total).unwrap();
+        assert_eq!(percentage_all.get(), 100.0);
+
+        // Edge case: 0% coverage
+        let covered_none = CoveredCount::new(0).unwrap();
+        let percentage_none = CoveragePercentage::from_counts(covered_none, total).unwrap();
+        assert_eq!(percentage_none.get(), 0.0);
+
+        // Division by zero case
+        let zero_total = TotalCount::new(0).unwrap();
+        let zero_covered = CoveredCount::new(0).unwrap();
+        let result = CoveragePercentage::from_counts(zero_covered, zero_total);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_coverage_percentage_into_f64() {
+        let percentage = CoveragePercentage::new(75.5).unwrap();
+        let f64_value: f64 = percentage.into();
+        assert_eq!(f64_value, 75.5);
     }
 }

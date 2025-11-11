@@ -248,6 +248,9 @@ where
         // If this fails, it indicates a system clock issue
         if let Err(e) = span.complete(end_time) {
             // Log error but don't fail - span will remain active
+            #[cfg(feature = "logging")]
+            log::warn!("Failed to complete span: {}", e);
+            #[cfg(not(feature = "logging"))]
             eprintln!("Warning: Failed to complete span: {}", e);
         } else {
             span.status = SpanStatus::Ok;
@@ -451,191 +454,272 @@ impl Default for FakeDataGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chicago_test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test error handling (80% of bugs)
     // ========================================================================
 
-    #[test]
-    fn test_test_data_builder_build_json_empty() {
+    chicago_test!(test_test_data_builder_build_json_empty, {
+        // Arrange: Create empty builder
         let builder = TestDataBuilder::new();
-        let json = builder.build_json();
-        assert!(json.is_ok());
-        let json = json.unwrap();
-        assert!(json.is_object());
-    }
 
-    #[test]
-    fn test_test_data_builder_build_json_with_data() {
-        let builder = TestDataBuilder::new().with_var("key", "value");
+        // Act: Build JSON
         let json = builder.build_json();
         assert!(json.is_ok());
         let json = json.unwrap();
+
+        // Assert: Verify JSON structure
+        assert!(json.is_object());
+    });
+
+    chicago_test!(test_test_data_builder_build_json_with_data, {
+        // Arrange: Create builder with data
+        let builder = TestDataBuilder::new().with_var("key", "value");
+
+        // Act: Build JSON
+        let json = builder.build_json();
+        assert!(json.is_ok());
+        let json = json.unwrap();
+
+        // Assert: Verify JSON contains data
         assert_eq!(json["key"], "value");
-    }
+    });
 
     // ========================================================================
     // 2. BUILDER PATTERN - Test fluent API
     // ========================================================================
 
-    #[test]
-    fn test_test_data_builder_new() {
+    chicago_test!(test_test_data_builder_new, {
+        // Arrange: Create new builder
         let builder = TestDataBuilder::new();
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data is empty
         assert!(data.is_empty());
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_with_var() {
+    chicago_test!(test_test_data_builder_with_var, {
+        // Arrange: Create builder with var
         let builder = TestDataBuilder::new().with_var("key", "value");
-        let data = builder.build();
-        assert_eq!(data.get("key"), Some(&"value".to_string()));
-    }
 
-    #[test]
-    fn test_test_data_builder_with_order_data() {
-        let builder = TestDataBuilder::new().with_order_data("order-123", "100.00");
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data contains var
+        assert_eq!(data.get("key"), Some(&"value".to_string()));
+    });
+
+    chicago_test!(test_test_data_builder_with_order_data, {
+        // Arrange: Create builder with order data
+        let builder = TestDataBuilder::new().with_order_data("order-123", "100.00");
+
+        // Act: Build data
+        let data = builder.build();
+
+        // Assert: Verify order data fields
         assert_eq!(data.get("order_id"), Some(&"order-123".to_string()));
         assert_eq!(data.get("total_amount"), Some(&"100.00".to_string()));
         assert_eq!(data.get("currency"), Some(&"USD".to_string()));
         assert_eq!(data.get("order_status"), Some(&"pending".to_string()));
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_with_customer_data() {
+    chicago_test!(test_test_data_builder_with_customer_data, {
+        // Arrange: Create builder with customer data
         let builder = TestDataBuilder::new().with_customer_data("customer-456");
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify customer data fields
         assert_eq!(data.get("customer_id"), Some(&"customer-456".to_string()));
         assert_eq!(data.get("customer_email"), Some(&"customer@example.com".to_string()));
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_with_approval_data() {
+    chicago_test!(test_test_data_builder_with_approval_data, {
+        // Arrange: Create builder with approval data
         let builder = TestDataBuilder::new().with_approval_data("request-789", "50.00");
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify approval data fields
         assert_eq!(data.get("request_id"), Some(&"request-789".to_string()));
         assert_eq!(data.get("amount"), Some(&"50.00".to_string()));
         assert_eq!(data.get("condition"), Some(&"true".to_string()));
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_chaining() {
+    chicago_test!(test_test_data_builder_chaining, {
+        // Arrange: Create builder with chained methods
         let builder = TestDataBuilder::new()
             .with_var("key1", "value1")
             .with_var("key2", "value2")
             .with_order_data("order-123", "100.00");
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify all data is present
         assert_eq!(data.len(), 6); // 2 vars + 4 order fields
         assert_eq!(data.get("key1"), Some(&"value1".to_string()));
         assert_eq!(data.get("key2"), Some(&"value2".to_string()));
         assert_eq!(data.get("order_id"), Some(&"order-123".to_string()));
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_default() {
+    chicago_test!(test_test_data_builder_default, {
+        // Arrange: Create default builder
         let builder = TestDataBuilder::default();
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data is empty
         assert!(data.is_empty());
-    }
+    });
 
     // ========================================================================
     // 3. GENERIC TEST DATA BUILDER - Test generic builder
     // ========================================================================
 
-    #[test]
-    fn test_generic_test_data_builder_new() {
+    chicago_test!(test_generic_test_data_builder_new, {
+        // Arrange: Create generic builder
         let builder: GenericTestDataBuilder<String, String> = GenericTestDataBuilder::new();
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data is empty
         assert!(data.is_empty());
-    }
+    });
 
-    #[test]
-    fn test_generic_test_data_builder_with_var() {
+    chicago_test!(test_generic_test_data_builder_with_var, {
+        // Arrange: Create generic builder with var
         let builder: GenericTestDataBuilder<String, String> =
             GenericTestDataBuilder::new().with_var("key", "value");
+
+        // Act: Build data
         let data = builder.build();
-        assert_eq!(data.get("key"), Some(&"value".to_string()));
-    }
 
-    #[test]
-    fn test_generic_test_data_builder_build_json() {
+        // Assert: Verify data contains var
+        assert_eq!(data.get("key"), Some(&"value".to_string()));
+    });
+
+    chicago_test!(test_generic_test_data_builder_build_json, {
+        // Arrange: Create generic builder with var
         let builder: GenericTestDataBuilder<String, String> =
             GenericTestDataBuilder::new().with_var("key", "value");
+
+        // Act: Build JSON
         let json = builder.build_json();
         assert!(json.is_ok());
         let json = json.unwrap();
-        assert_eq!(json["key"], "value");
-    }
 
-    #[test]
-    fn test_generic_test_data_builder_default() {
+        // Assert: Verify JSON contains data
+        assert_eq!(json["key"], "value");
+    });
+
+    chicago_test!(test_generic_test_data_builder_default, {
+        // Arrange: Create default generic builder
         let builder: GenericTestDataBuilder<String, String> = GenericTestDataBuilder::default();
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data is empty
         assert!(data.is_empty());
-    }
+    });
 
     // ========================================================================
     // 4. VALIDATED TEST DATA BUILDER - Test validated builder
     // ========================================================================
 
-    #[test]
-    fn test_validated_test_data_builder_new() {
+    chicago_test!(test_validated_test_data_builder_new, {
+        // Arrange: Create validated builder
         let builder: ValidatedTestDataBuilder<()> = ValidatedTestDataBuilder::new();
-        let data = builder.build();
-        assert!(data.is_empty());
-    }
 
-    #[test]
-    fn test_validated_test_data_builder_with_var() {
+        // Act: Build data
+        let data = builder.build();
+
+        // Assert: Verify data is empty
+        assert!(data.is_empty());
+    });
+
+    chicago_test!(test_validated_test_data_builder_with_var, {
+        // Arrange: Create validated builder with var
         let builder: ValidatedTestDataBuilder<()> =
             ValidatedTestDataBuilder::new().with_var("key", "value");
-        let data = builder.build();
-        assert_eq!(data.get("key"), Some(&"value".to_string()));
-    }
 
-    #[test]
-    fn test_validated_test_data_builder_default() {
-        let builder: ValidatedTestDataBuilder<()> = ValidatedTestDataBuilder::default();
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify data contains var
+        assert_eq!(data.get("key"), Some(&"value".to_string()));
+    });
+
+    chicago_test!(test_validated_test_data_builder_default, {
+        // Arrange: Create default validated builder
+        let builder: ValidatedTestDataBuilder<()> = ValidatedTestDataBuilder::default();
+
+        // Act: Build data
+        let data = builder.build();
+
+        // Assert: Verify data is empty
         assert!(data.is_empty());
-    }
+    });
 
     // ========================================================================
     // 5. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    #[test]
-    fn test_test_data_builder_empty_key() {
+    chicago_test!(test_test_data_builder_empty_key, {
+        // Arrange: Create builder with empty key
         let builder = TestDataBuilder::new().with_var("", "value");
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify empty key is handled
         assert_eq!(data.get(""), Some(&"value".to_string()));
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_empty_value() {
+    chicago_test!(test_test_data_builder_empty_value, {
+        // Arrange: Create builder with empty value
         let builder = TestDataBuilder::new().with_var("key", "");
-        let data = builder.build();
-        assert_eq!(data.get("key"), Some(&"".to_string()));
-    }
 
-    #[test]
-    fn test_test_data_builder_overwrite() {
-        let builder = TestDataBuilder::new().with_var("key", "value1").with_var("key", "value2");
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify empty value is handled
+        assert_eq!(data.get("key"), Some(&"".to_string()));
+    });
+
+    chicago_test!(test_test_data_builder_overwrite, {
+        // Arrange: Create builder with overwriting vars
+        let builder = TestDataBuilder::new().with_var("key", "value1").with_var("key", "value2");
+
+        // Act: Build data
+        let data = builder.build();
+
+        // Assert: Verify overwrite behavior
         assert_eq!(data.get("key"), Some(&"value2".to_string()));
         assert_eq!(data.len(), 1);
-    }
+    });
 
-    #[test]
-    fn test_test_data_builder_large_data() {
+    chicago_test!(test_test_data_builder_large_data, {
+        // Arrange: Create builder with large dataset
         let mut builder = TestDataBuilder::new();
         for i in 0..100 {
             builder = builder.with_var(format!("key{}", i), format!("value{}", i));
         }
+
+        // Act: Build data
         let data = builder.build();
+
+        // Assert: Verify large dataset
         assert_eq!(data.len(), 100);
         assert_eq!(data.get("key0"), Some(&"value0".to_string()));
         assert_eq!(data.get("key99"), Some(&"value99".to_string()));
-    }
+    });
 }

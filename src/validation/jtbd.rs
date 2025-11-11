@@ -288,9 +288,12 @@ impl JtbdValidator {
         // Validate JTBD: Does the code accomplish its intended purpose?
         let jtbd_valid = (scenario.validate_result)(&context, &execution_result);
 
+        // Kaizen improvement: Clone scenario name once and reuse to avoid multiple clones
+        let scenario_name = scenario.name.clone();
+
         if execution_result.success && jtbd_valid {
             Some(JtbdValidationResult::success(
-                scenario.name.clone(),
+                scenario_name,
                 latency_ms,
                 vec![format!(
                     "Scenario '{}' executed successfully and accomplished intended purpose",
@@ -305,7 +308,7 @@ impl JtbdValidator {
             };
 
             Some(JtbdValidationResult::failure(
-                scenario.name.clone(),
+                scenario_name,
                 execution_result.success,
                 scenario.expected_behavior.clone(),
                 format!("Execution: {}, JTBD: {jtbd_valid}", execution_result.success),

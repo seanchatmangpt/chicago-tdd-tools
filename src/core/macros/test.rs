@@ -110,7 +110,10 @@ macro_rules! chicago_async_test {
                 TestOutput::handle(output);
             };
 
-            match timeout(Duration::from_secs(DEFAULT_TEST_TIMEOUT_SECONDS), test_future).await {
+            // Execute body with timeout for SLA compliance
+            // Note: Using literal value since macro_rules! cannot reference constants
+            // The constant DEFAULT_TEST_TIMEOUT_SECONDS documents this value
+            match timeout(Duration::from_secs(1), test_future).await {
                 Ok(_) => {
                     // Test completed within timeout
                 }
@@ -162,7 +165,10 @@ macro_rules! chicago_fixture_test {
             // Execute test body with 1s timeout for SLA compliance
             let test_future = async { $body };
 
-            match timeout(Duration::from_secs(DEFAULT_TEST_TIMEOUT_SECONDS), test_future).await {
+            // Execute body with timeout for SLA compliance
+            // Note: Using literal value since macro_rules! cannot reference constants
+            // The constant DEFAULT_TEST_TIMEOUT_SECONDS documents this value
+            match timeout(Duration::from_secs(1), test_future).await {
                 Ok(_) => {
                     // Test completed within timeout
                 }
@@ -250,6 +256,144 @@ macro_rules! chicago_param_test {
 macro_rules! chicago_param_test {
     ($($tt:tt)*) => {
         compile_error!("Parameterized testing requires the 'parameterized-testing' feature. Enable with: --features parameterized-testing");
+    };
+}
+
+/// Macro for OTEL testing with automatic validation
+///
+/// Automates OTEL span/metric testing with Chicago TDD patterns:
+/// - AAA pattern enforcement
+/// - Automatic span/metric validation
+/// - Test helper setup
+///
+/// **Timeout Enforcement**: Tests are automatically wrapped with a 1s timeout
+/// to prevent hangs and ensure SLA compliance.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::{chicago_otel_test, prelude::*};
+///
+/// chicago_otel_test!(test_otel_span_validation, {
+///     // Arrange: Create test span
+///     let span = chicago_tdd_tools::otel::test_helpers::create_test_span("test.operation");
+///
+///     // Act: Validate span
+///     let helper = chicago_tdd_tools::otel::OtelTestHelper::new();
+///     helper.assert_spans_valid(&[span.clone()]);
+///
+///     // Assert: Verify span is valid
+///     assert_eq!(span.name, "test.operation");
+/// });
+/// ```
+#[cfg(feature = "otel")]
+#[macro_export]
+macro_rules! chicago_otel_test {
+    ($name:ident, $body:block) => {
+        #[test]
+        #[ntest::timeout(1000)] // 1s timeout for SLA compliance
+        fn $name() {
+            $body
+        }
+    };
+}
+
+#[cfg(not(feature = "otel"))]
+/// Macro for OTEL testing (requires otel feature)
+///
+/// Enable the `otel` feature to use OTEL testing macros.
+#[macro_export]
+macro_rules! chicago_otel_test {
+    ($($tt:tt)*) => {
+        compile_error!("OTEL testing requires the 'otel' feature. Enable with: --features otel");
+    };
+}
+
+/// Macro for Weaver testing with automatic validation
+///
+/// Automates Weaver validation testing with Chicago TDD patterns:
+/// - AAA pattern enforcement
+/// - Automatic Weaver validator setup
+/// - Test helper setup
+///
+/// **Timeout Enforcement**: Tests are automatically wrapped with tokio::time::timeout
+/// (1s) to prevent hangs and ensure SLA compliance.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::{chicago_weaver_test, prelude::*};
+/// use std::path::PathBuf;
+///
+/// chicago_weaver_test!(test_weaver_validation, {
+///     // Arrange: Create validator
+///     let registry_path = PathBuf::from("registry/");
+///     let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);
+///
+///     // Act: Start Weaver (if available)
+///     let start_result = validator.start();
+///
+///     // Assert: Verify Weaver started or handle unavailable case
+///     if start_result.is_ok() {
+///         assert!(validator.is_running());
+///         validator.stop().unwrap();
+///     }
+/// });
+/// ```
+#[cfg(feature = "weaver")]
+#[macro_export]
+macro_rules! chicago_weaver_test {
+    ($name:ident, $body:block) => {
+        #[tokio::test]
+        async fn $name() {
+            use tokio::time::{timeout, Duration};
+
+            // Helper trait to handle both Result and non-Result returns
+            trait TestOutput {
+                fn handle(self);
+            }
+
+            impl TestOutput for () {
+                fn handle(self) {}
+            }
+
+            impl<E: std::fmt::Debug> TestOutput for Result<(), E> {
+                fn handle(self) {
+                    if let Err(e) = self {
+                        panic!("Test failed: {:?}", e);
+                    }
+                }
+            }
+
+            // Execute body with 1s timeout for SLA compliance
+            let test_future = async {
+                let output = async { $body }.await;
+                TestOutput::handle(output);
+            };
+
+            // Execute body with timeout for SLA compliance
+            match timeout(Duration::from_secs(1), test_future).await {
+                Ok(_) => {
+                    // Test completed within timeout
+                }
+                Err(_) => {
+                    panic!("Test exceeded 1s timeout (SLA violation)");
+                }
+            }
+        }
+    };
+}
+
+#[cfg(not(feature = "weaver"))]
+/// Macro for Weaver testing (requires weaver feature)
+///
+/// Enable the `weaver` feature to use Weaver testing macros.
+#[macro_export]
+macro_rules! chicago_weaver_test {
+    ($($tt:tt)*) => {
+        compile_error!(
+            "Weaver testing requires the 'weaver' feature. Enable with: --features weaver"
+        );
     };
 }
 

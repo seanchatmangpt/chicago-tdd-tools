@@ -13,25 +13,25 @@ pub mod types;
 #[derive(Error, Debug)]
 pub enum OtelValidationError {
     /// Span validation failed
-    #[error("Span validation failed: {0}")]
+    #[error("🚨 Span validation failed: {0}\n   ⚠️  STOP: Span does not meet validation requirements\n   💡 FIX: Check span structure, attributes, and status")]
     SpanValidationFailed(String),
     /// Metric validation failed
-    #[error("Metric validation failed: {0}")]
+    #[error("🚨 Metric validation failed: {0}\n   ⚠️  STOP: Metric does not meet validation requirements\n   💡 FIX: Check metric structure, attributes, and values")]
     MetricValidationFailed(String),
     /// Missing required attribute
-    #[error("Missing required attribute: {0}")]
+    #[error("🚨 Missing required attribute: {0}\n   ⚠️  STOP: Required attribute is missing\n   💡 FIX: Add required attribute to span or metric")]
     MissingAttribute(String),
     /// Invalid attribute type
-    #[error("Invalid attribute type for '{0}': expected {1}, got {2}")]
+    #[error("🚨 Invalid attribute type for '{0}': expected {1}, got {2}\n   ⚠️  STOP: Attribute type mismatch\n   💡 FIX: Use correct attribute type")]
     InvalidAttributeType(String, String, String),
     /// Invalid span status
-    #[error("Invalid span status: {0}")]
+    #[error("🚨 Invalid span status: {0}\n   ⚠️  STOP: Span status is invalid\n   💡 FIX: Use valid span status (Ok, Error, Unset)")]
     InvalidSpanStatus(String),
     /// Invalid trace ID
-    #[error("Invalid trace ID: {0}")]
+    #[error("🚨 Invalid trace ID: {0}\n   ⚠️  STOP: Trace ID is invalid\n   💡 FIX: Use valid 128-bit trace ID (cannot be zero)")]
     InvalidTraceId(String),
     /// Invalid span ID
-    #[error("Invalid span ID: {0}")]
+    #[error("🚨 Invalid span ID: {0}\n   ⚠️  STOP: Span ID is invalid\n   💡 FIX: Use valid 64-bit span ID (cannot be zero)")]
     InvalidSpanId(String),
 }
 
@@ -265,6 +265,125 @@ impl OtelTestHelper {
                 .validate_metrics(&[metric.clone()])
                 .unwrap_or_else(|e| panic!("Metric validation failed: {}", e));
         }
+    }
+}
+
+/// Helper functions for creating test spans and metrics
+///
+/// These functions simplify creating OTEL spans and metrics for testing,
+/// automating common patterns and reducing boilerplate.
+#[cfg(feature = "otel")]
+pub mod test_helpers {
+    use super::*;
+    use crate::observability::otel::types::{
+        Attributes, Metric, MetricValue, Span, SpanContext, SpanId, SpanStatus, TraceId,
+    };
+
+    /// Create a test span with default values
+    ///
+    /// Creates a completed span with valid trace ID, span ID, and timestamps.
+    /// Useful for testing span validation and behavior.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::otel::test_helpers::create_test_span;
+    ///
+    /// let span = create_test_span("test.operation");
+    /// assert_eq!(span.name, "test.operation");
+    /// ```
+    pub fn create_test_span(name: impl Into<String>) -> Span {
+        let name = name.into();
+        let trace_id = TraceId(12345);
+        let span_id = SpanId(67890);
+        let context = SpanContext::root(trace_id, span_id, 1);
+        let start_time_ms = 1000;
+        let end_time_ms = 2000;
+        let attributes = Attributes::new();
+        let events = Vec::new();
+        let status = SpanStatus::Ok;
+
+        Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
+            .unwrap_or_else(|e| panic!("Failed to create test span: {}", e))
+    }
+
+    /// Create a test span with custom attributes
+    ///
+    /// Creates a completed span with custom attributes for testing attribute validation.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::otel::test_helpers::create_test_span_with_attributes;
+    /// use std::collections::BTreeMap;
+    ///
+    /// let mut attrs = BTreeMap::new();
+    /// attrs.insert("service.name".to_string(), "test-service".to_string());
+    /// let span = create_test_span_with_attributes("test.operation", attrs);
+    /// ```
+    pub fn create_test_span_with_attributes(
+        name: impl Into<String>,
+        attributes: Attributes,
+    ) -> Span {
+        let name = name.into();
+        let trace_id = TraceId(12345);
+        let span_id = SpanId(67890);
+        let context = SpanContext::root(trace_id, span_id, 1);
+        let start_time_ms = 1000;
+        let end_time_ms = 2000;
+        let events = Vec::new();
+        let status = SpanStatus::Ok;
+
+        Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
+            .unwrap_or_else(|e| panic!("Failed to create test span: {}", e))
+    }
+
+    /// Create a test metric with default values
+    ///
+    /// Creates a counter metric with a valid name and value.
+    /// Useful for testing metric validation and behavior.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::otel::test_helpers::create_test_metric;
+    ///
+    /// let metric = create_test_metric("test.counter", 42);
+    /// assert_eq!(metric.name, "test.counter");
+    /// ```
+    pub fn create_test_metric(name: impl Into<String>, value: u64) -> Metric {
+        let name = name.into();
+        let value = MetricValue::Counter(value);
+        let timestamp_ms = 1000;
+        let attributes = Attributes::new();
+
+        Metric { name, value, timestamp_ms, attributes }
+    }
+
+    /// Create a test metric with custom attributes
+    ///
+    /// Creates a metric with custom attributes for testing attribute validation.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::otel::test_helpers::create_test_metric_with_attributes;
+    /// use std::collections::BTreeMap;
+    ///
+    /// let mut attrs = BTreeMap::new();
+    /// attrs.insert("service.name".to_string(), "test-service".to_string());
+    /// let metric = create_test_metric_with_attributes("test.counter", 42, attrs);
+    /// ```
+    pub fn create_test_metric_with_attributes(
+        name: impl Into<String>,
+        value: u64,
+        attributes: Attributes,
+    ) -> Metric {
+        let name = name.into();
+        let value = MetricValue::Counter(value);
+        let timestamp_ms = 1000;
+
+        Metric { name, value, timestamp_ms, attributes }
     }
 }
 

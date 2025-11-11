@@ -1,7 +1,10 @@
 //! Test Fixtures
 //!
-//! Provides reusable test fixtures with automatic cleanup and state management.
+//! Provides reusable test fixtures with state management and test isolation.
 //! Uses Generic Associated Types (GATs) for flexible, type-safe fixture management.
+//!
+//! **Note**: TestFixture uses Rust's automatic memory management (Box drops automatically).
+//! For resources requiring explicit cleanup, implement the `cleanup()` method or use Drop.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -122,149 +125,202 @@ impl Default for TestFixture<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chicago_test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
-    #[test]
-    fn test_fixture_error_creation_failed_display() {
+    chicago_test!(test_fixture_error_creation_failed_display, {
+        // Arrange: Create error
         let error = FixtureError::CreationFailed("test error".to_string());
+
+        // Act: Format error
         let display = format!("{error}");
+
+        // Assert: Verify error message
         assert!(display.contains("Failed to create fixture"));
         assert!(display.contains("test error"));
-    }
+    });
 
-    #[test]
-    fn test_fixture_error_operation_failed_display() {
+    chicago_test!(test_fixture_error_operation_failed_display, {
+        // Arrange: Create error
         let error = FixtureError::OperationFailed("test operation".to_string());
+
+        // Act: Format error
         let display = format!("{error}");
+
+        // Assert: Verify error message
         assert!(display.contains("Fixture operation failed"));
         assert!(display.contains("test operation"));
-    }
+    });
 
-    #[test]
-    fn test_fixture_error_debug() {
+    chicago_test!(test_fixture_error_debug, {
+        // Arrange: Create error
         let error = FixtureError::CreationFailed("test".to_string());
-        let debug = format!("{error:?}");
-        assert!(debug.contains("CreationFailed"));
-    }
 
-    #[test]
-    fn test_fixture_error_all_variants() {
+        // Act: Format error as debug
+        let debug = format!("{error:?}");
+
+        // Assert: Verify debug output
+        assert!(debug.contains("CreationFailed"));
+    });
+
+    chicago_test!(test_fixture_error_all_variants, {
+        // Arrange: Create all error variants
         let errors = vec![
             FixtureError::CreationFailed("creation".to_string()),
             FixtureError::OperationFailed("operation".to_string()),
         ];
 
+        // Act & Assert: Verify each error has display message
         for error in errors {
             let display = format!("{error}");
             assert!(!display.is_empty(), "Error should have display message");
         }
-    }
+    });
 
     // ========================================================================
     // 2. FIXTURE PROVIDER TRAIT - Test trait implementation
     // ========================================================================
 
-    #[test]
-    fn test_fixture_provider_default_impl() {
+    chicago_test!(test_fixture_provider_default_impl, {
+        // Arrange: Create default provider
         let provider = ();
+
+        // Act: Create fixture
         let fixture = provider.create_fixture();
         assert!(fixture.is_ok());
         let fixture = fixture.unwrap();
-        assert!(fixture.test_counter() >= 0);
-    }
+
+        // Assert: Verify counter is within valid range
+        // test_counter() returns u64, which is always >= 0, so we verify it's a valid counter
+        assert!(fixture.test_counter() < u64::MAX);
+    });
 
     // ========================================================================
     // 3. TEST FIXTURE LIFECYCLE - Test fixture creation and usage
     // ========================================================================
 
-    #[test]
-    fn test_test_fixture_new() {
+    chicago_test!(test_test_fixture_new, {
+        // Arrange: Create fixture
         let fixture = TestFixture::new();
         assert!(fixture.is_ok());
         let fixture = fixture.unwrap();
-        assert!(fixture.test_counter() >= 0);
-    }
 
-    #[test]
-    fn test_test_fixture_with_data() {
+        // Assert: Verify counter is within valid range
+        // test_counter() returns u64, which is always >= 0, so we verify it's a valid counter
+        assert!(fixture.test_counter() < u64::MAX);
+    });
+
+    chicago_test!(test_test_fixture_with_data, {
+        // Arrange: Create test data
         let data = 42;
+
+        // Act: Create fixture with data
         let fixture = TestFixture::with_data(data);
+
+        // Assert: Verify fixture contains data
         assert_eq!(*fixture.inner(), 42);
         // test_counter() returns u64, which is always >= 0
         let _counter = fixture.test_counter();
-    }
+    });
 
-    #[test]
-    fn test_test_fixture_inner_access() {
+    chicago_test!(test_test_fixture_inner_access, {
+        // Arrange: Create fixture with data
         let fixture = TestFixture::with_data("test".to_string());
-        assert_eq!(fixture.inner(), "test");
+
+        // Act: Access inner data
         let inner = fixture.inner();
+
+        // Assert: Verify inner data
         assert_eq!(inner, "test");
-    }
+    });
 
-    #[test]
-    fn test_test_fixture_inner_mut() {
+    chicago_test!(test_test_fixture_inner_mut, {
+        // Arrange: Create fixture with initial data
         let mut fixture = TestFixture::with_data(0);
-        *fixture.inner_mut() = 42;
-        assert_eq!(*fixture.inner(), 42);
-    }
 
-    #[test]
-    fn test_test_fixture_test_counter() {
+        // Act: Modify inner data
+        *fixture.inner_mut() = 42;
+
+        // Assert: Verify inner data was modified
+        assert_eq!(*fixture.inner(), 42);
+    });
+
+    chicago_test!(test_test_fixture_test_counter, {
+        // Arrange: Create two fixtures
         let fixture1 = TestFixture::new().unwrap();
         let counter1 = fixture1.test_counter();
         let fixture2 = TestFixture::new().unwrap();
         let counter2 = fixture2.test_counter();
+
+        // Assert: Verify counters are valid
         // Counters should be unique (or at least different if atomic wraps)
         assert!(counter1 != counter2 || counter1 == counter2); // Always true, but verifies method works
-    }
+    });
 
-    #[test]
-    fn test_test_fixture_metadata() {
+    chicago_test!(test_test_fixture_metadata, {
+        // Arrange: Create fixture
         let mut fixture = TestFixture::new().unwrap();
+
+        // Act: Set metadata
         fixture.set_metadata("key".to_string(), "value".to_string());
+
+        // Assert: Verify metadata
         assert_eq!(fixture.get_metadata("key"), Some(&"value".to_string()));
         assert_eq!(fixture.get_metadata("nonexistent"), None);
-    }
+    });
 
-    #[test]
-    fn test_test_fixture_cleanup() {
+    chicago_test!(test_test_fixture_cleanup, {
+        // Arrange: Create fixture
         let fixture = TestFixture::new().unwrap();
-        let result = fixture.cleanup();
-        assert!(result.is_ok());
-    }
 
-    #[test]
-    fn test_test_fixture_default() {
+        // Act: Cleanup fixture
+        let result = fixture.cleanup();
+
+        // Assert: Verify cleanup succeeds
+        assert!(result.is_ok());
+    });
+
+    chicago_test!(test_test_fixture_default, {
+        // Arrange: Create default fixture
         let fixture = TestFixture::default();
+
+        // Assert: Verify fixture is usable
         // test_counter() returns u64, which is always >= 0
         let _counter = fixture.test_counter();
-    }
+    });
 
     // ========================================================================
     // 4. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    #[test]
-    fn test_test_fixture_empty_string() {
+    chicago_test!(test_test_fixture_empty_string, {
+        // Arrange: Create fixture with empty string
         let fixture = TestFixture::with_data(String::new());
+
+        // Assert: Verify fixture contains empty string
         assert_eq!(fixture.inner(), "");
-    }
+    });
 
-    #[test]
-    fn test_test_fixture_zero_value() {
+    chicago_test!(test_test_fixture_zero_value, {
+        // Arrange: Create fixture with zero value
         let fixture = TestFixture::with_data(0);
-        assert_eq!(*fixture.inner(), 0);
-    }
 
-    #[test]
-    fn test_test_fixture_metadata_overwrite() {
+        // Assert: Verify fixture contains zero
+        assert_eq!(*fixture.inner(), 0);
+    });
+
+    chicago_test!(test_test_fixture_metadata_overwrite, {
+        // Arrange: Create fixture
         let mut fixture = TestFixture::new().unwrap();
+
+        // Act: Set metadata twice (overwrite)
         fixture.set_metadata("key".to_string(), "value1".to_string());
         fixture.set_metadata("key".to_string(), "value2".to_string());
+
+        // Assert: Verify metadata was overwritten
         assert_eq!(fixture.get_metadata("key"), Some(&"value2".to_string()));
-    }
+    });
 }

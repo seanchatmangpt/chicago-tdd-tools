@@ -6,7 +6,7 @@
 //!
 //! ## Features
 //!
-//! - **Test Fixtures**: Reusable test fixtures with automatic cleanup
+//! - **Test Fixtures**: Reusable test fixtures with state management and test isolation
 //! - **Builders**: Fluent builders for test data and workflows
 //! - **Assertion Helpers**: Comprehensive assertion utilities
 //! - **Macros**: AAA pattern enforcement and test helpers
@@ -52,6 +52,7 @@
 //! - `macros`: Test macros for AAA pattern enforcement and assertions
 //! - `state`: Type-level AAA enforcement
 //! - `const_assert`: Compile-time assertions
+//! - `alert`: Alert helpers for visual problem indicators (with optional `log` crate integration)
 //!
 //! ### Advanced Testing Techniques (`testing`)
 //! - `property`: Property-based testing framework
@@ -103,6 +104,12 @@
 //! - `assert_in_range!`: Assert value is within range with detailed messages
 //! - `assert_eq_msg!`: Assert equality with custom message
 //! - `assert_guard_constraint!`: Validate guard constraints
+//! - `alert_critical!`: Emit critical alert (🚨) - must stop immediately
+//! - `alert_warning!`: Emit warning alert (⚠️) - should stop
+//! - `alert_info!`: Emit info alert (ℹ️) - informational
+//! - `alert_success!`: Emit success alert (✅) - operation completed
+//! - `alert_debug!`: Emit debug alert (🔍) - detailed diagnostics
+//! - `alert!`: Emit custom alert with user-defined severity
 
 #![deny(clippy::unwrap_used)]
 #![warn(missing_docs)]
@@ -110,6 +117,13 @@
 #![allow(clippy::pub_use, reason = "Procedural macros must be re-exported via pub use")]
 // Test code - panic is appropriate for test failures
 #![cfg_attr(test, allow(clippy::panic))]
+
+// Note: When using the `logging` feature (enabled by default), users should initialize
+// the AlertLogger at the start of their application:
+//   use chicago_tdd_tools::alert::AlertLogger;
+//   AlertLogger::init_default().unwrap();
+// This enables standard log macros (log::error!, log::warn!, etc.) to use the alert format.
+// Alert macros (alert_critical!, alert_warning!, etc.) also use log::* when logging is enabled.
 
 // Re-export procedural macros
 // Note: #[chicago_test] and #[chicago_fixture] are available via chicago_tdd_tools_proc_macros
@@ -120,6 +134,12 @@ pub use chicago_tdd_tools_proc_macros::chicago_fixture;
 pub use chicago_tdd_tools_proc_macros::TestBuilder;
 
 // Capability groups - organized by functionality
+//
+// **Kaizen improvement**: Module declaration pattern to prevent dead code.
+// All modules MUST be declared here (or in parent module's mod.rs).
+// Files not declared as modules are dead code and will be removed.
+// Pattern: Use `pub mod` for new modules, `pub use` for re-exports.
+// See MUDA_INVENTORY.md for waste elimination patterns.
 pub mod core;
 pub mod integration;
 pub mod observability;
@@ -134,19 +154,21 @@ pub mod macros;
 // Re-export new "go the extra mile" types
 pub use core::assertions::{AssertionBuilder, ValidatedAssertion};
 pub use core::builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
-pub use validation::coverage::{CoveredCount, TotalCount};
+pub use validation::coverage::{CoveragePercentage, CoveredCount, TotalCount};
 pub use validation::jtbd::ScenarioIndex;
 pub use validation::performance::ValidatedTickBudget;
 
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
-pub use core::{assertions, builders, const_assert, fixture, state};
+pub use core::{alert, assertions, builders, const_assert, fixture, state};
 #[cfg(feature = "testcontainers")]
 pub use integration::testcontainers;
 #[cfg(feature = "otel")]
 pub use observability::otel;
 #[cfg(feature = "weaver")]
-pub use observability::weaver;
+pub use observability::weaver::types::WeaverLiveCheck;
+#[cfg(feature = "weaver")]
+pub use observability::weaver::{WeaverValidationError, WeaverValidationResult};
 #[cfg(feature = "cli-testing")]
 pub use testing::cli;
 #[cfg(feature = "concurrency-testing")]
@@ -184,7 +206,7 @@ pub mod prelude {
     pub use crate::observability::otel::*;
 
     #[cfg(feature = "weaver")]
-    pub use crate::observability::weaver::*;
+    pub use crate::observability::weaver::{WeaverValidationError, WeaverValidationResult};
 
     #[cfg(feature = "testcontainers")]
     pub use crate::integration::testcontainers::*;

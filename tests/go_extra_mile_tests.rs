@@ -1,7 +1,13 @@
-//! Tests for "Go the Extra Mile" implementations with OTEL/Weaver validation
+//! Unit tests for "Go the Extra Mile" implementations with OTEL/Weaver validation
+//!
+//! **Poka-yoke**: These are UNIT tests, not integration tests. They test types,
+//! validators, and builders without requiring external services (Docker, Weaver CLI, etc.).
 //!
 //! These tests validate that the 1st/2nd/3rd idea progression works correctly
-//! and that OTEL spans/metrics are properly validated with Weaver live-check.
+//! and that OTEL spans/metrics are properly validated using type-level validators.
+//!
+//! **CRITICAL**: These tests do NOT use testcontainers, do NOT require Docker,
+//! and do NOT start Weaver CLI. They only test Rust types and validators.
 
 use chicago_tdd_tools::chicago_test;
 use chicago_tdd_tools::prelude::*;

@@ -403,3 +403,5 @@ cargo make test  # Verify functionality
 
 **Mura elimination**: Focus on the most impactful inconsistencies first. Don't try to fix everything at once. Use Kaizen to standardize incrementally.
 
+**DfLSS alignment**: Eliminating Mura (inconsistency) supports DfLSS (Design for Lean Six Sigma) by ensuring both efficiency (consistent patterns reduce waste) AND quality (consistent quality standards prevent defects). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. When standardizing, ensure consistency supports both efficiency and quality. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

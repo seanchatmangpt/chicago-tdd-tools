@@ -6,14 +6,21 @@ This command enables agents to autonomously scan the codebase using 80/20 thinki
 
 ## Core Principle: 80/20 Thinking
 
-**The 80/20 rule**: 20% of work delivers 80% of value. Focus on completing high-impact capabilities that provide maximum value with minimal effort.
+**The 80/20 rule**: 20% of capabilities deliver 80% of value. Value includes quality, consistency, and maintainability - these are not optional. Focus on high-impact capabilities that provide maximum value while maintaining quality standards.
+
+**Quality-First Principle (DfLSS Alignment)**:
+- **Quality is HIGH VALUE**, not optional - design for quality from the start
+- **Consistency is HIGH VALUE** - using project language (Rust in Rust project) is high value, not "extra effort"
+- **Maintainability is HIGH VALUE** - code that's easy to maintain prevents defects and reduces technical debt
+- **Prevent defects AND waste** - don't fix them later (DfLSS principle - addresses both efficiency and quality)
+- Quality work may require more effort, but it's still high value because it prevents defects, maintains consistency, and improves maintainability
 
 **Above-AGI thinking**:
 - Use **full context window** to scan entire codebase
 - Identify **incomplete capabilities** (not just bugs)
-- Prioritize by **impact and effort** (80/20 matrix)
-- **Finish capabilities** completely
-- **Validate** implementations
+- Prioritize by **impact and value** (80/20 matrix) - where value includes quality, consistency, maintainability
+- **Finish capabilities** completely with quality standards
+- **Validate** implementations thoroughly
 - **Determine next steps** strategically
 
 ## Workflow Overview
@@ -117,31 +124,37 @@ find src -name "*.rs" | wc -l     # Count total modules
 
 #### 2.2: 80/20 Prioritization
 
-**Action**: Prioritize capabilities by impact and effort.
+**Action**: Prioritize capabilities by impact and value (where value includes quality, consistency, maintainability).
 
-**80/20 Matrix**:
-- **High Impact, Low Effort** (Quick Wins) - Finish first
-- **High Impact, High Effort** (Major Projects) - Plan carefully
-- **Low Impact, Low Effort** (Fill-ins) - Do when convenient
-- **Low Impact, High Effort** (Thankless) - Avoid
+**80/20 Matrix** (Quality-First):
+- **High Impact, High Value** (Quality Work) - Finish first - Quality, consistency, and maintainability are high value
+- **High Impact, Medium Value** (Good Work) - Plan carefully - May require more effort but maintains quality
+- **Low Impact, High Value** (Foundation Work) - Do when convenient - Quality foundations prevent future problems
+- **Low Impact, Low Value** (Avoid) - Don't do - Not worth the effort
+
+**Value Includes**:
+- **Quality**: Code that works correctly, handles errors, follows patterns
+- **Consistency**: Uses project language, follows project conventions, maintains patterns
+- **Maintainability**: Easy to understand, modify, and extend
+- **Prevention**: Prevents defects and waste rather than fixing them later (DfLSS)
 
 **Action**: Prioritize capabilities
 
 ```markdown
-## Top 20% Capabilities (80% of Value)
+## Top 20% Capabilities (80% of Value - Quality First)
 
-### Quick Wins (High Impact, Low Effort)
-1. Fix build_json() to return Result - Prevents silent failures
-2. Add compile-fail test for ValidatedRun::<9> - Verifies claims
-3. Add ScenarioIndex newtype - Prevents index errors
-4. Add TotalCount/CoveredCount newtypes - Prevents count errors
+### High Impact, High Value (Quality Work - Do First)
+1. Fix build_json() to return Result - Prevents silent failures, maintains error handling consistency
+2. Add compile-fail test for ValidatedRun::<9> - Verifies claims, maintains test quality
+3. Use Rust in Rust project - Maintains consistency, prevents language mixing
+4. Add ScenarioIndex newtype - Prevents index errors, maintains type safety
 
-### High-Value (High Impact, Medium Effort)
-5. Add ValidatedTickBudget const generic - Compile-time validation
-6. Add error path tests - Complete test coverage
+### High Impact, Medium Value (Good Work - Plan)
+5. Add ValidatedTickBudget const generic - Compile-time validation, maintains quality
+6. Add error path tests - Complete test coverage, maintains quality standards
 
-### Major Projects (High Impact, High Effort)
-7. Migrate production code to use ValidatedRun - Incremental adoption
+### Foundation Work (High Value, Lower Impact)
+7. Migrate production code to use ValidatedRun - Incremental adoption, maintains consistency
 ```
 
 ---
@@ -306,40 +319,45 @@ cargo test --lib guards::tests::test_validated_run_compile_error
 
 #### 5.2: Strategic Next Steps
 
-**Action**: Determine strategic next steps using 80/20 thinking.
+**Action**: Determine strategic next steps using 80/20 thinking (quality-first).
 
 **Next steps criteria**:
-1. **Impact** - How much value does this provide?
-2. **Effort** - How much work is required?
+1. **Impact** - How much value does this provide? (Value includes quality, consistency, maintainability)
+2. **Value** - Does this maintain quality standards? Does it maintain consistency? Does it improve maintainability?
 3. **Dependencies** - What does this unblock?
-4. **Risk** - What's the risk of not doing this?
+4. **Risk** - What's the risk of not doing this? (Quality risks, consistency risks, maintainability risks)
 
 **Action**: Prioritize next steps
 
 ```markdown
-## Strategic Next Steps (80/20)
+## Strategic Next Steps (80/20 - Quality First)
 
-### High Impact, Low Effort (Do Next)
+### High Impact, High Value (Do Next - Quality Work)
 1. Complete ValidatedTickBudget const generic
    - Impact: HIGH (compile-time validation)
-   - Effort: MEDIUM
-   - Value: 70%
+   - Value: HIGH (quality, type safety, consistency)
+   - Quality: Maintains type safety standards
 
 2. Add error path tests for remaining error variants
    - Impact: HIGH (test coverage)
-   - Effort: LOW
-   - Value: 80%
+   - Value: HIGH (quality, prevents defects)
+   - Quality: Maintains test quality standards
 
-### High Impact, High Effort (Plan)
-3. Migrate production code to use ValidatedRun
+3. Use Rust in Rust project (not Python/other languages)
+   - Impact: HIGH (consistency)
+   - Value: HIGH (maintainability, consistency)
+   - Quality: Maintains language consistency
+
+### High Impact, Medium Value (Plan - Good Work)
+4. Migrate production code to use ValidatedRun
    - Impact: HIGH (adoption)
-   - Effort: HIGH
-   - Plan: Incremental migration
+   - Value: MEDIUM (consistency, quality)
+   - Plan: Incremental migration with quality checks
 
-### Lower Priority (Later)
-4. Additional documentation examples
+### Foundation Work (High Value, Lower Impact)
+5. Additional documentation examples
    - Impact: MEDIUM
-   - Effort: LOW
+   - Value: HIGH (maintainability, quality)
    - Do when convenient
 ```
 
@@ -422,16 +440,18 @@ cargo test --lib guards::tests::test_validated_run_compile_error
 
 **Why this matters**: Incomplete capabilities accumulate technical debt. Finishing capabilities completely prevents bugs and improves code quality.
 
-**Key principle**: "80/20 thinking" - Focus on completing the 20% of capabilities that deliver 80% of value. Don't try to complete everything at once.
+**Key principle**: "80/20 thinking" - Focus on completing the 20% of capabilities that deliver 80% of value. Value includes quality, consistency, and maintainability - these are not optional. Quality work may require more effort, but it's still high value.
 
-**Above-AGI thinking**: Use the full context window to make comprehensive decisions. Think strategically about impact and effort. Finish capabilities completely without asking for confirmation.
+**Above-AGI thinking**: Use the full context window to make comprehensive decisions. Think strategically about impact and value (where value includes quality, consistency, maintainability). Finish capabilities completely with quality standards without asking for confirmation.
 
 **Remember**: 
-- **Quick wins first** - Complete high-impact, low-effort capabilities
-- **Finish completely** - Don't leave capabilities half-done
-- **Validate thoroughly** - Ensure capabilities work correctly
-- **Strategic next steps** - Plan what to do next based on 80/20
+- **Quality first** - Quality, consistency, and maintainability are high value, not optional
+- **Finish completely** - Don't leave capabilities half-done - complete with quality standards
+- **Validate thoroughly** - Ensure capabilities work correctly and maintain quality
+- **Strategic next steps** - Plan what to do next based on 80/20 value (including quality)
 
-**80/20 principle**: 20% of capabilities deliver 80% of value. Complete those first.
+**80/20 principle**: 20% of capabilities deliver 80% of value. Value includes quality, consistency, and maintainability. Complete those first while maintaining quality standards.
 
-**Autonomous execution**: Once capabilities are identified and prioritized, finish them without asking. The agent has full context and can make informed decisions.
+**DfLSS Alignment**: Design for Lean Six Sigma - addresses both efficiency (Lean waste elimination) AND quality (Six Sigma defect prevention) from the start. Prevent defects AND waste rather than fixing them later. Maintain consistency (e.g., Rust in Rust project). Quality and efficiency are foundational value, not optional.
+
+**Autonomous execution**: Once capabilities are identified and prioritized, finish them without asking. The agent has full context and can make informed decisions. Always prioritize quality, consistency, and maintainability.

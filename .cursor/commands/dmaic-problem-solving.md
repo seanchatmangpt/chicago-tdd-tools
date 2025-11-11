@@ -227,6 +227,7 @@ let current = *value; // Lock released here
 - Feasible to implement
 - Doesn't break other functionality
 - Maintainable
+- **DfLSS alignment**: Solutions should address both efficiency (waste elimination) AND quality (defect prevention). See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why DfLSS is superior to DFSS.
 
 **Example solutions**:
 ```markdown
@@ -422,4 +423,6 @@ cargo make test test_concurrent_access
 **Remember**: Each step builds on the previous. Don't skip steps. Define clearly, measure accurately, analyze deeply, improve systematically, control consistently.
 
 **DMAIC cycle**: This is iterative. If Improve doesn't work, return to Analyze. If problem returns, strengthen Control.
+
+**DfLSS alignment**: When designing solutions in the Improve step, use DfLSS (Design for Lean Six Sigma) principles - address both efficiency (waste elimination) AND quality (defect prevention) from the start. Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. Using the wrong methodology is itself a root cause. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for detailed explanation.
 

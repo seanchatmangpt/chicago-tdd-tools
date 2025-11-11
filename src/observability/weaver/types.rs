@@ -10,10 +10,10 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found in PATH
-    #[error("Weaver binary not found: {0}")]
+    #[error("🚨 Weaver binary not found: {0}\n   ⚠️  STOP: Cannot proceed with Weaver operations\n   💡 FIX: Install Weaver binary\n   📋 Install: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound(String),
     /// Weaver health check failed
-    #[error("Weaver health check failed: {0}")]
+    #[error("⚠️  Weaver health check failed: {0}\n   ⚠️  WARNING: Weaver may not be responding correctly")]
     HealthCheckFailed(String),
     /// Failed to start Weaver process
     #[error("Failed to start Weaver: {0}")]
@@ -123,6 +123,8 @@ impl WeaverLiveCheck {
     }
 
     /// Check if Weaver binary is available (checks multiple locations)
+    ///
+    /// 🚨 CRITICAL - Returns error if Weaver binary not found.
     pub fn check_weaver_available() -> Result<(), String> {
         use std::process::Command;
 
@@ -132,12 +134,14 @@ impl WeaverLiveCheck {
             match Command::new(&binary_path).arg("--version").output() {
                 Ok(output) => {
                     if output.status.success() {
+                        // ✅ Weaver binary is available and working
                         Ok(())
                     } else {
-                        Err("Weaver binary found but --version failed".to_string())
+                        Err("🚨 Weaver binary found but --version failed. Binary may be corrupted."
+                            .to_string())
                     }
                 }
-                Err(e) => Err(format!("Failed to execute weaver binary: {e}")),
+                Err(e) => Err(format!("🚨 Failed to execute weaver binary: {e}")),
             }
         } else {
             // Try runtime download if not found (only if weaver feature is enabled)

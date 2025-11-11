@@ -15,22 +15,25 @@ pub mod types;
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found
-    #[error("Weaver binary not found in PATH. Install with: ./scripts/install-weaver.sh")]
+    #[error("🚨 Weaver binary not found in PATH\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Install Weaver binary\n   📋 Install: cargo install weaver\n   📋 Or download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound,
+    /// Docker daemon is not running or unavailable
+    #[error("🚨 Docker daemon is not running or unavailable: {0}\n   ⚠️  STOP: Cannot proceed with Weaver integration\n   💡 FIX: Start Docker Desktop or Docker daemon\n   📋 macOS: Open Docker Desktop\n   📋 Linux: sudo systemctl start docker\n   📋 Windows: Start Docker Desktop")]
+    DockerUnavailable(String),
     /// Weaver check failed
-    #[error("Weaver validation failed: {0}")]
+    #[error("🚨 Weaver validation failed: {0}\n   ⚠️  STOP: Telemetry validation failed\n   💡 FIX: Check telemetry conforms to schema and semantic conventions")]
     ValidationFailed(String),
     /// Registry path does not exist
-    #[error("Registry path does not exist: {0}")]
+    #[error("🚨 Registry path does not exist: {0}\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Provide valid registry path\n   📋 Registry: Path to OpenTelemetry semantic conventions registry")]
     RegistryNotFound(String),
     /// Failed to start Weaver process
-    #[error("Failed to start Weaver process: {0}")]
+    #[error("🚨 Failed to start Weaver process: {0}\n   ⚠️  STOP: Cannot start Weaver live-check\n   💡 FIX: Check Weaver binary is installed and accessible\n   📋 Verify: weaver --version")]
     ProcessStartFailed(String),
     /// Failed to stop Weaver process
-    #[error("Failed to stop Weaver process: {0}")]
+    #[error("⚠️  Failed to stop Weaver process: {0}\n   ⚠️  WARNING: Weaver process may still be running\n   💡 FIX: Manually stop Weaver process if needed\n   📋 Check: ps aux | grep weaver")]
     ProcessStopFailed(String),
     /// Weaver process not running
-    #[error("Weaver process is not running")]
+    #[error("⚠️  Weaver process is not running\n   ⚠️  WARNING: Expected Weaver process to be running\n   💡 FIX: Start Weaver process before operation")]
     ProcessNotRunning,
 }
 
@@ -96,16 +99,36 @@ impl WeaverValidator {
     }
 
     /// Start Weaver live-check
+    ///
+    /// Signals:
+    /// - 🚨 CRITICAL: Stops immediately if Weaver binary not found
+    /// - 🚨 CRITICAL: Stops immediately if Docker unavailable (when testcontainers feature enabled)
+    /// - 🚨 CRITICAL: Stops immediately if registry path doesn't exist
     pub fn start(&mut self) -> WeaverValidationResult<()> {
-        // Check Weaver binary availability
+        // 🚨 Check Weaver binary availability
         Self::check_weaver_available()?;
+        // ✅ Weaver binary is available
 
-        // Verify registry path exists
+        // 🚨 Check Docker availability if testcontainers feature is enabled
+        #[cfg(feature = "testcontainers")]
+        {
+            use crate::testcontainers::check_docker_available;
+            check_docker_available().map_err(|e| {
+                WeaverValidationError::DockerUnavailable(format!(
+                    "Docker daemon is not running. Weaver integration requires Docker. Error: {}",
+                    e
+                ))
+            })?;
+            // ✅ Docker is available
+        }
+
+        // 🚨 Verify registry path exists
         if !self.registry_path.exists() {
             return Err(WeaverValidationError::RegistryNotFound(
                 self.registry_path.display().to_string(),
             ));
         }
+        // ✅ Registry path exists
 
         // Create Weaver live-check instance
         let registry_str = self.registry_path.to_str().ok_or_else(|| {
@@ -199,7 +222,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
     let exporter =
         opentelemetry_otlp::SpanExporter::builder().with_http().build().map_err(|e| {
             WeaverValidationError::ValidationFailed(format!(
-                "Failed to create OTLP HTTP exporter: {}",
+                "🚨 Failed to create OTLP HTTP exporter: {}\n   ⚠️  STOP: Cannot create OTLP exporter\n   💡 FIX: Check OpenTelemetry SDK configuration and endpoint",
                 e
             ))
         })?;
@@ -230,11 +253,12 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
 
     // Create and start span using span_builder pattern
     use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
+    // Kaizen improvement: Create owned string once and reuse to avoid unnecessary clone
     let span_name_owned = span_name.to_string();
     let mut span = tracer.span_builder(span_name_owned.clone()).start(&tracer);
 
     // Set test attributes
-    span.set_attribute(KeyValue::new("test.operation", span_name_owned.clone()));
+    span.set_attribute(KeyValue::new("test.operation", span_name_owned));
     span.set_attribute(KeyValue::new("test.framework", "chicago-tdd-tools"));
     span.set_attribute(KeyValue::new("span.kind", "internal"));
 
@@ -243,7 +267,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
 
     // Force flush to ensure span is exported before shutdown
     provider.force_flush().map_err(|e| {
-        WeaverValidationError::ValidationFailed(format!("Failed to flush traces: {}", e))
+        WeaverValidationError::ValidationFailed(format!("⚠️  Failed to flush traces: {}\n   ⚠️  WARNING: Traces may not be exported\n   💡 FIX: Check OTLP endpoint connectivity", e))
     })?;
 
     // Give async exports time to complete
@@ -252,7 +276,7 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
     // Shutdown tracer provider
     provider.shutdown().map_err(|e| {
         WeaverValidationError::ValidationFailed(format!(
-            "Failed to shutdown tracer provider: {}",
+            "⚠️  Failed to shutdown tracer provider: {}\n   ⚠️  WARNING: Tracer provider may not have shut down cleanly\n   💡 FIX: Check resource cleanup",
             e
         ))
     })?;
@@ -307,7 +331,7 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
                 WeaverValidationError::BinaryNotFound
             } else {
                 WeaverValidationError::ValidationFailed(format!(
-                    "Failed to execute weaver check: {}",
+                    "🚨 Failed to execute weaver check: {}\n   ⚠️  STOP: Weaver schema validation failed\n   💡 FIX: Check Weaver binary is installed and registry path is valid",
                     e
                 ))
             }
@@ -316,7 +340,7 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(WeaverValidationError::ValidationFailed(format!(
-            "Weaver schema validation failed: {}",
+            "🚨 Weaver schema validation failed: {}\n   ⚠️  STOP: Schema does not conform to semantic conventions\n   💡 FIX: Check registry schema and telemetry structure",
             stderr
         )));
     }
@@ -510,92 +534,6 @@ mod tests {
         assert!(!validator.is_running(), "Validator should not be running initially");
     }
 
-    #[cfg(feature = "weaver")]
-    #[tokio::test]
-    async fn test_weaver_live_check_integration() {
-        use crate::assert_ok;
-        use std::fs;
-        use std::time::Duration;
-        use tokio::time::sleep;
-
-        // Arrange: Create validator with registry path
-        let registry_path = PathBuf::from("registry");
-
-        // Skip test if registry doesn't exist (may not be available in test environment)
-        if !registry_path.exists() {
-            eprintln!("NOTE: Registry path does not exist - skipping live-check integration test");
-            return;
-        }
-
-        // Check if Weaver binary is available
-        let weaver_available = WeaverValidator::check_weaver_available().is_ok();
-        if !weaver_available {
-            eprintln!("NOTE: Weaver binary not available - skipping live-check integration test");
-            return;
-        }
-
-        // Act: Create and start Weaver validator (uses CLI)
-        let mut validator = WeaverValidator::new(registry_path);
-        let start_result = validator.start();
-
-        // Assert: Start should succeed
-        assert_ok!(&start_result, "Weaver CLI should start successfully");
-        assert!(validator.is_running(), "Weaver should be running after start");
-
-        // Wait a moment for Weaver CLI to be ready
-        sleep(Duration::from_millis(1000)).await;
-
-        // Act: Get OTLP endpoint
-        let endpoint = validator.otlp_endpoint();
-        assert!(!endpoint.is_empty(), "OTLP endpoint should not be empty");
-
-        // Act: Send test span to Weaver via OTLP HTTP
-        // This sends telemetry to the weaver CLI which validates it
-        let send_result = send_test_span_to_weaver(&endpoint, "test.operation");
-        assert_ok!(&send_result, "Sending test span should succeed");
-
-        // Wait a moment for telemetry to be processed by weaver CLI
-        sleep(Duration::from_millis(1000)).await;
-
-        // Act: Stop Weaver CLI via HTTP admin endpoint
-        let stop_result = validator.stop();
-        assert_ok!(&stop_result, "Weaver CLI should stop successfully");
-        assert!(!validator.is_running(), "Weaver should not be running after stop");
-
-        // Assert: Parse weaver CLI JSON output report
-        // When using --output, weaver CLI writes live_check.json to the output directory
-        let report_path = PathBuf::from("./weaver-reports/live_check.json");
-        if report_path.exists() {
-            let report_content =
-                fs::read_to_string(&report_path).expect("Failed to read weaver CLI JSON report");
-            let report_json: serde_json::Value = serde_json::from_str(&report_content)
-                .expect("Failed to parse weaver CLI JSON report");
-
-            // Verify report structure (matches weaver CLI output format)
-            assert!(
-                report_json.get("statistics").is_some(),
-                "Weaver CLI report should contain statistics"
-            );
-
-            // Verify statistics fields exist
-            if let Some(statistics) = report_json.get("statistics") {
-                assert!(
-                    statistics.get("total_entities").is_some()
-                        || statistics.get("total_advisories").is_some(),
-                    "Statistics should contain validation results"
-                );
-            }
-        } else {
-            // If report doesn't exist, that's OK - weaver CLI may not have written it yet
-            // or output format may differ. The important thing is CLI was used.
-            eprintln!(
-                "NOTE: Weaver CLI report not found at {:?} - CLI may use different output format",
-                report_path
-            );
-        }
-
-        // Assert: Test completes successfully
-        // This verifies: Weaver CLI started → telemetry sent via OTLP → Weaver CLI stopped
-        // All using the real weaver CLI binary, not Rust API
-    }
+    // **Poka-yoke**: Integration test moved to tests/weaver_integration.rs
+    // Unit tests in src/ should only test types and validators, not integration with external services
 }

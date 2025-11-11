@@ -4,9 +4,9 @@ Complete guide to using Chicago TDD Tools, organized by user journey (beginner t
 
 ## Test Fixtures
 
-Test fixtures: Reusable setup with automatic cleanup. RAII patterns. Isolated test state.
+Test fixtures: Reusable setup with state management. Test isolation. Metadata tracking.
 
-**When to Use**: Isolated test state, automatic cleanup, test metadata, integration tests. **Avoid**: Simple unit tests, no state needed, one-off data.
+**When to Use**: Isolated test state, test metadata, integration tests. **Avoid**: Simple unit tests, no state needed, one-off data.
 
 **Basic Usage**: `TestFixture::new()?` for basic fixture, `TestFixture::with_data(data)` for custom data, `fixture.test_counter() -> u64` for unique counter, `fixture.set_metadata(key, value)` / `fixture.get_metadata(key)` for metadata.
 
@@ -208,7 +208,7 @@ OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 
 ## Summary
 
-**Key Associations**: Fixtures = RAII = Auto-cleanup. Builders = Fluent = JSON/HashMap. Macros = AAA = Zero-boilerplate. Property = Const generics = Reproducible. Mutation = Quality = Operators. Performance = RDTSC = Tick budget. Guards = Constraints = Chatman Constant. Testcontainers = Docker = Auto-cleanup. OTEL/Weaver = Validation = Schema.
+**Key Associations**: Fixtures = State Management = Test Isolation. Builders = Fluent = JSON/HashMap. Macros = AAA = Zero-boilerplate. Property = Const generics = Reproducible. Mutation = Quality = Operators. Performance = RDTSC = Tick budget. Guards = Constraints = Chatman Constant. Testcontainers = Docker = Auto-cleanup. OTEL/Weaver = Validation = Schema.
 
 **Pattern**: All features follow consistent patterns: when to use, basic usage, common patterns, anti-patterns. Use macros for all tests. Verify observable outputs. Use real collaborators.
 

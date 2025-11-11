@@ -64,10 +64,11 @@ alias = "lint"
 
 # Testing tasks - Fast unit tests (1s timeout) and slow integration tests (30s timeout)
 # Using cargo-nextest for better timeout enforcement and faster execution
-# Testcontainers integration tests excluded from normal iteration (too slow, require Docker)
+# **Poka-yoke**: Unit tests exclude integration tests (testcontainers, weaver_integration)
+# Integration tests require Docker and MUST fail if Docker is stopped
 
 [tasks.test]
-description = "Run unit tests only (fast iteration, excludes testcontainers integration tests)"
+description = "Run unit tests only (fast iteration, excludes integration tests)"
 command = "timeout"
 args = [
   "10s",
@@ -79,10 +80,18 @@ args = [
   "--",
   "--skip",
   "testcontainers",
+  "--skip",
+  "weaver_integration",
 ]
 
+[tasks.docker-check]
+description = "Check if Docker daemon is running and available (fail-fast)"
+command = "timeout"
+args = ["5s", "docker", "info"]
+ignore_errors = false
+
 [tasks.test-unit]
-description = "Unit tests only using cargo-nextest (excludes testcontainers integration tests)"
+description = "Unit tests only using cargo-nextest (excludes integration tests)"
 command = "timeout"
 args = [
   "10s",
@@ -94,10 +103,13 @@ args = [
   "--",
   "--skip",
   "testcontainers",
+  "--skip",
+  "weaver_integration",
 ]
 
 [tasks.test-integration]
-description = "Run testcontainers integration tests only (30s timeout, requires Docker)"
+description = "Run integration tests only (30s timeout, requires Docker - MUST fail if Docker stopped)"
+dependencies = ["docker-check"]
 command = "timeout"
 args = [
   "30s",
@@ -106,18 +118,20 @@ args = [
   "run",
   "--test",
   "testcontainers",
+  "--test",
+  "weaver_integration",
   "--profile",
   "integration",
   "--features",
-  "testcontainers",
+  "testcontainers,weaver",
 ]
 
 [tasks.test-all]
 description = "Run all tests (unit + integration)"
-dependencies = ["test-unit", "test-integration"]
+dependencies = ["test-unit", "docker-check", "test-integration"]
 
 [tasks.test-examples]
-description = "Run example tests using cargo-nextest (excludes testcontainers examples)"
+description = "Run example tests using cargo-nextest (excludes integration examples)"
 command = "timeout"
 args = [
   "10s",
@@ -181,7 +195,7 @@ args = [
 env = { "RUST_TEST_THREADS" = "1" }
 
 [tasks.test-verbose]
-description = "Run unit tests with verbose output (excludes testcontainers integration tests)"
+description = "Run unit tests with verbose output (excludes integration tests)"
 command = "timeout"
 args = [
   "10s",
@@ -193,6 +207,8 @@ args = [
   "--",
   "--skip",
   "testcontainers",
+  "--skip",
+  "weaver_integration",
   "--nocapture",
 ]
 
@@ -247,9 +263,15 @@ args = [
 # Pre-commit validation task
 # Expected total time: ~20s (fmt: 5s, lint: 5s, test-unit: 10s)
 # Individual task timeouts ensure no single task hangs
+[tasks.dead-code-check]
+description = "Check for undeclared modules (dead code detection)"
+command = "timeout"
+args = ["5s", "sh", "-c", "find src -name '*.rs' -type f | while read f; do dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\"; fi; fi; done"]
+ignore_errors = true
+
 [tasks.pre-commit]
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
-dependencies = ["timeout-check", "fmt", "lint", "test-unit"]
+dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
 
 # Security and audit tasks - 15s timeout (network operations can take longer)
 [tasks.audit]

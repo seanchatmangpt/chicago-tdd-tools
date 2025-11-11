@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -27,11 +27,16 @@ chrono = "0.4"
 testcontainers = { version = "0.25", optional = true, features = ["blocking"] }
 thiserror = "2.0"
 
+# Logging facade (optional, logging feature)
+log = { version = "0.4", optional = true }
+
 # HTTP client for Weaver admin endpoint (optional, weaver feature)
 reqwest = { version = "0.11", optional = true, features = ["blocking"] }
 
 # OpenTelemetry SDK for sending telemetry (optional, weaver feature)
-opentelemetry = { version = "0.31", optional = true, default-features = false, features = ["trace"] }
+opentelemetry = { version = "0.31", optional = true, default-features = false, features = [
+  "trace",
+] }
 opentelemetry_sdk = { version = "0.31", optional = true, default-features = false }
 opentelemetry-otlp = { version = "0.31", optional = true, default-features = false, features = [
   "http-proto",
@@ -57,7 +62,7 @@ rstest = { version = "0.19", optional = true }
 trycmd = { version = "0.15", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.0.0" }
+chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.0" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
@@ -70,16 +75,22 @@ trybuild = "1.0"   # Compile-fail tests
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
 
 [features]
-default = []
+default = ["logging"]
 workflow-engine = [] # Enable workflow-specific features
-property-testing = ["dep:proptest", "dep:arbitrary"] # Enable property-based testing with proptest
+property-testing = [
+  "dep:proptest",
+  "dep:arbitrary",
+] # Enable property-based testing with proptest
 mutation-testing = [] # Enable mutation testing
 snapshot-testing = ["dep:insta"] # Enable snapshot testing with insta
 fake-data = ["dep:fake"] # Enable fake data generation
 concurrency-testing = ["dep:loom"] # Enable concurrency testing with loom
-parameterized-testing = ["dep:rstest"] # Enable parameterized testing with rstest
+parameterized-testing = [
+  "dep:rstest",
+] # Enable parameterized testing with rstest
 cli-testing = ["dep:trycmd"] # Enable CLI testing with trycmd
-benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
+benchmarking = [
+] # Enable criterion benchmarking (install criterion separately for benches/)
 otel = [] # Enable OTEL validation features (uses internal otel_types)
 weaver = [
   "otel",
@@ -92,6 +103,7 @@ async = [] # Enable async performance measurement utilities
 testcontainers = [
   "dep:testcontainers",
 ] # Enable testcontainers support for integration testing
+logging = ["dep:log"] # Enable standard log crate integration for alert helpers
 
 [lib]
 name = "chicago_tdd_tools"

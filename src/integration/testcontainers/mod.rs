@@ -64,10 +64,10 @@
 //! For containers that exit immediately, consider using service images or
 //! accessing the underlying container via `container()` for advanced configuration.
 
-use thiserror::Error;
-
 #[cfg(feature = "testcontainers")]
 use std::collections::HashMap;
+
+use thiserror::Error;
 
 /// Default HTTP port for examples and tests
 ///
@@ -78,26 +78,29 @@ pub const DEFAULT_HTTP_PORT: u16 = 80;
 /// Testcontainers error type
 #[derive(Error, Debug)]
 pub enum TestcontainersError {
+    /// Docker daemon is not running or unavailable
+    #[error("🚨 Docker daemon is not running or unavailable: {0}\n   ⚠️  STOP: Cannot proceed with container operations\n   💡 FIX: Start Docker Desktop or Docker daemon\n   📋 macOS: Open Docker Desktop\n   📋 Linux: sudo systemctl start docker\n   📋 Windows: Start Docker Desktop")]
+    DockerUnavailable(String),
     /// Failed to create container
-    #[error("Failed to create container: {0}")]
+    #[error("🚨 Failed to create container: {0}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running")]
     CreationFailed(String),
     /// Container operation failed
-    #[error("Container operation failed: {0}")]
+    #[error("⚠️  Container operation failed: {0}\n   ⚠️  WARNING: Container operation did not complete successfully")]
     OperationFailed(String),
     /// Invalid configuration
-    #[error("Invalid configuration: {0}")]
+    #[error("🚨 Invalid configuration: {0}\n   ⚠️  STOP: Configuration is invalid\n   💡 FIX: Check configuration parameters")]
     InvalidConfig(String),
     /// Command execution failed
-    #[error("Command execution failed: {0}")]
+    #[error("⚠️  Command execution failed: {0}\n   ⚠️  WARNING: Command did not execute successfully\n   💡 FIX: Check command syntax and container state")]
     CommandExecutionFailed(String),
     /// Failed to read stdout
-    #[error("Failed to read stdout: {0}")]
+    #[error("⚠️  Failed to read stdout: {0}\n   ⚠️  WARNING: Could not read command output\n   💡 FIX: Check container is running and command completed")]
     StdoutReadFailed(String),
     /// Failed to read stderr
-    #[error("Failed to read stderr: {0}")]
+    #[error("⚠️  Failed to read stderr: {0}\n   ⚠️  WARNING: Could not read command error output\n   💡 FIX: Check container is running and command completed")]
     StderrReadFailed(String),
     /// Failed to get exit code
-    #[error("Failed to get exit code: {0}")]
+    #[error("⚠️  Failed to get exit code: {0}\n   ⚠️  WARNING: Could not determine command exit status\n   💡 FIX: Check container is running and command completed")]
     ExitCodeFailed(String),
 }
 
@@ -110,6 +113,10 @@ pub mod wait;
 pub use exec::ExecResult;
 
 #[cfg(feature = "testcontainers")]
+/// Implementation module for testcontainers functionality
+///
+/// Contains the actual implementation of ContainerClient and GenericContainer.
+/// These types are feature-gated and only available when the `testcontainers` feature is enabled.
 pub mod implementation {
     use super::*;
     use testcontainers::core::ContainerPort;
@@ -117,6 +124,81 @@ pub mod implementation {
     use testcontainers::Container;
     use testcontainers::GenericImage;
     use testcontainers::ImageExt;
+
+    /// Check if Docker daemon is actually running and responding
+    ///
+    /// This function verifies Docker daemon is running by checking:
+    /// 1. Docker command exists
+    /// 2. Docker daemon is responding (not just command execution)
+    /// 3. Docker daemon is accessible
+    ///
+    /// Returns 🚨 CRITICAL signal if Docker is unavailable.
+    /// This is a fail-fast check - operations should stop immediately.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if Docker daemon is running and responding
+    /// `Err(TestcontainersError::DockerUnavailable)` if Docker is stopped or unavailable
+    pub fn check_docker_available() -> TestcontainersResult<()> {
+        use std::process::Command;
+
+        // Check Docker command exists
+        let docker_check = Command::new("docker").args(["info"]).output();
+
+        match docker_check {
+            Ok(output) => {
+                if output.status.success() {
+                    // Verify Docker daemon is responding by checking output
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    if stdout.contains("Server Version") || stdout.contains("Docker Root Dir") {
+                        // ✅ Docker daemon is running and responding
+                        Ok(())
+                    } else {
+                        Err(TestcontainersError::DockerUnavailable(
+                            "Docker daemon is not responding correctly. Output does not contain expected Docker info.".to_string()
+                        ))
+                    }
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    Err(TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon is not running. Error: {}",
+                        stderr
+                    )))
+                }
+            }
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    Err(TestcontainersError::DockerUnavailable(
+                        "Docker command not found. Please install Docker.".to_string(),
+                    ))
+                } else {
+                    Err(TestcontainersError::DockerUnavailable(format!(
+                        "Failed to check Docker availability: {}",
+                        e
+                    )))
+                }
+            }
+        }
+    }
+
+    /// Docker error message patterns that indicate Docker daemon is unavailable
+    ///
+    /// **Kaizen improvement**: Extracted duplicated error detection strings to named constants.
+    /// Pattern: Use constants for repeated string patterns to reduce duplication and improve maintainability.
+    /// Benefits: Single source of truth, easier to maintain, consistent error detection.
+    const DOCKER_CONNECTION_ERROR_PATTERNS: &[&str] =
+        &["Cannot connect to the Docker daemon", "docker daemon", "connection refused"];
+
+    /// Check if an error message indicates Docker daemon is unavailable
+    ///
+    /// **Kaizen improvement**: Extracted duplicated error detection logic to helper function.
+    /// Pattern: Extract repeated logic to function for DRY (Don't Repeat Yourself) principle.
+    /// Benefits: Single implementation, easier to maintain, consistent behavior.
+    fn is_docker_unavailable_error(error_msg: &str) -> bool {
+        DOCKER_CONNECTION_ERROR_PATTERNS
+            .iter()
+            .any(|pattern| error_msg.contains(pattern))
+    }
 
     /// Container client for managing Docker containers
     ///
@@ -126,6 +208,10 @@ pub mod implementation {
 
     impl ContainerClient {
         /// Create a new container client
+        ///
+        /// Note: Docker availability is checked when containers are created,
+        /// not when the client is created. This allows client creation to succeed
+        /// even if Docker is temporarily unavailable.
         pub fn new() -> Self {
             Self
         }
@@ -160,9 +246,11 @@ pub mod implementation {
     impl GenericContainer {
         /// Create a new generic container from any Docker image
         ///
+        /// 🚨 CRITICAL - Stops immediately if Docker is unavailable.
+        ///
         /// # Arguments
         ///
-        /// * `_client` - Container client instance (unused in minimal implementation)
+        /// * `_client` - Container client instance (should have been validated via ContainerClient::new())
         /// * `image` - Docker image name (e.g., "alpine", "postgres")
         /// * `tag` - Docker image tag (e.g., "latest", "14")
         ///
@@ -174,11 +262,23 @@ pub mod implementation {
             image: &str,
             tag: &str,
         ) -> TestcontainersResult<Self> {
+            // 🚨 Verify Docker is still available before container operations
+            check_docker_available()?;
+
             let image = GenericImage::new(image, tag);
             let container = image.start().map_err(|e| {
-                TestcontainersError::CreationFailed(format!("Failed to start container: {e}"))
+                // Check if error indicates Docker is unavailable
+                let error_msg = format!("{e}");
+                if is_docker_unavailable_error(&error_msg) {
+                    TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon connection failed during container start: {e}\n   ⚠️  STOP: Cannot connect to Docker daemon\n   💡 FIX: Start Docker Desktop or Docker daemon"
+                    ))
+                } else {
+                    TestcontainersError::CreationFailed(format!("Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
+                }
             })?;
 
+            // ✅ Container created successfully
             Ok(Self { container })
         }
 
@@ -208,6 +308,9 @@ pub mod implementation {
             tag: &str,
             env_vars: HashMap<String, String>,
         ) -> TestcontainersResult<Self> {
+            // 🚨 Verify Docker is still available
+            check_docker_available()?;
+
             let image = GenericImage::new(image, tag);
             // Build container request with all env vars
             // Move env_vars into the request (no need to clone since we consume the HashMap)
@@ -216,7 +319,14 @@ pub mod implementation {
                 request = request.with_env_var(key, value);
             }
             let container = request.start().map_err(|e| {
-                TestcontainersError::CreationFailed(format!("Failed to start container: {e}"))
+                let error_msg = format!("{e}");
+                if is_docker_unavailable_error(&error_msg) {
+                    TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon connection failed during container start: {e}\n   ⚠️  STOP: Cannot connect to Docker daemon\n   💡 FIX: Start Docker Desktop or Docker daemon"
+                    ))
+                } else {
+                    TestcontainersError::CreationFailed(format!("Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
+                }
             })?;
 
             Ok(Self { container })
@@ -240,12 +350,22 @@ pub mod implementation {
             tag: &str,
             ports: &[u16],
         ) -> TestcontainersResult<Self> {
+            // 🚨 Verify Docker is still available
+            check_docker_available()?;
+
             let mut image = GenericImage::new(image, tag);
             for port in ports {
                 image = image.with_exposed_port(ContainerPort::Tcp(*port));
             }
             let container = image.start().map_err(|e| {
-                TestcontainersError::CreationFailed(format!("Failed to start container: {e}"))
+                let error_msg = format!("{e}");
+                if is_docker_unavailable_error(&error_msg) {
+                    TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon connection failed during container start: {e}\n   ⚠️  STOP: Cannot connect to Docker daemon\n   💡 FIX: Start Docker Desktop or Docker daemon"
+                    ))
+                } else {
+                    TestcontainersError::CreationFailed(format!("Failed to start container: {e}"))
+                }
             })?;
 
             Ok(Self { container })
@@ -356,11 +476,14 @@ pub use stubs::*;
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
+    use crate::chicago_test;
 
-    // Test error types (critical - 80% of bugs)
-    #[test]
-    fn test_testcontainers_error_display() {
-        // Test all error variants display correctly
+    // ========================================================================
+    // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
+    // ========================================================================
+
+    chicago_test!(test_testcontainers_error_display, {
+        // Arrange: Create all error variants
         let errors = vec![
             TestcontainersError::CreationFailed("test".to_string()),
             TestcontainersError::OperationFailed("test".to_string()),
@@ -371,65 +494,75 @@ mod tests {
             TestcontainersError::ExitCodeFailed("test".to_string()),
         ];
 
+        // Act & Assert: Verify all error variants display correctly
         for error in errors {
             let display = format!("{error}");
             assert!(!display.is_empty(), "Error should have display message");
             assert!(display.contains("test"), "Error should contain message");
         }
-    }
+    });
 
-    #[test]
-    fn test_exec_result_structure() {
-        // Test ExecResult creation and access
+    chicago_test!(test_exec_result_structure, {
+        // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "output".to_string(),
             stderr: "error".to_string(),
             exit_code: exec::SUCCESS_EXIT_CODE,
         };
 
+        // Act & Assert: Verify ExecResult structure
         assert_eq!(result.stdout, "output");
         assert_eq!(result.stderr, "error");
         assert_eq!(result.exit_code, exec::SUCCESS_EXIT_CODE);
-    }
+    });
 
-    #[test]
-    fn test_exec_result_clone() {
-        // Test ExecResult is cloneable
+    chicago_test!(test_exec_result_clone, {
+        // Arrange: Create ExecResult
         let result1 = ExecResult {
             stdout: "output".to_string(),
             stderr: "error".to_string(),
             exit_code: exec::SUCCESS_EXIT_CODE,
         };
 
+        // Act: Clone the result
         let result2 = result1.clone();
+
+        // Assert: Verify cloned fields match original
         assert_eq!(result1.stdout, result2.stdout);
         assert_eq!(result1.stderr, result2.stderr);
         assert_eq!(result1.exit_code, result2.exit_code);
-    }
+    });
 
-    #[test]
-    fn test_exec_result_debug() {
-        // Test ExecResult is debuggable
+    chicago_test!(test_exec_result_debug, {
+        // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "output".to_string(),
             stderr: "error".to_string(),
             exit_code: exec::SUCCESS_EXIT_CODE,
         };
 
+        // Act: Format as debug
         let debug = format!("{result:?}");
+
+        // Assert: Verify debug output contains expected fields
         assert!(debug.contains("output"));
         assert!(debug.contains("error"));
         assert!(debug.contains("0"));
-    }
+    });
 
-    // Test stubs when feature is disabled (important for mocking)
+    // ========================================================================
+    // 2. STUB BEHAVIOR TESTING - Test feature-gated code paths
+    // ========================================================================
+
     #[cfg(not(feature = "testcontainers"))]
-    #[test]
-    fn test_stubs_return_errors() {
+    chicago_test!(test_stubs_return_errors, {
+        // Arrange: Create container client
         let client = ContainerClient::new();
 
-        // Test: All stub methods return InvalidConfig error
+        // Act: Attempt to create container (should fail in stub mode)
         let result = GenericContainer::new(&client, "alpine", "latest");
+
+        // Assert: Verify stub returns InvalidConfig error
         assert!(result.is_err());
         match result {
             Err(TestcontainersError::InvalidConfig(msg)) => {
@@ -438,23 +571,26 @@ mod tests {
             _ => panic!("Expected InvalidConfig error"),
         }
 
+        // Act: Attempt to use stub container methods
         let container = GenericContainer;
         let port_result = container.get_host_port(DEFAULT_HTTP_PORT);
-        assert!(port_result.is_err());
-
         let exec_result = container.exec("echo", &["test"]);
+
+        // Assert: Verify all stub methods return errors
+        assert!(port_result.is_err());
         assert!(exec_result.is_err());
-    }
+    });
 
     #[cfg(not(feature = "testcontainers"))]
-    #[test]
-    fn test_stub_container_client() {
-        // Test: Stub client can be created
+    chicago_test!(test_stub_container_client, {
+        // Arrange: Create container clients
         let client1 = ContainerClient::new();
         let client2 = ContainerClient::default();
 
-        // Both should work (no panic)
+        // Act: Access client references
         let _ref1 = client1.client();
         let _ref2 = client2.client();
-    }
+
+        // Assert: Both should work (no panic) - stub clients are valid
+    });
 }

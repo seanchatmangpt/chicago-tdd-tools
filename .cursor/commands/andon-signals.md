@@ -332,3 +332,5 @@ cargo make test   # All tests pass ✅
 
 **Andon culture**: In Lean manufacturing, any worker can stop the production line if they see a problem. In coding, any developer should stop and fix problems when signals appear. This prevents defects from propagating.
 
+**DfLSS alignment**: Andon signals help prevent both defects (quality) and waste (efficiency) - stopping problems early prevents rework (waste) and defects from propagating (quality). This aligns with DfLSS (Design for Lean Six Sigma) principles. Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

@@ -55,6 +55,43 @@ chicago_test!(test_data_builder, {
 });
 ```
 
+### Result Assertions
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+chicago_test!(test_result_assertions, {
+    // Arrange: Create Result
+    let result: Result<u32, String> = Ok(42);
+    // Assert: Use assertion macros for better error messages
+    assert_ok!(&result);
+    assert_ok!(&result, "Operation should succeed");
+    
+    // Error case
+    let error_result: Result<u32, String> = Err("failed".to_string());
+    assert_err!(&error_result);
+    assert_err!(&error_result, "Expected error case");
+});
+```
+
+### Performance Testing
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+chicago_performance_test!(test_hot_path, {
+    // Arrange: Set up test data
+    let input = vec![1, 2, 3];
+    // Act: Execute hot path and measure ticks
+    let (result, ticks) = measure_ticks(|| {
+        input.iter().sum::<i32>()
+    });
+    // Assert: Verify performance constraint (≤8 ticks)
+    assert_within_tick_budget!(ticks, "Hot path operation");
+    assert_eq!(result, 6);
+});
+```
+
 ## Next Steps
 
 - **[User Guide](USER_GUIDE.md)** - Complete usage guide

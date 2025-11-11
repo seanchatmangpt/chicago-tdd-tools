@@ -16,7 +16,7 @@ LLMs embed knowledge, abilities, and concepts in latent space. This latent space
 2. **Complete Sentences**: Use full sentences, but make them compact and information-dense
 3. **Associative Language**: Use associations, analogies, and metaphors that prime understanding
 4. **LLM-First**: Write for another language model, not humans (though humans can still read it)
-5. **80/20 Focus**: Preserve the 20% of content that provides 80% of value
+5. **80/20 Focus**: Preserve the 20% of content that provides 80% of value. Value includes quality, consistency, and maintainability - these are not optional.
 
 ### Format Standards
 

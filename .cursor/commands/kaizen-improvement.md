@@ -331,3 +331,5 @@ cargo make test   # Tests pass ✅
 
 **PDCA cycle**: Plan-Do-Check-Act is the Kaizen cycle. Plan small change, do it, check results, act to standardize. Repeat continuously.
 
+**DfLSS alignment**: Kaizen (continuous improvement) aligns with DfLSS (Design for Lean Six Sigma) principles - improvements should address both efficiency (waste elimination) AND quality (defect prevention). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. When making improvements, consider both efficiency gains and quality improvements. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

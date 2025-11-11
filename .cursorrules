@@ -38,7 +38,11 @@ Never trust text, only test results. All code is production-ready with error han
 
 ## 80/20 Thinking: Go the Extra Mile
 
-**Idea Generation**: Always generate 3 ideas. First idea: solve immediate problem. Second idea: go bigger (solve 80% of related problems with 20% effort). Third idea: maximum value (type-level solutions, compile-time guarantees). Second idea is usually sweet spot (80% more value, reasonable effort).
+**Idea Generation**: Always generate 3 ideas. First idea: solve immediate problem. Second idea: go bigger (solve 80% of related problems with 20% effort) while maintaining quality standards. Third idea: maximum value (type-level solutions, compile-time guarantees) with quality first. Second idea is usually sweet spot (80% more value, reasonable effort, quality maintained).
+
+**Quality-First 80/20**: Value includes quality, consistency, and maintainability - these are not optional. Quality work may require more effort, but it's still high value because it prevents defects, maintains consistency, and improves maintainability. Consistency (e.g., Rust in Rust project) is high value, not "extra effort".
+
+**DfLSS Alignment**: Design for Lean Six Sigma - addresses both efficiency (Lean waste elimination) AND quality (Six Sigma defect prevention) from the start. Prevent defects AND waste rather than fixing them later. Maintain consistency. Quality and efficiency are foundational value, not optional. DfLSS is superior to DFSS because it addresses both waste elimination and quality prevention simultaneously.
 
 **Questions to Ask**: "What invariants can I encode in types?" "Is this abstraction zero-cost?" "What are the ownership semantics?" "Can I move this to compile time?" "How can I make misuse impossible?" **"What's my second idea? Third idea? How can I go bigger with 80/20?"**
 

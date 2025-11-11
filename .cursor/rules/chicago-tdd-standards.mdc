@@ -152,6 +152,60 @@ See [User Guide](../../docs/USER_GUIDE.md) for detailed "When to Use" guidance:
 - **Performance Testing**: Use when validating hot path performance
 - **Testcontainers**: Use for integration testing with real services
 
+## Code Clarity Patterns
+
+### Extract Magic Numbers to Named Constants
+
+**Pattern**: Replace magic numbers in test code with named constants for clarity and maintainability.
+
+**When to Apply**:
+- Test values that appear multiple times
+- Configuration values (timeouts, exit codes, test data)
+- Values that have semantic meaning beyond their numeric value
+
+**Benefits**:
+- Improves readability and self-documentation
+- Makes intent clear (e.g., `TEST_VALUE` vs `42`)
+- Easier to maintain (change in one place)
+- Reduces cognitive load
+
+**Example**:
+
+```rust
+// ❌ BAD: Magic number
+#[test]
+fn test_assertion() {
+    let result: Result<u32, String> = Ok(42);
+    assert_success(&result);
+}
+
+// ✅ GOOD: Named constant
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    // Kaizen improvement: Extract magic number to named constant for clarity
+    const TEST_VALUE: u32 = 42;
+    
+    #[test]
+    fn test_assertion() {
+        let result: Result<u32, String> = Ok(TEST_VALUE);
+        assert_success(&result);
+    }
+}
+```
+
+**Note**: In macro expansions, constants cannot be referenced directly. Use literal values with comments documenting the constant:
+
+```rust
+// Execute body with timeout for SLA compliance
+// Note: Using literal value since macro_rules! cannot reference constants
+// The constant DEFAULT_TEST_TIMEOUT_SECONDS documents this value
+match timeout(Duration::from_secs(1), test_future).await {
+    // ...
+}
+```
+
 ## Common Patterns
 
 See [User Guide - Common Patterns](../../docs/USER_GUIDE.md#common-patterns) for comprehensive patterns:
@@ -171,6 +225,41 @@ See [User Guide - Anti-patterns](../../docs/USER_GUIDE.md#anti-patterns) for wha
 - Testing implementation details
 - Only testing happy path
 
+## Dog Fooding Requirement
+
+**CRITICAL**: The framework must test itself using its own tools. This is "dog fooding" - using your own product to validate it works.
+
+### Dog Fooding Principle
+
+All tests in the framework must:
+- Use `chicago_test!` or appropriate framework macros (`chicago_async_test!`, `chicago_fixture_test!`, etc.)
+- Use framework's own features (fixtures, builders, assertions, performance testing, etc.)
+- Demonstrate framework usage patterns
+- Validate framework ergonomics through self-testing
+
+### Why This Matters
+
+- **Confidence**: If framework can test itself, it can test anything
+- **Real-World Validation**: Using framework to test itself validates real usage patterns
+- **Continuous Improvement**: Self-testing reveals pain points and missing features
+- **Documentation by Example**: Self-tests serve as examples for end users
+
+### Required Patterns
+
+1. **Test Macros**: All tests use `chicago_test!` or appropriate framework macros
+2. **Framework Features**: Tests use framework's own features (fixtures, builders, assertions)
+3. **Performance Testing**: Framework's performance-critical paths use `chicago_performance_test!`
+4. **Property Testing**: Framework's data structures use framework's property testing
+5. **Snapshot Testing**: Framework's output formatting uses framework's snapshot testing
+
+### Validation
+
+Before submitting tests, verify:
+- [ ] Test uses `chicago_test!` or appropriate framework macro (not `#[test]`)
+- [ ] Test uses framework's own features where applicable
+- [ ] Test demonstrates framework usage patterns
+- [ ] Test validates framework ergonomics
+
 ## Validation Checklist
 
 Before submitting tests, verify:
@@ -181,6 +270,7 @@ Before submitting tests, verify:
 - [ ] Test follows AAA pattern with clear comments
 - [ ] Test uses appropriate macros (`chicago_test!`, `chicago_async_test!`, etc.)
 - [ ] Test uses real collaborators when possible (not mocks)
+- [ ] Test uses framework's own features (dog fooding requirement)
 
 ## Expert-Level Testing
 

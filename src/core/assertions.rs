@@ -203,6 +203,9 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
             // End time should always be >= start time in normal operation
             if let Err(e) = span.complete(end_time) {
                 // Log error but don't fail - span will remain active
+                #[cfg(feature = "logging")]
+                log::warn!("Failed to complete span: {}", e);
+                #[cfg(not(feature = "logging"))]
                 eprintln!("Warning: Failed to complete span: {}", e);
             } else {
                 span.status = SpanStatus::Ok;
@@ -319,6 +322,7 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chicago_test;
 
     // Kaizen improvement: Extract magic number to named constant for clarity
     const TEST_VALUE: u32 = 42;
@@ -327,11 +331,13 @@ mod tests {
     // 1. ERROR PATH TESTING - Test all assertion functions (80% of bugs)
     // ========================================================================
 
-    #[test]
-    fn test_assert_success_with_ok() {
+    chicago_test!(test_assert_success_with_ok, {
+        // Arrange: Create Ok result
         let result: Result<u32, String> = Ok(TEST_VALUE);
+
+        // Act & Assert: Verify assert_success works
         assert_success(&result);
-    }
+    });
 
     #[test]
     #[should_panic(expected = "Expected success, but got error")]
@@ -340,11 +346,13 @@ mod tests {
         assert_success(&result);
     }
 
-    #[test]
-    fn test_assert_error_with_err() {
+    chicago_test!(test_assert_error_with_err, {
+        // Arrange: Create Err result
         let result: Result<u32, String> = Err("error".to_string());
+
+        // Act & Assert: Verify assert_error works
         assert_error(&result);
-    }
+    });
 
     #[test]
     #[should_panic(expected = "Expected error, but got success")]
@@ -353,10 +361,14 @@ mod tests {
         assert_error(&result);
     }
 
-    #[test]
-    fn test_assert_eq_with_msg_equal() {
-        assert_eq_with_msg(&TEST_VALUE, &TEST_VALUE, "values should be equal");
-    }
+    chicago_test!(test_assert_eq_with_msg_equal, {
+        // Arrange: Create equal values
+        let value1 = TEST_VALUE;
+        let value2 = TEST_VALUE;
+
+        // Act & Assert: Verify assert_eq_with_msg works
+        assert_eq_with_msg(&value1, &value2, "values should be equal");
+    });
 
     #[test]
     #[should_panic(expected = "values should be equal")]
@@ -364,20 +376,29 @@ mod tests {
         assert_eq_with_msg(&TEST_VALUE, &43, "values should be equal");
     }
 
-    #[test]
-    fn test_assert_in_range_valid() {
-        assert_in_range(&5, &0, &10, "value should be in range");
-    }
+    chicago_test!(test_assert_in_range_valid, {
+        // Arrange: Create value in range
+        let value = 5;
 
-    #[test]
-    fn test_assert_in_range_min_boundary() {
-        assert_in_range(&0, &0, &10, "value should be in range");
-    }
+        // Act & Assert: Verify assert_in_range works
+        assert_in_range(&value, &0, &10, "value should be in range");
+    });
 
-    #[test]
-    fn test_assert_in_range_max_boundary() {
-        assert_in_range(&10, &0, &10, "value should be in range");
-    }
+    chicago_test!(test_assert_in_range_min_boundary, {
+        // Arrange: Create value at min boundary
+        let value = 0;
+
+        // Act & Assert: Verify min boundary works
+        assert_in_range(&value, &0, &10, "value should be in range");
+    });
+
+    chicago_test!(test_assert_in_range_max_boundary, {
+        // Arrange: Create value at max boundary
+        let value = 10;
+
+        // Act & Assert: Verify max boundary works
+        assert_in_range(&value, &0, &10, "value should be in range");
+    });
 
     #[test]
     #[should_panic(expected = "value should be in range")]
@@ -391,10 +412,13 @@ mod tests {
         assert_in_range(&11, &0, &10, "value should be in range");
     }
 
-    #[test]
-    fn test_assert_that_valid() {
-        assert_that(&TEST_VALUE, |v| *v > 0);
-    }
+    chicago_test!(test_assert_that_valid, {
+        // Arrange: Create valid value
+        let value = TEST_VALUE;
+
+        // Act & Assert: Verify assert_that works
+        assert_that(&value, |v| *v > 0);
+    });
 
     #[test]
     #[should_panic(expected = "Assertion failed for value")]
@@ -402,16 +426,21 @@ mod tests {
         assert_that(&0, |v| *v > 0);
     }
 
-    #[test]
-    fn test_assert_that_with_vec() {
+    chicago_test!(test_assert_that_with_vec, {
+        // Arrange: Create vector
         let vec = vec![1, 2, 3];
-        assert_that(&vec, |v| v.len() == 3);
-    }
 
-    #[test]
-    fn test_assert_that_with_msg_valid() {
-        assert_that_with_msg(&TEST_VALUE, |v| *v > 0, "value should be positive");
-    }
+        // Act & Assert: Verify assert_that works with vec
+        assert_that(&vec, |v| v.len() == 3);
+    });
+
+    chicago_test!(test_assert_that_with_msg_valid, {
+        // Arrange: Create valid value
+        let value = TEST_VALUE;
+
+        // Act & Assert: Verify assert_that_with_msg works
+        assert_that_with_msg(&value, |v| *v > 0, "value should be positive");
+    });
 
     #[test]
     #[should_panic(expected = "value should be positive")]
@@ -423,19 +452,27 @@ mod tests {
     // 2. ASSERTION BUILDER - Test builder pattern
     // ========================================================================
 
-    #[test]
-    fn test_assertion_builder_new() {
+    chicago_test!(test_assertion_builder_new, {
+        // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
-        let value = builder.into_value();
-        assert_eq!(value, TEST_VALUE);
-    }
 
-    #[test]
-    fn test_assertion_builder_assert_that() {
-        let builder = AssertionBuilder::new(TEST_VALUE);
-        let value = builder.assert_that(|v| *v > 0).into_value();
+        // Act: Get value
+        let value = builder.into_value();
+
+        // Assert: Verify value
         assert_eq!(value, TEST_VALUE);
-    }
+    });
+
+    chicago_test!(test_assertion_builder_assert_that, {
+        // Arrange: Create assertion builder
+        let builder = AssertionBuilder::new(TEST_VALUE);
+
+        // Act: Assert and get value
+        let value = builder.assert_that(|v| *v > 0).into_value();
+
+        // Assert: Verify value
+        assert_eq!(value, TEST_VALUE);
+    });
 
     #[test]
     #[should_panic(expected = "Assertion failed for value")]
@@ -444,12 +481,16 @@ mod tests {
         builder.assert_that(|v| *v > 0);
     }
 
-    #[test]
-    fn test_assertion_builder_assert_eq() {
+    chicago_test!(test_assertion_builder_assert_eq, {
+        // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
+
+        // Act: Assert equality and get value
         let value = builder.assert_eq(&TEST_VALUE).into_value();
+
+        // Assert: Verify value
         assert_eq!(value, TEST_VALUE);
-    }
+    });
 
     #[test]
     #[should_panic(expected = "Values not equal")]
@@ -458,14 +499,18 @@ mod tests {
         builder.assert_eq(&43);
     }
 
-    #[test]
-    fn test_assertion_builder_assert_that_with_msg() {
+    chicago_test!(test_assertion_builder_assert_that_with_msg, {
+        // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
+
+        // Act: Assert with message and get value
         let value = builder
             .assert_that_with_msg(|v| *v > 0, "value should be positive")
             .into_value();
+
+        // Assert: Verify value
         assert_eq!(value, TEST_VALUE);
-    }
+    });
 
     #[test]
     #[should_panic(expected = "value should be positive")]
@@ -474,35 +519,46 @@ mod tests {
         builder.assert_that_with_msg(|v| *v > 0, "value should be positive");
     }
 
-    #[test]
-    fn test_assertion_builder_chaining() {
+    chicago_test!(test_assertion_builder_chaining, {
+        // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
+
+        // Act: Chain assertions and get value
         let value = builder
             .assert_that(|v| *v > 0)
             .assert_eq(&TEST_VALUE)
             .assert_that_with_msg(|v| *v < 100, "value should be less than 100")
             .into_value();
+
+        // Assert: Verify value
         assert_eq!(value, TEST_VALUE);
-    }
+    });
 
     // ========================================================================
     // 3. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    #[test]
-    fn test_assert_in_range_zero_range() {
-        assert_in_range(&0, &0, &0, "zero range");
-    }
+    chicago_test!(test_assert_in_range_zero_range, {
+        // Arrange: Create value at zero range
+        let value = 0;
 
-    #[test]
-    fn test_assert_that_with_empty_vec() {
+        // Act & Assert: Verify zero range works
+        assert_in_range(&value, &0, &0, "zero range");
+    });
+
+    chicago_test!(test_assert_that_with_empty_vec, {
+        // Arrange: Create empty vector
         let vec: Vec<i32> = vec![];
-        assert_that(&vec, |v| v.is_empty());
-    }
 
-    #[test]
-    fn test_assert_that_with_string() {
+        // Act & Assert: Verify assert_that works with empty vec
+        assert_that(&vec, |v| v.is_empty());
+    });
+
+    chicago_test!(test_assert_that_with_string, {
+        // Arrange: Create string
         let s = "test";
+
+        // Act & Assert: Verify assert_that works with string
         assert_that(&s, |v| !v.is_empty());
-    }
+    });
 }

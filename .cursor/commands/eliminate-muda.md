@@ -311,3 +311,5 @@ cargo make check  # Compiles ✅
 
 **Remember**: Waste elimination is continuous (Kaizen), not one-time. Regular waste elimination prevents technical debt accumulation.
 
+**DfLSS alignment**: Eliminating Muda (waste) is the Lean component of DfLSS (Design for Lean Six Sigma). However, waste elimination alone is incomplete - DfLSS addresses both efficiency (waste elimination) AND quality (defect prevention). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. When eliminating waste, also ensure quality is maintained and defects are prevented. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+

@@ -76,7 +76,7 @@ mod my_tests {
 }
 ```
 
-**Important**: Integration tests that require Docker should use `require_docker()`, which will cause the test to fail if Docker is unavailable. Use `skip_if_docker_unavailable()` only for tests where Docker is optional.
+**Important**: Integration tests that require Docker should use `require_docker()`, which will cause the test to fail if Docker is unavailable.
 
 ## Adding New Tests
 
