@@ -25,7 +25,7 @@ tokio = { version = "1.0", features = ["rt", "macros"] }
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_test!(test_basic_example, {
+test!(test_basic_example, {
     // Arrange: Set up test data
     let input = 5;
     // Act: Execute feature
@@ -39,11 +39,65 @@ chicago_test!(test_basic_example, {
 
 ## Common Patterns
 
-**Async Test**: `chicago_async_test!(name, { /* AAA */ })`. **Fixture Test**: `chicago_fixture_test!(name, fixture, { /* AAA */ })`. **Data Builder**: `TestDataBuilder::new().with_var(key, value).build_json()`. **Result Assertions**: `assert_ok!(&result)`, `assert_err!(&result)`. **Performance Test**: `chicago_performance_test!(name, { let (result, ticks) = measure_ticks(|| operation()); assert_within_tick_budget!(ticks); })`.
+**Async Test**: `async_test!(name, { /* AAA */ })`. **Fixture Test**: `fixture_test!(name, fixture, { /* AAA */ })`. **Data Builder**: `TestDataBuilder::new().with_var(key, value).build_json()`. **Result Assertions**: `assert_ok!(&result)`, `assert_err!(&result)`. **Performance Test**: `performance_test!(name, { let (result, ticks) = measure_ticks(|| operation()); assert_within_tick_budget!(ticks); })`.
 
 ## Optional Features
 
-**Weaver**: Enable `weaver` feature. Weaver CLI auto-downloaded. See WEAVER_LIVE_CHECK.md. **Property-Based**: Enable `property-testing` feature. **Mutation**: Enable `mutation-testing` feature. **Testcontainers**: Enable `testcontainers` feature. Requires Docker running.
+### Individual Features
+
+Enable individual features as needed:
+- **`property-testing`**: Property-based testing with proptest (random test generation)
+- **`snapshot-testing`**: Snapshot testing with insta (output comparison)
+- **`fake-data`**: Fake data generation for realistic test data
+- **`mutation-testing`**: Mutation testing for test quality validation
+- **`concurrency-testing`**: Concurrency testing with loom (thread model checking)
+- **`parameterized-testing`**: Parameterized tests with rstest
+- **`cli-testing`**: CLI testing with trycmd (command execution testing)
+- **`testcontainers`**: Docker container support (requires Docker running)
+- **`otel`**: OpenTelemetry span/metric validation
+- **`weaver`**: Weaver live validation (requires `otel`, auto-downloads Weaver CLI)
+
+### Feature Groups (Recommended)
+
+For better DX, use feature groups for common combinations:
+
+**`testing-extras`**: Most common advanced testing features
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["testing-extras"]  # Enables property-testing, snapshot-testing, fake-data
+}
+```
+
+**`testing-full`**: All testing features
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["testing-full"]  # All testing features
+}
+```
+
+**`observability-full`**: Complete observability stack
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["observability-full"]  # otel + weaver
+}
+```
+
+**`integration-full`**: Full integration testing
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["integration-full"]  # testcontainers + weaver
+}
+```
+
+**See**: [README Features](../README.md#features) for complete feature documentation.
 
 ## Verify Installation
 
@@ -59,11 +113,52 @@ chicago_test!(test_basic_example, {
 
 ## Troubleshooting
 
-**Compilation Errors**: `cannot find crate` → verify path in Cargo.toml. `edition 2021 required` → add `edition = "2021"`. `cannot find macro` → ensure `use chicago_tdd_tools::prelude::*;`.
+### Common Compilation Errors
 
-**Runtime Errors**: `TestFixture::new()` panics → ensure tokio runtime for async tests, use `chicago_fixture_test!`. Property tests don't compile → enable `property-testing` feature. Testcontainers tests fail → ensure Docker running.
+**Error**: `cannot find crate 'chicago_tdd_tools'`
+- **Fix**: Verify path in `Cargo.toml` is correct
+- **Check**: `[dev-dependencies]` section includes `chicago-tdd-tools = { path = "..." }`
 
-**Performance Tests**: Fail on non-x86_64 → RDTSC is x86_64-specific, falls back to `std::time::Instant`. Tick budget still applies.
+**Error**: `edition 2021 required`
+- **Fix**: Add `edition = "2021"` to `Cargo.toml`:
+  ```toml
+  [package]
+  edition = "2021"
+  ```
+
+**Error**: `cannot find macro 'test!' in this scope`
+- **Fix**: Add `use chicago_tdd_tools::prelude::*;` at top of test file
+- **Alternative**: Use explicit import: `use chicago_tdd_tools::test;`
+
+**Error**: `cannot find module 'observability'` or `cannot find module 'integration'`
+- **Fix**: Enable required feature in `Cargo.toml`:
+  ```toml
+  chicago-tdd-tools = { features = ["otel", "weaver", "testcontainers"] }
+  ```
+- **Note**: Feature-gated modules require explicit feature flags
+
+**Error**: `feature 'X' is required for module Y`
+- **Fix**: Add feature to `Cargo.toml`:
+  ```toml
+  chicago-tdd-tools = { features = ["feature-name"] }
+  ```
+
+### Common Runtime Errors
+
+**Error**: `TestFixture::new()` panics
+- **Fix**: Use `fixture_test!` macro for async tests, or ensure tokio runtime
+- **Note**: `TestFixture::new()` returns `Result` - handle errors properly
+
+**Error**: Property tests don't compile
+- **Fix**: Enable `property-testing` feature in `Cargo.toml`
+
+**Error**: Testcontainers tests fail
+- **Fix**: Ensure Docker is running
+- **Check**: Run `docker ps` to verify Docker is available
+
+**Error**: Performance tests fail on non-x86_64
+- **Fix**: RDTSC is x86_64-specific, automatically falls back to `std::time::Instant`
+- **Note**: Tick budget still applies, fallback is transparent
 
 ## Platform-Specific
 

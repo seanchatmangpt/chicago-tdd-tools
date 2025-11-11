@@ -322,7 +322,7 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chicago_test;
+    use crate::test;
 
     // Kaizen improvement: Extract magic number to named constant for clarity
     const TEST_VALUE: u32 = 42;
@@ -331,7 +331,7 @@ mod tests {
     // 1. ERROR PATH TESTING - Test all assertion functions (80% of bugs)
     // ========================================================================
 
-    chicago_test!(test_assert_success_with_ok, {
+    test!(test_assert_success_with_ok, {
         // Arrange: Create Ok result
         let result: Result<u32, String> = Ok(TEST_VALUE);
 
@@ -346,7 +346,7 @@ mod tests {
         assert_success(&result);
     }
 
-    chicago_test!(test_assert_error_with_err, {
+    test!(test_assert_error_with_err, {
         // Arrange: Create Err result
         let result: Result<u32, String> = Err("error".to_string());
 
@@ -361,7 +361,7 @@ mod tests {
         assert_error(&result);
     }
 
-    chicago_test!(test_assert_eq_with_msg_equal, {
+    test!(test_assert_eq_with_msg_equal, {
         // Arrange: Create equal values
         let value1 = TEST_VALUE;
         let value2 = TEST_VALUE;
@@ -376,7 +376,7 @@ mod tests {
         assert_eq_with_msg(&TEST_VALUE, &43, "values should be equal");
     }
 
-    chicago_test!(test_assert_in_range_valid, {
+    test!(test_assert_in_range_valid, {
         // Arrange: Create value in range
         let value = 5;
 
@@ -384,7 +384,7 @@ mod tests {
         assert_in_range(&value, &0, &10, "value should be in range");
     });
 
-    chicago_test!(test_assert_in_range_min_boundary, {
+    test!(test_assert_in_range_min_boundary, {
         // Arrange: Create value at min boundary
         let value = 0;
 
@@ -392,7 +392,7 @@ mod tests {
         assert_in_range(&value, &0, &10, "value should be in range");
     });
 
-    chicago_test!(test_assert_in_range_max_boundary, {
+    test!(test_assert_in_range_max_boundary, {
         // Arrange: Create value at max boundary
         let value = 10;
 
@@ -412,7 +412,7 @@ mod tests {
         assert_in_range(&11, &0, &10, "value should be in range");
     }
 
-    chicago_test!(test_assert_that_valid, {
+    test!(test_assert_that_valid, {
         // Arrange: Create valid value
         let value = TEST_VALUE;
 
@@ -426,7 +426,7 @@ mod tests {
         assert_that(&0, |v| *v > 0);
     }
 
-    chicago_test!(test_assert_that_with_vec, {
+    test!(test_assert_that_with_vec, {
         // Arrange: Create vector
         let vec = vec![1, 2, 3];
 
@@ -434,7 +434,7 @@ mod tests {
         assert_that(&vec, |v| v.len() == 3);
     });
 
-    chicago_test!(test_assert_that_with_msg_valid, {
+    test!(test_assert_that_with_msg_valid, {
         // Arrange: Create valid value
         let value = TEST_VALUE;
 
@@ -452,7 +452,7 @@ mod tests {
     // 2. ASSERTION BUILDER - Test builder pattern
     // ========================================================================
 
-    chicago_test!(test_assertion_builder_new, {
+    test!(test_assertion_builder_new, {
         // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
 
@@ -463,7 +463,7 @@ mod tests {
         assert_eq!(value, TEST_VALUE);
     });
 
-    chicago_test!(test_assertion_builder_assert_that, {
+    test!(test_assertion_builder_assert_that, {
         // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
 
@@ -481,7 +481,7 @@ mod tests {
         builder.assert_that(|v| *v > 0);
     }
 
-    chicago_test!(test_assertion_builder_assert_eq, {
+    test!(test_assertion_builder_assert_eq, {
         // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
 
@@ -499,7 +499,7 @@ mod tests {
         builder.assert_eq(&43);
     }
 
-    chicago_test!(test_assertion_builder_assert_that_with_msg, {
+    test!(test_assertion_builder_assert_that_with_msg, {
         // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
 
@@ -519,7 +519,7 @@ mod tests {
         builder.assert_that_with_msg(|v| *v > 0, "value should be positive");
     }
 
-    chicago_test!(test_assertion_builder_chaining, {
+    test!(test_assertion_builder_chaining, {
         // Arrange: Create assertion builder
         let builder = AssertionBuilder::new(TEST_VALUE);
 
@@ -538,7 +538,7 @@ mod tests {
     // 3. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    chicago_test!(test_assert_in_range_zero_range, {
+    test!(test_assert_in_range_zero_range, {
         // Arrange: Create value at zero range
         let value = 0;
 
@@ -546,7 +546,7 @@ mod tests {
         assert_in_range(&value, &0, &0, "zero range");
     });
 
-    chicago_test!(test_assert_that_with_empty_vec, {
+    test!(test_assert_that_with_empty_vec, {
         // Arrange: Create empty vector
         let vec: Vec<i32> = vec![];
 
@@ -554,7 +554,7 @@ mod tests {
         assert_that(&vec, |v| v.is_empty());
     });
 
-    chicago_test!(test_assert_that_with_string, {
+    test!(test_assert_that_with_string, {
         // Arrange: Create string
         let s = "test";
 

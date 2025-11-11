@@ -38,10 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build system: All commands use `cargo make` with timeout protection
 - Documentation: Comprehensive documentation updates (README, guides, architecture)
 - Test framework: All tests migrated to use `chicago_test!` macro
+- Code quality: Extracted magic numbers to named constants for improved readability and maintainability
 
 ### Fixed
 - Documentation: Updated outdated reports to reflect actual implementation status
 - Test framework: Fixed test organization and consistency
+- Dead code: Removed duplicate `andon.rs` module (393 lines) - `alert.rs` is the correct implementation
 
 ### Documentation
 - Added comprehensive README with Chicago TDD principles and dog fooding

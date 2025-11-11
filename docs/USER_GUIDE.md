@@ -10,7 +10,7 @@ Test fixtures: Reusable setup with state management. Test isolation. Metadata tr
 
 **Basic Usage**: `TestFixture::new()?` for basic fixture, `TestFixture::with_data(data)` for custom data, `fixture.test_counter() -> u64` for unique counter, `fixture.set_metadata(key, value)` / `fixture.get_metadata(key)` for metadata.
 
-**Automatic Setup**: `chicago_fixture_test!(name, fixture, { /* AAA */ })` for auto setup/teardown. Prefer over manual creation.
+**Automatic Setup**: `fixture_test!(name, fixture, { /* AAA */ })` for auto setup/teardown. Prefer over manual creation.
 
 **Patterns**: Shared setup (auto fixture), metadata tracking (test identification), isolation (unique counters).
 
@@ -36,7 +36,7 @@ Test macros: AAA pattern enforcement. Zero-boilerplate tests. Assertion macros.
 
 **When to Use**: All tests (enforces AAA), async tests, fixture tests, performance tests. **Always use**: Reduces boilerplate, enforces patterns.
 
-**Test Macros**: `chicago_test!(name, { /* AAA */ })` (synchronous), `chicago_async_test!(name, { /* AAA */ })` (async), `chicago_fixture_test!(name, fixture, { /* AAA */ })` (auto fixture), `chicago_performance_test!(name, { /* AAA */ })` (tick budget).
+**Test Macros**: `test!(name, { /* AAA */ })` (synchronous), `async_test!(name, { /* AAA */ })` (async), `fixture_test!(name, fixture, { /* AAA */ })` (auto fixture), `performance_test!(name, { /* AAA */ })` (tick budget).
 
 **Assertion Macros**: `assert_ok!(result)` / `assert_ok!(result, message)`, `assert_err!(result)` / `assert_err!(result, message)`, `assert_within_tick_budget!(ticks)` / `assert_within_tick_budget!(ticks, message)`, `assert_in_range!(value, min, max)` / `assert_in_range!(value, min, max, message)`, `assert_eq_msg!(actual, expected, message)`, `assert_guard_constraint!(condition, constraint_name)`.
 
@@ -168,7 +168,7 @@ OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 
 **AAA Pattern**: Arrange-Act-Assert structure required. Use AAA comments. Verify observable outputs.
 
-**Use Macros**: Always use `chicago_test!`, `chicago_async_test!`, `chicago_fixture_test!`. Never use raw `#[test]`.
+**Use Macros**: Always use `test!`, `async_test!`, `fixture_test!`. Never use raw `#[test]`.
 
 **Real Collaborators**: Use real objects, minimize mocks. Use testcontainers for integration tests.
 
@@ -178,7 +178,7 @@ OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 
 ## Common Patterns
 
-**Test Isolation**: `chicago_fixture_test!` provides unique fixtures. Tests don't interfere.
+**Test Isolation**: `fixture_test!` provides unique fixtures. Tests don't interfere.
 
 **Reusable Test Data**: Helper functions for common test data. `fn create_test_order() -> Value`.
 

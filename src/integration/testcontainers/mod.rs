@@ -209,10 +209,28 @@ pub mod implementation {
     impl ContainerClient {
         /// Create a new container client
         ///
-        /// Note: Docker availability is checked when containers are created,
-        /// not when the client is created. This allows client creation to succeed
-        /// even if Docker is temporarily unavailable.
+        /// **FMEA Fix (RPN 216)**: Check Docker availability at client creation to fail-fast.
+        /// Previously, Docker was only checked when containers were created, allowing false positives
+        /// (tests pass when Docker unavailable). Now checks Docker immediately to prevent false positives.
+        ///
+        /// # Panics
+        ///
+        /// Panics if Docker is unavailable, with a clear error message.
         pub fn new() -> Self {
+            // **FMEA Fix**: Verify Docker is available at client creation (fail-fast)
+            // This prevents false positives where tests pass when Docker is unavailable
+            check_docker_available().unwrap_or_else(|e| {
+                panic!(
+                    "🚨 Docker is required for testcontainers but Docker daemon is not available.\n\
+                     ⚠️  STOP: Cannot create container client\n\
+                     💡 FIX: Start Docker Desktop or Docker daemon\n\
+                     📋 macOS: Open Docker Desktop\n\
+                     📋 Linux: sudo systemctl start docker\n\
+                     📋 Windows: Start Docker Desktop\n\
+                     \n\
+                     Error: {e}"
+                )
+            });
             Self
         }
 
@@ -290,6 +308,55 @@ pub mod implementation {
             Self { container }
         }
 
+        /// Create a new generic container with environment variables and optional command
+        ///
+        /// # Arguments
+        ///
+        /// * `_client` - Container client instance (unused in minimal implementation)
+        /// * `image` - Docker image name
+        /// * `tag` - Docker image tag
+        /// * `env_vars` - Environment variables to set in the container
+        /// * `command` - Optional command to run (e.g., Some(("sleep", &["infinity"])) to keep container running)
+        ///
+        /// # Errors
+        ///
+        /// Returns error if container creation fails
+        pub fn with_env_and_command(
+            _client: &ContainerClient,
+            image: &str,
+            tag: &str,
+            env_vars: HashMap<String, String>,
+            command: Option<(&str, &[&str])>,
+        ) -> TestcontainersResult<Self> {
+            // 🚨 Verify Docker is still available
+            check_docker_available()?;
+
+            let image = GenericImage::new(image, tag);
+            // Build container request with all env vars
+            let mut request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
+            for (key, value) in env_vars {
+                request = request.with_env_var(key, value);
+            }
+            // Add command if provided
+            if let Some((cmd, args)) = command {
+                let mut cmd_vec = vec![cmd.to_string()];
+                cmd_vec.extend(args.iter().map(|s| s.to_string()));
+                request = request.with_cmd(cmd_vec);
+            }
+            let container = request.start().map_err(|e| {
+                let error_msg = format!("{e}");
+                if is_docker_unavailable_error(&error_msg) {
+                    TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon connection failed during container start: {e}\n   ⚠️  STOP: Cannot connect to Docker daemon\n   💡 FIX: Start Docker Desktop or Docker daemon"
+                    ))
+                } else {
+                    TestcontainersError::CreationFailed(format!("Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
+                }
+            })?;
+
+            Ok(Self { container })
+        }
+
         /// Create a new generic container with environment variables
         ///
         /// # Arguments
@@ -318,6 +385,67 @@ pub mod implementation {
             for (key, value) in env_vars {
                 request = request.with_env_var(key, value);
             }
+            let container = request.start().map_err(|e| {
+                let error_msg = format!("{e}");
+                if is_docker_unavailable_error(&error_msg) {
+                    TestcontainersError::DockerUnavailable(format!(
+                        "Docker daemon connection failed during container start: {e}\n   ⚠️  STOP: Cannot connect to Docker daemon\n   💡 FIX: Start Docker Desktop or Docker daemon"
+                    ))
+                } else {
+                    TestcontainersError::CreationFailed(format!("Failed to start container: {e}\n   ⚠️  STOP: Container creation failed\n   💡 FIX: Check Docker image exists and Docker daemon is running"))
+                }
+            })?;
+
+            Ok(Self { container })
+        }
+
+        /// Create a new generic container with a command that keeps it running
+        ///
+        /// This is useful for containers like Alpine that exit immediately without a command.
+        /// The command will be executed when the container starts and will keep it running.
+        ///
+        /// # Arguments
+        ///
+        /// * `_client` - Container client instance
+        /// * `image` - Docker image name
+        /// * `tag` - Docker image tag
+        /// * `command` - Command to run (e.g., "sleep", "sh")
+        /// * `args` - Command arguments (e.g., &["infinity"] for sleep)
+        ///
+        /// # Errors
+        ///
+        /// Returns error if container creation fails
+        ///
+        /// # Example
+        ///
+        /// ```rust
+        /// // Create Alpine container with sleep to keep it running
+        /// let container = GenericContainer::with_command(
+        ///     client.client(),
+        ///     "alpine",
+        ///     "latest",
+        ///     "sleep",
+        ///     &["infinity"]
+        /// )?;
+        /// ```
+        pub fn with_command(
+            _client: &ContainerClient,
+            image: &str,
+            tag: &str,
+            command: &str,
+            args: &[&str],
+        ) -> TestcontainersResult<Self> {
+            // 🚨 Verify Docker is still available
+            check_docker_available()?;
+
+            let image = GenericImage::new(image, tag);
+            // Build container request with command
+            let mut request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
+            // Set command and args to keep container running
+            let mut cmd_vec = vec![command.to_string()];
+            cmd_vec.extend(args.iter().map(|s| s.to_string()));
+            request = request.with_cmd(cmd_vec);
+
             let container = request.start().map_err(|e| {
                 let error_msg = format!("{e}");
                 if is_docker_unavailable_error(&error_msg) {
@@ -476,13 +604,16 @@ pub use stubs::*;
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
-    use crate::chicago_test;
+    use crate::assert_eq_msg;
+    use crate::assert_err;
+    use crate::assertions::assert_that_with_msg;
+    use crate::test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
-    chicago_test!(test_testcontainers_error_display, {
+    test!(test_testcontainers_error_display, {
         // Arrange: Create all error variants
         let errors = vec![
             TestcontainersError::CreationFailed("test".to_string()),
@@ -497,12 +628,12 @@ mod tests {
         // Act & Assert: Verify all error variants display correctly
         for error in errors {
             let display = format!("{error}");
-            assert!(!display.is_empty(), "Error should have display message");
-            assert!(display.contains("test"), "Error should contain message");
+            assert_that_with_msg(&!display.is_empty(), |v| *v, "Error should have display message");
+            assert_that_with_msg(&display.contains("test"), |v| *v, "Error should contain message");
         }
     });
 
-    chicago_test!(test_exec_result_structure, {
+    test!(test_exec_result_structure, {
         // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "output".to_string(),
@@ -511,12 +642,12 @@ mod tests {
         };
 
         // Act & Assert: Verify ExecResult structure
-        assert_eq!(result.stdout, "output");
-        assert_eq!(result.stderr, "error");
-        assert_eq!(result.exit_code, exec::SUCCESS_EXIT_CODE);
+        assert_eq_msg!(&result.stdout, &"output".to_string(), "Stdout should match");
+        assert_eq_msg!(&result.stderr, &"error".to_string(), "Stderr should match");
+        assert_eq_msg!(&result.exit_code, &exec::SUCCESS_EXIT_CODE, "Exit code should match");
     });
 
-    chicago_test!(test_exec_result_clone, {
+    test!(test_exec_result_clone, {
         // Arrange: Create ExecResult
         let result1 = ExecResult {
             stdout: "output".to_string(),
@@ -528,12 +659,12 @@ mod tests {
         let result2 = result1.clone();
 
         // Assert: Verify cloned fields match original
-        assert_eq!(result1.stdout, result2.stdout);
-        assert_eq!(result1.stderr, result2.stderr);
-        assert_eq!(result1.exit_code, result2.exit_code);
+        assert_eq_msg!(&result1.stdout, &result2.stdout, "Cloned stdout should match");
+        assert_eq_msg!(&result1.stderr, &result2.stderr, "Cloned stderr should match");
+        assert_eq_msg!(&result1.exit_code, &result2.exit_code, "Cloned exit code should match");
     });
 
-    chicago_test!(test_exec_result_debug, {
+    test!(test_exec_result_debug, {
         // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "output".to_string(),
@@ -545,9 +676,9 @@ mod tests {
         let debug = format!("{result:?}");
 
         // Assert: Verify debug output contains expected fields
-        assert!(debug.contains("output"));
-        assert!(debug.contains("error"));
-        assert!(debug.contains("0"));
+        assert_that_with_msg(&debug.contains("output"), |v| *v, "Debug should contain stdout");
+        assert_that_with_msg(&debug.contains("error"), |v| *v, "Debug should contain stderr");
+        assert_that_with_msg(&debug.contains("0"), |v| *v, "Debug should contain exit code");
     });
 
     // ========================================================================
@@ -555,7 +686,7 @@ mod tests {
     // ========================================================================
 
     #[cfg(not(feature = "testcontainers"))]
-    chicago_test!(test_stubs_return_errors, {
+    test!(test_stubs_return_errors, {
         // Arrange: Create container client
         let client = ContainerClient::new();
 
@@ -563,10 +694,14 @@ mod tests {
         let result = GenericContainer::new(&client, "alpine", "latest");
 
         // Assert: Verify stub returns InvalidConfig error
-        assert!(result.is_err());
+        assert_err!(&result, "Stub should return error");
         match result {
             Err(TestcontainersError::InvalidConfig(msg)) => {
-                assert!(msg.contains("testcontainers feature is not enabled"));
+                assert_that_with_msg(
+                    &msg.contains("testcontainers feature is not enabled"),
+                    |v| *v,
+                    "Error message should indicate feature not enabled",
+                );
             }
             _ => panic!("Expected InvalidConfig error"),
         }
@@ -577,12 +712,12 @@ mod tests {
         let exec_result = container.exec("echo", &["test"]);
 
         // Assert: Verify all stub methods return errors
-        assert!(port_result.is_err());
-        assert!(exec_result.is_err());
+        assert_err!(&port_result, "Port result should be error");
+        assert_err!(&exec_result, "Exec result should be error");
     });
 
     #[cfg(not(feature = "testcontainers"))]
-    chicago_test!(test_stub_container_client, {
+    test!(test_stub_container_client, {
         // Arrange: Create container clients
         let client1 = ContainerClient::new();
         let client2 = ContainerClient::default();

@@ -217,53 +217,61 @@ Step 1: Identify Muda → Step 2: Measure Waste Impact → Step 3: Eliminate Was
 
 ### Step 5: Control (Prevent Waste from Returning)
 
-**Action**: Establish controls to prevent waste from accumulating again.
+**CRITICAL**: Do NOT write documents or reports. Create todos and execute controls.
 
-#### 5.1: Add Tests
+**Action**: Create 10+ item todo list for implementing controls to prevent waste.
 
-**Action**: Add tests for refactored code to prevent regression.
+**Control methods** (implement as todos):
+- **Tests** - Add tests for refactored code
+- **Code review** - Add checklist items to prevent waste
+- **Inline comments** - Add comments explaining waste removal (in code, not separate doc)
+- **Standards** - Implement waste prevention patterns
 
-```bash
-cargo make test
+**Example control todo list**:
+```markdown
+## Waste Prevention Control Todos (10+ items)
+
+**Test Controls**:
+- [ ] Add tests for refactored code to prevent regression
+- [ ] Verify tests catch waste patterns
+- [ ] Add tests to CI pipeline
+
+**Code Review Controls**:
+- [ ] Add checklist item: No dead code
+- [ ] Add checklist item: No unnecessary clones
+- [ ] Add checklist item: No unwrap() in production code
+- [ ] Update code review process to include checklist
+
+**Inline Documentation Controls**:
+- [ ] Add inline comment: Document why waste was removed
+- [ ] Add inline comment: Document pattern to avoid
+- [ ] Verify comments are clear and helpful
+
+**Standards Controls**:
+- [ ] Add standard: Use references over clones when possible
+- [ ] Add standard: Extract common logic, don't duplicate
+- [ ] Add standard: Remove unused code immediately
+- [ ] Add standard: Avoid premature abstractions (YAGNI)
+
+**Monitoring Controls**:
+- [ ] Set up unused code detection in CI
+- [ ] Configure alerts for waste accumulation
+- [ ] Review waste regularly during code review
+
+**Verification**:
+- [ ] Verify controls work: Tests catch waste patterns
+- [ ] Verify no regressions: All tests still pass
+- [ ] Verify controls are sustainable: Process is repeatable
 ```
 
-**Purpose**: Tests prevent waste from returning by catching regressions
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
 
-#### 5.2: Document Decisions
-
-**Action**: Document why waste was removed.
-
-**Format**:
-```rust
-// Removed abstraction layer - was unnecessary complexity (Muda: Over-processing)
-// Inlined logic here for clarity and maintainability
-```
-
-**Purpose**: Prevents re-introducing waste
-
-#### 5.3: Establish Patterns
-
-**Action**: Document patterns to follow to avoid waste.
-
-**Example**:
-- Use references over clones when possible
-- Extract common logic, don't duplicate
-- Remove unused code immediately
-- Avoid premature abstractions (YAGNI)
-
-**Purpose**: Guides future development to avoid waste
-
-#### 5.4: Monitor for Waste
-
-**Action**: Regularly scan for new waste.
-
-**Indicators**:
-- Unused code warnings
-- Duplicate code patterns
-- Unnecessary complexity
-- Dead dependencies
-
-**Frequency**: During code review, before commits
+**Principle**: Implement controls, don't document them separately. Todos track progress, controls prevent waste accumulation.
 
 ---
 
@@ -312,4 +320,18 @@ cargo make check  # Compiles ✅
 **Remember**: Waste elimination is continuous (Kaizen), not one-time. Regular waste elimination prevents technical debt accumulation.
 
 **DfLSS alignment**: Eliminating Muda (waste) is the Lean component of DfLSS (Design for Lean Six Sigma). However, waste elimination alone is incomplete - DfLSS addresses both efficiency (waste elimination) AND quality (defect prevention). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. When eliminating waste, also ensure quality is maintained and defects are prevented. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
+
+---
+
+## Command Execution Pattern
+
+**CRITICAL**: Eliminate Muda commands must:
+1. **Create 10+ item todo list** - Not documents/reports
+2. **Execute todos** - Remove waste, not document it
+3. **Verify fixes** - Test that waste elimination works
+4. **Complete todos** - Mark todos as done as waste is eliminated
+
+**Principle**: Eliminate waste, don't document it. Todos track progress, waste elimination improves efficiency.
+
+---
 

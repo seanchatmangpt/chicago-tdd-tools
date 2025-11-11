@@ -31,6 +31,9 @@ mod implementation {
     impl GenericContainer {
         /// Execute a command in the container
         ///
+        /// **FMEA Fix (RPN 210)**: Improved error messages to help diagnose container lifecycle issues.
+        /// Added guidance for common failure modes (container not running, command not found, etc.).
+        ///
         /// # Arguments
         ///
         /// * `command` - The command to execute (e.g., "echo", "sh")
@@ -48,6 +51,11 @@ mod implementation {
         ///
         /// The container must be running for exec to work. This works best with service containers
         /// (postgres, redis, nginx, etc.) that stay running.
+        ///
+        /// **Container Lifecycle**: If exec fails with "container is not running", ensure:
+        /// 1. Container was created with a command that keeps it running (e.g., `sleep infinity`)
+        /// 2. Container has had time to start (add small delay if needed)
+        /// 3. Container hasn't exited unexpectedly (check container logs)
         pub fn exec(&self, command: &str, args: &[&str]) -> TestcontainersResult<ExecResult> {
             // Build command + args into Vec<String> for ExecCommand::new
             // ExecCommand requires owned strings, so convert &str to String
@@ -56,9 +64,29 @@ mod implementation {
 
             let mut exec_result =
                 self.container().exec(ExecCommand::new(cmd_args)).map_err(|e| {
-                    TestcontainersError::CommandExecutionFailed(format!(
-                        "⚠️  Failed to execute command '{command}': {e}\n   ⚠️  WARNING: Command did not execute successfully\n   💡 FIX: Check command syntax and container state"
-                    ))
+                    let error_msg = format!("{e}");
+                    // **FMEA Fix**: Provide more helpful error messages based on failure mode
+                    if error_msg.contains("not running") || error_msg.contains("stopped") {
+                        TestcontainersError::CommandExecutionFailed(format!(
+                            "⚠️  Container is not running - cannot execute command '{command}'\n\
+                             ⚠️  WARNING: Container must be running to execute commands\n\
+                             💡 FIX: Ensure container was created with a command that keeps it running\n\
+                             💡 FIX: Use GenericContainer::with_command() with 'sleep infinity' or similar\n\
+                             💡 FIX: Add a small delay after container creation to ensure it's ready\n\
+                             💡 FIX: Check container logs if container exited unexpectedly\n\
+                             \n\
+                             Error: {e}"
+                        ))
+                    } else {
+                        TestcontainersError::CommandExecutionFailed(format!(
+                            "⚠️  Failed to execute command '{command}': {e}\n\
+                             ⚠️  WARNING: Command did not execute successfully\n\
+                             💡 FIX: Check command syntax and container state\n\
+                             💡 FIX: Verify container is running and command exists in container\n\
+                             \n\
+                             Error: {e}"
+                        ))
+                    }
                 })?;
 
             let mut stdout = String::new();
@@ -113,13 +141,13 @@ mod stubs {
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
-    use crate::chicago_test;
+    use crate::test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
-    chicago_test!(test_exec_result_debug, {
+    test!(test_exec_result_debug, {
         // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "output".to_string(),
@@ -139,7 +167,7 @@ mod tests {
     // Kaizen improvement: Extract magic number to named constant for clarity
     const TEST_EXIT_CODE: i32 = 42;
 
-    chicago_test!(test_exec_result_clone, {
+    test!(test_exec_result_clone, {
         // Arrange: Create ExecResult
         let result = ExecResult {
             stdout: "test".to_string(),
@@ -156,14 +184,14 @@ mod tests {
         assert_eq!(result.exit_code, cloned.exit_code);
     });
 
-    chicago_test!(test_success_exit_code_constant, {
+    test!(test_success_exit_code_constant, {
         // Arrange: SUCCESS_EXIT_CODE constant
 
         // Act & Assert: Verify constant value
         assert_eq!(SUCCESS_EXIT_CODE, 0);
     });
 
-    chicago_test!(test_exec_result_success, {
+    test!(test_exec_result_success, {
         // Arrange: Create successful ExecResult
         let result = ExecResult {
             stdout: "success".to_string(),
@@ -181,7 +209,7 @@ mod tests {
     // Standard Unix exit code for "command not found"
     const COMMAND_NOT_FOUND_EXIT_CODE: i32 = 127;
 
-    chicago_test!(test_exec_result_failure, {
+    test!(test_exec_result_failure, {
         // Arrange: Create failed ExecResult
         let result = ExecResult {
             stdout: "".to_string(),
@@ -200,7 +228,7 @@ mod tests {
     // ========================================================================
 
     #[cfg(not(feature = "testcontainers"))]
-    chicago_test!(test_exec_stub_returns_error, {
+    test!(test_exec_stub_returns_error, {
         // Arrange: Create container client and container (stub mode)
         use crate::integration::testcontainers::{ContainerClient, GenericContainer};
 

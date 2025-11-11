@@ -14,6 +14,10 @@ mod weaver_tests {
         include!("../common.rs");
     }
     use chicago_tdd_tools::assert_ok;
+    use chicago_tdd_tools::async_test;
+    use chicago_tdd_tools::test;
+    use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::assertions::assert_that;
     use chicago_tdd_tools::testcontainers::*;
     use chicago_tdd_tools::observability::weaver::WeaverValidator;
     use common::require_docker;
@@ -30,6 +34,12 @@ mod weaver_tests {
     const PYTHON_IMAGE: &str = "python";
     const PYTHON_TAG: &str = "3-slim";
 
+    // **Kaizen improvement**: Extract magic number `500` to named constant for container readiness wait.
+    // Pattern: Use named constants instead of magic numbers for timing values.
+    // Benefits: Improves readability, maintainability, self-documentation.
+    // Value: 500ms provides sufficient time for container to be ready after creation.
+    const CONTAINER_READINESS_WAIT_MS: u64 = 500;
+
     /// Test that Weaver Docker image is available and can execute commands
     ///
     /// This test verifies:
@@ -39,8 +49,7 @@ mod weaver_tests {
     ///
     /// This is Chicago TDD: Real Collaborators (actual Docker container),
     /// State Verification (weaver binary exists), Behavior Verification (weaver works)
-    #[test]
-    fn weaver_container_available() {
+    test!(weaver_container_available, {
         require_docker();
 
         // Arrange: Create Weaver container
@@ -48,18 +57,27 @@ mod weaver_tests {
         let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
 
+        // **Gemba Walk Fix**: Ensure container is running before exec
+        // Previously, exec might be called before container is fully started, causing "container is not running" error.
+        // Fix: Use a command that keeps container running, or wait for container to be ready.
+        // Since GenericContainer::new() starts container, we use a short sleep to ensure it's ready.
+        use std::thread;
+        use std::time::Duration;
+        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
+
         // Act: Execute weaver --version in container
         let result = container.exec("weaver", &["--version"]);
 
         // Assert: Verify Weaver works (state verification)
         assert_ok!(&result, "Weaver should execute --version successfully");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.exit_code, 0, "Weaver --version should succeed");
-        assert!(
-            exec_result.stdout.contains("weaver") || exec_result.stdout.contains("Weaver"),
+        assert_eq_msg!(&exec_result.exit_code, &0, "Weaver --version should succeed");
+        assert_that(
+            &(exec_result.stdout.contains("weaver") || exec_result.stdout.contains("Weaver")),
+            |v| *v,
             "Weaver version output should contain 'weaver' or 'Weaver'"
         );
-    }
+    });
 
     /// Test that Weaver can execute registry check command in container
     ///
@@ -69,14 +87,18 @@ mod weaver_tests {
     ///
     /// This is Chicago TDD: Behavior Verification (weaver command behavior),
     /// Error Path Testing (80% of bugs)
-    #[test]
-    fn weaver_container_registry_check() {
+    test!(weaver_container_registry_check, {
         require_docker();
 
         // Arrange: Create Weaver container
         let client = ContainerClient::new();
         let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
+
+        // **Gemba Walk Fix**: Ensure container is running before exec
+        use std::thread;
+        use std::time::Duration;
+        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
 
         // Act: Execute weaver registry check with non-existent registry
         let result =
@@ -86,15 +108,16 @@ mod weaver_tests {
         assert_ok!(&result, "Weaver should execute command (even if it fails)");
         let exec_result = result.expect("Exec should succeed after assert_ok");
         // Weaver should return non-zero exit code for invalid registry
-        assert_ne!(exec_result.exit_code, 0, "Weaver should fail with invalid registry");
+        assert_that(&exec_result.exit_code, |v| *v != 0, "Weaver should fail with invalid registry");
         // Verify error message is helpful (behavior verification)
-        assert!(
-            exec_result.stderr.contains("registry")
+        assert_that(
+            &(exec_result.stderr.contains("registry")
                 || exec_result.stderr.contains("not found")
-                || exec_result.stderr.contains("error"),
+                || exec_result.stderr.contains("error")),
+            |v| *v,
             "Weaver should provide helpful error message"
         );
-    }
+    });
 
     /// Test that Weaver container can be used for live-check verification
     ///
@@ -104,8 +127,7 @@ mod weaver_tests {
     ///
     /// This is Chicago TDD: Real Collaborators (actual Weaver container),
     /// Working Capability Testing (verify Weaver works in containerized environment)
-    #[test]
-    fn weaver_container_live_check_capability() {
+    test!(weaver_container_live_check_capability, {
         require_docker();
 
         // Arrange: Create Weaver container
@@ -113,19 +135,25 @@ mod weaver_tests {
         let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
 
+        // **Gemba Walk Fix**: Ensure container is running before exec
+        use std::thread;
+        use std::time::Duration;
+        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
+
         // Act: Check if weaver binary exists and can show help
         let result = container.exec("weaver", &["--help"]);
 
         // Assert: Verify Weaver is functional (working capability)
         assert_ok!(&result, "Weaver should execute --help successfully");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.exit_code, 0, "Weaver --help should succeed");
+        assert_eq_msg!(&exec_result.exit_code, &0, "Weaver --help should succeed");
         // Verify help output contains expected commands (behavior verification)
-        assert!(
-            exec_result.stdout.contains("registry") || exec_result.stdout.contains("live-check"),
+        assert_that(
+            &(exec_result.stdout.contains("registry") || exec_result.stdout.contains("live-check")),
+            |v| *v,
             "Weaver help should mention registry or live-check commands"
         );
-    }
+    });
 
     /// Test that Weaver live-check validates OTEL telemetry emitted from within a testcontainer
     ///
@@ -138,8 +166,7 @@ mod weaver_tests {
     /// This is Chicago TDD: Real Collaborators (actual containers, real weaver),
     /// Behavior Verification (verify telemetry validation workflow),
     /// Integration Testing (end-to-end validation)
-    #[tokio::test]
-    async fn test_weaver_live_check_otel_from_container() {
+    async_test!(test_weaver_live_check_otel_from_container, {
         require_docker();
 
         // Arrange: Check prerequisites
@@ -158,7 +185,7 @@ mod weaver_tests {
         let mut validator = WeaverValidator::new(registry_path);
         let start_result = validator.start();
         assert_ok!(&start_result, "Weaver should start successfully");
-        assert!(validator.is_running(), "Weaver should be running after start");
+        assert_that(&validator.is_running(), |v| *v, "Weaver should be running after start");
 
         // Wait for Weaver to be ready
         sleep(Duration::from_millis(1000)).await;
@@ -242,12 +269,14 @@ print("OTEL telemetry emitted successfully")
         let exec_result = container.exec("python", &["-c", python_script]);
         assert_ok!(&exec_result, "Python script should execute successfully");
         let exec_output = exec_result.expect("Exec should succeed after assert_ok");
-        assert_eq!(
-            exec_output.exit_code, 0,
+        assert_eq_msg!(
+            &exec_output.exit_code,
+            &0,
             "Python script should succeed (exit code 0)"
         );
-        assert!(
-            exec_output.stdout.contains("OTEL telemetry emitted successfully"),
+        assert_that(
+            &exec_output.stdout.contains("OTEL telemetry emitted successfully"),
+            |v| *v,
             "Python script should confirm telemetry emission"
         );
 
@@ -257,7 +286,7 @@ print("OTEL telemetry emitted successfully")
         // Act: Stop Weaver
         let stop_result = validator.stop();
         assert_ok!(&stop_result, "Weaver should stop successfully");
-        assert!(!validator.is_running(), "Weaver should not be running after stop");
+        assert_that(&!validator.is_running(), |v| *v, "Weaver should not be running after stop");
 
         // Assert: Verify weaver received and validated telemetry
         // Check weaver report file
@@ -269,8 +298,9 @@ print("OTEL telemetry emitted successfully")
                 .expect("Failed to parse weaver report JSON");
 
             // Verify report structure
-            assert!(
-                report_json.get("statistics").is_some(),
+            assert_that(
+                &report_json.get("statistics").is_some(),
+                |v| *v,
                 "Weaver report should contain statistics"
             );
 
@@ -285,8 +315,9 @@ print("OTEL telemetry emitted successfully")
 
                 // If statistics exist, telemetry was likely processed
                 // (Even if empty, the fact that statistics exist means weaver ran)
-                assert!(
-                    has_telemetry_indicators || !statistics.as_object().unwrap().is_empty(),
+                assert_that(
+                    &(has_telemetry_indicators || !statistics.as_object().unwrap().is_empty()),
+                    |v| *v,
                     "Weaver statistics should indicate telemetry processing"
                 );
             }
@@ -302,6 +333,6 @@ print("OTEL telemetry emitted successfully")
         // Assert: Test completes successfully
         // This verifies: Weaver started → Container emitted OTEL → Container sent to weaver → Weaver stopped
         // All using real containers and real weaver CLI
-    }
+    });
 }
 

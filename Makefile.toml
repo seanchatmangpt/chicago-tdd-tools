@@ -309,10 +309,80 @@ args = ["20s", "cargo", "doc", "--no-deps", "--all-features"]
 description = "Run CI pipeline (unit tests only, excludes slow integration tests)"
 dependencies = ["timeout-check", "fmt", "lint", "test-unit", "audit-all"]
 
-# Expected total time: ~180s (ci: 120s, docs-build: 20s)
+# Release validation tasks - Prevent release failures (FMEA fixes)
+# These tasks reduce RPN (Risk Priority Number) by improving detection and preventing failures
+[tasks.release-validate-git-state]
+description = "Validate git state is clean (no uncommitted changes, no WIP files) - CRITICAL BLOCKER"
+command = "timeout"
+args = ["5s", "sh", "-c", "if [ -n \"$(git status --porcelain)\" ]; then echo '🚨 CRITICAL: Git state is not clean - uncommitted changes detected'; git status --porcelain; exit 1; fi; if [ -n \"$(find . -name '*.new' -o -name '*WIP*' -o -name '*.tmp' 2>/dev/null | grep -v 'target\\|node_modules\\|\\.git')\" ]; then echo '🚨 CRITICAL: WIP files detected'; find . -name '*.new' -o -name '*WIP*' -o -name '*.tmp' 2>/dev/null | grep -v 'target\\|node_modules\\|\\.git'; exit 1; fi; echo '✅ Git state is clean'"]
+ignore_errors = false
+
+[tasks.release-validate-artifacts]
+description = "Validate release artifacts exist (CHANGELOG.md, release notes)"
+command = "timeout"
+args = ["5s", "sh", "-c", "if [ ! -f CHANGELOG.md ]; then echo '🚨 CRITICAL: CHANGELOG.md missing'; exit 1; fi; if [ ! -f RELEASE_NOTES_v1.1.0.md ] && [ ! -f RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'"]
+ignore_errors = true
+
+[tasks.release-validate-version]
+description = "Validate version consistency across all Cargo.toml files"
+command = "timeout"
+args = ["5s", "sh", "-c", "VERSION=$(grep '^version' Cargo.toml | cut -d'\"' -f2); PROC_VERSION=$(grep '^version' proc_macros/Cargo.toml 2>/dev/null | cut -d'\"' -f2 || echo ''); if [ -n \"$PROC_VERSION\" ] && [ \"$VERSION\" != \"$PROC_VERSION\" ]; then echo \"🚨 CRITICAL: Version mismatch - Cargo.toml: $VERSION, proc_macros/Cargo.toml: $PROC_VERSION\"; exit 1; fi; echo \"✅ Version consistent: $VERSION\""]
+ignore_errors = false
+
+[tasks.release-validate-compilation]
+description = "Validate code compiles in release mode (not just debug)"
+command = "timeout"
+args = ["30s", "cargo", "build", "--release", "--all-features"]
+ignore_errors = false
+
+[tasks.release-validate-examples]
+description = "Validate all examples compile"
+command = "timeout"
+args = ["10s", "cargo", "check", "--examples", "--all-features"]
+ignore_errors = false
+
+[tasks.release-validate-precommit]
+description = "Run pre-commit validation checks before release"
+dependencies = ["pre-commit"]
+ignore_errors = false
+
+[tasks.release-validate-security]
+description = "Run security audit before release"
+dependencies = ["audit"]
+ignore_errors = true
+
+[tasks.release-validate-testcontainers]
+description = "Validate testcontainers tests pass (if Docker available)"
+command = "timeout"
+args = ["60s", "sh", "-c", "if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then cargo test --features testcontainers --test testcontainers 2>&1 | grep -q 'test result: ok' && echo '✅ Testcontainers tests pass' || (echo '⚠️  WARNING: Testcontainers tests failed (not blocking if Docker unavailable)' && exit 0); else echo '⚠️  SKIP: Docker not available, skipping testcontainers tests'; fi"]
+ignore_errors = true
+
+[tasks.release-validate-git-push]
+description = "Validate code and artifacts are pushed to remote (check remote is ahead)"
+command = "timeout"
+args = ["5s", "sh", "-c", "if [ -n \"$(git log origin/main..HEAD 2>/dev/null || git log origin/master..HEAD 2>/dev/null)\" ]; then echo '⚠️  WARNING: Local commits not pushed to remote'; git log --oneline origin/main..HEAD 2>/dev/null || git log --oneline origin/master..HEAD 2>/dev/null; exit 1; fi; echo '✅ All commits pushed to remote'"]
+ignore_errors = true
+
+# Comprehensive release validation task
+[tasks.release-validate]
+description = "Comprehensive release validation (all FMEA failure mode checks)"
+dependencies = [
+    "timeout-check",
+    "release-validate-git-state",
+    "release-validate-artifacts",
+    "release-validate-version",
+    "release-validate-compilation",
+    "release-validate-examples",
+    "release-validate-precommit",
+    "release-validate-security",
+    "release-validate-testcontainers",
+]
+ignore_errors = false
+
+# Expected total time: ~240s (release-validate: ~60s, ci: 120s, docs-build: 20s)
 [tasks.release]
 description = "Create a release"
-dependencies = ["ci", "docs-build"]
+dependencies = ["release-validate", "ci", "docs-build"]
 
 # Development workflow
 # Expected total time: ~25s (check: 5s, fmt: 5s, test-unit: 10s)

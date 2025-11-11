@@ -11,55 +11,89 @@ categories = ["development-tools::testing"]
 
 [dependencies]
 # Async runtime
-tokio = { version = "1.0", features = ["rt", "rt-multi-thread", "macros"] }
-futures = "0.3"
+# Tokio features optimized for testing: rt (basic runtime), rt-multi-thread (parallel execution),
+# macros (async test macros). Minimal feature set for testing use case.
+tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
+futures = "^0.3"
 
 # Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+# Serde with derive feature for automatic serialization/deserialization of test data structures
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
 
 # Utilities
-uuid = { version = "1.0", features = ["v4"] }
-chrono = "0.4"
+uuid = { version = "^1.0", features = ["v4"] }
+chrono = "^0.4"
 
 # Error handling
-# Testcontainers support (optional)
-testcontainers = { version = "0.25", optional = true, features = ["blocking"] }
-thiserror = "2.0"
+thiserror = "^2.0"
+
+# Testcontainers support (optional, testcontainers feature)
+# When to use: Integration testing with Docker containers, real service dependencies
+# Enables: integration::testcontainers module, Docker container lifecycle management
+# Common combo: Use with weaver for full integration testing with observability
+testcontainers = { version = "^0.25", optional = true, features = ["blocking"] }
 
 # Logging facade (optional, logging feature)
-log = { version = "0.4", optional = true }
+# When to use: Alert helpers integration with log crate, structured logging in tests
+# Enables: AlertLogger integration with log macros (log::error!, log::warn!, etc.)
+# Note: Enabled by default for better DX
+log = { version = "^0.4", optional = true }
 
 # HTTP client for Weaver admin endpoint (optional, weaver feature)
-reqwest = { version = "0.11", optional = true, features = ["blocking"] }
+# When to use: Weaver live validation, checking Weaver admin API endpoints
+# Enables: HTTP requests to Weaver admin API
+# Dependency: Requires weaver feature (automatically enabled)
+reqwest = { version = "^0.11", optional = true, features = ["blocking"] }
 
 # OpenTelemetry SDK for sending telemetry (optional, weaver feature)
-opentelemetry = { version = "0.31", optional = true, default-features = false, features = [
+# When to use: Sending telemetry data to Weaver, OTEL trace validation
+# Enables: OTEL trace export, Weaver telemetry integration
+# Dependency: Requires weaver feature (automatically enabled)
+opentelemetry = { version = "^0.31", optional = true, default-features = false, features = [
   "trace",
 ] }
-opentelemetry_sdk = { version = "0.31", optional = true, default-features = false }
-opentelemetry-otlp = { version = "0.31", optional = true, default-features = false, features = [
+opentelemetry_sdk = { version = "^0.31", optional = true, default-features = false }
+opentelemetry-otlp = { version = "^0.31", optional = true, default-features = false, features = [
   "http-proto",
 ] }
 
 # Snapshot testing (optional, snapshot-testing feature)
-insta = { version = "1.40", optional = true }
+# When to use: Testing complex data structures, output stability, regression testing
+# Enables: testing::snapshot module, SnapshotAssert API
+# Common combo: Use with property-testing for comprehensive test coverage
+insta = { version = "^1.40", optional = true }
 
 # Property-based testing (optional, property-testing feature)
-proptest = { version = "1.5", optional = true }
-arbitrary = { version = "1.4", optional = true }
+# When to use: Random test generation, finding edge cases, property verification
+# Enables: testing::property module, ProptestStrategy API, PropertyTestGenerator
+# Common combo: Use with fake-data for realistic test data generation
+proptest = { version = "^1.5", optional = true }
+arbitrary = { version = "^1.4", optional = true }
 
 # Fake data generation (optional, fake-data feature)
-fake = { version = "3.0", optional = true, features = ["derive"] }
+# When to use: Realistic test data generation, avoiding magic numbers in tests
+# Enables: builders::FakeDataBuilder, fake data generation helpers
+# Common combo: Use with property-testing for comprehensive test data generation
+fake = { version = "^3.0", optional = true, features = ["derive"] }
 
 # Concurrency testing (optional, concurrency-testing feature)
-loom = { version = "0.7", optional = true }
+# When to use: Thread model checking, concurrency bug detection, deterministic testing
+# Enables: testing::concurrency module, LoomModel API
+# Note: Loom provides deterministic concurrency testing (exhaustive exploration)
+loom = { version = "^0.7", optional = true }
 
 # Parameterized testing (optional, parameterized-testing feature)
-rstest = { version = "0.19", optional = true }
+# When to use: Testing multiple inputs, test matrices, fixture injection
+# Enables: rstest integration, parameterized test macros
+# Common combo: Use with snapshot-testing for parameterized snapshot tests
+rstest = { version = "^0.19", optional = true }
 
 # CLI testing (optional, cli-testing feature)
-trycmd = { version = "0.15", optional = true }
+# When to use: Testing command-line tools, golden file testing, CLI output verification
+# Enables: testing::cli module, CliTest API, trycmd integration
+# Note: Uses golden files (.trycmd) for CLI output comparison
+trycmd = { version = "^0.15", optional = true }
 
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.0" }
@@ -68,42 +102,138 @@ chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.0" }
 # No external dependency on knhk-otel needed
 
 [dev-dependencies]
-tokio-test = "0.4"
-tempfile = "3.0"
-ntest = "0.9"      # Test timeout enforcement
-trybuild = "1.0"   # Compile-fail tests
+# Test utilities (dev-only, not included in library)
+tokio-test = "^0.4"      # Tokio testing utilities
+tempfile = "^3.0"        # Temporary file/directory creation for tests
+ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
+trybuild = "^1.0"        # Compile-fail tests (compile-time test validation)
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
 
 [features]
+# Default features: Minimal set for best DX
+# logging: Alert helpers integration with log crate (enabled by default)
 default = ["logging"]
+
+# Core features (always available - no dependencies)
 workflow-engine = [] # Enable workflow-specific features
+mutation-testing = [] # Enable mutation testing (no external dependencies)
+async = [] # Enable async performance measurement utilities (no external dependencies)
+benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
+
+# Individual testing features
+# Property-based testing: Random test generation, finding edge cases
+# When to use: Testing properties that should hold for all inputs, finding edge cases
+# Enables: testing::property module, ProptestStrategy, PropertyTestGenerator
+# Common combo: Use with fake-data for realistic test data
 property-testing = [
   "dep:proptest",
   "dep:arbitrary",
-] # Enable property-based testing with proptest
-mutation-testing = [] # Enable mutation testing
-snapshot-testing = ["dep:insta"] # Enable snapshot testing with insta
-fake-data = ["dep:fake"] # Enable fake data generation
-concurrency-testing = ["dep:loom"] # Enable concurrency testing with loom
-parameterized-testing = [
-  "dep:rstest",
-] # Enable parameterized testing with rstest
-cli-testing = ["dep:trycmd"] # Enable CLI testing with trycmd
-benchmarking = [
-] # Enable criterion benchmarking (install criterion separately for benches/)
-otel = [] # Enable OTEL validation features (uses internal otel_types)
+]
+
+# Snapshot testing: Output comparison, regression testing
+# When to use: Testing complex data structures, ensuring output stability
+# Enables: testing::snapshot module, SnapshotAssert API
+# Common combo: Use with property-testing for comprehensive coverage
+snapshot-testing = ["dep:insta"]
+
+# Fake data generation: Realistic test data creation
+# When to use: Avoiding magic numbers, generating realistic test data
+# Enables: builders::FakeDataBuilder, fake data helpers
+# Common combo: Use with property-testing for comprehensive test data
+fake-data = ["dep:fake"]
+
+# Concurrency testing: Thread model checking, deterministic concurrency testing
+# When to use: Detecting concurrency bugs, verifying thread safety
+# Enables: testing::concurrency module, LoomModel API
+concurrency-testing = ["dep:loom"]
+
+# Parameterized testing: Multiple inputs, test matrices
+# When to use: Testing multiple inputs efficiently, fixture injection
+# Enables: rstest integration, parameterized test macros
+# Common combo: Use with snapshot-testing for parameterized snapshots
+parameterized-testing = ["dep:rstest"]
+
+# CLI testing: Command-line tool testing, golden files
+# When to use: Testing CLI tools, verifying command output
+# Enables: testing::cli module, CliTest API, trycmd integration
+cli-testing = ["dep:trycmd"]
+
+# Observability features
+# OTEL validation: OpenTelemetry span/metric validation
+# When to use: Validating OTEL instrumentation, span/metric verification
+# Enables: observability::otel module, OTEL validation APIs
+otel = []
+
+# Weaver live validation: Weaver integration with OTEL
+# When to use: Live validation of Weaver telemetry, Weaver admin API integration
+# Enables: observability::weaver module, WeaverValidationResult, WeaverLiveCheck
+# Dependency: Requires otel feature (automatically enabled)
 weaver = [
   "otel",
   "dep:reqwest",
   "dep:opentelemetry",
   "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
-] # Enable Weaver live validation (requires otel, uses internal weaver_types)
-async = [] # Enable async performance measurement utilities
-testcontainers = [
-  "dep:testcontainers",
-] # Enable testcontainers support for integration testing
-logging = ["dep:log"] # Enable standard log crate integration for alert helpers
+]
+
+# Integration testing
+# Testcontainers: Docker container support for integration testing
+# When to use: Integration testing with real services, Docker-based testing
+# Enables: integration::testcontainers module, Docker container lifecycle
+# Common combo: Use with weaver for full integration testing with observability
+testcontainers = ["dep:testcontainers"]
+
+# Logging: Standard log crate integration
+# When to use: Alert helpers with log macros, structured logging
+# Enables: AlertLogger integration with log::error!, log::warn!, etc.
+# Note: Enabled by default for better DX
+logging = ["dep:log"]
+
+# Feature groups (convenience bundles for common use cases)
+# These reduce cognitive load by enabling common feature combinations with a single flag
+
+# Testing extras: Most common advanced testing features
+# Includes: property-testing, snapshot-testing, fake-data
+# When to use: Comprehensive test coverage with property-based and snapshot testing
+# Rationale: These three features are commonly used together for advanced testing
+testing-extras = [
+  "property-testing",
+  "snapshot-testing",
+  "fake-data",
+]
+
+# Testing full: All testing features
+# Includes: property-testing, snapshot-testing, mutation-testing, concurrency-testing,
+#           parameterized-testing, cli-testing, fake-data
+# When to use: Maximum testing capabilities, comprehensive test suite
+# Rationale: Enables all testing features for projects requiring full testing coverage
+testing-full = [
+  "property-testing",
+  "snapshot-testing",
+  "mutation-testing",
+  "concurrency-testing",
+  "parameterized-testing",
+  "cli-testing",
+  "fake-data",
+]
+
+# Observability full: Complete observability stack
+# Includes: otel, weaver
+# When to use: Full observability validation with Weaver integration
+# Rationale: otel and weaver are commonly used together for complete observability
+observability-full = [
+  "otel",
+  "weaver",
+]
+
+# Integration full: Full integration testing with observability
+# Includes: testcontainers, weaver
+# When to use: Integration testing with Docker containers and Weaver observability
+# Rationale: testcontainers and weaver together provide complete integration testing
+integration-full = [
+  "testcontainers",
+  "weaver",
+]
 
 [lib]
 name = "chicago_tdd_tools"
@@ -160,5 +290,5 @@ path = "examples/snapshot_testing.rs"
 name = "concurrency_testing"
 path = "examples/concurrency_testing.rs"
 [[example]]
-name = "cli_testing"
-path = "examples/cli_testing.rs"
+name = "advanced_features"
+path = "examples/advanced_features.rs"

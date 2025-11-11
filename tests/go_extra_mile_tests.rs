@@ -9,8 +9,9 @@
 //! **CRITICAL**: These tests do NOT use testcontainers, do NOT require Docker,
 //! and do NOT start Weaver CLI. They only test Rust types and validators.
 
-use chicago_tdd_tools::chicago_test;
+use chicago_tdd_tools::assert_eq_msg;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::test;
 
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, OtelTestHelper, SpanValidator};
@@ -29,140 +30,185 @@ mod tests {
     // 1st Idea Tests: Basic implementations
     // ========================================================================
 
-    chicago_test!(test_first_idea_builder, {
-        // 1st Idea: Basic TestDataBuilder
+    test!(test_first_idea_builder, {
+        // Arrange: Create builder with test data
         let builder = TestDataBuilder::new().with_var("key1", "value1").with_var("key2", "value2");
 
+        // Act: Build test data
         let data = builder.build();
-        assert_eq!(data.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(data.get("key2"), Some(&"value2".to_string()));
+
+        // Assert: Verify data contains expected values
+        assert_eq_msg!(data.get("key1"), Some(&"value1".to_string()), "Key1 should match");
+        assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
     });
 
     // ========================================================================
     // 2nd Idea Tests: Generic versions with OTEL
     // ========================================================================
 
-    chicago_test!(test_second_idea_generic_builder, {
-        // 2nd Idea: Generic builder works with any Into<String> types
+    test!(test_second_idea_generic_builder, {
+        // Arrange: Create generic builder with test data
         let builder = GenericTestDataBuilder::<String, String>::new()
             .with_var("key1".to_string(), "value1".to_string())
             .with_var("key2", "value2"); // Works with &str too
 
+        // Act: Build test data
         let data = builder.build();
-        assert_eq!(data.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(data.get("key2"), Some(&"value2".to_string()));
+
+        // Assert: Verify data contains expected values
+        assert_eq_msg!(data.get("key1"), Some(&"value1".to_string()), "Key1 should match");
+        assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_second_idea_builder_with_otel, {
-        // 2nd Idea: Generic builder with OTEL spans
+    test!(test_second_idea_builder_with_otel, {
+        // Arrange: Create generic builder with test data
         let builder = GenericTestDataBuilder::<String, String>::new()
             .with_var("key1", "value1")
             .with_var("key2", "value2");
 
+        // Act: Build test data with OTEL span
         let (data, span) = builder.build_with_otel("test_build");
 
-        // Verify data
-        assert_eq!(data.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(data.get("key2"), Some(&"value2".to_string()));
+        // Assert: Verify data contains expected values
+        assert_eq_msg!(data.get("key1"), Some(&"value1".to_string()), "Key1 should match");
+        assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
 
-        // Validate OTEL span
+        // Assert: Validate OTEL span
         let validator = SpanValidator::new();
         assert_ok!(&validator.validate(&span));
 
-        // Verify span attributes
-        assert_eq!(span.name, "test_build");
-        assert_eq!(span.attributes.get("item_count"), Some(&"2".to_string()));
-        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
+        // Assert: Verify span attributes
+        assert_eq_msg!(&span.name, &"test_build".to_string(), "Span name should match");
+        assert_eq_msg!(
+            span.attributes.get("item_count"),
+            Some(&"2".to_string()),
+            "Item count should match"
+        );
+        assert_eq_msg!(
+            &span.status,
+            &chicago_tdd_tools::otel::types::SpanStatus::Ok,
+            "Span status should be Ok"
+        );
     });
 
-    chicago_test!(test_second_idea_assertion_builder, {
-        // 2nd Idea: Assertion builder for composable assertions
+    test!(test_second_idea_assertion_builder, {
+        // Arrange: Create assertion builder with test value
         let value = 42;
         let builder = AssertionBuilder::new(value).assert_that(|v| *v > 0).assert_eq(&42);
 
-        assert_eq!(builder.into_value(), 42);
+        // Act & Assert: Verify builder returns correct value
+        assert_eq_msg!(&builder.into_value(), &42, "Builder value should match");
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_second_idea_assertion_builder_with_otel, {
-        // 2nd Idea: Assertion builder with OTEL spans
+    test!(test_second_idea_assertion_builder_with_otel, {
+        // Arrange: Create assertion builder with test value and OTEL span
         let value = 42;
         let builder =
             AssertionBuilder::new(value).with_span("test_assertion").assert_that(|v| *v > 0);
 
+        // Act: Get span from builder
         let span = builder.into_span();
-        assert!(span.is_some());
+        assert_that(&span.is_some(), |v| *v, "Span should be present");
 
+        // Assert: Validate OTEL span
         let span = span.unwrap();
         let validator = SpanValidator::new();
         assert_ok!(&validator.validate(&span));
-        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
+        assert_eq_msg!(
+            &span.status,
+            &chicago_tdd_tools::otel::types::SpanStatus::Ok,
+            "Span status should be Ok"
+        );
     });
 
     // ========================================================================
     // 3rd Idea Tests: Type-level validation + OTEL + Weaver
     // ========================================================================
 
-    chicago_test!(test_third_idea_validated_builder, {
-        // 3rd Idea: Validated builder with type-level validation
+    test!(test_third_idea_validated_builder, {
+        // Arrange: Create validated builder with test data
         let builder = ValidatedTestDataBuilder::<()>::new()
             .with_var("key1", "value1")
             .with_var("key2", "value2");
 
+        // Act: Build test data
         let data = builder.build();
-        assert_eq!(data.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(data.get("key2"), Some(&"value2".to_string()));
+
+        // Assert: Verify data contains expected values
+        assert_eq_msg!(data.get("key1"), Some(&"value1".to_string()), "Key1 should match");
+        assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_third_idea_validated_builder_with_otel, {
-        // 3rd Idea: Validated builder with OTEL spans
+    test!(test_third_idea_validated_builder_with_otel, {
+        // Arrange: Create validated builder with test data and OTEL span
         let builder = ValidatedTestDataBuilder::<()>::new()
             .start_span("test_validated_build")
             .with_var("key1", "value1")
             .with_var("key2", "value2");
 
+        // Act: Build test data with OTEL span
         let (data, span_opt) = builder.build_with_otel();
 
-        // Verify data
-        assert_eq!(data.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(data.get("key2"), Some(&"value2".to_string()));
+        // Assert: Verify data contains expected values
+        assert_eq_msg!(data.get("key1"), Some(&"value1".to_string()), "Key1 should match");
+        assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
 
-        // Validate OTEL span
-        assert!(span_opt.is_some());
+        // Assert: Validate OTEL span exists and is valid
+        assert_that(&span_opt.is_some(), |v| *v, "Span should be present");
         let span = span_opt.unwrap();
         let validator = SpanValidator::new();
         assert_ok!(&validator.validate(&span));
 
-        // Verify span attributes
-        assert_eq!(span.attributes.get("item_count"), Some(&"2".to_string()));
-        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
+        // Assert: Verify span attributes
+        assert_eq_msg!(
+            span.attributes.get("item_count"),
+            Some(&"2".to_string()),
+            "Item count should match"
+        );
+        assert_eq_msg!(
+            &span.status,
+            &chicago_tdd_tools::otel::types::SpanStatus::Ok,
+            "Span status should be Ok"
+        );
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_third_idea_validated_assertion, {
-        // 3rd Idea: Validated assertion with OTEL spans and metrics
+    test!(test_third_idea_validated_assertion, {
+        // Arrange: Create validated assertion with test value
         let value = 42;
         let validated =
             ValidatedAssertion::new(value, "test_validated_assertion").assert_that(|v| *v > 0);
 
-        // Verify value
-        assert_eq!(*validated.into_value(), 42);
+        // Act: Get value from validated assertion
+        let result_value = validated.into_value();
 
-        // Validate OTEL span
+        // Assert: Verify value matches expected
+        assert_eq_msg!(result_value, &42, "Value should match");
+
+        // Assert: Validate OTEL span
         let span = validated.span();
         let span_validator = SpanValidator::new();
         assert_ok!(&span_validator.validate(span));
-        assert_eq!(span.status, chicago_tdd_tools::otel::types::SpanStatus::Ok);
+        assert_eq_msg!(
+            &span.status,
+            &chicago_tdd_tools::otel::types::SpanStatus::Ok,
+            "Span status should be Ok"
+        );
 
-        // Validate OTEL metric
+        // Assert: Validate OTEL metric
         let metric = validated.metric();
-        assert!(metric.is_some());
+        assert_that(&metric.is_some(), |v| *v, "Metric should be present");
         let metric = metric.unwrap();
         let metric_validator = MetricValidator::new();
         assert_ok!(&metric_validator.validate(metric));
-        assert_eq!(metric.name, "chicago_tdd_tools.assertions.total");
+        assert_eq_msg!(
+            &metric.name,
+            &"chicago_tdd_tools.assertions.total".to_string(),
+            "Metric name should match"
+        );
     });
 
     // ========================================================================
@@ -170,21 +216,26 @@ mod tests {
     // ========================================================================
 
     #[cfg(feature = "weaver")]
-    chicago_test!(test_weaver_validator_creation, {
-        // Test Weaver validator can be created
+    test!(test_weaver_validator_creation, {
+        // Arrange: Create registry path
         use std::path::PathBuf;
-
         let registry_path = PathBuf::from("registry/");
+
+        // Act: Create Weaver validator
         let validator = WeaverValidator::new(registry_path);
 
-        // Verify validator was created
-        assert!(!validator.is_running());
-        assert_eq!(validator.otlp_endpoint(), "http://127.0.0.1:4317");
+        // Assert: Verify validator was created correctly
+        assert_that(&!validator.is_running(), |v| *v, "Validator should not be running initially");
+        assert_eq_msg!(
+            &validator.otlp_endpoint(),
+            &"http://127.0.0.1:4317".to_string(),
+            "OTLP endpoint should match"
+        );
     });
 
     #[cfg(all(feature = "otel", feature = "weaver"))]
-    chicago_test!(test_otel_spans_validated_by_helper, {
-        // Test that OTEL spans can be validated using OtelTestHelper
+    test!(test_otel_spans_validated_by_helper, {
+        // Arrange: Create test OTEL span
         use chicago_tdd_tools::otel::types::{Span, SpanContext, SpanId, SpanStatus, TraceId};
 
         let span = Span {
@@ -202,13 +253,16 @@ mod tests {
             status: SpanStatus::Ok,
         };
 
+        // Act: Validate span using helper
         let helper = OtelTestHelper::new();
         helper.assert_spans_valid(&[span]);
+
+        // Assert: If no panic, span is valid (assert_spans_valid panics on invalid spans)
     });
 
     #[cfg(all(feature = "otel", feature = "weaver"))]
-    chicago_test!(test_otel_metrics_validated_by_helper, {
-        // Test that OTEL metrics can be validated using OtelTestHelper
+    test!(test_otel_metrics_validated_by_helper, {
+        // Arrange: Create test OTEL metric
         use chicago_tdd_tools::otel::types::{Metric, MetricValue};
         use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -221,7 +275,10 @@ mod tests {
             attributes: std::collections::BTreeMap::new(),
         };
 
+        // Act: Validate metric using helper
         let helper = OtelTestHelper::new();
         helper.assert_metrics_valid(&[metric]);
+
+        // Assert: If no panic, metric is valid (assert_metrics_valid panics on invalid metrics)
     });
 }

@@ -395,7 +395,7 @@ impl JtbdValidationSummary {
 }
 
 #[cfg(test)]
-#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
+#[allow(clippy::panic, clippy::unwrap_used, clippy::float_cmp)] // Test code - panic, unwrap, and float comparisons are acceptable
 mod tests {
     use super::*;
 
@@ -436,6 +436,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)] // Test code - unwrap is acceptable
     fn test_scenario_index() {
         // Test basic creation
         let index = ScenarioIndex::new(0).unwrap();
@@ -460,6 +461,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)] // Test code - unwrap is acceptable
     fn test_validate_scenario_with_index() {
         let mut validator = JtbdValidator::new();
 

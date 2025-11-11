@@ -10,10 +10,15 @@ async fn main() {
     println!("==================");
 
     // Arrange: Create fixture
-    let fixture = TestFixture::new().unwrap_or_else(|e| {
-        eprintln!("Failed to create fixture: {}", e);
-        std::process::exit(1);
-    });
+    // Note: TestFixture::new() returns Result - handle errors properly
+    let fixture = match TestFixture::new() {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Failed to create fixture: {}", e);
+            eprintln!("This should not happen in normal usage - check your environment");
+            std::process::exit(1);
+        }
+    };
 
     // Act: Use fixture
     let counter = fixture.test_counter();

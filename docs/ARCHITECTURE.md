@@ -28,11 +28,13 @@ Modules are organized into capability groups for better discoverability and main
 
 **Core Testing Infrastructure** (`core/`): Foundational primitives that all tests use.
 - `fixture`: Test fixtures (GATs, RAII, automatic cleanup)
+- `async_fixture`: Async fixture providers (async traits, Rust 1.75+)
 - `builders`: Fluent builders for test data (JSON/HashMap)
 - `assertions`: Assertion helpers (Result, predicate, range)
 - `macros`: Test macros (AAA pattern, async, fixture, performance)
-- `state`: Type-level AAA enforcement
+- `state`: Type-level AAA enforcement (sealed traits, zero-sized types)
 - `const_assert`: Compile-time assertions
+- `type_level`: Type-level arithmetic and compile-time validation (const generics, type-level arithmetic)
 
 **Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
 - `property`: Property-based testing (const generics, reproducible)
@@ -75,15 +77,21 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 **Use TestDataBuilder**: Use directly or extend with domain helpers. Pattern: `TestDataBuilder::new().with_var().build_json()` or extend with `with_workflow_data()`.
 
-**Compose Components**: Use fixture + builder + assertions together. Pattern: `chicago_fixture_test!` with `TestDataBuilder` and `assert_ok!`.
+**Compose Components**: Use fixture + builder + assertions together. Pattern: `fixture_test!` with `TestDataBuilder` and `assert_ok!`.
 
 ## Type Safety
 
 **GATs**: Flexible fixture creation with type-safe lifetimes. Pattern: `trait FixtureProvider { type Fixture<'a>; }`.
 
+**Async Traits**: Native async trait support (Rust 1.75+). Pattern: `trait AsyncFixtureProvider { async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>; }`.
+
 **Const Generics**: Compile-time configuration, zero runtime cost. Pattern: `PropertyTestGenerator<const MAX_ITEMS: usize>`.
 
 **Type State**: Compile-time AAA enforcement. Pattern: `TestState<Phase>` with `PhantomData<Phase>`. Prevents wrong method order.
+
+**Sealed Traits**: API safety and extensibility control. Pattern: `mod private { pub trait Sealed {} }` prevents external implementations.
+
+**Type-Level Arithmetic**: Runtime size/range validation with const generics. Pattern: `SizeValidatedArray<const SIZE: usize, const MAX_SIZE: usize>` (runtime validation, future: compile-time with Rust 1.79+). Marker types: `ValidatedSize`, `ValidatedRange` (documentation only, no validation).
 
 **HRTB**: Flexible predicates with any lifetime. Pattern: `F: for<'a> Fn(&'a T) -> bool`.
 
@@ -115,7 +123,7 @@ State-based testing (verify outputs, not implementation). Real collaborators (ac
 
 ## Procedural Macros
 
-**`#[chicago_test]`**: Zero-boilerplate tests with AAA validation. **`#[chicago_fixture]`**: Automatic fixture setup/teardown. **`#[derive(TestBuilder)]`**: Derive macro for fluent builders.
+**`#[tdd_test]`**: Zero-boilerplate tests with AAA validation. **`#[fixture]`**: Automatic fixture setup/teardown. **`#[derive(TestBuilder)]`**: Derive macro for fluent builders.
 
 **Rationale**: Compile-time validation, reduce boilerplate.
 

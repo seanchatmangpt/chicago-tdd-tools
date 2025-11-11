@@ -9,7 +9,7 @@ Essential patterns for 80% of common use cases. See [User Guide](USER_GUIDE.md) 
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_async_test!(test_async_operation, {
+async_test!(test_async_operation, {
     // Arrange
     let expected = 10;
     // Act
@@ -28,7 +28,7 @@ chicago_async_test!(test_async_operation, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_fixture_test!(test_with_fixture, fixture, {
+fixture_test!(test_with_fixture, fixture, {
     // Arrange: Fixture automatically created
     let counter = fixture.test_counter();
     // Act
@@ -43,7 +43,7 @@ chicago_fixture_test!(test_with_fixture, fixture, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_test!(test_data_builder, {
+test!(test_data_builder, {
     // Arrange: Create test data
     let data = TestDataBuilder::new()
         .with_var("key1", "value1")
@@ -60,7 +60,7 @@ chicago_test!(test_data_builder, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_test!(test_result_assertions, {
+test!(test_result_assertions, {
     // Arrange: Create Result
     let result: Result<u32, String> = Ok(42);
     // Assert: Use assertion macros for better error messages
@@ -79,7 +79,7 @@ chicago_test!(test_result_assertions, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_performance_test!(test_hot_path, {
+performance_test!(test_hot_path, {
     // Arrange: Set up test data
     let input = vec![1, 2, 3];
     // Act: Execute hot path and measure ticks

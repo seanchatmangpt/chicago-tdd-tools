@@ -2,23 +2,63 @@
 
 Multi-layered timeout enforcement system ensuring all unit tests complete within 1s. Integration tests excluded from normal iteration, use separate 30s timeout profile.
 
+## Chicago TDD Principles for Timeouts
+
+**Core Principle**: "Better to break fast than freeze forever" - Timeouts prevent infinite hangs and ensure fast feedback.
+
+### Key Principles
+
+1. **Fast Feedback Loop**: Unit tests must complete within 1s for rapid iteration during development
+2. **Defense in Depth**: Multiple timeout layers ensure enforcement even if one layer fails
+3. **Fail Fast**: Timeouts should fail immediately with clear error messages, not hang indefinitely
+4. **Consistent Configuration**: Timeout behavior should be consistent across all test macros
+5. **80/20 Approach**: Integration tests excluded from normal iteration (slow, require Docker)
+
+### Timeout SLAs
+
+- **Unit Tests**: 1s per test execution (actual: ~0.05s, well under SLA)
+- **Integration Tests**: 30s per test execution (for Docker operations, network calls)
+
 ## Architecture
 
-**Layer 1: Test-Level Timeouts (ntest crate)**: `chicago_test!` macro automatically adds `#[ntest::timeout(1000)]` attribute. ntest spawns tests in separate threads with timeout monitoring. Tests exceeding 1s are terminated.
+**Layer 1: Test-Level Timeouts (tokio::time::timeout)**: 
+- `async_test!`, `fixture_test!`, and `weaver_test!` macros wrap test bodies with `tokio::time::timeout(Duration::from_secs(1))` for unit tests
+- Use `async_test_with_timeout!`, `fixture_test_with_timeout!`, or `weaver_test_with_timeout!` for custom timeouts (e.g., 30s for integration tests)
+- Tokio's timeout cancels future if it doesn't complete within the specified duration
 
-**Layer 2: Async Test Timeouts (tokio::time::timeout)**: `chicago_async_test!` and `chicago_fixture_test!` macros wrap test bodies with `tokio::time::timeout(Duration::from_secs(1))`. Tokio's timeout cancels future if it doesn't complete within 1s.
+**Layer 2: Test Runner Timeouts (cargo-nextest)**: 
+- `.config/nextest.toml` defines two profiles:
+  - **Default Profile** (unit tests, 1s timeout): `slow-timeout = { period = "1s", terminate-after = 1 }`, excludes testcontainers integration tests
+  - **Integration Profile** (testcontainers tests, 30s timeout): `slow-timeout = { period = "30s", terminate-after = 1 }`, used only for testcontainers integration tests
+- cargo-nextest monitors test execution and kills slow tests immediately
 
-**Layer 3: Test Runner Timeouts (cargo-nextest)**: `.config/nextest.toml` defines two profiles. Default Profile (unit tests, 1s timeout): `slow-timeout = { period = "1s", terminate-after = 1 }`, `test-timeout = "1s"`, excludes testcontainers integration tests. Integration Profile (testcontainers tests, 30s timeout): `slow-timeout = { period = "30s", terminate-after = 1 }`, `test-timeout = "30s"`, used only for testcontainers integration tests. cargo-nextest monitors test execution and kills slow tests immediately.
+**Layer 3: Process-Level Timeouts (Unix timeout command)**: 
+- All test tasks wrapped with `timeout` command in Makefile.toml
+- Unit tests: `timeout 10s` (allows for parallel execution while maintaining per-test SLA)
+- Integration tests: `timeout 30s`
+- Unix `timeout` command kills entire process if it exceeds the timeout
 
-**Layer 4: Process-Level Timeouts (Unix timeout command)**: All test tasks wrapped with `timeout 1s` command in Makefile.toml. Unix `timeout` command kills entire process if it exceeds 1s.
+**Note**: Synchronous test macros (`test!`, `otel_test!`) rely on cargo-nextest profile timeouts rather than test-level timeouts. This allows cargo-nextest to apply the correct timeout based on the profile used (1s for unit tests, 30s for integration tests).
 
 ## Benefits
 
-**Defense in Depth**: Multiple layers ensure timeout enforcement even if one layer fails. **Fast Test Execution**: cargo-nextest provides parallel execution and better performance. **Clear Error Messages**: Each layer provides specific timeout violation messages. **SLA Compliance**: Guaranteed 1s maximum test execution time.
+**Defense in Depth**: Multiple layers ensure timeout enforcement even if one layer fails. **Fast Test Execution**: cargo-nextest provides parallel execution and better performance. **Clear Error Messages**: Each layer provides specific timeout violation messages. **SLA Compliance**: Guaranteed 1s maximum test execution time for unit tests, 30s for integration tests.
 
 ## Usage
 
 **Unit Tests Only**: `cargo make test` (fast iteration, excludes testcontainers, uses 1s timeout). `cargo make test-unit` (explicit). **Integration Tests Only**: `cargo make test-integration` (testcontainers, requires Docker, uses 30s timeout). **All Tests**: `cargo make test-all` (unit + integration). **With Verbose Output**: `cargo make test-verbose` (unit tests only).
+
+### Test Macro Timeout Configuration
+
+**Synchronous Tests** (`test!`, `otel_test!`):
+- No test-level timeout (relies on cargo-nextest profiles)
+- Unit tests: Use default profile (1s timeout)
+- Integration tests: Use integration profile (30s timeout)
+
+**Async Tests** (`async_test!`, `fixture_test!`, `weaver_test!`):
+- Default: 1s timeout for unit tests
+- For integration tests: Use `*_with_timeout!` variants with 30s timeout
+- Example: `async_test_with_timeout!(test_name, 30, { /* test body */ })`
 
 ## Testcontainers Integration Tests
 
@@ -34,17 +74,17 @@ If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to s
 
 ## Configuration Files
 
-`.config/nextest.toml`: cargo-nextest timeout configuration. `Makefile.toml`: Process-level timeout wrappers. `src/macros.rs`: Test macro timeout enforcement. `Cargo.toml`: ntest dependency for synchronous test timeouts.
+`.config/nextest.toml`: cargo-nextest timeout configuration. `Makefile.toml`: Process-level timeout wrappers. `src/core/macros/test.rs`: Test macro timeout enforcement. `Cargo.toml`: ntest dependency (not currently used, kept for backward compatibility).
 
 ## Troubleshooting
 
 **Unit Tests Timing Out**: Check test complexity (optimize slow operations), review async operations (ensure they're not blocking), verify timeout configuration in `.config/nextest.toml` (default profile), check for infinite loops or deadlocks.
 
-**Integration Tests Timing Out**: Verify Docker is running (`docker ps`), check container startup time (may need longer timeout), verify integration profile timeout in `.config/nextest.toml` (30s), consider mocking testcontainers for faster testing (disable feature).
+**Integration Tests Timing Out**: Verify Docker is running (`docker ps`), check container startup time (may need longer timeout), verify integration profile timeout in `.config/nextest.toml` (30s), consider mocking testcontainers for faster testing (disable feature), use `*_with_timeout!` macro variants with 30s timeout for async integration tests.
 
 **Testcontainers Tests Not Running**: Verify feature is enabled (`cargo make test-integration --features testcontainers`), check Docker is running (`docker ps`), verify test file exists (`tests/testcontainers_expert_tests.rs`), check feature gate (tests are gated with `#[cfg(all(feature = "testcontainers", test))]`).
 
-**Timeout Not Enforced**: Verify cargo-nextest is installed (`cargo install cargo-nextest`), check `.config/nextest.toml` exists and is valid, verify ntest dependency in `Cargo.toml`, check macro expansion (`cargo expand --test test_name`).
+**Timeout Not Enforced**: Verify cargo-nextest is installed (`cargo install cargo-nextest`), check `.config/nextest.toml` exists and is valid, check macro expansion (`cargo expand --test test_name`), for async tests verify `tokio::time::timeout` is being applied.
 
 ## Performance Impact
 
@@ -62,4 +102,6 @@ If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to s
 
 **Key Associations**: Timeout Enforcement = Multi-Layer = Defense in Depth. Unit Tests = 1s SLA = Fast Feedback. Integration Tests = 30s SLA = Docker Operations. Testcontainers = Excluded = 80/20 Approach.
 
-**Pattern**: All tests have timeout protection at multiple layers (test-level, async-level, runner-level, process-level). Unit tests use 1s timeout for fast feedback. Integration tests use 30s timeout for Docker operations. Testcontainers excluded from normal iteration for speed.
+**Pattern**: All tests have timeout protection at multiple layers (test-level for async tests, runner-level, process-level). Unit tests use 1s timeout for fast feedback. Integration tests use 30s timeout for Docker operations. Testcontainers excluded from normal iteration for speed.
+
+**Chicago TDD Alignment**: Timeouts enforce "better to break fast than freeze forever" principle, enable fast feedback loop (1s unit tests), maintain defense in depth (multiple layers), and support 80/20 approach (integration tests excluded from normal iteration).

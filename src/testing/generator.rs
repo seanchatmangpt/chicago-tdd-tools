@@ -16,6 +16,7 @@ impl TestGenerator {
     }
 
     /// Generate test from specification
+    #[allow(clippy::needless_pass_by_ref_mut)] // Preserve API compatibility
     pub fn generate_test(&mut self, name: &str, spec: &str) -> String {
         format!(
             "#[test]\nfn {}() {{\n    // Generated from: {}\n    // Test implementation needed\n}}\n",

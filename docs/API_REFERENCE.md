@@ -34,11 +34,11 @@ Assertion helpers. Result assertions, predicates with HRTB, range assertions.
 
 Test macros. AAA pattern enforcement. Zero-boilerplate tests.
 
-**Test Macros**: `chicago_test!(name, body)` (synchronous), `chicago_async_test!(name, body)` (async), `chicago_fixture_test!(name, fixture_var, body)` (auto fixture), `chicago_performance_test!(name, body)` (tick budget).
+**Test Macros**: `test!(name, body)` (synchronous), `async_test!(name, body)` (async), `fixture_test!(name, fixture_var, body)` (auto fixture), `performance_test!(name, body)` (tick budget).
 
 **Assertion Macros**: `assert_ok!(result)` / `assert_ok!(result, message)`, `assert_err!(result)` / `assert_err!(result, message)`, `assert_within_tick_budget!(ticks)` / `assert_within_tick_budget!(ticks, message)`, `assert_in_range!(value, min, max)` / `assert_in_range!(value, min, max, message)`, `assert_eq_msg!(actual, expected, message)`, `assert_guard_constraint!(condition, constraint_name)`.
 
-**Pattern**: `chicago_test!(test_name, { /* AAA */ })` for tests, `assert_ok!(&result)` for assertions.
+**Pattern**: `test!(test_name, { /* AAA */ })` for tests, `assert_ok!(&result)` for assertions.
 
 ## property
 

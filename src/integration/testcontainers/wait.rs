@@ -83,14 +83,15 @@ mod stubs {
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
+    use super::*;
+    use crate::test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
     #[cfg(not(feature = "testcontainers"))]
-    #[test]
-    fn test_with_wait_for_stub_returns_error() {
+    test!(test_with_wait_for_stub_returns_error, {
         use crate::integration::testcontainers::{ContainerClient, GenericContainer};
 
         let client = ContainerClient::new();
@@ -108,16 +109,15 @@ mod tests {
             }
             _ => panic!("Expected InvalidConfig error"),
         }
-    }
+    });
 
     // ========================================================================
     // 2. FEATURE-GATED CODE PATH TESTING
     // ========================================================================
 
-    #[test]
-    fn test_wait_module_compiles_without_feature() {
+    test!(test_wait_module_compiles_without_feature, {
         // Test that the module compiles and stub implementation works
         // This verifies the feature-gated code paths are correct
         assert!(true, "Module should compile without testcontainers feature");
-    }
+    });
 }

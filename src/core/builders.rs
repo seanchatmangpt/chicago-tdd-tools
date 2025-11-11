@@ -454,13 +454,13 @@ impl Default for FakeDataGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chicago_test;
+    use crate::test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test error handling (80% of bugs)
     // ========================================================================
 
-    chicago_test!(test_test_data_builder_build_json_empty, {
+    test!(test_test_data_builder_build_json_empty, {
         // Arrange: Create empty builder
         let builder = TestDataBuilder::new();
 
@@ -473,7 +473,7 @@ mod tests {
         assert!(json.is_object());
     });
 
-    chicago_test!(test_test_data_builder_build_json_with_data, {
+    test!(test_test_data_builder_build_json_with_data, {
         // Arrange: Create builder with data
         let builder = TestDataBuilder::new().with_var("key", "value");
 
@@ -490,7 +490,7 @@ mod tests {
     // 2. BUILDER PATTERN - Test fluent API
     // ========================================================================
 
-    chicago_test!(test_test_data_builder_new, {
+    test!(test_test_data_builder_new, {
         // Arrange: Create new builder
         let builder = TestDataBuilder::new();
 
@@ -501,7 +501,7 @@ mod tests {
         assert!(data.is_empty());
     });
 
-    chicago_test!(test_test_data_builder_with_var, {
+    test!(test_test_data_builder_with_var, {
         // Arrange: Create builder with var
         let builder = TestDataBuilder::new().with_var("key", "value");
 
@@ -512,7 +512,7 @@ mod tests {
         assert_eq!(data.get("key"), Some(&"value".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_with_order_data, {
+    test!(test_test_data_builder_with_order_data, {
         // Arrange: Create builder with order data
         let builder = TestDataBuilder::new().with_order_data("order-123", "100.00");
 
@@ -526,7 +526,7 @@ mod tests {
         assert_eq!(data.get("order_status"), Some(&"pending".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_with_customer_data, {
+    test!(test_test_data_builder_with_customer_data, {
         // Arrange: Create builder with customer data
         let builder = TestDataBuilder::new().with_customer_data("customer-456");
 
@@ -538,7 +538,7 @@ mod tests {
         assert_eq!(data.get("customer_email"), Some(&"customer@example.com".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_with_approval_data, {
+    test!(test_test_data_builder_with_approval_data, {
         // Arrange: Create builder with approval data
         let builder = TestDataBuilder::new().with_approval_data("request-789", "50.00");
 
@@ -551,7 +551,7 @@ mod tests {
         assert_eq!(data.get("condition"), Some(&"true".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_chaining, {
+    test!(test_test_data_builder_chaining, {
         // Arrange: Create builder with chained methods
         let builder = TestDataBuilder::new()
             .with_var("key1", "value1")
@@ -568,7 +568,7 @@ mod tests {
         assert_eq!(data.get("order_id"), Some(&"order-123".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_default, {
+    test!(test_test_data_builder_default, {
         // Arrange: Create default builder
         let builder = TestDataBuilder::default();
 
@@ -583,7 +583,7 @@ mod tests {
     // 3. GENERIC TEST DATA BUILDER - Test generic builder
     // ========================================================================
 
-    chicago_test!(test_generic_test_data_builder_new, {
+    test!(test_generic_test_data_builder_new, {
         // Arrange: Create generic builder
         let builder: GenericTestDataBuilder<String, String> = GenericTestDataBuilder::new();
 
@@ -594,7 +594,7 @@ mod tests {
         assert!(data.is_empty());
     });
 
-    chicago_test!(test_generic_test_data_builder_with_var, {
+    test!(test_generic_test_data_builder_with_var, {
         // Arrange: Create generic builder with var
         let builder: GenericTestDataBuilder<String, String> =
             GenericTestDataBuilder::new().with_var("key", "value");
@@ -606,7 +606,7 @@ mod tests {
         assert_eq!(data.get("key"), Some(&"value".to_string()));
     });
 
-    chicago_test!(test_generic_test_data_builder_build_json, {
+    test!(test_generic_test_data_builder_build_json, {
         // Arrange: Create generic builder with var
         let builder: GenericTestDataBuilder<String, String> =
             GenericTestDataBuilder::new().with_var("key", "value");
@@ -620,7 +620,7 @@ mod tests {
         assert_eq!(json["key"], "value");
     });
 
-    chicago_test!(test_generic_test_data_builder_default, {
+    test!(test_generic_test_data_builder_default, {
         // Arrange: Create default generic builder
         let builder: GenericTestDataBuilder<String, String> = GenericTestDataBuilder::default();
 
@@ -635,7 +635,7 @@ mod tests {
     // 4. VALIDATED TEST DATA BUILDER - Test validated builder
     // ========================================================================
 
-    chicago_test!(test_validated_test_data_builder_new, {
+    test!(test_validated_test_data_builder_new, {
         // Arrange: Create validated builder
         let builder: ValidatedTestDataBuilder<()> = ValidatedTestDataBuilder::new();
 
@@ -646,7 +646,7 @@ mod tests {
         assert!(data.is_empty());
     });
 
-    chicago_test!(test_validated_test_data_builder_with_var, {
+    test!(test_validated_test_data_builder_with_var, {
         // Arrange: Create validated builder with var
         let builder: ValidatedTestDataBuilder<()> =
             ValidatedTestDataBuilder::new().with_var("key", "value");
@@ -658,7 +658,7 @@ mod tests {
         assert_eq!(data.get("key"), Some(&"value".to_string()));
     });
 
-    chicago_test!(test_validated_test_data_builder_default, {
+    test!(test_validated_test_data_builder_default, {
         // Arrange: Create default validated builder
         let builder: ValidatedTestDataBuilder<()> = ValidatedTestDataBuilder::default();
 
@@ -673,7 +673,7 @@ mod tests {
     // 5. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    chicago_test!(test_test_data_builder_empty_key, {
+    test!(test_test_data_builder_empty_key, {
         // Arrange: Create builder with empty key
         let builder = TestDataBuilder::new().with_var("", "value");
 
@@ -684,7 +684,7 @@ mod tests {
         assert_eq!(data.get(""), Some(&"value".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_empty_value, {
+    test!(test_test_data_builder_empty_value, {
         // Arrange: Create builder with empty value
         let builder = TestDataBuilder::new().with_var("key", "");
 
@@ -695,7 +695,7 @@ mod tests {
         assert_eq!(data.get("key"), Some(&"".to_string()));
     });
 
-    chicago_test!(test_test_data_builder_overwrite, {
+    test!(test_test_data_builder_overwrite, {
         // Arrange: Create builder with overwriting vars
         let builder = TestDataBuilder::new().with_var("key", "value1").with_var("key", "value2");
 
@@ -707,7 +707,7 @@ mod tests {
         assert_eq!(data.len(), 1);
     });
 
-    chicago_test!(test_test_data_builder_large_data, {
+    test!(test_test_data_builder_large_data, {
         // Arrange: Create builder with large dataset
         let mut builder = TestDataBuilder::new();
         for i in 0..100 {

@@ -18,7 +18,7 @@ See [Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc) for complet
 
 ## Dog Fooding
 
-The framework tests itself using its own tools. All framework tests use `chicago_test!` macros and framework features, demonstrating real-world usage patterns and validating framework ergonomics.
+The framework tests itself using its own tools. All framework tests use `test!` macros and framework features, demonstrating real-world usage patterns and validating framework ergonomics.
 
 See [Dog Fooding Documentation](docs/DOG_FOODING.md) for details.
 
@@ -38,10 +38,38 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools" }
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
+**Note**: For optional features (property-testing, testcontainers, weaver, etc.), enable them:
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["property-testing", "testcontainers"] }
+```
+
 **Step 3**: Verify installation:
 ```bash
 cargo make check
 ```
+
+### Optional Features
+
+Enable features as needed:
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = [
+        "property-testing",  # Property-based testing
+        "testcontainers",     # Docker container support
+        "weaver",            # Weaver live validation
+        "otel"               # OTEL span/metric validation
+    ]
+}
+```
+
+**Common Feature Combinations**:
+- **Basic testing**: No features needed (default)
+- **Property testing**: `property-testing`
+- **Integration testing**: `testcontainers`
+- **Observability testing**: `otel`, `weaver`
 
 ### Your First Test
 
@@ -49,7 +77,7 @@ cargo make check
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_test!(test_example, {
+test!(test_example, {
     // Arrange: Set up test data
     let input = 5;
     
@@ -65,7 +93,7 @@ chicago_test!(test_example, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_async_test!(test_async_example, {
+async_test!(test_async_example, {
     // Arrange: Set up test data
     let expected = 10;
     
@@ -84,7 +112,7 @@ chicago_async_test!(test_async_example, {
 ```rust
 use chicago_tdd_tools::prelude::*;
 
-chicago_fixture_test!(test_with_fixture, fixture, {
+fixture_test!(test_with_fixture, fixture, {
     // Arrange: Fixture automatically created
     let counter = fixture.test_counter();
     
@@ -108,7 +136,7 @@ cargo make test
 - **Fixtures**: Reusable test fixtures with state management and automatic cleanup
 - **Builders**: Fluent builders for test data (JSON, HashMap, domain-specific)
 - **Assertions**: Comprehensive assertion utilities (`assert_ok!`, `assert_err!`, `assert_in_range!`, etc.)
-- **Macros**: AAA pattern enforcement (`chicago_test!`, `chicago_async_test!`, `chicago_fixture_test!`)
+- **Macros**: AAA pattern enforcement (`test!`, `async_test!`, `fixture_test!`)
 - **Performance Testing**: RDTSC-based tick measurement and budget validation
 - **Guards**: Constraint enforcement (`MAX_RUN_LEN` ≤ 8, `MAX_BATCH_SIZE`)
 - **JTBD Validation**: Jobs To Be Done validation framework
@@ -116,13 +144,15 @@ cargo make test
 
 ### Optional Features (Enable in `Cargo.toml`)
 
-- **`property-testing`**: Property-based testing with proptest (random test generation)
+#### Individual Features
+
+- **`property-testing`**: Property-based testing with proptest (random test generation, finding edge cases)
 - **`mutation-testing`**: Mutation testing for test quality validation
-- **`snapshot-testing`**: Snapshot testing with insta (output comparison)
-- **`fake-data`**: Fake data generation for test data
-- **`concurrency-testing`**: Concurrency testing with loom (thread model checking)
-- **`parameterized-testing`**: Parameterized tests with rstest
-- **`cli-testing`**: CLI testing with trycmd (command execution testing)
+- **`snapshot-testing`**: Snapshot testing with insta (output comparison, regression testing)
+- **`fake-data`**: Fake data generation for test data (realistic test data creation)
+- **`concurrency-testing`**: Concurrency testing with loom (thread model checking, deterministic testing)
+- **`parameterized-testing`**: Parameterized tests with rstest (multiple inputs, test matrices)
+- **`cli-testing`**: CLI testing with trycmd (command execution testing, golden files)
 - **`testcontainers`**: Docker container support for integration testing
 - **`otel`**: OpenTelemetry span/metric validation
 - **`weaver`**: Weaver live validation integration (requires `otel`)
@@ -130,12 +160,41 @@ cargo make test
 - **`benchmarking`**: Criterion benchmarking support
 - **`workflow-engine`**: Workflow-specific features
 
-**Example**: Enable multiple features:
+#### Feature Groups (Convenience Bundles)
+
+For better DX, common feature combinations are available as feature groups:
+
+- **`testing-extras`**: Most common advanced testing features (`property-testing`, `snapshot-testing`, `fake-data`)
+  - Use when: You want comprehensive test coverage with property-based and snapshot testing
+- **`testing-full`**: All testing features (property, snapshot, mutation, concurrency, parameterized, cli, fake-data)
+  - Use when: You need maximum testing capabilities for comprehensive test suites
+- **`observability-full`**: Complete observability stack (`otel`, `weaver`)
+  - Use when: You need full observability validation with Weaver integration
+- **`integration-full`**: Full integration testing (`testcontainers`, `weaver`)
+  - Use when: You need integration testing with Docker containers and Weaver observability
+
+**Examples**: Enable features individually or use feature groups:
+
 ```toml
+# Individual features
 [dev-dependencies]
 chicago-tdd-tools = { 
     path = "../chicago-tdd-tools",
-    features = ["property-testing", "testcontainers", "weaver"]
+    features = ["property-testing", "snapshot-testing", "fake-data"]
+}
+
+# Feature groups (recommended for common combinations)
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["testing-extras"]  # Enables property-testing, snapshot-testing, fake-data
+}
+
+# Combine feature groups with individual features
+[dev-dependencies]
+chicago-tdd-tools = { 
+    path = "../chicago-tdd-tools",
+    features = ["testing-extras", "testcontainers"]  # testing-extras + testcontainers
 }
 ```
 

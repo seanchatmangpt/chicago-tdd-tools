@@ -7,7 +7,7 @@ This command guides agents to "go to the source" (Gemba) - work directly with ac
 ## Workflow Overview
 
 ```
-Step 1: Go to Gemba → Step 2: Observe Actual Behavior → Step 3: Verify Claims → Step 4: Document Discrepancies → Step 5: Fix at Source
+Step 1: Go to Gemba → Step 2: Observe Actual Behavior → Step 3: Verify Claims → Step 4: Create Todo List for Fixing Discrepancies → Step 5: Fix at Source
 ```
 
 ## Step-by-Step Instructions
@@ -161,9 +161,11 @@ cargo make test
 
 ---
 
-### Step 4: Document Discrepancies
+### Step 4: Create Todo List for Fixing Discrepancies
 
-**Action**: Record differences between claims and actual behavior.
+**CRITICAL**: Do NOT just document discrepancies. Create todos and fix them.
+
+**Action**: Create 10+ item todo list for fixing all discrepancies found.
 
 **Discrepancy types**:
 1. **Documentation doesn't match code** - Docs say one thing, code does another
@@ -171,29 +173,50 @@ cargo make test
 3. **Test names don't match test behavior** - Test name claims one thing, test does another
 4. **Assumptions don't match reality** - Assumed behavior doesn't match actual
 
-**Action**: Create discrepancy list
+**Action**: Create todo list for fixing discrepancies
 
 ```markdown
-## Gemba Discrepancies
+## Gemba Discrepancy Fix Todos (10+ items)
 
-### Documentation vs Code
-- [ ] `docs/API_REFERENCE.md` says `parse_number` accepts empty strings, but code returns `Err` for empty
+**Documentation vs Code Fixes**:
+- [ ] Fix: `docs/API_REFERENCE.md` says `parse_number` accepts empty strings, but code returns `Err`
   - File: `src/parser.rs:45`
   - Actual behavior: Returns `ParseError::EmptyInput` for empty string
-  - Claim: Documentation says empty string is valid
+  - Decision: Code is correct, update documentation
+  - Action: Update `docs/API_REFERENCE.md` to match code
+  - Verify: Documentation now matches code
 
-### Comments vs Behavior
-- [ ] Comment says "handles all errors" but code panics on overflow
+**Comments vs Behavior Fixes**:
+- [ ] Fix: Comment says "handles all errors" but code panics on overflow
   - File: `src/calculator.rs:123`
   - Actual behavior: `unwrap()` on overflow, panics
-  - Claim: Comment says errors are handled
+  - Decision: Code is wrong, fix code to handle errors
+  - Action: Replace `unwrap()` with proper error handling
+  - Verify: Code handles errors correctly
 
-### Test Names vs Behavior
-- [ ] Test name says "test_valid_input" but test uses invalid input
+**Test Names vs Behavior Fixes**:
+- [ ] Fix: Test name says "test_valid_input" but test uses invalid input
   - File: `tests/parser_test.rs:34`
   - Actual behavior: Test uses empty string (invalid)
-  - Claim: Test name implies valid input
+  - Decision: Test name is wrong, update test name
+  - Action: Rename test to `test_invalid_input_empty_string`
+  - Verify: Test name matches test behavior
+
+**Verification**:
+- [ ] Verify all discrepancies fixed: Run `cargo make test`
+- [ ] Verify documentation matches code: Review updated docs
+- [ ] Verify comments match behavior: Review updated comments
+- [ ] Verify test names match behavior: Review updated tests
 ```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (fix each discrepancy)
+3. Mark todos as completed as fixes are implemented
+4. Verify each fix works before moving to next
+5. Continue until all discrepancies fixed
+
+**Principle**: Fix discrepancies at source, don't just document them. Todos track progress, fixes eliminate discrepancies.
 
 ---
 
@@ -303,3 +326,15 @@ cargo make test
 
 **DfLSS alignment**: Gemba walk (going to source) supports DfLSS (Design for Lean Six Sigma) by preventing both waste (outdated information causes rework) AND defects (wrong assumptions cause bugs). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
 
+
+## Command Execution Pattern
+
+**CRITICAL**: Gemba walk commands must:
+1. **Create 10+ item todo list** - Not documents/reports
+2. **Execute todos** - Fix discrepancies at source, not just document them
+3. **Verify fixes** - Test that fixes work
+4. **Complete todos** - Mark todos as done as fixes complete
+
+**Principle**: Fix discrepancies at source, don't document them. Todos track progress, fixes eliminate discrepancies.
+
+---

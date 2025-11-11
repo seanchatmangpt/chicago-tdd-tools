@@ -240,3 +240,41 @@ const COMMAND_NOT_FOUND_EXIT_CODE: i32 = 127;
 
 **Kaizen Result**: Small, focused improvements completed successfully. Code is more readable, self-documenting, and easier to maintain. All improvements follow the established pattern for future consistency.
 
+---
+
+## Additional Kaizen Improvements
+
+### Improvement 4: Fix Weaver Integration Test Import Path ✅
+
+**Date**: 2024-12-19  
+**Category**: Error Prevention  
+**Location**: `tests/weaver_integration.rs`  
+**Issue**: Test file had compilation error - `unresolved import chicago_tdd_tools::weaver`  
+**Value**: Fixes compilation error, prevents test failures, improves maintainability
+
+**Current code** (before):
+```rust
+use chicago_tdd_tools::weaver::{send_test_span_to_weaver, WeaverValidator};
+```
+
+**Improvement**: Update import path to correct module location
+
+**Changes**:
+- Updated import: `chicago_tdd_tools::weaver` → `chicago_tdd_tools::observability::weaver`
+- Added documentation comment explaining import pattern
+
+**Result**: 
+- ✅ Test compiles successfully
+- ✅ All tests still pass (257 passed, 10 skipped)
+- ✅ Import pattern documented for future reference
+
+**Pattern established**: Use full module path `chicago_tdd_tools::observability::weaver` for Weaver types. The `weaver` module is not re-exported at crate root - use the capability group path.
+
+**Verification**:
+- ✅ Code compiles: `cargo make check` passes
+- ✅ Tests pass: `cargo make test` shows 257 passed
+- ✅ Test compiles: `cargo test --test weaver_integration --no-run` succeeds
+- ✅ No regressions: All existing tests still pass
+
+---
+

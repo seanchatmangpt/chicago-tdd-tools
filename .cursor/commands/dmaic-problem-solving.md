@@ -311,26 +311,50 @@ chicago_test!(test_concurrent_increment_no_race, {
 });
 ```
 
-#### 5.2: Document Solution
+#### 5.2: Create Todo List for Solution Implementation
 
-**Action**: Document what was fixed and why.
+**CRITICAL**: Do NOT write documents or reports. Create todos and execute them.
 
-**Documentation**:
-- Problem statement
-- Root cause
-- Solution implemented
-- Why solution works
-- How to prevent similar issues
+**Action**: Create 10+ item todo list for implementing solution and prevention measures.
 
-**Example**:
-```rust
-/// Counter with thread-safe increment.
-/// 
-/// **DMAIC Fix**: Expanded lock scope to prevent race condition.
-/// Root cause: Lock was released before increment completed.
-/// Solution: Keep lock for entire increment operation.
-/// Prevention: Test ensures no race condition (test_concurrent_increment_no_race).
+**Todo list creation**:
+1. Create todos for solution implementation steps
+2. Create todos for prevention measures (tests, controls)
+3. Create todos for verification steps
+4. Prioritize by impact (solution first, then prevention)
+5. Execute todos systematically
+
+**Example todo list**:
+```markdown
+## DMAIC Solution Todos (10+ items)
+
+**Solution Implementation**:
+- [ ] Implement fix: Expand lock scope to include entire increment operation
+- [ ] Update code: Keep lock for entire critical section
+- [ ] Verify compilation: `cargo make check`
+- [ ] Run tests: `cargo make test`
+- [ ] Verify fix works: Run test 100 times, verify 0 failures
+
+**Prevention Measures**:
+- [ ] Add test: `test_lock_scope_covers_operation` to catch pattern
+- [ ] Add code review checklist item: Lock scope covers entire operation
+- [ ] Add inline comment: Document why lock scope is important
+- [ ] Verify test catches pattern: Test fails if lock scope too narrow
+
+**Verification**:
+- [ ] Verify problem doesn't occur: Run test 100 times, 0 failures
+- [ ] Verify no regressions: All other tests still pass
+- [ ] Verify prevention works: Test catches pattern
 ```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement solution, add prevention)
+3. Mark todos as completed as work is done
+4. Verify each step works before moving to next
+5. Continue until all todos complete
+
+**Principle**: Execute solution and prevention, don't document them. Todos track progress, fixes prevent recurrence.
 
 #### 5.3: Establish Controls
 
@@ -342,25 +366,32 @@ chicago_test!(test_concurrent_increment_no_race, {
 - **Monitoring**: Track test failure rates
 - **Standards**: Document pattern to avoid
 
-**Example controls**:
+**Example controls** (implement as todos, not markdown):
 ```markdown
-## Controls Established
+## Controls Todos (10+ items)
 
-**Code Review Checklist**:
-- [ ] Lock scope covers entire critical section
-- [ ] No operations between lock acquire and release
+**Code Review Controls**:
+- [ ] Add checklist item: Lock scope covers entire critical section
+- [ ] Add checklist item: No operations between lock acquire and release
+- [ ] Update code review process to include checklist
 
-**Test Strategy**:
-- Run flaky test detection in CI
-- Alert if failure rate > 1%
+**Test Strategy Controls**:
+- [ ] Add flaky test detection to CI pipeline
+- [ ] Configure alert if failure rate > 1%
+- [ ] Verify alerts work correctly
 
-**Monitoring**:
-- Track test failure rates over time
-- Investigate if failure rate increases
+**Monitoring Controls**:
+- [ ] Set up test failure rate tracking
+- [ ] Configure monitoring dashboard
+- [ ] Set up alerts for failure rate increases
 
-**Standards**:
-- Document: "Lock scope must cover entire operation, not just read"
+**Standards Controls**:
+- [ ] Add standard to coding guidelines: "Lock scope must cover entire operation"
+- [ ] Update team documentation with standard
+- [ ] Verify standard is followed in code reviews
 ```
+
+**CRITICAL**: Implement controls as todos and execute them. Don't just document controls - actually implement them.
 
 #### 5.4: Monitor
 
@@ -426,3 +457,15 @@ cargo make test test_concurrent_access
 
 **DfLSS alignment**: When designing solutions in the Improve step, use DfLSS (Design for Lean Six Sigma) principles - address both efficiency (waste elimination) AND quality (defect prevention) from the start. Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. Using the wrong methodology is itself a root cause. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for detailed explanation.
 
+
+## Command Execution Pattern
+
+**CRITICAL**: DMAIC commands must:
+1. **Create 10+ item todo list** - Not documents/reports
+2. **Execute todos** - Implement solutions and controls, not document them
+3. **Verify fixes** - Test that solutions work
+4. **Complete todos** - Mark todos as done as work completes
+
+**Principle**: Execute solutions and controls, don't document them. Todos track progress, solutions fix problems.
+
+---

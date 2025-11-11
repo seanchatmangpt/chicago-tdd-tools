@@ -19,11 +19,11 @@ fn main() {
 #[cfg(test)]
 mod otel_tests {
     use chicago_tdd_tools::otel::{test_helpers, OtelTestHelper, SpanValidator};
-    use chicago_tdd_tools::{chicago_otel_test, prelude::*};
+    use chicago_tdd_tools::{otel_test, prelude::*};
     use std::collections::BTreeMap;
 
-    // Example 1: Basic OTEL span validation using chicago_otel_test! macro
-    chicago_otel_test!(test_otel_span_validation_basic, {
+    // Example 1: Basic OTEL span validation using otel_test! macro
+    otel_test!(test_otel_span_validation_basic, {
         // Arrange: Create test span using helper function
         let span = test_helpers::create_test_span("test.operation");
 
@@ -37,7 +37,7 @@ mod otel_tests {
     });
 
     // Example 2: OTEL span validation with custom attributes
-    chicago_otel_test!(test_otel_span_with_attributes, {
+    otel_test!(test_otel_span_with_attributes, {
         // Arrange: Create span with custom attributes
         let mut attrs = BTreeMap::new();
         attrs.insert("service.name".to_string(), "test-service".to_string());
@@ -57,7 +57,7 @@ mod otel_tests {
     });
 
     // Example 3: OTEL metric validation
-    chicago_otel_test!(test_otel_metric_validation, {
+    otel_test!(test_otel_metric_validation, {
         // Arrange: Create test metric using helper function
         let metric = test_helpers::create_test_metric("test.counter", 42);
 
@@ -76,7 +76,7 @@ mod otel_tests {
     });
 
     // Example 4: OTEL span validation with error path testing
-    chicago_otel_test!(test_otel_span_validation_error_path, {
+    otel_test!(test_otel_span_validation_error_path, {
         // Arrange: Create span with invalid trace ID (zero)
         use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
         let context = SpanContext::root(TraceId(0), SpanId(67890), 1); // Invalid: trace ID is zero
@@ -110,12 +110,12 @@ mod otel_tests {
 #[cfg(feature = "weaver")]
 #[cfg(test)]
 mod weaver_tests {
-    use chicago_tdd_tools::weaver::WeaverValidator;
-    use chicago_tdd_tools::{chicago_weaver_test, prelude::*};
+    use chicago_tdd_tools::observability::weaver::WeaverValidator;
+    use chicago_tdd_tools::{prelude::*, weaver_test};
     use std::path::PathBuf;
 
-    // Example 1: Basic Weaver validation using chicago_weaver_test! macro
-    chicago_weaver_test!(test_weaver_validator_creation, {
+    // Example 1: Basic Weaver validation using weaver_test! macro
+    weaver_test!(test_weaver_validator_creation, {
         // Arrange: Create validator with registry path
         let registry_path = PathBuf::from("registry/");
 
@@ -128,7 +128,7 @@ mod weaver_tests {
     });
 
     // Example 2: Weaver validation with error handling
-    chicago_weaver_test!(test_weaver_validator_error_handling, {
+    weaver_test!(test_weaver_validator_error_handling, {
         // Arrange: Create validator with invalid registry path
         let invalid_path = PathBuf::from("/nonexistent/registry/path");
         let mut validator = WeaverValidator::new(invalid_path);
@@ -139,7 +139,11 @@ mod weaver_tests {
         // Assert: Verify start fails with appropriate error
         assert!(start_result.is_err(), "Start should fail with invalid registry path");
         match start_result {
-            Err(chicago_tdd_tools::weaver::WeaverValidationError::RegistryNotFound(_)) => {
+            Err(
+                chicago_tdd_tools::observability::weaver::WeaverValidationError::RegistryNotFound(
+                    _,
+                ),
+            ) => {
                 // Expected error variant
             }
             Err(e) => panic!("Expected RegistryNotFound error, got: {:?}", e),
@@ -148,7 +152,7 @@ mod weaver_tests {
     });
 
     // Example 3: Weaver validation with custom configuration
-    chicago_weaver_test!(test_weaver_validator_custom_config, {
+    weaver_test!(test_weaver_validator_custom_config, {
         // Arrange: Create validator with custom ports
         let registry_path = PathBuf::from("registry/");
         let validator = WeaverValidator::with_config(registry_path, 4318, 8081);
@@ -165,13 +169,13 @@ mod weaver_tests {
 #[cfg(feature = "weaver")]
 #[cfg(test)]
 mod integration_tests {
+    use chicago_tdd_tools::observability::weaver::WeaverValidator;
     use chicago_tdd_tools::otel::{test_helpers, OtelTestHelper};
-    use chicago_tdd_tools::weaver::WeaverValidator;
-    use chicago_tdd_tools::{chicago_weaver_test, prelude::*};
+    use chicago_tdd_tools::{prelude::*, weaver_test};
     use std::path::PathBuf;
 
     // Example: Integration test combining OTEL and Weaver
-    chicago_weaver_test!(test_otel_weaver_integration, {
+    weaver_test!(test_otel_weaver_integration, {
         // Arrange: Create test span and Weaver validator
         let span = test_helpers::create_test_span("test.operation");
         let registry_path = PathBuf::from("registry/");

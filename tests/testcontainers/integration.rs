@@ -17,7 +17,7 @@ mod integration_tests {
     mod common {
         include!("../common.rs");
     }
-    use chicago_tdd_tools::chicago_test;
+    use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_err;
     use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::testcontainers::*;
@@ -32,7 +32,7 @@ mod integration_tests {
     // 1. RESOURCE CLEANUP TESTING - Test cleanup in all code paths
     // ========================================================================
 
-    chicago_test!(container_cleanup_all_paths, {
+    test!(container_cleanup_all_paths, {
         // Arrange: Set up Docker
         require_docker();
 
@@ -70,11 +70,11 @@ mod integration_tests {
     // 2. INTEGRATION TESTING - Test real container interactions
     // ========================================================================
 
-    chicago_test!(integration_real_container_exec, {
+    test!(integration_real_container_exec, {
         // Arrange: Set up Docker and create real container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: Execute real commands

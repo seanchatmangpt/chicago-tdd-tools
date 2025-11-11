@@ -7,7 +7,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 
-/// Procedural macro for Chicago TDD tests
+/// Procedural macro for TDD tests
 ///
 /// Automatically:
 /// - Detects AAA sections via AST analysis
@@ -15,7 +15,7 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 /// - Validates AAA pattern at compile time
 /// - Auto-generates test names from function names
 #[proc_macro_attribute]
-pub fn chicago_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let fn_vis = &input.vis;
@@ -55,14 +55,14 @@ pub fn chicago_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Procedural macro for Chicago TDD fixtures
+/// Procedural macro for TDD fixtures
 ///
 /// Automatically:
 /// - Generates fixture setup/teardown code
 /// - Provides type-safe fixture state management
 /// - Validates fixture lifecycle at compile time
 #[proc_macro_attribute]
-pub fn chicago_fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let fn_vis = &input.vis;

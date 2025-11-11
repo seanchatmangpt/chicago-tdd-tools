@@ -29,9 +29,11 @@ mod tests {
     mod common {
         include!("../common.rs");
     }
-    use chicago_tdd_tools::chicago_test;
-    use chicago_tdd_tools::assert_err;
+    use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_ok;
+    use chicago_tdd_tools::assert_err;
+    use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::assertions::assert_that;
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
     use std::collections::HashMap;
@@ -47,37 +49,39 @@ mod tests {
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
-    chicago_test!(exec_error_paths, {
+    test!(exec_error_paths, {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: Try to exec a non-existent command
         let result = container.exec("nonexistent_command_xyz", &[]);
 
-        // Assert: Should fail with CommandExecutionFailed
-        assert_err!(&result, "Executing non-existent command should fail");
-        match result {
-            Err(TestcontainersError::CommandExecutionFailed(_)) => {
-                // Expected error variant
-            }
-            Err(e) => panic!("Expected CommandExecutionFailed, got: {:?}", e),
-            Ok(_) => panic!("Expected error, got success"),
-        }
+        // Assert: Exec should succeed (container is running), but command should fail (exit_code != 0)
+        assert_ok!(&result, "Exec should succeed even if command doesn't exist");
+        let exec_result = result.expect("Exec should succeed");
+        assert_that(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
+        assert_that(
+            &(exec_result.stderr.contains("executable file not found") || exec_result.stdout.contains("executable file not found")),
+            |v| *v,
+            "Error message should indicate command not found"
+        );
     });
 
-    chicago_test!(exec_error_recovery, {
+    test!(exec_error_recovery, {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
-        // Act: First exec fails (invalid command)
+        // Act: First exec fails (invalid command) - exec succeeds but command fails
         let result1 = container.exec("nonexistent_command", &[]);
-        assert_err!(&result1, "First exec should fail");
+        assert_ok!(&result1, "Exec should succeed even if command doesn't exist");
+        let exec_result1 = result1.expect("Exec should succeed");
+        assert_that(&exec_result1.exit_code, |v| *v != 0, "Invalid command should have non-zero exit code");
 
         // Act: Container should still be usable after error
         let result2 = container.exec("echo", &["recovery", "test"]);
@@ -85,68 +89,211 @@ mod tests {
         // Assert: Container should be usable after error
         assert_ok!(&result2, "Container should be usable after error");
         let exec_result2 = result2.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result2.exit_code, 0, "Recovery exec should succeed");
-        assert!(exec_result2.stdout.contains("recovery"), "Should capture recovery output");
+        assert_eq_msg!(&exec_result2.exit_code, &0, "Recovery exec should succeed");
+        assert_that(&exec_result2.stdout.contains("recovery"), |v| *v, "Should capture recovery output");
     });
 
     // ========================================================================
     // 2. BOUNDARY CONDITION TESTING - Test edge cases
     // ========================================================================
 
-    chicago_test!(exec_boundary_conditions, {
+    test!(exec_boundary_conditions, {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act & Assert: Empty command args
         let result = container.exec("echo", &[]);
         assert_ok!(&result, "Exec with empty args should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.exit_code, 0, "Empty echo should succeed");
+        assert_eq_msg!(&exec_result.exit_code, &0, "Empty echo should succeed");
 
         // Act & Assert: Single arg
         let result = container.exec("echo", &["hello"]);
         assert_ok!(&result, "Exec with single arg should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.stdout.trim(), "hello");
+        assert_eq_msg!(&exec_result.stdout.trim(), "hello", "Echo output should match");
 
         // Act & Assert: Multiple args
         let result = container.exec("echo", &["hello", "world", "test"]);
         assert_ok!(&result, "Exec with multiple args should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert!(exec_result.stdout.contains("hello"));
-        assert!(exec_result.stdout.contains("world"));
+        assert_that(&exec_result.stdout.contains("hello"), |v| *v, "Output should contain hello");
+        assert_that(&exec_result.stdout.contains("world"), |v| *v, "Output should contain world");
 
         // Act & Assert: Command that produces stderr (non-zero exit)
         let result = container.exec("sh", &["-c", "echo error >&2; exit 1"]);
         assert_ok!(&result, "Exec should succeed even if command fails");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.exit_code, 1, "Command should exit with code 1");
-        assert!(exec_result.stderr.contains("error"), "Should capture stderr");
+        assert_eq_msg!(&exec_result.exit_code, &1, "Command should exit with code 1");
+        assert_that(&exec_result.stderr.contains("error"), |v| *v, "Should capture stderr");
+    });
+
+    // **Gemba Walk Fix**: Add critical boundary condition tests (80/20 - catch 80% of bugs)
+    // These tests cover edge cases that are likely to cause bugs:
+    // - Empty/invalid container image/tag (should fail)
+    // - Invalid port numbers (should fail)
+    // - Special characters in env vars (should work)
+
+    test!(container_creation_boundaries, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act & Assert: Empty image name should fail
+        let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
+        assert_err!(&result, "Empty image name should fail");
+        match result {
+            Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant
+            }
+            Err(e) => panic!("Expected CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error, got success"),
+        }
+
+        // Act & Assert: Empty tag should fail
+        let result = GenericContainer::new(client.client(), ALPINE_IMAGE, "");
+        assert_err!(&result, "Empty tag should fail");
+        match result {
+            Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant
+            }
+            Err(e) => panic!("Expected CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error, got success"),
+        }
+    });
+
+    test!(port_mapping_invalid_boundaries, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act & Assert: Invalid port (>65535) should fail
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
+        assert_err!(&result, "Port >65535 should fail");
+        match result {
+            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant (either InvalidConfig or CreationFailed)
+            }
+            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error, got success"),
+        }
+    });
+
+    test!(env_vars_special_characters, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act & Assert: Special characters in env vars should work
+        let mut special_env = HashMap::new();
+        special_env.insert("TEST_VAR".to_string(), "value with spaces".to_string());
+        special_env.insert("TEST_VAR2".to_string(), "value-with-dashes".to_string());
+        special_env.insert("TEST_VAR3".to_string(), "value_with_underscores".to_string());
+        special_env.insert("TEST_VAR4".to_string(), "value123".to_string());
+
+        let container = GenericContainer::with_env_and_command(
+            client.client(),
+            ALPINE_IMAGE,
+            ALPINE_TAG,
+            special_env,
+            Some(("sleep", &["infinity"])),
+        )
+        .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
+
+        // Verify special characters work (if container supports it)
+        let result = container.exec("sh", &["-c", "echo $TEST_VAR"]);
+        if let Ok(exec_result) = result {
+            assert_that(&exec_result.stdout.contains("value with spaces"), |v| *v, "Special characters should work");
+        }
+    });
+
+    // **FMEA Fix (RPN 243)**: Add negative test cases to verify tests fail when they should
+    // These tests verify that our test infrastructure correctly detects failures,
+    // preventing false negatives where tests pass when they should fail.
+
+    test!(negative_test_empty_image_fails, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act: Attempt to create container with empty image (should fail)
+        let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
+
+        // Assert: Verify test correctly detects failure (negative test case)
+        assert_err!(&result, "Empty image should fail");
+        match result {
+            Err(TestcontainersError::CreationFailed(_)) | Err(TestcontainersError::InvalidConfig(_)) => {
+                // Expected error variant - test correctly detected failure
+            }
+            Err(e) => panic!("Expected CreationFailed or InvalidConfig error, got: {:?}", e),
+            Ok(_) => panic!("Expected error for empty image, but got success - FALSE NEGATIVE DETECTED"),
+        }
+    });
+
+    test!(negative_test_invalid_port_fails, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act: Attempt to create container with invalid port >65535 (should fail)
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
+
+        // Assert: Verify test correctly detects failure (negative test case)
+        assert_err!(&result, "Invalid port should fail");
+        match result {
+            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant - test correctly detected failure
+            }
+            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error for invalid port, but got success - FALSE NEGATIVE DETECTED"),
+        }
+    });
+
+    test!(negative_test_nonexistent_command_fails, {
+        // Arrange: Set up Docker and container
+        require_docker();
+        let client = ContainerClient::new();
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+            .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
+
+        // Act: Execute non-existent command (exec succeeds, but command fails)
+        let result = container.exec("nonexistent_command_xyz_12345", &[]);
+
+        // Assert: Verify exec succeeds (container is running), but command fails (negative test case)
+        assert_ok!(&result, "Exec should succeed even if command doesn't exist");
+        let exec_result = result.expect("Exec should succeed");
+        assert_that(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
+        // Verify test correctly detects command failure (not a false negative)
+        assert_that(
+            &(exec_result.stderr.contains("not found") || exec_result.stderr.contains("executable file not found") || exec_result.stdout.contains("not found")),
+            |v| *v,
+            "Error message should indicate command not found - if this assertion fails, we have a false negative"
+        );
     });
 
     // ========================================================================
     // 3. FEATURE TESTING - Test specific features
     // ========================================================================
 
-    chicago_test!(port_mapping_boundaries, {
+    test!(port_mapping_boundaries, {
         // Arrange: Set up Docker and client
         require_docker();
         let client = ContainerClient::new();
 
-        // Act & Assert: Single port
-        let container = GenericContainer::with_ports(client.client(), ALPINE_IMAGE, ALPINE_TAG, &[80])
+        // Act & Assert: Single port (use nginx which exposes port 80)
+        let container = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[80])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
         let port = container
             .get_host_port(80)
             .unwrap_or_else(|e| panic!("Failed to get host port: {}", e));
-        assert!(port > 0, "Port should be mapped");
+        assert_that(&port, |v| *v > 0, "Port should be mapped");
 
-        // Act & Assert: Multiple ports
+        // Act & Assert: Multiple ports (use nginx which can expose multiple ports)
         let container =
-            GenericContainer::with_ports(client.client(), ALPINE_IMAGE, ALPINE_TAG, &[80, 443, 8080])
+            GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[80, 443, 8080])
                 .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
         let port80 = container
             .get_host_port(80)
@@ -157,10 +304,10 @@ mod tests {
         let port8080 = container
             .get_host_port(8080)
             .unwrap_or_else(|e| panic!("Failed to get host port 8080: {}", e));
-        assert!(port80 > 0 && port443 > 0 && port8080 > 0, "All ports should be mapped");
+        assert_that(&(port80 > 0 && port443 > 0 && port8080 > 0), |v| *v, "All ports should be mapped");
     });
 
-    chicago_test!(env_vars_all_paths, {
+    test!(env_vars_all_paths, {
         // Arrange: Set up Docker and client
         require_docker();
         let client = ContainerClient::new();
@@ -173,13 +320,13 @@ mod tests {
         // Act & Assert: Single env var
         let mut single_env = HashMap::new();
         single_env.insert("TEST_VAR".to_string(), "test_value".to_string());
-        let container = GenericContainer::with_env(client.client(), ALPINE_IMAGE, ALPINE_TAG, single_env)
+        let container = GenericContainer::with_env_and_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, single_env, Some(("sleep", &["infinity"])))
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Verify env var is set (if container supports it)
         let result = container.exec("sh", &["-c", "echo $TEST_VAR"]);
         if let Ok(exec_result) = result {
-            assert!(exec_result.stdout.contains("test_value"), "Env var should be set");
+            assert_that(&exec_result.stdout.contains("test_value"), |v| *v, "Env var should be set");
         }
 
         // Act & Assert: Multiple env vars
@@ -191,7 +338,7 @@ mod tests {
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
     });
 
-    chicago_test!(wait_conditions, {
+    test!(wait_conditions, {
         // Arrange: Set up Docker, client, and imports
         require_docker();
         use std::net::TcpStream;
@@ -232,18 +379,18 @@ mod tests {
 
         // Verify connection is actually established (state verification)
         let stream = connection_result.expect("Connection should succeed after assert_ok");
-        assert!(stream.peer_addr().is_ok(), "Connection should be established to HTTP service");
+        assert_that(&stream.peer_addr().is_ok(), |v| *v, "Connection should be established to HTTP service");
     });
 
     // ========================================================================
     // 4. EXECRESULT STRUCTURE TESTING
     // ========================================================================
 
-    chicago_test!(exec_result_structure, {
+    test!(exec_result_structure, {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act & Assert: Successful command
@@ -252,24 +399,25 @@ mod tests {
         let exec_result = result.expect("Exec should succeed after assert_ok");
 
         // Verify ExecResult structure
-        assert!(
-            !exec_result.stdout.is_empty() || exec_result.stdout == "test\n",
+        assert_that(
+            &(!exec_result.stdout.is_empty() || exec_result.stdout == "test\n"),
+            |v| *v,
             "Should have stdout"
         );
-        assert_eq!(exec_result.exit_code, 0, "Exit code should be 0 for success");
+        assert_eq_msg!(&exec_result.exit_code, &0, "Exit code should be 0 for success");
 
         // Act & Assert: Failed command
         let result = container.exec("sh", &["-c", "exit 42"]);
         assert_ok!(&result, "Exec should succeed even if command fails");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq!(exec_result.exit_code, 42, "Exit code should match command exit code");
+        assert_eq_msg!(&exec_result.exit_code, &42, "Exit code should match command exit code");
     });
 
     // ========================================================================
     // 5. CONTAINER CLIENT TESTING
     // ========================================================================
 
-    chicago_test!(container_client_boundaries, {
+    test!(container_client_boundaries, {
         // Arrange: Create multiple clients
         let _client1 = ContainerClient::new();
         let _client2 = ContainerClient::new();
@@ -278,8 +426,8 @@ mod tests {
 
         // Act & Assert: Verify clients can be used
         if docker_available() {
-            let _container1 = GenericContainer::new(client3.client(), ALPINE_IMAGE, ALPINE_TAG);
-            let _container2 = GenericContainer::new(client4.client(), ALPINE_IMAGE, ALPINE_TAG);
+            let _container1 = GenericContainer::with_command(client3.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
+            let _container2 = GenericContainer::with_command(client4.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
         }
     });
 
@@ -287,11 +435,19 @@ mod tests {
     // 6. STRESS TESTING - Concurrent operations
     // ========================================================================
 
-    chicago_test!(concurrent_container_creation, {
+    test!(concurrent_container_creation, {
         // Arrange: Set up Docker, client, and imports
         require_docker();
         use std::sync::Arc;
         use std::thread;
+        use std::time::{Duration, SystemTime};
+
+        // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
+        // Generate unique test ID based on timestamp to ensure isolation across test runs
+        let test_id = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
 
         let client = Arc::new(ContainerClient::new());
         let num_containers = 5;
@@ -300,28 +456,32 @@ mod tests {
         let handles: Vec<_> = (0..num_containers)
             .map(|i| {
                 let client = Arc::clone(&client);
+                let test_id = test_id;
                 thread::spawn(move || {
+                    // **FMEA Fix**: Use unique identifier combining test_id and container index
+                    let unique_id = format!("test-{}-container-{}", test_id, i);
+                    
                     // Act: Create container in parallel
                     let container_result =
-                        GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG);
+                        GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
 
                     // Assert: Verify each container is created successfully (observable behavior)
                     assert_ok!(
                         &container_result,
-                        &format!("Container {} should be created successfully", i)
+                        &format!("Container {} should be created successfully", unique_id)
                     );
 
                     let container = container_result.expect("Container should be created");
 
                     // Verify container is usable (state verification)
-                    let exec_result = container.exec("echo", &[&format!("container-{}", i)]);
-                    assert_ok!(&exec_result, "Exec should succeed in concurrent container");
+                    let exec_result = container.exec("echo", &[&unique_id]);
+                    assert_ok!(&exec_result, &format!("Exec should succeed in concurrent container {}", unique_id));
 
                     let exec_result = exec_result.expect("Exec should succeed");
-                    assert!(
-                        exec_result.stdout.contains(&format!("container-{}", i)),
-                        "Container {} should execute commands correctly",
-                        i
+                    assert_that(
+                        &exec_result.stdout.contains(&unique_id),
+                        |v| *v,
+                        &format!("Container {} should execute commands correctly", unique_id)
                     );
 
                     // Container will be dropped here, testing concurrent cleanup
@@ -337,22 +497,29 @@ mod tests {
             .collect();
 
         // Assert: Verify all containers were created successfully (state verification)
-        assert_eq!(
-            containers.len(),
-            num_containers,
+        assert_eq_msg!(
+            &containers.len(),
+            &num_containers,
             "All containers should be created successfully"
         );
     });
 
-    chicago_test!(stress_concurrent_exec, {
+    test!(stress_concurrent_exec, {
         // Arrange: Set up Docker, client, container, and imports
         require_docker();
         use std::sync::Arc;
         use std::thread;
+        use std::time::{Duration, SystemTime};
+
+        // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
+        let test_id = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
 
         let client = ContainerClient::new();
         let container = Arc::new(
-            GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+            GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
                 .expect("Container should be created for stress testing"),
         );
 
@@ -362,19 +529,23 @@ mod tests {
         let handles: Vec<_> = (0..num_commands)
             .map(|i| {
                 let container = Arc::clone(&container);
+                let test_id = test_id;
                 thread::spawn(move || {
+                    // **FMEA Fix**: Use unique identifier combining test_id and command index
+                    let unique_id = format!("test-{}-stress-{}", test_id, i);
+                    
                     // Act: Execute command concurrently
-                    let exec_result = container.exec("echo", &[&format!("stress-{}", i)]);
+                    let exec_result = container.exec("echo", &[&unique_id]);
 
                     // Assert: Verify command executes successfully (observable behavior)
-                    assert_ok!(&exec_result, &format!("Command {} should execute successfully", i));
+                    assert_ok!(&exec_result, &format!("Command {} should execute successfully", unique_id));
 
                     let exec_result = exec_result.expect("Exec should succeed");
-                    assert_eq!(exec_result.exit_code, 0, "Command {} should exit with code 0", i);
-                    assert!(
-                        exec_result.stdout.contains(&format!("stress-{}", i)),
-                        "Command {} should produce correct output",
-                        i
+                    assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
+                    assert_that(
+                        &exec_result.stdout.contains(&unique_id),
+                        |v| *v,
+                        &format!("Command {} should produce correct output", unique_id)
                     );
 
                     exec_result
@@ -389,25 +560,32 @@ mod tests {
             .collect();
 
         // Assert: Verify all commands executed successfully (state verification)
-        assert_eq!(results.len(), num_commands, "All commands should execute successfully");
+        assert_eq_msg!(&results.len(), &num_commands, "All commands should execute successfully");
 
         // Verify outputs are distinct (containers don't interfere)
         let outputs: Vec<String> = results.iter().map(|r| r.stdout.clone()).collect();
 
         // Each output should be unique (verify isolation)
         let unique_outputs: std::collections::HashSet<String> = outputs.iter().cloned().collect();
-        assert_eq!(
+        assert_eq_msg!(
             unique_outputs.len(),
             num_commands,
             "All command outputs should be distinct (no interference)"
         );
     });
 
-    chicago_test!(stress_multiple_containers_concurrent_exec, {
+    test!(stress_multiple_containers_concurrent_exec, {
         // Arrange: Set up Docker, client, and imports
         require_docker();
         use std::sync::Arc;
         use std::thread;
+        use std::time::{Duration, SystemTime};
+
+        // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
+        let test_id = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
 
         let client = Arc::new(ContainerClient::new());
         let num_containers = 3;
@@ -416,7 +594,7 @@ mod tests {
         // Arrange: Create multiple containers
         let containers: Vec<_> = (0..num_containers)
             .map(|i| {
-                GenericContainer::new(client.client(), ALPINE_IMAGE, ALPINE_TAG)
+                GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
                     .expect(&format!("Container {} should be created", i))
             })
             .collect();
@@ -427,33 +605,31 @@ mod tests {
         let handles: Vec<_> = (0..num_containers)
             .flat_map(|container_idx| {
                 let containers = Arc::clone(&containers);
+                let test_id = test_id;
                 (0..commands_per_container).map(move |cmd_idx| {
                     let containers = Arc::clone(&containers);
                     let container_idx = container_idx;
                     let cmd_idx = cmd_idx;
+                    let test_id = test_id;
                     thread::spawn(move || {
+                        // **FMEA Fix**: Use unique identifier combining test_id, container index, and command index
+                        let unique_id = format!("test-{}-container-{}-cmd-{}", test_id, container_idx, cmd_idx);
+                        
                         let container = &containers[container_idx];
-                        let exec_result = container.exec(
-                            "echo",
-                            &[&format!("container-{}-cmd-{}", container_idx, cmd_idx)],
-                        );
+                        let exec_result = container.exec("echo", &[&unique_id]);
 
                         // Assert: Verify command executes successfully (observable behavior)
                         assert_ok!(
                             &exec_result,
-                            &format!(
-                                "Command {} on container {} should execute successfully",
-                                cmd_idx, container_idx
-                            )
+                            &format!("Command {} should execute successfully", unique_id)
                         );
 
                         let exec_result = exec_result.expect("Exec should succeed");
-                        assert_eq!(exec_result.exit_code, 0, "Command should exit with code 0");
-                        assert!(
-                            exec_result
-                                .stdout
-                                .contains(&format!("container-{}-cmd-{}", container_idx, cmd_idx)),
-                            "Command should produce correct output"
+                        assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
+                        assert_that(
+                            &exec_result.stdout.contains(&unique_id),
+                            |v| *v,
+                            &format!("Command {} should produce correct output", unique_id)
                         );
 
                         exec_result
@@ -469,9 +645,9 @@ mod tests {
             .collect();
 
         // Assert: Verify all commands executed successfully (state verification)
-        assert_eq!(
-            results.len(),
-            num_containers * commands_per_container,
+        assert_eq_msg!(
+            &results.len(),
+            &(num_containers * commands_per_container),
             "All commands should execute successfully"
         );
 
@@ -479,9 +655,9 @@ mod tests {
         let outputs: Vec<String> = results.iter().map(|r| r.stdout.clone()).collect();
 
         let unique_outputs: std::collections::HashSet<String> = outputs.iter().cloned().collect();
-        assert_eq!(
-            unique_outputs.len(),
-            num_containers * commands_per_container,
+        assert_eq_msg!(
+            &unique_outputs.len(),
+            &(num_containers * commands_per_container),
             "All command outputs should be distinct (containers don't interfere)"
         );
     });

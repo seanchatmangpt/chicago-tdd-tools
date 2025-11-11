@@ -220,9 +220,9 @@ macro_rules! assert_guard_constraint {
 #[allow(unnameable_test_items)] // Macro-generated tests trigger this warning
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
-    use crate::chicago_test;
+    use crate::test;
 
-    chicago_test!(test_assert_ok_macro, {
+    test!(test_assert_ok_macro, {
         // Arrange: Create successful result
         let result: Result<u32, String> = Ok(42);
 
@@ -241,7 +241,7 @@ mod tests {
         assert_ok!(result);
     }
 
-    chicago_test!(test_assert_err_macro, {
+    test!(test_assert_err_macro, {
         // Arrange: Create error result
         let result: Result<u32, String> = Err("error".to_string());
 
@@ -260,7 +260,7 @@ mod tests {
         assert_err!(result);
     }
 
-    chicago_test!(test_assert_within_tick_budget_macro, {
+    test!(test_assert_within_tick_budget_macro, {
         // Arrange: Various tick values
         let ticks_valid = 5;
         let ticks_max = 8;
@@ -283,7 +283,7 @@ mod tests {
         assert_within_tick_budget!(ticks);
     }
 
-    chicago_test!(test_assert_in_range_macro, {
+    test!(test_assert_in_range_macro, {
         // Arrange: Values within and at boundaries
         let value_mid = 5;
         let value_min = 0;
@@ -316,7 +316,7 @@ mod tests {
         assert_in_range!(value, 0, 10);
     }
 
-    chicago_test!(test_assert_eq_msg_macro, {
+    test!(test_assert_eq_msg_macro, {
         // Arrange: Equal values
         let actual = 42;
         let expected = 42;
@@ -336,7 +336,7 @@ mod tests {
         assert_eq_msg!(actual, expected, "Values should match");
     }
 
-    chicago_test!(test_assert_guard_constraint_macro, {
+    test!(test_assert_guard_constraint_macro, {
         // Arrange: Valid constraint values
         let max_run_len = 5;
 

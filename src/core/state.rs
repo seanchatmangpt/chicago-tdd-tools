@@ -2,15 +2,47 @@
 //!
 //! Implements type state pattern for compile-time test lifecycle guarantees.
 //! Ensures AAA pattern is enforced at compile time - impossible to call Act before Arrange.
+//!
+//! # Advanced Rust Features
+//!
+//! - **Type State Pattern**: Compile-time state machine using PhantomData
+//! - **Sealed Traits**: API safety and extensibility control
+//! - **Zero-Sized Types**: Zero-cost abstractions for state tracking
+
+/// Sealed trait pattern for phase markers
+///
+/// This trait is sealed (only implementable within this crate) to prevent
+/// external implementations that might violate invariants.
+mod private {
+    /// Sealed marker trait for test phases
+    /// Note: This trait is used via the sealed trait pattern, not directly
+    #[allow(dead_code)]
+    pub trait Sealed {}
+}
 
 /// Marker type for Arrange phase
+///
+/// This is a zero-sized type used for type-level state tracking.
+/// Implements Sealed to prevent external implementations.
 pub struct Arrange;
 
+impl private::Sealed for Arrange {}
+
 /// Marker type for Act phase
+///
+/// This is a zero-sized type used for type-level state tracking.
+/// Implements Sealed to prevent external implementations.
 pub struct Act;
 
+impl private::Sealed for Act {}
+
 /// Marker type for Assert phase
+///
+/// This is a zero-sized type used for type-level state tracking.
+/// Implements Sealed to prevent external implementations.
 pub struct Assert;
+
+impl private::Sealed for Assert {}
 
 /// Test state with type-level phase tracking
 ///

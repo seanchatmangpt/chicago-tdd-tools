@@ -369,9 +369,13 @@ mod property_tests {
 mod proptest_tests {
     use super::*;
 
+    // Kaizen improvement: Extract magic number to named constant for clarity
+    // Number of test cases to run for property tests
+    const DEFAULT_PROPERTY_TEST_CASES: u32 = 100;
+
     #[test]
     fn test_proptest_strategy_addition_commutative() {
-        let strategy = ProptestStrategy::new().with_cases(100);
+        let strategy = ProptestStrategy::new().with_cases(DEFAULT_PROPERTY_TEST_CASES);
         // Use wrapping_add to handle overflow gracefully (property still holds)
         // DMAIC Fix: Changed from `x + y` to `x.wrapping_add(y)` to prevent integer overflow
         // Root cause: Debug mode panics on overflow when adding large u32 values
@@ -381,7 +385,7 @@ mod proptest_tests {
 
     #[test]
     fn test_proptest_strategy_multiplication_distributive() {
-        let strategy = ProptestStrategy::new().with_cases(100);
+        let strategy = ProptestStrategy::new().with_cases(DEFAULT_PROPERTY_TEST_CASES);
         // Use wrapping arithmetic to handle overflow gracefully (property still holds)
         // DMAIC Fix: Changed from regular arithmetic to wrapping arithmetic to prevent overflow
         // Root cause: Debug mode panics on overflow when multiplying large u32 values
@@ -393,7 +397,7 @@ mod proptest_tests {
 
     #[test]
     fn test_proptest_strategy_string_length() {
-        let strategy = ProptestStrategy::new().with_cases(100);
+        let strategy = ProptestStrategy::new().with_cases(DEFAULT_PROPERTY_TEST_CASES);
         strategy.test(any::<String>(), |s| {
             s.len() == s.chars().count() || s.len() >= s.chars().count()
         });

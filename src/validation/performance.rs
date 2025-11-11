@@ -433,54 +433,6 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_tick_counter_basic() {
-        let counter = TickCounter::start();
-        std::hint::black_box(42); // Prevent optimization
-        let ticks = counter.elapsed_ticks();
-        // ticks is u64, so it's always >= 0 - no need to check
-        assert!(ticks < u64::MAX); // Just verify it's a valid value
-    }
-
-    #[test]
-    fn test_tick_counter_within_budget() {
-        let counter = TickCounter::start();
-        std::hint::black_box(42);
-        // Should pass for any reasonable operation
-        assert!(counter.assert_within_budget(1_000_000).is_ok());
-    }
-
-    #[test]
-    fn test_measure_ticks() {
-        let (result, ticks) = measure_ticks(|| 42);
-        assert_eq!(result, 42);
-        // ticks is u64, so it's always >= 0 - no need to check
-        assert!(ticks < u64::MAX); // Just verify it's a valid value
-    }
-
-    #[test]
-    fn test_benchmark() {
-        let result = benchmark("test_operation", 100, || std::hint::black_box(42));
-        assert_eq!(result.operation, "test_operation");
-        assert_eq!(result.iterations, 100);
-        assert!(result.avg_ticks >= 0.0);
-        assert!(result.min_ticks <= result.max_ticks);
-    }
-
-    #[test]
-    fn test_tick_measurer() {
-        let measurer = TickMeasurer::new(|| 42);
-        let (result, ticks) = measurer.measure();
-        assert_eq!(result, 42);
-        // ticks is u64, so it's always >= 0 - no need to check
-        assert!(ticks < u64::MAX); // Just verify it's a valid value
-    }
-}
-
 // ============================================================================
 // Criterion Benchmarking Support (when benchmarking feature is enabled)
 // ============================================================================
@@ -550,5 +502,53 @@ impl Benchmark {
     /// Create a new benchmark (requires benchmarking feature)
     pub fn new(_name: &str) -> Self {
         Self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tick_counter_basic() {
+        let counter = TickCounter::start();
+        std::hint::black_box(42); // Prevent optimization
+        let ticks = counter.elapsed_ticks();
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
+    }
+
+    #[test]
+    fn test_tick_counter_within_budget() {
+        let counter = TickCounter::start();
+        std::hint::black_box(42);
+        // Should pass for any reasonable operation
+        assert!(counter.assert_within_budget(1_000_000).is_ok());
+    }
+
+    #[test]
+    fn test_measure_ticks() {
+        let (result, ticks) = measure_ticks(|| 42);
+        assert_eq!(result, 42);
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
+    }
+
+    #[test]
+    fn test_benchmark() {
+        let result = benchmark("test_operation", 100, || std::hint::black_box(42));
+        assert_eq!(result.operation, "test_operation");
+        assert_eq!(result.iterations, 100);
+        assert!(result.avg_ticks >= 0.0);
+        assert!(result.min_ticks <= result.max_ticks);
+    }
+
+    #[test]
+    fn test_tick_measurer() {
+        let measurer = TickMeasurer::new(|| 42);
+        let (result, ticks) = measurer.measure();
+        assert_eq!(result, 42);
+        // ticks is u64, so it's always >= 0 - no need to check
+        assert!(ticks < u64::MAX); // Just verify it's a valid value
     }
 }

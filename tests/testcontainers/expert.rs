@@ -5,7 +5,7 @@ mod expert_tests {
     mod common {
         include!("../common.rs");
     }
-    use chicago_tdd_tools::chicago_test;
+    use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::testcontainers::*;
     use common::require_docker;
@@ -15,13 +15,17 @@ mod expert_tests {
     const NGINX_IMAGE: &str = "nginx";
     const NGINX_TAG: &str = "latest";
 
-    chicago_test!(warmup_image_pull, {
+    test!(warmup_image_pull, {
+        // Arrange: Set up Docker and images to pull
         require_docker();
         let client = ContainerClient::new();
         let images = vec![(ALPINE_IMAGE, ALPINE_TAG), (NGINX_IMAGE, NGINX_TAG)];
 
+        // Act: Pull images by creating containers
         for (image, tag) in images {
             let container_result = GenericContainer::new(client.client(), image, tag);
+            
+            // Assert: Verify each image pulls successfully
             assert_ok!(
                 &container_result,
                 &format!("Image {}:{} should be pulled successfully", image, tag)

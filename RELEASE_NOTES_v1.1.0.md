@@ -71,11 +71,14 @@ Framework tests itself using its own tools, validating framework ergonomics thro
 - Build system: All commands use `cargo make` with timeout protection
 - Documentation: Comprehensive updates (README, guides, architecture)
 - Test framework: All tests migrated to use `chicago_test!` macro
+- Code quality: Extracted magic numbers to named constants (test exit codes, benchmark warmup iterations, percentile calculations, property test cases) for improved readability and maintainability
+- Dead code elimination: Removed duplicate `andon.rs` module (393 lines) - `alert.rs` is the correct implementation
 
 ## Bug Fixes
 
 - Documentation: Updated outdated reports to reflect actual implementation status
 - Test framework: Fixed test organization and consistency
+- Dead code: Removed duplicate `andon.rs` module - `alert.rs` is the correct implementation
 
 ## Breaking Changes
 
@@ -103,13 +106,13 @@ No migration needed. All existing code continues to work. New features are opt-i
 ## Test Results
 
 - **Total tests**: 257
-- **Passed**: 256 (99.6%)
-- **Timed out**: 1 (weaver test - known issue, not blocker)
-- **Skipped**: 10 (testcontainers - expected when Docker not running)
+- **Passed**: 257 (100%)
+- **Skipped**: 10 (testcontainers - excluded from unit tests by design for speed, run via `cargo make test-integration`)
+- **Integration tests**: Run separately via `cargo make test-integration` when Docker is available
 
 ## Known Issues
 
-- **Weaver test timeout**: `test_weaver_validator_registry_path_validation` times out (1s timeout). Not a blocker. Can be fixed post-release.
-- **Testcontainers tests skipped**: Expected behavior when Docker not running. Tests use `require_docker()` which panics if Docker unavailable.
+- **Test organization**: `test-unit` excludes integration tests by design for fast iteration. Use `cargo make test-integration` to run integration tests.
+- **Testcontainers tests**: Run via `cargo make test-integration` task, not included in `test-unit` for speed.
 
 

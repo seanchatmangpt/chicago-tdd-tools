@@ -47,6 +47,7 @@
 //!
 //! ### Core Testing Infrastructure (`core`)
 //! - `fixture`: Test fixtures and setup utilities
+//! - `async_fixture`: Async test fixtures with async traits (requires `async` feature)
 //! - `builders`: Fluent builders for test data
 //! - `assertions`: Assertion helpers and utilities
 //! - `macros`: Test macros for AAA pattern enforcement and assertions
@@ -87,17 +88,18 @@
 //!
 //! ## Procedural Macros
 //!
-//! - `#[chicago_test]`: Procedural macro for zero-boilerplate tests with AAA validation
-//!   - Import: `use chicago_tdd_tools_proc_macros::chicago_test;`
-//! - `#[chicago_fixture]`: Procedural macro for automatic fixture setup/teardown
+//! - `#[tdd_test]`: Procedural macro for zero-boilerplate tests with AAA validation
+//!   - Import: `use chicago_tdd_tools::tdd_test;` (re-exported) or `use chicago_tdd_tools_proc_macros::tdd_test;`
+//! - `#[fixture]`: Procedural macro for automatic fixture setup/teardown
+//!   - Import: `use chicago_tdd_tools::fixture;` (re-exported) or `use chicago_tdd_tools_proc_macros::fixture;`
 //! - `#[derive(TestBuilder)]`: Derive macro for fluent builder generation
 //!
 //! ## Declarative Macros
 //!
-//! - `chicago_test!`: Enforce AAA pattern for synchronous tests
-//! - `chicago_async_test!`: Enforce AAA pattern for async tests
-//! - `chicago_fixture_test!`: Async test with automatic fixture setup/teardown
-//! - `chicago_performance_test!`: Performance test with tick budget validation
+//! - `test!`: Enforce AAA pattern for synchronous tests
+//! - `async_test!`: Enforce AAA pattern for async tests
+//! - `fixture_test!`: Async test with automatic fixture setup/teardown
+//! - `performance_test!`: Performance test with tick budget validation
 //! - `assert_ok!`: Assert Result is Ok with detailed error messages
 //! - `assert_err!`: Assert Result is Err with detailed error messages
 //! - `assert_within_tick_budget!`: Validate performance constraints (≤8 ticks)
@@ -126,9 +128,11 @@
 // Alert macros (alert_critical!, alert_warning!, etc.) also use log::* when logging is enabled.
 
 // Re-export procedural macros
-// Note: #[chicago_test] and #[chicago_fixture] are available via chicago_tdd_tools_proc_macros
-// Users can import them explicitly: use chicago_tdd_tools_proc_macros::{chicago_test, chicago_fixture};
-pub use chicago_tdd_tools_proc_macros::chicago_fixture;
+// Both #[tdd_test] and #[fixture] are re-exported at crate root for convenience
+// Users can import from chicago_tdd_tools: use chicago_tdd_tools::{tdd_test, fixture};
+// Or directly from chicago_tdd_tools_proc_macros: use chicago_tdd_tools_proc_macros::{tdd_test, fixture};
+pub use chicago_tdd_tools_proc_macros::fixture;
+pub use chicago_tdd_tools_proc_macros::tdd_test;
 
 // Re-export TestBuilder derive macro (users will use #[derive(TestBuilder)])
 pub use chicago_tdd_tools_proc_macros::TestBuilder;
@@ -139,7 +143,7 @@ pub use chicago_tdd_tools_proc_macros::TestBuilder;
 // All modules MUST be declared here (or in parent module's mod.rs).
 // Files not declared as modules are dead code and will be removed.
 // Pattern: Use `pub mod` for new modules, `pub use` for re-exports.
-// See MUDA_INVENTORY.md for waste elimination patterns.
+// See docs/MUDA_INVENTORY_MARKDOWN.md for waste elimination patterns.
 pub mod core;
 pub mod integration;
 pub mod observability;
@@ -161,6 +165,9 @@ pub use validation::performance::ValidatedTickBudget;
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
 pub use core::{alert, assertions, builders, const_assert, fixture, state};
+// Note: async_fixture is separate because it's feature-gated (requires `async` feature)
+#[cfg(feature = "async")]
+pub use core::async_fixture;
 #[cfg(feature = "testcontainers")]
 pub use integration::testcontainers;
 #[cfg(feature = "otel")]
@@ -178,14 +185,28 @@ pub use testing::snapshot;
 pub use testing::{generator, mutation, property};
 pub use validation::{coverage, guards, jtbd, performance};
 
-/// Prelude module - import commonly used items
+/// Prelude module - import everything you need with `use chicago_tdd_tools::prelude::*;`
+///
+/// **Usage**:
+/// ```rust
+/// use chicago_tdd_tools::prelude::*;
+///
+/// test!(my_test, {
+///     // All macros and types available
+/// });
+/// ```
+///
+/// **What's included**:
+/// - All core modules (fixture, builders, assertions, macros)
+/// - All validation modules (coverage, guards, jtbd, performance)
+/// - Feature-gated modules (when features enabled): property, mutation, snapshot, concurrency, cli
 pub mod prelude {
     pub use crate::core::*;
     pub use crate::validation::*;
 
     // Macros are automatically exported via #[macro_use] in lib.rs
-    // They can be used directly: chicago_test!, assert_ok!, etc.
-    // Or explicitly: use chicago_tdd_tools::{chicago_test, assert_ok};
+    // They can be used directly: test!, assert_ok!, etc.
+    // Or explicitly: use chicago_tdd_tools::{test, assert_ok};
 
     #[cfg(feature = "property-testing")]
     pub use crate::testing::property::*;

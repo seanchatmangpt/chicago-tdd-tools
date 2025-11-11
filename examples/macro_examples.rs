@@ -13,7 +13,7 @@
 
 /*
 // Example 1: Basic synchronous test with AAA pattern
-chicago_test!(test_basic_aaa_pattern, {
+test!(test_basic_aaa_pattern, {
     // Arrange: Set up test data
     let input = 5;
     let expected = 10;
@@ -26,7 +26,7 @@ chicago_test!(test_basic_aaa_pattern, {
 });
 
 // Example 2: Async test with AAA pattern
-chicago_async_test!(test_async_operation, {
+async_test!(test_async_operation, {
     // Arrange: Set up test data
     let input = "test";
 
@@ -38,7 +38,7 @@ chicago_async_test!(test_async_operation, {
 });
 
 // Example 3: Test with automatic fixture setup/teardown
-chicago_fixture_test!(test_with_fixture, fixture, {
+fixture_test!(test_with_fixture, fixture, {
     // Arrange: Use provided fixture
     let counter = fixture.test_counter();
     fixture.set_metadata("test_key".to_string(), "test_value".to_string());
@@ -52,7 +52,7 @@ chicago_fixture_test!(test_with_fixture, fixture, {
 });
 
 // Example 4: Performance test with tick budget validation
-chicago_performance_test!(test_hot_path_performance, {
+performance_test!(test_hot_path_performance, {
     // Arrange: Set up test data
     let input = create_test_input();
 
@@ -73,10 +73,10 @@ fn main() {
     println!("Macros expand to test functions, so they're typically used in test files.");
     println!();
     println!("Available macros:");
-    println!("  - chicago_test!: Synchronous test with AAA pattern");
-    println!("  - chicago_async_test!: Async test with AAA pattern");
-    println!("  - chicago_fixture_test!: Test with automatic fixture setup");
-    println!("  - chicago_performance_test!: Performance test with tick validation");
+    println!("  - test!: Synchronous test with AAA pattern");
+    println!("  - async_test!: Async test with AAA pattern");
+    println!("  - fixture_test!: Test with automatic fixture setup");
+    println!("  - performance_test!: Performance test with tick validation");
     println!("  - assert_ok!: Assert Result is Ok");
     println!("  - assert_err!: Assert Result is Err");
     println!("  - assert_within_tick_budget!: Validate tick budget (≤8 ticks)");

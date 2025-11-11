@@ -12,11 +12,11 @@ Using the testing framework to test itself. Every feature tested using the frame
 
 ## How Framework Tests Itself
 
-**Macros Test Macros**: `chicago_test!` tested using itself. `assert_ok!` tested using itself. AAA pattern enforced.
+**Macros Test Macros**: `test!` tested using itself. `assert_ok!` tested using itself. AAA pattern enforced.
 
 **Assertions Test Assertions**: Assertion macros tested using themselves. Error messages validated. Framework validates own behavior.
 
-**Fixtures Test Fixtures**: `TestFixture` tested using itself. `chicago_fixture_test!` tested using itself. Automatic cleanup validated.
+**Fixtures Test Fixtures**: `TestFixture` tested using itself. `fixture_test!` tested using itself. Automatic cleanup validated.
 
 **Testcontainers Test Testcontainers**: Real Docker containers test the module. `assert_ok!` works with testcontainers Results. Real collaborators validated.
 
@@ -56,9 +56,9 @@ Using the testing framework to test itself. Every feature tested using the frame
 
 ## Dogfooding Cycle
 
-**1. Implement Feature**: Implement new feature (e.g., `chicago_test!` macro).
+**1. Implement Feature**: Implement new feature (e.g., `test!` macro).
 
-**2. Test with Framework**: Test feature using framework itself. `chicago_test!(test_new_feature, { /* test */ })`.
+**2. Test with Framework**: Test feature using framework itself. `test!(test_new_feature, { /* test */ })`.
 
 **3. Verify Behavior**: Verify feature works correctly (test passes).
 

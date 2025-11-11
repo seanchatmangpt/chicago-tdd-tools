@@ -8,10 +8,14 @@
 //! Each idea includes increasing levels of telemetry instrumentation and validation.
 
 use chicago_tdd_tools::assert_ok;
+#[cfg(feature = "weaver")]
+use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::types::{
     Metric, MetricValue, Span, SpanContext, SpanId, SpanStatus, TraceId,
 };
+#[cfg(feature = "otel")]
+use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
 
 /// Example: Number parsing with progressive enhancement
 ///
@@ -317,7 +321,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("SystemTime should always be after UNIX_EPOCH")
             .as_millis() as u64;
 
-        let metric = Metric {
+        let mut metric = Metric {
             name: "chicago_tdd_tools.parse.operations".to_string(),
             value: MetricValue::Counter(1),
             timestamp_ms: timestamp,
@@ -384,15 +388,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "weaver")]
+    use chicago_tdd_tools::observability::weaver::WeaverValidator;
+    #[cfg(feature = "otel")]
+    use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
+    use chicago_tdd_tools::test;
 
-    chicago_test!(test_first_idea_basic, {
+    test!(test_first_idea_basic, {
         // 1st Idea: Basic implementation
         let result = parse_u32_first_idea("42");
         assert_ok!(&result);
         assert_eq!(result.unwrap(), 42);
     });
 
-    chicago_test!(test_second_idea_generic, {
+    test!(test_second_idea_generic, {
         // 2nd Idea: Generic version (80/20)
         let u32_result = parse_number_second_idea_no_otel::<u32>("42");
         assert_ok!(&u32_result);
@@ -407,14 +416,14 @@ mod tests {
         assert_eq!(f64_result.unwrap(), 123.456);
     });
 
-    chicago_test!(test_third_idea_validated, {
+    test!(test_third_idea_validated, {
         // 3rd Idea: Type-level validation
         let validated = ValidatedNumberNoOtel::<u32>::parse("42").unwrap();
         assert_eq!(*validated.value(), 42);
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_second_idea_with_otel, {
+    test!(test_second_idea_with_otel, {
         // 2nd Idea with OTEL spans
         let (value, span) = parse_number_second_idea::<u32>("42", "test_parse").unwrap();
         assert_eq!(value, 42);
@@ -425,7 +434,7 @@ mod tests {
     });
 
     #[cfg(feature = "otel")]
-    chicago_test!(test_third_idea_with_otel, {
+    test!(test_third_idea_with_otel, {
         // 3rd Idea with OTEL spans
         let validated = ValidatedNumber::<u32>::parse("42", "test_validated").unwrap();
         assert_eq!(*validated.value(), 42);

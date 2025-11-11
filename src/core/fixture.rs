@@ -54,6 +54,19 @@ pub struct TestFixture<T: ?Sized = ()> {
 
 impl TestFixture<()> {
     /// Create a new test fixture with unique identifier
+    ///
+    /// **Returns**: `Result<TestFixture<()>, FixtureError>`
+    ///
+    /// **Error Handling**: This function returns `Result` - always handle errors:
+    /// ```rust
+    /// let fixture = TestFixture::new()?;  // In functions that return Result
+    /// // or
+    /// let fixture = TestFixture::new().unwrap_or_else(|e| {
+    ///     panic!("Failed to create fixture: {}", e);
+    /// });
+    /// ```
+    ///
+    /// **Note**: In normal usage, this should never fail. If it does, check your environment.
     pub fn new() -> FixtureResult<Self> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -125,13 +138,13 @@ impl Default for TestFixture<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chicago_test;
+    use crate::test;
 
     // ========================================================================
     // 1. ERROR PATH TESTING - Test all error variants (80% of bugs)
     // ========================================================================
 
-    chicago_test!(test_fixture_error_creation_failed_display, {
+    test!(test_fixture_error_creation_failed_display, {
         // Arrange: Create error
         let error = FixtureError::CreationFailed("test error".to_string());
 
@@ -143,7 +156,7 @@ mod tests {
         assert!(display.contains("test error"));
     });
 
-    chicago_test!(test_fixture_error_operation_failed_display, {
+    test!(test_fixture_error_operation_failed_display, {
         // Arrange: Create error
         let error = FixtureError::OperationFailed("test operation".to_string());
 
@@ -155,7 +168,7 @@ mod tests {
         assert!(display.contains("test operation"));
     });
 
-    chicago_test!(test_fixture_error_debug, {
+    test!(test_fixture_error_debug, {
         // Arrange: Create error
         let error = FixtureError::CreationFailed("test".to_string());
 
@@ -166,7 +179,7 @@ mod tests {
         assert!(debug.contains("CreationFailed"));
     });
 
-    chicago_test!(test_fixture_error_all_variants, {
+    test!(test_fixture_error_all_variants, {
         // Arrange: Create all error variants
         let errors = vec![
             FixtureError::CreationFailed("creation".to_string()),
@@ -184,7 +197,7 @@ mod tests {
     // 2. FIXTURE PROVIDER TRAIT - Test trait implementation
     // ========================================================================
 
-    chicago_test!(test_fixture_provider_default_impl, {
+    test!(test_fixture_provider_default_impl, {
         // Arrange: Create default provider
         let provider = ();
 
@@ -202,7 +215,7 @@ mod tests {
     // 3. TEST FIXTURE LIFECYCLE - Test fixture creation and usage
     // ========================================================================
 
-    chicago_test!(test_test_fixture_new, {
+    test!(test_test_fixture_new, {
         // Arrange: Create fixture
         let fixture = TestFixture::new();
         assert!(fixture.is_ok());
@@ -213,7 +226,7 @@ mod tests {
         assert!(fixture.test_counter() < u64::MAX);
     });
 
-    chicago_test!(test_test_fixture_with_data, {
+    test!(test_test_fixture_with_data, {
         // Arrange: Create test data
         let data = 42;
 
@@ -226,7 +239,7 @@ mod tests {
         let _counter = fixture.test_counter();
     });
 
-    chicago_test!(test_test_fixture_inner_access, {
+    test!(test_test_fixture_inner_access, {
         // Arrange: Create fixture with data
         let fixture = TestFixture::with_data("test".to_string());
 
@@ -237,7 +250,7 @@ mod tests {
         assert_eq!(inner, "test");
     });
 
-    chicago_test!(test_test_fixture_inner_mut, {
+    test!(test_test_fixture_inner_mut, {
         // Arrange: Create fixture with initial data
         let mut fixture = TestFixture::with_data(0);
 
@@ -248,7 +261,7 @@ mod tests {
         assert_eq!(*fixture.inner(), 42);
     });
 
-    chicago_test!(test_test_fixture_test_counter, {
+    test!(test_test_fixture_test_counter, {
         // Arrange: Create two fixtures
         let fixture1 = TestFixture::new().unwrap();
         let counter1 = fixture1.test_counter();
@@ -260,7 +273,7 @@ mod tests {
         assert!(counter1 != counter2 || counter1 == counter2); // Always true, but verifies method works
     });
 
-    chicago_test!(test_test_fixture_metadata, {
+    test!(test_test_fixture_metadata, {
         // Arrange: Create fixture
         let mut fixture = TestFixture::new().unwrap();
 
@@ -272,7 +285,7 @@ mod tests {
         assert_eq!(fixture.get_metadata("nonexistent"), None);
     });
 
-    chicago_test!(test_test_fixture_cleanup, {
+    test!(test_test_fixture_cleanup, {
         // Arrange: Create fixture
         let fixture = TestFixture::new().unwrap();
 
@@ -283,7 +296,7 @@ mod tests {
         assert!(result.is_ok());
     });
 
-    chicago_test!(test_test_fixture_default, {
+    test!(test_test_fixture_default, {
         // Arrange: Create default fixture
         let fixture = TestFixture::default();
 
@@ -296,7 +309,7 @@ mod tests {
     // 4. BOUNDARY CONDITIONS - Test edge cases
     // ========================================================================
 
-    chicago_test!(test_test_fixture_empty_string, {
+    test!(test_test_fixture_empty_string, {
         // Arrange: Create fixture with empty string
         let fixture = TestFixture::with_data(String::new());
 
@@ -304,7 +317,7 @@ mod tests {
         assert_eq!(fixture.inner(), "");
     });
 
-    chicago_test!(test_test_fixture_zero_value, {
+    test!(test_test_fixture_zero_value, {
         // Arrange: Create fixture with zero value
         let fixture = TestFixture::with_data(0);
 
@@ -312,7 +325,7 @@ mod tests {
         assert_eq!(*fixture.inner(), 0);
     });
 
-    chicago_test!(test_test_fixture_metadata_overwrite, {
+    test!(test_test_fixture_metadata_overwrite, {
         // Arrange: Create fixture
         let mut fixture = TestFixture::new().unwrap();
 
