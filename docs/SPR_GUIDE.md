@@ -59,6 +59,14 @@ LLMs embed knowledge, abilities, and concepts in latent space. This latent space
 - Prohibited/Required patterns as concise lists
 - Associations for quick reference
 
+**Clippy Standards** (Root Cause Prevention):
+- All warnings treated as errors (`-D warnings`) - prevents defects at compile time
+- Use `#[allow(clippy::...)]` with justification comments when necessary
+- CI/CD pipeline enforces clippy checks automatically - prevents accumulation of lint errors
+- Pattern: `#[allow(clippy::lint_name)] // Justification: why this is acceptable`
+- Common allows: `expect_used` (with mutex justification), `panic` (test helpers), `unwrap_used` (test code)
+- Root cause fix: CI/CD pipeline prevents clippy errors from entering codebase
+
 ## SPR Consolidation Process
 
 ### Step 1: Identify Core Concepts

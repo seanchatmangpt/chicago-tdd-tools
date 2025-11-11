@@ -12,8 +12,10 @@
 //! by providing compile-time guarantees and zero-cost abstractions.
 
 #[cfg(feature = "async")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::core::async_fixture::{AsyncFixtureManager, AsyncFixtureProvider};
 #[cfg(feature = "async")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::core::fixture::FixtureError;
 use chicago_tdd_tools::core::state::{Arrange, TestState};
 use chicago_tdd_tools::core::type_level::SizeValidatedArray;
@@ -23,11 +25,13 @@ use chicago_tdd_tools::core::type_level::SizeValidatedArray;
 // ============================================================================
 
 #[cfg(feature = "async")]
+#[allow(dead_code)] // Example code - struct shown for demonstration
 struct DatabaseFixture {
     connection: String,
 }
 
 #[cfg(feature = "async")]
+#[allow(dead_code)] // Example code - struct shown for demonstration
 struct DatabaseProvider;
 
 // Note: Sealed trait pattern prevents external implementations

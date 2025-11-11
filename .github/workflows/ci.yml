@@ -1,0 +1,160 @@
+# CI/CD Pipeline for Chicago TDD Tools
+#
+# **Root Cause Fix**: Automated enforcement of clippy checks prevents accumulation of lint errors.
+# This workflow ensures code quality standards are maintained on every commit/PR.
+#
+# **Poka-Yoke Design**: CI fails on clippy warnings, preventing defects from entering codebase.
+# Type-first thinking: Compiler enforces correctness. If CI passes, invariants are enforced.
+#
+# Workflow runs on:
+# - Push to main/master branches
+# - Pull requests
+# - Manual workflow dispatch
+#
+# Expected duration: ~120s (fmt: 5s, lint: 5s, test-unit: 10s, audit: 30s)
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # **Root Cause Prevention**: Clippy check job prevents lint errors from accumulating
+  # This job fails if clippy finds any warnings/errors, blocking merge
+  lint:
+    name: Clippy Lint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install cargo-make
+        run: |
+          cargo install cargo-make
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run clippy lint check
+        run: |
+          cargo make lint
+        # **Root Cause Prevention**: Exit code 1 on failure blocks merge
+        # This ensures clippy errors cannot be committed
+
+  # Format check ensures code style consistency
+  fmt:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-make
+        run: |
+          cargo install cargo-make
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check code formatting
+        run: |
+          cargo make fmt
+          # Check if formatting changed anything
+          if [ -n "$(git diff --exit-code)" ]; then
+            echo "❌ Code is not formatted correctly. Run 'cargo make fmt' to fix."
+            exit 1
+          fi
+
+  # Unit tests ensure functionality works
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-make
+        run: |
+          cargo install cargo-make
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run unit tests
+        run: |
+          cargo make test-unit
+
+  # Security audit checks for vulnerabilities
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: |
+          cargo install cargo-audit --features=fix
+
+      - name: Run security audit
+        run: |
+          cargo make audit
+        continue-on-error: true  # Audit failures are warnings, not blockers
+
+  # Full CI pipeline - runs all checks
+  ci:
+    name: Full CI Pipeline
+    runs-on: ubuntu-latest
+    needs: [lint, fmt, test, audit]
+    steps:
+      - name: CI Pipeline Complete
+        run: |
+          echo "✅ All CI checks passed"

@@ -52,6 +52,8 @@ impl<const MAX_ITEMS: usize, const MAX_DEPTH: usize> PropertyTestGenerator<MAX_I
 
         let mut data = HashMap::new();
         // Use compile-time constant MAX_ITEMS
+        #[allow(clippy::cast_possible_truncation)]
+        // Property test - truncation acceptable for test data generation
         let num_items = (rng.next() as usize % MAX_ITEMS) + 1;
 
         for i in 0..num_items {
@@ -188,6 +190,7 @@ impl ProptestStrategy {
     /// # Panics
     ///
     /// Panics if the property fails for any generated test case.
+    #[allow(clippy::panic)] // Property test - panic is appropriate for test failures
     pub fn test<S, F>(&self, strategy: S, property: F)
     where
         S: Strategy,

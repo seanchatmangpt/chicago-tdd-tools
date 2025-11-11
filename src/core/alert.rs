@@ -409,6 +409,10 @@ macro_rules! alert {
 /// let mut writer = BufWriter::new(file);
 /// write_alert(&mut writer, "🚨", "Critical error", "STOP: Cannot proceed", "FIX: Resolve issue").unwrap();
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if writing to the writer fails.
 pub fn write_alert<W: Write>(
     writer: &mut W,
     severity: &str,
@@ -510,8 +514,7 @@ impl log::Log for AlertLogger {
                 Some("FIX: Check and resolve"),
             ),
             log::Level::Info => ("ℹ️", None, None),
-            log::Level::Debug => ("🔍", None, None),
-            log::Level::Trace => ("🔍", None, None),
+            log::Level::Debug | log::Level::Trace => ("🔍", None, None),
         };
 
         if let (Some(stop), Some(fix)) = (stop_msg, fix_msg) {

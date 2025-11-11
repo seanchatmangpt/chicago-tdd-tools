@@ -46,6 +46,12 @@ log = { version = "^0.4", optional = true }
 # Dependency: Requires weaver feature (automatically enabled)
 reqwest = { version = "^0.11", optional = true, features = ["blocking"] }
 
+# Temporary file/directory creation (optional, weaver feature)
+# When to use: Weaver test fixtures, temporary report directories
+# Enables: TempDir for WeaverTestFixture
+# Dependency: Requires weaver feature (automatically enabled)
+tempfile = { version = "^3.0", optional = true }
+
 # OpenTelemetry SDK for sending telemetry (optional, weaver feature)
 # When to use: Sending telemetry data to Weaver, OTEL trace validation
 # Enables: OTEL trace export, Weaver telemetry integration
@@ -104,10 +110,10 @@ chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.0" }
 [dev-dependencies]
 # Test utilities (dev-only, not included in library)
 tokio-test = "^0.4"      # Tokio testing utilities
-tempfile = "^3.0"        # Temporary file/directory creation for tests
 ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
 trybuild = "^1.0"        # Compile-fail tests (compile-time test validation)
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
+# Note: tempfile moved to regular dependencies (weaver feature) - needed for WeaverTestFixture
 
 [features]
 # Default features: Minimal set for best DX
@@ -174,6 +180,7 @@ weaver = [
   "dep:opentelemetry",
   "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
+  "dep:tempfile",
 ]
 
 # Integration testing
@@ -240,19 +247,25 @@ name = "chicago_tdd_tools"
 path = "src/lib.rs"
 
 # Maximized linting configuration (Rust 1.78+)
+# **Poka-Yoke Design**: Warnings are treated as errors to prevent defects at compile time.
+# Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
+# Prevention is better than detection - catch issues at compile time, not runtime.
 # Note: Individual lint configuration is done via attributes in code
 # This section sets global lint levels
 [lints.rust]
-warnings = "warn"
+warnings = "deny"  # Poka-Yoke: Prevent warnings at compile time
 unsafe_code = "deny"
-missing_docs = "warn"
+missing_docs = "warn"  # Documentation warnings are less critical than code quality
 
 [lints.clippy]
-# Set lint groups to lower priority so individual lints can override
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-nursery = { level = "warn", priority = -1 }
-cargo = { level = "warn", priority = -1 }
+# **Poka-Yoke Design**: Deny warnings to prevent defects at compile time.
+# Type-first thinking: Use compiler as design tool to enforce correctness.
+# Prevention is better than detection - catch issues at compile time, not runtime.
+# Set lint groups to deny level for poka-yoke error prevention
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+cargo = { level = "deny", priority = -1 }
 
 # Deny critical lints for Poka-Yoke (error prevention)
 # These have higher priority (0) and will override the groups

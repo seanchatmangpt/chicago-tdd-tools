@@ -1,22 +1,29 @@
-// Shared test utilities for Chicago TDD Tools tests
-//
-// Provides common test helpers used across multiple test files.
-// Consolidates duplicate code to reduce maintenance burden.
+//! Common test utilities for Chicago TDD Tools tests
+//!
+//! Provides shared test helpers used across multiple test files.
+//! Consolidates duplicate code to reduce maintenance burden.
+//!
+//! # Docker Availability Helper
+//!
+//! 🚨 CRITICAL - Returns `false` if the Docker daemon is not running.
+//!
+//! This helper verifies the Docker daemon is actually running and responding,
+//! not just that the `docker` command executed successfully.
+//!
+//! **Kaizen improvement**: Added timeout to prevent hanging when Docker is stopped.
+//! Pattern: All external commands should have timeouts to fail fast.
+//! Benefits: Prevents tests from hanging indefinitely and provides fast feedback.
+//!
+//! # Returns
+//!
+//! `true` if the Docker daemon is running and responding, `false` otherwise.
+//!
+//! This module provides shared utilities for integration tests, including
+//! Docker availability checks and other common test infrastructure.
 
-/// Check if Docker is available for testcontainers tests
+/// Check if Docker is available and running
 ///
-/// 🚨 CRITICAL - Returns false if Docker daemon is not running.
-///
-/// This helper verifies Docker daemon is actually running and responding,
-/// not just that the docker command executed successfully.
-///
-/// **Kaizen improvement**: Added timeout to prevent hanging when Docker is stopped.
-/// Pattern: All external commands should have timeouts to fail fast.
-/// Benefits: Prevents tests from hanging indefinitely, provides fast feedback.
-///
-/// # Returns
-///
-/// `true` if Docker daemon is running and responding, `false` otherwise.
+/// Returns `true` if Docker daemon is running and responding, `false` otherwise.
 pub fn docker_available() -> bool {
     use std::process::Command;
     use std::sync::mpsc;

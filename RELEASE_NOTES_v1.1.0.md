@@ -73,6 +73,7 @@ Framework tests itself using its own tools, validating framework ergonomics thro
 - Test framework: All tests migrated to use `chicago_test!` macro
 - Code quality: Extracted magic numbers to named constants (test exit codes, benchmark warmup iterations, percentile calculations, property test cases) for improved readability and maintainability
 - Dead code elimination: Removed duplicate `andon.rs` module (393 lines) - `alert.rs` is the correct implementation
+- Tooling: Retired the git hook installer script; developers run `cargo make pre-commit`, `cargo make check`, `cargo make lint`, and related tasks directly
 
 ## Bug Fixes
 

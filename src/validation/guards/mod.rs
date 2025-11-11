@@ -95,6 +95,10 @@ impl GuardValidator {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if run length exceeds maximum allowed length.
     pub const fn validate_run_len(&self, len: usize) -> GuardConstraintResult<()> {
         if len > self.max_run_len {
             return Err(GuardConstraintError::MaxRunLengthExceeded(len, self.max_run_len));
@@ -118,6 +122,10 @@ impl GuardValidator {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if batch size exceeds maximum allowed size.
     pub const fn validate_batch_size(&self, size: usize) -> GuardConstraintResult<()> {
         if size > self.max_batch_size {
             return Err(GuardConstraintError::MaxBatchSizeExceeded(size, self.max_batch_size));
@@ -128,6 +136,10 @@ impl GuardValidator {
     /// Validate run length for a slice/array
     ///
     /// Convenience method for validating collections.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if run length exceeds maximum allowed length.
     pub const fn validate_run<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
         self.validate_run_len(items.len())
     }
@@ -135,6 +147,10 @@ impl GuardValidator {
     /// Validate batch for a slice/array
     ///
     /// Convenience method for validating collections.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if batch size exceeds maximum allowed size.
     pub const fn validate_batch<T>(&self, items: &[T]) -> GuardConstraintResult<()> {
         self.validate_batch_size(items.len())
     }
@@ -150,6 +166,11 @@ impl GuardValidator {
 /// let run = vec![1, 2, 3, 4, 5];
 /// assert_guard_run_len(&run); // OK
 /// ```
+///
+/// # Panics
+///
+/// Panics if guard constraint validation fails.
+#[allow(clippy::panic)] // Test helper - panic is appropriate for constraint violations
 pub fn assert_guard_run_len<T>(items: &[T]) {
     let validator = GuardValidator::new();
     validator.validate_run(items).unwrap_or_else(|e| {
@@ -167,6 +188,11 @@ pub fn assert_guard_run_len<T>(items: &[T]) {
 /// let batch = vec![0; 500];
 /// assert_guard_batch_size(&batch); // OK
 /// ```
+///
+/// # Panics
+///
+/// Panics if guard constraint validation fails.
+#[allow(clippy::panic)] // Test helper - panic is appropriate for constraint violations
 pub fn assert_guard_batch_size<T>(items: &[T]) {
     let validator = GuardValidator::new();
     validator.validate_batch(items).unwrap_or_else(|e| {

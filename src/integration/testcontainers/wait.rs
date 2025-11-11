@@ -83,7 +83,6 @@ mod stubs {
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
-    use super::*;
     use crate::test;
 
     // ========================================================================

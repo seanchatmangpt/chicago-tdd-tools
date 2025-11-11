@@ -235,10 +235,16 @@ where
     }
 
     /// Build test data with OTEL span instrumentation
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[cfg(feature = "otel")]
     #[must_use]
     pub fn build_with_otel(self, span_name: &str) -> (HashMap<String, String>, Span) {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -257,6 +263,8 @@ where
         span.attributes.insert("item_count".to_string(), self.data.len().to_string());
 
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let end_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -326,10 +334,16 @@ impl<T> ValidatedTestDataBuilder<T> {
     }
 
     /// Start OTEL span for this builder
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[cfg(feature = "otel")]
     #[must_use]
     pub fn start_span(mut self, span_name: &str) -> Self {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -355,6 +369,10 @@ impl<T> ValidatedTestDataBuilder<T> {
     }
 
     /// Build test data with OTEL span (if started)
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[cfg(feature = "otel")]
     #[must_use]
     pub fn build_with_otel(mut self) -> (HashMap<String, String>, Option<Span>) {
@@ -362,6 +380,8 @@ impl<T> ValidatedTestDataBuilder<T> {
 
         if let Some(ref mut s) = span {
             #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+            #[allow(clippy::cast_possible_truncation)]
+            // Milliseconds since epoch won't exceed u64::MAX for many years
             let end_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("SystemTime should always be after UNIX_EPOCH")
@@ -424,54 +444,72 @@ impl FakeDataGenerator {
 
     /// Generate a fake email address
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn email(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake name
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn name(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake UUID
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn uuid(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake phone number
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn phone(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake address
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn address(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake company name
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn company(&self) -> String {
         Faker.fake::<String>()
     }
 
     /// Generate a fake integer in a range
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn int(&self, min: i32, max: i32) -> i32 {
         (min..max).fake::<i32>()
     }
 
     /// Generate a fake float in a range
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn float(&self, min: f64, max: f64) -> f64 {
         (min..max).fake::<f64>()
     }
 
     /// Generate a fake string with specified length
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn string(&self, len: usize) -> String {
         (0..len).map(|_| Faker.fake::<char>()).collect()
     }

@@ -12,12 +12,14 @@ pub struct TestGenerator {
 impl TestGenerator {
     /// Create new test generator
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const - Vec::new() is not const
     pub fn new() -> Self {
-        Self { tests: vec![] }
+        Self { tests: Vec::new() }
     }
 
     /// Generate test from specification
     #[allow(clippy::needless_pass_by_ref_mut)] // Preserve API compatibility
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn generate_test(&mut self, name: &str, spec: &str) -> String {
         format!(
             "#[test]\nfn {name}() {{\n    // Generated from: {spec}\n    // Test implementation needed\n}}\n"
@@ -52,6 +54,7 @@ impl Default for TestGenerator {
 /// assert_eq!(TEST_DATA[1], 1);
 /// ```
 #[must_use]
+#[allow(clippy::cast_possible_truncation)] // Array index modulo 256 fits in u8
 pub const fn generate_test_array<const N: usize>() -> [u8; N] {
     let mut array = [0u8; N];
     let mut i = 0;
@@ -66,6 +69,7 @@ pub const fn generate_test_array<const N: usize>() -> [u8; N] {
 ///
 /// Generates an array where each element follows a pattern based on its index.
 #[must_use]
+#[allow(clippy::cast_possible_truncation)] // Pattern addition modulo 256 fits in u8
 pub const fn generate_test_array_pattern<const N: usize>(pattern: u8) -> [u8; N] {
     let mut array = [0u8; N];
     let mut i = 0;
@@ -79,11 +83,19 @@ pub const fn generate_test_array_pattern<const N: usize>(pattern: u8) -> [u8; N]
 /// Compile-time validation helper
 ///
 /// Validates a condition at compile time using const assertions.
+///
+/// # Panics
+///
+/// Panics if `condition` is `false` at compile time.
 pub const fn const_assert(condition: bool) {
     assert!(condition, "Compile-time assertion failed");
 }
 
 /// Compile-time validation helper with message
+///
+/// # Panics
+///
+/// Panics if `condition` is `false` at compile time.
 pub const fn const_assert_msg(condition: bool, _msg: &'static str) {
     assert!(condition, "Compile-time assertion failed");
 }

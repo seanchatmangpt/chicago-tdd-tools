@@ -37,12 +37,14 @@ pub struct TotalCount(usize);
 impl TotalCount {
     /// Create a new total count
     #[must_use]
+    #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
     pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
 
     /// Get the count value
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Const fn - cannot change signature to pass by value
     pub const fn get(&self) -> usize {
         self.0
     }
@@ -83,6 +85,7 @@ pub struct CoveredCount(usize);
 impl CoveredCount {
     /// Create a new covered count
     #[must_use]
+    #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
     pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
@@ -113,6 +116,7 @@ impl CoveredCount {
 
     /// Get the count value
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Const fn - cannot change signature to pass by value
     pub const fn get(&self) -> usize {
         self.0
     }
@@ -212,12 +216,15 @@ impl CoveragePercentage {
             return None; // Division by zero
         }
 
+        #[allow(clippy::cast_precision_loss)]
+        // Percentage calculation - precision loss acceptable for coverage percentages
         let percentage = (covered.get() as f64 / total.get() as f64) * 100.0;
         Self::new(percentage)
     }
 
     /// Get the percentage value
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Const fn - cannot change signature to pass by value
     pub const fn get(&self) -> f64 {
         self.0
     }
@@ -253,6 +260,10 @@ pub struct CoverageReport {
 
 impl CoverageReport {
     /// Create new coverage report
+    ///
+    /// # Panics
+    ///
+    /// Panics if creating `TotalCount`, `CoveredCount`, or `CoveragePercentage` with 0/0.0 fails (should never happen).
     #[allow(clippy::expect_used)] // 0 is always valid for TotalCount and CoveredCount
     #[must_use]
     pub fn new() -> Self {
@@ -268,6 +279,11 @@ impl CoverageReport {
     }
 
     /// Add coverage item
+    /// Add an item to the coverage report
+    ///
+    /// # Panics
+    ///
+    /// Panics if creating `TotalCount` or `CoveredCount` with incremented values fails (should never happen).
     #[allow(clippy::expect_used)] // Incremented total is always valid
     pub fn add_item(&mut self, name: String, covered: bool) {
         self.details.insert(name, covered);

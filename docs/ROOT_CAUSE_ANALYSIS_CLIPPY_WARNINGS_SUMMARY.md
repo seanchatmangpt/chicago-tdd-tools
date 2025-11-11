@@ -2,27 +2,27 @@
 
 ## Root Cause
 
-**Configuration inconsistency between git hooks and `cargo make lint`**
+**Configuration inconsistency between legacy git hooks and `cargo make lint`**
 
-- Git hooks check `--lib` only (production code, excludes tests)
+- Legacy git hooks (installed via a now-removed script) checked `--lib` only
 - `cargo make lint` was checking `--all-targets` (included tests)
 - Test code has different standards (allows unwrap, expect, etc.)
-- When git hooks were updated to check lib only, `cargo make lint` wasn't updated to match
+- When hooks were relaxed to check lib only, `cargo make lint` wasn't updated to match
 
 ## Fix Applied
 
-Changed `cargo make lint` from `--all-targets` to `--lib` only, matching git hooks.
+Changed `cargo make lint` from `--all-targets` to `--lib` only, baking the relaxed hook behavior into the canonical task.
 
 **File**: `Makefile.toml` lines 40-63
 **Change**: `--all-targets` → `--lib`
-**Result**: Both git hooks and `cargo make lint` now check production code only
+**Result**: `cargo make lint` now enforces the intended production-only scope without relying on custom hooks.
 
 ## Prevention Measures Needed
 
-1. **Synchronization check**: Verify git hooks and Makefile.toml use same linting rules
-2. **Documentation**: Document that lint task matches git hooks
-3. **Code review**: Add checklist item to verify linting config consistency
-4. **CI check**: Add automated check to verify git hooks and Makefile.toml alignment
+1. **Synchronization check**: Verify any future linting changes stay centralized in Makefile.toml
+2. **Documentation**: Document that `cargo make lint` is the single source of truth
+3. **Code review**: Add checklist item to avoid reintroducing divergent configs
+4. **CI check**: Add automated check to verify lint configuration remains consistent
 
 ## Remaining Issues
 

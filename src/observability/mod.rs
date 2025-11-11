@@ -1,57 +1,45 @@
-//! Telemetry & Observability
+//! Unified Observability Testing
 //!
-//! Telemetry validation for OTEL spans/metrics and Weaver live-check.
-//! Validates observability correctness and schema conformance.
+//! Ground-up TRIZ redesign combining OTEL and Weaver testing into a single,
+//! ergonomic API with automatic resource management and zero-cost abstractions.
+//!
+//! **Key Features**:
+//! - Unified API for OTEL and Weaver testing
+//! - RAII-based automatic lifecycle management
+//! - Auto-detection of Weaver binary and registry
+//! - Compile-time validation where possible (zero-cost)
+//! - Runtime validation when needed (real collaborators)
+//! - Type-safe API (invalid states unrepresentable)
+//!
+//! **Usage**:
+//! ```rust
+//! use chicago_tdd_tools::observability::ObservabilityTest;
+//!
+//! // Simple usage - zero configuration for 80% of cases
+//! let test = ObservabilityTest::new()?;
+//! test.validate_span(&span)?;
+//! // Automatic cleanup via Drop trait
+//! ```
 //!
 //! **Required Features**:
 //! - `otel`: Enable OTEL span/metric validation (`chicago-tdd-tools = { features = ["otel"] }`)
 //! - `weaver`: Enable Weaver live validation (`chicago-tdd-tools = { features = ["weaver"] }`)
-//!
-//! **Usage**:
-//! ```rust
-//! // Enable features in Cargo.toml:
-//! // chicago-tdd-tools = { features = ["otel", "weaver"] }
-//!
-//! use chicago_tdd_tools::observability::otel::SpanValidator;
-//! use chicago_tdd_tools::observability::weaver::WeaverValidator;
-//! ```
 
+// Unified API (new implementation)
+pub mod unified;
+
+// Re-export unified API as main API
+#[cfg(feature = "otel")]
+pub use unified::{ObservabilityError, ObservabilityResult, ObservabilityTest, TestConfig};
+#[cfg(not(feature = "otel"))]
+pub use unified::{ObservabilityTest, TestConfig};
+
+// Keep old modules temporarily for types (will be removed)
+// Types are still needed for the unified API
 #[cfg(feature = "otel")]
 pub mod otel;
-#[cfg(not(feature = "otel"))]
-/// OTEL module - requires `otel` feature
-///
-/// **Error**: If you see "cannot find module 'otel'", enable the feature:
-/// ```toml
-/// chicago-tdd-tools = { features = ["otel"] }
-/// ```
-mod otel_placeholder {
-    // Placeholder to provide helpful error message
-    // When feature is disabled, users get "cannot find module 'otel'" error
-    // Documentation above guides them to enable the feature
-}
-
 #[cfg(feature = "weaver")]
 pub mod weaver;
-#[cfg(not(feature = "weaver"))]
-/// Weaver module - requires `weaver` feature
-///
-/// **Error**: If you see "cannot find module 'weaver'", enable the feature:
-/// ```toml
-/// chicago-tdd-tools = { features = ["weaver"] }
-/// ```
-mod weaver_placeholder {
-    // Placeholder to provide helpful error message
-    // When feature is disabled, users get "cannot find module 'weaver'" error
-    // Documentation above guides them to enable the feature
-}
 
-// Re-export commonly used items
-// Note: Both otel and weaver export a `types` module, causing ambiguous glob re-exports.
-// This is intentional - users can disambiguate with module paths (otel::types, weaver::types).
-#[allow(ambiguous_glob_reexports)]
-#[cfg(feature = "otel")]
-pub use otel::*;
-#[allow(ambiguous_glob_reexports)]
-#[cfg(feature = "weaver")]
-pub use weaver::*;
+#[cfg(all(feature = "weaver", feature = "otel"))]
+pub mod fixtures;

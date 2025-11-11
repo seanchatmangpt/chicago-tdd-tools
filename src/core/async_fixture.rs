@@ -145,6 +145,11 @@ where
     /// Setup fixture asynchronously
     ///
     /// Creates the fixture and returns it for use in tests.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if fixture creation fails.
+    #[allow(clippy::future_not_send)] // Trait design - Send bound is on trait, not implementation
     pub async fn setup(&self) -> Result<P::Fixture<'_>, P::Error> {
         self.provider.create_fixture().await
     }
@@ -152,7 +157,12 @@ where
     /// Teardown fixture asynchronously
     ///
     /// Performs cleanup operations. Override for custom cleanup logic.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if teardown fails.
     #[allow(clippy::unused_async)] // Part of async trait API - implementations may need async
+    #[allow(clippy::future_not_send)] // Async trait API - Send bound not required for default implementation
     pub async fn teardown(&self) -> FixtureResult<()> {
         // Default: no-op cleanup
         // Override in implementations for custom cleanup

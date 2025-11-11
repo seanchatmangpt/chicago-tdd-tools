@@ -1,11 +1,13 @@
-//! Build script to download weaver CLI binary during compilation
+//! Build script to download weaver CLI binary and clone registry during compilation
 //!
-//! This script downloads the weaver binary from GitHub releases if the weaver feature is enabled.
+//! This script downloads the weaver binary from GitHub releases and clones the OpenTelemetry
+//! semantic conventions registry if the weaver feature is enabled.
 //! The binary is placed in target/debug/weaver or target/release/weaver for use at runtime.
+//! The registry is cloned to registry/ directory in the project root.
 
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
@@ -70,6 +72,29 @@ fn main() {
             "cargo:warning=Weaver binary downloaded successfully to {}",
             output_path.display()
         );
+    }
+
+    // Setup registry directory (OpenTelemetry semantic conventions)
+    #[allow(clippy::expect_used)] // Cargo guarantees CARGO_MANIFEST_DIR is set
+    let manifest_dir =
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set"));
+    let registry_path = manifest_dir.join("registry");
+
+    // Skip if registry already exists
+    if registry_path.exists() {
+        println!(
+            "cargo:warning=Registry already exists at {}, skipping clone",
+            registry_path.display()
+        );
+        return;
+    }
+
+    // Clone registry
+    if let Err(e) = clone_registry(&registry_path) {
+        println!("cargo:warning=Failed to clone registry: {e}");
+        println!("cargo:warning=Registry will be cloned at runtime if not found");
+    } else {
+        println!("cargo:warning=Registry cloned successfully to {}", registry_path.display());
     }
 }
 
@@ -256,6 +281,38 @@ fn extract_zip(archive_path: &PathBuf) -> Result<(), String> {
 
     // Clean up archive
     let _ = fs::remove_file(archive_path);
+
+    Ok(())
+}
+
+/// Clone OpenTelemetry semantic conventions registry
+///
+/// Clones the registry repository to the specified path.
+/// Uses git clone with shallow clone (--depth 1) for faster download.
+fn clone_registry(registry_path: &Path) -> Result<(), String> {
+    // Check if git is available
+    if Command::new("git").arg("--version").output().is_err() {
+        return Err("git not found. Please install git to clone registry.".to_string());
+    }
+
+    let registry_url = "https://github.com/open-telemetry/semantic-conventions.git";
+    let registry_str = registry_path
+        .to_str()
+        .ok_or_else(|| "Registry path is not valid UTF-8".to_string())?;
+
+    println!("cargo:warning=Cloning registry from: {registry_url}");
+    println!("cargo:warning=Target directory: {}", registry_path.display());
+
+    // Clone with shallow clone for faster download
+    // Use --depth 1 to only clone the latest commit
+    let status = Command::new("git")
+        .args(["clone", "--depth", "1", "--single-branch", registry_url, registry_str])
+        .status()
+        .map_err(|e| format!("Failed to execute git clone: {e}"))?;
+
+    if !status.success() {
+        return Err("git clone failed".to_string());
+    }
 
     Ok(())
 }

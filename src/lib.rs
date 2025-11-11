@@ -52,6 +52,7 @@
 //! - `assertions`: Assertion helpers and utilities
 //! - `macros`: Test macros for AAA pattern enforcement and assertions
 //! - `state`: Type-level AAA enforcement
+//! - `poka_yoke`: Error prevention through type-level safety (prevents invalid states)
 //! - `const_assert`: Compile-time assertions
 //! - `alert`: Alert helpers for visual problem indicators (with optional `log` crate integration)
 //!
@@ -114,6 +115,7 @@
 //! - `alert!`: Emit custom alert with user-defined severity
 
 #![deny(clippy::unwrap_used)]
+#![deny(warnings)] // Poka-Yoke: Prevent warnings at compile time - compiler enforces correctness
 #![warn(missing_docs)]
 // Poka-Yoke: pub use is necessary for procedural macro re-exports
 #![allow(clippy::pub_use, reason = "Procedural macros must be re-exported via pub use")]
@@ -177,6 +179,9 @@ pub use observability::otel;
 pub use observability::weaver::types::WeaverLiveCheck;
 #[cfg(feature = "weaver")]
 pub use observability::weaver::{WeaverValidationError, WeaverValidationResult};
+// Unified observability API (new)
+#[cfg(any(feature = "otel", feature = "weaver"))]
+pub use observability::{ObservabilityError, ObservabilityResult, ObservabilityTest};
 #[cfg(feature = "cli-testing")]
 pub use testing::cli;
 #[cfg(feature = "concurrency-testing")]
@@ -205,7 +210,7 @@ pub mod prelude {
     pub use crate::core::*;
     pub use crate::validation::*;
 
-    // Macros are automatically exported via #[macro_use] in lib.rs
+    // Macros are automatically exported via #[macro_export] in macro definitions
     // They can be used directly: test!, assert_ok!, etc.
     // Or explicitly: use chicago_tdd_tools::{test, assert_ok};
 
@@ -229,6 +234,10 @@ pub mod prelude {
 
     #[cfg(feature = "weaver")]
     pub use crate::observability::weaver::{WeaverValidationError, WeaverValidationResult};
+
+    // Unified observability API (new)
+    #[cfg(any(feature = "otel", feature = "weaver"))]
+    pub use crate::observability::{ObservabilityError, ObservabilityResult, ObservabilityTest};
 
     #[cfg(feature = "testcontainers")]
     pub use crate::integration::testcontainers::*;

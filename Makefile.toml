@@ -38,10 +38,13 @@ command = "timeout"
 args = ["5s", "cargo", "fmt", "--all"]
 
 [tasks.lint]
-description = "Run clippy with maximized linting (all, pedantic, nursery, cargo) - matches git hooks: checks lib only, filters test warnings"
-# ROOT CAUSE FIX: Align with git hooks behavior
-# Git hooks use: cargo clippy --lib --all-features (excludes tests) + filter test warnings
-# This ensures consistency: git hooks and cargo make lint use same rules
+description = "Run clippy with maximized linting (all, pedantic, nursery, cargo) - canonical configuration for SPR linting"
+# ROOT CAUSE FIX: Preserve historical alignment with former git hook behavior (hooks removed)
+# `cargo make lint` is now the single source of truth for lint settings
+# This ensures consistency across local development and CI pipelines
+# **Poka-Yoke Design**: -D warnings treats warnings as errors, preventing defects at compile time
+# Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
+# **Root Cause Prevention**: CI/CD pipeline enforces this check automatically, preventing accumulation of lint errors
 command = "timeout"
 args = [
   "5s",
@@ -59,7 +62,7 @@ args = [
   "-W",
   "clippy::cargo",
   "-D",
-  "warnings",
+  "warnings",  # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
 ]
 
 [tasks.clippy]
@@ -272,6 +275,53 @@ command = "timeout"
 args = ["5s", "sh", "-c", "find src -name '*.rs' -type f | while read f; do dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\"; fi; fi; done"]
 ignore_errors = true
 
+# Code quality checks - unwrap/expect/TODO detection
+[tasks.check-unwrap-staged]
+description = "Check staged files for unwrap() calls in production code"
+command = "timeout"
+args = ["5s", "sh", "-c", "STAGED=\"$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true)\"; if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; UNWRAPS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c '\\.unwrap()' || echo 0); if [ \"$UNWRAPS\" -gt 0 ]; then echo \"❌ $f: $UNWRAPS unwrap() call(s)\"; COUNT=$((COUNT + UNWRAPS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unwrap() calls in production code\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-expect-staged]
+description = "Check staged files for expect() calls in production code"
+command = "timeout"
+args = ["5s", "sh", "-c", "STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ /(test|tests|example|examples|bench|benches)/ ]] || [[ \"$f\" == *\"build.rs\" ]] || [[ \"$f\" =~ ^(test|tests|example|examples|bench|benches)/ ]]; then continue; fi; if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; EXPECTS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c '\\.expect(' || echo 0); if [ \"$EXPECTS\" -gt 0 ]; then echo \"❌ $f: $EXPECTS expect() call(s)\"; COUNT=$((COUNT + EXPECTS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT expect() calls in production code\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-todo-staged]
+description = "Check staged files for TODO/FUTURE comments (main branch only)"
+command = "timeout"
+args = ["5s", "sh", "-c", "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do if [[ \"$f\" =~ \\.(md|txt|rst)$ ]]; then continue; fi; TODOS=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -iE '\\b(TODO|FUTURE)\\b' | grep -c . || echo 0); if [ \"$TODOS\" -gt 0 ]; then echo \"❌ $f: $TODOS FUTURE/TODO comment(s)\"; COUNT=$((COUNT + TODOS)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT FUTURE/TODO comments to main\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-unimplemented-staged]
+description = "Check staged files for unimplemented!() placeholders (main branch only)"
+command = "timeout"
+args = ["5s", "sh", "-c", "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ''); if [ \"$BRANCH\" != \"main\" ] && [ \"$BRANCH\" != \"master\" ]; then exit 0; fi; STAGED=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep '\\.rs$' || true); if [ -z \"$STAGED\" ]; then exit 0; fi; COUNT=0; for f in $STAGED; do UNIMPL=$(timeout 3s git diff --cached \"$f\" 2>&1 | grep -E '^\\+' | grep -c 'unimplemented!' || echo 0); if [ \"$UNIMPL\" -gt 0 ]; then echo \"❌ $f: $UNIMPL unimplemented!() placeholder(s)\"; COUNT=$((COUNT + UNIMPL)); fi; done; if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Cannot commit $COUNT unimplemented!() placeholders to main\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-unwrap-all]
+description = "Check all production files for unwrap() calls"
+command = "timeout"
+args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while read f; do if timeout 3s grep -qE '#!?\\[allow\\(clippy::unwrap_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.unwrap()' \"$f\" 2>/dev/null || echo 0; done | awk '{s+=$1} END {print s}' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Found $COUNT unwrap() calls in production code\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-expect-all]
+description = "Check all production files for expect() calls"
+command = "timeout"
+args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | while read f; do if timeout 3s grep -qE '#!?\\[allow\\(clippy::expect_used\\)\\]' \"$f\" 2>/dev/null || timeout 3s grep -q '#\\[cfg(test)\\]' \"$f\" 2>/dev/null; then continue; fi; timeout 3s grep -c '\\.expect(' \"$f\" 2>/dev/null || echo 0; done | awk '{s+=$1} END {print s}' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: Found $COUNT expect() calls in production code\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.check-todo-all]
+description = "Check all production files for TODO comments"
+command = "timeout"
+args = ["10s", "sh", "-c", "COUNT=$(timeout 8s find src proc_macros/src -name '*.rs' -type f 2>/dev/null | grep -v '/tests/' | grep -v '/test/' | grep -v '/example' | grep -v 'build.rs' | grep -v '/target/' | xargs timeout 8s grep 'TODO:' 2>/dev/null | grep -v 'FUTURE:' | wc -l | tr -d '[:space:]' || echo 0); if [ \"$COUNT\" -gt 0 ]; then echo \"❌ ERROR: $COUNT TODO comments found in production code\"; exit 1; fi"]
+ignore_errors = false
+
+[tasks.pre-commit-staged-checks]
+description = "Run staged-file-specific checks (unwrap/expect/TODO/unimplemented)"
+dependencies = ["check-unwrap-staged", "check-expect-staged", "check-todo-staged", "check-unimplemented-staged"]
+
 [tasks.pre-commit]
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
 dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
@@ -397,3 +447,64 @@ dependencies = ["timeout-check", "check", "fmt", "test-unit"]
 [tasks.all]
 description = "Full validation (build, test, lint)"
 dependencies = ["timeout-check", "build", "test", "lint"]
+
+[tasks.cookbook-build]
+description = "Build the pattern cookbook (mdBook)"
+dependencies = ["timeout-check"]
+command = "timeout"
+args = [
+  "10s",
+  "mdbook",
+  "build",
+  "cookbook"
+]
+
+[tasks.cookbook-serve]
+description = "Serve the pattern cookbook locally"
+dependencies = ["timeout-check"]
+command = "timeout"
+args = [
+  "60s",
+  "mdbook",
+  "serve",
+  "cookbook",
+  "--open"
+]
+
+[tasks.cookbook-test]
+description = "Verify the cookbook builds without errors"
+dependencies = ["cookbook-build"]
+command = "timeout"
+args = [
+  "10s",
+  "mdbook",
+  "build",
+  "cookbook",
+  "--dest-dir",
+  "book-test"
+]
+
+[tasks.weaver-bootstrap]
+description = "Download Weaver binary and semantic convention registry"
+command = "timeout"
+args = [
+  "60s",
+  "bash",
+  "scripts/weaver-bootstrap.sh",
+]
+
+[tasks.weaver-smoke]
+description = "Run Weaver smoke test (version check + telemetry span)"
+dependencies = ["weaver-bootstrap"]
+command = "timeout"
+args = [
+  "30s",
+  "cargo",
+  "run",
+  "--quiet",
+  "--bin",
+  "weaver_smoke",
+  "--features",
+  "weaver",
+]
+

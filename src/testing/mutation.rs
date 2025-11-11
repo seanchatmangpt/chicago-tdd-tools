@@ -36,6 +36,7 @@ impl MutationTester {
         self.mutate_data(&self.original.clone(), mutation)
     }
 
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     fn mutate_data(
         &self,
         data: &HashMap<String, String>,
@@ -100,6 +101,8 @@ impl MutationScore {
     /// Calculate mutation score
     #[must_use]
     pub fn calculate(caught: usize, total: usize) -> Self {
+        #[allow(clippy::cast_precision_loss)]
+        // Percentage calculation - precision loss acceptable for mutation scores
         let score = if total > 0 { (caught as f64 / total as f64) * 100.0 } else { 0.0 };
 
         Self { total, caught, score }

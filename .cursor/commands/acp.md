@@ -23,10 +23,16 @@ cargo make pre-commit
 **What this does**:
 - Formats code (`cargo make fmt`)
 - Lints code (`cargo make lint`)
-- Runs tests (`cargo make test`)
-- Validates git hooks
+- Runs tests (`cargo make test-unit`)
+- Checks for dead code
 
 **Expected Result**: All checks pass (exit code 0)
+
+**CRITICAL**: Pre-commit checks MUST pass before committing. CI/CD will block commits
+with compilation errors. Always run `cargo make pre-commit` before committing.
+
+**Root Cause Prevention**: This step prevents compilation errors from being committed.
+If this step fails, DO NOT commit - fix errors first.
 
 **If this step fails**: Proceed to Step 2 (Fix Issues)
 

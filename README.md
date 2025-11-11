@@ -5,263 +5,163 @@
 
 Testing framework for Chicago TDD (Classicist Test-Driven Development) in Rust. Enforces AAA pattern, provides fixtures, builders, and advanced testing capabilities.
 
-## Chicago TDD Principles
+## Development Workflow
 
-This framework enforces Chicago TDD (Classicist) principles:
+**Pre-commit validation** (run before committing):
+```bash
+cargo make pre-commit  # Format, lint, test
+```
 
-- **State-Based Testing**: Tests verify outputs and state, not implementation details
-- **Real Collaborators**: Uses actual dependencies, not mocks
-- **Behavior Verification**: Tests verify what code does, not how it does it
-- **AAA Pattern**: All tests follow Arrange-Act-Assert structure
+**Important**: The CI/CD pipeline automatically enforces clippy checks on every commit/PR.
+Always run `cargo make pre-commit` before committing to catch issues early.
 
-See [Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc) for complete methodology.
-
-## Dog Fooding
-
-The framework tests itself using its own tools. All framework tests use `test!` macros and framework features, demonstrating real-world usage patterns and validating framework ergonomics.
-
-See [Dog Fooding Documentation](docs/DOG_FOODING.md) for details.
+**Clippy standards**:
+- All clippy warnings are treated as errors (`-D warnings`)
+- Use `#[allow(clippy::...)]` with justification comments when necessary
+- CI/CD pipeline will fail if clippy finds any warnings/errors
+- See [SPR Guide](docs/SPR_GUIDE.md) for clippy best practices
 
 ## Quick Start
-
-### Installation
 
 **Step 1**: Install `cargo-make` (required for build system):
 ```bash
 cargo install cargo-make
 ```
 
-**Step 2**: Add dependency to `Cargo.toml`:
+**Verify**: `cargo make --version` should show version. If you get "command not found", install cargo-make first.
+
+**Step 2**: Create a new Rust project (if you don't have one):
+```bash
+cargo new my-project
+cd my-project
+```
+
+**Step 3**: Add dependency to `Cargo.toml`:
+
+**For local development** (if framework is in parent directory):
 ```toml
+[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2021"  # Required: Edition 2021
+
 [dev-dependencies]
 chicago-tdd-tools = { path = "../chicago-tdd-tools" }
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-**Note**: For optional features (property-testing, testcontainers, weaver, etc.), enable them:
+**For GitHub users** (when framework is published to crates.io):
 ```toml
+[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2021"  # Required: Edition 2021
+
 [dev-dependencies]
-chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["property-testing", "testcontainers"] }
+chicago-tdd-tools = "1.1.0"  # Use version when published
+tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-**Step 3**: Verify installation:
-```bash
-cargo make check
-```
-
-### Optional Features
-
-Enable features as needed:
-```toml
-[dev-dependencies]
-chicago-tdd-tools = { 
-    path = "../chicago-tdd-tools",
-    features = [
-        "property-testing",  # Property-based testing
-        "testcontainers",     # Docker container support
-        "weaver",            # Weaver live validation
-        "otel"               # OTEL span/metric validation
-    ]
-}
-```
-
-**Common Feature Combinations**:
-- **Basic testing**: No features needed (default)
-- **Property testing**: `property-testing`
-- **Integration testing**: `testcontainers`
-- **Observability testing**: `otel`, `weaver`
-
-### Your First Test
-
-**Synchronous Test**:
+**Step 4**: Create your first test file `tests/my_first_test.rs`:
 ```rust
-use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::prelude::*;  // prelude::* imports all common macros and types
 
 test!(test_example, {
-    // Arrange: Set up test data
+    // Arrange
     let input = 5;
-    
-    // Act: Execute feature
+    // Act
     let result = input * 2;
-    
-    // Assert: Verify behavior
+    // Assert
     assert_eq!(result, 10);
 });
-```
 
-**Async Test**:
-```rust
-use chicago_tdd_tools::prelude::*;
-
-async_test!(test_async_example, {
-    // Arrange: Set up test data
-    let expected = 10;
-    
-    // Act: Execute async operation
-    let result = async {
-        tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
-        5 * 2
-    }.await;
-    
-    // Assert: Verify behavior
-    assert_eq!(result, expected);
+async_test!(test_async, {
+    let result = async { 5 * 2 }.await;
+    assert_eq!(result, 10);
 });
-```
-
-**Fixture Test**:
-```rust
-use chicago_tdd_tools::prelude::*;
 
 fixture_test!(test_with_fixture, fixture, {
-    // Arrange: Fixture automatically created
     let counter = fixture.test_counter();
-    
-    // Act: Execute test
-    let result = counter + 1;
-    
-    // Assert: Verify behavior
-    assert!(result > 0);
+    assert!(counter >= 0);
 });
 ```
 
-**Run Tests**:
+**Step 5**: Verify installation and run tests:
 ```bash
-cargo make test
+cargo make check      # Verify compilation
+cargo make test       # Run tests
 ```
+
+**Note**: Always use `cargo make` commands (not `cargo test` directly). The build system handles proc-macro crates and includes timeouts.
+
+## Core Macros
+
+### Test Macros
+- **`test!`**: Synchronous tests with AAA pattern
+- **`async_test!`**: Async tests (1s timeout)
+- **`fixture_test!`**: Async tests with automatic fixture setup
+
+### Assertion Macros
+- **`assert_ok!`**: Assert Result is Ok
+- **`assert_err!`**: Assert Result is Err
+- **`assert_in_range!`**: Assert value in range
+
+**See [Quick Guide](docs/QUICK_GUIDE.md) for complete macro reference.**
 
 ## Features
 
-### Core Features (Always Available)
-
-- **Fixtures**: Reusable test fixtures with state management and automatic cleanup
-- **Builders**: Fluent builders for test data (JSON, HashMap, domain-specific)
-- **Assertions**: Comprehensive assertion utilities (`assert_ok!`, `assert_err!`, `assert_in_range!`, etc.)
-- **Macros**: AAA pattern enforcement (`test!`, `async_test!`, `fixture_test!`)
-- **Performance Testing**: RDTSC-based tick measurement and budget validation
-- **Guards**: Constraint enforcement (`MAX_RUN_LEN` ≤ 8, `MAX_BATCH_SIZE`)
-- **JTBD Validation**: Jobs To Be Done validation framework
-- **Coverage**: Test coverage analysis and reporting
-
-### Optional Features (Enable in `Cargo.toml`)
-
-#### Individual Features
-
-- **`property-testing`**: Property-based testing with proptest (random test generation, finding edge cases)
-- **`mutation-testing`**: Mutation testing for test quality validation
-- **`snapshot-testing`**: Snapshot testing with insta (output comparison, regression testing)
-- **`fake-data`**: Fake data generation for test data (realistic test data creation)
-- **`concurrency-testing`**: Concurrency testing with loom (thread model checking, deterministic testing)
-- **`parameterized-testing`**: Parameterized tests with rstest (multiple inputs, test matrices)
-- **`cli-testing`**: CLI testing with trycmd (command execution testing, golden files)
-- **`testcontainers`**: Docker container support for integration testing
-- **`otel`**: OpenTelemetry span/metric validation
-- **`weaver`**: Weaver live validation integration (requires `otel`)
-- **`async`**: Async fixture providers (async traits, Rust 1.75+)
-- **`benchmarking`**: Criterion benchmarking support
-- **`workflow-engine`**: Workflow-specific features
-
-#### Feature Groups (Convenience Bundles)
-
-For better DX, common feature combinations are available as feature groups:
-
-- **`testing-extras`**: Most common advanced testing features (`property-testing`, `snapshot-testing`, `fake-data`)
-  - Use when: You want comprehensive test coverage with property-based and snapshot testing
-- **`testing-full`**: All testing features (property, snapshot, mutation, concurrency, parameterized, cli, fake-data)
-  - Use when: You need maximum testing capabilities for comprehensive test suites
-- **`observability-full`**: Complete observability stack (`otel`, `weaver`)
-  - Use when: You need full observability validation with Weaver integration
-- **`integration-full`**: Full integration testing (`testcontainers`, `weaver`)
-  - Use when: You need integration testing with Docker containers and Weaver observability
-
-**Examples**: Enable features individually or use feature groups:
-
+**Most Common**: Enable `testing-extras` for property-based testing, snapshot testing, and fake data:
 ```toml
-# Individual features
 [dev-dependencies]
 chicago-tdd-tools = { 
-    path = "../chicago-tdd-tools",
-    features = ["property-testing", "snapshot-testing", "fake-data"]
-}
-
-# Feature groups (recommended for common combinations)
-[dev-dependencies]
-chicago-tdd-tools = { 
-    path = "../chicago-tdd-tools",
-    features = ["testing-extras"]  # Enables property-testing, snapshot-testing, fake-data
-}
-
-# Combine feature groups with individual features
-[dev-dependencies]
-chicago-tdd-tools = { 
-    path = "../chicago-tdd-tools",
-    features = ["testing-extras", "testcontainers"]  # testing-extras + testcontainers
+    path = "../chicago-tdd-tools",  # Or use git URL when published
+    features = ["testing-extras"]   # Enable common testing features
 }
 ```
 
-## Module Organization
+**When to use features**: Enable features only when you need them (e.g., `testcontainers` for Docker integration, `otel` for observability testing).
 
-Modules are organized into capability groups for better discoverability:
-
-- **`core/`**: Core testing infrastructure (fixtures, async_fixture, builders, assertions, macros, state, const_assert, alert)
-- **`testing/`**: Advanced testing techniques (property, mutation, snapshot, concurrency, cli, generator)
-- **`validation/`**: Quality & validation (coverage, guards, jtbd, performance)
-- **`observability/`**: Telemetry & observability (otel, weaver)
-- **`integration/`**: Integration testing (testcontainers)
-
-All modules are re-exported at the crate root for backward compatibility. See [Architecture](docs/ARCHITECTURE.md) for details.
+**See [Getting Started](docs/GETTING_STARTED.md) for complete feature list** (property-testing, mutation-testing, testcontainers, otel, weaver, etc.)
 
 ## Build System
 
-**CRITICAL**: Always use `cargo make` commands, never direct `cargo` commands. The build system handles proc-macro crates, includes timeouts, and ensures consistency.
-
+**Always use `cargo make` commands** (required for proc-macro crates and timeout enforcement):
 ```bash
-cargo make check      # Compile check (with timeout)
-cargo make test       # Run tests (excludes testcontainers by default)
-cargo make test-integration  # Run testcontainers integration tests (requires Docker)
+cargo make check      # Compile check
+cargo make test       # Run tests
 cargo make lint       # Run clippy
-cargo make pre-commit # Pre-commit validation
 ```
+
+**Why cargo-make?** The build system handles proc-macro crates correctly, includes timeouts to prevent hanging, and ensures consistency. Using `cargo test` directly may fail with proc-macro errors.
 
 See [Build System Practices](.cursor/rules/build-system-practices.mdc) for details.
 
 ## Documentation
 
-### Getting Started
 - **[Quick Guide](docs/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
-- **[Getting Started](docs/GETTING_STARTED.md)** - Quick start guide with verified examples
-
-### Comprehensive Guides
-- **[User Guide](docs/USER_GUIDE.md)** - Complete usage guide with patterns and best practices
+- **[Getting Started](docs/GETTING_STARTED.md)** - Complete setup guide with troubleshooting
+- **[User Guide](docs/USER_GUIDE.md)** - Comprehensive usage guide
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](docs/ARCHITECTURE.md)** - Design principles and extension patterns
-
-### Methodology & Practices
-- **[Chicago TDD Standards](.cursor/rules/chicago-tdd-standards.mdc)** - Testing methodology and standards
-- **[Dog Fooding](docs/DOG_FOODING.md)** - Framework self-testing principles
-- **[SPR Guide](docs/SPR_GUIDE.md)** - Sparse Priming Representation methodology
-- **[Build System Practices](.cursor/rules/build-system-practices.mdc)** - Build system and workflow practices
-
-### Examples
-- **[Examples](examples/)** - Working code examples demonstrating all features
+- **[Architecture](docs/ARCHITECTURE.md)** - Design principles
+- **[Pattern Cookbook](cookbook/src/README.md)** - Alexander-style pattern language (testing, architecture, design)
 
 ## Requirements
 
-### Required
 - **Rust**: Edition 2021 (Rust 1.70+)
-- **Cargo**: Latest stable
-- **cargo-make**: Required for build system (`cargo install cargo-make`)
-- **Tokio**: Required for async tests (included in dev-dependencies)
+- **cargo-make**: `cargo install cargo-make` (verify with `cargo make --version`)
+- **Tokio**: Included in dev-dependencies
 
-### Optional
-- **Docker**: Required for `testcontainers` feature (must be running for integration tests)
-- **Criterion**: Optional for `benchmarking` feature (install separately for benches/)
+**Optional**: Docker (for `testcontainers` feature), Rust 1.75+ (for `async` feature)
 
-**Verify Installation**:
-```bash
-rustc --version  # Should be 1.70+
-cargo --version  # Latest stable
-cargo make --version  # Should be installed
-```
+## Troubleshooting
+
+**"command not found: cargo-make"**: Install with `cargo install cargo-make`, then verify with `cargo make --version`.
+
+**"cannot find crate 'chicago_tdd_tools'"**: Check that `Cargo.toml` has `edition = "2021"` in `[package]` section and path is correct.
+
+**"cannot find macro 'test!'"**: Ensure you have `use chicago_tdd_tools::prelude::*;` at the top of your test file.
+
+**See [Getting Started - Troubleshooting](docs/GETTING_STARTED.md#troubleshooting) for more help.**
 
 ## License
 

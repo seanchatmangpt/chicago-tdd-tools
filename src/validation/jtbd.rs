@@ -107,6 +107,7 @@ impl ScenarioIndex {
     /// assert!(result.is_none());
     /// ```
     #[must_use]
+    #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
     pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
     }
@@ -137,6 +138,7 @@ impl ScenarioIndex {
 
     /// Get the index value
     #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Const fn - cannot change signature to pass by value
     pub const fn get(&self) -> usize {
         self.0
     }
@@ -176,6 +178,7 @@ pub struct JtbdValidationResult {
 impl JtbdValidationResult {
     /// Create a successful JTBD validation result
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const - takes String and Vec parameters
     pub fn success(scenario_name: String, latency_ms: u64, details: Vec<String>) -> Self {
         Self {
             scenario_name,
@@ -190,6 +193,7 @@ impl JtbdValidationResult {
 
     /// Create a failed JTBD validation result
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const - takes String and Vec parameters
     pub fn failure(
         scenario_name: String,
         execution_success: bool,
@@ -271,6 +275,7 @@ pub struct JtbdValidator {
 impl JtbdValidator {
     /// Create a new JTBD validator
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const - contains Vec field
     pub fn new() -> Self {
         Self { scenarios: Vec::new() }
     }
@@ -293,6 +298,8 @@ impl JtbdValidator {
         // Execute
         let start_time = std::time::Instant::now();
         let execution_result = (scenario.execute)(&context);
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds won't exceed u64::MAX for reasonable durations
         let latency_ms = start_time.elapsed().as_millis() as u64;
 
         // Validate JTBD: Does the code accomplish its intended purpose?
@@ -346,6 +353,7 @@ impl JtbdValidator {
 
     /// Get validation summary
     #[must_use]
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn get_summary(&self, results: &[JtbdValidationResult]) -> JtbdValidationSummary {
         let total = results.len();
         let execution_passed = results.iter().filter(|r| r.execution_success).count();
@@ -400,6 +408,7 @@ impl JtbdValidationSummary {
 
     /// Get pass rate (0.0 to 1.0)
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Percentage calculation - precision loss acceptable for pass rates
     pub fn pass_rate(&self) -> f64 {
         if self.total_scenarios == 0 {
             return 0.0;

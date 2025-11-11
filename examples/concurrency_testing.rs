@@ -4,10 +4,13 @@
 //! Loom performs model checking to explore all possible thread interleavings.
 
 #[cfg(feature = "concurrency-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[cfg(feature = "concurrency-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use loom::thread;
 #[cfg(feature = "concurrency-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "concurrency-testing")]

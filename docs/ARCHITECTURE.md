@@ -1,12 +1,14 @@
-# Architecture - SPR
+# Architecture
 
 ## Overview
 
 Chicago TDD Tools: Generic testing framework base layer. Extensible for domain-specific needs. Reusable across projects. Maintains consistency, avoids duplication.
 
+> See the [Pattern Cookbook](../cookbook/src/README.md) for Alexander-style documentation of the architectural and design patterns summarized here.
+
 ## Architecture
 
-**Base Layer** (chicago-tdd-tools): Generic components (Fixtures, Builders, Macros, Assertions, Property, Mutation, Performance, Guards, JTBD, Testcontainers, OTEL/Weaver).
+**Base Layer** (chicago-tdd-tools): Generic components (Fixtures, Async Fixtures, Builders, Assertions, Macros, State, Const Assert, Type Level, Alert, Property, Mutation, Snapshot, Concurrency, CLI, Generator, Coverage, Guards, JTBD, Performance, Testcontainers, OTEL/Weaver).
 
 **Extension Layer** (domain-specific): Extends base components (Workflow Fixture, Workflow Builder, Domain-Specific).
 
@@ -28,34 +30,35 @@ Modules are organized into capability groups for better discoverability and main
 
 **Core Testing Infrastructure** (`core/`): Foundational primitives that all tests use.
 - `fixture`: Test fixtures (GATs, RAII, automatic cleanup)
-- `async_fixture`: Async fixture providers (async traits, Rust 1.75+)
-- `builders`: Fluent builders for test data (JSON/HashMap)
-- `assertions`: Assertion helpers (Result, predicate, range)
-- `macros`: Test macros (AAA pattern, async, fixture, performance)
+- `async_fixture`: Async fixture providers (async traits, Rust 1.75+, requires `async` feature)
+- `builders`: Fluent builders for test data (JSON/HashMap, GenericTestDataBuilder, ValidatedTestDataBuilder)
+- `assertions`: Assertion helpers (Result, predicate, range, AssertionBuilder, ValidatedAssertion)
+- `macros`: Test macros (AAA pattern, async, fixture, performance, parameterized, OTEL, Weaver)
 - `state`: Type-level AAA enforcement (sealed traits, zero-sized types)
 - `const_assert`: Compile-time assertions
 - `type_level`: Type-level arithmetic and compile-time validation (const generics, type-level arithmetic)
+- `alert`: Alert helpers for visual problem indicators (with optional `log` crate integration, requires `logging` feature)
 
 **Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
-- `property`: Property-based testing (const generics, reproducible)
-- `mutation`: Mutation testing (quality validation, operators, scores)
+- `property`: Property-based testing (const generics, reproducible, requires `property-testing` feature)
+- `mutation`: Mutation testing (quality validation, operators, scores, requires `mutation-testing` feature)
 - `snapshot`: Snapshot testing (requires `snapshot-testing` feature)
 - `concurrency`: Concurrency testing (requires `concurrency-testing` feature)
 - `cli`: CLI testing (requires `cli-testing` feature)
 - `generator`: Test code generation
 
 **Quality & Validation** (`validation/`): Quality assurance and constraint validation.
-- `coverage`: Test coverage analysis (tracking, reports)
+- `coverage`: Test coverage analysis (tracking, reports, CoveragePercentage, CoveredCount, TotalCount)
 - `guards`: Guard constraints (input validation, Chatman Constant ≤8, batch size limits)
-- `jtbd`: Jobs To Be Done validation (scenario validation, real-world testing)
-- `performance`: Performance validation (RDTSC, tick measurement, hot path budget)
+- `jtbd`: Jobs To Be Done validation (scenario validation, real-world testing, ScenarioIndex)
+- `performance`: Performance validation (RDTSC, tick measurement, hot path budget, ValidatedTickBudget)
 
 **Telemetry & Observability** (`observability/`): Telemetry validation.
-- `otel`: OTEL validation (span/metric validation, schema conformance)
-- `weaver`: Weaver live validation (live validation, registry, OTLP)
+- `otel`: OTEL validation (span/metric validation, schema conformance, requires `otel` feature)
+- `weaver`: Weaver live validation (live validation, registry, OTLP, requires `weaver` feature, automatically enables `otel`)
 
 **Integration Testing** (`integration/`): External system integration.
-- `testcontainers`: Docker support (port mapping, exec, auto-cleanup)
+- `testcontainers`: Docker support (port mapping, exec, auto-cleanup, requires `testcontainers` feature)
 
 **Backward Compatibility**: All modules are re-exported at the crate root. Existing code using `chicago_tdd_tools::fixture::*` continues to work. New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 
@@ -63,11 +66,11 @@ Modules are organized into capability groups for better discoverability and main
 
 Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
 
-**Dependency Graph**: lib.rs → core (fixture, builders, assertions, macros, state, const_assert), testing (property, mutation, snapshot, concurrency, cli, generator), validation (coverage, guards, jtbd, performance), observability (otel, weaver), integration (testcontainers). Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
+**Dependency Graph**: lib.rs → core (fixture, async_fixture, builders, assertions, macros, state, const_assert, type_level, alert), testing (property, mutation, snapshot, concurrency, cli, generator), validation (coverage, guards, jtbd, performance), observability (otel, weaver), integration (testcontainers). Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
 
 ## Feature Flags
 
-**default**: Core framework (no optional features). **property-testing**: Property-based testing. **mutation-testing**: Mutation testing. **testcontainers**: Docker support. **otel**: OTEL validation. **weaver**: Weaver live validation (requires otel).
+**default**: Core framework with `logging` feature enabled. **Core features**: `workflow-engine`, `mutation-testing`, `async`, `benchmarking`. **Testing features**: `property-testing`, `snapshot-testing`, `fake-data`, `concurrency-testing`, `parameterized-testing`, `cli-testing`. **Observability features**: `otel`, `weaver` (requires otel). **Integration features**: `testcontainers`. **Feature groups**: `testing-extras` (property-testing, snapshot-testing, fake-data), `testing-full` (all testing features), `observability-full` (otel, weaver), `integration-full` (testcontainers, weaver).
 
 **Rationale**: Users include only what they need. Reduces compile time, binary size.
 
@@ -79,6 +82,8 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 **Compose Components**: Use fixture + builder + assertions together. Pattern: `fixture_test!` with `TestDataBuilder` and `assert_ok!`.
 
+**Extend Async Fixtures**: Implement `AsyncFixtureProvider` trait with sealed trait pattern. Use `AsyncFixtureManager` for lifecycle management.
+
 ## Type Safety
 
 **GATs**: Flexible fixture creation with type-safe lifetimes. Pattern: `trait FixtureProvider { type Fixture<'a>; }`.
@@ -89,17 +94,31 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 **Type State**: Compile-time AAA enforcement. Pattern: `TestState<Phase>` with `PhantomData<Phase>`. Prevents wrong method order.
 
-**Sealed Traits**: API safety and extensibility control. Pattern: `mod private { pub trait Sealed {} }` prevents external implementations.
+**Sealed Traits**: API safety and extensibility control. Pattern: `mod private { pub trait Sealed {} }` prevents external implementations. Used in `AsyncFixtureProvider` to prevent external implementations.
 
 **Type-Level Arithmetic**: Runtime size/range validation with const generics. Pattern: `SizeValidatedArray<const SIZE: usize, const MAX_SIZE: usize>` (runtime validation, future: compile-time with Rust 1.79+). Marker types: `ValidatedSize`, `ValidatedRange` (documentation only, no validation).
 
 **HRTB**: Flexible predicates with any lifetime. Pattern: `F: for<'a> Fn(&'a T) -> bool`.
+
+## Macros
+
+**Test Macros**: `test!`, `async_test!`, `async_test_with_timeout!`, `fixture_test!`, `fixture_test_with_timeout!`, `performance_test!`, `param_test!` (requires `parameterized-testing`), `otel_test!` (requires `otel`), `weaver_test!`, `weaver_test_with_timeout!` (requires `weaver`).
+
+**Assertion Macros**: `assert_ok!`, `assert_err!`, `assert_within_tick_budget!`, `assert_in_range!`, `assert_eq_msg!`, `assert_eq_enhanced!`, `assert_guard_constraint!`.
+
+**Alert Macros**: `alert_critical!`, `alert_warning!`, `alert_info!`, `alert_success!`, `alert_debug!`, `alert!`.
+
+**Procedural Macros**: `#[tdd_test]`, `#[fixture]`, `#[derive(TestBuilder)]`.
+
+**Timeout Management**: Async macros (`async_test!`, `fixture_test!`, `weaver_test!`) use 1s timeout by default. Use `*_with_timeout!` variants for custom timeouts (e.g., 30s for integration tests). Synchronous macros (`test!`, `otel_test!`) rely on cargo-nextest profile timeouts.
 
 ## Error Handling
 
 All fallible operations return `Result<T, E>`. No `unwrap()` in production. Use `thiserror` for error types. Errors include context.
 
 **Pattern**: `pub enum FixtureError { CreationFailed(String), OperationFailed(String) }`.
+
+**Error Types**: `FixtureError`, `FixtureResult<T>`, `TestcontainersError`, `OtelValidationError`, `WeaverValidationError`, `WeaverValidationResult<T>`, `GuardConstraintError`, `PerformanceValidationError`, `JtbdValidationResult`.
 
 ## Performance
 
@@ -108,6 +127,8 @@ All fallible operations return `Result<T, E>`. No `unwrap()` in production. Use 
 **Efficient**: Atomic counters for fixtures (~1-2ns). Builders use HashMap, convert to JSON when needed. LCG for property testing.
 
 **Hot Path**: RDTSC on x86_64. Tick budget enforced at compile time. Minimal allocations, reuse structures.
+
+**Timeout Enforcement**: Multiple layers (test-level timeouts via `tokio::time::timeout`, cargo-nextest profile timeouts, process-level timeouts via Makefile.toml). Defense in depth ensures tests don't hang.
 
 ## Security
 
@@ -123,7 +144,7 @@ State-based testing (verify outputs, not implementation). Real collaborators (ac
 
 ## Procedural Macros
 
-**`#[tdd_test]`**: Zero-boilerplate tests with AAA validation. **`#[fixture]`**: Automatic fixture setup/teardown. **`#[derive(TestBuilder)]`**: Derive macro for fluent builders.
+**`#[tdd_test]`**: Zero-boilerplate tests with AAA validation. Works with both sync and async functions. **`#[fixture]`**: Automatic fixture setup/teardown. Automatically creates `fixture` variable. **`#[derive(TestBuilder)]`**: Derive macro for fluent builders. Generates `{StructName}Builder` with `with_*` methods.
 
 **Rationale**: Compile-time validation, reduce boilerplate.
 

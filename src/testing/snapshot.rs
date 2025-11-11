@@ -257,6 +257,7 @@ mod tests {
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_enum_variants() {
         #[derive(Debug)]
+        #[allow(dead_code)] // Test enum - fields used for Debug output
         enum TestEnum {
             Variant1,
             Variant2(String),
@@ -274,11 +275,13 @@ mod tests {
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_nested_struct() {
         #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used for Debug output
         struct Inner {
             value: i32,
             name: String,
         }
         #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used for Debug output
         struct Outer {
             inner: Inner,
             count: usize,

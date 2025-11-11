@@ -123,10 +123,16 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
     }
 
     /// Start OTEL span for this assertion
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[cfg(feature = "otel")]
     #[must_use]
     pub fn with_span(mut self, span_name: &str) -> Self {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -195,10 +201,16 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
     }
 
     /// Get the OTEL span (if started)
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[cfg(feature = "otel")]
     pub fn into_span(mut self) -> Option<Span> {
         if let Some(ref mut span) = self.span {
             #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+            #[allow(clippy::cast_possible_truncation)]
+            // Milliseconds since epoch won't exceed u64::MAX for many years
             let end_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("SystemTime should always be after UNIX_EPOCH")
@@ -243,8 +255,14 @@ pub struct ValidatedAssertion<T> {
 #[cfg(feature = "otel")]
 impl<T: std::fmt::Debug> ValidatedAssertion<T> {
     /// Create a new validated assertion with OTEL instrumentation
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     pub fn new(value: T, span_name: &str) -> Self {
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -263,6 +281,10 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
     }
 
     /// Assert that the value satisfies a predicate (validated)
+    ///
+    /// # Panics
+    ///
+    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
     #[must_use]
     pub fn assert_that<F>(mut self, predicate: F) -> Self
     where
@@ -271,6 +293,8 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
         let success = predicate(&self.value);
 
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let end_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -287,6 +311,8 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
 
         // Create metric
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        #[allow(clippy::cast_possible_truncation)]
+        // Milliseconds since epoch won't exceed u64::MAX for many years
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("SystemTime should always be after UNIX_EPOCH")
@@ -483,7 +509,7 @@ mod tests {
     #[should_panic(expected = "Assertion failed for value")]
     fn test_assertion_builder_assert_that_fails() {
         let builder = AssertionBuilder::new(0);
-        builder.assert_that(|v| *v > 0);
+        let _ = builder.assert_that(|v| *v > 0);
     }
 
     test!(test_assertion_builder_assert_eq, {
@@ -501,7 +527,7 @@ mod tests {
     #[should_panic(expected = "Values not equal")]
     fn test_assertion_builder_assert_eq_fails() {
         let builder = AssertionBuilder::new(TEST_VALUE);
-        builder.assert_eq(&43);
+        let _ = builder.assert_eq(&43);
     }
 
     test!(test_assertion_builder_assert_that_with_msg, {
@@ -521,7 +547,7 @@ mod tests {
     #[should_panic(expected = "value should be positive")]
     fn test_assertion_builder_assert_that_with_msg_fails() {
         let builder = AssertionBuilder::new(0);
-        builder.assert_that_with_msg(|v| *v > 0, "value should be positive");
+        let _ = builder.assert_that_with_msg(|v| *v > 0, "value should be positive");
     }
 
     test!(test_assertion_builder_chaining, {

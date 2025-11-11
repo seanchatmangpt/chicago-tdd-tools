@@ -4,8 +4,10 @@
 //! Snapshot testing is ideal for testing complex data structures and ensuring output stability.
 
 #[cfg(feature = "snapshot-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "snapshot-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::snapshot::SnapshotAssert;
 
 #[cfg(feature = "snapshot-testing")]

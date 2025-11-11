@@ -142,8 +142,19 @@ where
     ///
     /// This is guaranteed to be LEN at compile time.
     #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
+    #[allow(clippy::len_without_is_empty)] // Compile-time validated - length is always LEN, is_empty not meaningful
     pub const fn len(&self) -> usize {
         LEN
+    }
+
+    /// Check if the run is empty
+    ///
+    /// This is always false for `ValidatedRun` (length is guaranteed to be `LEN` at compile time).
+    #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
+    pub const fn is_empty(&self) -> bool {
+        LEN == 0
     }
 
     /// Get a reference to the run data
@@ -245,8 +256,19 @@ where
     ///
     /// This is guaranteed to be SIZE at compile time.
     #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
+    #[allow(clippy::len_without_is_empty)] // Compile-time validated - size is always SIZE, is_empty not meaningful
     pub const fn len(&self) -> usize {
         SIZE
+    }
+
+    /// Check if the batch is empty
+    ///
+    /// This is always false for `ValidatedBatch` (size is guaranteed to be `SIZE` at compile time).
+    #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
+    pub const fn is_empty(&self) -> bool {
+        SIZE == 0
     }
 
     /// Get a reference to the batch data

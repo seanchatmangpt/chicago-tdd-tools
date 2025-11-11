@@ -262,14 +262,15 @@ macro_rules! fixture_test {
 #[macro_export]
 macro_rules! fixture_test_with_timeout {
     ($name:ident, $fixture_var:ident, $timeout_secs:expr, $body:block) => {
-        #[allow(unnameable_test_items)]
+        #[allow(unnameable_test_items, unused_mut)]
         #[tokio::test]
         async fn $name() {
             use tokio::time::{timeout, Duration};
 
             // Arrange: Create fixture
             #[allow(clippy::expect_used)] // Macro - panic is appropriate if fixture creation fails
-            let $fixture_var = $crate::core::fixture::TestFixture::new()
+            #[allow(unused_mut)] // Fixture may not require mutation in every test body
+            let mut $fixture_var = $crate::core::fixture::TestFixture::new()
                 .unwrap_or_else(|e| panic!("Failed to create test fixture: {}", e));
 
             // Execute test body with specified timeout for SLA compliance
@@ -438,154 +439,13 @@ macro_rules! otel_test {
     };
 }
 
-/// Macro for Weaver testing with automatic validation
-///
-/// Automates Weaver validation testing with Chicago TDD patterns:
-/// - AAA pattern enforcement
-/// - Automatic Weaver validator setup
-/// - Test helper setup
-///
-/// **Timeout Enforcement**:
-/// - Default: Tests are automatically wrapped with `tokio::time::timeout` (1s) for unit tests
-/// - Integration tests: Use `weaver_test_with_timeout!` with 30s timeout, or rely on cargo-nextest profile timeout
-/// - Defense in depth: Multiple timeout layers ensure enforcement even if one layer fails
-///
-/// **Chicago TDD Principle**: "Better to break fast than freeze forever" - timeouts prevent infinite hangs
-///
-/// # Example
-///
-/// ```rust
-/// use chicago_tdd_tools::{weaver_test, prelude::*};
-/// use std::path::PathBuf;
-///
-/// weaver_test!(test_weaver_validation, {
-///     // Arrange: Create validator
-///     let registry_path = PathBuf::from("registry/");
-///     let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);
-///
-///     // Act: Start Weaver (if available)
-///     let start_result = validator.start();
-///
-///     // Assert: Verify Weaver started or handle unavailable case
-///     if start_result.is_ok() {
-///         assert!(validator.is_running());
-///         validator.stop().unwrap();
-///     }
-/// });
-/// ```
-#[cfg(feature = "weaver")]
-#[macro_export]
-macro_rules! weaver_test {
-    ($name:ident, $body:block) => {
-        $crate::weaver_test_with_timeout!($name, 1, $body);
-    };
-}
-
-/// Macro for Weaver testing with custom timeout
-///
-/// Same as `weaver_test!` but allows specifying a custom timeout in seconds.
-/// Use this for integration tests that require longer timeouts (e.g., 30s for Docker operations).
-///
-/// **Timeout Enforcement**: Tests are wrapped with `tokio::time::timeout` using the specified duration.
-///
-/// # Example
-///
-/// ```rust
-/// use chicago_tdd_tools::{weaver_test_with_timeout, prelude::*};
-/// use std::path::PathBuf;
-///
-/// // Integration test with 30s timeout
-/// weaver_test_with_timeout!(test_integration_weaver, 30, {
-///     // Arrange: Create validator
-///     let registry_path = PathBuf::from("registry/");
-///     let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);
-///
-///     // Act: Start Weaver (if available)
-///     let start_result = validator.start();
-///
-///     // Assert: Verify Weaver started or handle unavailable case
-///     if start_result.is_ok() {
-///         assert!(validator.is_running());
-///         validator.stop().unwrap();
-///     }
-/// });
-/// ```
-#[cfg(feature = "weaver")]
-#[macro_export]
-macro_rules! weaver_test_with_timeout {
-    ($name:ident, $timeout_secs:expr, $body:block) => {
-        #[tokio::test]
-        async fn $name() {
-            use tokio::time::{timeout, Duration};
-
-            // Helper trait to handle both Result and non-Result returns
-            trait TestOutput {
-                fn handle(self);
-            }
-
-            impl TestOutput for () {
-                fn handle(self) {}
-            }
-
-            impl<E: std::fmt::Debug> TestOutput for Result<(), E> {
-                fn handle(self) {
-                    if let Err(e) = self {
-                        panic!("Test failed: {:?}", e);
-                    }
-                }
-            }
-
-            // Execute body with specified timeout for SLA compliance
-            // **Kaizen improvement**: Comments reference timeout constants for clarity
-            // Note: Using literal value since macro_rules! cannot reference constants directly
-            // Standard timeout values:
-            //   - DEFAULT_UNIT_TEST_TIMEOUT_SECONDS (1s) for unit tests
-            //   - DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS (30s) for integration tests
-            // The $timeout_secs parameter allows custom timeouts (e.g., 30s for integration tests)
-            let test_future = async {
-                let output = async { $body }.await;
-                TestOutput::handle(output);
-            };
-
-            match timeout(Duration::from_secs($timeout_secs), test_future).await {
-                Ok(_) => {
-                    // Test completed within timeout
-                }
-                Err(_) => {
-                    panic!(
-                        "Test '{}' exceeded {}s timeout (SLA violation). \
-                        Expected timeout: {}s. \
-                        Use weaver_test_with_timeout! with longer timeout for integration tests.",
-                        stringify!($name),
-                        $timeout_secs,
-                        $timeout_secs
-                    );
-                }
-            }
-        }
-    };
-}
-
-#[cfg(not(feature = "weaver"))]
-/// Macro for Weaver testing (requires weaver feature)
-///
-/// Enable the `weaver` feature to use Weaver testing macros.
-#[macro_export]
-macro_rules! weaver_test {
-    ($($tt:tt)*) => {
-        compile_error!(
-            "Weaver testing requires the 'weaver' feature. Enable with: --features weaver"
-        );
-    };
-}
-
 #[cfg(test)]
 #[allow(unnameable_test_items)] // Macro-generated tests trigger this warning
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use crate::assert_eq_msg;
     use crate::assert_err;
-    use crate::assertions::{assert_that, assert_that_with_msg};
+    use crate::assertions::assert_that_with_msg;
     use crate::async_test;
     // Note: We can't use test! macro here because it would create
     // a test function with the same name, causing conflicts.
@@ -616,18 +476,17 @@ mod tests {
         };
     }
 
-    #[allow(dead_code)] // Test function is generated by macro, not actually dead code
-    async_test!(test_fixture_test_macro, {
-        fixture_test!(test_fixture_basic, fixture, {
-            // Arrange
-            let counter = fixture.test_counter();
+    // Test fixture_test! macro expansion - verify it compiles and works
+    // Note: This test verifies the macro expands correctly by using it directly
+    fixture_test!(test_fixture_basic, fixture, {
+        // Arrange
+        let counter = fixture.test_counter();
 
-            // Act
-            let result = counter + 1;
+        // Act
+        let result = counter + 1;
 
-            // Assert
-            assert_that_with_msg(&result, |v| *v > 0, "Result should be greater than 0");
-        });
+        // Assert
+        assert_that_with_msg(&result, |v| *v > 0, "Result should be greater than 0");
     });
 
     #[cfg(feature = "parameterized-testing")]
@@ -635,7 +494,7 @@ mod tests {
     fn test_parameterized_macro() {
         // This test demonstrates parameterized testing
         // Actual parameterized tests would use param_test! macro
-        assert_that(&true, |v| *v);
+        assert_that_with_msg(&true, |v| *v, "Value should be true");
     }
 
     #[test]
@@ -693,10 +552,9 @@ mod tests {
         };
     }
 
-    /// Test to verify timeout enforcement works (FM9: Defense in depth verification)
-    ///
-    /// **FMEA Fix**: Verifies that tokio::time::timeout actually enforces timeouts.
-    /// This test ensures timeout layer 1 (tokio::time::timeout) is working correctly.
+    // Test to verify timeout enforcement works (FM9: Defense in depth verification)
+    // FMEA Fix: Verifies that tokio::time::timeout actually enforces timeouts.
+    // This test ensures timeout layer 1 (tokio::time::timeout) is working correctly.
     async_test!(test_timeout_enforcement_works, {
         use tokio::time::{timeout, Duration, Instant};
 

@@ -1,0 +1,69 @@
+[package]
+name = "chicago-tdd-tools-playground"
+version = "0.1.0"
+edition = "2021"
+authors = ["KNHK Team"]
+license = "MIT"
+description = "Comprehensive playground demonstrating all features of chicago-tdd-tools"
+publish = false
+
+[dependencies]
+# Chicago TDD Tools with ALL features enabled
+chicago-tdd-tools = { path = "..", features = [
+    # Feature groups (convenience bundles)
+    "testing-full",      # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
+    "observability-full", # Complete observability: otel, weaver
+    "integration-full",  # Full integration: testcontainers, weaver
+    
+    # Individual features
+    "async",             # Async fixture providers (Rust 1.75+)
+    "mutation-testing",  # Mutation testing (no external deps)
+    "benchmarking",      # Criterion benchmarking support
+    "workflow-engine",   # Workflow-specific features
+    "logging",           # Log crate integration (enabled by default)
+] }
+
+# Tokio for async runtime
+tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
+
+# Serialization
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+
+# Utilities
+uuid = { version = "^1.0", features = ["v4"] }
+chrono = "^0.4"
+
+# Error handling
+thiserror = "^2.0"
+
+# Test utilities
+tempfile = "^3.0"
+
+[[bin]]
+name = "playground"
+path = "src/main.rs"
+
+[dev-dependencies]
+# Test utilities
+tokio-test = "^0.4"
+ntest = "^0.9"
+
+[lints.rust]
+warnings = "warn"
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+# Deny critical lints
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+

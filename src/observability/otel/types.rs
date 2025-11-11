@@ -272,6 +272,10 @@ impl Span {
     }
 
     /// Create a new completed span
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if span creation fails.
     pub fn new_completed(
         context: SpanContext,
         name: String,

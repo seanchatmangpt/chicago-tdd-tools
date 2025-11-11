@@ -27,6 +27,22 @@ mod weaver_tests {
     use std::time::Duration;
     use tokio::time::sleep;
 
+    fn allow_weaver_skip() -> bool {
+        matches!(
+            std::env::var("WEAVER_ALLOW_SKIP"),
+            Ok(value) if matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES")
+        )
+    }
+
+    fn handle_prereq_failure(message: &str) -> bool {
+        if allow_weaver_skip() {
+            eprintln!("⏭️  Skipping Weaver test: {message} (WEAVER_ALLOW_SKIP set)");
+            true
+        } else {
+            panic!("{message}\nSet WEAVER_ALLOW_SKIP=1 to bypass Weaver tests explicitly.");
+        }
+    }
+
     // Kaizen improvement: Extract repeated Docker image names to constants
     // Pattern: Use named constants for repeated string literals to improve maintainability
     const WEAVER_IMAGE: &str = "otel/weaver";
@@ -171,13 +187,13 @@ mod weaver_tests {
 
         // Arrange: Check prerequisites
         let registry_path = PathBuf::from("registry");
-        if !registry_path.exists() {
-            eprintln!("⏭️  Skipping test: Registry path does not exist");
+        if !registry_path.exists() && handle_prereq_failure("Registry path does not exist (run scripts/weaver-bootstrap.sh)") {
             return;
         }
 
-        if WeaverValidator::check_weaver_available().is_err() {
-            eprintln!("⏭️  Skipping test: Weaver binary not available");
+        if WeaverValidator::check_weaver_available().is_err()
+            && handle_prereq_failure("Weaver binary not available (run scripts/weaver-bootstrap.sh)")
+        {
             return;
         }
 

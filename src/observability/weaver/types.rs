@@ -24,6 +24,7 @@ pub enum WeaverValidationError {
 }
 
 /// Weaver live-check integration for telemetry validation
+#[derive(Debug)]
 pub struct WeaverLiveCheck {
     registry_path: Option<String>,
     otlp_grpc_address: String,
@@ -99,7 +100,7 @@ impl WeaverLiveCheck {
     }
 
     /// Find weaver binary in multiple locations
-    /// Checks: PATH, target/debug/weaver, target/release/weaver, vendors/weaver/target/release/weaver
+    /// Checks: PATH, target/debug/weaver, target/release/weaver
     #[must_use]
     pub fn find_weaver_binary() -> Option<std::path::PathBuf> {
         use std::path::PathBuf;
@@ -122,18 +123,16 @@ impl WeaverLiveCheck {
             return Some(release_path);
         }
 
-        // 4. Check vendors/weaver/target/release/weaver (fallback)
-        let vendor_path = PathBuf::from("vendors/weaver/target/release/weaver");
-        if vendor_path.exists() {
-            return Some(vendor_path);
-        }
-
         None
     }
 
     /// Check if Weaver binary is available (checks multiple locations)
     ///
     /// 🚨 CRITICAL - Returns error if Weaver binary not found.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Weaver binary is not found.
     pub fn check_weaver_available() -> Result<(), String> {
         use std::process::Command;
 
@@ -309,6 +308,10 @@ impl WeaverLiveCheck {
     }
 
     /// Check Weaver health by querying the admin endpoint
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if health check fails.
     pub fn check_health(&self) -> Result<bool, String> {
         // Note: This requires reqwest, which may not be available
         // For now, return a basic connectivity check
@@ -326,10 +329,16 @@ impl WeaverLiveCheck {
 
     /// Run live-check and return the process handle
     /// The caller should send telemetry to the configured OTLP endpoint
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Weaver binary is not available or starting the process fails.
     pub fn start(&self) -> Result<Child, String> {
+        // Items (use statements) must come before statements (Rust requirement)
+        use std::process::Command;
+
         // Check Weaver binary availability first (may trigger runtime download)
         Self::check_weaver_available()?;
-        use std::process::Command;
 
         // Find weaver binary path
         let weaver_binary = Self::find_weaver_binary()
@@ -364,6 +373,10 @@ impl WeaverLiveCheck {
     }
 
     /// Stop the live-check process via HTTP admin endpoint
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if stopping the process fails.
     #[cfg(feature = "weaver")]
     pub fn stop(&self) -> Result<(), String> {
         use reqwest::blocking::Client;

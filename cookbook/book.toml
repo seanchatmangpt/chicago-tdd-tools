@@ -1,0 +1,20 @@
+[book]
+title = "Chicago TDD Tools Pattern Cookbook"
+author = "Chicago TDD Tools Team"
+description = "Alexander-style pattern language for Chicago TDD Tools"
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+default-theme = "light"
+create-missing = false
+build-dir = "book"
+
+[output.html]
+preferred-dark-theme = "navy"
+no-section-label = false
+site-url = ""
+
+[preprocessor.links]
+

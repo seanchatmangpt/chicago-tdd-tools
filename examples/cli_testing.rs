@@ -4,6 +4,7 @@
 //! CLI testing uses golden files to verify command output stability.
 
 #[cfg(feature = "cli-testing")]
+#[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::cli::CliTest;
 
 #[cfg(feature = "cli-testing")]

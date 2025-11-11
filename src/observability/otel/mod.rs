@@ -77,6 +77,10 @@ impl SpanValidator {
     }
 
     /// Validate a span
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if span validation fails (e.g., invalid span ID, trace ID, empty name, or missing required attributes).
     pub fn validate(&self, span: &Span) -> OtelValidationResult<()> {
         // Validate span ID is not zero (if enabled)
         if self.validate_non_zero_ids && span.context.span_id.0 == 0 {
@@ -117,6 +121,10 @@ impl SpanValidator {
     }
 
     /// Validate multiple spans
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any span validation fails.
     pub fn validate_spans(&self, spans: &[Span]) -> OtelValidationResult<()> {
         for (idx, span) in spans.iter().enumerate() {
             self.validate(span).map_err(|e| {
@@ -160,6 +168,10 @@ impl MetricValidator {
     }
 
     /// Validate a metric
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if metric validation fails.
     pub fn validate(&self, metric: &Metric) -> OtelValidationResult<()> {
         // Validate metric name is not empty
         if metric.name.is_empty() {
@@ -205,6 +217,10 @@ impl MetricValidator {
     }
 
     /// Validate multiple metrics
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any metric validation fails.
     pub fn validate_metrics(&self, metrics: &[Metric]) -> OtelValidationResult<()> {
         for (idx, metric) in metrics.iter().enumerate() {
             self.validate(metric).map_err(|e| {
@@ -241,33 +257,49 @@ impl OtelTestHelper {
     }
 
     /// Validate spans from a tracer
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if span validation fails.
     pub fn validate_tracer_spans(&self, spans: &[Span]) -> OtelValidationResult<Vec<SpanId>> {
         self.span_validator.validate_spans(spans)?;
         Ok(spans.iter().map(|s| s.context.span_id).collect())
     }
 
     /// Validate metrics from a tracer
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if metric validation fails.
     pub fn validate_tracer_metrics(&self, metrics: &[Metric]) -> OtelValidationResult<Vec<String>> {
         self.metric_validator.validate_metrics(metrics)?;
         Ok(metrics.iter().map(|m| m.name.clone()).collect())
     }
 
     /// Assert that spans are valid (for use in tests)
+    ///
+    /// # Panics
+    ///
+    /// Panics if span validation fails.
     pub fn assert_spans_valid(&self, spans: &[Span]) {
-        #[allow(clippy::expect_used)] // Test helper - panic is appropriate
+        #[allow(clippy::expect_used, clippy::panic)] // Test helper - panic is appropriate
         for span in spans {
             self.span_validator
-                .validate_spans(&[span.clone()])
+                .validate_spans(std::slice::from_ref(span))
                 .unwrap_or_else(|e| panic!("Span validation failed: {e}"));
         }
     }
 
     /// Assert that metrics are valid (for use in tests)
+    ///
+    /// # Panics
+    ///
+    /// Panics if metric validation fails.
     pub fn assert_metrics_valid(&self, metrics: &[Metric]) {
-        #[allow(clippy::expect_used)] // Test helper - panic is appropriate
+        #[allow(clippy::expect_used, clippy::panic)] // Test helper - panic is appropriate
         for metric in metrics {
             self.metric_validator
-                .validate_metrics(&[metric.clone()])
+                .validate_metrics(std::slice::from_ref(metric))
                 .unwrap_or_else(|e| panic!("Metric validation failed: {e}"));
         }
     }
@@ -297,6 +329,10 @@ pub mod test_helpers {
     /// let span = create_test_span("test.operation");
     /// assert_eq!(span.name, "test.operation");
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if creating the span fails.
     pub fn create_test_span(name: impl Into<String>) -> Span {
         let name = name.into();
         let trace_id = TraceId(12345);
@@ -308,6 +344,7 @@ pub mod test_helpers {
         let events = Vec::new();
         let status = SpanStatus::Ok;
 
+        #[allow(clippy::panic)] // Test helper - panic is appropriate
         Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
             .unwrap_or_else(|e| panic!("Failed to create test span: {e}"))
     }
@@ -326,6 +363,10 @@ pub mod test_helpers {
     /// attrs.insert("service.name".to_string(), "test-service".to_string());
     /// let span = create_test_span_with_attributes("test.operation", attrs);
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if creating the span fails.
     pub fn create_test_span_with_attributes(
         name: impl Into<String>,
         attributes: Attributes,
@@ -339,8 +380,9 @@ pub mod test_helpers {
         let events = Vec::new();
         let status = SpanStatus::Ok;
 
+        #[allow(clippy::panic)] // Test helper - panic is appropriate
         Span::new_completed(context, name, start_time_ms, end_time_ms, attributes, events, status)
-            .unwrap_or_else(|e| panic!("Failed to create test span: {e}"))
+            .unwrap_or_else(|e| panic!("Failed to create test span with attributes: {e}"))
     }
 
     /// Create a test metric with default values

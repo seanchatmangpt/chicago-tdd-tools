@@ -76,6 +76,8 @@ impl TickCounter {
         #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
         {
             // Fallback: use SystemTime for non-x86_64/ARM64 platforms
+            #[allow(clippy::cast_possible_truncation)]
+            // Nanoseconds won't exceed u64::MAX for reasonable durations
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
@@ -96,6 +98,10 @@ impl TickCounter {
     }
 
     /// Assert that elapsed ticks are within budget
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if ticks exceed the specified budget.
     pub fn assert_within_budget(&self, budget: u64) -> PerformanceValidationResult<()> {
         let elapsed = self.elapsed_ticks();
         if elapsed > budget {
@@ -105,6 +111,10 @@ impl TickCounter {
     }
 
     /// Assert that elapsed ticks are within hot path budget (≤8 ticks)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if ticks exceed hot path budget.
     pub fn assert_within_hot_path_budget(&self) -> PerformanceValidationResult<()> {
         self.assert_within_budget(HOT_PATH_TICK_BUDGET)
     }
@@ -160,6 +170,7 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     ///
     /// This is guaranteed to be BUDGET at compile time.
     #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
     pub const fn budget(&self) -> u64 {
         BUDGET
     }
@@ -169,6 +180,7 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     /// # Errors
     ///
     /// Returns `PerformanceValidationError::TickBudgetExceeded` if elapsed ticks exceed the budget.
+    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn assert_within_budget(&self, counter: &TickCounter) -> PerformanceValidationResult<()> {
         counter.assert_within_budget(BUDGET)
     }
@@ -321,6 +333,7 @@ pub struct BenchmarkResult {
 impl BenchmarkResult {
     /// Check if benchmark meets hot path budget
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Hot path budget comparison - precision loss acceptable
     pub fn meets_hot_path_budget(&self) -> bool {
         self.avg_ticks <= HOT_PATH_TICK_BUDGET as f64
     }
@@ -374,11 +387,15 @@ pub fn benchmark<F, T>(operation: &str, iterations: u64, f: F) -> BenchmarkResul
 where
     F: Fn() -> T,
 {
-    let mut tick_samples = Vec::with_capacity(iterations as usize);
-
-    // Kaizen improvement: Extract magic number to named constant for clarity
-    // Number of warmup iterations before benchmarking
+    // Constants must be declared before statements (Rust requirement)
     const BENCHMARK_WARMUP_ITERATIONS: u64 = 100;
+    const PERCENTILE_50: u8 = 50;
+    const PERCENTILE_95: u8 = 95;
+    const PERCENTILE_99: u8 = 99;
+
+    #[allow(clippy::cast_possible_truncation)]
+    // u64 to usize - iterations won't exceed usize::MAX in practice
+    let mut tick_samples = Vec::with_capacity(iterations as usize);
 
     // Warmup
     for _ in 0..BENCHMARK_WARMUP_ITERATIONS {
@@ -411,12 +428,9 @@ where
         };
     }
 
-    // Kaizen improvement: Extract magic numbers to named constants for clarity
-    const PERCENTILE_50: u8 = 50;
-    const PERCENTILE_95: u8 = 95;
-    const PERCENTILE_99: u8 = 99;
-
     let total_ticks: u64 = tick_samples.iter().sum();
+    #[allow(clippy::cast_precision_loss)]
+    // Average calculation - precision loss acceptable for benchmark statistics
     let avg_ticks = total_ticks as f64 / iterations as f64;
     let min_ticks = tick_samples[0];
     let max_ticks = tick_samples[tick_samples.len() - 1];

@@ -162,6 +162,7 @@ impl<const SIZE: usize, const MAX_SIZE: usize> SizeValidatedArray<SIZE, MAX_SIZE
 
     /// Get the validated size
     #[must_use]
+    #[allow(clippy::unused_self)] // Required for trait consistency - const fn needs self
     pub const fn size(&self) -> usize {
         SIZE
     }

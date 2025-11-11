@@ -139,6 +139,10 @@ pub mod implementation {
     ///
     /// `Ok(())` if Docker daemon is running and responding
     /// `Err(TestcontainersError::DockerUnavailable)` if Docker is stopped or unavailable
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Docker is unavailable or not responding.
     pub fn check_docker_available() -> TestcontainersResult<()> {
         use std::process::Command;
 
@@ -218,6 +222,7 @@ pub mod implementation {
         pub fn new() -> Self {
             // **FMEA Fix**: Verify Docker is available at client creation (fail-fast)
             // This prevents false positives where tests pass when Docker is unavailable
+            #[allow(clippy::panic)] // Test helper - panic is appropriate if Docker unavailable
             check_docker_available().unwrap_or_else(|e| {
                 panic!(
                     "🚨 Docker is required for testcontainers but Docker daemon is not available.\n\
@@ -316,7 +321,7 @@ pub mod implementation {
         /// * `image` - Docker image name
         /// * `tag` - Docker image tag
         /// * `env_vars` - Environment variables to set in the container
-        /// * `command` - Optional command to run (e.g., Some(("sleep", &["infinity"])) to keep container running)
+        /// * `command` - Optional command to run (e.g., `Some(("sleep", &["infinity"]))` to keep container running)
         ///
         /// # Errors
         ///
@@ -410,7 +415,7 @@ pub mod implementation {
         /// * `image` - Docker image name
         /// * `tag` - Docker image tag
         /// * `command` - Command to run (e.g., "sleep", "sh")
-        /// * `args` - Command arguments (e.g., &["infinity"] for sleep)
+        /// * `args` - Command arguments (e.g., `&["infinity"]` for sleep)
         ///
         /// # Errors
         ///
@@ -605,7 +610,6 @@ pub use stubs::*;
 mod tests {
     use super::*;
     use crate::assert_eq_msg;
-    use crate::assert_err;
     use crate::assertions::assert_that_with_msg;
     use crate::test;
 

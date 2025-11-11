@@ -4,7 +4,7 @@ Comprehensive reference for all timeout SLAs in chicago-tdd-tools project.
 
 ## Overview
 
-All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. Timeouts enforced at multiple layers: Task-level (Unix `timeout` command), test-level (ntest crate, tokio::time::timeout), test-runner (cargo-nextest profiles), git hooks (individual checks wrapped with timeouts).
+All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. Timeouts are enforced at multiple layers: task-level (Unix `timeout` command), test-level (ntest crate, tokio::time::timeout), and test-runner (cargo-nextest profiles).
 
 ## Test SLAs
 
@@ -18,9 +18,9 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Code Quality SLAs
 
-**Formatting**: 5s SLA, ~0.6s actual. Task: `fmt`. Git Hook: Pre-commit and pre-push (5s timeout).
+**Formatting**: 5s SLA, ~0.6s actual. Task: `fmt`. Applied via cargo-make tasks and CI pipelines.
 
-**Linting (Clippy)**: 5s SLA, ~1.2s actual. Task: `lint`. Git Hook: Pre-commit (5s timeout for cargo check and clippy).
+**Linting (Clippy)**: 5s SLA, ~1.2s actual. Task: `lint`. Executed by `cargo make pre-commit`, `cargo make ci`, and CI workflows.
 
 ## Coverage SLAs
 
@@ -40,9 +40,9 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Workflow SLAs
 
-**Pre-Commit**: ~10s expected total (fmt: 5s, lint: 5s, test-unit: 1s). Task: `pre-commit`. Git Hook: Pre-commit hook (individual checks have 5s timeouts).
+**Pre-Commit**: ~10s expected total (fmt: 5s, lint: 5s, test-unit: 1s). Task: `pre-commit`.
 
-**Pre-Push**: ~60s expected total (check: 5s, lint: 5s, TODO/error handling: <1s, fmt: 5s, test-unit: 1s, audit: 15s). Git Hook: Pre-push hook (individual checks use cargo make with timeouts).
+**Pre-Push**: ~60s expected total (check: 5s, lint: 5s, TODO/error handling: <1s, fmt: 5s, test-unit: 1s, audit: 15s). Recommended task sequence: `pre-commit`, `check`, `lint`, `audit`.
 
 **CI Pipeline**: ~120s expected total (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s). Task: `ci`.
 
@@ -54,9 +54,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Git Hook SLAs
 
-**Pre-Commit Hook**: 2-5s target (incremental checks only). Individual checks: unwrap/expect/TODO checks: <1s (grep operations), formatting: 5s timeout, clippy: 5s timeout (cargo check + clippy). Note: Only checks staged files, skips unnecessary checks.
-
-**Pre-Push Hook**: 30-60s target (comprehensive validation). Gates: Gate 1: Cargo check (5s via cargo make), Gate 2: Clippy (5s via cargo make), Gate 2.5: TODO/error handling (<1s), Gate 3: Formatting (5s timeout), Gate 4: Unit tests (1s via cargo make), Gate 5: Security audit (15s via cargo make).
+_Removed_: Git hook installer has been retired; developers run cargo-make tasks directly (`pre-commit`, `check`, `lint`, `audit`, etc.).
 
 ## Rationale
 
@@ -74,10 +72,10 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Monitoring
 
-**Verify SLAs**: `time cargo make test-unit`, `time cargo make check`, `time cargo make lint`, `time .git/hooks/pre-commit`, `time .git/hooks/pre-push`.
+**Verify SLAs**: `time cargo make test-unit`, `time cargo make check`, `time cargo make lint`, `time cargo make pre-commit`, `time cargo make ci`.
 
 ## Summary
 
 **Key Associations**: Unit Tests = 1s = Fast Feedback. Integration Tests = 30s = Docker Operations. Build Tasks = 5s = Normal Operations. Security Audit = 15s = Network Operations. Documentation = 20s = Generation Time. Coverage = 30s = Analysis Time.
 
-**Pattern**: All tasks have explicit timeout SLAs. Timeouts enforced at multiple layers (task-level, test-level, runner-level, hook-level). Actual times well under SLA. Timeouts prevent hangs and ensure fast feedback.
+**Pattern**: All tasks have explicit timeout SLAs. Timeouts enforced at multiple layers (task-level, test-level, runner-level). Actual times well under SLA. Timeouts prevent hangs and ensure fast feedback.

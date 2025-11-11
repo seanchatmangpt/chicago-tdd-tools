@@ -37,6 +37,10 @@ pub trait FixtureProvider {
     type Error: std::error::Error + Send + Sync + 'static;
 
     /// Create a fixture
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if fixture creation fails.
     fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>;
 }
 
@@ -67,6 +71,11 @@ impl TestFixture<()> {
     /// ```
     ///
     /// **Note**: In normal usage, this should never fail. If it does, check your environment.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if fixture creation fails.
+    #[allow(clippy::unnecessary_wraps)] // API design - Result allows future validation without breaking changes
     pub fn new() -> FixtureResult<Self> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -113,6 +122,12 @@ impl<T> TestFixture<T> {
     }
 
     /// Cleanup fixture resources
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if cleanup fails.
+    #[allow(clippy::unused_self)] // Required for trait implementation - const fn needs self
+    #[allow(clippy::unnecessary_wraps)] // API design - Result allows future error handling without breaking changes
     pub const fn cleanup(&self) -> FixtureResult<()> {
         // Override in specific implementations
         Ok(())
@@ -132,7 +147,7 @@ impl FixtureProvider for () {
 impl Default for TestFixture<()> {
     fn default() -> Self {
         // Default implementation should not fail - use unwrap_or_else with panic
-        #[allow(clippy::expect_used)]
+        #[allow(clippy::expect_used, clippy::panic)]
         // Default impl - panic is appropriate if fixture creation fails
         Self::new().unwrap_or_else(|e| panic!("Failed to create default fixture: {e}"))
     }

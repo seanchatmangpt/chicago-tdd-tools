@@ -5,7 +5,7 @@
 
 #[cfg(feature = "weaver")]
 use crate::observability::weaver::types::WeaverLiveCheck;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Child;
 use thiserror::Error;
 
@@ -96,8 +96,59 @@ impl WeaverValidator {
     }
 
     /// Check if Weaver binary is available
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Weaver binary is not found.
     pub fn check_weaver_available() -> WeaverValidationResult<()> {
         WeaverLiveCheck::check_weaver_available().map_err(|_| WeaverValidationError::BinaryNotFound)
+    }
+
+    /// Clone OpenTelemetry semantic conventions registry at runtime if missing
+    ///
+    /// This is a runtime fallback that matches the Weaver binary runtime download pattern.
+    /// The registry should normally be cloned during build via `build.rs`, but this provides
+    /// a fallback for cases where build-time clone failed or registry was deleted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if git is not available or clone fails.
+    fn clone_registry_runtime(registry_path: &Path) -> WeaverValidationResult<()> {
+        use std::process::Command;
+
+        // Check if git is available
+        if Command::new("git").arg("--version").output().is_err() {
+            return Err(WeaverValidationError::RegistryNotFound(format!(
+                "{} (git not found for runtime clone)",
+                registry_path.display()
+            )));
+        }
+
+        let registry_url = "https://github.com/open-telemetry/semantic-conventions.git";
+        let registry_str = registry_path.to_str().ok_or_else(|| {
+            WeaverValidationError::ValidationFailed("Registry path is not valid UTF-8".to_string())
+        })?;
+
+        // Clone with shallow clone for faster download
+        // Use --depth 1 to only clone the latest commit
+        let status = Command::new("git")
+            .args(["clone", "--depth", "1", "--single-branch", registry_url, registry_str])
+            .status()
+            .map_err(|e| {
+                WeaverValidationError::RegistryNotFound(format!(
+                    "{} (failed to clone: {e})",
+                    registry_path.display()
+                ))
+            })?;
+
+        if !status.success() {
+            return Err(WeaverValidationError::RegistryNotFound(format!(
+                "{} (git clone failed)",
+                registry_path.display()
+            )));
+        }
+
+        Ok(())
     }
 
     /// Start Weaver live-check
@@ -106,6 +157,10 @@ impl WeaverValidator {
     /// - 🚨 CRITICAL: Stops immediately if Weaver binary not found
     /// - 🚨 CRITICAL: Stops immediately if Docker unavailable (when testcontainers feature enabled)
     /// - 🚨 CRITICAL: Stops immediately if registry path doesn't exist
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Weaver binary is not available, Docker is unavailable, or registry path doesn't exist.
     pub fn start(&mut self) -> WeaverValidationResult<()> {
         // 🚨 Check Weaver binary availability
         Self::check_weaver_available()?;
@@ -123,11 +178,15 @@ impl WeaverValidator {
             // ✅ Docker is available
         }
 
-        // 🚨 Verify registry path exists
+        // 🚨 Verify registry path exists, clone if missing (runtime fallback)
         if !self.registry_path.exists() {
-            return Err(WeaverValidationError::RegistryNotFound(
-                self.registry_path.display().to_string(),
-            ));
+            // Try to clone registry at runtime (matching Weaver binary runtime download pattern)
+            if let Err(err) = Self::clone_registry_runtime(self.registry_path.as_path()) {
+                return Err(WeaverValidationError::RegistryNotFound(format!(
+                    "{}\n   💡 FIX: Registry will be cloned automatically during build, or run: cargo make setup-registry\n   Details: {err}",
+                    self.registry_path.display()
+                )));
+            }
         }
         // ✅ Registry path exists
 
@@ -154,6 +213,10 @@ impl WeaverValidator {
     }
 
     /// Stop Weaver live-check
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if stopping the process fails.
     pub fn stop(&mut self) -> WeaverValidationResult<()> {
         if let Some(ref live_check) = self.live_check {
             live_check.stop().map_err(WeaverValidationError::ProcessStopFailed)?;
@@ -209,10 +272,17 @@ impl Drop for WeaverValidator {
 /// # Ok(())
 /// # }
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if sending the span to Weaver fails.
 #[cfg(feature = "weaver")]
 pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValidationResult<()> {
+    // Items (use statements) must come before statements (Rust requirement)
+    use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
     use opentelemetry::KeyValue;
-    use opentelemetry_sdk::trace::SdkTracerProvider;
+    use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, SdkTracerProvider};
+    use opentelemetry_sdk::Resource;
     use std::time::Duration;
 
     // Create OTLP HTTP exporter and tracer provider
@@ -230,7 +300,6 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
         })?;
 
     // Create resource with service information
-    use opentelemetry_sdk::Resource;
     let resource = Resource::builder_empty()
         .with_service_name("chicago-tdd-tools-test")
         .with_attributes([
@@ -242,7 +311,6 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
         .build();
 
     // Create tracer provider with batch exporter (sync pattern from knhk)
-    use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler};
     let provider = SdkTracerProvider::builder()
         .with_batch_exporter(exporter)
         .with_sampler(Sampler::TraceIdRatioBased(1.0)) // Always sample for tests
@@ -254,7 +322,6 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
     let tracer = provider.tracer("chicago-tdd-tools");
 
     // Create and start span using span_builder pattern
-    use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
     // Kaizen improvement: Create owned string once and reuse to avoid unnecessary clone
     let span_name_owned = span_name.to_string();
     let mut span = tracer.span_builder(span_name_owned.clone()).start(&tracer);
@@ -302,8 +369,14 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
 /// # Ok(())
 /// # }
 /// ```
+///
+/// # Errors
+///
+/// Returns an error if Weaver binary is not available or schema validation fails.
 #[cfg(feature = "weaver")]
 pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidationResult<()> {
+    // Items (use statements) must come before statements (Rust requirement)
+    use crate::observability::weaver::types::WeaverLiveCheck;
     use std::process::Command;
 
     // Check Weaver binary availability
@@ -320,7 +393,6 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
     })?;
 
     // Find weaver binary (may trigger runtime download)
-    use crate::observability::weaver::types::WeaverLiveCheck;
     let weaver_binary =
         WeaverLiveCheck::find_weaver_binary().ok_or(WeaverValidationError::BinaryNotFound)?;
 

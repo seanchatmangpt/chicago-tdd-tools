@@ -1,0 +1,998 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chicago TDD Tools Pattern Cookbook</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chicago-tdd-tools-pattern-cookbook"><a class="header" href="#chicago-tdd-tools-pattern-cookbook">Chicago TDD Tools Pattern Cookbook</a></h1>
+<p>Welcome to the Chicago TDD Tools Pattern Cookbook. This mdBook captures the living pattern language behind the framework. Inspired by Christopher Alexander's "A Pattern Language," each pattern documents a recurring problem and the high-leverage solution encoded in the framework. Patterns are organized across testing, architecture, and design themes so you can quickly discover what fits your current context.</p>
+<p>Every pattern includes:</p>
+<ul>
+<li><strong>Context</strong> – when the pattern applies</li>
+<li><strong>Problem</strong> – the tension you are trying to resolve</li>
+<li><strong>Solution</strong> – the structure that resolves the tension, with concrete code</li>
+<li><strong>Forces</strong> – trade-offs the solution balances</li>
+<li><strong>Examples</strong> – copy-pasteable Rust using Chicago TDD Tools</li>
+<li><strong>Related Patterns</strong> – how the language connects</li>
+</ul>
+<p>Use this cookbook as a field guide while building and testing Rust systems with Chicago TDD Tools.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Christopher Alexander famously observed that great environments share a pattern language – a network of proven responses to recurring forces. Chicago TDD Tools embodies the same philosophy for Rust testing. Instead of isolated utilities, the framework codifies high-leverage patterns that push teams toward dependable, behavior-focused tests and extendable architecture.</p>
+<p>This cookbook distills those patterns. Each entry is written in Alexander's form so you can quickly scan the context, recognize the tension, and apply the solution. Read the patterns sequentially to see how they reinforce each other, or jump to the problem you have today.</p>
+<p>The language is organized into three families:</p>
+<ol>
+<li><strong>Testing Patterns</strong> – maintainable, behavior-driven tests that fail fast and verify real outcomes.</li>
+<li><strong>Architecture Patterns</strong> – structural choices that keep the framework extensible and consistent.</li>
+<li><strong>Design Patterns</strong> – type-level techniques, zero-cost abstractions, and compile-time validation.</li>
+</ol>
+<p>Combine these ingredients to build resilient Rust systems aligned with Chicago TDD principles: state-based testing, real collaborators, behavior verification, and the AAA pattern.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="testing-patterns"><a class="header" href="#testing-patterns">Testing Patterns</a></h1>
+<p>Tests are executable specifications. The Chicago TDD Tools testing patterns capture how to write fast, trustworthy, and expressive tests that verify observable behavior. Each pattern layers on the previous ones; together they reflect the AAA mindset, the insistence on real collaborators, and the bias toward fast failure.</p>
+<p>Use these patterns when a test feels brittle, slow, or unclear. The language highlights which macro to reach for, how to structure the test body, and how to keep failures meaningful.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-1-aaa-pattern"><a class="header" href="#pattern-1-aaa-pattern">Pattern 1: AAA Pattern</a></h1>
+<h2 id="context"><a class="header" href="#context">Context</a></h2>
+<p>You are writing or reviewing a test in Chicago TDD Tools. You want the test to communicate intent instantly and fail with a precise message when behavior regresses.</p>
+<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
+<p>Tests that intermingle setup, behavior, and assertions become hard to scan. When the failure occurs, teammates must untangle implicit state, which slows feedback and hides missing assertions.</p>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<p>Structure every test body into three explicit phases – <strong>Arrange</strong>, <strong>Act</strong>, <strong>Assert</strong> – and let the framework enforce it. Use the <code>test!</code>, <code>async_test!</code>, or <code>fixture_test!</code> macros so that comments and code read in a top-to-bottom narrative.</p>
+<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
+<ul>
+<li>Readability vs. flexibility: expressive labels without duplicating boilerplate</li>
+<li>Fast diagnosis vs. runtime overhead: compile-time enforcement should cost nothing</li>
+<li>Behavior proof vs. implementation detail: assertions must verify observable outcomes</li>
+</ul>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+
+test!(test_scaling_multiplier, {
+    // Arrange
+    let multiplier = 3;
+    let input = 7;
+
+    // Act
+    let result = multiplier * input;
+
+    // Assert
+    assert_eq!(result, 21, "multiplier should scale the input");
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Async tests follow the same skeleton:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+
+async_test!(test_fetch_customer, {
+    // Arrange
+    let client = FakeCrmClient::connected();
+
+    // Act
+    let customer = client.fetch("cust-123").await?;
+
+    // Assert
+    assert_eq!(customer.id, "cust-123");
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
+<ul>
+<li>Pattern 2: Error Path Testing</li>
+<li>Pattern 5: Real Collaborators</li>
+<li>Pattern 11: Zero-Cost Abstractions</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-2-error-path-testing"><a class="header" href="#pattern-2-error-path-testing">Pattern 2: Error Path Testing</a></h1>
+<h2 id="context-1"><a class="header" href="#context-1">Context</a></h2>
+<p>A function returns <code>Result</code> or <code>Option</code>, and the happy path already behaves as expected. You must guarantee that every failure mode is observable and carries actionable context.</p>
+<h2 id="problem-1"><a class="header" href="#problem-1">Problem</a></h2>
+<p>When tests only exercise the success path, regressions sneak in through unhandled errors, missing context, or broken guardrails. Production discovers the failure first, and the team spends time reconstructing the scenario.</p>
+<h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
+<p>Enumerate every documented error variant and write a focused test for each. Use <code>test!</code> or <code>param_test!</code> to drive the error case, assert the specific variant, and check that error messages include the necessary context. Prefer direct construction or builders over mocks so that you validate the real failure.</p>
+<h2 id="forces-1"><a class="header" href="#forces-1">Forces</a></h2>
+<ul>
+<li>Coverage vs. duplication: each error merits a separate assertion without creating noise</li>
+<li>Realistic behavior vs. test speed: use in-memory collaborators where possible, but ensure pathways stay intact</li>
+<li>Diagnostic clarity vs. maintenance: error text should be specific yet stable</li>
+</ul>
+<h2 id="examples-1"><a class="header" href="#examples-1">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::core::fixture::FixtureError;
+
+param_test! {
+    #[case("", FixtureError::CreationFailed("name required".into()))]
+    #[case("db://unreachable", FixtureError::OperationFailed("reconnect failed".into()))]
+    fn test_fixture_error_paths(input: &amp;str, expected: FixtureError) {
+        let result = TestFixture::with_data(input.to_string()).cleanup();
+        assert_err!(&amp;result);
+        let error = result.unwrap_err();
+        assert_eq!(format!("{}", error), format!("{}", expected));
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-1"><a class="header" href="#related-patterns-1">Related Patterns</a></h2>
+<ul>
+<li>Pattern 3: Boundary Conditions</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+<li>Pattern 19: Feature Gate Slices</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-3-boundary-conditions"><a class="header" href="#pattern-3-boundary-conditions">Pattern 3: Boundary Conditions</a></h1>
+<h2 id="context-2"><a class="header" href="#context-2">Context</a></h2>
+<p>Logic depends on limits: minimum quantities, maximum run lengths, exclusive ranges. You must guarantee behavior at and around those boundaries.</p>
+<h2 id="problem-2"><a class="header" href="#problem-2">Problem</a></h2>
+<p>Happy-path tests routinely miss off-by-one errors, buffer limits, or guardrail regressions. Without explicit boundary coverage, downstream invariants fail silently.</p>
+<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
+<p>Adopt a deliberate boundary grid: <strong>below</strong>, <strong>at</strong>, and <strong>above</strong> each documented limit. Use <code>param_test!</code> to table-drive the grid and Chicago TDD Tools assertions such as <code>assert_in_range!</code> and <code>assert_guard_constraint!</code>. Include boundary-focused names so a failing case communicates which edge is breached.</p>
+<h2 id="forces-2"><a class="header" href="#forces-2">Forces</a></h2>
+<ul>
+<li>Thoroughness vs. duplication: table-driven tests keep boundaries concise</li>
+<li>Performance vs. realism: small data sets reproduce the failure quickly</li>
+<li>Maintainability vs. specificity: boundary constants should live in one place</li>
+</ul>
+<h2 id="examples-2"><a class="header" href="#examples-2">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::validation::guards::{GuardValidator, MAX_RUN_LEN};
+
+param_test! {
+    #[case("below", MAX_RUN_LEN - 1, true)]
+    #[case("at", MAX_RUN_LEN, true)]
+    #[case("above", MAX_RUN_LEN + 1, false)]
+    fn test_run_length_boundaries(label: &amp;str, length: usize, expected_ok: bool) {
+        let validator = GuardValidator::new();
+        let result = validator.validate_run_length(length);
+        match expected_ok {
+            true =&gt; assert_ok!(&amp;result, "{label} should be accepted"),
+            false =&gt; assert_err!(&amp;result, "{label} should be rejected"),
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-2"><a class="header" href="#related-patterns-2">Related Patterns</a></h2>
+<ul>
+<li>Pattern 2: Error Path Testing</li>
+<li>Pattern 4: Resource Cleanup</li>
+<li>Pattern 20: Macro Pattern Enforcement</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-4-resource-cleanup"><a class="header" href="#pattern-4-resource-cleanup">Pattern 4: Resource Cleanup</a></h1>
+<h2 id="context-3"><a class="header" href="#context-3">Context</a></h2>
+<p>Your tests allocate resources – files, network ports, containers, telemetry backends – that must be released even when assertions fail.</p>
+<h2 id="problem-3"><a class="header" href="#problem-3">Problem</a></h2>
+<p>Forgetting to release resources causes nondeterministic failures, leaking containers, or state pollution between tests. Manual cleanup logic scatters across tests and is easy to miss.</p>
+<h2 id="solution-3"><a class="header" href="#solution-3">Solution</a></h2>
+<p>Use Chicago TDD Tools fixtures and the RAII guarantees they provide. Wrap resource management inside <code>fixture_test!</code> or <code>fixture_test_with_timeout!</code>, storing handles in the fixture. Allow Drop implementations and the framework cleanup to run automatically so every test returns to a known good state.</p>
+<h2 id="forces-3"><a class="header" href="#forces-3">Forces</a></h2>
+<ul>
+<li>Determinism vs. speed: automated teardown must be reliable without slowing the hot path</li>
+<li>Simplicity vs. observability: cleanup should be invisible unless a failure occurs</li>
+<li>Isolation vs. reuse: fixtures create fresh state while sharing setup logic</li>
+</ul>
+<h2 id="examples-3"><a class="header" href="#examples-3">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use testcontainers::clients::Cli as DockerCli;
+
+struct DockerFixture {
+    docker: DockerCli,
+}
+
+fixture_test!(test_exec_container_command, fixture, {
+    // Arrange
+    let docker = DockerCli::default();
+    let container = docker.run("alpine:3.19");
+
+    // Act
+    let result = container.exec("echo", &amp;["ok"])?;
+
+    // Assert
+    assert_eq!(result.stdout, "ok\n");
+
+    Ok::&lt;(), testcontainers::Error&gt;(())
+});
+<span class="boring">}</span></code></pre></pre>
+<p>The fixture ensures containers stop even if the assertion fails.</p>
+<h2 id="related-patterns-3"><a class="header" href="#related-patterns-3">Related Patterns</a></h2>
+<ul>
+<li>Pattern 5: Real Collaborators</li>
+<li>Pattern 16: Fixture Lifecycle Management</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-5-real-collaborators"><a class="header" href="#pattern-5-real-collaborators">Pattern 5: Real Collaborators</a></h1>
+<h2 id="context-4"><a class="header" href="#context-4">Context</a></h2>
+<p>You are validating behavior that depends on external systems – telemetry, containers, queues – and want confidence that integrations behave the same way in production.</p>
+<h2 id="problem-4"><a class="header" href="#problem-4">Problem</a></h2>
+<p>Mock-heavy tests can mask integration gaps, drift from reality, and erode trust in the test suite. When production fails, tests offer little guidance.</p>
+<h2 id="solution-4"><a class="header" href="#solution-4">Solution</a></h2>
+<p>Use the framework's integration helpers to exercise real collaborators. For containers, enable the <code>testcontainers</code> feature and run against Docker. For telemetry, use <code>otel_test!</code> and <code>weaver_test!</code> to validate spans and semantic conventions. Keep tests categorized so slower integration suites run intentionally.</p>
+<h2 id="forces-4"><a class="header" href="#forces-4">Forces</a></h2>
+<ul>
+<li>Fidelity vs. speed: real dependencies cost more time, so isolate them behind feature flags and profiles</li>
+<li>Determinism vs. variability: control randomness via fixtures and builders</li>
+<li>Observability vs. complexity: prefer higher-level validators over low-level asserts</li>
+</ul>
+<h2 id="examples-4"><a class="header" href="#examples-4">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::observability::otel::{OtelTestHelper, SpanValidator};
+
+otel_test!(test_span_follows_conventions, {
+    // Arrange
+    let helper = OtelTestHelper::new();
+    let span = helper.capture(|tracer| tracer.span("checkout"));
+
+    // Act
+    let result = helper.assert_spans_valid(&amp;[span.clone()]);
+
+    // Assert
+    assert_ok!(&amp;result);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::integration::testcontainers::ContainerClient;
+
+fixture_test_with_timeout!(test_postgres_roundtrip, fixture, 30, {
+    // Arrange
+    let client = ContainerClient::for_image("postgres:16").await?;
+
+    // Act
+    let rows = client.query("SELECT 1").await?;
+
+    // Assert
+    assert_eq!(rows[0].get::&lt;i32, _&gt;(0), 1);
+
+    Ok::&lt;(), testcontainers::Error&gt;(())
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-4"><a class="header" href="#related-patterns-4">Related Patterns</a></h2>
+<ul>
+<li>Pattern 4: Resource Cleanup</li>
+<li>Pattern 16: Fixture Lifecycle Management</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture-patterns"><a class="header" href="#architecture-patterns">Architecture Patterns</a></h1>
+<p>Chicago TDD Tools is deliberately layered so teams can extend the framework without rewriting core functionality. The architecture patterns describe how modules compose, how extensions fit, and how the framework keeps behavior predictable across crates.</p>
+<p>Use these patterns when building custom tooling on top of the framework or when evaluating how to contribute new modules upstream.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-6-generic-base-layer"><a class="header" href="#pattern-6-generic-base-layer">Pattern 6: Generic Base Layer</a></h1>
+<h2 id="context-5"><a class="header" href="#context-5">Context</a></h2>
+<p>You want a reusable testing foundation that can support multiple domains without pulling in their dependencies.</p>
+<h2 id="problem-5"><a class="header" href="#problem-5">Problem</a></h2>
+<p>If the base includes domain code, every consumer drags in unused dependencies, slowing builds and introducing coupling. Conversely, a minimal base risks missing essential primitives.</p>
+<h2 id="solution-5"><a class="header" href="#solution-5">Solution</a></h2>
+<p>Keep the core crate focused on generic capabilities – fixtures, builders, assertions, macros, state tracking. Expose them through capability modules (<code>core</code>, <code>testing</code>, <code>validation</code>, <code>observability</code>, <code>integration</code>). Ensure modules depend only on the standard library and optional features. Domain-specific abstractions live in downstream crates that compose the base.</p>
+<h2 id="forces-5"><a class="header" href="#forces-5">Forces</a></h2>
+<ul>
+<li>Reuse vs. specialization: core must be broadly useful without dictating domain models</li>
+<li>Build time vs. flexibility: optional features load only when needed</li>
+<li>Stability vs. growth: base APIs should be stable; extensions add behavior</li>
+</ul>
+<h2 id="examples-5"><a class="header" href="#examples-5">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs
+pub mod core;
+pub mod testing;
+pub mod validation;
+pub mod observability;
+pub mod integration;
+
+pub use core::{fixture, builders, assertions};
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-5"><a class="header" href="#related-patterns-5">Related Patterns</a></h2>
+<ul>
+<li>Pattern 7: Extension Layer</li>
+<li>Pattern 8: Composition Over Duplication</li>
+<li>Pattern 10: Capability Grouping</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-7-extension-layer"><a class="header" href="#pattern-7-extension-layer">Pattern 7: Extension Layer</a></h1>
+<h2 id="context-6"><a class="header" href="#context-6">Context</a></h2>
+<p>A product team needs domain-specific fixtures, builders, or assertions on top of Chicago TDD Tools.</p>
+<h2 id="problem-6"><a class="header" href="#problem-6">Problem</a></h2>
+<p>Embedding domain logic inside the core crate makes it hard to evolve independently and risks breaking other users. Repeated copy-paste of generic primitives leads to drift.</p>
+<h2 id="solution-6"><a class="header" href="#solution-6">Solution</a></h2>
+<p>Create an extension crate that depends on the core. Compose base fixtures inside your domain fixture, forwarding behavior while adding fields and helpers. Re-export the pieces your team should import. Treat the base crate as an 80% solution and layer the remaining 20% locally.</p>
+<h2 id="forces-6"><a class="header" href="#forces-6">Forces</a></h2>
+<ul>
+<li>Encapsulation vs. reuse: domain modules wrap core primitives rather than modify them</li>
+<li>Stability vs. iteration speed: upstream stays stable while the extension can iterate quickly</li>
+<li>Discoverability vs. sprawl: re-export only what the domain needs</li>
+</ul>
+<h2 id="examples-6"><a class="header" href="#examples-6">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// workflow-fixture crate
+use chicago_tdd_tools::core::fixture::TestFixture;
+
+pub struct WorkflowFixture {
+    base: TestFixture&lt;()&gt;,
+    engine: WorkflowEngine,
+}
+
+impl WorkflowFixture {
+    pub fn new(engine: WorkflowEngine) -&gt; Self {
+        let base = TestFixture::new().expect("fixture");
+        Self { base, engine }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-6"><a class="header" href="#related-patterns-6">Related Patterns</a></h2>
+<ul>
+<li>Pattern 6: Generic Base Layer</li>
+<li>Pattern 8: Composition Over Duplication</li>
+<li>Pattern 9: Single Source of Truth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-8-composition-over-duplication"><a class="header" href="#pattern-8-composition-over-duplication">Pattern 8: Composition Over Duplication</a></h1>
+<h2 id="context-7"><a class="header" href="#context-7">Context</a></h2>
+<p>You are adding a feature to an extension crate and need functionality already available in the base layer.</p>
+<h2 id="problem-7"><a class="header" href="#problem-7">Problem</a></h2>
+<p>Copying helpers or macros breaks the single source of truth. Over time the copies diverge, and bug fixes must be applied in multiple places.</p>
+<h2 id="solution-7"><a class="header" href="#solution-7">Solution</a></h2>
+<p>Compose existing primitives. Wrap fixtures inside domain fixtures, embed builders into higher-level builders, and use assertion macros rather than writing bespoke checks. When missing functionality is truly generic, add it to the base crate instead of forking it downstream.</p>
+<h2 id="forces-7"><a class="header" href="#forces-7">Forces</a></h2>
+<ul>
+<li>Launch speed vs. long-term maintenance: composition keeps future upgrades cheap</li>
+<li>Ergonomics vs. explicitness: wrappers can augment APIs without obscuring the base</li>
+<li>Ownership vs. contribution: contribute upstream when the behavior benefits all users</li>
+</ul>
+<h2 id="examples-7"><a class="header" href="#examples-7">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct OrderBuilder {
+    base: TestDataBuilder,
+}
+
+impl OrderBuilder {
+    pub fn new() -&gt; Self {
+        Self { base: TestDataBuilder::new() }
+    }
+
+    pub fn with_amount(mut self, amount: u64) -&gt; Self {
+        self.base = self.base.with_var("amount", amount.to_string());
+        self
+    }
+
+    pub fn build_json(self) -&gt; serde_json::Value {
+        self.base.build_json().expect("json")
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-7"><a class="header" href="#related-patterns-7">Related Patterns</a></h2>
+<ul>
+<li>Pattern 6: Generic Base Layer</li>
+<li>Pattern 7: Extension Layer</li>
+<li>Pattern 9: Single Source of Truth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-9-single-source-of-truth"><a class="header" href="#pattern-9-single-source-of-truth">Pattern 9: Single Source of Truth</a></h1>
+<h2 id="context-8"><a class="header" href="#context-8">Context</a></h2>
+<p>Constants, toggle lists, and feature matrices are needed across modules and extensions.</p>
+<h2 id="problem-8"><a class="header" href="#problem-8">Problem</a></h2>
+<p>Duplicating configuration (timeouts, guard limits, feature lists) invites drift. Teams change one copy and forget the rest, producing inconsistent behavior.</p>
+<h2 id="solution-8"><a class="header" href="#solution-8">Solution</a></h2>
+<p>Centralize invariants inside the module that owns them and re-export when necessary. Examples include timeout constants in <code>core::macros::test</code>, guard limits in <code>validation::guards</code>, and feature combinations in <code>Cargo.toml</code>. Extensions read these definitions instead of defining their own copies.</p>
+<h2 id="forces-8"><a class="header" href="#forces-8">Forces</a></h2>
+<ul>
+<li>Accessibility vs. encapsulation: invariants must be easy to import without exposing internals</li>
+<li>Flexibility vs. safety: allow customization through builders or configuration rather than duplicating constants</li>
+<li>Documentation vs. code: comments and docs should reference the single source, not restated values</li>
+</ul>
+<h2 id="examples-8"><a class="header" href="#examples-8">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/core/macros/test.rs
+pub const DEFAULT_UNIT_TEST_TIMEOUT_SECONDS: u64 = 1;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
+
+// src/validation/guards.rs
+pub const MAX_RUN_LEN: usize = 8;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-8"><a class="header" href="#related-patterns-8">Related Patterns</a></h2>
+<ul>
+<li>Pattern 8: Composition Over Duplication</li>
+<li>Pattern 10: Capability Grouping</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-10-capability-grouping"><a class="header" href="#pattern-10-capability-grouping">Pattern 10: Capability Grouping</a></h1>
+<h2 id="context-9"><a class="header" href="#context-9">Context</a></h2>
+<p>You are browsing the Chicago TDD Tools codebase or designing a new module. You need to know where functionality belongs and how to expose it.</p>
+<h2 id="problem-9"><a class="header" href="#problem-9">Problem</a></h2>
+<p>Without a consistent module taxonomy, features surface haphazardly. Consumers struggle to find capabilities, and maintainers duplicate structure.</p>
+<h2 id="solution-9"><a class="header" href="#solution-9">Solution</a></h2>
+<p>Group modules by capability: <code>core</code> for foundational primitives, <code>testing</code> for advanced techniques, <code>validation</code> for guardrails, <code>observability</code> for telemetry, and <code>integration</code> for external systems. Re-export each group at the crate root to support both granular and high-level imports. New modules join one of these groups or motivate a new, clearly named capability.</p>
+<h2 id="forces-9"><a class="header" href="#forces-9">Forces</a></h2>
+<ul>
+<li>Discoverability vs. granularity: capability groups provide short import paths while preserving modularity</li>
+<li>Stability vs. evolution: groups rarely change, making documentation and IDE tooling reliable</li>
+<li>Compilation vs. optionality: feature flags enable or disable entire capability slices</li>
+</ul>
+<h2 id="examples-9"><a class="header" href="#examples-9">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs
+pub mod core;          // fixtures, builders, assertions, macros
+pub mod testing;       // property testing, mutation testing, snapshots
+pub mod validation;    // guards, coverage, performance
+pub mod observability; // otel, weaver
+pub mod integration;   // testcontainers
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-9"><a class="header" href="#related-patterns-9">Related Patterns</a></h2>
+<ul>
+<li>Pattern 6: Generic Base Layer</li>
+<li>Pattern 9: Single Source of Truth</li>
+<li>Pattern 19: Feature Gate Slices</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="design-patterns"><a class="header" href="#design-patterns">Design Patterns</a></h1>
+<p>These patterns codify the type-level and zero-cost techniques that make Chicago TDD Tools safe and fast. They explain how the framework encodes invariants, leverages Rust's compiler, and prevents misuse through types.</p>
+<p>Use them when extending the framework or designing downstream APIs that should feel at home in the ecosystem.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-11-zero-cost-abstractions"><a class="header" href="#pattern-11-zero-cost-abstractions">Pattern 11: Zero-Cost Abstractions</a></h1>
+<h2 id="context-10"><a class="header" href="#context-10">Context</a></h2>
+<p>You are designing APIs or extensions and need expressive abstractions without runtime overhead.</p>
+<h2 id="problem-10"><a class="header" href="#problem-10">Problem</a></h2>
+<p>Runtime polymorphism or heap allocations can slow hot paths. Manual inlining or duplicated code sacrifices readability.</p>
+<h2 id="solution-10"><a class="header" href="#solution-10">Solution</a></h2>
+<p>Lean on generics, const generics, and macros to express behavior that compiles down to the same machine code as bespoke implementations. Favor references over owned values and prefer stack allocation. When dynamic dispatch is required, isolate it behind narrow traits.</p>
+<h2 id="forces-10"><a class="header" href="#forces-10">Forces</a></h2>
+<ul>
+<li>Expressiveness vs. performance: abstractions must be ergonomic without cost</li>
+<li>Safety vs. control: compile-time guarantees should not block optimization</li>
+<li>Maintainability vs. specialization: macros and generics prevent copy-paste</li>
+</ul>
+<h2 id="examples-10"><a class="header" href="#examples-10">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn measure_ticks&lt;F, T&gt;(operation: F) -&gt; (T, u64)
+where
+    F: FnOnce() -&gt; T,
+{
+    // Generic function specialized per call site; no dynamic dispatch
+    chicago_tdd_tools::validation::performance::measure_ticks(operation)
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-10"><a class="header" href="#related-patterns-10">Related Patterns</a></h2>
+<ul>
+<li>Pattern 12: Type Safety with GATs</li>
+<li>Pattern 14: Compile-Time Validation</li>
+<li>Pattern 20: Macro Pattern Enforcement</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-12-type-safety-with-gats"><a class="header" href="#pattern-12-type-safety-with-gats">Pattern 12: Type Safety with GATs</a></h1>
+<h2 id="context-11"><a class="header" href="#context-11">Context</a></h2>
+<p>You provide fixtures or builders that return references tied to the fixture lifetime.</p>
+<h2 id="problem-11"><a class="header" href="#problem-11">Problem</a></h2>
+<p>Without explicit lifetimes, consumers can hold onto references after cleanup, causing dangling pointers or logic bugs.</p>
+<h2 id="solution-11"><a class="header" href="#solution-11">Solution</a></h2>
+<p>Use Generic Associated Types (GATs) to bind returned data to the fixture lifetime. In <code>AsyncFixtureProvider</code>, <code>Fixture&lt;'a&gt;</code> ensures the borrow cannot outlive the provider. Pair GATs with sealed traits to prevent downstream crates from violating invariants.</p>
+<h2 id="forces-11"><a class="header" href="#forces-11">Forces</a></h2>
+<ul>
+<li>Safety vs. ergonomics: GATs constrain lifetimes but keep APIs pleasant</li>
+<li>Extensibility vs. soundness: sealing the trait permits internal evolution while preserving invariants</li>
+<li>Async vs. sync: async fixtures require lifetimes that sync code cannot express without GATs</li>
+</ul>
+<h2 id="examples-11"><a class="header" href="#examples-11">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait AsyncFixtureProvider: private::Sealed {
+    type Fixture&lt;'a&gt;: Send where Self: 'a;
+    type Error: std::error::Error + Send + Sync + 'static;
+
+    fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = Result&lt;Self::Fixture&lt;'a&gt;, Self::Error&gt;&gt; + Send + 'a&gt;&gt;;
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-11"><a class="header" href="#related-patterns-11">Related Patterns</a></h2>
+<ul>
+<li>Pattern 13: Sealed Traits for API Safety</li>
+<li>Pattern 16: Fixture Lifecycle Management</li>
+<li>Pattern 17: Builder-Driven Test Data</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-13-sealed-traits-for-api-safety"><a class="header" href="#pattern-13-sealed-traits-for-api-safety">Pattern 13: Sealed Traits for API Safety</a></h1>
+<h2 id="context-12"><a class="header" href="#context-12">Context</a></h2>
+<p>A trait defines extension points (fixtures, validators) but external implementations could break invariants.</p>
+<h2 id="problem-12"><a class="header" href="#problem-12">Problem</a></h2>
+<p>If downstream crates implement the trait arbitrarily, the framework cannot guarantee lifecycle management or error semantics. Breaking changes become impossible.</p>
+<h2 id="solution-12"><a class="header" href="#solution-12">Solution</a></h2>
+<p>Use the sealed trait pattern: define a <code>private</code> module with a <code>Sealed</code> trait implemented only within the crate, and require <code>Sealed</code> as a supertrait. Consumers can use the trait, but only framework-defined implementations exist.</p>
+<h2 id="forces-12"><a class="header" href="#forces-12">Forces</a></h2>
+<ul>
+<li>Safety vs. openness: sealing protects invariants while letting users compose functionality</li>
+<li>Flexibility vs. versioning: internal changes become possible without breaking downstream code</li>
+<li>Testability vs. encapsulation: tests can still construct fixtures via provided builders</li>
+</ul>
+<h2 id="examples-12"><a class="header" href="#examples-12">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod private {
+    pub trait Sealed {}
+}
+
+pub trait AsyncFixtureProvider: private::Sealed {
+    // ...
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-12"><a class="header" href="#related-patterns-12">Related Patterns</a></h2>
+<ul>
+<li>Pattern 12: Type Safety with GATs</li>
+<li>Pattern 17: Builder-Driven Test Data</li>
+<li>Pattern 20: Macro Pattern Enforcement</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-14-compile-time-validation"><a class="header" href="#pattern-14-compile-time-validation">Pattern 14: Compile-Time Validation</a></h1>
+<h2 id="context-13"><a class="header" href="#context-13">Context</a></h2>
+<p>Invariants (tick budgets, guard limits, feature combinations) should fail fast during compilation.</p>
+<h2 id="problem-13"><a class="header" href="#problem-13">Problem</a></h2>
+<p>Runtime checks add overhead and can be bypassed in rarely executed code paths. Missing an invariant leads to subtle production bugs.</p>
+<h2 id="solution-13"><a class="header" href="#solution-13">Solution</a></h2>
+<p>Push validation to compile time with const generics, type-level markers, and <code>const_assert!</code>. When runtime validation is unavoidable, encapsulate it in constructors that return <code>Result</code>, making misuse impossible through types.</p>
+<h2 id="forces-13"><a class="header" href="#forces-13">Forces</a></h2>
+<ul>
+<li>Safety vs. flexibility: some values remain runtime, but defaults should be encoded in types</li>
+<li>Compile time vs. ergonomics: const generics expose parameters without macros</li>
+<li>Diagnostics vs. noise: compile errors must explain the invariant succinctly</li>
+</ul>
+<h2 id="examples-13"><a class="header" href="#examples-13">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub const fn assert_tick_budget(ticks: u64) {
+    const_assert!(ticks &lt;= 8);
+}
+
+pub struct SizeValidatedArray&lt;const SIZE: usize, const MAX: usize&gt; {
+    data: [u8; SIZE],
+    _marker: PhantomData&lt;[u8; MAX]&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-13"><a class="header" href="#related-patterns-13">Related Patterns</a></h2>
+<ul>
+<li>Pattern 11: Zero-Cost Abstractions</li>
+<li>Pattern 15: Type State Enforcement</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-15-type-state-enforcement"><a class="header" href="#pattern-15-type-state-enforcement">Pattern 15: Type State Enforcement</a></h1>
+<h2 id="context-14"><a class="header" href="#context-14">Context</a></h2>
+<p>An API has a prescribed call order (Arrange → Act → Assert) or requires configuration before use.</p>
+<h2 id="problem-14"><a class="header" href="#problem-14">Problem</a></h2>
+<p>Runtime enforcement of order relies on documentation and can be bypassed, leading to inconsistent state and test flakiness.</p>
+<h2 id="solution-14"><a class="header" href="#solution-14">Solution</a></h2>
+<p>Model the phases as distinct types and use <code>PhantomData</code> to encode the current phase. Methods consume <code>self</code> and return the next state, making it impossible to call methods out of order. Chicago TDD Tools uses this to enforce AAA semantics internally.</p>
+<h2 id="forces-14"><a class="header" href="#forces-14">Forces</a></h2>
+<ul>
+<li>Safety vs. ergonomic: type transitions should read naturally without verbose syntax</li>
+<li>Flexibility vs. constraints: provide escape hatches only when absolutely necessary</li>
+<li>Zero-cost vs. clarity: type state should erase at compile time</li>
+</ul>
+<h2 id="examples-14"><a class="header" href="#examples-14">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct TestState&lt;Phase&gt; {
+    context: Context,
+    _phase: PhantomData&lt;Phase&gt;,
+}
+
+impl TestState&lt;Arrange&gt; {
+    pub fn act(self) -&gt; TestState&lt;Act&gt; { /* ... */ }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-14"><a class="header" href="#related-patterns-14">Related Patterns</a></h2>
+<ul>
+<li>Pattern 1: AAA Pattern</li>
+<li>Pattern 11: Zero-Cost Abstractions</li>
+<li>Pattern 14: Compile-Time Validation</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="new-patterns-from-practice"><a class="header" href="#new-patterns-from-practice">New Patterns from Practice</a></h1>
+<p>The framework continues to evolve through real-world usage. This section captures patterns that emerged after building large Chicago TDD deployments. They complement the classical design patterns with pragmatic guidance on fixtures, timeouts, feature flags, and macro enforcement.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-16-fixture-lifecycle-management"><a class="header" href="#pattern-16-fixture-lifecycle-management">Pattern 16: Fixture Lifecycle Management</a></h1>
+<h2 id="context-15"><a class="header" href="#context-15">Context</a></h2>
+<p>Complex tests require deterministic setup and teardown of shared state: databases, telemetry, temporary directories.</p>
+<h2 id="problem-15"><a class="header" href="#problem-15">Problem</a></h2>
+<p>Manual lifecycle logic is error-prone. Forgetting teardown causes cascading failures across tests. Async setup complicates matters further.</p>
+<h2 id="solution-15"><a class="header" href="#solution-15">Solution</a></h2>
+<p>Wrap lifecycle responsibilities in <code>TestFixture</code> or <code>AsyncFixtureManager</code>. Use the fixture to hold handles and expose helper methods. Let Drop and the manager <code>.teardown()</code> guarantee cleanup. For async resources, implement <code>AsyncFixtureProvider</code> and return strongly typed handles.</p>
+<h2 id="forces-15"><a class="header" href="#forces-15">Forces</a></h2>
+<ul>
+<li>Determinism vs. flexibility: fixtures must isolate state yet allow custom behavior per test</li>
+<li>Async vs. sync complexity: asynchronous resources require explicit lifecycle boundaries</li>
+<li>Performance vs. safety: reuse is tempting, but fresh fixtures avoid hidden coupling</li>
+</ul>
+<h2 id="examples-15"><a class="header" href="#examples-15">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct DbProvider;
+
+impl chicago_tdd_tools::core::async_fixture::private::Sealed for DbProvider {}
+
+impl AsyncFixtureProvider for DbProvider {
+    type Fixture&lt;'a&gt; = DatabaseHandle;
+    type Error = DbError;
+
+    fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; DbFuture&lt;'a, DatabaseHandle&gt; {
+        Box::pin(async move { DatabaseHandle::connect().await })
+    }
+}
+
+async_test!(test_query_latency, {
+    let manager = AsyncFixtureManager::new(DbProvider);
+    let handle = manager.setup().await?;
+    // ...
+    manager.teardown().await?;
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-15"><a class="header" href="#related-patterns-15">Related Patterns</a></h2>
+<ul>
+<li>Pattern 4: Resource Cleanup</li>
+<li>Pattern 12: Type Safety with GATs</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-17-builder-driven-test-data"><a class="header" href="#pattern-17-builder-driven-test-data">Pattern 17: Builder-Driven Test Data</a></h1>
+<h2 id="context-16"><a class="header" href="#context-16">Context</a></h2>
+<p>Domain objects require multiple fields or nested structures. Hand-building them in tests scatters intent and duplicates defaults.</p>
+<h2 id="problem-16"><a class="header" href="#problem-16">Problem</a></h2>
+<p>Verbose setup obscures the behavior under test. When requirements change, hundreds of tests need updates.</p>
+<h2 id="solution-16"><a class="header" href="#solution-16">Solution</a></h2>
+<p>Wrap <code>TestDataBuilder</code> (or create your own builder) to provide fluent helpers and sensible defaults. Expose domain-specific methods (<code>with_customer_id</code>, <code>with_balance</code>) and return JSON or HashMap structures ready for assertions. Builders live close to the domain, yet reuse the underlying generic builder to avoid duplication.</p>
+<h2 id="forces-16"><a class="header" href="#forces-16">Forces</a></h2>
+<ul>
+<li>Expressiveness vs. coupling: builders should reflect domain language without leaking implementation details</li>
+<li>Defaults vs. explicitness: provide safe defaults but allow overrides</li>
+<li>Reuse vs. specialization: share base builder logic; extensions add convenience</li>
+</ul>
+<h2 id="examples-16"><a class="header" href="#examples-16">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct CustomerBuilder {
+    base: TestDataBuilder,
+}
+
+impl CustomerBuilder {
+    pub fn new() -&gt; Self {
+        Self {
+            base: TestDataBuilder::new()
+                .with_var("status", "active"),
+        }
+    }
+
+    pub fn with_id(mut self, id: &amp;str) -&gt; Self {
+        self.base = self.base.with_var("customer_id", id.to_string());
+        self
+    }
+
+    pub fn build(self) -&gt; serde_json::Value {
+        self.base.build_json().expect("valid json")
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-16"><a class="header" href="#related-patterns-16">Related Patterns</a></h2>
+<ul>
+<li>Pattern 8: Composition Over Duplication</li>
+<li>Pattern 11: Zero-Cost Abstractions</li>
+<li>Pattern 19: Feature Gate Slices</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-18-timeout-defense-in-depth"><a class="header" href="#pattern-18-timeout-defense-in-depth">Pattern 18: Timeout Defense in Depth</a></h1>
+<h2 id="context-17"><a class="header" href="#context-17">Context</a></h2>
+<p>Async tests interact with containers, networks, or external services. A hung future or stalled process could freeze the suite.</p>
+<h2 id="problem-17"><a class="header" href="#problem-17">Problem</a></h2>
+<p>Single-layer timeouts fail silently when they reside in the wrong place. For example, process-level timeouts kill the entire run without explaining which test stalled.</p>
+<h2 id="solution-17"><a class="header" href="#solution-17">Solution</a></h2>
+<p>Layer timeouts at three levels:</p>
+<ol>
+<li><strong>Test-level</strong> (<code>tokio::time::timeout</code> inside macros) – fails the specific test with a clear message.</li>
+<li><strong>Runner-level</strong> (<code>cargo-nextest</code> profiles) – applies SLA-based timeouts per profile.</li>
+<li><strong>Process-level</strong> (<code>timeout</code> wrapper in <code>Makefile.toml</code>) – stops catastrophic hangs.</li>
+</ol>
+<p>Expose constants for standard timeouts (<code>DEFAULT_UNIT_TEST_TIMEOUT_SECONDS = 1</code>, <code>DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS = 30</code>) and use <code>*_with_timeout!</code> macros for slow scenarios.</p>
+<h2 id="forces-17"><a class="header" href="#forces-17">Forces</a></h2>
+<ul>
+<li>Resilience vs. noise: timeouts must be strict enough to catch hangs but lenient for expected latency</li>
+<li>Diagnostics vs. overhead: detailed error messages help triage without cluttering success paths</li>
+<li>Configurability vs. consistency: shared constants keep expectations aligned</li>
+</ul>
+<h2 id="examples-17"><a class="header" href="#examples-17">Examples</a></h2>
+<pre><code class="language-toml"># .config/nextest.toml
+[profile.default]
+slow-timeout = { period = "1s", terminate-after = 1 }
+
+[profile.integration]
+slow-timeout = { period = "30s", terminate-after = 1 }
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture_test_with_timeout!(test_container_warmup, fixture, DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS, {
+    // slow operation
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-17"><a class="header" href="#related-patterns-17">Related Patterns</a></h2>
+<ul>
+<li>Pattern 4: Resource Cleanup</li>
+<li>Pattern 9: Single Source of Truth</li>
+<li>Pattern 20: Macro Pattern Enforcement</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-19-feature-gate-slices"><a class="header" href="#pattern-19-feature-gate-slices">Pattern 19: Feature Gate Slices</a></h1>
+<h2 id="context-18"><a class="header" href="#context-18">Context</a></h2>
+<p>The framework offers advanced capabilities (property testing, mutation testing, testcontainers, OTEL) that not every project needs.</p>
+<h2 id="problem-18"><a class="header" href="#problem-18">Problem</a></h2>
+<p>Enabling every feature increases compile times and pulls in heavy dependencies. Disabling a feature accidentally can break tests silently.</p>
+<h2 id="solution-18"><a class="header" href="#solution-18">Solution</a></h2>
+<p>Group related features into named slices in <code>Cargo.toml</code> (e.g., <code>testing-extras</code>, <code>observability-full</code>). Document the slice and expose <code>cfg</code>-gated APIs accordingly. Tests and examples import the feature-specific modules only when the feature is active, keeping the base lean.</p>
+<h2 id="forces-18"><a class="header" href="#forces-18">Forces</a></h2>
+<ul>
+<li>Modularity vs. convenience: slices reduce duplication but still allow fine-grained toggles</li>
+<li>Discoverability vs. complexity: a small number of curated slices keeps onboarding simple</li>
+<li>Compatibility vs. optionality: code must compile cleanly with features disabled</li>
+</ul>
+<h2 id="examples-18"><a class="header" href="#examples-18">Examples</a></h2>
+<pre><code class="language-toml">[features]
+default = ["logging"]
+testing-extras = ["property-testing", "snapshot-testing", "fake-data"]
+observability-full = ["otel", "weaver"]
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(feature = "weaver")]
+pub mod weaver;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-18"><a class="header" href="#related-patterns-18">Related Patterns</a></h2>
+<ul>
+<li>Pattern 6: Generic Base Layer</li>
+<li>Pattern 10: Capability Grouping</li>
+<li>Pattern 20: Macro Pattern Enforcement</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-20-macro-pattern-enforcement"><a class="header" href="#pattern-20-macro-pattern-enforcement">Pattern 20: Macro Pattern Enforcement</a></h1>
+<h2 id="context-19"><a class="header" href="#context-19">Context</a></h2>
+<p>You need consistent test structure and timeouts without repeating boilerplate or relying on discipline alone.</p>
+<h2 id="problem-19"><a class="header" href="#problem-19">Problem</a></h2>
+<p>Developers forget to add timeouts, skip AAA comments, or mix direct <code>#[test]</code> usage with framework macros, leading to drift and inconsistent behavior.</p>
+<h2 id="solution-19"><a class="header" href="#solution-19">Solution</a></h2>
+<p>Embed enforcement inside macros. <code>test!</code> injects the AAA skeleton, <code>async_test!</code> and <code>fixture_test!</code> wrap bodies with <code>tokio::time::timeout</code>, and <code>weaver_test!</code> requires the <code>weaver</code> feature. Each macro centralizes best practices so using it guarantees compliance.</p>
+<h2 id="forces-19"><a class="header" href="#forces-19">Forces</a></h2>
+<ul>
+<li>Consistency vs. flexibility: macros enforce conventions while allowing custom logic inside</li>
+<li>Zero cost vs. tooling: expansions must stay small and compile quickly</li>
+<li>Guidance vs. noise: failures should point to the missing convention explicitly</li>
+</ul>
+<h2 id="examples-19"><a class="header" href="#examples-19">Examples</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[macro_export]
+macro_rules! async_test {
+    ($name:ident, $body:block) =&gt; {
+        $crate::async_test_with_timeout!($name, 1, $body);
+    };
+}
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(not(feature = "otel"))]
+#[macro_export]
+macro_rules! otel_test {
+    ($($tt:tt)*) =&gt; {
+        compile_error!("OTEL testing requires the 'otel' feature. Enable with: --features otel");
+    };
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="related-patterns-19"><a class="header" href="#related-patterns-19">Related Patterns</a></h2>
+<ul>
+<li>Pattern 1: AAA Pattern</li>
+<li>Pattern 18: Timeout Defense in Depth</li>
+<li>Pattern 19: Feature Gate Slices</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
