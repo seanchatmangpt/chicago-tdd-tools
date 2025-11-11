@@ -620,7 +620,7 @@ impl ObservabilityTest {
     }
 
     #[cfg(feature = "weaver")]
-    fn stop_weaver_process(&mut self) -> ObservabilityResult<()> {
+    pub(crate) fn stop_weaver_process(&mut self) -> ObservabilityResult<()> {
         if let Some(ref mut validator) = self.weaver_validator {
             validator.stop()?;
         }

@@ -187,12 +187,12 @@ mod weaver_tests {
 
         // Arrange: Check prerequisites
         let registry_path = PathBuf::from("registry");
-        if !registry_path.exists() && handle_prereq_failure("Registry path does not exist (run scripts/weaver-bootstrap.sh)") {
+        if !registry_path.exists() && handle_prereq_failure("Registry path does not exist (run cargo make weaver-bootstrap)") {
             return;
         }
 
         if WeaverValidator::check_weaver_available().is_err()
-            && handle_prereq_failure("Weaver binary not available (run scripts/weaver-bootstrap.sh)")
+            && handle_prereq_failure("Weaver binary not available (run cargo make weaver-bootstrap)")
         {
             return;
         }

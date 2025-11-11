@@ -25,10 +25,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let registry_path = PathBuf::from("registry");
     if !registry_path.exists() {
-        return Err(Box::new(WeaverValidationError::RegistryNotFound(format!(
-            "{} (run scripts/weaver-bootstrap.sh)",
+        return Err(WeaverValidationError::RegistryNotFound(format!(
+            "{} (run cargo make weaver-bootstrap)",
             registry_path.display()
-        ))));
+        )));
     }
 
     let weaver_binary = WeaverLiveCheck::find_weaver_binary()
