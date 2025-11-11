@@ -113,7 +113,7 @@ cargo make test       # Run tests
 **Most Common**: Enable `testing-extras` for property-based testing, snapshot testing, and fake data:
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { 
+chicago_tdd_tools = { 
     path = "../chicago-tdd-tools",  # Or use git URL when published
     features = ["testing-extras"]   # Enable common testing features
 }
@@ -122,6 +122,25 @@ chicago-tdd-tools = {
 **When to use features**: Enable features only when you need them (e.g., `testcontainers` for Docker integration, `otel` for observability testing).
 
 **See [Getting Started](docs/GETTING_STARTED.md) for complete feature list** (property-testing, mutation-testing, testcontainers, otel, weaver, etc.)
+
+## Weaver Live-Check Quick Start
+
+Chicago TDD Tools dogfoods Weaver. Follow these steps to exercise live-check locally:
+
+1. **Bootstrap prerequisites** (Weaver CLI + semantic convention registry):
+   ```bash
+   cargo make weaver-bootstrap
+   ```
+2. **Run the fast smoke test** (version check + telemetry span):
+   ```bash
+   cargo make weaver-smoke
+   ```
+3. **Run full integration when Docker is available**:
+   ```bash
+   cargo make test-integration        # Requires Docker + weaver feature
+   ```
+
+**Need to temporarily skip Weaver tests?** Set `WEAVER_ALLOW_SKIP=1` in your environment. Without that explicit opt-out, Weaver tests fail fast when prerequisites are missing—quality is the default.
 
 ## Build System
 

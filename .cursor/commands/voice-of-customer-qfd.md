@@ -365,6 +365,66 @@ Legend: ●● = Strong, ● = Medium, ○ = Weak
 
 ---
 
+### Step 3.5: Gap Analysis (CRITICAL)
+
+**Action**: Identify gaps between customer needs and current capabilities.
+
+**CRITICAL**: This step is mandatory. Skipping gap analysis causes QFD to verify existing requirements instead of implementing new ones to address unmet customer needs.
+
+#### 3.5.1: Compare Needs vs Capabilities
+
+**Action**: Compare each customer need against current capabilities.
+
+**Gap analysis process**:
+1. **List customer needs**: All needs from Step 2
+2. **List current capabilities**: What the framework currently provides
+3. **Identify gaps**: Needs not addressed by current capabilities
+4. **Prioritize gaps**: Rank gaps by importance and impact
+
+**Example gap analysis**:
+```markdown
+## Gap Analysis
+
+**Customer Need**: "I want to see progress while tests run"
+- **Current Capability**: cargo-nextest provides basic output, but status-level is set to "none"
+- **Gap**: No real-time progress display
+- **Priority**: High (Visibility need, Importance: 7.5/10)
+
+**Customer Need**: "I want to know which tests are slow"
+- **Current Capability**: cargo-nextest has --timings option, but not used
+- **Gap**: No slow test identification feature
+- **Priority**: High (Visibility need, Importance: 7.2/10)
+```
+
+#### 3.5.2: Create Requirements for Gaps
+
+**Action**: Create new requirements to address identified gaps.
+
+**Requirement creation**:
+- **For each gap**: Create requirement that addresses it
+- **Measurable**: Requirements must be measurable
+- **Actionable**: Requirements must be actionable
+- **Complete**: Requirements must fully address the gap
+
+**Example requirements for gaps**:
+```markdown
+## New Requirements for Gaps
+
+**Gap**: No real-time progress display
+- **Requirement**: Enable test progress display in cargo-nextest configuration
+- **Measurement**: Progress dots shown during test execution
+- **Target**: Users can see test progress in real-time
+
+**Gap**: No slow test identification
+- **Requirement**: Add test timing report task
+- **Measurement**: Timing report generated (HTML/JSON)
+- **Target**: Users can identify slow tests via timing report
+```
+
+**Principle**: Gap analysis ensures QFD identifies unmet needs and creates requirements to address them, not just verify existing requirements meet targets.
+
+---
+
 ### Step 4: Prioritize Requirements
 
 **Action**: Prioritize design requirements based on QFD analysis.

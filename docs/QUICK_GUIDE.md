@@ -171,10 +171,20 @@ otel_test!(test_otel_span_validation, {
 
 **Requires**: `weaver` feature flag (automatically enables `otel`).
 
+**Bootstrap once**:
+```bash
+cargo make weaver-bootstrap
+```
+
+**Daily guardrail**:
+```bash
+cargo make weaver-smoke    # version check + telemetry span
+```
+
 **Enable in `Cargo.toml`**:
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { 
+chicago_tdd_tools = { 
     path = "../chicago-tdd-tools",
     features = ["weaver"]  # Automatically enables otel
 }
@@ -450,3 +460,5 @@ async_test!(test_async_fixture, {
 - **[Getting Started](GETTING_STARTED.md)** - Quick start guide
 - **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
 - **[Examples](../examples/)** - Working code examples
+
+> **Short-term skip?** Export `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests explicitly. Without it, missing prerequisites cause a panic to enforce dogfooding.

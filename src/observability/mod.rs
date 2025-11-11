@@ -29,10 +29,7 @@
 pub mod unified;
 
 // Re-export unified API as main API
-#[cfg(feature = "otel")]
 pub use unified::{ObservabilityError, ObservabilityResult, ObservabilityTest, TestConfig};
-#[cfg(not(feature = "otel"))]
-pub use unified::{ObservabilityTest, TestConfig};
 
 // Keep old modules temporarily for types (will be removed)
 // Types are still needed for the unified API

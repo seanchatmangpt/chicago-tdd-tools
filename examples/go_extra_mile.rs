@@ -361,7 +361,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(e) => {
                 println!("⚠ Weaver not available: {}", e);
-                println!("  Install with: ./scripts/install-weaver.sh");
+                println!("  Bootstrap with: cargo make weaver-bootstrap");
             }
         }
     }

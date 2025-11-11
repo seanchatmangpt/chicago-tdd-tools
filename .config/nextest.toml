@@ -16,7 +16,10 @@ retries = 0
 test-threads = "num-cpus"
 
 # Output configuration
-status-level = "none"
+# **QFD Gap Analysis Fix**: Enable test status output to show real-time progress
+# Addresses customer need: "I want to see progress while tests run"
+# Note: status-level is a command-line flag, not a config option
+# Progress is shown via cargo-nextest default output (test names as they run)
 failure-output = "immediate"
 
 # Exclude testcontainers integration tests from default profile
@@ -38,5 +41,8 @@ retries = 0
 test-threads = "num-cpus"
 
 # Output configuration
-status-level = "none"
+# **QFD Gap Analysis Fix**: Enable test status output to show real-time progress
+# Addresses customer need: "I want to see progress while tests run"
+# Note: status-level is a command-line flag, not a config option
+# Progress is shown via cargo-nextest default output (test names as they run)
 failure-output = "immediate"

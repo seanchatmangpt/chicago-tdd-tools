@@ -92,7 +92,7 @@ jobs:
         run: |
           cargo make fmt
           # Check if formatting changed anything
-          if [ -n "$(git diff --exit-code)" ]; then
+          if ! git diff --exit-code; then
             echo "❌ Code is not formatted correctly. Run 'cargo make fmt' to fix."
             exit 1
           fi

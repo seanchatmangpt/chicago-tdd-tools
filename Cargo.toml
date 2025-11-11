@@ -246,6 +246,11 @@ integration-full = [
 name = "chicago_tdd_tools"
 path = "src/lib.rs"
 
+[[bin]]
+name = "weaver_smoke"
+path = "src/bin/weaver_smoke.rs"
+required-features = ["weaver"]
+
 # Maximized linting configuration (Rust 1.78+)
 # **Poka-Yoke Design**: Warnings are treated as errors to prevent defects at compile time.
 # Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.

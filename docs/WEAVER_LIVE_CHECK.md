@@ -36,6 +36,25 @@ Pinnacle of Chicago TDD methodology. Embodies all four Chicago TDD principles in
 
 **Chicago TDD Integration**: `WeaverValidator::new(registry_path).start()?` for setup. `send_test_span_to_weaver(&endpoint, "http.request")?` for sending telemetry. `validator.stop()?` for cleanup. Weaver validates actual telemetry state against schema. State-based testing with real collaborators.
 
+## Operational Workflow (80/20)
+
+1. **Bootstrap prerequisites**
+   ```bash
+   # Downloads weaver binary + semantic convention registry
+   cargo make weaver-bootstrap
+   ```
+2. **Run smoke validation**
+   ```bash
+   # Verifies weaver --version and sends a test span without Docker
+   cargo make weaver-smoke
+   ```
+3. **Execute integration (Docker required)**
+   ```bash
+   cargo make test-integration    # Runs testcontainers + Weaver live-check suite
+   ```
+
+> **Explicit skip only**: Set `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests temporarily (e.g., constrained CI runners). Without the flag, missing prerequisites panic to enforce dogfooding discipline.
+
 ## Why This is the Pinnacle
 
 **Real-World Validation**: Validates actual telemetry from real applications, not simulated data. Test real behavior, not mocks.

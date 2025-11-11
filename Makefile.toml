@@ -218,6 +218,27 @@ args = [
   "--nocapture",
 ]
 
+# **QFD Gap Analysis Fix**: Added slow test identification task
+# Addresses customer need: "I want to know which tests are slow"
+# Uses cargo-nextest --timings option to generate timing report
+[tasks.test-timings]
+description = "Run tests and generate timing report to identify slow tests (excludes integration tests)"
+command = "timeout"
+args = [
+  "10s",
+  "cargo",
+  "nextest",
+  "run",
+  "--lib",
+  "--all-features",
+  "--timings=html,json",
+  "--",
+  "--skip",
+  "testcontainers",
+  "--skip",
+  "weaver_integration",
+]
+
 # Fallback: Standard cargo test (if nextest not available)
 [tasks.test-cargo]
 description = "Run all tests using standard cargo test (fallback)"

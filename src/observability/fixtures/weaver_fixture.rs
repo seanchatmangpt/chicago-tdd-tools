@@ -3,7 +3,6 @@
 #![cfg(all(feature = "weaver", feature = "otel"))]
 
 use std::path::Path;
-use std::time::Duration;
 
 use tempfile::TempDir;
 
@@ -36,6 +35,15 @@ impl WeaverTestFixture {
     /// Returns an error if Weaver cannot be started or configured.
     pub fn with_config(mut config: TestConfig) -> ObservabilityResult<Self> {
         config.weaver_enabled = true;
+
+        if let Some(ref path) = config.registry_path {
+            if !path.exists() {
+                return Err(ObservabilityError::RegistryNotFound(format!(
+                    "Semantic conventions registry not found at {}. Run `cargo make setup-registry` or provide an existing registry path.",
+                    path.display()
+                )));
+            }
+        }
 
         let output_dir = TempDir::new().map_err(|err| {
             ObservabilityError::ValidationFailed(format!(
@@ -87,11 +95,12 @@ impl WeaverTestFixture {
     ///
     /// Returns an error if telemetry capture fails, Weaver processing fails,
     /// or validation results cannot be parsed.
-    pub fn finish(&self) -> ObservabilityResult<ValidationResults> {
+    pub fn finish(&mut self) -> ObservabilityResult<ValidationResults> {
         self.capture.flush()?;
-
-        // Give Weaver a moment to process the final export.
-        std::thread::sleep(Duration::from_millis(200));
+        #[cfg(feature = "weaver")]
+        {
+            self.observability.stop_weaver_process()?;
+        }
 
         ValidationResults::from_report_dir(self.output_dir())
     }

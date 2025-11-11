@@ -59,15 +59,21 @@ pub enum ObservabilityError {
     #[error("🚨 Validation failed: {0}\n   ⚠️  STOP: Telemetry validation failed\n   💡 FIX: Check telemetry conforms to schema and semantic conventions")]
     ValidationFailed(String),
     /// Span validation failed
+    #[cfg(feature = "otel")]
     #[error("🚨 Span validation failed: {0}")]
     SpanValidationFailed(String),
     /// Metric validation failed
+    #[cfg(feature = "otel")]
     #[error("🚨 Metric validation failed: {0}")]
     MetricValidationFailed(String),
+    /// Required feature disabled
+    #[error(
+        "🚨 Required feature disabled: {0}\n   ⚠️  STOP: Enable required feature to use observability tools\n   💡 FIX: Enable the `{0}` feature in Cargo.toml"
+    )]
+    FeatureDisabled(&'static str),
 }
 
 /// Result type for observability testing
-#[cfg(feature = "otel")]
 pub type ObservabilityResult<T> = Result<T, ObservabilityError>;
 
 /// Type-level validation state (compile-time guarantees)
@@ -264,6 +270,16 @@ impl ObservabilityTest {
         Self::with_config(TestConfig::default())
     }
 
+    /// Create a new observability test (requires `otel` feature)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `otel` feature is not enabled.
+    #[cfg(not(feature = "otel"))]
+    pub fn new() -> ObservabilityResult<Self> {
+        Err(ObservabilityError::FeatureDisabled("otel"))
+    }
+
     /// Create a new observability test with custom configuration
     ///
     /// # Errors
@@ -271,7 +287,6 @@ impl ObservabilityTest {
     /// Returns an error if configuration is invalid or Weaver cannot be started.
     #[cfg(feature = "otel")]
     pub fn with_config(config: TestConfig) -> ObservabilityResult<Self> {
-        #[cfg(feature = "otel")]
         let otel_validator = OtelValidator::new();
 
         #[cfg(feature = "weaver")]
@@ -351,6 +366,17 @@ impl ObservabilityTest {
             validation_results: None,
             _validation_state: PhantomData,
         })
+    }
+
+    /// Create a new observability test with custom configuration (requires `otel` feature)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `otel` feature is not enabled.
+    #[cfg(not(feature = "otel"))]
+    pub fn with_config(config: TestConfig) -> ObservabilityResult<Self> {
+        let _ = config;
+        Err(ObservabilityError::FeatureDisabled("otel"))
     }
 
     /// Set registry path
@@ -565,6 +591,46 @@ impl ObservabilityTest {
     pub const fn is_weaver_running(&self) -> bool {
         self.weaver_process.is_some()
     }
+
+    /// Access the latest Weaver validation results (parsed from the report directory).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Weaver validation is not enabled, the report directory is
+    /// unavailable, or the validation output cannot be parsed.
+    #[cfg(all(feature = "weaver", feature = "otel"))]
+    pub fn weaver_results(&self) -> ObservabilityResult<ValidationResults> {
+        if !self.config.weaver_enabled {
+            return Err(ObservabilityError::ValidationFailed(
+                "Weaver validation is not enabled for this ObservabilityTest".to_string(),
+            ));
+        }
+
+        let dir = self
+            .weaver_output_dir
+            .as_ref()
+            .ok_or_else(|| {
+                ObservabilityError::ValidationFailed(
+                    "Weaver output directory is unknown; ensure ObservabilityTest was constructed with weaver enabled"
+                        .to_string(),
+                )
+            })?;
+
+        ValidationResults::from_report_dir(dir)
+    }
+
+    #[cfg(feature = "weaver")]
+    fn stop_weaver_process(&mut self) -> ObservabilityResult<()> {
+        if let Some(ref mut validator) = self.weaver_validator {
+            validator.stop()?;
+        }
+
+        if let Some(mut process) = self.weaver_process.take() {
+            let _ = process.wait();
+        }
+
+        Ok(())
+    }
 }
 
 /// Automatic cleanup via Drop trait
@@ -572,15 +638,7 @@ impl Drop for ObservabilityTest {
     fn drop(&mut self) {
         #[cfg(feature = "weaver")]
         {
-            // Stop Weaver validator
-            if let Some(ref mut validator) = self.weaver_validator {
-                let _ = validator.stop();
-            }
-
-            // Kill Weaver process if still running
-            if let Some(mut process) = self.weaver_process.take() {
-                let _ = process.kill();
-            }
+            let _ = self.stop_weaver_process();
         }
     }
 }

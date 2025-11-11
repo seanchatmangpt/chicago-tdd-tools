@@ -259,6 +259,26 @@ Enable individual features as needed:
 - **`workflow-engine`**: Workflow-specific features
 - **`logging`**: Standard log crate integration (enabled by default)
 
+### Weaver Live-Check Setup (80/20 Quick Path)
+
+1. **Bootstrap Weaver CLI + registry**
+   ```bash
+   cargo make weaver-bootstrap
+   ```
+   Downloads the Weaver binary to `target/<profile>/weaver` and clones the semantic convention registry into `registry/`.
+2. **Run smoke validation**
+   ```bash
+   cargo make weaver-smoke
+   ```
+   Verifies `weaver --version` and sends a telemetry span via the library, ensuring live-check works without Docker.
+3. **Run full integration (optional)**
+   ```bash
+   cargo make test-integration         # Requires Docker + weaver feature
+   ```
+   Executes the container-based Weaver suite. Tests fail fast if prerequisites are missing unless `WEAVER_ALLOW_SKIP=1` is set.
+
+> **Skip intentionally?** Export `WEAVER_ALLOW_SKIP=1` to opt out temporarily. Without this flag, missing prerequisites panic to preserve dogfooding quality.
+
 ### Feature Groups (Recommended)
 
 For better DX, use feature groups for common combinations:
@@ -459,6 +479,12 @@ async_test!(test_async_fixture, {
   ```toml
   chicago-tdd-tools = { features = ["weaver"] }
   ```
+
+### Weaver Testing Notes
+
+- Integration checks require Docker plus `cargo make test-integration`.
+- Set `WEAVER_ALLOW_SKIP=1` to opt out of Weaver tests temporarily (CI should leave it unset).
+- Always re-run `cargo make weaver-smoke` after upgrading Weaver or OpenTelemetry dependencies.
 
 ### Common Runtime Errors
 
