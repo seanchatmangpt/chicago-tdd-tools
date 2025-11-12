@@ -1,0 +1,78 @@
+@startuml Weaver Live-Check Perfect Architecture
+
+!define RECTANGLE class
+
+package "Weaver Live-Check Perfect Architecture" {
+    
+    RECTANGLE WeaverValidator {
+        + registry_path: ValidRegistryPath
+        + otlp_grpc_port: NonZeroPort
+        + admin_port: NonZeroPort
+        + process: Option<Child>
+        + live_check: Option<WeaverLiveCheck>
+        --
+        + start() -> WeaverValidationResult<()>
+        + stop() -> WeaverValidationResult<()>
+        + is_running() -> bool
+        + wait_for_weaver_ready() -> WeaverValidationResult<()>
+        + check_admin_port_ready() -> bool
+        + validate_registry_before_start() -> Result<(), String>
+    }
+    
+    RECTANGLE WeaverLiveCheck {
+        + registry_path: Option<String>
+        + otlp_grpc_address: String
+        + otlp_grpc_port: u16
+        + admin_port: u16
+        --
+        + start() -> Result<Child, String>
+        + stop() -> Result<(), String>
+        + check_health() -> Result<bool, String>
+    }
+    
+    RECTANGLE ValidRegistryPath {
+        + path: PathBuf
+        --
+        + new() -> Option<Self>
+        + as_path() -> &Path
+    }
+    
+    RECTANGLE NonZeroPort {
+        + value: NonZeroU16
+        --
+        + new() -> Option<Self>
+        + get() -> u16
+    }
+    
+    RECTANGLE PositiveTimeout {
+        + value: NonZeroU64
+        --
+        + new() -> Option<Self>
+        + get() -> u64
+    }
+    
+    RECTANGLE WeaverValidationError {
+        + BinaryNotFound
+        + ProcessStartFailed(String)
+        + ProcessStopFailed(String)
+        + ProcessNotRunning
+        + RegistryNotFound(String)
+        + ValidationFailed(String)
+    }
+    
+    RECTANGLE Child {
+        + try_wait() -> Result<Option<ExitStatus>, Error>
+        + kill() -> Result<(), Error>
+    }
+    
+    WeaverValidator *-- WeaverLiveCheck
+    WeaverValidator *-- Child
+    WeaverValidator --> ValidRegistryPath : uses
+    WeaverValidator --> NonZeroPort : uses
+    WeaverValidator --> PositiveTimeout : uses
+    WeaverValidator ..> WeaverValidationError : returns
+    WeaverLiveCheck --> Child : creates
+}
+
+@enduml
+

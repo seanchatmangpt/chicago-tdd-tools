@@ -1,0 +1,83 @@
+@startuml Weaver Component Interactions Perfect
+
+package "Test Layer" {
+    [WeaverTestFixture] as Fixture
+    [weaver_test! macro] as Macro
+}
+
+package "Observability Layer" {
+    [ObservabilityTest] as ObsTest
+    [WeaverValidator] as Validator
+    [WeaverLiveCheck] as LiveCheck
+}
+
+package "Poka-Yoke Types" {
+    [ValidRegistryPath] as RegistryPath
+    [NonZeroPort] as Port
+    [PositiveTimeout] as Timeout
+    [RegistryVersion] as Version
+}
+
+package "Process Management" {
+    [Child Process] as Process
+    [Process Exit Detection] as ExitDetect
+    [Port Readiness Check] as PortCheck
+}
+
+package "External Services" {
+    [Weaver Binary] as Binary
+    [Semantic Conventions Registry] as Registry
+    [Admin Port (TCP)] as AdminPort
+    [OTLP gRPC Port] as OTLPPort
+}
+
+Fixture --> ObsTest : uses
+Macro --> Fixture : uses
+ObsTest --> Validator : manages
+Validator --> LiveCheck : uses
+Validator --> RegistryPath : validates
+Validator --> Port : uses
+Validator --> Timeout : uses
+Validator --> Version : uses (optional)
+
+LiveCheck --> Binary : spawns
+LiveCheck --> Process : creates
+Validator --> ExitDetect : uses
+Validator --> PortCheck : uses
+
+Process --> Binary : executes
+ExitDetect --> Process : monitors
+PortCheck --> AdminPort : connects
+
+Binary --> Registry : validates
+Binary --> AdminPort : listens
+Binary --> OTLPPort : listens
+
+note right of Validator
+  **Perfect Implementation:**
+  - Type-safe paths (ValidRegistryPath)
+  - Type-safe ports (NonZeroPort)
+  - Type-safe timeouts (PositiveTimeout)
+  - Process exit detection
+  - Port readiness verification
+  - Clear error messages
+end note
+
+note right of ExitDetect
+  **Perfect Detection:**
+  - try_wait() immediately after spawn
+  - try_wait() during readiness check
+  - try_wait() in is_running()
+  - Captures exit code and stderr
+end note
+
+note right of PortCheck
+  **Perfect Verification:**
+  - TcpStream::connect_timeout()
+  - Exponential backoff retry
+  - Non-blocking checks
+  - Fast failure detection
+end note
+
+@enduml
+

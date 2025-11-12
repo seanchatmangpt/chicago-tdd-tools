@@ -1,0 +1,68 @@
+@startuml Weaver Process State Machine
+
+[*] --> NotStarted : Initial State
+
+state NotStarted {
+    [*] --> ValidatingRegistry : start() called
+}
+
+state ValidatingRegistry {
+    [*] --> RegistryValid : ✅ Validation passes
+    [*] --> RegistryInvalid : ❌ Validation fails
+}
+
+RegistryInvalid --> [*] : Return RegistryNotFound error
+
+state RegistryValid {
+    [*] --> Spawning : Validation passed
+}
+
+state Spawning {
+    [*] --> ProcessSpawned : spawn() succeeds
+    [*] --> SpawnFailed : ❌ spawn() fails
+}
+
+SpawnFailed --> [*] : Return ProcessStartFailed error
+
+state ProcessSpawned {
+    [*] --> CheckingReady : Process spawned
+}
+
+state CheckingReady {
+    [*] --> ProcessExited : ❌ try_wait() returns Some
+    [*] --> PortNotReady : ❌ Port not listening
+    [*] --> Ready : ✅ Process running + Port listening
+}
+
+ProcessExited --> [*] : Return ProcessStartFailed\n(exit code, stderr)
+
+PortNotReady --> CheckingReady : Retry with backoff
+PortNotReady --> TimeoutExceeded : ❌ Timeout exceeded
+
+TimeoutExceeded --> [*] : Return ProcessStartFailed\n(timeout)
+
+state Ready {
+    [*] --> Running : ✅ Ready
+}
+
+state Running {
+    [*] --> CheckingHealth : is_running() called
+    [*] --> Stopping : stop() called
+    [*] --> ProcessDied : ❌ Process exited
+}
+
+CheckingHealth --> Running : ✅ Process alive
+CheckingHealth --> ProcessDied : ❌ Process exited
+
+ProcessDied --> [*] : Return ProcessNotRunning error
+
+state Stopping {
+    [*] --> Stopped : ✅ Stop succeeds
+    [*] --> StopFailed : ❌ Stop fails
+}
+
+StopFailed --> [*] : Return ProcessStopFailed error
+Stopped --> [*] : ✅ Success
+
+@enduml
+

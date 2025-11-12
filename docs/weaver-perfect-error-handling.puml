@@ -1,0 +1,77 @@
+@startuml Weaver Error Handling Perfect Flow
+
+start
+
+:WeaverValidator::start() called;
+
+partition "Pre-Start Validation" {
+    :Check Weaver binary available;
+    if (Binary not found?) then (yes)
+        :Try runtime download;
+        if (Download fails?) then (yes)
+            :Return BinaryNotFound error\n(with fix instructions);
+            stop
+        else (no)
+        endif
+    else (no)
+    endif
+    
+    :Validate registry before start;
+    if (Registry validation fails?) then (yes)
+        :Return RegistryNotFound error\n(with fix instructions:\n- Run weaver registry check\n- Pin to known-good version\n- Set WEAVER_SKIP_REGISTRY_VALIDATION=1);
+        stop
+    else (no)
+    endif
+}
+
+partition "Process Startup" {
+    :Spawn Weaver process;
+    if (Spawn fails?) then (yes)
+        :Return ProcessStartFailed error\n(with fix instructions:\n- Check Weaver binary\n- Verify registry path);
+        stop
+    else (no)
+    endif
+    
+    :Check process exit immediately;
+    if (Process exited?) then (yes)
+        :Capture exit code and stderr;
+        :Return ProcessStartFailed error\n(with:\n- Exit code\n- Stderr output\n- Fix instructions:\n  * Check registry validation\n  * Review stderr\n  * Pin to known-good version);
+        stop
+    else (no)
+    endif
+}
+
+partition "Readiness Check" {
+    :Wait for Weaver ready\n(exponential backoff);
+    
+    repeat
+        :Check process state;
+        if (Process exited?) then (yes)
+            :Return ProcessStartFailed error\n(process exited during wait);
+            stop
+        else (no)
+        endif
+        
+        :Check admin port;
+        if (Port ready?) then (yes)
+            :✅ Ready!;
+            break
+        else (no)
+        endif
+        
+        :Sleep (exponential backoff);
+    repeat while (Not timeout)
+    
+    if (Timeout exceeded?) then (yes)
+        :Return ProcessStartFailed error\n(timeout exceeded\nwith fix instructions:\n- Check Weaver logs\n- Verify registry valid);
+        stop
+    else (no)
+    endif
+}
+
+:✅ Success - Weaver ready;
+
+stop
+
+@enduml
+

@@ -1,0 +1,92 @@
+@startuml Weaver Live-Check Perfect Sequence
+
+actor Test
+participant WeaverValidator
+participant WeaverLiveCheck
+participant Process as "Child Process"
+participant AdminPort as "Admin Port\n(TCP)"
+participant Registry as "Semantic\nConventions\nRegistry"
+
+== Perfect Startup Flow ==
+
+Test -> WeaverValidator: start()
+activate WeaverValidator
+
+WeaverValidator -> WeaverValidator: validate_registry_before_start()
+activate WeaverValidator
+WeaverValidator -> Registry: weaver registry check
+Registry --> WeaverValidator: ✅ Valid
+deactivate WeaverValidator
+
+WeaverValidator -> WeaverLiveCheck: start()
+activate WeaverLiveCheck
+WeaverLiveCheck -> Process: spawn()
+Process --> WeaverLiveCheck: Child handle
+WeaverLiveCheck --> WeaverValidator: Child
+deactivate WeaverLiveCheck
+
+WeaverValidator -> WeaverValidator: wait_for_weaver_ready()
+activate WeaverValidator
+
+loop Exponential Backoff (100ms → 2000ms)
+    WeaverValidator -> Process: try_wait()
+    Process --> WeaverValidator: Ok(None) - running
+    
+    alt Process Exited
+        Process --> WeaverValidator: Ok(Some(status))
+        WeaverValidator --> Test: ❌ ProcessStartFailed\n(exit code, stderr)
+        deactivate WeaverValidator
+        return
+    end
+    
+    WeaverValidator -> AdminPort: TcpStream::connect_timeout()
+    AdminPort --> WeaverValidator: ✅ Connected
+    
+    alt Port Ready
+        WeaverValidator --> WeaverValidator: ✅ Ready!
+        deactivate WeaverValidator
+        break
+    end
+    
+    WeaverValidator -> WeaverValidator: sleep(backoff_interval)
+end
+
+alt Timeout Exceeded
+    WeaverValidator --> Test: ❌ ProcessStartFailed\n(timeout exceeded)
+    deactivate WeaverValidator
+    return
+end
+
+WeaverValidator --> Test: ✅ Success
+deactivate WeaverValidator
+
+== Perfect Usage Flow ==
+
+Test -> WeaverValidator: is_running()
+activate WeaverValidator
+WeaverValidator -> Process: try_wait()
+Process --> WeaverValidator: Ok(None) - running
+WeaverValidator --> Test: ✅ true
+deactivate WeaverValidator
+
+Test -> WeaverValidator: send telemetry
+Test -> WeaverValidator: finish()
+
+== Perfect Shutdown Flow ==
+
+Test -> WeaverValidator: stop()
+activate WeaverValidator
+WeaverValidator -> WeaverLiveCheck: stop()
+activate WeaverLiveCheck
+WeaverLiveCheck -> AdminPort: HTTP POST /stop
+AdminPort --> WeaverLiveCheck: ✅ Stopped
+WeaverLiveCheck --> WeaverValidator: ✅
+deactivate WeaverLiveCheck
+
+WeaverValidator -> Process: kill()
+Process --> WeaverValidator: ✅
+WeaverValidator --> Test: ✅ Success
+deactivate WeaverValidator
+
+@enduml
+

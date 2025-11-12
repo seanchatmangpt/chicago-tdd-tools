@@ -1,0 +1,105 @@
+@startuml Weaver Perfect Type Safety
+
+package "Poka-Yoke Types" {
+    
+    class ValidRegistryPath {
+        + path: PathBuf
+        --
+        + new() -> Option<Self>
+        + as_path() -> &Path
+        + to_string() -> Option<String>
+        --
+        **Invariant**: Path exists and is directory
+    }
+    
+    class NonZeroPort {
+        + value: NonZeroU16
+        --
+        + new() -> Option<Self>
+        + get() -> u16
+        --
+        **Invariant**: Port > 0
+    }
+    
+    class PositiveTimeout {
+        + value: NonZeroU64
+        --
+        + new() -> Option<Self>
+        + get() -> u64
+        --
+        **Invariant**: Timeout > 0
+    }
+    
+    class RegistryVersion {
+        + version: String
+        --
+        + new() -> Option<Self>
+        + as_str() -> &str
+        --
+        **Invariant**: Version non-empty
+    }
+    
+    class RegistryState {
+        + Unvalidated(ValidRegistryPath)
+        + Validated(ValidRegistryPath)
+        + ValidationFailed(ValidRegistryPath, String)
+        --
+        + new() -> Option<Self>
+        + validate() -> Result<Self, String>
+        + validated_path() -> Option<&ValidRegistryPath>
+        --
+        **Invariant**: Only Validated allows path access
+    }
+}
+
+package "Weaver Types" {
+    
+    class WeaverValidator {
+        + registry_path: ValidRegistryPath
+        + otlp_grpc_port: NonZeroPort
+        + admin_port: NonZeroPort
+        + process: Option<Child>
+        --
+        + start() -> WeaverValidationResult<()>
+        + wait_for_weaver_ready(\n  process: &mut Child,\n  admin_port: NonZeroPort,\n  timeout: PositiveTimeout\n) -> WeaverValidationResult<()>
+    }
+    
+    class WeaverValidationError {
+        + BinaryNotFound
+        + ProcessStartFailed(String)
+        + ProcessStopFailed(String)
+        + ProcessNotRunning
+        + RegistryNotFound(String)
+        + ValidationFailed(String)
+    }
+}
+
+WeaverValidator --> ValidRegistryPath : uses
+WeaverValidator --> NonZeroPort : uses (x2)
+WeaverValidator --> PositiveTimeout : uses
+WeaverValidator ..> WeaverValidationError : returns
+
+note right of ValidRegistryPath
+  **Perfect Type Safety:**
+  - Cannot create invalid paths
+  - Compile-time prevention
+  - Runtime validation
+  - Option<T> forces handling
+end note
+
+note right of NonZeroPort
+  **Perfect Port Safety:**
+  - Cannot create port = 0
+  - NonZeroU16 enforces > 0
+  - Compile-time check
+end note
+
+note right of PositiveTimeout
+  **Perfect Timeout Safety:**
+  - Cannot create timeout = 0
+  - NonZeroU64 enforces > 0
+  - Compile-time check
+end note
+
+@enduml
+

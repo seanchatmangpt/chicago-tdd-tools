@@ -1,0 +1,67 @@
+@startuml Weaver Perfect Lifecycle
+
+state "Perfect Weaver Lifecycle" as Lifecycle {
+    
+    state "Initialization" as Init {
+        [*] --> ValidatePrerequisites
+        ValidatePrerequisites --> CheckBinary : ✅ Binary available
+        ValidatePrerequisites --> DownloadBinary : ❌ Binary missing
+        DownloadBinary --> CheckBinary : ✅ Downloaded
+        DownloadBinary --> [*] : ❌ Download failed
+        CheckBinary --> ValidateRegistry : ✅ Binary ready
+    }
+    
+    state "Registry Validation" as RegVal {
+        [*] --> CheckRegistryExists
+        CheckRegistryExists --> CloneRegistry : ❌ Missing
+        CheckRegistryExists --> ValidateSchema : ✅ Exists
+        CloneRegistry --> ValidateSchema : ✅ Cloned
+        CloneRegistry --> [*] : ❌ Clone failed
+        ValidateSchema --> [*] : ✅ Valid
+        ValidateSchema --> [*] : ❌ Invalid\n(return error)
+    }
+    
+    state "Process Startup" as Startup {
+        [*] --> SpawnProcess
+        SpawnProcess --> CheckImmediateExit : ✅ Spawned
+        SpawnProcess --> [*] : ❌ Spawn failed
+        CheckImmediateExit --> WaitForReady : ✅ Running
+        CheckImmediateExit --> [*] : ❌ Exited\n(return error)
+    }
+    
+    state "Readiness Verification" as Ready {
+        [*] --> CheckProcessAlive
+        CheckProcessAlive --> CheckPortReady : ✅ Alive
+        CheckProcessAlive --> [*] : ❌ Exited\n(return error)
+        CheckPortReady --> [*] : ✅ Ready
+        CheckPortReady --> RetryWithBackoff : ❌ Not ready
+        RetryWithBackoff --> CheckProcessAlive : Retry
+        RetryWithBackoff --> [*] : ❌ Timeout\n(return error)
+    }
+    
+    state "Running" as Running {
+        [*] --> AcceptTelemetry
+        AcceptTelemetry --> ValidateTelemetry : Telemetry received
+        ValidateTelemetry --> AcceptTelemetry : Continue
+        AcceptTelemetry --> Shutdown : stop() called
+        AcceptTelemetry --> ProcessDied : ❌ Process exited
+        ProcessDied --> [*] : Return error
+    }
+    
+    state "Shutdown" as Shutdown {
+        [*] --> StopViaAdminPort
+        StopViaAdminPort --> KillProcess : ✅ Stopped
+        StopViaAdminPort --> ForceKill : ❌ Stop failed
+        KillProcess --> [*] : ✅ Success
+        ForceKill --> [*] : ✅ Success
+    }
+}
+
+Init --> RegVal : Prerequisites ready
+RegVal --> Startup : Registry valid
+Startup --> Ready : Process spawned
+Ready --> Running : Ready verified
+Running --> Shutdown : Stop requested
+
+@enduml
+

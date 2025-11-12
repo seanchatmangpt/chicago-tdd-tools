@@ -1,0 +1,63 @@
+@startuml Weaver Readiness Check Perfect Flow
+
+start
+
+:Test calls WeaverValidator::start();
+
+:Validate registry before start;
+if (Registry validation fails?) then (yes)
+    :Return RegistryNotFound error;
+    stop
+else (no)
+endif
+
+:Spawn Weaver process;
+if (Spawn fails?) then (yes)
+    :Return ProcessStartFailed error;
+    stop
+else (no)
+endif
+
+:Call wait_for_weaver_ready();
+
+partition "Exponential Backoff Loop" {
+    :Initialize backoff intervals\n[100ms, 200ms, 400ms, 800ms, 1600ms, 2000ms];
+    :Start timeout timer;
+    
+    repeat
+        if (Timeout exceeded?) then (yes)
+            :Return ProcessStartFailed\n(timeout exceeded);
+            stop
+        else (no)
+        endif
+        
+        :Check process state: try_wait();
+        if (Process exited?) then (yes)
+            :Capture exit code and stderr;
+            :Return ProcessStartFailed\n(exit code, stderr);
+            stop
+        else (no)
+        endif
+        
+        :Check admin port: TcpStream::connect_timeout(100ms);
+        if (Port ready?) then (yes)
+            :✅ Weaver is ready!;
+            break
+        else (no)
+        endif
+        
+        :Sleep for backoff interval;
+    repeat while (More intervals?)
+}
+
+:Final check: Admin port ready?;
+if (Port ready?) then (yes)
+    :✅ Success;
+    stop
+else (no)
+    :Return ProcessStartFailed\n(port not ready);
+    stop
+endif
+
+@enduml
+

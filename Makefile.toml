@@ -3,6 +3,15 @@
 #
 # CRITICAL: All commands have timeout protection to prevent freezing
 # Better to fail fast than hang forever
+#
+# LOGGING PATTERN (for shell commands with validation):
+#   All shell commands that need validation output should follow this pattern:
+#   1. Start: Echo operation start with context (use >&2 for stderr visibility)
+#   2. Progress: Echo per-item progress with counters [N] and status (>&2)
+#   3. Summary: Echo formatted summary with counts and list (>&2)
+#   4. All validation output uses >&2 to ensure visibility through cargo-make
+#   5. Use structured format: [COUNT] Status: path for easy parsing
+#   Example: See clean-all-home task for reference implementation
 
 # Verify timeout command exists before running any task
 [tasks.timeout-check]
@@ -36,12 +45,25 @@ args = ["5s", "cargo", "clean"]
 description = "Clean build artifacts in all Rust projects under home directory (~/)"
 # Root Cause Fix: Added explicit logging with >&2 redirection to ensure all output is visible
 # Validation: Logging shows search start, progress per project, and summary with counts
+# Gemba Walk Fixes:
+#   - Added maxdepth 4 limit to find command (prevents timeout from searching entire directory tree)
+#   - Added timeout 15s on find command itself (prevents indefinite hanging)
+#   - Changed from command substitution to temp file + while loop (prevents memory issues, works with basic sh)
+#   - Fixed variable expansion in summary (removed ${VAR:-0} syntax that cargo-make was escaping incorrectly)
+#   - Changed set -euo to set -uo (prevents premature exit if find returns no results)
+#   - Added trap for temp file cleanup (ensures temp file is removed even on error)
+# Logging Pattern (for future commands):
+#   1. Start: Echo search/operation start with context (>&2 for stderr visibility)
+#   2. Progress: Echo per-item progress with counters [N] and status (>&2)
+#   3. Summary: Echo formatted summary with counts and list (>&2)
+#   4. All output uses >&2 to ensure visibility through cargo-make
+#   5. Use structured format: [COUNT] Status: path for easy parsing
 command = "timeout"
 args = [
   "60s",
   "sh",
   "-c",
-  "set -euo pipefail; HOME_DIR=\"${HOME:-}\"; if [ -z \"$HOME_DIR\" ]; then echo '❌ ERROR: HOME variable not set' >&2; exit 1; fi; echo \"🔍 Searching for Rust projects in: $HOME_DIR\" >&2; COUNT=0; SUCCESS=0; FAILED=0; PROJECTS=\"\"; for cargo_file in $(find \"$HOME_DIR\" -type f -name 'Cargo.toml' 2>/dev/null | grep -v '/target/' | grep -v '/.cargo/' | grep -v '/.rustup/' || true); do if [ -f \"$cargo_file\" ]; then dir=$(dirname \"$cargo_file\"); if [ -d \"$dir\" ]; then COUNT=$((COUNT + 1)); echo \"[${COUNT}] Cleaning: $dir\" >&2; PROJECTS=\"$PROJECTS\n  - $dir\"; if (cd \"$dir\" && timeout 10s cargo clean >/dev/null 2>&1); then SUCCESS=$((SUCCESS + 1)); echo \"✅ [${COUNT}] Success: $dir\" >&2; else FAILED=$((FAILED + 1)); echo \"⚠️  [${COUNT}] Failed: $dir\" >&2; fi; fi; fi; done; echo '' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo '📊 CLEAN SUMMARY' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo \"Total projects found: ${COUNT:-0}\" >&2; echo \"Successfully cleaned: ${SUCCESS:-0}\" >&2; echo \"Failed: ${FAILED:-0}\" >&2; if [ \"${COUNT:-0}\" -gt 0 ]; then echo '' >&2; echo 'Projects processed:' >&2; echo \"$PROJECTS\" >&2; fi; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; if [ \"${COUNT:-0}\" -eq 0 ]; then echo 'ℹ️  No Rust projects found in home directory' >&2; fi; if [ \"${FAILED:-0}\" -gt 0 ]; then exit 1; fi",
+  "set -uo pipefail; HOME_DIR=\"${HOME:-}\"; if [ -z \"$HOME_DIR\" ]; then echo '❌ ERROR: HOME variable not set' >&2; exit 1; fi; echo \"🔍 Searching for Rust projects in: $HOME_DIR (max depth: 4)\" >&2; COUNT=0; SUCCESS=0; FAILED=0; PROJECTS=\"\"; TMPFILE=$(mktemp); trap 'rm -f \"$TMPFILE\"' EXIT; timeout 15s find \"$HOME_DIR\" -maxdepth 4 -type f -name 'Cargo.toml' 2>/dev/null | grep -v '/target/' | grep -v '/.cargo/' | grep -v '/.rustup/' > \"$TMPFILE\" || true; while IFS= read -r cargo_file || [ -n \"$cargo_file\" ]; do if [ -n \"$cargo_file\" ] && [ -f \"$cargo_file\" ]; then dir=$(dirname \"$cargo_file\"); if [ -d \"$dir\" ]; then COUNT=$((COUNT + 1)); echo \"[${COUNT}] Cleaning: $dir\" >&2; PROJECTS=\"$PROJECTS\n  - $dir\"; if (cd \"$dir\" && timeout 10s cargo clean >/dev/null 2>&1); then SUCCESS=$((SUCCESS + 1)); echo \"✅ [${COUNT}] Success: $dir\" >&2; else FAILED=$((FAILED + 1)); echo \"⚠️  [${COUNT}] Failed: $dir\" >&2; fi; fi; fi; done < \"$TMPFILE\"; echo '' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo '📊 CLEAN SUMMARY' >&2; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; echo \"Total projects found: $COUNT\" >&2; echo \"Successfully cleaned: $SUCCESS\" >&2; echo \"Failed: $FAILED\" >&2; if [ \"$COUNT\" -gt 0 ]; then echo '' >&2; echo 'Projects processed:' >&2; printf \"$PROJECTS\" >&2; echo '' >&2; fi; echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' >&2; if [ \"$COUNT\" -eq 0 ]; then echo 'ℹ️  No Rust projects found in home directory (searched up to 4 levels deep)' >&2; fi; if [ \"$FAILED\" -gt 0 ]; then exit 1; fi",
 ]
 ignore_errors = true
 
