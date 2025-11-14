@@ -18,7 +18,11 @@ pub fn example_coverage_basic() {
     // Assert: Verify coverage calculated
     assert_eq!(report.total.get(), 3);
     assert_eq!(report.covered.get(), 2);
-    assert_eq!(report.percentage.get(), 66.67);
+    // Use epsilon comparison for floating-point (FMEA T2: RPN 72 → 10)
+    let expected = 66.67;
+    let actual = report.percentage.get();
+    assert!((actual - expected).abs() < 0.01,
+        "Expected {}, got {} (difference: {})", expected, actual, (actual - expected).abs());
 }
 
 /// Example: Coverage with newtypes
