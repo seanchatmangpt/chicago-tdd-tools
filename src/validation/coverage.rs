@@ -361,6 +361,8 @@ impl Default for CoverageReport {
 
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
+#[allow(clippy::unwrap_used)] // Test code - unwrap is acceptable for test setup
+#[allow(clippy::float_cmp)] // Test code - exact float comparison is intentional
 mod tests {
     use super::*;
 
@@ -463,13 +465,13 @@ mod tests {
         assert_eq!(percentage_all.get(), 100.0);
 
         // Edge case: 0% coverage
-        let covered_none = CoveredCount::new(0).unwrap();
+        let covered_none = CoveredCount::ZERO;
         let percentage_none = CoveragePercentage::from_counts(covered_none, total).unwrap();
         assert_eq!(percentage_none.get(), 0.0);
 
         // Division by zero case
-        let zero_total = TotalCount::new(0).unwrap();
-        let zero_covered = CoveredCount::new(0).unwrap();
+        let zero_total = TotalCount::ZERO;
+        let zero_covered = CoveredCount::ZERO;
         let result = CoveragePercentage::from_counts(zero_covered, zero_total);
         assert!(result.is_none());
     }

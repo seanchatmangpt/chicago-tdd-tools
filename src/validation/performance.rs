@@ -523,7 +523,8 @@ pub struct Benchmark;
 #[cfg(not(feature = "benchmarking"))]
 impl Benchmark {
     /// Create a new benchmark (requires benchmarking feature)
-    pub fn new(_name: &str) -> Self {
+    #[must_use]
+    pub const fn new(_name: &str) -> Self {
         Self
     }
 }
