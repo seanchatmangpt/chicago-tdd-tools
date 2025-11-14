@@ -7,7 +7,7 @@
 # Type-first thinking: Compiler enforces correctness. If CI passes, invariants are enforced.
 #
 # Workflow runs on:
-# - Push to main/master branches
+# - Push to any branch (including PR/feature branches)
 # - Pull requests
 # - Manual workflow dispatch
 #
@@ -18,7 +18,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    # Run on all branch pushes for continuous validation
   pull_request:
     branches: [main, master]
   workflow_dispatch:
