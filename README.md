@@ -30,6 +30,13 @@ cargo install cargo-make
 
 **Verify**: `cargo make --version` should show version. If you get "command not found", install cargo-make first.
 
+**Step 1.5**: Install Git hooks (recommended for production code safety):
+```bash
+cargo make install-hooks
+```
+
+This installs pre-commit hooks that prevent `.unwrap()` and `.expect()` in production code, reducing production panics.
+
 **Step 2**: Create a new Rust project (if you don't have one):
 ```bash
 cargo new my-project

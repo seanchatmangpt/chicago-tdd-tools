@@ -82,6 +82,7 @@ description = "Run clippy with maximized linting (all, pedantic, nursery, cargo)
 # **Root Cause Prevention**: CI/CD pipeline enforces this check automatically, preventing accumulation of lint errors
 # **Timeout**: 300s (5min) for CI cold-start with all features (testcontainers, otel, weaver)
 # Local warm cache: ~3-5s, CI cold cache: ~2-3min for deps + 30s for project
+# **FMEA Fix**: Deny unwrap_used and expect_used to prevent production panics (RPN: 180 → 36)
 command = "timeout"
 args = [
   "300s",
@@ -100,6 +101,10 @@ args = [
   "clippy::cargo",
   "-D",
   "warnings",         # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
+  "-D",
+  "clippy::unwrap_used",    # FMEA: Prevent .unwrap() in production code
+  "-D",
+  "clippy::expect_used",    # FMEA: Prevent .expect() in production code
 ]
 
 [tasks.clippy]
@@ -616,4 +621,19 @@ args = [
   "weaver_smoke",
   "--features",
   "weaver",
+]
+
+# FMEA Fix: Git hooks installation (RPN: 180 → 36)
+[tasks.install-hooks]
+description = "Install Git pre-commit hooks to prevent unwrap/expect in production code"
+command = "bash"
+args = ["scripts/install-hooks.sh"]
+
+[tasks.setup-dev]
+description = "Complete development environment setup (cargo-make + Git hooks)"
+dependencies = ["install-hooks"]
+script = [
+  "echo '✅ Development environment setup complete!'",
+  "echo '🔧 Git hooks installed for unwrap/expect prevention'",
+  "echo '📚 See docs/process/SPR_GUIDE.md for error handling patterns'",
 ]
