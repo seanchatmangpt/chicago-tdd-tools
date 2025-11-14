@@ -17,7 +17,7 @@ mod weaver_tests {
     use chicago_tdd_tools::async_test;
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_eq_msg;
-    use chicago_tdd_tools::assertions::assert_that;
+    use chicago_tdd_tools::assertions::{assert_that, assert_that_with_msg};
     use chicago_tdd_tools::testcontainers::*;
     use chicago_tdd_tools::observability::weaver::WeaverValidator;
     use common::require_docker;
@@ -88,7 +88,7 @@ mod weaver_tests {
         assert_ok!(&result, "Weaver should execute --version successfully");
         let exec_result = result.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result.exit_code, &0, "Weaver --version should succeed");
-        assert_that(
+        assert_that_with_msg(
             &(exec_result.stdout.contains("weaver") || exec_result.stdout.contains("Weaver")),
             |v| *v,
             "Weaver version output should contain 'weaver' or 'Weaver'"
@@ -124,9 +124,9 @@ mod weaver_tests {
         assert_ok!(&result, "Weaver should execute command (even if it fails)");
         let exec_result = result.expect("Exec should succeed after assert_ok");
         // Weaver should return non-zero exit code for invalid registry
-        assert_that(&exec_result.exit_code, |v| *v != 0, "Weaver should fail with invalid registry");
+        assert_that_with_msg(&exec_result.exit_code, |v| *v != 0, "Weaver should fail with invalid registry");
         // Verify error message is helpful (behavior verification)
-        assert_that(
+        assert_that_with_msg(
             &(exec_result.stderr.contains("registry")
                 || exec_result.stderr.contains("not found")
                 || exec_result.stderr.contains("error")),
@@ -164,7 +164,7 @@ mod weaver_tests {
         let exec_result = result.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result.exit_code, &0, "Weaver --help should succeed");
         // Verify help output contains expected commands (behavior verification)
-        assert_that(
+        assert_that_with_msg(
             &(exec_result.stdout.contains("registry") || exec_result.stdout.contains("live-check")),
             |v| *v,
             "Weaver help should mention registry or live-check commands"
@@ -201,7 +201,7 @@ mod weaver_tests {
         let mut validator = WeaverValidator::new(registry_path);
         let start_result = validator.start();
         assert_ok!(&start_result, "Weaver should start successfully");
-        assert_that(&validator.is_running(), |v| *v, "Weaver should be running after start");
+        assert_that_with_msg(&validator.is_running(), |v| *v, "Weaver should be running after start");
 
         // Wait for Weaver to be ready
         sleep(Duration::from_millis(1000)).await;
@@ -290,7 +290,7 @@ print("OTEL telemetry emitted successfully")
             &0,
             "Python script should succeed (exit code 0)"
         );
-        assert_that(
+        assert_that_with_msg(
             &exec_output.stdout.contains("OTEL telemetry emitted successfully"),
             |v| *v,
             "Python script should confirm telemetry emission"
@@ -302,7 +302,7 @@ print("OTEL telemetry emitted successfully")
         // Act: Stop Weaver
         let stop_result = validator.stop();
         assert_ok!(&stop_result, "Weaver should stop successfully");
-        assert_that(&!validator.is_running(), |v| *v, "Weaver should not be running after stop");
+        assert_that_with_msg(&!validator.is_running(), |v| *v, "Weaver should not be running after stop");
 
         // Assert: Verify weaver received and validated telemetry
         // Check weaver report file
@@ -314,7 +314,7 @@ print("OTEL telemetry emitted successfully")
                 .expect("Failed to parse weaver report JSON");
 
             // Verify report structure
-            assert_that(
+            assert_that_with_msg(
                 &report_json.get("statistics").is_some(),
                 |v| *v,
                 "Weaver report should contain statistics"
@@ -331,7 +331,7 @@ print("OTEL telemetry emitted successfully")
 
                 // If statistics exist, telemetry was likely processed
                 // (Even if empty, the fact that statistics exist means weaver ran)
-                assert_that(
+                assert_that_with_msg(
                     &(has_telemetry_indicators || !statistics.as_object().unwrap().is_empty()),
                     |v| *v,
                     "Weaver statistics should indicate telemetry processing"
