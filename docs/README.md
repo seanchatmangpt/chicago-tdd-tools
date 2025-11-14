@@ -60,6 +60,13 @@ Root cause analyses and research documentation:
 - **[Innovative Testing Tools](research/INNOVATIVE_TESTING_TOOLS.md)** - Exploration of innovative testing approaches
 - **[Problems Solved](research/PROBLEMS_SOLVED.md)** - Documentation of solved problems and solutions
 
+## Release Documentation
+
+Version history and release notes:
+
+- **[CHANGELOG](releases/CHANGELOG.md)** - Complete changelog of all releases
+- **[Release Notes v1.1.0](releases/RELEASE_NOTES_v1.1.0.md)** - Detailed release notes for version 1.1.0
+
 ## Diagrams
 
 PlantUML diagrams for Weaver integration:
@@ -89,6 +96,7 @@ docs/
 ├── process/             # Development processes and standards
 ├── analysis/            # Root cause analyses
 ├── research/            # Research and innovation documentation
+├── releases/            # Changelogs and release notes
 └── diagrams/            # PlantUML diagrams
 ```
 
@@ -113,6 +121,10 @@ docs/
 - [Weaver Live Check](features/WEAVER_LIVE_CHECK.md) - Integration guide
 - [Perfect Weaver Live Check](features/PERFECT_WEAVER_LIVE_CHECK.md) - Perfect implementation
 - [Diagrams](diagrams/) - Weaver architecture diagrams
+
+### Releases
+- [CHANGELOG](releases/CHANGELOG.md) - Version history
+- [Release Notes](releases/) - Detailed release documentation
 
 ## Contributing to Documentation
 
