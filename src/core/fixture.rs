@@ -63,8 +63,16 @@ impl TestFixture<()> {
     ///
     /// **Error Handling**: This function returns `Result` - always handle errors:
     /// ```rust
+    /// # use chicago_tdd_tools::core::fixture::TestFixture;
+    /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let fixture = TestFixture::new()?;  // In functions that return Result
+    /// # Ok(())
+    /// # }
     /// // or
+    /// ```
+    ///
+    /// ```rust
+    /// # use chicago_tdd_tools::core::fixture::TestFixture;
     /// let fixture = TestFixture::new().unwrap_or_else(|e| {
     ///     panic!("Failed to create fixture: {}", e);
     /// });
