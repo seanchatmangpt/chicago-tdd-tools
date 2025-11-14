@@ -14,7 +14,7 @@ async fn main() {
     let fixture = match TestFixture::new() {
         Ok(f) => f,
         Err(e) => {
-            eprintln!("Failed to create fixture: {}", e);
+            eprintln!("Failed to create fixture: {e}");
             eprintln!("This should not happen in normal usage - check your environment");
             std::process::exit(1);
         }
@@ -24,7 +24,7 @@ async fn main() {
     let counter = fixture.test_counter();
 
     // Assert: Verify fixture created
-    println!("Test counter: {}", counter);
+    println!("Test counter: {counter}");
     // Counter is always >= 0 for u64, so just verify it exists
     println!("✓ Fixture created successfully");
 
@@ -34,7 +34,7 @@ async fn main() {
         .with_order_data("ORD-001", "100.00")
         .build_json()
         .unwrap_or_else(|e| {
-            eprintln!("Failed to build JSON: {}", e);
+            eprintln!("Failed to build JSON: {e}");
             std::process::exit(1);
         });
 

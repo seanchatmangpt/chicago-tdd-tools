@@ -123,15 +123,14 @@ pub fn docker_available() -> bool {
 /// ```
 #[allow(missing_docs)]
 pub fn require_docker() {
-    if !docker_available() {
-        panic!(
-            "🚨 Docker is required for this test but Docker daemon is not running.\n\
-             ⚠️  STOP: Cannot proceed with test\n\
-             💡 FIX: Start Docker Desktop or Docker daemon\n\
-             📋 macOS: Open Docker Desktop\n\
-             📋 Linux: sudo systemctl start docker\n\
-             📋 Windows: Start Docker Desktop"
-        );
-    }
+    assert!(
+        docker_available(),
+        "🚨 Docker is required for this test but Docker daemon is not running.\n\
+         ⚠️  STOP: Cannot proceed with test\n\
+         💡 FIX: Start Docker Desktop or Docker daemon\n\
+         📋 macOS: Open Docker Desktop\n\
+         📋 Linux: sudo systemctl start docker\n\
+         📋 Windows: Start Docker Desktop"
+    );
     // ✅ Docker is available, test can proceed
 }
