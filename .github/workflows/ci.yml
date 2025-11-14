@@ -41,6 +41,10 @@ permissions:
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always
+  # FMEA Fix: Skip weaver tests in CI (requires weaver binary + registry)
+  # Integration tests (weaver/testcontainers) require Docker and weaver binary, not available in CI
+  # Local developers can run: cargo make test-integration (if Docker available)
+  WEAVER_ALLOW_SKIP: "1"
 
 jobs:
   # **Root Cause Prevention**: Clippy check job prevents lint errors from accumulating

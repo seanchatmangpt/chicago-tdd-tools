@@ -574,6 +574,16 @@ mod tests {
     fn test_weaver_validator_registry_path_validation() {
         use crate::assert_err;
 
+        // FMEA Fix: Skip test if weaver not available in CI
+        // Integration tests require weaver binary which is not available in CI
+        if std::env::var("WEAVER_ALLOW_SKIP")
+            .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+            .unwrap_or(false)
+        {
+            eprintln!("⏭️  Skipping weaver registry path test: WEAVER_ALLOW_SKIP is set");
+            return;
+        }
+
         // Test registry path validation (error path - 80% of bugs)
         let invalid_path = PathBuf::from("/nonexistent/registry/path");
 
@@ -599,6 +609,16 @@ mod tests {
     #[cfg(feature = "weaver")]
     #[test]
     fn test_weaver_validator_is_running() {
+        // FMEA Fix: Skip test if weaver not available in CI
+        // Integration tests require weaver binary which is not available in CI
+        if std::env::var("WEAVER_ALLOW_SKIP")
+            .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+            .unwrap_or(false)
+        {
+            eprintln!("⏭️  Skipping weaver is_running test: WEAVER_ALLOW_SKIP is set");
+            return;
+        }
+
         // Test is_running() method (important - used frequently)
         let registry_path = PathBuf::from("registry/");
         let validator = WeaverValidator::new(registry_path);
