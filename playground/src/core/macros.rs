@@ -129,8 +129,8 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    /// Example: #[fixture] procedural macro for automatic fixture setup
-    #[fixture]
+    /// Example: #[tdd_test] procedural macro for fixture setup
+    #[tdd_test]
     fn test_fixture_procedural_macro() {
         // Arrange: Fixture automatically created by procedural macro
         let mut fixture = chicago_tdd_tools::fixture::TestFixture::new()
@@ -146,8 +146,8 @@ mod tests {
         assert!(counter >= 0);
     }
 
-    /// Example: #[fixture] procedural macro for async tests
-    #[fixture]
+    /// Example: #[tdd_test] procedural macro for async tests with fixture
+    #[tdd_test]
     async fn test_fixture_async_procedural_macro() {
         // Arrange: Fixture automatically created by procedural macro
         let mut fixture = chicago_tdd_tools::fixture::TestFixture::new()

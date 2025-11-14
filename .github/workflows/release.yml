@@ -1,0 +1,212 @@
+# Release Automation Workflow
+#
+# This workflow automates the release process:
+# - Creates GitHub releases from tags
+# - Generates changelog from commits
+# - Builds and uploads release artifacts
+# - Publishes to crates.io (optional)
+#
+# Triggered by: Push of version tags (v*.*.*)
+# Expected duration: ~5 minutes
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v1.2.3)'
+        required: true
+        type: string
+
+# Only allow one release at a time
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Minimal permissions at workflow level (jobs override as needed)
+permissions:
+  contents: read
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Validate release preconditions
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      - name: Run release validation
+        run: cargo make release-validate
+
+  # Build release artifacts
+  build-artifacts:
+    name: Build Release Artifacts (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}-release
+
+      - name: Install musl tools (Linux musl only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }} --all-features
+
+      - name: Package artifacts (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../chicago-tdd-tools-${{ github.ref_name }}-${{ matrix.target }}.tar.gz libchicago_tdd_tools.*
+          cd ../../..
+
+      - name: Package artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ../../../chicago-tdd-tools-${{ github.ref_name }}-${{ matrix.target }}.zip chicago_tdd_tools.*
+          cd ../../..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.target }}
+          path: |
+            chicago-tdd-tools-*.tar.gz
+            chicago-tdd-tools-*.zip
+          retention-days: 1
+
+  # Create GitHub release and upload all artifacts
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            # First release - use all commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # Generate changelog since last tag
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to file for multiline output
+          cat > changelog.txt << 'EOF'
+          ## What's Changed
+
+          $CHANGELOG
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}
+          EOF
+
+          # Replace variables
+          sed -i "s|\$CHANGELOG|$CHANGELOG|g" changelog.txt
+          sed -i "s|\${PREV_TAG}|${PREV_TAG}|g" changelog.txt
+
+          echo "Changelog generated:"
+          cat changelog.txt
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: changelog.txt
+          files: artifacts/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publish to crates.io (optional - requires CARGO_REGISTRY_TOKEN secret)
+  publish-crate:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: [validate, create-release]
+    if: ${{ !contains(github.ref_name, 'alpha') && !contains(github.ref_name, 'beta') && !contains(github.ref_name, 'rc') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Publish to crates.io
+        if: ${{ secrets.CARGO_REGISTRY_TOKEN != '' }}
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Skip crates.io publish (no token)
+        if: ${{ secrets.CARGO_REGISTRY_TOKEN == '' }}
+        run: echo "⚠️ Skipping crates.io publish - CARGO_REGISTRY_TOKEN not set"
