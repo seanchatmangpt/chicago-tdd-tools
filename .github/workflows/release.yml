@@ -40,6 +40,7 @@ jobs:
   validate:
     name: Validate Release
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,14 +58,48 @@ jobs:
         with:
           tool: cargo-make
 
-      - name: Run release validation
-        run: cargo make release-validate
+      - name: Validate version matches tag
+        run: |
+          echo "🔍 Validating version consistency..."
+
+          # Extract tag version (remove 'v' prefix)
+          TAG_VERSION="${{ github.ref_name }}"
+          if [[ "$TAG_VERSION" == refs/tags/* ]]; then
+            TAG_VERSION="${TAG_VERSION#refs/tags/}"
+          fi
+          TAG_VERSION="${TAG_VERSION#v}"
+
+          echo "Tag version: $TAG_VERSION"
+
+          # Check main Cargo.toml
+          CARGO_VERSION=$(grep -m 1 '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "Cargo.toml version: $CARGO_VERSION"
+
+          if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
+            echo "❌ Version mismatch: tag ($TAG_VERSION) != Cargo.toml ($CARGO_VERSION)"
+            exit 1
+          fi
+
+          echo "✅ Version validation passed"
+
+      - name: Run tests before release
+        run: cargo test --all-features --workspace
+
+      - name: Run release validation (if defined)
+        run: |
+          if cargo make --list-all-steps | grep -q release-validate; then
+            cargo make release-validate
+          else
+            echo "ℹ️  No release-validate task defined in Makefile.toml, skipping"
+          fi
+        continue-on-error: false
 
   # Build release artifacts
   build-artifacts:
     name: Build Release Artifacts (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     needs: validate
+    timeout-minutes: 30  # Prevent hung builds
     strategy:
       fail-fast: false
       matrix:
@@ -118,6 +153,7 @@ jobs:
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
+        timeout-minutes: 10  # Prevent hung uploads
         with:
           name: artifact-${{ matrix.target }}
           path: |
@@ -130,6 +166,7 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: build-artifacts
+    timeout-minutes: 15  # Prevent hung release process
     permissions:
       contents: write
     steps:
@@ -144,6 +181,45 @@ jobs:
           path: artifacts
           pattern: artifact-*
           merge-multiple: true
+
+      - name: Validate all artifacts present
+        run: |
+          echo "🔍 Validating release artifacts..."
+
+          # Expected platforms from build matrix
+          EXPECTED_PLATFORMS=(
+            "x86_64-unknown-linux-gnu"
+            "x86_64-unknown-linux-musl"
+            "x86_64-apple-darwin"
+            "aarch64-apple-darwin"
+            "x86_64-pc-windows-msvc"
+          )
+
+          MISSING_ARTIFACTS=()
+
+          for platform in "${EXPECTED_PLATFORMS[@]}"; do
+            # Check for either .tar.gz or .zip
+            if ! ls artifacts/chicago-tdd-tools-*-${platform}.* 1> /dev/null 2>&1; then
+              MISSING_ARTIFACTS+=("$platform")
+              echo "❌ Missing artifact for platform: $platform"
+            else
+              echo "✅ Found artifact for platform: $platform"
+            fi
+          done
+
+          if [ ${#MISSING_ARTIFACTS[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ VALIDATION FAILED: Missing artifacts for platforms:"
+            printf '  - %s\n' "${MISSING_ARTIFACTS[@]}"
+            echo ""
+            echo "Expected ${#EXPECTED_PLATFORMS[@]} artifacts, found $((${#EXPECTED_PLATFORMS[@]} - ${#MISSING_ARTIFACTS[@]}))"
+            echo ""
+            echo "🛑 Cannot create release with incomplete artifacts. Please investigate build failures."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All ${#EXPECTED_PLATFORMS[@]} platform artifacts validated successfully!"
 
       - name: Generate changelog
         id: changelog

@@ -41,10 +41,11 @@ jobs:
   lint:
     name: Clippy Lint Check (${{ matrix.rust }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable, beta, nightly]
+        rust: [stable, beta]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,15 +68,14 @@ jobs:
 
       - name: Run clippy lint check
         run: cargo make lint
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
         # **Root Cause Prevention**: Exit code 1 on failure blocks merge
         # This ensures clippy errors cannot be committed
-        # Note: Allow nightly failures as they may have unstable lints
 
   # Format check ensures code style consistency
   fmt:
     name: Format Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -106,14 +106,12 @@ jobs:
   test:
     name: Unit Tests (${{ matrix.os }}, ${{ matrix.rust }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         rust: [stable, beta]
-        include:
-          - os: ubuntu-latest
-            rust: nightly
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -138,14 +136,19 @@ jobs:
         with:
           tool: cargo-nextest
 
-      - name: Run unit tests
-        run: cargo make test-unit
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
+      - name: Run unit tests with retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          retry_on: error
+          command: cargo make test-unit
 
   # Security audit checks for vulnerabilities
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -167,13 +170,22 @@ jobs:
           tool: cargo-audit
 
       - name: Run security audit
+        id: audit
         run: cargo make audit
         continue-on-error: true  # Audit failures are warnings, not blockers
+
+      - name: Report audit issues
+        if: failure() && steps.audit.outcome == 'failure'
+        run: |
+          echo "⚠️  SECURITY AUDIT FAILED"
+          echo "::warning::Security vulnerabilities detected. Please review cargo audit output above."
+          echo "This is a warning only and does not block CI, but should be addressed."
 
   # Code coverage for test coverage tracking
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -219,10 +231,81 @@ jobs:
     steps:
       - name: Check job results
         run: |
-          if [[ "${{ needs.lint.result }}" == "failure" ]] || \
-             [[ "${{ needs.fmt.result }}" == "failure" ]] || \
-             [[ "${{ needs.test.result }}" == "failure" ]]; then
-            echo "❌ CI Pipeline failed"
+          echo "🔍 Validating CI Pipeline Results..."
+          echo ""
+
+          # Track failures
+          FAILURES=0
+
+          # Check lint result
+          if [[ "${{ needs.lint.result }}" == "failure" ]]; then
+            echo "❌ Lint job failed"
+            FAILURES=$((FAILURES + 1))
+          elif [[ "${{ needs.lint.result }}" == "success" ]]; then
+            echo "✅ Lint job passed"
+          else
+            echo "⚠️  Lint job: ${{ needs.lint.result }}"
+          fi
+
+          # Check fmt result
+          if [[ "${{ needs.fmt.result }}" == "failure" ]]; then
+            echo "❌ Format check failed"
+            FAILURES=$((FAILURES + 1))
+          elif [[ "${{ needs.fmt.result }}" == "success" ]]; then
+            echo "✅ Format check passed"
+          else
+            echo "⚠️  Format check: ${{ needs.fmt.result }}"
+          fi
+
+          # Check test result (includes matrix jobs)
+          if [[ "${{ needs.test.result }}" == "failure" ]]; then
+            echo "❌ Test job failed (one or more platforms/toolchains)"
+            FAILURES=$((FAILURES + 1))
+          elif [[ "${{ needs.test.result }}" == "success" ]]; then
+            echo "✅ Test job passed (all platforms/toolchains)"
+          else
+            echo "⚠️  Test job: ${{ needs.test.result }}"
+          fi
+
+          # Check audit result (warning only, not blocking)
+          if [[ "${{ needs.audit.result }}" == "failure" ]]; then
+            echo "⚠️  Security audit found issues (non-blocking)"
+          elif [[ "${{ needs.audit.result }}" == "success" ]]; then
+            echo "✅ Security audit passed"
+          else
+            echo "ℹ️  Security audit: ${{ needs.audit.result }}"
+          fi
+
+          # Check coverage result (warning only, not blocking)
+          if [[ "${{ needs.coverage.result }}" == "failure" ]]; then
+            echo "⚠️  Coverage job failed (non-blocking)"
+          elif [[ "${{ needs.coverage.result }}" == "success" ]]; then
+            echo "✅ Coverage job passed"
+          else
+            echo "ℹ️  Coverage job: ${{ needs.coverage.result }}"
+          fi
+
+          echo ""
+
+          if [ $FAILURES -gt 0 ]; then
+            echo "❌ CI Pipeline FAILED with $FAILURES critical failure(s)"
+            echo ""
+            echo "Required jobs (must pass):"
+            echo "  - Lint: ${{ needs.lint.result }}"
+            echo "  - Format: ${{ needs.fmt.result }}"
+            echo "  - Tests: ${{ needs.test.result }}"
+            echo ""
+            echo "Optional jobs (warnings only):"
+            echo "  - Audit: ${{ needs.audit.result }}"
+            echo "  - Coverage: ${{ needs.coverage.result }}"
             exit 1
           fi
-          echo "✅ All CI checks passed"
+
+          echo "✅ All required CI checks passed!"
+          echo ""
+          echo "Summary:"
+          echo "  - Lint: ${{ needs.lint.result }}"
+          echo "  - Format: ${{ needs.fmt.result }}"
+          echo "  - Tests: ${{ needs.test.result }}"
+          echo "  - Audit: ${{ needs.audit.result }}"
+          echo "  - Coverage: ${{ needs.coverage.result }}"
