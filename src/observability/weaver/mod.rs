@@ -579,7 +579,7 @@ mod tests {
         // Set WEAVER_REQUIRE_TEST=1 to run this integration test (requires weaver binary)
         let skip_test = std::env::var("WEAVER_REQUIRE_TEST")
             .map(|v| !matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-            .unwrap_or(true);  // Skip by default
+            .unwrap_or(true); // Skip by default
 
         if skip_test {
             eprintln!("⏭️  Skipping weaver integration test (requires weaver binary)");
@@ -617,7 +617,7 @@ mod tests {
         // Set WEAVER_REQUIRE_TEST=1 to run this integration test (requires weaver binary)
         let skip_test = std::env::var("WEAVER_REQUIRE_TEST")
             .map(|v| !matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-            .unwrap_or(true);  // Skip by default
+            .unwrap_or(true); // Skip by default
 
         if skip_test {
             eprintln!("⏭️  Skipping weaver integration test (requires weaver binary)");
