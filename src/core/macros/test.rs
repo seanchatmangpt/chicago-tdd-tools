@@ -446,7 +446,6 @@ mod tests {
     use crate::assert_eq_msg;
     use crate::assert_err;
     use crate::assertions::assert_that_with_msg;
-    use crate::async_test;
     // Note: We can't use test! macro here because it would create
     // a test function with the same name, causing conflicts.
     // These tests verify the macro expansion works correctly.
