@@ -53,9 +53,9 @@ impl IntegrationTestContext {
     }
 }
 
-// Include common.rs functions
+// Include common test utilities
 mod common_impl {
-    include!("../common.rs");
+    include!("../test_common.inc");
 }
 
 /// Require Docker to be available for integration tests

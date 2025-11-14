@@ -15,7 +15,7 @@
 #[cfg(all(feature = "testcontainers", test))]
 mod integration_tests {
     mod common {
-        include!("../common.rs");
+        include!("../test_common.inc");
     }
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_err;

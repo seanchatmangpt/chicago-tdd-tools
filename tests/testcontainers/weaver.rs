@@ -11,7 +11,7 @@
 #[cfg(all(feature = "testcontainers", feature = "weaver", test))]
 mod weaver_tests {
     mod common {
-        include!("../common.rs");
+        include!("../test_common.inc");
     }
     use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::async_test;
