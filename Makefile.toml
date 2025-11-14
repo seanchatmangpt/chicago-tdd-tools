@@ -80,9 +80,11 @@ description = "Run clippy with maximized linting (all, pedantic, nursery, cargo)
 # **Poka-Yoke Design**: -D warnings treats warnings as errors, preventing defects at compile time
 # Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
 # **Root Cause Prevention**: CI/CD pipeline enforces this check automatically, preventing accumulation of lint errors
+# **Timeout**: 300s (5min) for CI cold-start with all features (testcontainers, otel, weaver)
+# Local warm cache: ~3-5s, CI cold cache: ~2-3min for deps + 30s for project
 command = "timeout"
 args = [
-  "5s",
+  "300s",
   "cargo",
   "clippy",
   "--lib",
@@ -110,9 +112,11 @@ alias = "lint"
 
 [tasks.test]
 description = "Run unit tests only (fast iteration, excludes integration tests)"
+# **Timeout**: 300s (5min) for CI cold-start compilation + test execution
+# Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
 command = "timeout"
 args = [
-  "10s",
+  "300s",
   "cargo",
   "nextest",
   "run",
@@ -133,9 +137,11 @@ ignore_errors = false
 
 [tasks.test-unit]
 description = "Unit tests only using cargo-nextest (excludes integration tests)"
+# **Timeout**: 300s (5min) for CI cold-start compilation + test execution
+# Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
 command = "timeout"
 args = [
-  "10s",
+  "300s",
   "cargo",
   "nextest",
   "run",

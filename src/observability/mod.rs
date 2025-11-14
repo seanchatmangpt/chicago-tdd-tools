@@ -31,8 +31,12 @@ pub mod unified;
 // Re-export unified API as main API
 pub use unified::{ObservabilityError, ObservabilityResult, ObservabilityTest, TestConfig};
 
-// Keep old modules temporarily for types (will be removed)
-// Types are still needed for the unified API
+// Keep legacy modules for backward compatibility and type re-exports
+// These modules provide the underlying types used by the unified API:
+// - otel: SpanData, MetricData, validation types
+// - weaver: WeaverLiveCheck, WeaverValidationResult, registry types
+// - fixtures: Shared test fixtures for both OTEL and Weaver
+// Users can access these types directly for advanced use cases
 #[cfg(feature = "otel")]
 pub mod otel;
 #[cfg(feature = "weaver")]
