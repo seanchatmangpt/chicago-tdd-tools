@@ -192,6 +192,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate, create-release]
     if: ${{ !contains(github.ref_name, 'alpha') && !contains(github.ref_name, 'beta') && !contains(github.ref_name, 'rc') }}
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -203,10 +205,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Publish to crates.io
-        if: ${{ secrets.CARGO_REGISTRY_TOKEN != '' }}
+        if: ${{ env.CARGO_REGISTRY_TOKEN != '' }}
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
 
       - name: Skip crates.io publish (no token)
-        if: ${{ secrets.CARGO_REGISTRY_TOKEN == '' }}
+        if: ${{ env.CARGO_REGISTRY_TOKEN == '' }}
         run: echo "⚠️ Skipping crates.io publish - CARGO_REGISTRY_TOKEN not set"
