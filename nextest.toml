@@ -1,0 +1,9 @@
+# Nextest configuration for chicago-tdd-tools
+# Reference: https://nexte.st/docs/configuration/
+
+[profile.default]
+# Default timeout for tests in seconds
+# Panic tests need extra time to unwind properly
+timeout = "60s"
+# Number of test threads
+test-threads = 4

@@ -141,15 +141,15 @@ args = ["5s", "docker", "info"]
 ignore_errors = false
 
 [tasks.test-unit]
-description = "Unit tests only using cargo-nextest (excludes integration tests)"
+description = "Unit tests only (excludes integration tests)"
 # **Timeout**: 300s (5min) for CI cold-start compilation + test execution
 # Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
+# Uses cargo test instead of nextest due to panic test timeout issues with nextest
 command = "timeout"
 args = [
   "300s",
   "cargo",
-  "nextest",
-  "run",
+  "test",
   "--lib",
   "--all-features",
   "--",
