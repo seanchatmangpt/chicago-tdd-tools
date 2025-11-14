@@ -18,8 +18,22 @@ name: Benchmark
 on:
   pull_request:
     branches: [main, master]
+    paths:
+      - 'benches/**'
+      - 'src/**'
+      - 'proc_macros/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   push:
     branches: [main, master]
+    paths:
+      - 'benches/**'
+      - 'src/**'
+      - 'proc_macros/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   workflow_dispatch:
 
 # Only run one benchmark at a time
