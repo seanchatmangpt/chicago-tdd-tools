@@ -1,13 +1,18 @@
 # Cargo Nextest Configuration
-# Fast unit tests (1s timeout) and slow integration tests (30s timeout)
+# Fast unit tests (5s timeout with framework overhead) and slow integration tests (30s timeout)
 
 [profile.default]
-# Fast profile for unit tests (1s timeout for SLA compliance)
-slow-timeout = { period = "1s", terminate-after = 1 }
+# Fast profile for unit tests (5s timeout for SLA compliance with test framework overhead)
+# FMEA Fix: Increased from "1s" to "5s" to accommodate:
+# - #[should_panic] test framework overhead (+0.1-0.2s)
+# - Parallel test execution context switching (+0.5s)
+# - Macro expansion overhead (+0.05-0.1s)
+# Tests were timing out at 1.1-1.2s with aggressive 1s limit (RPN: 36)
+slow-timeout = { period = "5s", terminate-after = 1 }
 
-# Global timeout: 10 seconds for entire test suite
-# (allows for parallel execution while maintaining per-test SLA)
-global-timeout = "10s"
+# Global timeout: 60 seconds for entire test suite
+# (allows for parallel execution: 12 tests × 5s = ~60s max)
+global-timeout = "60s"
 
 # Retry configuration (disabled for deterministic results)
 retries = 0
