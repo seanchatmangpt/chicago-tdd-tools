@@ -113,6 +113,10 @@ jobs:
         run: |
           cargo install cargo-make
 
+      - name: Install cargo-nextest
+        run: |
+          cargo install cargo-nextest --locked
+
       - name: Cache cargo dependencies
         uses: actions/cache@v4
         with:
