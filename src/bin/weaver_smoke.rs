@@ -31,8 +31,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))));
     }
 
-    let weaver_binary = WeaverLiveCheck::find_weaver_binary()
-        .ok_or_else(|| Box::new(WeaverValidationError::BinaryNotFound) as Box<dyn std::error::Error>)?;
+    let weaver_binary = WeaverLiveCheck::find_weaver_binary().ok_or_else(|| {
+        Box::new(WeaverValidationError::BinaryNotFound) as Box<dyn std::error::Error>
+    })?;
     let version_output = Command::new(&weaver_binary).arg("--version").output().map_err(|e| {
         Box::new(WeaverValidationError::ProcessStartFailed(format!(
             "Failed to execute {} --version: {e}",
