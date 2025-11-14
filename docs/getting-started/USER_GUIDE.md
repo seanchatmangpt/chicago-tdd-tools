@@ -281,7 +281,7 @@ Alert helpers: Visual problem indicators. Standard log crate integration.
 
 **Reusable Test Data**: Helper functions for common test data. `fn create_test_order() -> Value`.
 
-**Error Handling**: Use `?` operator in async tests. Use `assert_ok!` / `assert_err!` for Result validation.
+**Error Handling**: Use `?` operator in tests with Result return type. Use `assert_ok!` / `assert_err!` / `assert_fail!` for Result validation.
 
 **Poka-Yoke Patterns**: Use `TestResult<T, E>` wrapper that doesn't provide `unwrap()` method. Forces use of `assert_ok!()` or `assert_err!()` macros with better error messages.
 

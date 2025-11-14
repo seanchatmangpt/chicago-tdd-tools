@@ -41,6 +41,11 @@ pub const DEFAULT_TEST_TIMEOUT_SECONDS: u64 = DEFAULT_UNIT_TEST_TIMEOUT_SECONDS;
 /// This macro ensures tests follow the Chicago TDD AAA pattern by requiring
 /// explicit Arrange, Act, and Assert sections.
 ///
+/// **Return Type Support**:
+/// - Supports both `()` and `Result<(), E>` return types
+/// - Use `?` operator for error propagation - errors are converted to panics
+/// - Handles both Result and non-Result returns automatically
+///
 /// **Timeout Enforcement**:
 /// - Unit tests: Automatically wrapped with a 1s timeout for SLA compliance
 /// - Integration tests: No ntest timeout (relies on cargo-nextest profile timeout)
@@ -64,6 +69,25 @@ pub const DEFAULT_TEST_TIMEOUT_SECONDS: u64 = DEFAULT_UNIT_TEST_TIMEOUT_SECONDS;
 ///     assert_eq!(result, expected);
 /// });
 /// ```
+///
+/// # Example with Result Return Type
+///
+/// ```rust
+/// use chicago_tdd_tools::test;
+///
+/// # fn fallible_function() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
+/// test!(test_with_result, {
+///     // Arrange: Set up test data
+///     let expected = true;
+///
+///     // Act: Execute fallible feature (use ? for error propagation)
+///     fallible_function()?;
+///
+///     // Assert: Verify behavior
+///     assert!(expected);
+///     Ok::<(), Box<dyn std::error::Error>>(()) // Return Result - will be unwrapped automatically
+/// });
+/// ```
 #[macro_export]
 macro_rules! test {
     ($name:ident, $body:block) => {
@@ -74,8 +98,33 @@ macro_rules! test {
         // Previously, ntest timeout (1s) took precedence over cargo-nextest profile timeout (30s),
         // causing integration tests to fail. Removing ntest timeout allows cargo-nextest to apply
         // the correct timeout based on the profile used.
-        fn $name() {
-            $body
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            // Helper trait to convert both () and Result to Result<(), Box<dyn Error>>
+            // Use a uniquely named module to avoid conflicts across tests
+            mod __chicago_tdd_test_output {
+                pub trait TestOutput {
+                    fn into_result(self) -> Result<(), Box<dyn std::error::Error>>;
+                }
+
+                impl TestOutput for () {
+                    #[inline(always)]
+                    fn into_result(self) -> Result<(), Box<dyn std::error::Error>> {
+                        Ok(())
+                    }
+                }
+
+                impl<E: std::fmt::Debug + std::error::Error + 'static> TestOutput for Result<(), E> {
+                    #[inline(always)]
+                    fn into_result(self) -> Result<(), Box<dyn std::error::Error>> {
+                        self.map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+                    }
+                }
+            }
+
+            // Execute test body - trait converts both () and Result to Result<(), Box<dyn Error>>
+            // This allows ? operator to work in the test body
+            let output = { $body };
+            __chicago_tdd_test_output::TestOutput::into_result(output)
         }
     };
 }
@@ -85,6 +134,11 @@ macro_rules! test {
 /// Wraps async test functions and ensures AAA pattern is followed.
 /// Supports `?` operator for error propagation - errors are converted to panics.
 /// Handles both Result and non-Result returns.
+///
+/// **Return Type Support**:
+/// - Supports both `()` and `Result<(), E>` return types (via `async_test_with_timeout!`)
+/// - Use `?` operator for error propagation - errors are converted to panics
+/// - Handles both Result and non-Result returns automatically
 ///
 /// **Timeout Enforcement**:
 /// - Default: Tests are automatically wrapped with `tokio::time::timeout` (1s) for unit tests

@@ -8,8 +8,11 @@ Complete API reference for Chicago TDD Tools, organized by module.
 
 - **`test!(name, body)`**: Synchronous tests with AAA pattern enforcement
   - Signature: `test!($name:ident, $body:block)`
-  - Expands to: `#[test] fn $name() { $body }`
+  - Expands to: `#[test] fn $name() -> Result<(), Box<dyn std::error::Error>> { /* trait conversion */ }`
+  - Return types: Supports both `()` and `Result<(), E>` return types
+  - Error handling: Use `?` operator for error propagation - errors are converted to panics
   - Timeout: Relies on cargo-nextest profile timeout (1s for unit tests)
+  - Example: `test!(test_with_result, { fallible_function()?; Ok(()) })`
 
 - **`async_test!(name, body)`**: Async tests with AAA pattern (1s timeout default)
   - Signature: `async_test!($name:ident, $body:block)`
@@ -65,6 +68,13 @@ Complete API reference for Chicago TDD Tools, organized by module.
 - **`assert_err!(result)`** / **`assert_err!(result, message)`**: Assert Result is Err with detailed error messages
   - Signature: `assert_err!($result:expr)` / `assert_err!($result:expr, $msg:expr)`
   - Panics with: `"Expected Err, but got Ok: {:?}"` or `"{message}: Expected Err, but got Ok: {:?}"`
+
+- **`assert_fail!(call)`** / **`assert_fail!(call, message)`**: Assert function call fails, returning error value
+  - Signature: `assert_fail!($call:expr)` / `assert_fail!($call:expr, $msg:expr)`
+  - Returns: Error value `E` for further assertions
+  - Panics with: `"Expected function to fail, but got Ok: {:?}"` or `"{message}: Expected function to fail, but got Ok: {:?}"`
+  - Use case: Concise error path testing with `test!` macro's Result return type support
+  - Example: `let error = assert_fail!(fallible_function()); assert_eq!(error, "expected");`
 
 - **`assert_within_tick_budget!(ticks)`** / **`assert_within_tick_budget!(ticks, message)`**: Validate performance constraints (≤8 ticks)
   - Signature: `assert_within_tick_budget!($ticks:expr)` / `assert_within_tick_budget!($ticks:expr, $msg:expr)`

@@ -1,7 +1,7 @@
 //! Assertion Macros for Chicago TDD Testing
 //!
 //! Provides enhanced assertion macros with better error messages:
-//! - Result assertions (`assert_ok`, `assert_err`)
+//! - Result assertions (`assert_ok`, `assert_err`, `assert_fail`)
 //! - Performance assertions (`assert_within_tick_budget`)
 //! - Range assertions (`assert_in_range`)
 //! - Equality assertions (`assert_eq_msg`, `assert_eq_enhanced`)
@@ -67,6 +67,57 @@ macro_rules! assert_err {
         match $result {
             Ok(v) => panic!("{}: Expected Err, but got Ok: {:?}", $msg, v),
             Err(_) => {}
+        }
+    };
+}
+
+/// Assert that a function call fails, returning the error value
+///
+/// Convenience macro for testing error paths. Calls the function and asserts it returns `Err`,
+/// then returns the error value for further assertions.
+///
+/// **Ergonomics**: With `test!` macro's new `Result` return type support, this provides
+/// a concise way to test error cases without intermediate variables.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::{assert_fail, test};
+///
+/// # fn fallible_function() -> Result<u32, String> { Err("error".to_string()) }
+/// test!(test_should_fail, {
+///     // Arrange: Function that should fail
+///
+///     // Act & Assert: Verify function fails and extract error
+///     let error = assert_fail!(fallible_function());
+///     assert_eq!(error, "error");
+/// });
+/// ```
+///
+/// # Example with custom message
+///
+/// ```rust
+/// use chicago_tdd_tools::{assert_fail, test};
+///
+/// # fn fallible_function() -> Result<u32, String> { Err("error".to_string()) }
+/// test!(test_should_fail_with_msg, {
+///     // Act & Assert: Verify function fails with custom message
+///     let error = assert_fail!(fallible_function(), "Operation should fail");
+///     assert_eq!(error, "error");
+/// });
+/// ```
+#[macro_export]
+macro_rules! assert_fail {
+    ($call:expr) => {
+        match $call {
+            Ok(v) => panic!("Expected function to fail, but got Ok: {:?}", v),
+            Err(e) => e,
+        }
+    };
+    ($call:expr, $msg:expr) => {
+        match $call {
+            Ok(v) => panic!("{}: Expected function to fail, but got Ok: {:?}", $msg, v),
+            Err(e) => e,
         }
     };
 }
@@ -258,6 +309,33 @@ mod tests {
 
         // Act & Assert: Should panic
         assert_err!(result);
+    }
+
+    test!(test_assert_fail_macro, {
+        // Arrange: Function that returns error
+        fn fallible_function() -> Result<u32, String> {
+            Err("error".to_string())
+        }
+
+        // Act & Assert: Verify assert_fail! macro works and returns error
+        let error = assert_fail!(fallible_function());
+        assert_eq!(error, "error");
+
+        // With custom message
+        let error2 = assert_fail!(fallible_function(), "Operation should fail");
+        assert_eq!(error2, "error");
+    });
+
+    #[test]
+    #[should_panic(expected = "Expected function to fail")]
+    fn test_assert_fail_macro_fails() {
+        // Arrange: Function that succeeds
+        fn successful_function() -> Result<u32, String> {
+            Ok(42)
+        }
+
+        // Act & Assert: Should panic
+        let _ = assert_fail!(successful_function());
     }
 
     test!(test_assert_within_tick_budget_macro, {

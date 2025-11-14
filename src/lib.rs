@@ -103,6 +103,7 @@
 //! - `performance_test!`: Performance test with tick budget validation
 //! - `assert_ok!`: Assert Result is Ok with detailed error messages
 //! - `assert_err!`: Assert Result is Err with detailed error messages
+//! - `assert_fail!`: Assert function call fails, returning error value for further assertions
 //! - `assert_within_tick_budget!`: Validate performance constraints (≤8 ticks)
 //! - `assert_in_range!`: Assert value is within range with detailed messages
 //! - `assert_eq_msg!`: Assert equality with custom message

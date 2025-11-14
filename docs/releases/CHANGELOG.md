@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-11-14
+
+### Enhanced
+- **`test!` Macro**: Added `Result<(), E>` return type support
+  - Tests can now return `Result<(), E>` and use the `?` operator for error propagation
+  - Backward compatible: existing tests returning `()` continue to work unchanged
+  - Automatic conversion between `()` and `Result<(), E>` return types
+  - Improved ergonomics for testing fallible operations
+- **`assert_fail!` Macro**: New convenience macro for testing error paths
+  - Calls a function and asserts it returns `Err`, then returns the error value
+  - Enables concise error path testing without intermediate variables
+  - Works seamlessly with `test!` macro's new `Result` return type support
+  - Example: `let error = assert_fail!(fallible_function());`
+
+### Documentation
+- Added examples demonstrating `Result` return type usage in `test!` macro
+- Updated `async_test!` macro documentation to clarify Result return type support
+- Added `assert_fail!` macro documentation and examples
+
 ## [1.1.0] - 2025-11-10
 
 ### Added
