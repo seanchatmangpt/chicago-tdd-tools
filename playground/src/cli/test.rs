@@ -127,6 +127,65 @@ fn exec(
     })
 }
 
+#[derive(Serialize)]
+struct GuidanceInfo {
+    command: String,
+    description: String,
+    steps: Vec<String>,
+    key_principles: Vec<String>,
+}
+
+/// Expert testing patterns guidance
+///
+/// Advanced testing patterns and techniques for writing more effective tests.
+#[verb]
+fn expert() -> Result<GuidanceInfo> {
+    Ok(GuidanceInfo {
+        command: "test expert".to_string(),
+        description: "Expert Testing Patterns".to_string(),
+        steps: vec![
+            "Step 1: Understand Test Patterns - What patterns exist for different scenarios?".to_string(),
+            "Step 2: Choose Appropriate Pattern - Select pattern that fits your test".to_string(),
+            "Step 3: Apply Pattern Consistently - Use pattern across similar tests".to_string(),
+            "Step 4: Verify Clarity - Ensure test intent is clear to readers".to_string(),
+            "Step 5: Optimize for Maintenance - Make tests easy to update".to_string(),
+        ],
+        key_principles: vec![
+            "Arrange-Act-Assert - Structure tests with clear sections".to_string(),
+            "Test behavior, not implementation - Tests shouldn't change when implementation does".to_string(),
+            "One assertion per test - Each test validates one behavior".to_string(),
+            "Descriptive names - Test names explain what is being tested".to_string(),
+            "DRY principle - Extract common test setup and utilities".to_string(),
+        ],
+    })
+}
+
+/// Verify tests workflow guidance
+///
+/// Systematic approach to verifying that tests are effective and working correctly.
+#[verb]
+fn verify() -> Result<GuidanceInfo> {
+    Ok(GuidanceInfo {
+        command: "test verify".to_string(),
+        description: "Verify Tests".to_string(),
+        steps: vec![
+            "Step 1: Run All Tests - Execute full test suite".to_string(),
+            "Step 2: Check Coverage - Verify code coverage is adequate".to_string(),
+            "Step 3: Test Mutation - Use mutation testing to verify test quality".to_string(),
+            "Step 4: Test Failure Modes - Verify tests fail when code is wrong".to_string(),
+            "Step 5: Performance Checks - Ensure tests run in acceptable time".to_string(),
+            "Step 6: Flakiness Review - Identify and fix flaky tests".to_string(),
+        ],
+        key_principles: vec![
+            "Tests must fail - If code breaks, tests should fail".to_string(),
+            "Coverage metrics - Aim for high coverage (>80%)".to_string(),
+            "Mutation testing - Good tests catch most mutations".to_string(),
+            "Deterministic - Tests should have no random failures".to_string(),
+            "Fast feedback - Tests should run quickly for rapid iteration".to_string(),
+        ],
+    })
+}
+
 fn execute_test_example(name: &str) -> std::result::Result<(), String> {
     match name {
         "gen" => {
