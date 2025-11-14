@@ -1,0 +1,68 @@
+# Stale Issues and PRs Management
+#
+# Automatically manages stale issues and pull requests:
+# - Marks issues/PRs as stale after 60 days of inactivity
+# - Closes stale items after 7 additional days
+# - Helps keep issue tracker clean and focused
+#
+# Triggered by: Daily cron schedule
+# Expected duration: ~1 minute
+
+name: Stale
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark Stale Issues and PRs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Issue settings
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has not had
+            recent activity. It will be closed in 7 days if no further activity occurs.
+
+            If this issue is still relevant, please add a comment to keep it open.
+            Thank you for your contributions!
+          close-issue-message: |
+            This issue has been automatically closed due to inactivity.
+
+            If you believe this issue is still relevant, please reopen it or create a new issue
+            referencing this one. Thank you!
+          days-before-issue-stale: 60
+          days-before-issue-close: 7
+          stale-issue-label: 'stale'
+          exempt-issue-labels: 'pinned,security,bug,enhancement'
+
+          # PR settings
+          stale-pr-message: |
+            This pull request has been automatically marked as stale because it has not had
+            recent activity. It will be closed in 7 days if no further activity occurs.
+
+            If this PR is still being worked on, please add a comment to keep it open.
+            Thank you for your contributions!
+          close-pr-message: |
+            This pull request has been automatically closed due to inactivity.
+
+            If you would like to continue working on this, please reopen it or create a new PR.
+            Thank you!
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-pr-label: 'stale'
+          exempt-pr-labels: 'pinned,security,work-in-progress'
+
+          # General settings
+          operations-per-run: 100
+          remove-stale-when-updated: true
+          ascending: false
