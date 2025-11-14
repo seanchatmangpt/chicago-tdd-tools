@@ -13,6 +13,25 @@
 #   5. Use structured format: [COUNT] Status: path for easy parsing
 #   Example: See clean-all-home task for reference implementation
 
+# Verify all prerequisites (FMEA Mitigation: M1, M2)
+[tasks.verify-prerequisites]
+description = "Verify all required tools are installed (FMEA: RPN 140+180 → 40)"
+script = '''
+#!/bin/bash
+if [ -f scripts/verify-prerequisites.sh ]; then
+    bash scripts/verify-prerequisites.sh
+else
+    echo "⚠️  Prerequisite verification script not found"
+    echo "   Falling back to basic timeout check..."
+    command -v timeout || {
+        echo "❌ timeout command not found"
+        echo "Install coreutils: https://www.gnu.org/software/coreutils/"
+        exit 1
+    }
+fi
+'''
+ignore_errors = false
+
 # Verify timeout command exists before running any task
 [tasks.timeout-check]
 description = "Verify timeout command exists (required for all tasks)"
@@ -127,8 +146,21 @@ args = [
 
 [tasks.docker-check]
 description = "Check if Docker daemon is running and available (fail-fast)"
-command = "timeout"
-args = ["5s", "docker", "info"]
+script = '''
+#!/bin/bash
+# FMEA Mitigation: I1 (RPN 210 → 30) - Enforce Docker availability
+if [ -f scripts/setup-docker-validation.sh ]; then
+    bash scripts/setup-docker-validation.sh
+else
+    # Fallback to simple check
+    timeout 5s docker info > /dev/null 2>&1 || {
+        echo "❌ Docker is not available. Integration tests require Docker."
+        echo "Install Docker: https://docs.docker.com/get-docker/"
+        echo "Or run unit tests only: cargo make test-unit"
+        exit 1
+    }
+fi
+'''
 ignore_errors = false
 
 [tasks.test-unit]
