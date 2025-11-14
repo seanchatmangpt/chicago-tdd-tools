@@ -26,14 +26,14 @@
 
 #[cfg(all(feature = "testcontainers", test))]
 mod tests {
+    #[allow(missing_docs)]
     mod common {
-        include!("../common.rs");
+        include!("../test_common.inc");
     }
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_ok;
-    use chicago_tdd_tools::assert_err;
     use chicago_tdd_tools::assert_eq_msg;
-    use chicago_tdd_tools::assertions::assert_that;
+    use chicago_tdd_tools::assertions::assert_that_with_msg;
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
     use std::collections::HashMap;
@@ -62,8 +62,8 @@ mod tests {
         // Assert: Exec should succeed (container is running), but command should fail (exit_code != 0)
         assert_ok!(&result, "Exec should succeed even if command doesn't exist");
         let exec_result = result.expect("Exec should succeed");
-        assert_that(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
-        assert_that(
+        assert_that_with_msg(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
+        assert_that_with_msg(
             &(exec_result.stderr.contains("executable file not found") || exec_result.stdout.contains("executable file not found")),
             |v| *v,
             "Error message should indicate command not found"
@@ -81,7 +81,7 @@ mod tests {
         let result1 = container.exec("nonexistent_command", &[]);
         assert_ok!(&result1, "Exec should succeed even if command doesn't exist");
         let exec_result1 = result1.expect("Exec should succeed");
-        assert_that(&exec_result1.exit_code, |v| *v != 0, "Invalid command should have non-zero exit code");
+        assert_that_with_msg(&exec_result1.exit_code, |v| *v != 0, "Invalid command should have non-zero exit code");
 
         // Act: Container should still be usable after error
         let result2 = container.exec("echo", &["recovery", "test"]);
@@ -90,7 +90,7 @@ mod tests {
         assert_ok!(&result2, "Container should be usable after error");
         let exec_result2 = result2.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result2.exit_code, &0, "Recovery exec should succeed");
-        assert_that(&exec_result2.stdout.contains("recovery"), |v| *v, "Should capture recovery output");
+        assert_that_with_msg(&exec_result2.stdout.contains("recovery"), |v| *v, "Should capture recovery output");
     });
 
     // ========================================================================
@@ -114,21 +114,21 @@ mod tests {
         let result = container.exec("echo", &["hello"]);
         assert_ok!(&result, "Exec with single arg should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq_msg!(&exec_result.stdout.trim(), "hello", "Echo output should match");
+        assert_eq_msg!(&exec_result.stdout.trim(), &"hello", "Echo output should match");
 
         // Act & Assert: Multiple args
         let result = container.exec("echo", &["hello", "world", "test"]);
         assert_ok!(&result, "Exec with multiple args should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_that(&exec_result.stdout.contains("hello"), |v| *v, "Output should contain hello");
-        assert_that(&exec_result.stdout.contains("world"), |v| *v, "Output should contain world");
+        assert_that_with_msg(&exec_result.stdout.contains("hello"), |v| *v, "Output should contain hello");
+        assert_that_with_msg(&exec_result.stdout.contains("world"), |v| *v, "Output should contain world");
 
         // Act & Assert: Command that produces stderr (non-zero exit)
         let result = container.exec("sh", &["-c", "echo error >&2; exit 1"]);
         assert_ok!(&result, "Exec should succeed even if command fails");
         let exec_result = result.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result.exit_code, &1, "Command should exit with code 1");
-        assert_that(&exec_result.stderr.contains("error"), |v| *v, "Should capture stderr");
+        assert_that_with_msg(&exec_result.stderr.contains("error"), |v| *v, "Should capture stderr");
     });
 
     // **Gemba Walk Fix**: Add critical boundary condition tests (80/20 - catch 80% of bugs)
@@ -144,7 +144,7 @@ mod tests {
 
         // Act & Assert: Empty image name should fail
         let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
-        assert_err!(&result, "Empty image name should fail");
+        assert!(result.is_err(), "Empty image name should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) => {
                 // Expected error variant
@@ -155,7 +155,7 @@ mod tests {
 
         // Act & Assert: Empty tag should fail
         let result = GenericContainer::new(client.client(), ALPINE_IMAGE, "");
-        assert_err!(&result, "Empty tag should fail");
+        assert!(result.is_err(), "Empty tag should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) => {
                 // Expected error variant
@@ -165,22 +165,8 @@ mod tests {
         }
     });
 
-    test!(port_mapping_invalid_boundaries, {
-        // Arrange: Set up Docker and client
-        require_docker();
-        let client = ContainerClient::new();
-
-        // Act & Assert: Invalid port (>65535) should fail
-        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
-        assert_err!(&result, "Port >65535 should fail");
-        match result {
-            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
-                // Expected error variant (either InvalidConfig or CreationFailed)
-            }
-            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
-            Ok(_) => panic!("Expected error, got success"),
-        }
-    });
+    // Note: Cannot test port >65535 because u16 max is 65535 (compile-time check)
+    // The type system prevents invalid ports at compile time (Poka-yoke design)
 
     test!(env_vars_special_characters, {
         // Arrange: Set up Docker and client
@@ -206,7 +192,7 @@ mod tests {
         // Verify special characters work (if container supports it)
         let result = container.exec("sh", &["-c", "echo $TEST_VAR"]);
         if let Ok(exec_result) = result {
-            assert_that(&exec_result.stdout.contains("value with spaces"), |v| *v, "Special characters should work");
+            assert_that_with_msg(&exec_result.stdout.contains("value with spaces"), |v| *v, "Special characters should work");
         }
     });
 
@@ -223,7 +209,7 @@ mod tests {
         let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
 
         // Assert: Verify test correctly detects failure (negative test case)
-        assert_err!(&result, "Empty image should fail");
+        assert!(result.is_err(), "Empty image should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) | Err(TestcontainersError::InvalidConfig(_)) => {
                 // Expected error variant - test correctly detected failure
@@ -233,24 +219,8 @@ mod tests {
         }
     });
 
-    test!(negative_test_invalid_port_fails, {
-        // Arrange: Set up Docker and client
-        require_docker();
-        let client = ContainerClient::new();
-
-        // Act: Attempt to create container with invalid port >65535 (should fail)
-        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
-
-        // Assert: Verify test correctly detects failure (negative test case)
-        assert_err!(&result, "Invalid port should fail");
-        match result {
-            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
-                // Expected error variant - test correctly detected failure
-            }
-            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
-            Ok(_) => panic!("Expected error for invalid port, but got success - FALSE NEGATIVE DETECTED"),
-        }
-    });
+    // Note: Cannot test invalid port >65535 because u16 max is 65535
+    // The type system prevents this at compile time (Poka-yoke design - better than runtime check)
 
     test!(negative_test_nonexistent_command_fails, {
         // Arrange: Set up Docker and container
@@ -265,9 +235,9 @@ mod tests {
         // Assert: Verify exec succeeds (container is running), but command fails (negative test case)
         assert_ok!(&result, "Exec should succeed even if command doesn't exist");
         let exec_result = result.expect("Exec should succeed");
-        assert_that(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
+        assert_that_with_msg(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
         // Verify test correctly detects command failure (not a false negative)
-        assert_that(
+        assert_that_with_msg(
             &(exec_result.stderr.contains("not found") || exec_result.stderr.contains("executable file not found") || exec_result.stdout.contains("not found")),
             |v| *v,
             "Error message should indicate command not found - if this assertion fails, we have a false negative"
@@ -289,7 +259,7 @@ mod tests {
         let port = container
             .get_host_port(80)
             .unwrap_or_else(|e| panic!("Failed to get host port: {}", e));
-        assert_that(&port, |v| *v > 0, "Port should be mapped");
+        assert_that_with_msg(&port, |v| *v > 0, "Port should be mapped");
 
         // Act & Assert: Multiple ports (use nginx which can expose multiple ports)
         let container =
@@ -304,7 +274,7 @@ mod tests {
         let port8080 = container
             .get_host_port(8080)
             .unwrap_or_else(|e| panic!("Failed to get host port 8080: {}", e));
-        assert_that(&(port80 > 0 && port443 > 0 && port8080 > 0), |v| *v, "All ports should be mapped");
+        assert_that_with_msg(&(port80 > 0 && port443 > 0 && port8080 > 0), |v| *v, "All ports should be mapped");
     });
 
     test!(env_vars_all_paths, {
@@ -326,7 +296,7 @@ mod tests {
         // Verify env var is set (if container supports it)
         let result = container.exec("sh", &["-c", "echo $TEST_VAR"]);
         if let Ok(exec_result) = result {
-            assert_that(&exec_result.stdout.contains("test_value"), |v| *v, "Env var should be set");
+            assert_that_with_msg(&exec_result.stdout.contains("test_value"), |v| *v, "Env var should be set");
         }
 
         // Act & Assert: Multiple env vars
@@ -379,7 +349,7 @@ mod tests {
 
         // Verify connection is actually established (state verification)
         let stream = connection_result.expect("Connection should succeed after assert_ok");
-        assert_that(&stream.peer_addr().is_ok(), |v| *v, "Connection should be established to HTTP service");
+        assert_that_with_msg(&stream.peer_addr().is_ok(), |v| *v, "Connection should be established to HTTP service");
     });
 
     // ========================================================================
@@ -399,7 +369,7 @@ mod tests {
         let exec_result = result.expect("Exec should succeed after assert_ok");
 
         // Verify ExecResult structure
-        assert_that(
+        assert_that_with_msg(
             &(!exec_result.stdout.is_empty() || exec_result.stdout == "test\n"),
             |v| *v,
             "Should have stdout"
@@ -440,7 +410,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         // Generate unique test ID based on timestamp to ensure isolation across test runs
@@ -478,7 +448,7 @@ mod tests {
                     assert_ok!(&exec_result, &format!("Exec should succeed in concurrent container {}", unique_id));
 
                     let exec_result = exec_result.expect("Exec should succeed");
-                    assert_that(
+                    assert_that_with_msg(
                         &exec_result.stdout.contains(&unique_id),
                         |v| *v,
                         &format!("Container {} should execute commands correctly", unique_id)
@@ -509,7 +479,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()
@@ -542,7 +512,7 @@ mod tests {
 
                     let exec_result = exec_result.expect("Exec should succeed");
                     assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
-                    assert_that(
+                    assert_that_with_msg(
                         &exec_result.stdout.contains(&unique_id),
                         |v| *v,
                         &format!("Command {} should produce correct output", unique_id)
@@ -579,7 +549,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()
@@ -626,7 +596,7 @@ mod tests {
 
                         let exec_result = exec_result.expect("Exec should succeed");
                         assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
-                        assert_that(
+                        assert_that_with_msg(
                             &exec_result.stdout.contains(&unique_id),
                             |v| *v,
                             &format!("Command {} should produce correct output", unique_id)
