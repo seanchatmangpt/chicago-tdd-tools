@@ -42,6 +42,7 @@ Development processes and quality standards:
 
 - **[SPR Guide](process/SPR_GUIDE.md)** - Elite Rust developer standards and best practices
 - **[Code Review Checklist](process/CODE_REVIEW_CHECKLIST.md)** - Comprehensive code review guidelines
+- **[FMEA: Tests, Build, Actions](process/FMEA_TESTS_BUILD_ACTIONS.md)** - Failure Mode and Effects Analysis for infrastructure
 - **[Poka-Yoke Weaver Registry](process/POKA_YOKE_WEAVER_REGISTRY.md)** - Type-level error prevention patterns
 - **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver integration
 - **[Dog Fooding](process/DOG_FOODING.md)** - Using Chicago TDD Tools to test itself

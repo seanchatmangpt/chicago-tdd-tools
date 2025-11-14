@@ -489,7 +489,7 @@ args = [
   "5s",
   "sh",
   "-c",
-  "set -uo pipefail; if [ ! -f CHANGELOG.md ]; then echo '🚨 CRITICAL: CHANGELOG.md missing'; exit 1; fi; if [ ! -f RELEASE_NOTES_v1.1.0.md ] && [ ! -f RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'",
+  "set -uo pipefail; if [ ! -f docs/releases/CHANGELOG.md ]; then echo '🚨 CRITICAL: docs/releases/CHANGELOG.md missing'; exit 1; fi; if [ ! -f docs/releases/RELEASE_NOTES_v1.1.0.md ] && [ ! -f docs/releases/RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'",
 ]
 ignore_errors = true
 
