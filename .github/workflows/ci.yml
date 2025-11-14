@@ -27,6 +27,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Minimal permissions for security
+permissions:
+  contents: read
+
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always

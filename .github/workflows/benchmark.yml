@@ -27,6 +27,11 @@ concurrency:
   group: benchmark-${{ github.ref }}
   cancel-in-progress: true
 
+# Permissions for benchmark workflow
+permissions:
+  contents: write        # For storing benchmark results
+  pull-requests: write   # For posting PR comments
+
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always
