@@ -273,7 +273,7 @@ impl RegistryState {
     /// **Poka-yoke**: Only returns path if registry is validated.
     /// Prevents using unvalidated registries.
     #[must_use]
-    pub fn validated_path(&self) -> Option<&ValidRegistryPath> {
+    pub const fn validated_path(&self) -> Option<&ValidRegistryPath> {
         match self {
             Self::Validated(path) => Some(path),
             Self::Unvalidated(_) | Self::ValidationFailed(_, _) => None,
@@ -284,7 +284,7 @@ impl RegistryState {
     ///
     /// **Poka-yoke**: Type-level check for validation state.
     #[must_use]
-    pub fn is_validated(&self) -> bool {
+    pub const fn is_validated(&self) -> bool {
         matches!(self, Self::Validated(_))
     }
 }
