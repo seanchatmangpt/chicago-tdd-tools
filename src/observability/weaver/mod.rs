@@ -523,8 +523,7 @@ mod tests {
                     || debug.contains("ProcessStartFailed")
                     || debug.contains("ProcessStopFailed")
                     || debug.contains("ProcessNotRunning"),
-                "Debug output should contain error type: {}",
-                debug
+                "Debug output should contain error type: {debug}"
             );
         }
     }
@@ -555,7 +554,7 @@ mod tests {
         // OTLP endpoint uses LOCALHOST for client connections (even though server listens on 0.0.0.0)
         assert_eq!(
             validator.otlp_endpoint(),
-            format!("http://{}:{}", LOCALHOST, DEFAULT_OTLP_GRPC_PORT)
+            format!("http://{LOCALHOST}:{DEFAULT_OTLP_GRPC_PORT}")
         );
     }
 
@@ -601,7 +600,7 @@ mod tests {
                 // Expected error variant
             }
             Err(e) => {
-                panic!("Expected RegistryNotFound, got: {:?}", e);
+                panic!("Expected RegistryNotFound, got: {e:?}");
             }
             Ok(_) => {
                 panic!("Expected error, got success");
