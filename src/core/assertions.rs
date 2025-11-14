@@ -303,6 +303,9 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
         // End time should always be >= start time in normal operation
         if let Err(e) = self.span.complete(end_time) {
             // Log error but don't fail - span will remain active
+            #[cfg(feature = "logging")]
+            log::warn!("Failed to complete span: {e}");
+            #[cfg(not(feature = "logging"))]
             eprintln!("Warning: Failed to complete span: {e}");
         } else {
             self.span.status = if success { SpanStatus::Ok } else { SpanStatus::Error };
