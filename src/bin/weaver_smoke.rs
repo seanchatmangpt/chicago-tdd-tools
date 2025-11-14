@@ -25,19 +25,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let registry_path = PathBuf::from("registry");
     if !registry_path.exists() {
-        return Err(WeaverValidationError::RegistryNotFound(format!(
+        return Err(Box::new(WeaverValidationError::RegistryNotFound(format!(
             "{} (run cargo make weaver-bootstrap)",
             registry_path.display()
-        )));
+        ))));
     }
 
     let weaver_binary = WeaverLiveCheck::find_weaver_binary()
-        .ok_or_else(|| WeaverValidationError::BinaryNotFound)?;
+        .ok_or_else(|| Box::new(WeaverValidationError::BinaryNotFound) as Box<dyn std::error::Error>)?;
     let version_output = Command::new(&weaver_binary).arg("--version").output().map_err(|e| {
-        WeaverValidationError::ProcessStartFailed(format!(
+        Box::new(WeaverValidationError::ProcessStartFailed(format!(
             "Failed to execute {} --version: {e}",
             weaver_binary.display()
-        ))
+        ))) as Box<dyn std::error::Error>
     })?;
     if !version_output.status.success() {
         return Err(Box::new(WeaverValidationError::ProcessStartFailed(format!(

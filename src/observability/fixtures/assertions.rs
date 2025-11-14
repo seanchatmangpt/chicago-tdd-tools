@@ -47,11 +47,11 @@ pub fn assert_violation_count(
 #[macro_export]
 macro_rules! assert_telemetry_valid {
     ($results:expr $(,)?) => {{
-        $crate::observability::fixtures::assertions::assert_telemetry_valid($results)
+        $crate::observability::fixtures::assert_telemetry_valid($results)
             .unwrap_or_else(|err| panic!("Weaver live-check validation failed: {err}"));
     }};
     ($results:expr, $($arg:tt)+) => {{
-        $crate::observability::fixtures::assertions::assert_telemetry_valid($results)
+        $crate::observability::fixtures::assert_telemetry_valid($results)
             .unwrap_or_else(|err| panic!("{}: {err}", format_args!($($arg)+)));
     }};
 }
@@ -60,7 +60,7 @@ macro_rules! assert_telemetry_valid {
 #[macro_export]
 macro_rules! assert_violation_count {
     ($results:expr, $expected:expr $(,)?) => {{
-        $crate::observability::fixtures::assertions::assert_violation_count($results, $expected)
+        $crate::observability::fixtures::assert_violation_count($results, $expected)
             .unwrap_or_else(|err| {
                 panic!(
                     "Weaver live-check violation count assertion failed: {err}"
@@ -68,7 +68,7 @@ macro_rules! assert_violation_count {
             });
     }};
     ($results:expr, $expected:expr, $($arg:tt)+) => {{
-        $crate::observability::fixtures::assertions::assert_violation_count($results, $expected)
+        $crate::observability::fixtures::assert_violation_count($results, $expected)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {err}",
