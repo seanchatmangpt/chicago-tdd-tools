@@ -362,7 +362,7 @@ jobs:
           echo "🟠 ANDON SIGNAL: Measuring test coverage..."
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
 
-      - name: 🎯 Check coverage threshold (investigative signal)
+      - name: 🎯 Check coverage threshold (≥85% required for v1.2.0)
         run: |
           # Use portable commands (awk instead of bc/grep -P)
           COVERAGE=$(cargo llvm-cov --all-features --lib --tests --summary-only | \
@@ -370,18 +370,28 @@ jobs:
           echo ""
           echo "📊 Coverage: $COVERAGE%"
           # Use awk for portable comparison (works on all platforms)
-          if [ $(echo "$COVERAGE 70.0" | awk '{print ($1 < $2)}') -eq 1 ]; then
+          # FMEA Fix: Enforce 85% coverage to maintain code quality for v1.2.0
+          if [ $(echo "$COVERAGE 85.0" | awk '{print ($1 < $2)}') -eq 1 ]; then
             echo ""
-            echo "🟠 ANDON SIGNAL: Coverage below recommended 70% threshold"
+            echo "🔴 ANDON SIGNAL: Coverage below required 85% threshold (v1.2.0)"
             echo "   Current coverage: $COVERAGE%"
-            echo "   Status: ⚠️  WARNING (investigative signal)"
-            echo "   Action: Consider adding tests to improve coverage"
-            echo "   Goal: Reach 70% coverage for full enforcement"
+            echo "   Required: 85% for v1.2.0"
+            echo "   Status: ❌ BLOCKING (hard requirement)"
             echo ""
-            # exit 1  # Uncomment when ready to enforce
+            echo "📊 Coverage Goals for v1.2.0:"
+            echo "  - Minimum: 85% line coverage"
+            echo "  - Target: 90%+ for production code"
+            echo ""
+            echo "🔧 To improve coverage:"
+            echo "  1. Run: cargo llvm-cov --html --all-features"
+            echo "  2. Open: target/llvm-cov/html/index.html"
+            echo "  3. Add tests for uncovered lines"
+            echo ""
+            exit 1
           else
-            echo "✅ Signal cleared: Coverage $COVERAGE% meets threshold"
+            echo "✅ Signal cleared: Coverage $COVERAGE% meets v1.2.0 threshold (≥85%)"
           fi
+        continue-on-error: false  # Coverage is now a hard requirement
 
       - name: 📤 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
