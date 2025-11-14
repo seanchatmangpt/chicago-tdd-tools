@@ -95,7 +95,8 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "unified_api_weaver_integration"));
         span.end();
 
-        tracer.force_flush()
+        tracer
+            .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
         let results = fixture
@@ -124,7 +125,8 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
         span.end();
 
-        tracer.force_flush()
+        tracer
+            .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
         let results = fixture
@@ -153,7 +155,8 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_reports_rendered"));
         span.end();
 
-        tracer.force_flush()
+        tracer
+            .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
         let results = fixture

@@ -27,7 +27,8 @@ fn weaver_macro_detects_violation() {
     let mut fixture = WeaverTestFixture::new()
         .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
-    let tracer = fixture.tracer("macro-violation", "weaver-macro-tests")
+    let tracer = fixture
+        .tracer("macro-violation", "weaver-macro-tests")
         .unwrap_or_else(|err| panic!("Failed to create tracer: {err}"));
     let mut span = tracer.tracer().start("macro-violation-span");
     span.set_attribute(KeyValue::new("unknown.attribute", "value"));
