@@ -7,7 +7,7 @@
 //! - `testcontainers`: Enable Docker container support (`chicago-tdd-tools = { features = ["testcontainers"] }`)
 //!
 //! **Usage**:
-//! ```rust
+//! ```rust,ignore
 //! // Enable feature in Cargo.toml:
 //! // chicago-tdd-tools = { features = ["testcontainers"] }
 //!

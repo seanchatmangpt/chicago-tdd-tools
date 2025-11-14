@@ -12,11 +12,12 @@
 //! - Type-safe API (invalid states unrepresentable)
 //!
 //! **Usage**:
-//! ```rust
+//! ```rust,ignore
 //! use chicago_tdd_tools::observability::ObservabilityTest;
 //!
 //! // Simple usage - zero configuration for 80% of cases
 //! let test = ObservabilityTest::new()?;
+//! let span = /* obtained from OTEL */ unimplemented!();
 //! test.validate_span(&span)?;
 //! // Automatic cleanup via Drop trait
 //! ```

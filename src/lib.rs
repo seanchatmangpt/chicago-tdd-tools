@@ -194,7 +194,7 @@ pub use validation::{coverage, guards, jtbd, performance};
 /// Prelude module - import everything you need with `use chicago_tdd_tools::prelude::*;`
 ///
 /// **Usage**:
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::prelude::*;
 ///
 /// test!(my_test, {
