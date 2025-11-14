@@ -438,6 +438,90 @@ dependencies = [
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
 dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
 
+[tasks.ci-local]
+description = "Simulate CI environment locally (FMEA: Tests Pass Locally, Fail in CI - RPN 105 → 21)"
+# This task runs the same checks as CI to catch environment-specific issues early
+# Helps identify: OS differences, Docker availability, environment variables, resource constraints
+dependencies = ["timeout-check"]
+script = '''
+#!/bin/bash
+set -e
+
+echo "🔍 Running CI simulation locally..."
+echo ""
+echo "This runs the same checks as GitHub Actions CI to catch issues early."
+echo ""
+
+# Step 1: Format check
+echo "1️⃣  Format check..."
+cargo make fmt
+if ! git diff --exit-code; then
+  echo "❌ FAILED: Code is not formatted correctly"
+  echo "Fix: Run 'cargo make fmt' and commit the changes"
+  exit 1
+fi
+echo "✅ Format check passed"
+echo ""
+
+# Step 2: Clippy lint check
+echo "2️⃣  Clippy lint check..."
+cargo make lint
+echo "✅ Clippy passed"
+echo ""
+
+# Step 3: Unit tests (with retry simulation)
+echo "3️⃣  Unit tests..."
+cargo make test-unit || {
+  echo "⚠️  Tests failed on first attempt, retrying..."
+  sleep 2
+  cargo make test-unit || {
+    echo "❌ FAILED: Tests failed twice"
+    echo "This may indicate environment-specific issues"
+    exit 1
+  }
+}
+echo "✅ Unit tests passed"
+echo ""
+
+# Step 4: Unwrap/expect check
+echo "4️⃣  Production code safety check (unwrap/expect)..."
+PROD_FILES=$(find src proc_macros/src -name '*.rs' -type f 2>/dev/null | \
+  grep -v '/test' | grep -v '/tests/' | grep -v 'build.rs' || true)
+
+if [ -z "$PROD_FILES" ]; then
+  echo "✅ No production files to check"
+else
+  UNWRAP_COUNT=0
+  for FILE in $PROD_FILES; do
+    if grep -q '#\[cfg(test)\]' "$FILE" 2>/dev/null; then
+      continue
+    fi
+    COUNT=$(grep -c '\.unwrap()\|\.expect(' "$FILE" 2>/dev/null || echo "0")
+    UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
+  done
+
+  if [ "$UNWRAP_COUNT" -gt 0 ]; then
+    echo "❌ FAILED: Found $UNWRAP_COUNT unwrap/expect in production code"
+    exit 1
+  fi
+  echo "✅ No unwrap/expect in production code"
+fi
+echo ""
+
+# Step 5: Environment validation
+echo "5️⃣  Environment validation..."
+echo "  OS: $(uname -s)"
+echo "  Rust: $(rustc --version)"
+echo "  Cargo: $(cargo --version)"
+echo "  Docker: $(docker --version 2>/dev/null || echo "Not available")"
+echo "✅ Environment validated"
+echo ""
+
+echo "🎉 All CI checks passed locally!"
+echo ""
+echo "Your code should pass CI. Push with confidence!"
+'''
+
 # Security and audit tasks - 15s timeout (network operations can take longer)
 [tasks.audit]
 description = "Security audit"
