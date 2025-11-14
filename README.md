@@ -19,7 +19,7 @@ Always run `cargo make pre-commit` before committing to catch issues early.
 - All clippy warnings are treated as errors (`-D warnings`)
 - Use `#[allow(clippy::...)]` with justification comments when necessary
 - CI/CD pipeline will fail if clippy finds any warnings/errors
-- See [SPR Guide](docs/SPR_GUIDE.md) for clippy best practices
+- See [SPR Guide](docs/process/SPR_GUIDE.md) for clippy best practices
 
 ## Quick Start
 
@@ -106,7 +106,7 @@ cargo make test       # Run tests
 - **`assert_err!`**: Assert Result is Err
 - **`assert_in_range!`**: Assert value in range
 
-**See [Quick Guide](docs/QUICK_GUIDE.md) for complete macro reference.**
+**See [Quick Guide](docs/getting-started/QUICK_GUIDE.md) for complete macro reference.**
 
 ## Features
 
@@ -121,7 +121,7 @@ chicago_tdd_tools = {
 
 **When to use features**: Enable features only when you need them (e.g., `testcontainers` for Docker integration, `otel` for observability testing).
 
-**See [Getting Started](docs/GETTING_STARTED.md) for complete feature list** (property-testing, mutation-testing, testcontainers, otel, weaver, etc.)
+**See [Getting Started](docs/getting-started/GETTING_STARTED.md) for complete feature list** (property-testing, mutation-testing, testcontainers, otel, weaver, etc.)
 
 ## Weaver Live-Check Quick Start
 
@@ -157,12 +157,13 @@ See [Build System Practices](.cursor/rules/build-system-practices.mdc) for detai
 
 ## Documentation
 
-- **[Quick Guide](docs/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
-- **[Getting Started](docs/GETTING_STARTED.md)** - Complete setup guide with troubleshooting
-- **[User Guide](docs/USER_GUIDE.md)** - Comprehensive usage guide
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](docs/ARCHITECTURE.md)** - Design principles
+- **[Quick Guide](docs/getting-started/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
+- **[Getting Started](docs/getting-started/GETTING_STARTED.md)** - Complete setup guide with troubleshooting
+- **[User Guide](docs/getting-started/USER_GUIDE.md)** - Comprehensive usage guide
+- **[API Reference](docs/reference/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](docs/reference/ARCHITECTURE.md)** - Design principles
 - **[Pattern Cookbook](cookbook/src/README.md)** - Alexander-style pattern language (testing, architecture, design)
+- **[Documentation Index](docs/README.md)** - Complete documentation navigation
 
 ## Requirements
 
@@ -180,7 +181,7 @@ See [Build System Practices](.cursor/rules/build-system-practices.mdc) for detai
 
 **"cannot find macro 'test!'"**: Ensure you have `use chicago_tdd_tools::prelude::*;` at the top of your test file.
 
-**See [Getting Started - Troubleshooting](docs/GETTING_STARTED.md#troubleshooting) for more help.**
+**See [Getting Started - Troubleshooting](docs/getting-started/GETTING_STARTED.md#troubleshooting) for more help.**
 
 ## License
 

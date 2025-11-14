@@ -546,8 +546,8 @@ Re-exports commonly used items. Feature-gated exports.
 
 ## Next Steps
 
-- **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
-- **[User Guide](USER_GUIDE.md)** - Complete usage guide
-- **[Getting Started](GETTING_STARTED.md)** - Quick start guide
+- **[Quick Guide](../getting-started/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
+- **[User Guide](../getting-started/USER_GUIDE.md)** - Complete usage guide
+- **[Getting Started](../getting-started/GETTING_STARTED.md)** - Quick start guide
 - **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
 - **[Examples](../examples/)** - Working code examples
