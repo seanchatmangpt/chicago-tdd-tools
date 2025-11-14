@@ -1,0 +1,104 @@
+# Benchmark Workflow
+#
+# This workflow runs performance benchmarks and tracks performance over time:
+# - Runs Criterion benchmarks on PR and push
+# - Compares performance against base branch
+# - Posts results as PR comments
+# - Tracks performance trends over time
+#
+# Triggered by:
+# - Pull requests (compare against base)
+# - Push to main/master (track baseline)
+# - Manual workflow dispatch
+#
+# Expected duration: ~10 minutes
+
+name: Benchmark
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+# Only run one benchmark at a time
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: benchmark
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      # Run benchmarks (if benchmarking feature exists)
+      - name: Run benchmarks
+        run: |
+          if [ -d "benches" ]; then
+            cargo bench --all-features -- --output-format bencher | tee benchmark_results.txt
+          else
+            echo "No benchmarks directory found. Skipping benchmarks."
+            echo "To add benchmarks, create a 'benches/' directory with Criterion benchmarks."
+            exit 0
+          fi
+        continue-on-error: true
+
+      - name: Store benchmark result
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: benchmark_results.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Compare benchmark (PR only)
+        if: github.event_name == 'pull_request'
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: benchmark_results.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: |
+            benchmark_results.txt
+            target/criterion/
+          retention-days: 30
