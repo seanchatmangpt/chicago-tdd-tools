@@ -4,8 +4,8 @@ Essential patterns for 80% of common use cases. See [User Guide](USER_GUIDE.md) 
 
 **Quick Navigation**:
 - **New user?** Start with [Getting Started](GETTING_STARTED.md)
-- **Need API details?** See [API Reference](API_REFERENCE.md)
-- **Want architecture?** See [Architecture](ARCHITECTURE.md)
+- **Need API details?** See [API Reference](../reference/API_REFERENCE.md)
+- **Want architecture?** See [Architecture](../reference/ARCHITECTURE.md)
 
 ## Test Macros
 
@@ -456,9 +456,9 @@ async_test!(test_async_fixture, {
 ## Next Steps
 
 - **[User Guide](USER_GUIDE.md)** - Complete usage guide
-- **[API Reference](API_REFERENCE.md)** - Full API documentation
+- **[API Reference](../reference/API_REFERENCE.md)** - Full API documentation
 - **[Getting Started](GETTING_STARTED.md)** - Quick start guide
-- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
+- **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
 - **[Examples](../examples/)** - Working code examples
 
 > **Short-term skip?** Export `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests explicitly. Without it, missing prerequisites cause a panic to enforce dogfooding.

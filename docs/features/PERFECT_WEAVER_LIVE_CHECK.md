@@ -372,11 +372,11 @@ A perfect Weaver live-check implementation:
 
 ## References
 
-- [Kaizen Improvement Plan](KAIZEN_WEAVER_READINESS.md) - Incremental improvements
-- [Poka-Yoke Design](POKA_YOKE_WEAVER_REGISTRY.md) - Type-level error prevention
-- [Root Cause Analysis](ROOT_CAUSE_ANALYSIS_WEAVER_REGISTRY.md) - Problem analysis
-- [Chicago TDD Standards](../.cursor/rules/chicago-tdd-standards.mdc) - Testing methodology
-- [SPR Guide](../docs/SPR_GUIDE.md) - Elite Rust developer standards
+- [Kaizen Improvement Plan](../process/KAIZEN_WEAVER_READINESS.md) - Incremental improvements
+- [Poka-Yoke Design](../process/POKA_YOKE_WEAVER_REGISTRY.md) - Type-level error prevention
+- [Root Cause Analysis](../analysis/ROOT_CAUSE_ANALYSIS_WEAVER_REGISTRY.md) - Problem analysis
+- [Chicago TDD Standards](../../.cursor/rules/chicago-tdd-standards.mdc) - Testing methodology
+- [SPR Guide](../process/SPR_GUIDE.md) - Elite Rust developer standards
 
 ## Diagrams
 
