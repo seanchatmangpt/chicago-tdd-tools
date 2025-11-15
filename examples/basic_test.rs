@@ -77,20 +77,20 @@ fn example_fixture_creation() -> Result<(), Box<dyn std::error::Error>> {
     let fixture = match TestFixture::new() {
         Ok(f) => f,
         Err(e) => {
-            eprintln!("Failed to create fixture: {e}");
-            eprintln!("Check your environment configuration");
+            chicago_tdd_tools::alert_critical!("Failed to create fixture: {e}");
+            chicago_tdd_tools::alert_warning!("Check your environment configuration");
             // **Best Practice**: In production code, propagate errors with ? operator or return Result
             return Err(e.into());
         }
     };
 
     // Act: Use fixture
-    let counter = fixture.test_counter();
+    let _counter = fixture.test_counter();
 
     // Assert: Verify fixture created
-    println!("Test counter: {counter}");
+    chicago_tdd_tools::alert_info!("Test counter accessed");
     // Counter is always >= 0 for u64, so just verify it exists
-    println!("✓ Fixture created successfully");
+    chicago_tdd_tools::alert_success!("Fixture created successfully");
     Ok(())
 }
 
@@ -131,20 +131,20 @@ fn example_data_building() -> Result<(), Box<dyn std::error::Error>> {
     {
         Ok(d) => d,
         Err(e) => {
-            eprintln!("Failed to build JSON: {e}");
+            chicago_tdd_tools::alert_critical!("Failed to build JSON: {e}");
             // **Best Practice**: In production code, propagate errors with ? operator or return Result
             return Err(e.into());
         }
     };
 
     // Assert: Verify data created
-    println!("Test data created: {}", data.is_object());
+    chicago_tdd_tools::alert_info!("Test data created: {}", data.is_object());
     if data.is_object() {
-        println!("  key1: {}", data["key1"]);
-        println!("  order_id: {}", data["order_id"]);
-        println!("✓ Data builder works correctly");
+        chicago_tdd_tools::alert_debug!("key1: {}", data["key1"]);
+        chicago_tdd_tools::alert_debug!("order_id: {}", data["order_id"]);
+        chicago_tdd_tools::alert_success!("Data builder works correctly");
     } else {
-        println!("✗ Data builder failed");
+        chicago_tdd_tools::alert_warning!("Data builder failed");
     }
     Ok(())
 }
@@ -169,13 +169,13 @@ fn example_data_building() -> Result<(), Box<dyn std::error::Error>> {
 /// ```rust
 /// let result: Result<(), String> = Ok(());
 /// if result.is_ok() {
-///     println!("Success");
+///     chicago_tdd_tools::alert_info!("Success");
 /// }
 ///
 /// let error_result: Result<(), String> = Err("error".to_string());
 /// match error_result {
-///     Ok(_) => println!("Success"),
-///     Err(e) => println!("Error: {e}"),
+///     Ok(_) => chicago_tdd_tools::alert_info!("Success"),
+///     Err(e) => chicago_tdd_tools::alert_info!("Error: {e}"),
 /// }
 /// ```
 fn example_error_handling() {
@@ -185,17 +185,19 @@ fn example_error_handling() {
     // Assert: Use assertion helpers
     // **Best Practice**: Demonstrate both success and error paths for complete learning
     if result.is_ok() {
-        println!("✓ Assertion helpers work correctly");
+        chicago_tdd_tools::alert_success!("Assertion helpers work correctly");
     } else {
-        println!("✗ Assertion helpers failed");
+        chicago_tdd_tools::alert_warning!("Assertion helpers failed");
     }
 
     // **Best Practice**: Demonstrate error path handling
     let error_result: Result<(), String> = Err("example error".to_string());
     match error_result {
-        Ok(()) => println!("✓ Error result handled - success case"),
-        Err(e) => {
-            println!("✓ Error result handled - error case: {e}");
+        Ok(()) => {
+            chicago_tdd_tools::alert_success!("Error result handled - success case");
+        }
+        Err(_e) => {
+            chicago_tdd_tools::alert_info!("Error result handled - error case occurred");
             // **Best Practice**: In production code, handle errors appropriately:
             // - Return error with ? operator
             // - Log error and continue
@@ -206,27 +208,23 @@ fn example_error_handling() {
 
 #[tokio::main]
 async fn main() {
-    println!("Basic Test Example");
-    println!("==================");
-    println!();
+    chicago_tdd_tools::alert_info!("Basic Test Example");
+    chicago_tdd_tools::alert_info!("==================");
 
-    println!("1. Creating test fixture...");
-    if let Err(e) = example_fixture_creation() {
-        eprintln!("Failed: {e}");
+    chicago_tdd_tools::alert_info!("1. Creating test fixture...");
+    if let Err(_e) = example_fixture_creation() {
+        chicago_tdd_tools::alert_critical!("Failed to create fixture");
         return;
     }
-    println!();
 
-    println!("2. Building test data...");
-    if let Err(e) = example_data_building() {
-        eprintln!("Failed: {e}");
+    chicago_tdd_tools::alert_info!("2. Building test data...");
+    if let Err(_e) = example_data_building() {
+        chicago_tdd_tools::alert_critical!("Failed to build test data");
         return;
     }
-    println!();
 
-    println!("3. Error handling patterns...");
+    chicago_tdd_tools::alert_info!("3. Error handling patterns...");
     example_error_handling();
-    println!();
 
-    println!("✓ All examples completed successfully!");
+    chicago_tdd_tools::alert_success!("All examples completed successfully!");
 }

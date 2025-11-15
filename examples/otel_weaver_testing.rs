@@ -66,13 +66,13 @@
 //! - Default Weaver admin port: `8080`
 
 fn main() {
-    println!("Unified Observability Testing Examples");
-    println!("======================================");
-    println!();
-    println!("This example demonstrates Chicago TDD Tools unified observability testing API.");
-    println!("For actual test examples, see the test modules below.");
-    println!();
-    println!("To run tests, use: cargo test --features otel,weaver");
+    chicago_tdd_tools::alert_info!("Unified Observability Testing Examples");
+    chicago_tdd_tools::alert_info!("======================================");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("This example demonstrates Chicago TDD Tools unified observability testing API.");
+    chicago_tdd_tools::alert_info!("For actual test examples, see the test modules below.");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("To run tests, use: cargo test --features otel,weaver");
 }
 
 /// OTEL Testing Examples
@@ -283,7 +283,7 @@ mod otel_tests {
     // let span_result = Span::new_completed(context, name, start, end, attrs, events, status);
     // match span_result {
     //     Ok(span) => test.validate_span(&span)?,
-    //     Err(e) => println!("Expected error: {e}"),
+    //     Err(e) => chicago_tdd_tools::alert_info!("Expected error: {e}"),
     // }
     // ```
     test!(test_otel_span_validation_error_path, {
@@ -317,7 +317,7 @@ mod otel_tests {
                 Err(e) => {
                     // If span creation failed (expected for invalid trace ID), that's correct behavior
                     // **Best Practice**: Handle error case properly - demonstrates error handling pattern
-                    println!("Expected error for invalid trace ID: {e}");
+                    chicago_tdd_tools::alert_info!("Expected error for invalid trace ID: {e}");
                 }
             }
         }

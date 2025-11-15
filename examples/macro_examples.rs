@@ -229,23 +229,23 @@ mod macro_examples {
 }
 
 fn main() {
-    println!("Chicago TDD Tools - Macro Examples");
-    println!("===================================");
-    println!();
-    println!("This file demonstrates macro usage patterns.");
-    println!("Macros expand to test functions, so they're typically used in test files.");
-    println!();
-    println!("Available macros:");
-    println!("  - test!: Synchronous test with AAA pattern");
-    println!("  - async_test!: Async test with AAA pattern");
-    println!("  - fixture_test!: Test with automatic fixture setup");
-    println!("  - performance_test!: Performance test with tick validation");
-    println!("  - assert_ok!: Assert Result is Ok");
-    println!("  - assert_err!: Assert Result is Err");
-    println!("  - assert_within_tick_budget!: Validate tick budget (≤8 ticks)");
-    println!("  - assert_in_range!: Assert value is in range");
-    println!("  - assert_eq_msg!: Assert equality with custom message");
-    println!("  - assert_guard_constraint!: Validate guard constraints");
-    println!();
-    println!("See README.md for complete usage examples.");
+    chicago_tdd_tools::alert_info!("Chicago TDD Tools - Macro Examples");
+    chicago_tdd_tools::alert_info!("===================================");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("This file demonstrates macro usage patterns.");
+    chicago_tdd_tools::alert_info!("Macros expand to test functions, so they're typically used in test files.");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("Available macros:");
+    chicago_tdd_tools::alert_info!("  - test!: Synchronous test with AAA pattern");
+    chicago_tdd_tools::alert_info!("  - async_test!: Async test with AAA pattern");
+    chicago_tdd_tools::alert_info!("  - fixture_test!: Test with automatic fixture setup");
+    chicago_tdd_tools::alert_info!("  - performance_test!: Performance test with tick validation");
+    chicago_tdd_tools::alert_info!("  - assert_ok!: Assert Result is Ok");
+    chicago_tdd_tools::alert_info!("  - assert_err!: Assert Result is Err");
+    chicago_tdd_tools::alert_info!("  - assert_within_tick_budget!: Validate tick budget (≤8 ticks)");
+    chicago_tdd_tools::alert_info!("  - assert_in_range!: Assert value is in range");
+    chicago_tdd_tools::alert_info!("  - assert_eq_msg!: Assert equality with custom message");
+    chicago_tdd_tools::alert_info!("  - assert_guard_constraint!: Validate guard constraints");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("See README.md for complete usage examples.");
 }
