@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
 
+use crate::format_utils::OutputFormat;
+
 #[derive(Serialize, Debug)]
 struct WorkflowStatus {
     name: String,
@@ -29,17 +31,32 @@ struct GhStatus {
 fn stat(
     #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
 ) -> Result<GhStatus> {
     let workflows = discover_workflows();
     let valid_count = workflows.iter().filter(|w| w.valid).count();
     let invalid_count = workflows.len() - valid_count;
 
-    if verbose > 0 {
+    let status = GhStatus {
+        total_workflows: workflows.len(),
+        valid_workflows: valid_count,
+        invalid_workflows: invalid_count,
+        workflows,
+    };
+
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&status) {
+            println!("{}", formatted);
+        }
+    } else if verbose > 0 {
+        // Fallback to verbose output if format parsing fails
         println!("📊 GitHub Actions Status");
         println!("========================");
         println!();
 
-        for workflow in &workflows {
+        for workflow in &status.workflows {
             let status_icon = if workflow.valid { "✅" } else { "❌" };
             println!("{} {} (jobs: {})", status_icon, workflow.name, workflow.jobs);
 
@@ -50,23 +67,30 @@ fn stat(
         println!();
     }
 
-    Ok(GhStatus {
-        total_workflows: workflows.len(),
-        valid_workflows: valid_count,
-        invalid_workflows: invalid_count,
-        workflows,
-    })
+    Ok(status)
 }
 
 /// List all GitHub Actions workflows
 #[verb]
 fn list(
-    #[arg(long, value_name = "FORMAT", default_value = "names", help = "Output format: names, paths, or json")]
-    format: Option<String>,
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
 ) -> Result<Vec<String>> {
     let workflows = discover_workflows();
-    let output_format = format.as_deref().unwrap_or("names");
+    let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();
 
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&names) {
+            println!("{}", formatted);
+        }
+    }
+
+    Ok(names)
+}
+
+// Legacy handler for backward compatibility
+fn _list_workflows_by_format(output_format: &str, workflows: &[WorkflowStatus]) -> Result<Vec<String>> {
     match output_format {
         "names" => {
             let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();

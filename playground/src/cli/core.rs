@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use crate::core::{
     alert, assertions, async_fixtures, builders, const_assert, fixtures, macros, state, type_level,
 };
+use crate::format_utils::OutputFormat;
 
 #[derive(Serialize)]
 struct Status {
@@ -32,8 +33,10 @@ struct ExecutionResult {
 fn stat(
     #[arg(short = 'v', long, action = "count", help = "Increase verbosity level (-v, -vv, -vvv)")]
     verbose: usize,
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
 ) -> Result<Status> {
-    Ok(Status {
+    let status = Status {
         features: vec![
             "fixtures".to_string(),
             "async".to_string(),
@@ -55,13 +58,25 @@ fn stat(
             "const_assert".to_string(),
             "alert".to_string(),
         ],
-    })
+    };
+
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&status) {
+            println!("{}", formatted);
+        }
+    }
+
+    Ok(status)
 }
 
 /// List available core examples
 #[verb]
-fn list() -> Result<Vec<String>> {
-    Ok(vec![
+fn list(
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
+) -> Result<Vec<String>> {
+    let examples = vec![
         "fixtures".to_string(),
         "builders".to_string(),
         "assert".to_string(),
@@ -70,7 +85,16 @@ fn list() -> Result<Vec<String>> {
         "type_level".to_string(),
         "const_assert".to_string(),
         "alert".to_string(),
-    ])
+    ];
+
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&examples) {
+            println!("{}", formatted);
+        }
+    }
+
+    Ok(examples)
 }
 
 /// Execute one or more core examples

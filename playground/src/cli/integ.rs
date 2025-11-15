@@ -8,6 +8,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 
 use crate::integration;
+use crate::format_utils::OutputFormat;
 
 #[derive(Serialize)]
 struct Status {
@@ -27,6 +28,8 @@ struct ExecutionResult {
 fn stat(
     #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
 ) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
@@ -37,17 +40,36 @@ fn stat(
         examples.push("contain".to_string());
     }
 
-    Ok(Status { features, examples })
+    let status = Status { features, examples };
+
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&status) {
+            println!("{}", formatted);
+        }
+    }
+
+    Ok(status)
 }
 
 /// List available integration demos
 #[verb]
-fn list() -> Result<Vec<String>> {
+fn list(
+    #[arg(short = 'f', long, default_value = "json", help = "Output format: json, yaml, toml, table, tsv")]
+    format: String,
+) -> Result<Vec<String>> {
     let mut examples = Vec::new();
 
     #[cfg(feature = "testcontainers")]
     {
         examples.push("contain".to_string());
+    }
+
+    // Format and print output
+    if let Ok(fmt) = OutputFormat::from_str(&format) {
+        if let Ok(formatted) = fmt.serialize(&examples) {
+            println!("{}", formatted);
+        }
     }
 
     Ok(examples)
