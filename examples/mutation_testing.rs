@@ -66,6 +66,36 @@
 use chicago_tdd_tools::mutation::*;
 use std::collections::HashMap;
 
+/// Example: Mutation testing with MutationTester
+///
+/// ## How-to: Use Mutation Testing
+///
+/// This example demonstrates mutation testing workflow:
+/// 1. Create mutation tester with test data
+/// 2. Apply mutations using mutation operators
+/// 3. Test if mutations are caught by tests
+/// 4. Calculate mutation score to measure test quality
+///
+/// ## Reference
+///
+/// - **MutationTester**: `MutationTester::new(data) -> MutationTester<T>`
+/// - **Apply Mutation**: `apply_mutation(operator)` - Apply mutation operator
+/// - **Test Detection**: `test_mutation_detection(test_fn)` - Test if mutation is caught
+/// - **Mutation Score**: `MutationScore::calculate(caught, total) -> MutationScore`
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::mutation::*;
+/// use std::collections::HashMap;
+///
+/// let mut data = HashMap::new();
+/// data.insert("key1".to_string(), "value1".to_string());
+/// let mut tester = MutationTester::new(data);
+/// tester.apply_mutation(MutationOperator::RemoveKey("key1".to_string()));
+/// let caught = tester.test_mutation_detection(|data| !data.is_empty());
+/// let score = MutationScore::calculate(if caught { 1 } else { 0 }, 1);
+/// ```
 #[tokio::main]
 async fn main() {
     println!("Mutation Testing Example");

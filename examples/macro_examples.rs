@@ -71,9 +71,9 @@ mod macro_examples {
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::{assert_err, assert_ok};
 
-    /// Example: Basic synchronous test with AAA pattern
-    ///
-    /// ## How-to: Write a Basic Test
+    // Example: Basic synchronous test with AAA pattern
+    //
+    // ## How-to: Write a Basic Test
     ///
     /// Use `test!` macro to create a synchronous test with AAA pattern.
     /// The macro expands to a standard `#[test]` function with AAA structure.
@@ -110,9 +110,9 @@ mod macro_examples {
         assert_eq!(result, expected);
     });
 
-    /// Example: Test with Result handling
-    ///
-    /// ## How-to: Handle Result Types in Tests
+    // Example: Test with Result handling
+    //
+    // ## How-to: Handle Result Types in Tests
     ///
     /// Use `assert_ok!` macro to assert that a `Result` is `Ok`. This provides
     /// better error messages than manual `match` or `unwrap()`.
@@ -149,9 +149,9 @@ mod macro_examples {
         }
     });
 
-    /// Example: Test with error Result
-    ///
-    /// ## How-to: Test Error Cases
+    // Example: Test with error Result
+    //
+    // ## How-to: Test Error Cases
     ///
     /// Use `assert_err!` macro to assert that a `Result` is `Err`. This is useful
     /// for testing error paths and error handling.
