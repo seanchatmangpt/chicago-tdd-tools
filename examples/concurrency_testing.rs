@@ -52,8 +52,8 @@
 //! - **Race Condition**: Bug that occurs in specific interleavings
 //! - **Thread Safety**: Code that works correctly in all interleavings
 
-use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[cfg(feature = "concurrency-testing")]
+use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "concurrency-testing")]

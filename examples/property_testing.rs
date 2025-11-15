@@ -57,7 +57,6 @@
 //! - **Shrinking**: Finding minimal failing cases
 //! - **Seed**: Random seed for reproducible tests
 
-use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::property::*;
 
 /// Example: Property-based testing with PropertyTestGenerator and ProptestStrategy

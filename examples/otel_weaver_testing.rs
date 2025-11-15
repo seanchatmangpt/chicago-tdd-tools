@@ -68,12 +68,12 @@
 fn main() {
     chicago_tdd_tools::alert_info!("Unified Observability Testing Examples");
     chicago_tdd_tools::alert_info!("======================================");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!(
         "This example demonstrates Chicago TDD Tools unified observability testing API."
     );
     chicago_tdd_tools::alert_info!("For actual test examples, see the test modules below.");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("To run tests, use: cargo test --features otel,weaver");
 }
 

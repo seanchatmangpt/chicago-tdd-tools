@@ -64,7 +64,6 @@
 //! - **Acceptable**: Score >= 80%
 
 use chicago_tdd_tools::mutation::*;
-use chicago_tdd_tools::prelude::*;
 use std::collections::HashMap;
 
 /// Example: Mutation testing with MutationTester

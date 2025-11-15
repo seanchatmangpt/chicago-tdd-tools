@@ -231,12 +231,12 @@ mod macro_examples {
 fn main() {
     chicago_tdd_tools::alert_info!("Chicago TDD Tools - Macro Examples");
     chicago_tdd_tools::alert_info!("===================================");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("This file demonstrates macro usage patterns.");
     chicago_tdd_tools::alert_info!(
         "Macros expand to test functions, so they're typically used in test files."
     );
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("Available macros:");
     chicago_tdd_tools::alert_info!("  - test!: Synchronous test with AAA pattern");
     chicago_tdd_tools::alert_info!("  - async_test!: Async test with AAA pattern");
@@ -250,6 +250,6 @@ fn main() {
     chicago_tdd_tools::alert_info!("  - assert_in_range!: Assert value is in range");
     chicago_tdd_tools::alert_info!("  - assert_eq_msg!: Assert equality with custom message");
     chicago_tdd_tools::alert_info!("  - assert_guard_constraint!: Validate guard constraints");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("See README.md for complete usage examples.");
 }

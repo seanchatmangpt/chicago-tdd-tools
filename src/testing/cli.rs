@@ -772,7 +772,7 @@ mod tests {
         // Arrange: Create CI environment
         let env = CliEnvironment::ci();
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: CI-specific variables are set
         assert_eq!(vars.get("CI"), Some(&"true".to_string()));
         assert_eq!(vars.get("TERM"), Some(&"dumb".to_string()));
@@ -784,7 +784,7 @@ mod tests {
         // Arrange: Create development environment
         let env = CliEnvironment::development();
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: Development-specific variables are set
         assert_eq!(vars.get("RUST_LOG"), Some(&"debug".to_string()));
         assert_eq!(vars.get("RUST_BACKTRACE"), Some(&"1".to_string()));
@@ -795,7 +795,7 @@ mod tests {
         // Arrange: Create production environment
         let env = CliEnvironment::production();
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: Production-specific variables are set
         assert_eq!(vars.get("RUST_LOG"), Some(&"info".to_string()));
         assert_eq!(vars.get("RUST_BACKTRACE"), Some(&"0".to_string()));
@@ -806,7 +806,7 @@ mod tests {
         // Arrange: Create clean environment
         let env = CliEnvironment::clean();
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: Clean environment has isolated variables
         assert_eq!(vars.get("HOME"), Some(&"/tmp/test-home".to_string()));
         assert_eq!(vars.get("USER"), Some(&"test-user".to_string()));
@@ -819,7 +819,7 @@ mod tests {
         let vars_to_set = [("VAR1", "value1"), ("VAR2", "value2"), ("VAR3", "value3")];
         let env = CliEnvironment::new().with_vars(&vars_to_set);
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: All variables are set
         assert_eq!(vars.get("VAR1"), Some(&"value1".to_string()));
         assert_eq!(vars.get("VAR2"), Some(&"value2".to_string()));
@@ -831,7 +831,7 @@ mod tests {
         // Arrange: Chain preset with additional vars
         let env = CliEnvironment::ci().set("CUSTOM_VAR", "custom_value");
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: Both preset and custom variables are set
         assert_eq!(vars.get("CI"), Some(&"true".to_string()));
         assert_eq!(vars.get("CUSTOM_VAR"), Some(&"custom_value".to_string()));
@@ -844,7 +844,7 @@ mod tests {
             .with_vars(&[("A", "1"), ("B", "2")])
             .set("C", "3");
         // Act: Get environment variables
-        let vars = env.vars();
+        let vars = &env.vars;
         // Assert: All variables are set
         assert_eq!(vars.get("A"), Some(&"1".to_string()));
         assert_eq!(vars.get("B"), Some(&"2".to_string()));

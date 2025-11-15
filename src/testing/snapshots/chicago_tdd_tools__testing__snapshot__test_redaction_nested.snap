@@ -1,0 +1,15 @@
+---
+source: src/testing/snapshot.rs
+assertion_line: 83
+expression: "serde_json::to_string_pretty(value).unwrap_or_else(|_|\n\"invalid json\".to_string())"
+---
+{
+  "session": {
+    "created_at": "[TIMESTAMP]",
+    "token": "[SESSION_TOKEN]"
+  },
+  "user": {
+    "email": "test@example.com",
+    "id": "[USER_ID]"
+  }
+}

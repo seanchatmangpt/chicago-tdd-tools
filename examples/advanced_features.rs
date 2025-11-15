@@ -59,8 +59,6 @@
 //! - **Zero-Cost**: No runtime overhead for abstractions
 //! - **Compile-Time**: Errors caught before code runs
 
-use chicago_tdd_tools::prelude::*;
-
 #[cfg(feature = "async")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::core::async_fixture::{AsyncFixtureManager, AsyncFixtureProvider};
@@ -200,15 +198,15 @@ fn example_type_state_pattern() {
 fn main() {
     chicago_tdd_tools::alert_info!("Advanced Rust Features Examples");
     chicago_tdd_tools::alert_info!("================================");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("1. Type-Level Arithmetic and Const Generics");
     example_type_level_arithmetic();
     chicago_tdd_tools::alert_info!("   ✓ Size-validated array created successfully");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("2. Type State Pattern");
     example_type_state_pattern();
     chicago_tdd_tools::alert_info!("   ✓ Type state pattern enforced compile-time guarantees");
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     #[cfg(feature = "async")]
     {
         chicago_tdd_tools::alert_info!("3. Async Traits (requires async feature)");
@@ -224,7 +222,7 @@ fn main() {
         chicago_tdd_tools::alert_info!("3. Async Traits");
         chicago_tdd_tools::alert_info!("   Enable async feature to see async traits example");
     }
-    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("");
     chicago_tdd_tools::alert_info!("Summary: Advanced features maximize DX by:");
     chicago_tdd_tools::alert_info!("  - Providing compile-time guarantees (catch errors early)");
     chicago_tdd_tools::alert_info!("  - Reducing boilerplate (less code to write)");

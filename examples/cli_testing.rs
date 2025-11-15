@@ -68,8 +68,8 @@
 //! - **Output Verification**: Assertions for command output
 //! - **Environment Isolation**: Automatic environment restoration
 
-use chicago_tdd_tools::cli::CliTest;
 #[cfg(feature = "cli-testing")]
+use chicago_tdd_tools::cli::CliTest;
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
 

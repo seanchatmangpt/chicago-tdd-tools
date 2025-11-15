@@ -12,7 +12,7 @@
 //! - **AAA Pattern**: Arrange (setup), Act (execute), Assert (snapshot comparison)
 
 #[cfg(feature = "snapshot-testing")]
-use insta::{assert_snapshot, assert_debug_snapshot, assert_json_snapshot, Settings};
+use insta::{assert_snapshot, assert_debug_snapshot, Settings};
 #[cfg(feature = "snapshot-testing")]
 use std::collections::HashMap;
 
@@ -163,7 +163,7 @@ impl SnapshotAssert {
     ///
     /// Like `assert_inline` but for JSON values.
     pub fn assert_inline_json(value: &serde_json::Value) {
-        assert_json_snapshot!(value);
+        assert_snapshot!(serde_json::to_string_pretty(value).unwrap_or_else(|_| "invalid json".to_string()));
     }
 
     /// Assert with redaction (v1.3.0)
@@ -175,7 +175,7 @@ impl SnapshotAssert {
     ///
     /// * `value` - The value to snapshot
     /// * `snapshot_name` - Name of the snapshot
-    /// * `redactions` - HashMap of selectors to redaction values
+    /// * `redactions` - `HashMap` of selectors to redaction values
     ///
     /// # Panics
     ///
@@ -209,16 +209,51 @@ impl SnapshotAssert {
         snapshot_name: &str,
         redactions: &HashMap<String, String>,
     ) {
-        Self::with_settings(
-            |settings| {
-                for (selector, replacement) in redactions {
-                    settings.add_redaction(selector, replacement.clone());
+        // Apply redactions by modifying the JSON value before snapshotting
+        let mut redacted_value = value.clone();
+        Self::apply_redactions(&mut redacted_value, redactions);
+        Self::assert_json_matches(&redacted_value, snapshot_name);
+    }
+
+    /// Apply redactions to a JSON value using dot-notation paths
+    fn apply_redactions(value: &mut serde_json::Value, redactions: &HashMap<String, String>) {
+        for (selector, replacement) in redactions {
+            let path: Vec<&str> = selector.trim_start_matches('.').split('.').collect();
+            Self::set_json_path(value, &path, serde_json::Value::String(replacement.clone()));
+        }
+    }
+
+    /// Set a value at a JSON path (dot-notation)
+    fn set_json_path(value: &mut serde_json::Value, path: &[&str], replacement: serde_json::Value) {
+        if path.is_empty() {
+            return;
+        }
+
+        match value {
+            serde_json::Value::Object(map) => {
+                let key = path[0];
+                if path.len() == 1 {
+                    map.insert(key.to_string(), replacement);
+                } else if let Some(nested) = map.get_mut(key) {
+                    Self::set_json_path(nested, &path[1..], replacement);
                 }
-            },
-            || {
-                Self::assert_json_matches(value, snapshot_name);
-            },
-        );
+            }
+            serde_json::Value::Array(arr) => {
+                if let Ok(index) = path[0].parse::<usize>() {
+                    if index < arr.len() {
+                        if path.len() == 1 {
+                            arr[index] = replacement;
+                        } else {
+                            Self::set_json_path(&mut arr[index], &path[1..], replacement);
+                        }
+                    }
+                }
+            }
+            _ => {
+                // For non-object/non-array values, we can't apply path-based redaction
+                // This is expected for leaf values
+            }
+        }
     }
 
     /// Assert with profile (v1.3.0)
@@ -595,6 +630,7 @@ mod tests {
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_inline_complex_struct() {
         #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used in Debug output
         struct TestStruct {
             name: String,
             value: i32,
