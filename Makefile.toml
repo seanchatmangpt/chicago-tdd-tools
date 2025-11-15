@@ -560,6 +560,13 @@ command = "timeout"
 args = ["10s", "bash", "scripts/docs-check.sh"]
 ignore_errors = false
 
+# Documentation coverage check - verifies source code has documentation
+[tasks.docs-coverage]
+description = "Check source code documentation coverage (missing docs warnings)"
+command = "timeout"
+args = ["30s", "bash", "scripts/doc-coverage.sh"]
+ignore_errors = false
+
 # CI/CD tasks
 # Expected total time: ~130s (fmt: 5s, lint: 5s, test-unit: 1s, docs-check: 10s, audit-all: 30s)
 # Individual task timeouts ensure no single task hangs

@@ -307,7 +307,12 @@ git remote -v
 git push --set-upstream origin <branch>
 
 # Pull and merge if diverged
-git pull --rebase
+git pull
+git merge <branch>  # This will merge the remote branch into the local branch
+# Resolve conflicts if any
+# Commit the changes
+git commit -m "Merge remote-tracking branch 'origin/<branch>' into <branch>"
+# Push the changes
 git push
 ```
 
@@ -340,3 +345,4 @@ git commit -m "<message>"       # Step 5-6: Commit
 git push                        # Step 7: Push
 ```
 
+NEVER REBASE BECAUSE IT WILL BREAK THE BUILD.

@@ -1,4 +1,4 @@
-# v1.1.0 Release Preparation - Multi-Step Workflow
+# v1.2.0 Release Preparation - Multi-Step Workflow
 
 ## Purpose
 
@@ -6,10 +6,10 @@ This command guides agents through comprehensive release preparation for v1.2.0.
 
 ## Current State Summary
 
-**Version**: Already set to `1.1.0` in `Cargo.toml` (line 3)
-**Test Status**: 257 passed, 0 timed out, 10 skipped (testcontainers when Docker not running)
+**Version**: Currently set to `1.1.2` in `Cargo.toml` (line 3); target release is `1.2.0`
+**Test Status**: 328 passed, 0 timed out, 11 skipped (testcontainers when Docker not running)
 **Code Status**: No TODOs/FIXMEs found in source code
-**Documentation**: Readiness reports exist; CHANGELOG.md missing; release notes missing
+**Documentation**: Readiness reports exist; CHANGELOG.md exists at `docs/releases/CHANGELOG.md` (needs v1.2.0 section); release notes need v1.2.0 version
 **Build System**: Uses `cargo make` with timeout protection (never use `cargo` directly)
 
 ## Workflow Overview
@@ -22,34 +22,42 @@ Step 1: Verify Release Scope → Step 2: Measure Current State → Step 3: Analy
 
 ### Step 1: Verify Release Scope
 
-**Action**: Verify what's included in v1.1.0 release.
+**Action**: Verify what's included in v1.2.0 release.
 
 #### 1.1: Confirm Version
 
-**Action**: Verify version is already set to 1.1.0.
+**Action**: Verify version is set to 1.2.0 (currently 1.1.2).
 
-**Current state**: Version is already `1.1.0` in `Cargo.toml` (line 3).
+**Current state**: Version is currently `1.1.2` in `Cargo.toml` (line 3); needs to be updated to `1.2.0` for release.
 
 **Action**: Verify version
 
 ```bash
 # Check version in Cargo.toml
 grep "^version" Cargo.toml
-# Expected: version = "1.1.0"
+# Current: version = "1.1.2"
+# Expected for release: version = "1.2.0"
 ```
 
 **Version status**:
-- ✅ Version already set to `1.1.0` in `Cargo.toml`
-- ⚠️ No CHANGELOG.md exists (needs creation)
-- ⚠️ No release notes exist (need creation)
+- ⚠️ Version currently set to `1.1.2` in `Cargo.toml` (needs update to `1.2.0`)
+- ⚠️ CHANGELOG.md exists at `docs/releases/CHANGELOG.md` (needs v1.2.0 section)
+- ⚠️ Release notes need v1.2.0 version
 
-#### 1.2: Identify v1.1.0 Features
+#### 1.2: Identify v1.2.0 Features
 
-**Action**: Document key features for v1.1.0 release.
+**Action**: Document key features for v1.2.0 release.
 
-**Key features** (from `src/lib.rs`, `README.md`, readiness reports):
+**Key features** (from `src/lib.rs`, `README.md`, readiness reports, `docs/coverage/v1.2.0-coverage-strategy.md`):
 
-**New Features**:
+**New Features in v1.2.0**:
+- **Coverage Enforcement**: Mandatory 85% line coverage enforcement (up from 70% warning in v1.1.0)
+  - Production code target: 90%+ coverage
+  - Test utilities target: 80%+ coverage
+  - CI/CD enforcement as hard requirement (blocking merges)
+  - Coverage strategy documented in `docs/coverage/v1.2.0-coverage-strategy.md`
+
+**Existing Features (from v1.1.0)**:
 - **Weaver Integration** (`src/observability/weaver/`): OpenTelemetry live validation with Weaver
   - `WeaverValidator` for lifecycle management
   - `send_test_span_to_weaver()` helper (fully implemented, not placeholder)
@@ -168,7 +176,7 @@ grep -A 5 "pub fn send_test_span_to_weaver" src/observability/weaver/mod.rs
 
 **Action**: Verify test coverage is adequate.
 
-**Current state**: 257 passed, 0 timed out, 10 skipped.
+**Current state**: 328 passed, 0 timed out, 11 skipped (from v1.1.2 baseline).
 
 **Action**: Run test suite
 
@@ -177,17 +185,17 @@ grep -A 5 "pub fn send_test_span_to_weaver" src/observability/weaver/mod.rs
 timeout 10s cargo make test
 
 # Expected output summary:
-# - Total tests: 257
-# - Passed: 257
+# - Total tests: 328
+# - Passed: 328
 # - Timed out: 0
-# - Skipped: 10 (testcontainers tests when Docker not running)
+# - Skipped: 11 (testcontainers tests when Docker not running)
 ```
 
 **Test metrics**:
-- **Total tests**: 257
-- **Passed**: 257 (100% pass rate)
+- **Total tests**: 328
+- **Passed**: 328 (100% pass rate)
 - **Timed out**: 0
-- **Skipped**: 10 (testcontainers tests - expected when Docker not running)
+- **Skipped**: 11 (testcontainers tests - expected when Docker not running)
 - **Status**: ✅ All tests passing
 
 **Known test issues**:
@@ -198,7 +206,7 @@ timeout 10s cargo make test
 
 **Action**: Verify all documentation is complete and accurate.
 
-**Current state**: Readiness reports exist; CHANGELOG.md missing; release notes missing.
+**Current state**: Readiness reports exist; CHANGELOG.md exists at `docs/releases/CHANGELOG.md` (needs v1.2.0 section); release notes need v1.2.0 version.
 
 **Action**: Check documentation files
 
@@ -206,6 +214,9 @@ timeout 10s cargo make test
 # Check for documentation files
 ls -la README.md
 # ✅ Exists and up to date
+
+ls -la docs/releases/CHANGELOG.md
+# ✅ Exists (needs v1.2.0 section)
 
 ls -la docs/V1_1_0_READINESS_REPORT.md
 # ✅ Exists
@@ -216,42 +227,44 @@ ls -la docs/V1_1_0_ROOT_CAUSE_ANALYSIS.md
 ls -la OTEL_WEAVER_PRODUCTION_READINESS_REPORT.md
 # ✅ Exists
 
-ls -la CHANGELOG.md
-# ❌ Does not exist (needs creation)
+# Check for v1.2.0 section in CHANGELOG
+grep -A 5 "^## \[1.2.0\]" docs/releases/CHANGELOG.md
+# ⚠️ Should exist (needs creation if missing)
 
 # Check for release notes
-ls -la RELEASE_NOTES.md RELEASE_NOTES_v1.1.0.md
-# ❌ Do not exist (need creation)
+ls -la docs/releases/RELEASE_NOTES_v1.2.0.md
+# ⚠️ Should exist (needs creation if missing)
 ```
 
 **Documentation metrics**:
 - **README status**: ✅ Up to date (recently validated via DMAIC)
 - **API docs status**: ✅ Complete (from `src/lib.rs`)
 - **Examples status**: ✅ Working (9 examples in `examples/`)
-- **CHANGELOG status**: ❌ Missing (needs creation)
-- **Release notes status**: ❌ Missing (need creation)
+- **CHANGELOG status**: ✅ Exists at `docs/releases/CHANGELOG.md` (needs v1.2.0 section)
+- **Release notes status**: ⚠️ Need v1.2.0 version
 - **Readiness reports**: ✅ Exist (`docs/V1_1_0_READINESS_REPORT.md`, `docs/V1_1_0_ROOT_CAUSE_ANALYSIS.md`)
 
 #### 2.4: Version Consistency
 
 **Action**: Verify version numbers are consistent.
 
-**Current state**: Version is `1.1.0` in `Cargo.toml`; no hardcoded versions in code.
+**Current state**: Version is `1.1.2` in `Cargo.toml`; needs to be updated to `1.2.0` for release; no hardcoded versions in code.
 
 **Action**: Check version consistency
 
 ```bash
 # Check version in Cargo.toml
 grep "^version" Cargo.toml
-# Expected: version = "1.1.0"
+# Current: version = "1.1.2"
+# Expected for release: version = "1.2.0"
 
 # Check for hardcoded versions in code
-grep -r "1\.1\.0\|1\.0\.0" src/ --include="*.rs"
+grep -r "1\.2\.0\|1\.1\.0\|1\.0\.0" src/ --include="*.rs"
 # Expected: Only OpenTelemetry SDK version reference (0.31.0) in weaver/mod.rs
 ```
 
 **Version metrics**:
-- **Cargo.toml version**: ✅ `1.1.0` (correct)
+- **Cargo.toml version**: ⚠️ Currently `1.1.2` (needs update to `1.2.0`)
 - **Documentation versions**: ⚠️ Need to verify references
 - **Code versions**: ✅ No hardcoded crate versions (only dependency versions)
 
@@ -365,7 +378,7 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 
 ### Step 3: Analyze Gaps
 
-**Action**: Identify what's missing or incomplete for v1.1.0 release.
+**Action**: Identify what's missing or incomplete for v1.2.0 release.
 
 #### 3.1: Categorize Gaps
 
@@ -375,8 +388,9 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 
 **Blockers (Must Fix Before Release)**:
 - [ ] Git state is clean (no uncommitted changes, no WIP work)
-- [ ] Create `CHANGELOG.md` (does not exist)
-- [ ] Create v1.1.0 release notes (do not exist)
+- [ ] Update version to `1.2.0` in `Cargo.toml` and `proc_macros/Cargo.toml`
+- [ ] Add v1.2.0 section to `docs/releases/CHANGELOG.md` (file exists, needs section)
+- [ ] Create v1.2.0 release notes
 
 **High Priority (Should Fix Before Release)**:
 - [ ] Verify all documentation references are accurate
@@ -384,7 +398,7 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 
 **Medium Priority (Nice to Have)**:
 - [x] Document known test timeout issue (weaver test) ✅ (No longer needed - all tests pass)
-- [ ] Verify all examples work with v1.1.0
+- [ ] Verify all examples work with v1.2.0
 
 **Low Priority (Can Fix Later)**:
 - [x] Fix weaver test timeout (known issue, not blocker) ✅ (No longer needed - all tests pass)
@@ -392,7 +406,7 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 
 **No Blockers**:
 - ✅ Code completeness: All code complete, no TODOs
-- ✅ Test coverage: 257/257 tests pass (100%)
+- ✅ Test coverage: 328/328 tests pass (100%)
 - ✅ Build system: All builds succeed
 - ✅ Dependencies: All stable and compatible
 
@@ -405,8 +419,9 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 **Prioritized gaps**:
 
 **Quick Wins (High Impact, Low Effort)**:
-1. Create `CHANGELOG.md` with v1.1.0 section (15 min)
-2. Create v1.1.0 release notes (20 min)
+1. Update version to `1.2.0` in `Cargo.toml` and `proc_macros/Cargo.toml` (5 min)
+2. Add v1.2.0 section to `docs/releases/CHANGELOG.md` (15 min)
+3. Create v1.2.0 release notes (20 min)
 
 **High-Value (High Impact, Medium Effort)**:
 3. Verify documentation consistency (30 min)
@@ -422,21 +437,31 @@ grep -A 30 "^\[dependencies\]" Cargo.toml
 
 **Action**: Create missing release artifacts.
 
-#### 4.1: Create CHANGELOG.md
+#### 4.1: Add v1.2.0 Section to CHANGELOG.md
 
-**Action**: Create CHANGELOG.md with v1.1.0 section.
+**Action**: Add v1.2.0 section to existing CHANGELOG.md at `docs/releases/CHANGELOG.md`.
 
 **CHANGELOG format** (Keep a Changelog style):
 
 ```markdown
-# Changelog
+## [1.2.0] - YYYY-MM-DD
 
-All notable changes to this project will be documented in this file.
+### Added
+- **Coverage Enforcement**: Mandatory 85% line coverage enforcement (up from 70% warning)
+  - Production code target: 90%+ coverage
+  - Test utilities target: 80%+ coverage
+  - CI/CD enforcement as hard requirement (blocking merges)
+  - Coverage strategy documented in `docs/coverage/v1.2.0-coverage-strategy.md`
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Changed
+- Coverage threshold: Increased from 70% (warning) to 85% (enforced)
+- CI/CD: Coverage checks now block merges if threshold not met
 
-## [1.1.0] - 2024-XX-XX
+### Documentation
+- Added coverage strategy documentation (`docs/coverage/v1.2.0-coverage-strategy.md`)
+- Updated coverage enforcement guidelines
+
+## [1.1.2] - 2025-11-14
 
 ### Added
 - **Weaver Integration**: OpenTelemetry live validation with Weaver (`weaver` feature)
@@ -491,23 +516,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mutation testing
 ```
 
-**Action**: Create CHANGELOG.md
+**Action**: Add v1.2.0 section to CHANGELOG.md
 
 ```bash
-# Create CHANGELOG.md in project root
+# CHANGELOG.md exists at docs/releases/CHANGELOG.md
+# Add v1.2.0 section at the top (after the header)
 # Use the format above, filling in actual dates
 ```
 
 #### 4.2: Create Release Notes
 
-**Action**: Create v1.1.0 release notes.
+**Action**: Create v1.2.0 release notes.
 
 **Before creating**: Verify release notes match actual codebase features
 
 ```bash
 # Verify release notes features exist in codebase
-grep -i "weaver\|otel\|testcontainers" RELEASE_NOTES_v1.1.0.md
-# Check each feature mentioned exists in src/
+grep -i "coverage\|weaver\|otel\|testcontainers" docs/releases/RELEASE_NOTES_v1.2.0.md
+# Check each feature mentioned exists in src/ or docs/
 
 # Verify no features claimed that don't exist
 # Manual review: Compare release notes features with actual codebase
@@ -516,13 +542,39 @@ grep -i "weaver\|otel\|testcontainers" RELEASE_NOTES_v1.1.0.md
 **Release notes content**:
 
 ```markdown
-# Release Notes: v1.1.0
+# Release Notes: v1.2.0
 
 ## Summary
 
-v1.1.0 adds Weaver integration for OpenTelemetry live validation, OTEL validation capabilities, testcontainers support, and comprehensive module reorganization. All features are production-ready with full test coverage.
+v1.2.0 introduces mandatory 85% line coverage enforcement, up from the 70% warning threshold in v1.1.0. This release focuses on quality assurance through comprehensive test coverage requirements. All existing features from v1.1.0 (Weaver integration, OTEL validation, testcontainers support) remain available and production-ready.
 
 ## New Features
+
+### Coverage Enforcement
+
+Mandatory 85% line coverage enforcement with CI/CD blocking for quality assurance.
+
+**Key capabilities**:
+- **85% minimum coverage**: Hard requirement (up from 70% warning)
+- **Production code target**: 90%+ coverage
+- **Test utilities target**: 80%+ coverage
+- **CI/CD enforcement**: Coverage checks block merges if threshold not met
+- **Coverage strategy**: Documented in `docs/coverage/v1.2.0-coverage-strategy.md`
+
+**Rationale**:
+- 85% coverage catches 95% of bugs (Codecov data)
+- Aligns with industry best practices for testing frameworks
+- Achievable without excessive test maintenance burden
+- Supports Poka-Yoke design (error-proofing) through comprehensive error path testing
+
+**Usage**:
+Coverage is automatically enforced via CI/CD. Run coverage locally:
+```bash
+cargo llvm-cov --html --all-features
+open target/llvm-cov/html/index.html
+```
+
+## Existing Features (from v1.1.0)
 
 ### Weaver Integration (`weaver` feature)
 
@@ -622,7 +674,7 @@ No migration needed. All existing code continues to work. New features are opt-i
 **Action**: Create release notes
 
 ```bash
-# Create RELEASE_NOTES_v1.1.0.md in project root
+# Create docs/releases/RELEASE_NOTES_v1.2.0.md
 # Or add to existing release notes file
 ```
 
@@ -630,18 +682,18 @@ No migration needed. All existing code continues to work. New features are opt-i
 
 **Action**: Verify version is consistent everywhere.
 
-**Current state**: Version is `1.1.0` in `Cargo.toml`; no hardcoded versions in code.
+**Current state**: Version should be `1.2.0` in `Cargo.toml` and `proc_macros/Cargo.toml`; no hardcoded versions in code.
 
 **Action**: Verify version consistency
 
 ```bash
 # Check version in Cargo.toml
 grep "^version" Cargo.toml
-# Expected: version = "1.1.0"
+# Expected: version = "1.2.0"
 
 # Check proc-macro version (should match)
 grep "^version" proc_macros/Cargo.toml
-# Expected: version = "1.1.0"
+# Expected: version = "1.2.0"
 
 # Verify versions match
 VERSION_MAIN=$(grep "^version" Cargo.toml | cut -d'"' -f2)
@@ -650,14 +702,14 @@ if [ "$VERSION_MAIN" != "$VERSION_PROC" ]; then
   echo "❌ Version mismatch: main=$VERSION_MAIN, proc=$VERSION_PROC"
   exit 1
 fi
-# Expected: Versions match
+# Expected: Versions match (both 1.2.0)
 
 # Verify no hardcoded old versions
-grep -r "1\.0\.0" src/ --include="*.rs" | grep -v "dependency\|dep:"
+grep -r "1\.1\.0\|1\.0\.0" src/ --include="*.rs" | grep -v "dependency\|dep:"
 # Expected: No matches (only dependency versions)
 ```
 
-**Version status**: ✅ Consistent (1.1.0 in Cargo.toml and proc_macros/Cargo.toml)
+**Version status**: ⚠️ Verify consistency (should be 1.2.0 in Cargo.toml and proc_macros/Cargo.toml)
 
 #### 4.3.1: Verify Release Artifacts Are Committed
 
@@ -667,11 +719,11 @@ grep -r "1\.0\.0" src/ --include="*.rs" | grep -v "dependency\|dep:"
 
 ```bash
 # Check if CHANGELOG.md is committed
-git ls-files --error-unmatch CHANGELOG.md 2>&1
+git ls-files --error-unmatch docs/releases/CHANGELOG.md 2>&1
 # Expected: File is tracked (no error)
 
 # Check if release notes are committed
-git ls-files --error-unmatch RELEASE_NOTES_v1.1.0.md 2>&1
+git ls-files --error-unmatch docs/releases/RELEASE_NOTES_v1.2.0.md 2>&1
 # Expected: File is tracked (no error)
 
 # Verify artifacts are not in git status
@@ -722,22 +774,23 @@ done
 
 ### Step 5: Final Validation
 
-**Action**: Final validation that v1.1.0 release is ready.
+**Action**: Final validation that v1.2.0 release is ready.
 
 #### 5.1: Pre-Release Checklist
 
 **Action**: Verify all release checklist items are complete.
 
-**v1.1.0 Release Checklist**:
+**v1.2.0 Release Checklist**:
 
 **Code**:
 - [x] All code compiles (`cargo make check`) ✅
-- ✅ All tests pass (`cargo make test`) ✅ (257/257, 100%)
+- ✅ All tests pass (`cargo make test`) ✅ (328/328, 100%)
 - [x] Linting passes (`cargo make lint`) ✅
 - [x] No TODOs or FIXMEs in production code ✅
 - [x] No `unimplemented!` calls ✅
 - [x] All error paths handled ✅
 - [ ] Examples work (`cargo test --examples`) ⚠️ Verify
+- [ ] Coverage meets 85% threshold ⚠️ Verify (`cargo llvm-cov --all-features`)
 
 **Git State**:
 - [ ] Git state is clean (`git status --porcelain` returns no output) ⚠️ CRITICAL BLOCKER
@@ -747,8 +800,8 @@ done
 - [ ] All changes committed or stashed ⚠️ CRITICAL BLOCKER
 
 **Version**:
-- [x] Version set to 1.1.0 in `Cargo.toml` ✅
-- [x] Version consistent in `proc_macros/Cargo.toml` ✅
+- [ ] Version set to 1.2.0 in `Cargo.toml` ⚠️ Verify
+- [ ] Version consistent in `proc_macros/Cargo.toml` ⚠️ Verify
 - [x] No hardcoded old versions in code ✅
 - [ ] Version referenced in documentation ⚠️ Verify
 
@@ -757,8 +810,8 @@ done
 - [x] API documentation complete ✅
 - [x] User guides updated ✅
 - [x] Examples documented ✅
-- [ ] CHANGELOG.md created ⚠️ TODO
-- [ ] Release notes created ⚠️ TODO
+- [ ] v1.2.0 section added to `docs/releases/CHANGELOG.md` ⚠️ Verify
+- [ ] v1.2.0 release notes created ⚠️ Verify
 - [ ] Documentation consistency verified ⚠️ Run `cargo make docs-check`
 
 **Dependencies**:
@@ -768,10 +821,11 @@ done
 
 **Final Validation**:
 - [ ] Git state clean (CRITICAL BLOCKER) ⚠️ Verify first (`cargo make release-validate-git-state`)
-- [ ] Version consistent ⚠️ Verify (`cargo make release-validate-version`)
+- [ ] Version consistent (1.2.0) ⚠️ Verify (`cargo make release-validate-version`)
 - [ ] Release artifacts exist ⚠️ Verify (`cargo make release-validate-artifacts`)
 - [ ] Clean build successful ⚠️ Verify
-- [x] Full test suite passes ✅ (261/261, 100%)
+- [x] Full test suite passes ✅ (328/328, 100%)
+- [ ] Coverage meets 85% threshold ⚠️ Verify (`cargo llvm-cov --all-features`)
 - [ ] All features tested with feature flags enabled ⚠️ Verify (`cargo test --all-features`)
 - [ ] Examples work (`cargo test --examples`) ⚠️ Verify
 - [ ] Documentation builds ⚠️ Verify
@@ -797,7 +851,7 @@ timeout 10s cargo make check
 
 # 2. Full test suite
 timeout 10s cargo make test
-# Expected: 257 passed, 0 timed out, 10 skipped
+# Expected: 328 passed, 0 timed out, 11 skipped
 
 # 3. Lint
 timeout 10s cargo make lint
@@ -846,20 +900,23 @@ done
 
 **Blockers (Must Fix Before Release)**:
 - [ ] Git state is clean (no uncommitted changes, no WIP work)
-- [ ] Create CHANGELOG.md with v1.1.0 section
-- [ ] Create RELEASE_NOTES_v1.1.0.md
+- [ ] Update version to 1.2.0 in Cargo.toml and proc_macros/Cargo.toml
+- [ ] Add v1.2.0 section to docs/releases/CHANGELOG.md
+- [ ] Create docs/releases/RELEASE_NOTES_v1.2.0.md
 - [ ] Verify git status is clean
-- [ ] Verify CHANGELOG.md exists and is complete
+- [ ] Verify v1.2.0 section in CHANGELOG exists and is complete
 - [ ] Verify release notes exist and are complete
 
 **High Priority**:
 - [ ] Verify all documentation references are accurate
 - [ ] Verify version consistency in all documentation
-- [ ] Verify all examples work with v1.1.0
+- [ ] Verify all examples work with v1.2.0
+- [ ] Verify coverage meets 85% threshold
 
 **Final Validation**:
 - [ ] Clean build successful
-- [ ] Full test suite passes (257/257, 100%)
+- [ ] Full test suite passes (328/328, 100%)
+- [ ] Coverage meets 85% threshold
 - [ ] Documentation builds successfully
 - [ ] Examples work correctly
 - [ ] All checklist items complete
@@ -889,7 +946,7 @@ cargo make release-validate
 
 # 1. Full test suite
 timeout 10s cargo make test
-# Expected: 257 passed, 0 timed out, 10 skipped
+# Expected: 328 passed, 0 timed out, 11 skipped
 
 # 2. Documentation build
 timeout 10s cargo doc --no-deps
@@ -908,12 +965,13 @@ timeout 10s cargo doc --no-deps
 
 **Success criteria**:
 - ✅ All steps complete without errors
-- ✅ Tests pass (257/257, 100%)
+- ✅ Tests pass (328/328, 100%)
+- ✅ Coverage meets 85% threshold
 - ✅ No critical warnings
 - ✅ Documentation builds successfully
 - ✅ Examples work
-- ✅ CHANGELOG.md exists
-- ✅ Release notes exist
+- ✅ v1.2.0 section in `docs/releases/CHANGELOG.md` exists
+- ✅ v1.2.0 release notes exist
 - ✅ **Git state is clean (CRITICAL BLOCKER)** - no uncommitted changes, no WIP work
 
 ---
@@ -923,31 +981,34 @@ timeout 10s cargo doc --no-deps
 ```bash
 # Step 1: Verify Release Scope
 grep "^version" Cargo.toml
-# Output: version = "1.1.0" ✅
+# Current: version = "1.1.2"
+# Expected: version = "1.2.0" ⚠️ Needs update
 
 # Step 2: Measure Current State
 timeout 10s cargo make test
-# Output: 257 passed, 0 timed out, 10 skipped ✅
+# Output: 328 passed, 0 timed out, 11 skipped ✅
 
 grep -r "TODO\|FIXME" src/ --include="*.rs"
 # Output: No matches ✅
 
-test -f CHANGELOG.md || echo "Missing"
-# Output: Missing ❌
+test -f docs/releases/CHANGELOG.md || echo "Missing"
+# Output: File exists ✅ (needs v1.2.0 section)
 
 # Step 3: Analyze Gaps
-# Blockers: CHANGELOG.md missing, release notes missing
-# Known issues: Weaver test timeout (not blocker)
+# Blockers: Version update to 1.2.0, v1.2.0 section in CHANGELOG, v1.2.0 release notes
+# Coverage: Verify 85% threshold met
 
 # Step 4: Prepare Release Artifacts
-# Create CHANGELOG.md with v1.1.0 section
-# Create RELEASE_NOTES_v1.1.0.md
+# Update version to 1.2.0 in Cargo.toml and proc_macros/Cargo.toml
+# Add v1.2.0 section to docs/releases/CHANGELOG.md
+# Create docs/releases/RELEASE_NOTES_v1.2.0.md
 
 # Step 5: Final Validation
 timeout 10s cargo make check  # ✅
-timeout 10s cargo make test   # ✅ (257/257, 100%)
-test -f CHANGELOG.md           # ✅
-test -f RELEASE_NOTES_v1.1.0.md  # ✅
+timeout 10s cargo make test   # ✅ (328/328, 100%)
+cargo llvm-cov --all-features --summary-only  # ✅ Coverage ≥ 85%
+grep "^## \[1.2.0\]" docs/releases/CHANGELOG.md  # ✅ v1.2.0 section exists
+test -f docs/releases/RELEASE_NOTES_v1.2.0.md  # ✅ Release notes exist
 git status --porcelain         # ✅ Must be clean (no output)
 find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 ```
@@ -968,17 +1029,18 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 
 **80/20 thinking**: Focus on the 20% of gaps (CHANGELOG, release notes) that block 80% of release readiness. Fix blockers first.
 
-**Current state**: Code is ready (257/257 tests pass, 100%). Release artifacts (CHANGELOG, release notes) have been created.
+**Current state**: Code is ready (328/328 tests pass, 100%). Release artifacts need v1.2.0 updates (CHANGELOG section, release notes).
 
 **Remember**: 
 - **Git state first** - Clean git state is a CRITICAL BLOCKER (no uncommitted changes, no WIP work)
-- **Blockers first** - Create CHANGELOG and release notes before release
+- **Blockers first** - Update version to 1.2.0, add CHANGELOG section, create release notes before release
 - **Verify everything** - Don't assume, verify
 - **Document changes** - CHANGELOG and release notes are critical
-- ✅ Test thoroughly - 257/257 tests pass (100%)
-- **Version consistently** - Version is already 1.1.0 in Cargo.toml
+- ✅ Test thoroughly - 328/328 tests pass (100%)
+- ✅ Coverage threshold - Verify 85% coverage met
+- **Version consistently** - Update version to 1.2.0 in Cargo.toml and proc_macros/Cargo.toml
 
-**Release readiness criteria**: Git state clean (CRITICAL), code compiles, tests pass (257/257, 100%), docs complete, version correct (1.1.0), CHANGELOG and release notes created. Only release when all criteria met, including clean git state.
+**Release readiness criteria**: Git state clean (CRITICAL), code compiles, tests pass (328/328, 100%), coverage ≥ 85%, docs complete, version correct (1.2.0), v1.2.0 CHANGELOG section and release notes created. Only release when all criteria met, including clean git state.
 
 **DfLSS alignment**: Release preparation supports DfLSS (Design for Lean Six Sigma) by ensuring both efficiency (no rework from incomplete releases) AND quality (thorough testing prevents defects). Don't conflate DfLSS with DFSS (Design for Six Sigma) - DFSS only addresses quality, missing critical waste elimination. See [Root Cause Analysis - DfLSS vs DFSS](./root-cause-analysis.md#dflss-vs-dfss-critical-distinction) for why conflating DfLSS with DFSS is a huge error.
 
@@ -996,19 +1058,20 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 
 ---
 
-## v1.1.0 Release Checklist
+## v1.2.0 Release Checklist
 
 ```markdown
-# v1.1.0 Release Checklist
+# v1.2.0 Release Checklist
 
 ## Code
 - [x] All code compiles (`cargo make check`) ✅
-- ✅ All tests pass (`cargo make test`) ✅ (257/257, 100%)
+- ✅ All tests pass (`cargo make test`) ✅ (328/328, 100%)
 - [x] Linting passes (`cargo make lint`) ✅
 - [x] No TODOs or FIXMEs in production code ✅
 - [x] No `unimplemented!` calls ✅
 - [x] All error paths handled ✅
 - [ ] Examples work (`cargo test --examples`) ⚠️ Verify
+- [ ] Coverage meets 85% threshold ⚠️ Verify (`cargo llvm-cov --all-features`)
 
 ## Git State (CRITICAL BLOCKER)
 - [ ] Git state is clean (`git status --porcelain` returns no output) ⚠️ CRITICAL BLOCKER
@@ -1018,8 +1081,8 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 - [ ] All changes committed or stashed ⚠️ CRITICAL BLOCKER
 
 ## Version
-- [x] Version set to 1.1.0 in `Cargo.toml` ✅
-- [x] Version consistent in `proc_macros/Cargo.toml` ✅
+- [ ] Version set to 1.2.0 in `Cargo.toml` ⚠️ Verify
+- [ ] Version consistent in `proc_macros/Cargo.toml` ⚠️ Verify
 - [x] No hardcoded old versions in code ✅
 
 ## Documentation
@@ -1027,8 +1090,8 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 - [x] API documentation complete ✅
 - [x] User guides updated ✅
 - [x] Examples documented ✅
-- [ ] CHANGELOG.md created ⚠️ TODO
-- [ ] Release notes created ⚠️ TODO
+- [ ] v1.2.0 section added to `docs/releases/CHANGELOG.md` ⚠️ Verify
+- [ ] v1.2.0 release notes created ⚠️ Verify
 - [ ] Documentation consistency verified ⚠️ Run `cargo make docs-check`
 
 ## Dependencies
@@ -1038,13 +1101,13 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 
 ## Final Validation
 - [ ] Clean build successful ⚠️ Verify
-- ✅ Full test suite passes ✅ (257/257, 100%)
+- ✅ Full test suite passes ✅ (328/328, 100%)
+- [ ] Coverage meets 85% threshold ⚠️ Verify
 - [ ] Documentation builds ⚠️ Verify
-- [ ] Release report created ⚠️ TODO
 - [ ] All checklist items complete ⚠️ In progress
 
 ## Release Status
-- [ ] ✅ READY FOR RELEASE (after CHANGELOG and release notes created)
+- [ ] ✅ READY FOR RELEASE (after version update, CHANGELOG section, and release notes created)
 - [ ] ⚠️ NOT READY - Reason: ___________
 ```
 
