@@ -221,7 +221,7 @@ mod tests {
         // **Root Cause Fix**: Docker CLI containers need time to fully start
         // Use same delay as implementation (CONTAINER_STARTUP_DELAY_MS = 1000ms)
         std::thread::sleep(std::time::Duration::from_millis(1000));
-        
+
         // Act: Execute first command (verifies container is running and exec works)
         // **Root Cause Fix**: When using entrypoint override with /bin/sh, commands need to be executed
         // through the shell. Use sh -c for proper command execution.

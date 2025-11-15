@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-14
+
+### Added
+- **Coverage Enforcement**: Mandatory 85% line coverage enforcement (up from 70% warning in v1.1.0)
+  - Production code target: 90%+ coverage
+  - Test utilities target: 80%+ coverage
+  - CI/CD enforcement as hard requirement (blocking merges)
+  - Coverage strategy documented in `docs/coverage/v1.2.0-coverage-strategy.md`
+
+### Changed
+- **Coverage Threshold**: Increased from 70% (warning) to 85% (enforced)
+  - 85% coverage catches 95% of bugs (Codecov data)
+  - Aligns with industry best practices for testing frameworks
+  - Achievable without excessive test maintenance burden
+- **CI/CD**: Coverage checks now block merges if threshold not met
+  - Hard requirement instead of warning-only
+  - Supports Poka-Yoke design (error-proofing) through comprehensive error path testing
+
+### Documentation
+- Added coverage strategy documentation (`docs/coverage/v1.2.0-coverage-strategy.md`)
+- Updated coverage enforcement guidelines
+- Documented rationale for 85% threshold (coverage science, Chicago TDD context)
+
 ## [1.1.2] - 2025-11-14
 
 ### Fixed

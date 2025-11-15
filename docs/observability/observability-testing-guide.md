@@ -1,4 +1,4 @@
-# Comprehensive Observability Testing Guide - v1.1.2
+# Comprehensive Observability Testing Guide - v1.2.0
 
 ## What is Observability Testing?
 
@@ -88,7 +88,7 @@ Chicago TDD Tools provides comprehensive observability testing capabilities:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.1.2", features = ["otel", "weaver"] }
+chicago-tdd-tools = { version = "1.2.0", features = ["otel", "weaver"] }
 ```
 
 ### Step 2: Create Test

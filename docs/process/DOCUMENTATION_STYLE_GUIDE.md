@@ -123,13 +123,13 @@ assert_eq!(42, 42)?;
 ## Version References
 
 ### Current Version
-- **Current**: 1.1.2 (published to crates.io)
+- **Current**: 1.2.0 (published to crates.io)
 - **Always use current version** in examples and installation instructions
 - **Exception**: Future feature docs can reference planned versions with clear status
 
 ### Version Format
 ```toml
-chicago-tdd-tools = { version = "1.1.2", features = ["feature-name"] }
+chicago-tdd-tools = { version = "1.2.0", features = ["feature-name"] }
 ```
 
 ### Version-Specific Docs
@@ -233,7 +233,7 @@ All major documentation should include:
 
 - [ ] Heading hierarchy limited to 4 levels
 - [ ] Code examples match format for document type
-- [ ] Version numbers are current (1.1.2)
+- [ ] Version numbers are current (1.2.0)
 - [ ] Build commands use `cargo make`
 - [ ] Cross-references included (Quick Navigation + See Also)
 - [ ] Terminology is consistent
@@ -317,7 +317,7 @@ Run with `cargo test`.  // Wrong command
 
 **Code Examples**: Full in getting started, minimal in quick guides, signature-focused in API reference
 
-**Terminology**: Consistent terms, backticks for code, current version (1.1.2)
+**Terminology**: Consistent terms, backticks for code, current version (1.2.0)
 
 **Commands**: Always `cargo make`, never direct `cargo` commands
 

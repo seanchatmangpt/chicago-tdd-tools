@@ -1,4 +1,4 @@
-# CLI Testing Guide - v1.1.2
+# CLI Testing Guide - v1.2.0
 
 ## Overview
 
@@ -22,7 +22,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.1.2", features = ["cli-testing"] }
+chicago-tdd-tools = { version = "1.2.0", features = ["cli-testing"] }
 ```
 
 ### Basic Test

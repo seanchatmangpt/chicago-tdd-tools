@@ -14,6 +14,28 @@ pub mod poka_yoke;
 pub mod types;
 
 /// Weaver validation error
+///
+/// Errors that can occur during Weaver validation operations.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::observability::weaver::WeaverValidationError;
+///
+/// // Handle specific error types
+/// let error = WeaverValidationError::BinaryNotFound;
+/// match error {
+///     WeaverValidationError::BinaryNotFound => {
+///         eprintln!("Weaver binary not found. Install with: cargo install weaver");
+///     }
+///     WeaverValidationError::ValidationFailed(msg) => {
+///         eprintln!("Validation failed: {}", msg);
+///     }
+///     _ => {
+///         eprintln!("Other Weaver error occurred");
+///     }
+/// }
+/// ```
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found
@@ -253,7 +275,7 @@ impl Drop for WeaverValidator {
         // This prevents blocking HTTP client from being called in async Drop context
         if self.process.is_some() {
             // Try to stop, but don't panic if it fails (we're in Drop)
-            let _ = self.stop();
+        let _ = self.stop();
         }
     }
 }

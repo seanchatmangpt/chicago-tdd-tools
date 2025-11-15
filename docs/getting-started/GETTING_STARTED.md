@@ -37,7 +37,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools" }  # Or use git URL when pub
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-**Note**: For GitHub users, use `chicago-tdd-tools = "1.1.2"` when published to crates.io.
+**Note**: For GitHub users, use `chicago-tdd-tools = "1.2.0"` when published to crates.io.
 
 **Step 3**: Verify installation: `cargo make check`. If errors: verify path, Rust edition 2021, Tokio in dev-dependencies.
 

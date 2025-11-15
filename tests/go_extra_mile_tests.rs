@@ -9,15 +9,22 @@
 //! **CRITICAL**: These tests do NOT use testcontainers, do NOT require Docker,
 //! and do NOT start Weaver CLI. They only test Rust types and validators.
 
-#[cfg(feature = "weaver")]
-use chicago_tdd_tools::observability::weaver::WeaverValidator;
-
 #[cfg(test)]
 mod tests {
     use chicago_tdd_tools::assert_eq_msg;
     use chicago_tdd_tools::core::builders::TestDataBuilder;
     use chicago_tdd_tools::test;
-    use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
+    use chicago_tdd_tools::{assert_ok, AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
+    
+    // **Poka-yoke**: Import validators only where used (conditionally compiled)
+    #[cfg(feature = "otel")]
+    use chicago_tdd_tools::observability::otel::{MetricValidator, OtelTestHelper, SpanValidator};
+    
+    #[cfg(feature = "otel")]
+    use chicago_tdd_tools::assertions::assert_that_with_msg;
+    
+    #[cfg(feature = "otel")]
+    use chicago_tdd_tools::ValidatedAssertion;
 
     // ========================================================================
     // 1st Idea Tests: Basic implementations
@@ -214,6 +221,8 @@ mod tests {
     test!(test_weaver_validator_creation, {
         // Arrange: Create registry path
         use std::path::PathBuf;
+        // **Poka-yoke**: Import only where used to prevent unused import errors
+        use chicago_tdd_tools::observability::weaver::WeaverValidator;
         let registry_path = PathBuf::from("registry/");
 
         // Act: Create Weaver validator

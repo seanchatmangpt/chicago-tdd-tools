@@ -603,10 +603,10 @@ pub fn max_batch_size() -> usize {
 /// Timeout value as `u64` (seconds). For type-safe usage, validate with `PositiveTimeout`:
 ///
 /// ```rust,no_run
-/// use chicago_tdd_tools::core::config;
+/// use chicago_tdd_tools::core::config::loading;
 /// use chicago_tdd_tools::core::config::poka_yoke::PositiveTimeout;
 ///
-/// let timeout = PositiveTimeout::new(config::testcontainers_container_wait_timeout_seconds())
+/// let timeout = PositiveTimeout::new(loading::testcontainers_container_wait_timeout_seconds())
 ///     .expect("Config should provide valid timeout > 0");
 /// ```
 ///
@@ -623,6 +623,27 @@ pub fn testcontainers_container_wait_timeout_seconds() -> u64 {
 /// Get HTTP connection timeout from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Timeout value as `u64` (seconds). For type-safe usage, validate with `PositiveTimeout`:
+///
+/// ```rust,no_run
+/// use chicago_tdd_tools::core::config::loading;
+/// use chicago_tdd_tools::core::config::poka_yoke::PositiveTimeout;
+///
+/// let timeout = PositiveTimeout::new(loading::testcontainers_http_connection_timeout_seconds())
+///     .expect("Config should provide valid timeout > 0");
+/// ```
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let timeout = loading::testcontainers_http_connection_timeout_seconds();
+/// assert!(timeout > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_http_connection_timeout_seconds() -> u64 {
     read_config_value(
@@ -641,11 +662,11 @@ pub fn testcontainers_http_connection_timeout_seconds() -> u64 {
 /// Port value as `u16`. For type-safe usage, validate with `NonZeroPort`:
 ///
 /// ```rust,no_run
-/// use chicago_tdd_tools::core::config;
+/// use chicago_tdd_tools::core::config::loading;
 /// use chicago_tdd_tools::core::config::poka_yoke::NonZeroPort;
 ///
 /// // Validate config value
-/// let port_value = config::testcontainers_default_http_port();
+/// let port_value = loading::testcontainers_default_http_port();
 /// let port = NonZeroPort::new(port_value)
 ///     .expect("Config should provide valid port > 0");
 ///
@@ -668,10 +689,10 @@ pub fn testcontainers_default_http_port() -> u16 {
 /// Port value as `u16`. For type-safe usage, validate with `NonZeroPort`:
 ///
 /// ```rust,no_run
-/// use chicago_tdd_tools::core::config;
+/// use chicago_tdd_tools::core::config::loading;
 /// use chicago_tdd_tools::core::config::poka_yoke::NonZeroPort;
 ///
-/// let port = NonZeroPort::new(config::testcontainers_default_https_port())
+/// let port = NonZeroPort::new(loading::testcontainers_default_https_port())
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///
@@ -684,6 +705,27 @@ pub fn testcontainers_default_https_port() -> u16 {
 /// Get default HTTP alternate port from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Port value as `u16`. For type-safe usage, validate with `NonZeroPort`:
+///
+/// ```rust,no_run
+/// use chicago_tdd_tools::core::config::loading;
+/// use chicago_tdd_tools::core::config::poka_yoke::NonZeroPort;
+///
+/// let port = NonZeroPort::new(loading::testcontainers_default_http_alt_port())
+///     .expect("Config should provide valid port > 0");
+/// ```
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let port = loading::testcontainers_default_http_alt_port();
+/// assert!(port > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_default_http_alt_port() -> u16 {
     read_config_value_u16("testcontainers", "default_http_alt_port", DEFAULT_HTTP_ALT_PORT)
@@ -692,6 +734,19 @@ pub fn testcontainers_default_http_alt_port() -> u16 {
 /// Get concurrent containers count from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Maximum number of containers that can run concurrently.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let count = loading::testcontainers_concurrent_containers_count();
+/// assert!(count > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_concurrent_containers_count() -> usize {
     read_config_value_usize(
@@ -704,6 +759,19 @@ pub fn testcontainers_concurrent_containers_count() -> usize {
 /// Get concurrent commands count from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Maximum number of commands that can execute concurrently.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let count = loading::testcontainers_concurrent_commands_count();
+/// assert!(count > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_concurrent_commands_count() -> usize {
     read_config_value_usize(
@@ -716,6 +784,19 @@ pub fn testcontainers_concurrent_commands_count() -> usize {
 /// Get multi-container count from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Default number of containers to use in multi-container test scenarios.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let count = loading::testcontainers_multi_container_count();
+/// assert!(count > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_multi_container_count() -> usize {
     read_config_value_usize(
@@ -728,6 +809,19 @@ pub fn testcontainers_multi_container_count() -> usize {
 /// Get commands per container from config (with fallback to constant)
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
+///
+/// # Returns
+///
+/// Default number of commands to execute per container in test scenarios.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// let count = loading::testcontainers_commands_per_container();
+/// assert!(count > 0);
+/// ```
 #[must_use]
 pub fn testcontainers_commands_per_container() -> usize {
     read_config_value_usize(
@@ -750,10 +844,10 @@ pub fn testcontainers_commands_per_container() -> usize {
 /// Port value as `u16`. For type-safe usage, validate with `NonZeroPort`:
 ///
 /// ```rust,no_run
-/// use chicago_tdd_tools::core::config;
+/// use chicago_tdd_tools::core::config::loading;
 /// use chicago_tdd_tools::core::config::poka_yoke::NonZeroPort;
 ///
-/// let port = NonZeroPort::new(config::weaver_otlp_grpc_port())
+/// let port = NonZeroPort::new(loading::weaver_otlp_grpc_port())
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///

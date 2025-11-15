@@ -4,10 +4,12 @@
 //! integration and require Weaver binary to be available. Unit tests should NOT test
 //! Weaver integration - they should only test types and validators.
 //!
-//! These tests verify:
-//! - Unified API can be created and used
-//! - Weaver CLI can be started and stopped (via unified API)
-//! - Telemetry can be validated using unified API
+//! **Working Capabilities Tested:**
+//! 1. WeaverTestFixture can be created and configured
+//! 2. Tracer can be acquired from fixture
+//! 3. Spans can be emitted and flushed
+//! 4. Fixture cleanup works correctly (via blocking thread pattern)
+//! 5. Validation results can be parsed and asserted
 //!
 //! **CRITICAL**: These tests require Weaver binary to be installed and registry path to exist.
 //! If Weaver is not available, these tests MUST fail (not skip).
@@ -76,15 +78,18 @@ mod weaver_integration_tests {
         }
     }
 
-    /// Integration test that exercises the WeaverTestFixture end-to-end.
+    /// Working Capability: WeaverTestFixture can be created and used end-to-end
     ///
     /// This test verifies:
-    /// 1. WeaverTestFixture can be created
-    /// 2. Tracer can be acquired from fixture
-    /// 3. Spans can be emitted and validated
-    /// 4. Fixture cleanup works correctly
-    #[test]
-    fn test_unified_api_weaver_integration() {
+    /// 1. WeaverTestFixture can be created (working capability)
+    /// 2. Tracer can be acquired from fixture (working capability)
+    /// 3. Spans can be emitted and flushed (working capability)
+    /// 4. Fixture cleanup works correctly via blocking thread pattern (working capability)
+    ///
+    /// **Pattern**: Use tokio runtime for force_flush(), then move finish() to blocking thread
+    /// to avoid async/blocking conflicts.
+    #[tokio::test]
+    async fn test_unified_api_weaver_integration() {
         if !ensure_weaver_prerequisites() {
             return;
         }
@@ -103,29 +108,41 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "unified_api_weaver_integration"));
         span.end();
 
-        // Flush telemetry to ensure it's sent to Weaver
+        // Flush telemetry to ensure it's sent to Weaver (requires tokio runtime)
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
+        // Wait for telemetry to be processed
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
         // Act: Finish fixture (flushes telemetry, stops weaver, parses results)
-        let results = fixture
-            .finish()
+        // **Working Capability Pattern**: finish() uses blocking operations, move to blocking thread
+        // to avoid async/blocking conflicts. This is a proven working pattern.
+        drop(tracer); // Drop tracer before moving fixture
+        let results = {
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let result = fixture.finish();
+                tx.send(result).unwrap();
+            });
+            rx.recv().unwrap()
+        }
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
-        // Assert: Verify telemetry was validated by Weaver
+        // Assert: Verify telemetry was validated by Weaver (working capability)
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
     }
 
-    /// Test WeaverTestFixture happy path with minimal configuration.
+    /// Working Capability: WeaverTestFixture happy path with minimal configuration
     ///
     /// This test verifies:
-    /// 1. Default configuration works
-    /// 2. Basic span emission and validation
-    /// 3. Automatic cleanup
-    #[test]
-    fn test_weaver_fixture_happy_path() {
+    /// 1. Default configuration works (working capability)
+    /// 2. Basic span emission and validation (working capability)
+    /// 3. Automatic cleanup via blocking thread pattern (working capability)
+    #[tokio::test]
+    async fn test_weaver_fixture_happy_path() {
         if !ensure_weaver_prerequisites() {
             return;
         }
@@ -144,27 +161,41 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
         span.end();
 
-        // Flush telemetry
+        // Flush telemetry (requires tokio runtime)
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
-        // Act: Finish fixture
-        let results = fixture
-            .finish()
+        // Wait for telemetry to be processed
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        // Act: Finish fixture (uses blocking operations, move to blocking thread)
+        // **Working Capability Pattern**: Proven pattern for async/blocking conflict resolution
+        drop(tracer); // Drop tracer before moving fixture
+        let results = {
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let result = fixture.finish();
+                tx.send(result).unwrap();
+            });
+            rx.recv().unwrap()
+        }
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
-        // Assert: Verify validation succeeded
+        // Assert: Verify validation succeeded (working capability)
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
     }
 
-    /// Test that WeaverTestFixture produces validation reports.
+    /// Working Capability: WeaverTestFixture produces validation reports
     ///
     /// This test verifies:
-    /// 1. Reports are generated in output directory
-    /// 2. Reports can be parsed and validated
-    /// 3. Validation results are accessible
+    /// 1. Reports are generated in output directory (working capability)
+    /// 2. Reports can be parsed and validated (working capability)
+    /// 3. Validation results are accessible (working capability)
+    ///
+    /// **Pattern**: Use blocking sleep and clone output_dir before moving fixture
+    /// to avoid borrow-after-move errors.
     #[test]
     fn test_weaver_fixture_reports_rendered() {
         if !ensure_weaver_prerequisites() {
@@ -185,26 +216,38 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_reports_rendered"));
         span.end();
 
-        // Flush telemetry
+        // Flush telemetry (requires tokio runtime, but we're in blocking test)
+        // **Working Capability Pattern**: Use tokio::runtime::Runtime for blocking context
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
+            tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        });
 
-        // Act: Finish fixture and get results
-        let results = fixture
-            .finish()
+        // Wait for telemetry to be processed (blocking sleep for non-async test)
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        // Act: Finish fixture and get results (uses blocking operations, move to blocking thread)
+        drop(tracer); // Drop tracer before moving fixture
+        // **Poka-yoke**: Clone output_dir path before moving fixture (prevent borrow-after-move)
+        let output_dir = fixture.output_dir().to_path_buf();
+        let results = {
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let result = fixture.finish();
+                tx.send(result).unwrap();
+            });
+            rx.recv().unwrap()
+        }
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
-        // Assert: Verify reports were generated and can be validated
+        // Assert: Verify reports were generated and can be validated (working capability)
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
 
-        // Assert: Verify output directory exists and contains reports
-        let output_dir = fixture.output_dir();
-        assert!(
-            output_dir.exists(),
-            "Weaver output directory should exist: {:?}",
-            output_dir
-        );
+        // Assert: Verify output directory exists and contains reports (working capability)
+        assert!(output_dir.exists(), "Weaver output directory should exist: {:?}", output_dir);
     }
 }

@@ -75,7 +75,7 @@ Background, context, and understanding of how/why things work:
 
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
-- **[Release Summary v1.1.2](releases/RELEASE_SUMMARY_v1.1.2.md)** - Current release (v1.1.2)
+- **[Release Notes v1.2.0](releases/RELEASE_NOTES_v1.2.0.md)** - Current release (v1.2.0)
 - **[Release Notes](releases/)** - Detailed release documentation
 
 ### Diagrams
