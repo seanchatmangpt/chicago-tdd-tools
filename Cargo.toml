@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
 description = "Chicago TDD testing framework and tools for Rust projects"
-repository = "https://github.com/seanchatmangpt/knhk"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
 keywords = ["testing", "tdd", "chicago-tdd", "test-framework"]
 categories = ["development-tools::testing"]
 

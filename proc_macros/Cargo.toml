@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
 description = "Procedural macros for chicago-tdd-tools"
-repository = "https://github.com/seanchatmangpt/knhk"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
 
 [lib]
 proc-macro = true
