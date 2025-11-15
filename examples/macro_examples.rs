@@ -182,7 +182,7 @@ mod macro_examples {
         assert_err!(&result, "Result should be Err");
     });
 
-    /// Example: Test with custom assertion messages
+    // Example: Test with custom assertion messages
     ///
     /// ## How-to: Add Custom Messages to Assertions
     ///
