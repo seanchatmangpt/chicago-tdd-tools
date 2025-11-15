@@ -6,6 +6,9 @@
 //! - Range assertions (`assert_in_range`)
 //! - Equality assertions (`assert_eq_msg`, `assert_eq_enhanced`)
 //! - Guard constraint assertions (`assert_guard_constraint`)
+//! - Collection assertions (`assert_contains`, `assert_not_contains`, `assert_subset`, `assert_superset`) - v1.3.0
+//! - JSON assertions (`assert_json_eq`) - v1.3.0
+//! - Approximate equality (`assert_approx_eq`) - v1.3.0
 
 /// Assert that a result is successful with detailed error message
 ///
@@ -267,6 +270,311 @@ macro_rules! assert_guard_constraint {
     };
 }
 
+// ============================================================================
+// v1.3.0 NEW ASSERTIONS
+// ============================================================================
+
+/// Assert that a collection contains an item
+///
+/// **New in v1.3.0**: Simplifies common collection testing scenarios.
+///
+/// Provides better error messages than manual iteration checks.
+/// Works with any type that implements `IntoIterator` where items implement `PartialEq + Debug`.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_contains;
+///
+/// let numbers = vec![1, 2, 3, 4, 5];
+/// assert_contains!(numbers, 3);
+///
+/// // With custom message
+/// let users = vec!["alice", "bob", "charlie"];
+/// assert_contains!(users, "bob", "User should exist");
+/// ```
+#[macro_export]
+macro_rules! assert_contains {
+    ($collection:expr, $item:expr) => {{
+        let collection_ref = &$collection;
+        let item_ref = &$item;
+        let found = collection_ref.into_iter().any(|x| x == item_ref);
+        if !found {
+            panic!(
+                "Collection does not contain item.\n  collection: {:?}\n  missing item: {:?}",
+                collection_ref, item_ref
+            );
+        }
+    }};
+    ($collection:expr, $item:expr, $msg:expr) => {{
+        let collection_ref = &$collection;
+        let item_ref = &$item;
+        let found = collection_ref.into_iter().any(|x| x == item_ref);
+        if !found {
+            panic!(
+                "{}: Collection does not contain item.\n  collection: {:?}\n  missing item: {:?}",
+                $msg, collection_ref, item_ref
+            );
+        }
+    }};
+}
+
+/// Assert that a collection does not contain an item
+///
+/// **New in v1.3.0**: Inverse of `assert_contains!`.
+///
+/// Provides better error messages for negative collection checks.
+/// Works with any type that implements `IntoIterator` where items implement `PartialEq + Debug`.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_not_contains;
+///
+/// let numbers = vec![1, 2, 3, 4, 5];
+/// assert_not_contains!(numbers, 6);
+///
+/// // With custom message
+/// let banned_users = vec!["alice", "bob"];
+/// assert_not_contains!(banned_users, "charlie", "User should not be banned");
+/// ```
+#[macro_export]
+macro_rules! assert_not_contains {
+    ($collection:expr, $item:expr) => {{
+        let collection_ref = &$collection;
+        let item_ref = &$item;
+        let found = collection_ref.into_iter().any(|x| x == item_ref);
+        if found {
+            panic!(
+                "Collection contains item that should not be present.\n  collection: {:?}\n  unexpected item: {:?}",
+                collection_ref, item_ref
+            );
+        }
+    }};
+    ($collection:expr, $item:expr, $msg:expr) => {{
+        let collection_ref = &$collection;
+        let item_ref = &$item;
+        let found = collection_ref.into_iter().any(|x| x == item_ref);
+        if found {
+            panic!(
+                "{}: Collection contains item that should not be present.\n  collection: {:?}\n  unexpected item: {:?}",
+                $msg, collection_ref, item_ref
+            );
+        }
+    }};
+}
+
+/// Assert that one collection is a subset of another
+///
+/// **New in v1.3.0**: Validates subset relationships between collections.
+///
+/// Checks that all items in `subset` are present in `superset`.
+/// Works with any type that implements `IntoIterator` where items implement `PartialEq + Debug`.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_subset;
+///
+/// let all_features = vec!["feature_a", "feature_b", "feature_c"];
+/// let enabled_features = vec!["feature_a", "feature_c"];
+/// assert_subset!(enabled_features, all_features);
+///
+/// // With custom message
+/// let allowed_roles = vec!["admin", "user", "guest"];
+/// let user_roles = vec!["user"];
+/// assert_subset!(user_roles, allowed_roles, "User roles must be allowed");
+/// ```
+#[macro_export]
+macro_rules! assert_subset {
+    ($subset:expr, $superset:expr) => {{
+        let subset_ref = &$subset;
+        let superset_ref = &$superset;
+        let subset_vec: Vec<_> = subset_ref.into_iter().collect();
+        let superset_vec: Vec<_> = superset_ref.into_iter().collect();
+
+        let missing: Vec<_> = subset_vec
+            .iter()
+            .filter(|item| !superset_vec.contains(item))
+            .collect();
+
+        if !missing.is_empty() {
+            panic!(
+                "Subset contains items not in superset.\n  subset: {:?}\n  superset: {:?}\n  missing from superset: {:?}",
+                subset_vec, superset_vec, missing
+            );
+        }
+    }};
+    ($subset:expr, $superset:expr, $msg:expr) => {{
+        let subset_ref = &$subset;
+        let superset_ref = &$superset;
+        let subset_vec: Vec<_> = subset_ref.into_iter().collect();
+        let superset_vec: Vec<_> = superset_ref.into_iter().collect();
+
+        let missing: Vec<_> = subset_vec
+            .iter()
+            .filter(|item| !superset_vec.contains(item))
+            .collect();
+
+        if !missing.is_empty() {
+            panic!(
+                "{}: Subset contains items not in superset.\n  subset: {:?}\n  superset: {:?}\n  missing from superset: {:?}",
+                $msg, subset_vec, superset_vec, missing
+            );
+        }
+    }};
+}
+
+/// Assert that one collection is a superset of another
+///
+/// **New in v1.3.0**: Validates superset relationships between collections.
+///
+/// Checks that all items in `subset` are present in `superset`.
+/// This is the inverse of `assert_subset!` for better readability in some contexts.
+/// Works with any type that implements `IntoIterator` where items implement `PartialEq + Debug`.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_superset;
+///
+/// let all_features = vec!["feature_a", "feature_b", "feature_c"];
+/// let enabled_features = vec!["feature_a", "feature_c"];
+/// assert_superset!(all_features, enabled_features);
+///
+/// // With custom message
+/// let all_permissions = vec!["read", "write", "execute"];
+/// let user_permissions = vec!["read"];
+/// assert_superset!(all_permissions, user_permissions, "All permissions must include user permissions");
+/// ```
+#[macro_export]
+macro_rules! assert_superset {
+    ($superset:expr, $subset:expr) => {{
+        $crate::assert_subset!($subset, $superset);
+    }};
+    ($superset:expr, $subset:expr, $msg:expr) => {{
+        $crate::assert_subset!($subset, $superset, $msg);
+    }};
+}
+
+/// Assert that two JSON values are semantically equal
+///
+/// **New in v1.3.0**: Semantic JSON comparison with pretty-printed diffs.
+///
+/// Compares JSON values semantically:
+/// - Ignores key order in objects
+/// - Ignores whitespace differences
+/// - Provides pretty-printed diff on failure
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_json_eq;
+/// use serde_json::json;
+///
+/// let actual = json!({
+///     "name": "Alice",
+///     "age": 30
+/// });
+/// let expected = json!({
+///     "age": 30,
+///     "name": "Alice"
+/// });
+/// assert_json_eq!(actual, expected); // Passes despite different key order
+///
+/// // With custom message
+/// let response = json!({"status": "ok"});
+/// let expected_response = json!({"status": "ok"});
+/// assert_json_eq!(response, expected_response, "API response should match");
+/// ```
+#[macro_export]
+macro_rules! assert_json_eq {
+    ($actual:expr, $expected:expr) => {{
+        let actual_ref = &$actual;
+        let expected_ref = &$expected;
+        if actual_ref != expected_ref {
+            let actual_pretty = serde_json::to_string_pretty(actual_ref)
+                .unwrap_or_else(|_| format!("{:?}", actual_ref));
+            let expected_pretty = serde_json::to_string_pretty(expected_ref)
+                .unwrap_or_else(|_| format!("{:?}", expected_ref));
+            panic!(
+                "JSON values are not equal.\n  actual:\n{}\n  expected:\n{}",
+                actual_pretty, expected_pretty
+            );
+        }
+    }};
+    ($actual:expr, $expected:expr, $msg:expr) => {{
+        let actual_ref = &$actual;
+        let expected_ref = &$expected;
+        if actual_ref != expected_ref {
+            let actual_pretty = serde_json::to_string_pretty(actual_ref)
+                .unwrap_or_else(|_| format!("{:?}", actual_ref));
+            let expected_pretty = serde_json::to_string_pretty(expected_ref)
+                .unwrap_or_else(|_| format!("{:?}", expected_ref));
+            panic!(
+                "{}: JSON values are not equal.\n  actual:\n{}\n  expected:\n{}",
+                $msg, actual_pretty, expected_pretty
+            );
+        }
+    }};
+}
+
+/// Assert that two floating-point values are approximately equal
+///
+/// **New in v1.3.0**: Floating-point comparison with configurable tolerance.
+///
+/// Compares floating-point values within a specified epsilon (tolerance).
+/// Works with `f32` and `f64` types.
+/// Provides clear failure messages showing the actual difference.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::assert_approx_eq;
+///
+/// let pi = 3.14159265_f64;
+/// let approx_pi = 3.14_f64;
+/// assert_approx_eq!(pi, approx_pi, 0.01);
+///
+/// // With custom message
+/// let calculated = 2.0_f64 / 3.0_f64;
+/// let expected = 0.6667_f64;
+/// assert_approx_eq!(calculated, expected, 0.0001, "Division result should be close");
+/// ```
+#[macro_export]
+macro_rules! assert_approx_eq {
+    ($actual:expr, $expected:expr, $epsilon:expr) => {{
+        #[allow(clippy::float_cmp)] // Intentional approximate comparison
+        {
+            let actual_val = $actual as f64;
+            let expected_val = $expected as f64;
+            let epsilon_val = $epsilon as f64;
+            let diff = (actual_val - expected_val).abs();
+            if diff > epsilon_val {
+                panic!(
+                    "Values not approximately equal.\n  actual: {}\n  expected: {}\n  epsilon: {}\n  difference: {}",
+                    actual_val, expected_val, epsilon_val, diff
+                );
+            }
+        }
+    }};
+    ($actual:expr, $expected:expr, $epsilon:expr, $msg:expr) => {{
+        #[allow(clippy::float_cmp)] // Intentional approximate comparison
+        {
+            let actual_val = $actual as f64;
+            let expected_val = $expected as f64;
+            let epsilon_val = $epsilon as f64;
+            let diff = (actual_val - expected_val).abs();
+            if diff > epsilon_val {
+                panic!(
+                    "{}: Values not approximately equal.\n  actual: {}\n  expected: {}\n  epsilon: {}\n  difference: {}",
+                    $msg, actual_val, expected_val, epsilon_val, diff
+                );
+            }
+        }
+    }};
+}
+
 #[cfg(test)]
 #[allow(unnameable_test_items)] // Macro-generated tests trigger this warning
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
@@ -431,5 +739,161 @@ mod tests {
 
         // Act & Assert: Should panic
         assert_guard_constraint!(max_run_len <= 8, "max_run_len");
+    }
+
+    // ========================================================================
+    // v1.3.0 NEW ASSERTION TESTS
+    // ========================================================================
+
+    test!(test_assert_contains_macro, {
+        // Arrange: Collection with items
+        let numbers = vec![1, 2, 3, 4, 5];
+        let users = vec!["alice", "bob", "charlie"];
+
+        // Act & Assert: Verify assert_contains! macro works
+        assert_contains!(numbers, 3);
+        assert_contains!(users, "bob");
+        assert_contains!(users, "bob", "User should exist");
+    });
+
+    #[test]
+    #[should_panic(expected = "Collection does not contain item")]
+    fn test_assert_contains_macro_fails() {
+        // Arrange: Collection without target item
+        let numbers = vec![1, 2, 3];
+
+        // Act & Assert: Should panic
+        assert_contains!(numbers, 5);
+    }
+
+    test!(test_assert_not_contains_macro, {
+        // Arrange: Collection without certain items
+        let numbers = vec![1, 2, 3, 4, 5];
+        let banned_users = vec!["alice", "bob"];
+
+        // Act & Assert: Verify assert_not_contains! macro works
+        assert_not_contains!(numbers, 6);
+        assert_not_contains!(banned_users, "charlie");
+        assert_not_contains!(banned_users, "charlie", "User should not be banned");
+    });
+
+    #[test]
+    #[should_panic(expected = "Collection contains item that should not be present")]
+    fn test_assert_not_contains_macro_fails() {
+        // Arrange: Collection with item
+        let numbers = vec![1, 2, 3];
+
+        // Act & Assert: Should panic
+        assert_not_contains!(numbers, 2);
+    }
+
+    test!(test_assert_subset_macro, {
+        // Arrange: Subset and superset collections
+        let all_features = vec!["feature_a", "feature_b", "feature_c"];
+        let enabled_features = vec!["feature_a", "feature_c"];
+        let all_roles = vec!["admin", "user", "guest"];
+        let user_roles = vec!["user"];
+
+        // Act & Assert: Verify assert_subset! macro works
+        assert_subset!(enabled_features, all_features);
+        assert_subset!(user_roles, all_roles);
+        assert_subset!(user_roles, all_roles, "User roles must be allowed");
+    });
+
+    #[test]
+    #[should_panic(expected = "Subset contains items not in superset")]
+    fn test_assert_subset_macro_fails() {
+        // Arrange: Invalid subset (contains items not in superset)
+        let superset = vec![1, 2, 3];
+        let subset = vec![2, 3, 4]; // 4 is not in superset
+
+        // Act & Assert: Should panic
+        assert_subset!(subset, superset);
+    }
+
+    test!(test_assert_superset_macro, {
+        // Arrange: Superset and subset collections
+        let all_features = vec!["feature_a", "feature_b", "feature_c"];
+        let enabled_features = vec!["feature_a", "feature_c"];
+        let all_permissions = vec!["read", "write", "execute"];
+        let user_permissions = vec!["read"];
+
+        // Act & Assert: Verify assert_superset! macro works
+        assert_superset!(all_features, enabled_features);
+        assert_superset!(all_permissions, user_permissions);
+        assert_superset!(
+            all_permissions,
+            user_permissions,
+            "All permissions must include user permissions"
+        );
+    });
+
+    #[test]
+    #[should_panic(expected = "Subset contains items not in superset")]
+    fn test_assert_superset_macro_fails() {
+        // Arrange: Invalid relationship (subset has items not in superset)
+        let superset = vec![1, 2, 3];
+        let subset = vec![2, 3, 4]; // 4 is not in superset
+
+        // Act & Assert: Should panic
+        assert_superset!(superset, subset);
+    }
+
+    test!(test_assert_json_eq_macro, {
+        use serde_json::json;
+
+        // Arrange: JSON values with different key orders
+        let actual = json!({
+            "name": "Alice",
+            "age": 30
+        });
+        let expected = json!({
+            "age": 30,
+            "name": "Alice"
+        });
+        let response = json!({"status": "ok"});
+        let expected_response = json!({"status": "ok"});
+
+        // Act & Assert: Verify assert_json_eq! macro works (ignores key order)
+        assert_json_eq!(actual, expected);
+        assert_json_eq!(response, expected_response);
+        assert_json_eq!(response, expected_response, "API response should match");
+    });
+
+    #[test]
+    #[should_panic(expected = "JSON values are not equal")]
+    fn test_assert_json_eq_macro_fails() {
+        use serde_json::json;
+
+        // Arrange: Different JSON values
+        let actual = json!({"name": "Alice"});
+        let expected = json!({"name": "Bob"});
+
+        // Act & Assert: Should panic
+        assert_json_eq!(actual, expected);
+    }
+
+    test!(test_assert_approx_eq_macro, {
+        // Arrange: Floating-point values
+        let pi = 3.14159265;
+        let approx_pi = 3.14;
+        let calculated = 2.0 / 3.0;
+        let expected = 0.6667;
+
+        // Act & Assert: Verify assert_approx_eq! macro works
+        assert_approx_eq!(pi, approx_pi, 0.01);
+        assert_approx_eq!(calculated, expected, 0.0001);
+        assert_approx_eq!(calculated, expected, 0.0001, "Division result should be close");
+    });
+
+    #[test]
+    #[should_panic(expected = "Values not approximately equal")]
+    fn test_assert_approx_eq_macro_fails() {
+        // Arrange: Values not within epsilon
+        let actual = 3.14159;
+        let expected = 2.71828;
+
+        // Act & Assert: Should panic
+        assert_approx_eq!(actual, expected, 0.01);
     }
 }
