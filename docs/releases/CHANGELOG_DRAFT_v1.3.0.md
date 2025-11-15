@@ -136,6 +136,28 @@
   - Independent assertions: `result.stdout`, `result.stderr`
   - Maintains backward compatibility (combined output still default)
 
+#### Playground CLI Enhancements
+
+- **Multi-Format Output Support** - Flexible output serialization
+  - New `format_utils` module with `OutputFormat` enum (JSON, YAML, TOML, Table, TSV)
+  - `--format` flag added to all `stat()` and `list()` commands across all CLI modules
+  - Default format: JSON (backward compatible)
+  - Works with `serde` serialization for consistent data representation
+  - Supports: `analyze`, `core`, `gh`, `improve`, `integ`, `obs`, `process`, `quality`, `release`, `test`, `valid`
+
+- **Enhanced clap-noun-verb Integration (v3.7.1)** - Improved CLI argument handling
+  - Upgraded from clap-noun-verb v3.4.0 to v3.7.1
+  - Added `#[arg(...)]` attributes to all verb functions for consistent configuration
+  - Standardized short/long flag naming: `-v/--verbose`, `-f/--format`, `-o/--output`
+  - Automatic help text generation for all arguments
+  - Configurable argument defaults and value parsing
+
+- **Improved Command Structure** - Better noun-verb command organization
+  - All CLI modules follow consistent noun-verb pattern
+  - Standardized argument configuration across 6+ modules
+  - Better error messages for invalid format specifications
+  - Seamless integration with clap-noun-verb auto-discovery via `linkme` macros
+
 ### Changed
 
 - **Documentation Structure** - Reorganized for better discoverability

@@ -463,8 +463,14 @@ assert_contains!(result.stderr, "Warning");
 **Deliverable:** Production-ready integration testing utilities
 
 ### Phase 5: CLI & Documentation (Week 7)
-- CLI environment helpers
-- Separate stderr capture
+- CLI environment helpers ✅ (Documented in CHANGELOG)
+- Separate stderr capture ✅ (Documented in CHANGELOG)
+- **Playground CLI Enhancements** ✅ (Completed)
+  - clap-noun-verb v3.7.1 upgrade with enhanced #[arg(...)] attributes
+  - Multi-format output support (JSON, YAML, TOML, Table, TSV)
+  - `--format` flag added to all stat() and list() commands
+  - New `format_utils` module with OutputFormat enum
+  - Applied consistently across all 6+ CLI modules
 - Cookbook examples for all new features
 - Updated user guides
 
