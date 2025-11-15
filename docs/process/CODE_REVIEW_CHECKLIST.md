@@ -13,6 +13,21 @@
 - [ ] **Format check**: Run `cargo make fmt` - code must be formatted
 - [ ] **No unwrap/expect**: Check for `unwrap()`/`expect()` in production code (use `#[allow]` with justification if needed)
 
+## Test Isolation Checklist (FMEA: Test Data Corruption RPN 168 → 34)
+
+When reviewing test code, verify:
+
+- [ ] **No shared mutable state**: Tests don't use `static mut`, `lazy_static` for mutable data
+- [ ] **Unique test data**: Each test creates its own unique test data
+- [ ] **Resource cleanup**: Tests clean up resources or use RAII types (TempDir, NamedTempFile)
+- [ ] **Order independence**: Tests don't depend on execution order
+- [ ] **Unique identifiers**: Tests use unique identifiers for shared resources (ports, file names, etc.)
+- [ ] **Concurrent safe**: Tests can run concurrently without conflicts
+- [ ] **No hardcoded paths**: No hardcoded file paths like `/tmp/test.txt` (use tempfile crate)
+- [ ] **No hardcoded ports**: No hardcoded ports (use OS-assigned port 0)
+
+See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and examples.
+
 ## Code Quality Checklist
 
 - [ ] **Clippy compliance**: No clippy warnings/errors (CI will fail if present)

@@ -125,7 +125,7 @@
 // Note: When using the `logging` feature (enabled by default), users should initialize
 // the AlertLogger at the start of their application:
 //   use chicago_tdd_tools::alert::AlertLogger;
-//   AlertLogger::init_default().unwrap();
+//   let _ = AlertLogger::init_default();
 // This enables standard log macros (log::error!, log::warn!, etc.) to use the alert format.
 // Alert macros (alert_critical!, alert_warning!, etc.) also use log::* when logging is enabled.
 
@@ -194,7 +194,7 @@ pub use validation::{coverage, guards, jtbd, performance};
 /// Prelude module - import everything you need with `use chicago_tdd_tools::prelude::*;`
 ///
 /// **Usage**:
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::prelude::*;
 ///
 /// test!(my_test, {

@@ -365,7 +365,7 @@ assert_eq!(value, 42);
 ## Next Steps
 
 - **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
-- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[API Reference](../reference/API_REFERENCE.md)** - Complete API documentation
 - **[Getting Started](GETTING_STARTED.md)** - Quick start guide
-- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
-- **[Examples](../examples/)** - Working code examples
+- **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
+- **[Examples](../../examples/)** - Working code examples

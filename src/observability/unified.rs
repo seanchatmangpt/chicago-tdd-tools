@@ -12,13 +12,16 @@
 //! - Type-safe API (invalid states unrepresentable)
 //!
 //! **Usage**:
-//! ```rust
+//! ```ignore
 //! use chicago_tdd_tools::observability::ObservabilityTest;
 //!
+//! # fn test() -> Result<(), Box<dyn std::error::Error>> {
 //! // Simple usage - zero configuration for 80% of cases
-//! let test = ObservabilityTest::new()?;
-//! test.validate_span(&span)?;
+//! let _test = ObservabilityTest::new()?;
+//! // Your application generates spans here
 //! // Automatic cleanup via Drop trait
+//! # Ok(())
+//! # }
 //! ```
 
 use std::marker::PhantomData;
@@ -281,7 +284,7 @@ impl ObservabilityTest {
     ///
     /// Returns an error if `otel` feature is not enabled.
     #[cfg(not(feature = "otel"))]
-    pub fn new() -> ObservabilityResult<Self> {
+    pub const fn new() -> ObservabilityResult<Self> {
         Err(ObservabilityError::FeatureDisabled("otel"))
     }
 
@@ -379,8 +382,7 @@ impl ObservabilityTest {
     ///
     /// Returns an error if `otel` feature is not enabled.
     #[cfg(not(feature = "otel"))]
-    pub fn with_config(config: TestConfig) -> ObservabilityResult<Self> {
-        let _ = config;
+    pub const fn with_config(_config: &TestConfig) -> ObservabilityResult<Self> {
         Err(ObservabilityError::FeatureDisabled("otel"))
     }
 

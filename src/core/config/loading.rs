@@ -1118,6 +1118,12 @@ max_batch_size = 0
             // Note: Config file is optional, so missing options are OK
             // But if config file exists, it should document implemented options
             if !contents.is_empty() && !found {
+                #[cfg(feature = "logging")]
+                log::warn!(
+                    "⚠️  Config file doesn't document [{section}].{key} but code reads it.\n   \
+                     💡 SUGGESTION: Add option to config file for documentation"
+                );
+                #[cfg(not(feature = "logging"))]
                 eprintln!(
                     "⚠️  Warning: Config file doesn't document [{section}].{key} but code reads it.\n   \
                      💡 SUGGESTION: Add option to config file for documentation"

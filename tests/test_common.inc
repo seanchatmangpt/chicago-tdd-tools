@@ -1,29 +1,30 @@
-//! Common test utilities for Chicago TDD Tools tests
-//!
-//! Provides shared test helpers used across multiple test files.
-//! Consolidates duplicate code to reduce maintenance burden.
-//!
-//! # Docker Availability Helper
-//!
-//! 🚨 CRITICAL - Returns `false` if the Docker daemon is not running.
-//!
-//! This helper verifies the Docker daemon is actually running and responding,
-//! not just that the `docker` command executed successfully.
-//!
-//! **Kaizen improvement**: Added timeout to prevent hanging when Docker is stopped.
-//! Pattern: All external commands should have timeouts to fail fast.
-//! Benefits: Prevents tests from hanging indefinitely and provides fast feedback.
-//!
-//! # Returns
-//!
-//! `true` if the Docker daemon is running and responding, `false` otherwise.
-//!
-//! This module provides shared utilities for integration tests, including
-//! Docker availability checks and other common test infrastructure.
+// Common test utilities for Chicago TDD Tools tests
+//
+// Provides shared test helpers used across multiple test files.
+// Consolidates duplicate code to reduce maintenance burden.
+//
+// # Docker Availability Helper
+//
+// 🚨 CRITICAL - Returns `false` if the Docker daemon is not running.
+//
+// This helper verifies the Docker daemon is actually running and responding,
+// not just that the `docker` command executed successfully.
+//
+// **Kaizen improvement**: Added timeout to prevent hanging when Docker is stopped.
+// Pattern: All external commands should have timeouts to fail fast.
+// Benefits: Prevents tests from hanging indefinitely and provides fast feedback.
+//
+// # Returns
+//
+// `true` if the Docker daemon is running and responding, `false` otherwise.
+//
+// This module provides shared utilities for integration tests, including
+// Docker availability checks and other common test infrastructure.
 
 /// Check if Docker is available and running
 ///
 /// Returns `true` if Docker daemon is running and responding, `false` otherwise.
+#[allow(missing_docs)]
 pub fn docker_available() -> bool {
     use std::process::Command;
     use std::sync::mpsc;
@@ -120,16 +121,16 @@ pub fn docker_available() -> bool {
 ///     // Test code here...
 /// }
 /// ```
+#[allow(missing_docs)]
 pub fn require_docker() {
-    if !docker_available() {
-        panic!(
-            "🚨 Docker is required for this test but Docker daemon is not running.\n\
-             ⚠️  STOP: Cannot proceed with test\n\
-             💡 FIX: Start Docker Desktop or Docker daemon\n\
-             📋 macOS: Open Docker Desktop\n\
-             📋 Linux: sudo systemctl start docker\n\
-             📋 Windows: Start Docker Desktop"
-        );
-    }
+    assert!(
+        docker_available(),
+        "🚨 Docker is required for this test but Docker daemon is not running.\n\
+         ⚠️  STOP: Cannot proceed with test\n\
+         💡 FIX: Start Docker Desktop or Docker daemon\n\
+         📋 macOS: Open Docker Desktop\n\
+         📋 Linux: sudo systemctl start docker\n\
+         📋 Windows: Start Docker Desktop"
+    );
     // ✅ Docker is available, test can proceed
 }

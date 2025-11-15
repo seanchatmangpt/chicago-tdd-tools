@@ -16,15 +16,11 @@
 
 #[cfg(all(feature = "weaver", feature = "otel", test))]
 mod weaver_integration_tests {
-    use chicago_tdd_tools::assert_ok;
-    use chicago_tdd_tools::assertions::assert_that;
-    use chicago_tdd_tools::async_test;
-    use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
-    use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
+    use chicago_tdd_tools::observability::fixtures::{assert_telemetry_valid, WeaverTestFixture};
+    use opentelemetry::trace::{Span as _, Tracer as _};
+    use opentelemetry::KeyValue;
     use std::fs;
     use std::path::PathBuf;
-    use std::time::Duration;
-    use tokio::time::sleep;
 
     fn allow_weaver_skip() -> bool {
         matches!(
@@ -81,73 +77,93 @@ mod weaver_integration_tests {
     }
 
     /// Integration test that exercises the new Weaver fixture end-to-end.
-    async_test!(test_unified_api_weaver_integration, {
-        if !ensure_weaver_prerequisites() {
-            return;
-        }
-        ensure_weaver_reports_dir();
-
-        let tracer = ObservabilityTest::new(TestConfig::default())
-            .map_err(|err| format!("Failed to initialise ObservabilityTest: {err}"))?;
-
-        let mut span = tracer.tracer().start("integration-span");
-        span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
-        span.end();
-
-        tracer.force_flush().map_err(|err| format!("Failed to flush tracer: {err}"))?;
-
-        let results = tracer
-            .finish()
-            .map_err(|err| format!("Failed to finalise ObservabilityTest: {err}"))?;
-
-        assert_telemetry_valid(&results).map_err(|err| format!("Weaver validation failed: {err}"))
-    });
-
-    async_test_with_timeout!(test_weaver_fixture_happy_path, 30, {
+    #[test]
+    fn test_unified_api_weaver_integration() {
         if !ensure_weaver_prerequisites() {
             return;
         }
         ensure_weaver_reports_dir();
 
         let mut fixture = WeaverTestFixture::new()
-            .map_err(|err| format!("Failed to initialise Weaver fixture: {err}"))?;
+            .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
         let tracer = fixture
             .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
-            .map_err(|err| format!("Failed to acquire Weaver tracer: {err}"))?;
+            .unwrap_or_else(|err| panic!("Failed to acquire tracer: {err}"));
 
         let mut span = tracer.tracer().start("integration-span");
-        span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
+        span.set_attribute(KeyValue::new("test.case", "unified_api_weaver_integration"));
         span.end();
 
-        tracer.force_flush().map_err(|err| format!("Failed to flush tracer: {err}"))?;
+        tracer
+            .force_flush()
+            .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
         let results = fixture
             .finish()
-            .map_err(|err| format!("Failed to finalise Weaver fixture: {err}"))?;
+            .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
-        assert_telemetry_valid(&results).map_err(|err| format!("Weaver validation failed: {err}"))
-    });
+        assert_telemetry_valid(&results)
+            .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
+    }
 
-    async_test_with_timeout!(test_weaver_fixture_reports_rendered, 30, {
+    #[test]
+    fn test_weaver_fixture_happy_path() {
         if !ensure_weaver_prerequisites() {
             return;
         }
         ensure_weaver_reports_dir();
 
-        let tracer = ObservabilityTest::new(TestConfig::default())
-            .map_err(|err| format!("Failed to initialise ObservabilityTest: {err}"))?;
+        let mut fixture = WeaverTestFixture::new()
+            .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
+
+        let tracer = fixture
+            .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
+            .unwrap_or_else(|err| panic!("Failed to acquire Weaver tracer: {err}"));
+
+        let mut span = tracer.tracer().start("integration-span");
+        span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
+        span.end();
+
+        tracer
+            .force_flush()
+            .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
+
+        let results = fixture
+            .finish()
+            .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
+
+        assert_telemetry_valid(&results)
+            .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
+    }
+
+    #[test]
+    fn test_weaver_fixture_reports_rendered() {
+        if !ensure_weaver_prerequisites() {
+            return;
+        }
+        ensure_weaver_reports_dir();
+
+        let mut fixture = WeaverTestFixture::new()
+            .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
+
+        let tracer = fixture
+            .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
+            .unwrap_or_else(|err| panic!("Failed to acquire tracer: {err}"));
 
         let mut span = tracer.tracer().start("integration-span");
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_reports_rendered"));
         span.end();
 
-        tracer.force_flush().map_err(|err| format!("Failed to flush tracer: {err}"))?;
+        tracer
+            .force_flush()
+            .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
-        let results = tracer
+        let results = fixture
             .finish()
-            .map_err(|err| format!("Failed to finalise ObservabilityTest: {err}"))?;
+            .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
-        assert_telemetry_valid(&results).map_err(|err| format!("Weaver validation failed: {err}"))
-    });
+        assert_telemetry_valid(&results)
+            .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
+    }
 }

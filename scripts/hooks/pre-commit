@@ -1,0 +1,87 @@
+#!/bin/sh
+# Chicago TDD Tools Pre-Commit Hook
+# FMEA Fix: Prevent unwrap/expect in production code (RPN: 180 → 36)
+#
+# This hook prevents commits containing .unwrap() or .expect() in production code.
+# It's automatically installed by scripts/install-hooks.sh
+#
+# To bypass temporarily (DISCOURAGED): SKIP_UNWRAP_CHECK=1 git commit
+# To remove hook: rm .git/hooks/pre-commit
+
+set -e
+
+# Allow bypass for emergency situations only
+if [ -n "$SKIP_UNWRAP_CHECK" ]; then
+    echo "⚠️  WARNING: Skipping unwrap/expect checks (SKIP_UNWRAP_CHECK set)"
+    echo "This is DISCOURAGED. Remove unwrap/expect from production code."
+    exit 0
+fi
+
+echo "🔍 Pre-commit: Checking for unwrap/expect in production code..."
+
+# Get staged Rust files (exclude tests, examples, benches, build.rs)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=d | grep '\.rs$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "✅ No Rust files staged"
+    exit 0
+fi
+
+UNWRAP_COUNT=0
+EXPECT_COUNT=0
+FILES_WITH_ISSUES=""
+
+for FILE in $STAGED_FILES; do
+    # Skip test files, examples, benches, and build scripts
+    if echo "$FILE" | grep -qE '/(test|tests|example|examples|bench|benches)/' || \
+       echo "$FILE" | grep -q 'build\.rs$' || \
+       echo "$FILE" | grep -qE '^(test|tests|example|examples|bench|benches)/'; then
+        continue
+    fi
+
+    # Check if file has allow attribute for unwrap/expect
+    if grep -qE '#!?\[allow\(clippy::(unwrap|expect)_used\)\]' "$FILE" 2>/dev/null; then
+        continue
+    fi
+
+    # Check if file is test-only (has #[cfg(test)])
+    if grep -q '#\[cfg(test)\]' "$FILE" 2>/dev/null; then
+        continue
+    fi
+
+    # Count unwrap() calls in added lines
+    UNWRAPS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.unwrap\(\)' 2>/dev/null || echo "0")
+
+    # Count expect() calls in added lines
+    EXPECTS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.expect\(' 2>/dev/null || echo "0")
+
+    if [ "$UNWRAPS" -gt 0 ] || [ "$EXPECTS" -gt 0 ]; then
+        FILES_WITH_ISSUES="$FILES_WITH_ISSUES\n  $FILE: $UNWRAPS unwrap(), $EXPECTS expect()"
+        UNWRAP_COUNT=$((UNWRAP_COUNT + UNWRAPS))
+        EXPECT_COUNT=$((EXPECT_COUNT + EXPECTS))
+    fi
+done
+
+TOTAL=$((UNWRAP_COUNT + EXPECT_COUNT))
+
+if [ "$TOTAL" -gt 0 ]; then
+    echo ""
+    echo "❌ ERROR: Cannot commit unwrap/expect calls in production code"
+    echo ""
+    echo "Found $UNWRAP_COUNT unwrap() and $EXPECT_COUNT expect() calls in:"
+    printf "$FILES_WITH_ISSUES\n"
+    echo ""
+    echo "🔧 How to fix:"
+    echo "  1. Use '?' operator for error propagation: result?"
+    echo "  2. Use 'if let' or 'match' for Option/Result handling"
+    echo "  3. Use assert_ok!()/assert_err!() in tests"
+    echo "  4. If intentional, add #[allow(clippy::unwrap_used)] with comment"
+    echo ""
+    echo "📚 See: docs/process/SPR_GUIDE.md for error handling patterns"
+    echo ""
+    echo "⚠️  To bypass (DISCOURAGED): SKIP_UNWRAP_CHECK=1 git commit"
+    exit 1
+fi
+
+echo "✅ No unwrap/expect in production code"
+exit 0

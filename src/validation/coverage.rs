@@ -35,11 +35,28 @@ use std::collections::HashMap;
 pub struct TotalCount(usize);
 
 impl TotalCount {
-    /// Create a new total count
+    /// Zero total count constant
+    ///
+    /// **Poka-Yoke**: Infallible constructor - no Option wrapping needed.
+    /// Use this instead of `TotalCount::new(0).unwrap()`.
+    pub const ZERO: Self = Self(0);
+
+    /// Create a new total count (legacy API - prefer `from_usize`)
+    ///
+    /// **Note**: This always returns `Some`. For infallible construction, use `from_usize()`.
     #[must_use]
     #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
     pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
+    }
+
+    /// Create a new total count (infallible)
+    ///
+    /// **Poka-Yoke**: Infallible constructor - use this instead of `.new().unwrap()`.
+    /// Any `usize` value is valid for total count.
+    #[must_use]
+    pub const fn from_usize(value: usize) -> Self {
+        Self(value)
     }
 
     /// Get the count value
@@ -83,11 +100,28 @@ impl From<TotalCount> for usize {
 pub struct CoveredCount(usize);
 
 impl CoveredCount {
-    /// Create a new covered count
+    /// Zero covered count constant
+    ///
+    /// **Poka-Yoke**: Infallible constructor - no Option wrapping needed.
+    /// Use this instead of `CoveredCount::new(0).unwrap()`.
+    pub const ZERO: Self = Self(0);
+
+    /// Create a new covered count (legacy API - prefer `from_usize`)
+    ///
+    /// **Note**: This always returns `Some`. For infallible construction, use `from_usize()`.
     #[must_use]
     #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
     pub const fn new(value: usize) -> Option<Self> {
         Some(Self(value))
+    }
+
+    /// Create a new covered count (infallible)
+    ///
+    /// **Poka-Yoke**: Infallible constructor - use this instead of `.new().unwrap()`.
+    /// Any `usize` value is valid for covered count (validation against total happens separately).
+    #[must_use]
+    pub const fn from_usize(value: usize) -> Self {
+        Self(value)
     }
 
     /// Create a new covered count validated against total count
@@ -161,6 +195,12 @@ impl CoveragePercentage {
 
     /// Maximum valid percentage value
     pub const MAX: f64 = 100.0;
+
+    /// Zero percentage constant (0.0%)
+    ///
+    /// **Poka-Yoke**: Infallible constructor - no Option wrapping needed.
+    /// Use this instead of `CoveragePercentage::new(0.0).unwrap()`.
+    pub const ZERO: Self = Self(0.0);
 
     /// Create a new coverage percentage from a value
     ///
@@ -261,19 +301,14 @@ pub struct CoverageReport {
 impl CoverageReport {
     /// Create new coverage report
     ///
-    /// # Panics
-    ///
-    /// Panics if creating `TotalCount`, `CoveredCount`, or `CoveragePercentage` with 0/0.0 fails (should never happen).
-    #[allow(clippy::expect_used)] // 0 is always valid for TotalCount and CoveredCount
+    /// **Poka-Yoke**: Uses const ZERO constructors - no panic possible.
     #[must_use]
     pub fn new() -> Self {
         Self {
-            // SAFETY: 0 is always valid for TotalCount and CoveredCount
-            total: TotalCount::new(0).expect("0 is always valid for TotalCount"),
-            covered: CoveredCount::new(0).expect("0 is always valid for CoveredCount"),
-            // SAFETY: 0.0 is always valid for CoveragePercentage
-            percentage: CoveragePercentage::new(0.0)
-                .expect("0.0 is always valid for CoveragePercentage"),
+            // Poka-Yoke: Infallible constructors - no unwrap/expect needed
+            total: TotalCount::ZERO,
+            covered: CoveredCount::ZERO,
+            percentage: CoveragePercentage::ZERO,
             details: HashMap::new(),
         }
     }
@@ -281,17 +316,12 @@ impl CoverageReport {
     /// Add coverage item
     /// Add an item to the coverage report
     ///
-    /// # Panics
-    ///
-    /// Panics if creating `TotalCount` or `CoveredCount` with incremented values fails (should never happen).
-    #[allow(clippy::expect_used)] // Incremented total is always valid
+    /// **Poka-Yoke**: Uses infallible constructors - no panic possible.
     pub fn add_item(&mut self, name: String, covered: bool) {
         self.details.insert(name, covered);
         let new_total = self.total.get() + 1;
-        // SAFETY: new_total is always valid (incremented from valid total)
-        // Incremented total is always valid
-        let total = TotalCount::new(new_total);
-        self.total = total.expect("Incremented total is always valid");
+        // Poka-Yoke: Infallible constructor - any usize is valid
+        self.total = TotalCount::from_usize(new_total);
         if covered {
             let new_covered = self.covered.get() + 1;
             // Validate: covered <= total
@@ -301,12 +331,13 @@ impl CoverageReport {
         }
         // Update percentage using Poka-Yoke validated type
         if self.total.get() > 0 {
-            self.percentage = CoveragePercentage::from_counts(self.covered, self.total)
-                .expect("Percentage should be valid when total > 0");
+            // Poka-Yoke: from_counts validates percentage range
+            if let Some(percentage) = CoveragePercentage::from_counts(self.covered, self.total) {
+                self.percentage = percentage;
+            }
         } else {
             // Total is 0, percentage is 0.0
-            self.percentage =
-                CoveragePercentage::new(0.0).expect("0.0 is always valid for CoveragePercentage");
+            self.percentage = CoveragePercentage::ZERO;
         }
     }
 
@@ -323,7 +354,6 @@ impl CoverageReport {
 }
 
 impl Default for CoverageReport {
-    #[allow(clippy::expect_used)] // 0 is always valid for TotalCount and CoveredCount
     fn default() -> Self {
         Self::new()
     }
@@ -331,6 +361,8 @@ impl Default for CoverageReport {
 
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
+#[allow(clippy::unwrap_used)] // Test code - unwrap is acceptable for test setup
+#[allow(clippy::float_cmp)] // Test code - exact float comparison is intentional
 mod tests {
     use super::*;
 
@@ -433,13 +465,13 @@ mod tests {
         assert_eq!(percentage_all.get(), 100.0);
 
         // Edge case: 0% coverage
-        let covered_none = CoveredCount::new(0).unwrap();
+        let covered_none = CoveredCount::ZERO;
         let percentage_none = CoveragePercentage::from_counts(covered_none, total).unwrap();
         assert_eq!(percentage_none.get(), 0.0);
 
         // Division by zero case
-        let zero_total = TotalCount::new(0).unwrap();
-        let zero_covered = CoveredCount::new(0).unwrap();
+        let zero_total = TotalCount::ZERO;
+        let zero_covered = CoveredCount::ZERO;
         let result = CoveragePercentage::from_counts(zero_covered, zero_total);
         assert!(result.is_none());
     }

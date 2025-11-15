@@ -1,0 +1,153 @@
+# Andon Signal Monitoring and Alerting
+#
+# **Purpose**: Monitor CI failures as Andon signals and provide alerts
+# This workflow processes CI results and creates a summary of active signals
+#
+# **When it runs**: After CI workflow completes
+# **Who sees it**: Developers, team leads
+#
+# **Signal Categories**:
+# 🔴 CRITICAL - Must fix immediately (test fail, panic, compile error)
+# 🟡 HIGH - Should fix before continuing (lint, format)
+# 🟠 MEDIUM - Investigate (coverage below threshold)
+#
+# **Actions**:
+# - Create/update issue for each active signal
+# - Post status check with visual summary
+# - Track signal history over time
+
+name: Andon Signal Monitor
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  checks: write
+
+env:
+  SIGNAL_ISSUE_LABEL: "andon-signal"
+  CRITICAL_SIGNAL_LABEL: "andon-critical"
+  HIGH_SIGNAL_LABEL: "andon-high"
+  MEDIUM_SIGNAL_LABEL: "andon-medium"
+
+jobs:
+  analyze-signals:
+    name: 🎯 Analyze Andon Signals
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch'
+    outputs:
+      has_critical: ${{ steps.check.outputs.has_critical }}
+      has_high: ${{ steps.check.outputs.has_high }}
+      has_medium: ${{ steps.check.outputs.has_medium }}
+      signal_summary: ${{ steps.check.outputs.signal_summary }}
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Analyze CI results
+        id: check
+        run: |
+          echo "🔴 Analyzing Andon signals..."
+
+          # Get the workflow run details
+          WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          WORKFLOW_CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+
+          echo "Workflow: $WORKFLOW_NAME"
+          echo "Conclusion: $WORKFLOW_CONCLUSION"
+
+          # Initialize signal tracking
+          HAS_CRITICAL="false"
+          HAS_HIGH="false"
+          HAS_MEDIUM="false"
+          SIGNAL_SUMMARY=""
+
+          # For now, signal on any failure
+          if [ "$WORKFLOW_CONCLUSION" == "failure" ]; then
+            HAS_CRITICAL="true"
+            SIGNAL_SUMMARY="CI Pipeline detected failures. Check job logs for details."
+          fi
+
+          # Set outputs
+          echo "has_critical=$HAS_CRITICAL" >> $GITHUB_OUTPUT
+          echo "has_high=$HAS_HIGH" >> $GITHUB_OUTPUT
+          echo "has_medium=$HAS_MEDIUM" >> $GITHUB_OUTPUT
+          echo "signal_summary=$SIGNAL_SUMMARY" >> $GITHUB_OUTPUT
+
+  report-signals:
+    name: 📊 Report Signal Status
+    runs-on: ubuntu-latest
+    needs: analyze-signals
+    if: needs.analyze-signals.outputs.has_critical == 'true' || needs.analyze-signals.outputs.has_high == 'true'
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚠️ Create Signal Alert
+        run: |
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║              🔴 ANDON SIGNAL DETECTED 🔴                  ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "🎯 Signal Summary: ${{ needs.analyze-signals.outputs.signal_summary }}"
+          echo ""
+          echo "📍 Location: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo ""
+          echo "🔗 Required Actions:"
+          echo "  1. Review the failed CI job"
+          echo "  2. Investigate root cause"
+          echo "  3. Fix and push changes"
+          echo "  4. Verify CI passes"
+          echo ""
+          echo "📚 Resources:"
+          echo "  - Guide: .github/ANDON_SIGNALS.md"
+          echo "  - Process: docs/process/SPR_GUIDE.md"
+
+  signal-summary:
+    name: 📋 Signal Summary
+    runs-on: ubuntu-latest
+    needs: analyze-signals
+    if: always()
+    steps:
+      - name: ✅ Signal Status
+        run: |
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║          📊 ANDON SIGNAL STATUS REPORT 📊                 ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+
+          if [ "${{ needs.analyze-signals.outputs.has_critical }}" == "true" ]; then
+            echo "🔴 CRITICAL SIGNALS: PRESENT"
+            echo "   Work must stop until signals are cleared"
+            echo ""
+          else
+            echo "🔴 CRITICAL SIGNALS: None detected ✅"
+            echo ""
+          fi
+
+          if [ "${{ needs.analyze-signals.outputs.has_high }}" == "true" ]; then
+            echo "🟡 HIGH SIGNALS: PRESENT"
+            echo "   Fix before continuing with other work"
+            echo ""
+          else
+            echo "🟡 HIGH SIGNALS: None detected ✅"
+            echo ""
+          fi
+
+          if [ "${{ needs.analyze-signals.outputs.has_medium }}" == "true" ]; then
+            echo "🟠 MEDIUM SIGNALS: PRESENT"
+            echo "   Investigate and address if significant"
+            echo ""
+          else
+            echo "🟠 MEDIUM SIGNALS: None detected ✅"
+            echo ""
+          fi
+
+          echo "📍 CI Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "📚 Guide: .github/ANDON_SIGNALS.md"

@@ -7,8 +7,8 @@ Get up and running with Chicago TDD Tools in 5 minutes. Verified, runnable examp
 **Looking for specific information?**
 - **Quick reference**: [Quick Guide](QUICK_GUIDE.md) - Essential patterns (80% of use cases)
 - **Complete guide**: [User Guide](USER_GUIDE.md) - Comprehensive coverage
-- **API details**: [API Reference](API_REFERENCE.md) - Complete API documentation
-- **Architecture**: [Architecture](ARCHITECTURE.md) - Design principles
+- **API details**: [API Reference](../reference/API_REFERENCE.md) - Complete API documentation
+- **Architecture**: [Architecture](../reference/ARCHITECTURE.md) - Design principles
 
 ## Prerequisites
 
@@ -425,9 +425,9 @@ async_test!(test_async_fixture, {
 
 - **[Quick Guide](QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
 - **[User Guide](USER_GUIDE.md)** - Comprehensive guide with all features
-- **[API Reference](API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
-- **[Pattern Cookbook](../cookbook/src/README.md)** - Alexander-style patterns for testing, architecture, and design
+- **[API Reference](../reference/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
+- **[Pattern Cookbook](../../cookbook/src/README.md)** - Alexander-style patterns for testing, architecture, and design
 - **[Examples](../examples/)** - Working code examples (`cargo make test-examples`)
 
 ## Troubleshooting

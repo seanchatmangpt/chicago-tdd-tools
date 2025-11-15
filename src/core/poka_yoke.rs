@@ -62,10 +62,10 @@ pub struct BehaviorVerified;
 /// # Example
 ///
 /// ```rust
-/// use chicago_tdd_tools::core::poka_yoke::BehaviorVerification;
+/// use chicago_tdd_tools::core::poka_yoke::{BehaviorVerification, AssertOkCalled};
 ///
-/// let result: Result<i32, String> = Ok(42);
-/// let verification = BehaviorVerification::<AssertOkCalled>::new(result);
+/// let value: i32 = 42;
+/// let verification = BehaviorVerification::<AssertOkCalled, i32>::new(value);
 /// // Must verify behavior to get value
 /// let verified = verification.verify_behavior(|v| *v == 42);
 /// assert_eq!(verified.value(), 42);

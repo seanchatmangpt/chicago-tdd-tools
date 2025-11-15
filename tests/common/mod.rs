@@ -3,8 +3,8 @@
 //! Provides common test helpers used across multiple test files.
 //! Consolidates duplicate code to reduce maintenance burden.
 
-// Include common.rs functions
-include!("../common.rs");
+// Include common test utilities
+include!("../test_common.inc");
 
 /// Integration test helpers with compile-time enforcement
 ///

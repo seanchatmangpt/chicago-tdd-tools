@@ -84,6 +84,5 @@ All three locations respect the environment variable for consistency.
 
 ## Related Documentation
 
-- [Registry Validation Fix Guide](./REGISTRY_VALIDATION_FIX.md) - How to fix registry validation errors
-- [Weaver Live Check](./WEAVER_LIVE_CHECK.md) - Weaver integration testing guide
+- [Weaver Live Check](WEAVER_LIVE_CHECK.md) - Weaver integration testing guide
 

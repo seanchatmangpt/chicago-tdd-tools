@@ -18,8 +18,22 @@ name: Benchmark
 on:
   pull_request:
     branches: [main, master]
+    paths:
+      - 'benches/**'
+      - 'src/**'
+      - 'proc_macros/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   push:
     branches: [main, master]
+    paths:
+      - 'benches/**'
+      - 'src/**'
+      - 'proc_macros/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   workflow_dispatch:
 
 # Only run one benchmark at a time
@@ -70,12 +84,23 @@ jobs:
           else
             echo "No benchmarks directory found. Skipping benchmarks."
             echo "To add benchmarks, create a 'benches/' directory with Criterion benchmarks."
-            exit 0
+            # Create empty marker file to prevent downstream errors
+            touch benchmark_results.txt
+            echo "# No benchmarks available" >> benchmark_results.txt
           fi
         continue-on-error: true
 
+      - name: Check if benchmark results exist
+        id: check-results
+        run: |
+          if [ -f "benchmark_results.txt" ] && [ -s "benchmark_results.txt" ] && ! grep -q "No benchmarks available" benchmark_results.txt; then
+            echo "has-results=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-results=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Store benchmark result
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check-results.outputs.has-results == 'true'
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: 'cargo'
@@ -87,7 +112,7 @@ jobs:
           fail-on-alert: true  # Block merge on significant regressions
 
       - name: Compare benchmark (PR only)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.check-results.outputs.has-results == 'true'
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: 'cargo'

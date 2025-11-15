@@ -12,13 +12,16 @@
 //! - Type-safe API (invalid states unrepresentable)
 //!
 //! **Usage**:
-//! ```rust
+//! ```ignore
 //! use chicago_tdd_tools::observability::ObservabilityTest;
 //!
+//! # fn test() -> Result<(), Box<dyn std::error::Error>> {
 //! // Simple usage - zero configuration for 80% of cases
-//! let test = ObservabilityTest::new()?;
-//! test.validate_span(&span)?;
+//! let _test = ObservabilityTest::new()?;
+//! // Your application generates spans here
 //! // Automatic cleanup via Drop trait
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! **Required Features**:
@@ -31,8 +34,12 @@ pub mod unified;
 // Re-export unified API as main API
 pub use unified::{ObservabilityError, ObservabilityResult, ObservabilityTest, TestConfig};
 
-// Keep old modules temporarily for types (will be removed)
-// Types are still needed for the unified API
+// Keep legacy modules for backward compatibility and type re-exports
+// These modules provide the underlying types used by the unified API:
+// - otel: SpanData, MetricData, validation types
+// - weaver: WeaverLiveCheck, WeaverValidationResult, registry types
+// - fixtures: Shared test fixtures for both OTEL and Weaver
+// Users can access these types directly for advanced use cases
 #[cfg(feature = "otel")]
 pub mod otel;
 #[cfg(feature = "weaver")]

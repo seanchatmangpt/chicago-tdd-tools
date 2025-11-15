@@ -295,6 +295,7 @@ macro_rules! alert_success {
 /// ```rust
 /// use chicago_tdd_tools::alert_debug;
 ///
+/// let container_state = "INITIALIZED";
 /// alert_debug!("Container state: {:?}", container_state);
 /// ```
 #[macro_export]
@@ -400,14 +401,14 @@ macro_rules! alert {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,no_run
 /// use chicago_tdd_tools::alert::write_alert;
 /// use std::io::BufWriter;
 /// use std::fs::File;
 ///
 /// let file = File::create("alert.log").unwrap();
 /// let mut writer = BufWriter::new(file);
-/// write_alert(&mut writer, "🚨", "Critical error", "STOP: Cannot proceed", "FIX: Resolve issue").unwrap();
+/// write_alert(&mut writer, "🚨", "Critical error", Some("STOP: Cannot proceed"), Some("FIX: Resolve issue")).unwrap();
 /// ```
 ///
 /// # Errors

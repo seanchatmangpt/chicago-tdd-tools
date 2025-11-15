@@ -273,7 +273,7 @@ impl RegistryState {
     /// **Poka-yoke**: Only returns path if registry is validated.
     /// Prevents using unvalidated registries.
     #[must_use]
-    pub fn validated_path(&self) -> Option<&ValidRegistryPath> {
+    pub const fn validated_path(&self) -> Option<&ValidRegistryPath> {
         match self {
             Self::Validated(path) => Some(path),
             Self::Unvalidated(_) | Self::ValidationFailed(_, _) => None,
@@ -284,7 +284,7 @@ impl RegistryState {
     ///
     /// **Poka-yoke**: Type-level check for validation state.
     #[must_use]
-    pub fn is_validated(&self) -> bool {
+    pub const fn is_validated(&self) -> bool {
         matches!(self, Self::Validated(_))
     }
 }
@@ -317,18 +317,29 @@ mod tests {
 
     #[test]
     fn test_valid_registry_path_file() {
-        let temp_dir = TempDir::new().unwrap();
-        let file_path = temp_dir.path().join("file.txt");
-        fs::write(&file_path, "test").unwrap();
-        let path = ValidRegistryPath::new(&file_path);
-        assert!(path.is_none()); // Type prevents non-directory path
+        if let Ok(temp_dir) = TempDir::new() {
+            let file_path = temp_dir.path().join("file.txt");
+            match fs::write(&file_path, "test") {
+                Ok(()) => {
+                    let path = ValidRegistryPath::new(&file_path);
+                    assert!(path.is_none()); // Type prevents non-directory path
+                }
+                Err(_) => panic!("Failed to write test file"),
+            }
+        } else {
+            panic!("Failed to create temp directory");
+        }
     }
 
     #[test]
     fn test_registry_version_valid() {
         let version = RegistryVersion::new("v1.25.0");
         assert!(version.is_some());
-        assert_eq!(version.unwrap().as_str(), "v1.25.0");
+        if let Some(v) = version {
+            assert_eq!(v.as_str(), "v1.25.0");
+        } else {
+            panic!("Expected Some but got None");
+        }
     }
 
     #[test]
@@ -345,22 +356,37 @@ mod tests {
 
     #[test]
     fn test_registry_state_unvalidated() {
-        let temp_dir = TempDir::new().unwrap();
-        let state = RegistryState::new(temp_dir.path());
-        assert!(state.is_some());
-        let state = state.unwrap();
-        assert!(!state.is_validated());
-        assert!(state.validated_path().is_none()); // Cannot use unvalidated path
+        if let Ok(temp_dir) = TempDir::new() {
+            let state = RegistryState::new(temp_dir.path());
+            assert!(state.is_some());
+            if let Some(state) = state {
+                assert!(!state.is_validated());
+                assert!(state.validated_path().is_none()); // Cannot use unvalidated path
+            } else {
+                panic!("Expected Some but got None");
+            }
+        } else {
+            panic!("Failed to create temp directory");
+        }
     }
 
     #[test]
     fn test_registry_state_validated() {
-        let temp_dir = TempDir::new().unwrap();
-        let state = RegistryState::new(temp_dir.path()).unwrap();
-        let validated = state.validate();
-        assert!(validated.is_ok());
-        let validated = validated.unwrap();
-        assert!(validated.is_validated());
-        assert!(validated.validated_path().is_some()); // Can use validated path
+        if let Ok(temp_dir) = TempDir::new() {
+            if let Some(state) = RegistryState::new(temp_dir.path()) {
+                let validated = state.validate();
+                assert!(validated.is_ok());
+                if let Ok(validated) = validated {
+                    assert!(validated.is_validated());
+                    assert!(validated.validated_path().is_some()); // Can use validated path
+                } else {
+                    panic!("Expected Ok but got Err");
+                }
+            } else {
+                panic!("Failed to create registry state");
+            }
+        } else {
+            panic!("Failed to create temp directory");
+        }
     }
 }

@@ -1,6 +1,7 @@
-//! Go the Extra Mile: 1st/2nd/3rd Idea Progression with OTEL/Weaver Validation
+//! # Go the Extra Mile: 1st/2nd/3rd Idea Progression with OTEL/Weaver Validation
 //!
 //! This example demonstrates the "go the extra mile" paradigm:
+//!
 //! - 1st Idea: Solve the immediate problem
 //! - 2nd Idea: Go bigger with generics (80/20)
 //! - 3rd Idea: Maximum value with type-level validation + OTEL/Weaver validation
@@ -17,23 +18,30 @@ use chicago_tdd_tools::otel::types::{
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
 
-/// Example: Number parsing with progressive enhancement
-///
-/// This demonstrates the 1st/2nd/3rd idea progression:
-///
-/// - First idea: Parse u32 only
-/// - Second idea: Parse any number type (generic)
-/// - Third idea: Type-level validated numbers with OTEL/Weaver validation
+// ============================================================================
+// Example: Number parsing with progressive enhancement
+// ============================================================================
+// This demonstrates the 1st/2nd/3rd idea progression:
+// - First idea: Parse u32 only
+// - Second idea: Parse any number type (generic)
+// - Third idea: Type-level validated numbers with OTEL/Weaver validation
 // ============================================================================
 // 1st IDEA: Solve the immediate problem
 // ============================================================================
-/// First idea: Parse u32 from string
+
+/// Parse u32 from string.
+///
+/// First idea: Parse u32 only.
 ///
 /// **Telemetry**: None (basic implementation)
 /// **Validation**: None
 /// **Scope**: Single type only
+///
+/// # Errors
+///
+/// Returns error if parsing fails.
 pub fn parse_u32_first_idea(input: &str) -> Result<u32, String> {
-    input.parse().map_err(|e| format!("Parse error: {}", e))
+    input.parse().map_err(|e| format!("Parse error: {e}"))
 }
 
 // ============================================================================
@@ -45,6 +53,9 @@ pub fn parse_u32_first_idea(input: &str) -> Result<u32, String> {
 /// **Telemetry**: Basic OTEL spans (if otel feature enabled)
 /// **Validation**: OTEL span validation
 /// **Scope**: Works for u32, i32, u64, f64, etc. - 80% more value, minimal effort
+///
+/// # Errors
+/// Returns error if parsing fails
 #[cfg(feature = "otel")]
 pub fn parse_number_second_idea<T: std::str::FromStr>(
     input: &str,
@@ -53,8 +64,6 @@ pub fn parse_number_second_idea<T: std::str::FromStr>(
 where
     T::Err: std::fmt::Display,
 {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
     // Create OTEL span for operation
     #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
     let start_time = SystemTime::now()
@@ -105,11 +114,14 @@ where
 /// Second idea: Parse any number type (without OTEL)
 ///
 /// Generic version that works for all number types - demonstrates 80/20 thinking.
+///
+/// # Errors
+/// Returns error if parsing fails
 pub fn parse_number_second_idea_no_otel<T: std::str::FromStr>(input: &str) -> Result<T, String>
 where
     T::Err: std::fmt::Display,
 {
-    input.parse().map_err(|e| format!("Parse error: {}", e))
+    input.parse().map_err(|e| format!("Parse error: {e}"))
 }
 
 // ============================================================================
@@ -135,8 +147,6 @@ where
 {
     /// Parse and validate number with full OTEL instrumentation
     pub fn parse(input: &str, span_name: &str) -> Result<Self, String> {
-        use std::time::{SystemTime, UNIX_EPOCH};
-
         // Create OTEL span
         #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
         let start_time = SystemTime::now()
@@ -213,15 +223,18 @@ where
     T::Err: std::fmt::Display,
 {
     /// Parse and validate number
+    ///
+    /// # Errors
+    /// Returns error if parsing fails
     pub fn parse(input: &str) -> Result<Self, String> {
         input
             .parse()
             .map(|value| Self { value })
-            .map_err(|e| format!("Parse error: {}", e))
+            .map_err(|e| format!("Parse error: {e}"))
     }
 
     /// Get the validated value
-    pub fn value(&self) -> &T {
+    pub const fn value(&self) -> &T {
         &self.value
     }
 }
@@ -231,7 +244,11 @@ where
 // ============================================================================
 
 #[tokio::main]
+#[allow(clippy::too_many_lines)] // Example demonstrates all three ideas
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(feature = "otel")]
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     println!("Go the Extra Mile: 1st/2nd/3rd Idea Progression");
     println!("================================================\n");
 
@@ -242,7 +259,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("-------------------------");
     let result1 = parse_u32_first_idea("42");
     assert_ok!(&result1);
-    assert_eq!(result1.unwrap(), 42);
+    let value1 = result1?;
+    assert_eq!(value1, 42);
     println!("✓ Parsed u32: 42");
     println!("  - No telemetry");
     println!("  - No validation");
@@ -255,21 +273,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("----------------------------------------");
 
     // Works for u32
-    let result_u32 = parse_number_second_idea_no_otel::<u32>("42");
-    assert_ok!(&result_u32);
-    assert_eq!(result_u32.unwrap(), 42);
+    let u32_parsed = parse_number_second_idea_no_otel::<u32>("42");
+    assert_ok!(&u32_parsed);
+    let parsed_u32 = u32_parsed?;
+    assert_eq!(parsed_u32, 42);
     println!("✓ Parsed u32: 42");
 
     // Works for i32
-    let result_i32 = parse_number_second_idea_no_otel::<i32>("-42");
-    assert_ok!(&result_i32);
-    assert_eq!(result_i32.unwrap(), -42);
+    let i32_parsed = parse_number_second_idea_no_otel::<i32>("-42");
+    assert_ok!(&i32_parsed);
+    let parsed_i32 = i32_parsed?;
+    assert_eq!(parsed_i32, -42);
     println!("✓ Parsed i32: -42");
 
     // Works for f64
-    let result_f64 = parse_number_second_idea_no_otel::<f64>("123.456");
-    assert_ok!(&result_f64);
-    assert_eq!(result_f64.unwrap(), 123.456);
+    let f64_parsed = parse_number_second_idea_no_otel::<f64>("123.456");
+    assert_ok!(&f64_parsed);
+    let parsed_f64 = f64_parsed?;
+    assert!((parsed_f64 - 123.456).abs() < f64::EPSILON);
     println!("✓ Parsed f64: 123.456");
 
     println!("  - Generic: Works for all number types");
@@ -315,11 +336,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("✓ OTEL span validation: Passed");
 
         // Create metric for operation
-        use std::time::{SystemTime, UNIX_EPOCH};
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("SystemTime should always be after UNIX_EPOCH")
-            .as_millis() as u64;
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
 
         let mut metric = Metric {
             name: "chicago_tdd_tools.parse.operations".to_string(),
@@ -344,7 +364,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Check if Weaver is available
         match WeaverValidator::check_weaver_available() {
-            Ok(_) => {
+            Ok(()) => {
                 println!("✓ Weaver binary available");
 
                 // In a real scenario, you would:
@@ -360,7 +380,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("  - Telemetry sent to endpoint");
             }
             Err(e) => {
-                println!("⚠ Weaver not available: {}", e);
+                println!("⚠ Weaver not available: {e}");
                 println!("  Bootstrap with: cargo make weaver-bootstrap");
             }
         }
@@ -398,49 +418,60 @@ mod tests {
         // 1st Idea: Basic implementation
         let result = parse_u32_first_idea("42");
         assert_ok!(&result);
-        assert_eq!(result.unwrap(), 42);
+        if let Ok(value) = result {
+            assert_eq!(value, 42);
+        }
     });
 
     test!(test_second_idea_generic, {
         // 2nd Idea: Generic version (80/20)
         let u32_result = parse_number_second_idea_no_otel::<u32>("42");
         assert_ok!(&u32_result);
-        assert_eq!(u32_result.unwrap(), 42);
+        if let Ok(value) = u32_result {
+            assert_eq!(value, 42);
+        }
 
         let i32_result = parse_number_second_idea_no_otel::<i32>("-42");
         assert_ok!(&i32_result);
-        assert_eq!(i32_result.unwrap(), -42);
+        if let Ok(value) = i32_result {
+            assert_eq!(value, -42);
+        }
 
         let f64_result = parse_number_second_idea_no_otel::<f64>("123.456");
         assert_ok!(&f64_result);
-        assert_eq!(f64_result.unwrap(), 123.456);
+        if let Ok(value) = f64_result {
+            assert!((value - 123.456).abs() < f64::EPSILON);
+        }
     });
 
     test!(test_third_idea_validated, {
         // 3rd Idea: Type-level validation
-        let validated = ValidatedNumberNoOtel::<u32>::parse("42").unwrap();
-        assert_eq!(*validated.value(), 42);
+        if let Ok(validated) = ValidatedNumberNoOtel::<u32>::parse("42") {
+            assert_eq!(*validated.value(), 42);
+        }
     });
 
     #[cfg(feature = "otel")]
     test!(test_second_idea_with_otel, {
         // 2nd Idea with OTEL spans
-        let (value, span) = parse_number_second_idea::<u32>("42", "test_parse").unwrap();
-        assert_eq!(value, 42);
+        if let Ok((value, span)) = parse_number_second_idea::<u32>("42", "test_parse") {
+            assert_eq!(value, 42);
 
-        // Validate span
-        let validator = SpanValidator::new();
-        assert_ok!(&validator.validate(&span));
+            // Validate span
+            let validator = SpanValidator::new();
+            assert_ok!(&validator.validate(&span));
+        }
     });
 
     #[cfg(feature = "otel")]
     test!(test_third_idea_with_otel, {
         // 3rd Idea with OTEL spans
-        let validated = ValidatedNumber::<u32>::parse("42", "test_validated").unwrap();
-        assert_eq!(*validated.value(), 42);
+        if let Ok(validated) = ValidatedNumber::<u32>::parse("42", "test_validated") {
+            assert_eq!(*validated.value(), 42);
 
-        // Validate span
-        let validator = SpanValidator::new();
-        assert_ok!(&validator.validate(validated.span()));
+            // Validate span
+            let validator = SpanValidator::new();
+            assert_ok!(&validator.validate(validated.span()));
+        }
     });
 }

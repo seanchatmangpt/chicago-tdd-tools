@@ -80,9 +80,12 @@ description = "Run clippy with maximized linting (all, pedantic, nursery, cargo)
 # **Poka-Yoke Design**: -D warnings treats warnings as errors, preventing defects at compile time
 # Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
 # **Root Cause Prevention**: CI/CD pipeline enforces this check automatically, preventing accumulation of lint errors
+# **Timeout**: 300s (5min) for CI cold-start with all features (testcontainers, otel, weaver)
+# Local warm cache: ~3-5s, CI cold cache: ~2-3min for deps + 30s for project
+# **FMEA Fix**: Deny unwrap_used and expect_used to prevent production panics (RPN: 180 → 36)
 command = "timeout"
 args = [
-  "5s",
+  "300s",
   "cargo",
   "clippy",
   "--lib",
@@ -98,6 +101,10 @@ args = [
   "clippy::cargo",
   "-D",
   "warnings",         # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
+  "-D",
+  "clippy::unwrap_used",    # FMEA: Prevent .unwrap() in production code
+  "-D",
+  "clippy::expect_used",    # FMEA: Prevent .expect() in production code
 ]
 
 [tasks.clippy]
@@ -110,9 +117,11 @@ alias = "lint"
 
 [tasks.test]
 description = "Run unit tests only (fast iteration, excludes integration tests)"
+# **Timeout**: 300s (5min) for CI cold-start compilation + test execution
+# Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
 command = "timeout"
 args = [
-  "10s",
+  "300s",
   "cargo",
   "nextest",
   "run",
@@ -132,13 +141,15 @@ args = ["5s", "docker", "info"]
 ignore_errors = false
 
 [tasks.test-unit]
-description = "Unit tests only using cargo-nextest (excludes integration tests)"
+description = "Unit tests only (excludes integration tests)"
+# **Timeout**: 300s (5min) for CI cold-start compilation + test execution
+# Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
+# Uses cargo test instead of nextest due to panic test timeout issues with nextest
 command = "timeout"
 args = [
-  "10s",
+  "300s",
   "cargo",
-  "nextest",
-  "run",
+  "test",
   "--lib",
   "--all-features",
   "--",
@@ -427,6 +438,90 @@ dependencies = [
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
 dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
 
+[tasks.ci-local]
+description = "Simulate CI environment locally (FMEA: Tests Pass Locally, Fail in CI - RPN 105 → 21)"
+# This task runs the same checks as CI to catch environment-specific issues early
+# Helps identify: OS differences, Docker availability, environment variables, resource constraints
+dependencies = ["timeout-check"]
+script = '''
+#!/bin/bash
+set -e
+
+echo "🔍 Running CI simulation locally..."
+echo ""
+echo "This runs the same checks as GitHub Actions CI to catch issues early."
+echo ""
+
+# Step 1: Format check
+echo "1️⃣  Format check..."
+cargo make fmt
+if ! git diff --exit-code; then
+  echo "❌ FAILED: Code is not formatted correctly"
+  echo "Fix: Run 'cargo make fmt' and commit the changes"
+  exit 1
+fi
+echo "✅ Format check passed"
+echo ""
+
+# Step 2: Clippy lint check
+echo "2️⃣  Clippy lint check..."
+cargo make lint
+echo "✅ Clippy passed"
+echo ""
+
+# Step 3: Unit tests (with retry simulation)
+echo "3️⃣  Unit tests..."
+cargo make test-unit || {
+  echo "⚠️  Tests failed on first attempt, retrying..."
+  sleep 2
+  cargo make test-unit || {
+    echo "❌ FAILED: Tests failed twice"
+    echo "This may indicate environment-specific issues"
+    exit 1
+  }
+}
+echo "✅ Unit tests passed"
+echo ""
+
+# Step 4: Unwrap/expect check
+echo "4️⃣  Production code safety check (unwrap/expect)..."
+PROD_FILES=$(find src proc_macros/src -name '*.rs' -type f 2>/dev/null | \
+  grep -v '/test' | grep -v '/tests/' | grep -v 'build.rs' || true)
+
+if [ -z "$PROD_FILES" ]; then
+  echo "✅ No production files to check"
+else
+  UNWRAP_COUNT=0
+  for FILE in $PROD_FILES; do
+    if grep -q '#\[cfg(test)\]' "$FILE" 2>/dev/null; then
+      continue
+    fi
+    COUNT=$(grep -c '\.unwrap()\|\.expect(' "$FILE" 2>/dev/null || echo "0")
+    UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
+  done
+
+  if [ "$UNWRAP_COUNT" -gt 0 ]; then
+    echo "❌ FAILED: Found $UNWRAP_COUNT unwrap/expect in production code"
+    exit 1
+  fi
+  echo "✅ No unwrap/expect in production code"
+fi
+echo ""
+
+# Step 5: Environment validation
+echo "5️⃣  Environment validation..."
+echo "  OS: $(uname -s)"
+echo "  Rust: $(rustc --version)"
+echo "  Cargo: $(cargo --version)"
+echo "  Docker: $(docker --version 2>/dev/null || echo "Not available")"
+echo "✅ Environment validated"
+echo ""
+
+echo "🎉 All CI checks passed locally!"
+echo ""
+echo "Your code should pass CI. Push with confidence!"
+'''
+
 # Security and audit tasks - 15s timeout (network operations can take longer)
 [tasks.audit]
 description = "Security audit"
@@ -483,7 +578,7 @@ args = [
   "5s",
   "sh",
   "-c",
-  "set -uo pipefail; if [ ! -f CHANGELOG.md ]; then echo '🚨 CRITICAL: CHANGELOG.md missing'; exit 1; fi; if [ ! -f RELEASE_NOTES_v1.1.0.md ] && [ ! -f RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'",
+  "set -uo pipefail; if [ ! -f docs/releases/CHANGELOG.md ]; then echo '🚨 CRITICAL: docs/releases/CHANGELOG.md missing'; exit 1; fi; if [ ! -f docs/releases/RELEASE_NOTES_v1.1.0.md ] && [ ! -f docs/releases/RELEASE_NOTES.md ]; then echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'; fi; echo '✅ Release artifacts validated'",
 ]
 ignore_errors = true
 
@@ -610,4 +705,19 @@ args = [
   "weaver_smoke",
   "--features",
   "weaver",
+]
+
+# FMEA Fix: Git hooks installation (RPN: 180 → 36)
+[tasks.install-hooks]
+description = "Install Git pre-commit hooks to prevent unwrap/expect in production code"
+command = "bash"
+args = ["scripts/install-hooks.sh"]
+
+[tasks.setup-dev]
+description = "Complete development environment setup (cargo-make + Git hooks)"
+dependencies = ["install-hooks"]
+script = [
+  "echo '✅ Development environment setup complete!'",
+  "echo '🔧 Git hooks installed for unwrap/expect prevention'",
+  "echo '📚 See docs/process/SPR_GUIDE.md for error handling patterns'",
 ]

@@ -74,11 +74,26 @@ jobs:
       - name: Prepare documentation directory
         run: |
           mkdir -p _site
+
+          # Verify rustdoc was built
+          if [ ! -d "target/doc" ]; then
+            echo "❌ ERROR: target/doc directory not found"
+            echo "Available directories:"
+            ls -la target/ || true
+            exit 1
+          fi
+
+          echo "📋 Copying rustdoc from target/doc..."
           cp -r target/doc/* _site/
+          echo "✅ Rustdoc copied"
 
           # Add cookbook if it exists
           if [ -d "cookbook/book" ]; then
+            echo "📋 Adding cookbook documentation..."
             cp -r cookbook/book _site/cookbook
+            echo "✅ Cookbook added"
+          else
+            echo "ℹ️  Cookbook directory not found (optional)"
           fi
 
           # Create index.html redirect to crate docs
@@ -96,10 +111,21 @@ jobs:
           </html>
           EOF
 
+          echo "📋 Created index.html redirect"
+          echo ""
+          echo "📁 Final _site directory structure:"
+          ls -la _site/ | head -20
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
+          retention-days: 1
+
+      - name: Verify artifact upload
+        run: |
+          echo "✅ Artifact uploaded successfully"
+          echo "📊 Site will be deployed to GitHub Pages"
 
   deploy:
     name: Deploy to GitHub Pages
@@ -109,6 +135,18 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Verify GitHub Pages configuration
+        run: |
+          echo "📋 Deployment Information:"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Event: ${{ github.event_name }}"
+          echo ""
+          echo "✅ Deployment will proceed to GitHub Pages"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          token: ${{ github.token }}

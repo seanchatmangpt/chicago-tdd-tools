@@ -66,6 +66,21 @@ LLMs embed knowledge, abilities, and concepts in latent space. This latent space
 - Pattern: `#[allow(clippy::lint_name)] // Justification: why this is acceptable`
 - Common allows: `expect_used` (with mutex justification), `panic` (test helpers), `unwrap_used` (test code)
 - Root cause fix: CI/CD pipeline prevents clippy errors from entering codebase
+- **FMEA Fix**: Deny `unwrap_used` and `expect_used` in production code (RPN: 180 → 36)
+
+**Error Handling Patterns** (FMEA: Production Panic Prevention):
+- **Rule**: NEVER use `.unwrap()` or `.expect()` in production code (causes panics)
+- **Why**: Panics crash the process, lose data, degrade user experience
+- **Detection**: Pre-commit hooks + CI enforcement + clippy deny rules
+- **Alternatives**:
+  - Use `?` operator for error propagation: `let value = result?;`
+  - Use `if let Ok(value) = result { ... }` for conditional handling
+  - Use `match result { Ok(v) => ..., Err(e) => ... }` for explicit handling
+  - Use `unwrap_or(default)` or `unwrap_or_else(|| default)` for fallback values
+  - Use `unwrap_or_default()` for types implementing Default
+- **In tests**: Use `assert_ok!(result)` or `assert_err!(result)` macros (better error messages)
+- **Allowed**: Only in tests, examples, benches, with `#[allow(clippy::unwrap_used)]` + justification
+- **Setup**: Run `cargo make install-hooks` to install pre-commit hooks
 
 ## SPR Consolidation Process
 
