@@ -4,25 +4,25 @@ use chicago_tdd_tools::prelude::*;
 
 pub fn run_testing_tests() {
     println!("  Testing testing features...");
-    
+
     // Generator (always available)
     test_generator();
-    
+
     // Mutation (always available)
     test_mutation();
-    
+
     #[cfg(feature = "property-testing")]
     test_property();
-    
+
     #[cfg(feature = "snapshot-testing")]
     test_snapshot();
-    
+
     #[cfg(feature = "concurrency-testing")]
     test_concurrency();
-    
+
     #[cfg(feature = "cli-testing")]
     test_cli();
-    
+
     println!("  ✓ Testing features validated");
 }
 
@@ -64,4 +64,3 @@ fn test_cli() {
     // CLI tests use .trycmd files
     assert!(true);
 }
-

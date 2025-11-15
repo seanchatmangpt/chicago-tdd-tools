@@ -16,4 +16,3 @@ fn main() -> Result<()> {
 
     clap_noun_verb::run()
 }
-

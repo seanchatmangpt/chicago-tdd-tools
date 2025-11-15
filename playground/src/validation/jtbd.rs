@@ -2,8 +2,8 @@
 //!
 //! Demonstrates Jobs To Be Done validation for real-world scenario testing, including advanced patterns.
 
-use chicago_tdd_tools::validation::jtbd::*;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::validation::jtbd::*;
 use std::collections::HashMap;
 
 /// Example: Basic JTBD scenario
@@ -76,13 +76,13 @@ pub fn example_jtbd_advanced() {
             // Extract from context
             let customer_id = ctx.variables.get("customer_id").cloned().unwrap_or_default();
             let amount = ctx.variables.get("order_amount").cloned().unwrap_or_default();
-            
+
             // Process order
             vars.insert("order_id".to_string(), "ORD-001".to_string());
             vars.insert("customer_id".to_string(), customer_id);
             vars.insert("total_amount".to_string(), amount);
             vars.insert("status".to_string(), "processed".to_string());
-            
+
             ExecutionResult::ok(vars)
         }),
         validate_result: Box::new(|ctx, result| {
@@ -90,16 +90,18 @@ pub fn example_jtbd_advanced() {
             let jtbd_ok = result.success;
             let has_order_id = result.variables.contains_key("order_id");
             let has_customer_id = result.variables.contains_key("customer_id");
-            let customer_matches = result.variables.get("customer_id")
+            let customer_matches = result
+                .variables
+                .get("customer_id")
                 .map(|id| id == ctx.variables.get("customer_id").unwrap_or(&String::new()))
                 .unwrap_or(false);
-            let status_correct = result.variables.get("status")
-                .map(|s| s == "processed")
-                .unwrap_or(false);
-            
+            let status_correct =
+                result.variables.get("status").map(|s| s == "processed").unwrap_or(false);
+
             jtbd_ok && has_order_id && has_customer_id && customer_matches && status_correct
         }),
-        expected_behavior: "Process order with customer context and validate all fields".to_string(),
+        expected_behavior: "Process order with customer context and validate all fields"
+            .to_string(),
     });
 
     // Act: Validate all scenarios
@@ -143,7 +145,7 @@ pub fn example_jtbd_multiple() {
             ExecutionResult::ok(vars)
         }),
         validate_result: Box::new(|_ctx, result| {
-            result.success 
+            result.success
                 && result.variables.contains_key("payment_id")
                 && result.variables.contains_key("amount")
         }),
@@ -182,4 +184,3 @@ mod tests {
         example_jtbd_multiple();
     });
 }
-

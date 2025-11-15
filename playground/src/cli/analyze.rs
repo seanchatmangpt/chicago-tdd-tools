@@ -2,16 +2,16 @@
 //!
 //! Commands for analysis methodologies: TRIZ, QFD, Gap Analysis
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
 
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct GuidanceInfo {
+    pub command: String,
+    pub description: String,
+    pub steps: Vec<String>,
+    pub key_principles: Vec<String>,
 }
 
 /// TRIZ (Theory of Inventive Problem Solving) guidance
@@ -27,7 +27,8 @@ fn triz() -> Result<GuidanceInfo> {
             "Step 1: Define Problem - Clearly state the technical problem".to_string(),
             "Step 2: Identify Contradictions - What are the competing objectives?".to_string(),
             "Step 3: Generalize Problem - Translate to generic problem".to_string(),
-            "Step 4: Apply TRIZ Principles - Use contradiction matrix to find principles".to_string(),
+            "Step 4: Apply TRIZ Principles - Use contradiction matrix to find principles"
+                .to_string(),
             "Step 5: Generate Solutions - Apply principles to generate solutions".to_string(),
             "Step 6: Evaluate Solutions - Assess feasibility and potential".to_string(),
         ],
@@ -55,12 +56,14 @@ fn qfd() -> Result<GuidanceInfo> {
             "Step 2: Organize Needs - Group into categories".to_string(),
             "Step 3: Define Requirements - How will we meet customer needs?".to_string(),
             "Step 4: Create House of Quality - Map needs to requirements".to_string(),
-            "Step 5: Define Relationships - How strongly does requirement address need?".to_string(),
+            "Step 5: Define Relationships - How strongly does requirement address need?"
+                .to_string(),
             "Step 6: Set Targets - What are target values for requirements?".to_string(),
         ],
         key_principles: vec![
             "Customer-focused - Start with customer needs, not assumptions".to_string(),
-            "House of Quality - Matrix showing relationships between needs and requirements".to_string(),
+            "House of Quality - Matrix showing relationships between needs and requirements"
+                .to_string(),
             "Importance weighting - Prioritize based on customer importance".to_string(),
             "Multi-level - Can cascade to sub-requirements and components".to_string(),
             "Data-driven - Use customer data and competitive analysis".to_string(),

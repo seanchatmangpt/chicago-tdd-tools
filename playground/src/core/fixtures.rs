@@ -84,4 +84,3 @@ mod tests {
         assert_ok!(example_fixture_isolation());
     });
 }
-
