@@ -69,11 +69,13 @@ if [ -n "$PROD_FILES" ]; then
         if grep -qE '#!?\[allow\(clippy::(unwrap|expect)_used\)\]' "$FILE" 2>/dev/null; then
             continue
         fi
-        COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || echo "0")
-        # Ensure COUNT is numeric (handle empty or non-numeric values)
-        if ! echo "$COUNT" | grep -qE '^[0-9]+$'; then
+        # Count unwrap/expect occurrences (handle empty results)
+        COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || true)
+        if [ -z "$COUNT" ]; then
             COUNT=0
         fi
+        # Ensure COUNT is numeric
+        COUNT=$(echo "$COUNT" | head -1 | grep -E '^[0-9]+$' || echo "0")
         UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
     done
 
