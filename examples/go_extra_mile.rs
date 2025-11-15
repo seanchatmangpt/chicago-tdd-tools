@@ -17,6 +17,7 @@ use chicago_tdd_tools::otel::types::{
 };
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
+#[cfg(feature = "otel")]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================

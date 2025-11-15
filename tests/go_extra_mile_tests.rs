@@ -10,7 +10,6 @@
 //! and do NOT start Weaver CLI. They only test Rust types and validators.
 
 use chicago_tdd_tools::assert_eq_msg;
-use chicago_tdd_tools::assert_ok;
 use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::test;
 
@@ -206,7 +205,7 @@ mod tests {
             &"chicago_tdd_tools.assertions.total".to_string(),
             "Metric name should match"
         );
-        
+
         // Now we can move validated to get the value (after all borrows are done)
         let result_value = validated.into_value();
 
