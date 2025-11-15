@@ -13,6 +13,25 @@ pub enum MutationOperator {
     AddKey(String, String),
     /// Change a value
     ChangeValue(String, String),
+    /// Swap values between two keys (v1.3.0)
+    SwapValues(String, String),
+    /// Toggle boolean value (flip true/false) (v1.3.0)
+    ToggleBoolean(String),
+    /// Apply numeric delta (add/subtract from numeric value) (v1.3.0)
+    NumericDelta(String, i32),
+    /// Change string case (uppercase/lowercase/title) (v1.3.0)
+    StringCase(String, CaseMode),
+}
+
+/// String case transformation mode (v1.3.0)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaseMode {
+    /// Convert to uppercase
+    Upper,
+    /// Convert to lowercase
+    Lower,
+    /// Convert to title case (first letter uppercase)
+    Title,
 }
 
 /// Mutation tester
@@ -54,6 +73,49 @@ impl MutationTester {
             MutationOperator::ChangeValue(key, new_value) => {
                 if let Some(v) = mutated.get_mut(&key) {
                     *v = new_value;
+                }
+            }
+            // === v1.3.0 Phase 4: New Mutation Operators ===
+            MutationOperator::SwapValues(key1, key2) => {
+                // Swap values between two keys
+                if let (Some(val1), Some(val2)) = (mutated.get(&key1).cloned(), mutated.get(&key2).cloned()) {
+                    mutated.insert(key1, val2);
+                    mutated.insert(key2, val1);
+                }
+            }
+            MutationOperator::ToggleBoolean(key) => {
+                // Toggle boolean value (flip true/false)
+                if let Some(val) = mutated.get_mut(&key) {
+                    *val = match val.to_lowercase().as_str() {
+                        "true" => "false".to_string(),
+                        "false" => "true".to_string(),
+                        _ => val.clone(), // Not a boolean, no change
+                    };
+                }
+            }
+            MutationOperator::NumericDelta(key, offset) => {
+                // Apply numeric delta (add/subtract from numeric value)
+                if let Some(val) = mutated.get_mut(&key) {
+                    if let Ok(num) = val.parse::<i32>() {
+                        *val = (num + offset).to_string();
+                    }
+                    // If not a valid number, no change
+                }
+            }
+            MutationOperator::StringCase(key, case_mode) => {
+                // Change string case
+                if let Some(val) = mutated.get_mut(&key) {
+                    *val = match case_mode {
+                        CaseMode::Upper => val.to_uppercase(),
+                        CaseMode::Lower => val.to_lowercase(),
+                        CaseMode::Title => {
+                            // Title case: first character uppercase, rest lowercase
+                            let mut chars = val.chars();
+                            chars.next().map_or_else(String::new, |first| {
+                                first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
+                            })
+                        }
+                    };
                 }
             }
         }
@@ -296,6 +358,259 @@ mod tests {
 
         let result = tester.test_mutation_detection(test_fn);
         assert!(!result, "Should return false if original test fails");
+    }
+
+    // ========================================================================
+    // v1.3.0 Phase 4: New Mutation Operators Tests
+    // ========================================================================
+
+    #[test]
+    fn test_mutation_operator_swap_values() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("key1".to_string(), "value1".to_string());
+        data.insert("key2".to_string(), "value2".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::SwapValues(
+            "key1".to_string(),
+            "key2".to_string(),
+        ));
+
+        // Assert
+        assert_eq!(mutated.get("key1"), Some(&"value2".to_string()), "key1 should have value2");
+        assert_eq!(mutated.get("key2"), Some(&"value1".to_string()), "key2 should have value1");
+    }
+
+    #[test]
+    fn test_mutation_operator_swap_values_nonexistent() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("key1".to_string(), "value1".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act: Swap with nonexistent key
+        let mutated = tester.apply_mutation(MutationOperator::SwapValues(
+            "key1".to_string(),
+            "nonexistent".to_string(),
+        ));
+
+        // Assert: No change when one key doesn't exist
+        assert_eq!(mutated.get("key1"), Some(&"value1".to_string()), "key1 should remain unchanged");
+    }
+
+    #[test]
+    fn test_mutation_operator_toggle_boolean_true_to_false() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("flag".to_string(), "true".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::ToggleBoolean("flag".to_string()));
+
+        // Assert
+        assert_eq!(mutated.get("flag"), Some(&"false".to_string()), "true should toggle to false");
+    }
+
+    #[test]
+    fn test_mutation_operator_toggle_boolean_false_to_true() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("flag".to_string(), "false".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::ToggleBoolean("flag".to_string()));
+
+        // Assert
+        assert_eq!(mutated.get("flag"), Some(&"true".to_string()), "false should toggle to true");
+    }
+
+    #[test]
+    fn test_mutation_operator_toggle_boolean_case_insensitive() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("flag".to_string(), "TRUE".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::ToggleBoolean("flag".to_string()));
+
+        // Assert: Should handle uppercase
+        assert_eq!(mutated.get("flag"), Some(&"false".to_string()), "TRUE should toggle to false");
+    }
+
+    #[test]
+    fn test_mutation_operator_toggle_boolean_non_boolean() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("key".to_string(), "not_a_bool".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::ToggleBoolean("key".to_string()));
+
+        // Assert: Should remain unchanged for non-boolean values
+        assert_eq!(mutated.get("key"), Some(&"not_a_bool".to_string()), "non-boolean should remain unchanged");
+    }
+
+    #[test]
+    fn test_mutation_operator_numeric_delta_positive() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("count".to_string(), "10".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::NumericDelta("count".to_string(), 5));
+
+        // Assert
+        assert_eq!(mutated.get("count"), Some(&"15".to_string()), "10 + 5 should be 15");
+    }
+
+    #[test]
+    fn test_mutation_operator_numeric_delta_negative() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("count".to_string(), "10".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::NumericDelta("count".to_string(), -3));
+
+        // Assert
+        assert_eq!(mutated.get("count"), Some(&"7".to_string()), "10 - 3 should be 7");
+    }
+
+    #[test]
+    fn test_mutation_operator_numeric_delta_non_numeric() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("key".to_string(), "not_a_number".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::NumericDelta("key".to_string(), 5));
+
+        // Assert: Should remain unchanged for non-numeric values
+        assert_eq!(mutated.get("key"), Some(&"not_a_number".to_string()), "non-numeric should remain unchanged");
+    }
+
+    #[test]
+    fn test_mutation_operator_string_case_upper() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("text".to_string(), "hello".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::StringCase(
+            "text".to_string(),
+            CaseMode::Upper,
+        ));
+
+        // Assert
+        assert_eq!(mutated.get("text"), Some(&"HELLO".to_string()), "should convert to uppercase");
+    }
+
+    #[test]
+    fn test_mutation_operator_string_case_lower() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("text".to_string(), "HELLO".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::StringCase(
+            "text".to_string(),
+            CaseMode::Lower,
+        ));
+
+        // Assert
+        assert_eq!(mutated.get("text"), Some(&"hello".to_string()), "should convert to lowercase");
+    }
+
+    #[test]
+    fn test_mutation_operator_string_case_title() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("text".to_string(), "hello world".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::StringCase(
+            "text".to_string(),
+            CaseMode::Title,
+        ));
+
+        // Assert
+        assert_eq!(mutated.get("text"), Some(&"Hello world".to_string()), "should convert to title case");
+    }
+
+    #[test]
+    fn test_mutation_operator_string_case_empty() {
+        // Arrange
+        let mut data = HashMap::new();
+        data.insert("text".to_string(), "".to_string());
+
+        let mut tester = MutationTester::new(data);
+
+        // Act
+        let mutated = tester.apply_mutation(MutationOperator::StringCase(
+            "text".to_string(),
+            CaseMode::Title,
+        ));
+
+        // Assert: Empty string should remain empty
+        assert_eq!(mutated.get("text"), Some(&"".to_string()), "empty string should remain empty");
+    }
+
+    #[test]
+    fn test_case_mode_debug() {
+        // Arrange & Act
+        let upper = format!("{:?}", CaseMode::Upper);
+        let lower = format!("{:?}", CaseMode::Lower);
+        let title = format!("{:?}", CaseMode::Title);
+
+        // Assert
+        assert_eq!(upper, "Upper");
+        assert_eq!(lower, "Lower");
+        assert_eq!(title, "Title");
+    }
+
+    #[test]
+    fn test_case_mode_clone() {
+        // Arrange
+        let mode1 = CaseMode::Upper;
+
+        // Act
+        let mode2 = mode1;
+
+        // Assert: Copy trait allows this
+        assert_eq!(mode1, mode2);
+    }
+
+    #[test]
+    fn test_case_mode_equality() {
+        // Arrange & Act & Assert
+        assert_eq!(CaseMode::Upper, CaseMode::Upper);
+        assert_eq!(CaseMode::Lower, CaseMode::Lower);
+        assert_eq!(CaseMode::Title, CaseMode::Title);
+        assert_ne!(CaseMode::Upper, CaseMode::Lower);
     }
 
     // ========================================================================
