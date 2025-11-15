@@ -8,6 +8,8 @@ Never trust text, only test results. All code is production-ready with error han
 
 **Build System**: Always use `cargo make` commands, never direct `cargo` commands. Cargo-make handles proc-macro crates, includes timeouts, ensures consistency.
 
+**Git Hooks**: NEVER use `--no-verify` flag. All git hooks (pre-commit, pre-push, etc.) MUST run to enforce quality gates. If hooks fail, fix the issues - do not bypass them. Hooks are mandatory quality checks that prevent defects from entering the codebase.
+
 **Timeout SLA**: Every CLI command MUST have timeout wrapper to prevent freezing. Quick checks: `timeout 5s`. Compilation: `timeout 10s`. Unit tests: `timeout 1s`. Integration: `timeout 30s`. Long ops: `timeout 60s`. Timeouts indicate issues early.
 
 **Behavior Verification**: Tests verify observable outputs/state changes, not just function existence. No tests that only check `assert_ok!()` without verifying behavior. Tests check state changes, outputs, execution order, actual effects.
@@ -66,7 +68,7 @@ Never trust text, only test results. All code is production-ready with error han
 
 ## Prohibited Patterns
 
-Placeholders, TODOs (except documented future enhancements), unhandled errors (unwrap/expect/panics in production), stubs, simulated behavior, claims without verification, meaningless tests (only assert_ok without behavior check), direct cargo commands, type system misuse, unnecessary allocations, runtime checks when compile-time possible, `print!` and `println!` macros in library code (use `log!` macros or alert macros instead - exceptions: CLI binaries `src/bin/*.rs` for user-facing output, `build.rs` for Cargo build messages `println!("cargo:warning=...")`, test code for test output/debugging).
+Placeholders, TODOs (except documented future enhancements), unhandled errors (unwrap/expect/panics in production), stubs, simulated behavior, claims without verification, meaningless tests (only assert_ok without behavior check), direct cargo commands, type system misuse, unnecessary allocations, runtime checks when compile-time possible, `print!` and `println!` macros in library code (use `log!` macros or alert macros instead - exceptions: CLI binaries `src/bin/*.rs` for user-facing output, `build.rs` for Cargo build messages `println!("cargo:warning=...")`, test code for test output/debugging), **NEVER use `--no-verify` flag with git commands** (git hooks MUST run to enforce quality gates - pre-commit, pre-push, etc. are mandatory quality checks).
 
 ## Required Patterns
 
