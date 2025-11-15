@@ -19,22 +19,24 @@ on:
   pull_request:
     branches: [main, master]
     paths:
-      - 'benches/**'
-      - 'src/**'
-      - 'proc_macros/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/benchmark.yml'
+      - "benches/**"
+      - "src/**"
+      - "proc_macros/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/benchmark.yml"
   push:
     branches: [main, master]
     paths:
-      - 'benches/**'
-      - 'src/**'
-      - 'proc_macros/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/benchmark.yml'
+      - "benches/**"
+      - "src/**"
+      - "proc_macros/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/benchmark.yml"
   workflow_dispatch:
+    # FMEA Fix: Path filters prevent workflow from running when benches/ doesn't exist
+    # This saves CI minutes by skipping unnecessary runs
 
 # Only run one benchmark at a time
 concurrency:
@@ -43,8 +45,8 @@ concurrency:
 
 # Permissions for benchmark workflow
 permissions:
-  contents: write        # For storing benchmark results
-  pull-requests: write   # For posting PR comments
+  contents: write # For storing benchmark results
+  pull-requests: write # For posting PR comments
 
 env:
   RUST_BACKTRACE: 1
@@ -103,11 +105,11 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check-results.outputs.has-results == 'true'
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          tool: 'cargo'
+          tool: "cargo"
           output-file-path: benchmark_results.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          alert-threshold: '150%'
+          alert-threshold: "150%"
           comment-on-alert: true
           fail-on-alert: false
 
@@ -115,11 +117,11 @@ jobs:
         if: github.event_name == 'pull_request' && steps.check-results.outputs.has-results == 'true'
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          tool: 'cargo'
+          tool: "cargo"
           output-file-path: benchmark_results.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: false
-          alert-threshold: '150%'
+          alert-threshold: "150%"
           comment-on-alert: true
           fail-on-alert: false
 

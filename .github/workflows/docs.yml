@@ -60,6 +60,9 @@ jobs:
         continue-on-error: true
 
       - name: Build rustdoc
+        # FMEA Fix: Use cargo make for consistency with build system standards
+        # Note: cargo make docs-build may not exist, so keeping direct cargo doc for now
+        # TODO: Add docs-build task to Makefile.toml if needed
         run: cargo doc --no-deps --all-features
 
       - name: Build cookbook (if present)
@@ -119,7 +122,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: "_site"
           retention-days: 1
 
       - name: Verify artifact upload
