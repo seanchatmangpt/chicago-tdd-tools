@@ -2,7 +2,7 @@
 //!
 //! Demonstrates type-level AAA pattern enforcement with TestState, including advanced patterns.
 
-use chicago_tdd_tools::core::state::{Arrange, Act, Assert, TestState};
+use chicago_tdd_tools::core::state::{Act, Arrange, Assert, TestState};
 use chicago_tdd_tools::prelude::*;
 
 /// Example: Type state pattern
@@ -20,9 +20,7 @@ pub fn example_type_state_pattern() {
 
     // Assert: Transition to Assert phase (only possible from Act)
     let assert_state = act_state.assert();
-    assert!(assert_state.assert_that(|result| {
-        result.map(|r| r.len() == 4).unwrap_or(false)
-    }));
+    assert!(assert_state.assert_that(|result| { result.map(|r| r.len() == 4).unwrap_or(false) }));
 
     // Type system prevents calling methods in wrong order:
     // - Cannot call `act()` on `TestState<Assert>`
@@ -33,12 +31,11 @@ pub fn example_type_state_pattern() {
 /// Example: Advanced state pattern with multiple transitions
 pub fn example_advanced_state_pattern() {
     // Arrange: Start with Arrange phase
-    let arrange_state = TestState::<Arrange>::new()
-        .with_arrange_data(vec![10, 20, 30]);
+    let arrange_state = TestState::<Arrange>::new().with_arrange_data(vec![10, 20, 30]);
 
     // Act: Transition to Act phase and execute multiple operations
     let act_state = arrange_state.act();
-    
+
     // First operation: Transform data
     let act_state = act_state.execute(|data| {
         let mut result = data.unwrap_or_default();
@@ -47,26 +44,19 @@ pub fn example_advanced_state_pattern() {
     });
 
     // Second operation: Filter data
-    let act_state = act_state.execute(|data| {
-        data.unwrap_or_default()
-            .into_iter()
-            .filter(|&v| v > 30)
-            .collect()
-    });
+    let act_state = act_state
+        .execute(|data| data.unwrap_or_default().into_iter().filter(|&v| v > 30).collect());
 
     // Assert: Transition to Assert phase and verify complex conditions
     let assert_state = act_state.assert();
-    
+
     // Verify result length
-    assert!(assert_state.assert_that(|result| {
-        result.as_ref().map(|r| r.len() == 2).unwrap_or(false)
-    }));
+    assert!(assert_state
+        .assert_that(|result| { result.as_ref().map(|r| r.len() == 2).unwrap_or(false) }));
 
     // Verify result values
     assert!(assert_state.assert_that(|result| {
-        result.as_ref()
-            .map(|r| r.iter().all(|&v| v > 30))
-            .unwrap_or(false)
+        result.as_ref().map(|r| r.iter().all(|&v| v > 30)).unwrap_or(false)
     }));
 }
 
@@ -84,9 +74,8 @@ pub fn example_state_no_arrange() {
 
     // Assert: Transition to Assert phase and verify
     let assert_state = act_state.assert();
-    assert!(assert_state.assert_that(|result| {
-        result.as_ref().map(|r| r.len() == 5).unwrap_or(false)
-    }));
+    assert!(assert_state
+        .assert_that(|result| { result.as_ref().map(|r| r.len() == 5).unwrap_or(false) }));
 }
 
 #[cfg(test)]
@@ -108,4 +97,3 @@ mod tests {
         example_state_no_arrange();
     });
 }
-

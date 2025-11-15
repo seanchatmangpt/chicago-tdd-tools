@@ -2,29 +2,28 @@
 //!
 //! Commands for testing features: property, mutation, snapshot, concurrency, cli, generator, parameterized
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
-use std::path::PathBuf;
 
 use crate::testing;
 
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct Status {
+    pub features: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ExecutionResult {
+    pub executed: Vec<String>,
+    pub success: bool,
+    pub message: String,
 }
 
 /// Show testing features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
     let mut features = vec!["gen".to_string()];
     let mut examples = vec!["gen".to_string()];
 
@@ -98,9 +97,8 @@ fn list() -> Result<Vec<String>> {
 /// Execute multiple test examples
 #[verb]
 fn exec(
-    names: String,
-    output: Option<PathBuf>,
-    verbose: usize,
+    #[arg(long, help = "Space-separated example names to execute")] names: String,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
@@ -120,11 +118,7 @@ fn exec(
         format!("Executed {} example(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
-        executed,
-        success,
-        message,
-    })
+    Ok(ExecutionResult { executed, success, message })
 }
 
 #[derive(Serialize)]
@@ -144,7 +138,8 @@ fn expert() -> Result<GuidanceInfo> {
         command: "test expert".to_string(),
         description: "Expert Testing Patterns".to_string(),
         steps: vec![
-            "Step 1: Understand Test Patterns - What patterns exist for different scenarios?".to_string(),
+            "Step 1: Understand Test Patterns - What patterns exist for different scenarios?"
+                .to_string(),
             "Step 2: Choose Appropriate Pattern - Select pattern that fits your test".to_string(),
             "Step 3: Apply Pattern Consistently - Use pattern across similar tests".to_string(),
             "Step 4: Verify Clarity - Ensure test intent is clear to readers".to_string(),
@@ -152,7 +147,8 @@ fn expert() -> Result<GuidanceInfo> {
         ],
         key_principles: vec![
             "Arrange-Act-Assert - Structure tests with clear sections".to_string(),
-            "Test behavior, not implementation - Tests shouldn't change when implementation does".to_string(),
+            "Test behavior, not implementation - Tests shouldn't change when implementation does"
+                .to_string(),
             "One assertion per test - Each test validates one behavior".to_string(),
             "Descriptive names - Test names explain what is being tested".to_string(),
             "DRY principle - Extract common test setup and utilities".to_string(),
@@ -254,4 +250,3 @@ fn execute_test_example(name: &str) -> std::result::Result<(), String> {
         }
     }
 }
-

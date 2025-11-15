@@ -2,10 +2,10 @@
 
 pub fn run_integration_tests() {
     println!("  Testing integration features...");
-    
+
     #[cfg(feature = "testcontainers")]
     test_testcontainers();
-    
+
     println!("  ✓ Integration features validated");
 }
 
@@ -17,4 +17,3 @@ fn test_testcontainers() {
     // This validates the API is available
     assert!(client.client().version().is_ok());
 }
-

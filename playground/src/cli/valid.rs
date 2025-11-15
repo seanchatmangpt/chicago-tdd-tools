@@ -2,29 +2,28 @@
 //!
 //! Commands for validation features: coverage, guards, jtbd, performance
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
-use std::path::PathBuf;
 
 use crate::validation;
 
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct Status {
+    pub features: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ExecutionResult {
+    pub executed: Vec<String>,
+    pub success: bool,
+    pub message: String,
 }
 
 /// Show validation features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
     Ok(Status {
         features: vec![
             "cov".to_string(),
@@ -44,20 +43,14 @@ fn stat(verbose: usize) -> Result<Status> {
 /// List available validation checks
 #[verb]
 fn list() -> Result<Vec<String>> {
-    Ok(vec![
-        "cov".to_string(),
-        "guard".to_string(),
-        "jtbd".to_string(),
-        "perf".to_string(),
-    ])
+    Ok(vec!["cov".to_string(), "guard".to_string(), "jtbd".to_string(), "perf".to_string()])
 }
 
 /// Execute multiple validation checks
 #[verb]
 fn exec(
-    names: String,
-    output: Option<PathBuf>,
-    verbose: usize,
+    #[arg(long, help = "Space-separated check names to execute")] names: String,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
@@ -78,11 +71,7 @@ fn exec(
         format!("Executed {} check(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
-        executed,
-        success,
-        message,
-    })
+    Ok(ExecutionResult { executed, success, message })
 }
 
 fn execute_valid_example(name: &str) -> std::result::Result<(), String> {
@@ -112,4 +101,3 @@ fn execute_valid_example(name: &str) -> std::result::Result<(), String> {
         _ => Err(format!("Unknown example: {}", name)),
     }
 }
-

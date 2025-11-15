@@ -22,4 +22,3 @@ pub mod generator;
 
 #[cfg(feature = "parameterized-testing")]
 pub mod parameterized;
-

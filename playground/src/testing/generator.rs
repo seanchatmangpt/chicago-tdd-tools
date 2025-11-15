@@ -2,8 +2,8 @@
 //!
 //! Demonstrates test code generation with compile-time arrays.
 
-use chicago_tdd_tools::testing::generator::*;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::testing::generator::*;
 
 /// Example: Test generator
 pub fn example_test_generator() {
@@ -59,4 +59,3 @@ mod tests {
         example_array_pattern();
     });
 }
-

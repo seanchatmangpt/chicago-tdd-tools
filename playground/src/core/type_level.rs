@@ -24,4 +24,3 @@ mod tests {
         example_size_validated_array();
     });
 }
-

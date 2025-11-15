@@ -4,28 +4,28 @@ use chicago_tdd_tools::prelude::*;
 
 pub fn run_core_tests() {
     println!("  Testing core features...");
-    
+
     // Fixtures
     test_fixtures();
-    
+
     // Builders
     test_builders();
-    
+
     // Assertions
     test_assertions();
-    
+
     // State
     test_state();
-    
+
     // Type level
     test_type_level();
-    
+
     // Const assert
     test_const_assert();
-    
+
     // Alert
     test_alert();
-    
+
     println!("  ✓ Core features validated");
 }
 
@@ -35,10 +35,7 @@ fn test_fixtures() {
 }
 
 fn test_builders() {
-    let data = TestDataBuilder::new()
-        .with_var("key", "value")
-        .build_json()
-        .unwrap();
+    let data = TestDataBuilder::new().with_var("key", "value").build_json().unwrap();
     assert!(data.is_object());
 }
 
@@ -65,4 +62,3 @@ fn test_const_assert() {
 fn test_alert() {
     alert_info!("Test alert");
 }
-

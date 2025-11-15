@@ -2,13 +2,13 @@
 
 pub fn run_observability_tests() {
     println!("  Testing observability features...");
-    
+
     #[cfg(feature = "otel")]
     test_otel();
-    
+
     #[cfg(feature = "weaver")]
     test_weaver();
-    
+
     println!("  ✓ Observability features validated");
 }
 
@@ -26,4 +26,3 @@ fn test_weaver() {
     let validator = WeaverValidator::new(PathBuf::from("registry/"));
     assert!(!validator.is_running());
 }
-

@@ -10,7 +10,7 @@ use chicago_tdd_tools::prelude::*;
 pub fn example_parameterized_test() {
     // Arrange: Parameterized tests use param_test! macro with #[case] attributes
     // Act-Assert: Tests run with multiple inputs
-    
+
     // Example pattern:
     // param_test! {
     //     #[case(1, 2, 3)]
@@ -19,7 +19,7 @@ pub fn example_parameterized_test() {
     //         assert_eq!(a + b, expected);
     //     }
     // }
-    
+
     assert!(true);
 }
 
@@ -65,4 +65,3 @@ mod tests {
         }
     }
 }
-

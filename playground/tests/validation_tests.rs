@@ -4,19 +4,19 @@ use chicago_tdd_tools::prelude::*;
 
 pub fn run_validation_tests() {
     println!("  Testing validation features...");
-    
+
     // Coverage
     test_coverage();
-    
+
     // Guards
     test_guards();
-    
+
     // JTBD
     test_jtbd();
-    
+
     // Performance
     test_performance();
-    
+
     println!("  ✓ Validation features validated");
 }
 
@@ -49,4 +49,3 @@ fn test_performance() {
     let counter = TickCounter::start();
     let _ticks = counter.elapsed_ticks();
 }
-

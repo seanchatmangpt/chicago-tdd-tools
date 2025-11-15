@@ -2,29 +2,28 @@
 //!
 //! Commands for observability features: otel, weaver
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
-use std::path::PathBuf;
 
 use crate::observability;
 
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct Status {
+    pub features: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ExecutionResult {
+    pub executed: Vec<String>,
+    pub success: bool,
+    pub message: String,
 }
 
 /// Show observability features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 
@@ -81,9 +80,7 @@ fn otel() -> Result<ExecutionResult> {
 #[verb]
 #[cfg(feature = "weaver")]
 fn weav(
-    report_dir: Option<PathBuf>,
-    registry: Option<PathBuf>,
-    verbose: usize,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<ExecutionResult> {
     observability::weaver::example_weaver_basic();
     observability::weaver::example_weaver_custom_config();
@@ -95,4 +92,3 @@ fn weav(
         message: "Weaver demo executed successfully".to_string(),
     })
 }
-

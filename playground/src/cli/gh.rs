@@ -4,29 +4,31 @@
 
 use clap_noun_verb::Result;
 use clap_noun_verb_macros::verb;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path::PathBuf;
 use std::process::Command;
 
 #[derive(Serialize, Debug)]
-struct WorkflowStatus {
-    name: String,
-    path: String,
-    jobs: usize,
-    valid: bool,
+pub struct WorkflowStatus {
+    pub name: String,
+    pub path: String,
+    pub jobs: usize,
+    pub valid: bool,
 }
 
 #[derive(Serialize, Debug)]
-struct GhStatus {
-    workflows: Vec<WorkflowStatus>,
-    total_workflows: usize,
-    valid_workflows: usize,
-    invalid_workflows: usize,
+pub struct GhStatus {
+    pub workflows: Vec<WorkflowStatus>,
+    pub total_workflows: usize,
+    pub valid_workflows: usize,
+    pub invalid_workflows: usize,
 }
 
 /// Show GitHub Actions status
 #[verb]
-fn stat(verbose: usize) -> Result<GhStatus> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<GhStatus> {
     let workflows = discover_workflows();
     let valid_count = workflows.iter().filter(|w| w.valid).count();
     let invalid_count = workflows.len() - valid_count;
@@ -57,11 +59,13 @@ fn stat(verbose: usize) -> Result<GhStatus> {
 
 /// List all GitHub Actions workflows
 #[verb]
-fn list(format: Option<String>) -> Result<Vec<String>> {
+fn list(
+    #[arg(long, default_value = "names", help = "Output format: names, paths, or json")]
+    format: String,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
-    let output_format = format.as_deref().unwrap_or("names");
 
-    match output_format {
+    match format.as_str() {
         "names" => {
             let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();
             println!("📋 GitHub Actions Workflows:");
@@ -79,17 +83,23 @@ fn list(format: Option<String>) -> Result<Vec<String>> {
             Ok(paths)
         }
         "json" => {
-            let json = serde_json::to_string_pretty(&workflows).unwrap_or_else(|_| "[]".to_string());
+            let json =
+                serde_json::to_string_pretty(&workflows).unwrap_or_else(|_| "[]".to_string());
             println!("{}", json);
             Ok(workflows.iter().map(|w| w.name.clone()).collect())
         }
-        _ => Ok(vec![format!("Unknown format: {}. Use 'names', 'paths', or 'json'", output_format)]),
+        _ => {
+            Ok(vec![format!("Unknown format: {}. Use 'names', 'paths', or 'json'", output_format)])
+        }
     }
 }
 
 /// Validate GitHub Actions workflows
 #[verb]
-fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
+fn check(
+    #[arg(long, help = "Auto-fix issues if possible")] fix: bool,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let mut issues = Vec::new();
 
@@ -151,8 +161,11 @@ fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
 
 /// Show recent workflow runs (requires gh CLI)
 #[verb]
-fn runs(limit: Option<usize>, workflow: Option<String>, _verbose: usize) -> Result<String> {
-    let limit = limit.unwrap_or(10);
+fn runs(
+    #[arg(long, default_value = "10", help = "Maximum number of runs to display")] limit: usize,
+    #[arg(long, help = "Filter by specific workflow name")] workflow: Option<String>,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] _verbose: usize,
+) -> Result<String> {
     println!("🔄 Fetching recent workflow runs...");
     println!();
 
@@ -198,7 +211,8 @@ fn open() -> Result<String> {
         }
     }
 
-    if let Ok(output) = Command::new("git").args(["config", "--get", "remote.origin.url"]).output() {
+    if let Ok(output) = Command::new("git").args(["config", "--get", "remote.origin.url"]).output()
+    {
         if output.status.success() {
             let url = String::from_utf8_lossy(&output.stdout);
             let url = url.trim();
@@ -240,11 +254,7 @@ fn discover_workflows() -> Vec<WorkflowStatus> {
         if path.extension().and_then(|s| s.to_str()) == Some("yml")
             || path.extension().and_then(|s| s.to_str()) == Some("yaml")
         {
-            let name = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("unknown")
-                .to_string();
+            let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
 
             let Ok(content) = fs::read_to_string(&path) else {
                 continue;
@@ -253,20 +263,12 @@ fn discover_workflows() -> Vec<WorkflowStatus> {
             let valid = serde_yaml::from_str::<serde_yaml::Value>(&content).is_ok();
 
             let jobs = if let Ok(yaml) = serde_yaml::from_str::<serde_yaml::Value>(&content) {
-                yaml.get("jobs")
-                    .and_then(|j| j.as_mapping())
-                    .map(|m| m.len())
-                    .unwrap_or(0)
+                yaml.get("jobs").and_then(|j| j.as_mapping()).map(|m| m.len()).unwrap_or(0)
             } else {
                 0
             };
 
-            workflows.push(WorkflowStatus {
-                name,
-                path: path.display().to_string(),
-                jobs,
-                valid,
-            });
+            workflows.push(WorkflowStatus { name, path: path.display().to_string(), jobs, valid });
         }
     }
 
