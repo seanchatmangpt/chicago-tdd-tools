@@ -1,0 +1,527 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Best Practices &amp; Migration - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="best-practices--migration"><a class="header" href="#best-practices--migration">Best Practices &amp; Migration</a></h1>
+<p>Proven patterns and migration strategies for Chicago TDD.</p>
+<h2 id="testing-best-practices"><a class="header" href="#testing-best-practices">Testing Best Practices</a></h2>
+<h3 id="1-write-tests-first-tdd"><a class="header" href="#1-write-tests-first-tdd">1. Write Tests First (TDD)</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. Write failing test
+test!(test_parse_positive_number, {
+    let result = parse_number("42");
+    assert_ok!(&amp;result);
+    assert_eq!(result.unwrap(), 42);
+});
+
+// 2. Implement minimal code
+pub fn parse_number(input: &amp;str) -&gt; Result&lt;u32, String&gt; {
+    input.parse().map_err(|e| format!("Parse failed: {e}"))
+}
+
+// 3. Refactor (improve design, remove duplication)
+// 4. Test passes ✓
+<span class="boring">}</span></code></pre></pre>
+<h3 id="2-test-both-paths"><a class="header" href="#2-test-both-paths">2. Test Both Paths</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_complete_behavior, {
+    // Success path
+    assert_ok!(&amp;parse_number("42"));
+
+    // Error path
+    assert_err!(&amp;parse_number("invalid"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3-focus-on-error-cases"><a class="header" href="#3-focus-on-error-cases">3. Focus on Error Cases</a></h3>
+<p>80% of bugs hide in error paths:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_error_cases, {
+    // Test invalid input
+    assert_err!(&amp;parse_number(""));
+    assert_err!(&amp;parse_number("not_a_number"));
+    assert_err!(&amp;parse_number("-1"));  // If negative not allowed
+
+    // Test boundaries
+    assert_ok!(&amp;parse_number("0"));
+    assert_ok!(&amp;parse_number("4294967295"));  // u32::MAX
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4-keep-tests-focused"><a class="header" href="#4-keep-tests-focused">4. Keep Tests Focused</a></h3>
+<p>One test per behavior:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Focused
+test!(test_parse_valid_number, {
+    let result = parse_number("42");
+    assert_ok!(&amp;result);
+});
+
+test!(test_parse_invalid_number, {
+    let result = parse_number("invalid");
+    assert_err!(&amp;result);
+});
+
+// ❌ Too many behaviors
+test!(test_parsing, {
+    // Tests both valid and invalid
+    // Hard to know what failed
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="5-use-descriptive-names"><a class="header" href="#5-use-descriptive-names">5. Use Descriptive Names</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Clear intent
+test!(test_parse_handles_negative_numbers_gracefully, { /* */ });
+
+// ❌ Vague
+test!(test_parse, { /* */ });
+<span class="boring">}</span></code></pre></pre>
+<h2 id="organization-best-practices"><a class="header" href="#organization-best-practices">Organization Best Practices</a></h2>
+<h3 id="1-mirror-source-structure"><a class="header" href="#1-mirror-source-structure">1. Mirror Source Structure</a></h3>
+<pre><code>src/
+├── users/
+│   └── service.rs
+└── orders/
+    └── service.rs
+
+tests/
+├── users/
+│   └── service_tests.rs
+└── orders/
+    └── service_tests.rs
+</code></pre>
+<h3 id="2-shared-utilities"><a class="header" href="#2-shared-utilities">2. Shared Utilities</a></h3>
+<pre><code>tests/
+├── common.rs           # Shared utilities
+├── users_tests.rs
+└── orders_tests.rs
+</code></pre>
+<p>In <code>common.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn create_test_user() -&gt; Result&lt;User, String&gt; {
+    TestDataBuilder::new()
+        .with_var("name", "Test User")
+        .build_json()?
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3-fixture-factory-pattern"><a class="header" href="#3-fixture-factory-pattern">3. Fixture Factory Pattern</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn setup_database_fixture() -&gt; Result&lt;TestFixture, String&gt; {
+    let fixture = TestFixture::new()?;
+    // Additional setup
+    Ok(fixture)
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="performance-best-practices"><a class="header" href="#performance-best-practices">Performance Best Practices</a></h2>
+<h3 id="1-isolate-slow-tests"><a class="header" href="#1-isolate-slow-tests">1. Isolate Slow Tests</a></h3>
+<p>Mark slow tests:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ignore]  // Run with --ignored flag
+test!(slow_integration_test, {
+    // Takes 10 seconds
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Run separately:</p>
+<pre><code class="language-bash">cargo test --ignored  # Only slow tests
+</code></pre>
+<h3 id="2-parallel-execution"><a class="header" href="#2-parallel-execution">2. Parallel Execution</a></h3>
+<p>Tests run in parallel by default:</p>
+<pre><code class="language-bash">cargo test -- --test-threads=4  # 4 threads (default: CPU count)
+cargo test -- --test-threads=1  # Sequential (slow, for debugging)
+</code></pre>
+<h3 id="3-cache-expensive-operations"><a class="header" href="#3-cache-expensive-operations">3. Cache Expensive Operations</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_expensive_setup, {
+    // Reuse expensive setup
+    lazy_static::lazy_static! {
+        static ref EXPENSIVE_DATA: Data = { /* expensive */ };
+    }
+
+    // Use cached data
+    assert_ok!(&amp;process(&amp;EXPENSIVE_DATA));
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="migration-from-traditional-testing"><a class="header" href="#migration-from-traditional-testing">Migration from Traditional Testing</a></h2>
+<h3 id="from-no-tests--to-core-tests"><a class="header" href="#from-no-tests--to-core-tests">From: No Tests → To: Core Tests</a></h3>
+<ol>
+<li>Start with core patterns (fixtures, builders, assertions)</li>
+<li>Test public APIs</li>
+<li>Focus on error cases</li>
+<li>Gradually increase coverage</li>
+</ol>
+<h3 id="from-mocks--to-real-dependencies"><a class="header" href="#from-mocks--to-real-dependencies">From: Mocks → To: Real Dependencies</a></h3>
+<ol>
+<li>Replace mocks with real implementations</li>
+<li>Use fixtures for isolation</li>
+<li>Only mock external services (APIs, DBs)</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Before: Mock-heavy
+let mock_db = MockDatabase::new();
+let result = process(&amp;mock_db);
+
+// After: Real implementations
+let fixture = TestFixture::new()?;
+let result = process(&amp;fixture)?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="from-global-state--to-fixtures"><a class="header" href="#from-global-state--to-fixtures">From: Global State → To: Fixtures</a></h3>
+<ol>
+<li>Remove global state</li>
+<li>Create fixtures for test isolation</li>
+<li>Pass fixtures as parameters</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Before: Global
+static mut TEST_DATA: Option&lt;Data&gt; = None;
+
+// After: Fixture-based
+test!(test_with_data, {
+    let fixture = TestFixture::new()?;
+    // Use fixture
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="from-100-coverage--to-80--error-paths"><a class="header" href="#from-100-coverage--to-80--error-paths">From: 100% Coverage → To: 80% + Error Paths</a></h3>
+<ol>
+<li>Stop obsessing over coverage</li>
+<li>Focus on critical paths</li>
+<li>Test error cases thoroughly</li>
+</ol>
+<h2 id="common-pitfalls--solutions"><a class="header" href="#common-pitfalls--solutions">Common Pitfalls &amp; Solutions</a></h2>
+<h3 id="pitfall-1-tests-coupled-to-implementation"><a class="header" href="#pitfall-1-tests-coupled-to-implementation">Pitfall 1: Tests Coupled to Implementation</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Brittle - depends on internal structure
+test!(test_struct_format, {
+    let user = create_user();
+    assert_eq!(format!("{:?}", user), "User { id: 123, ... }");
+});
+
+// ✅ Robust - tests behavior
+test!(test_user_creation, {
+    let user = create_user();
+    assert_eq!(user.id, 123);
+    assert_eq!(user.name, "Alice");
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pitfall-2-flaky-tests"><a class="header" href="#pitfall-2-flaky-tests">Pitfall 2: Flaky Tests</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Flaky - depends on time
+test!(test_timing_dependent, {
+    let start = Instant::now();
+    operation();
+    assert!(start.elapsed() &lt; Duration::from_secs(1));  // Unreliable
+});
+
+// ✅ Reliable - deterministic
+test!(test_result_correct, {
+    let result = operation();
+    assert_eq!(result, expected);  // Same result every time
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pitfall-3-test-interdependencies"><a class="header" href="#pitfall-3-test-interdependencies">Pitfall 3: Test Interdependencies</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Tests depend on order
+test!(test_1_setup, { /* setup */ });
+test!(test_2_use_setup_from_1, { /* depends on test_1 */ });
+
+// ✅ Each test is independent
+test!(test_setup, {
+    let fixture = TestFixture::new()?;
+    // setup complete
+});
+
+test!(test_use, {
+    let fixture = TestFixture::new()?;
+    // independent
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="quality-checklist"><a class="header" href="#quality-checklist">Quality Checklist</a></h2>
+<p>For each test, verify:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>AAA Pattern</strong>: Arrange, Act, Assert clearly separated</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Isolation</strong>: No dependencies on other tests</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Error Paths</strong>: Tests both success and failure</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Clear Name</strong>: Describes what's being tested</li>
+<li><input disabled="" type="checkbox"/>
+<strong>One Assertion</strong>: Focused on one behavior</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Deterministic</strong>: Same result every run</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Fast</strong>: &lt;100ms per test (unless integration)</li>
+</ul>
+<h2 id="continuous-integration"><a class="header" href="#continuous-integration">Continuous Integration</a></h2>
+<h3 id="pre-commit"><a class="header" href="#pre-commit">Pre-Commit</a></h3>
+<pre><code class="language-bash">cargo make pre-commit  # Format + lint + unit tests
+</code></pre>
+<h3 id="before-push"><a class="header" href="#before-push">Before Push</a></h3>
+<pre><code class="language-bash">cargo make ci-local    # Simulate full CI pipeline
+</code></pre>
+<h3 id="in-ci"><a class="header" href="#in-ci">In CI</a></h3>
+<pre><code class="language-bash">cargo make test-all    # All tests including integration
+</code></pre>
+<h2 id="graduation-path"><a class="header" href="#graduation-path">Graduation Path</a></h2>
+<pre><code>Learning
+  ↓
+Core Patterns (fixtures, builders, assertions)
+  ↓
+Error Path Testing
+  ↓
+Advanced Techniques (properties, mutations, snapshots)
+  ↓
+Observability (OTEL, Weaver)
+  ↓
+Expert
+</code></pre>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><a href="../core/README.html">Core Patterns</a></li>
+<li><a href="../advanced/README.html">Advanced Techniques</a></li>
+<li><a href="real-world.html">Real-World Examples</a></li>
+<li><a href="../../cookbook/README.html">Pattern Cookbook</a></li>
+<li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a></li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ol>
+<li>Pick a project to refactor</li>
+<li>Start with core patterns</li>
+<li>Add tests incrementally</li>
+<li>Build confidence with error paths</li>
+<li>Add advanced techniques where beneficial</li>
+</ol>
+<hr />
+<p><strong>Chicago TDD Tools</strong>: Testing with confidence, errors prevented at compile time.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guides/integration-docker.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guides/integration-docker.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
