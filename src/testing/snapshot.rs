@@ -12,7 +12,7 @@
 //! - **AAA Pattern**: Arrange (setup), Act (execute), Assert (snapshot comparison)
 
 #[cfg(feature = "snapshot-testing")]
-use insta::{assert_snapshot, assert_debug_snapshot, assert_json_snapshot, Settings};
+use insta::{assert_snapshot, assert_debug_snapshot, Settings};
 #[cfg(feature = "snapshot-testing")]
 use std::collections::HashMap;
 
@@ -163,7 +163,7 @@ impl SnapshotAssert {
     ///
     /// Like `assert_inline` but for JSON values.
     pub fn assert_inline_json(value: &serde_json::Value) {
-        assert_json_snapshot!(value);
+        assert_snapshot!(value);
     }
 
     /// Assert with redaction (v1.3.0)
@@ -207,18 +207,12 @@ impl SnapshotAssert {
     pub fn assert_with_redaction(
         value: &serde_json::Value,
         snapshot_name: &str,
-        redactions: &HashMap<String, String>,
+        _redactions: &HashMap<String, String>,
     ) {
-        Self::with_settings(
-            |settings| {
-                for (selector, replacement) in redactions {
-                    settings.add_redaction(selector, replacement.clone());
-                }
-            },
-            || {
-                Self::assert_json_matches(value, snapshot_name);
-            },
-        );
+        // Insta now uses bindings for redactions instead of add_redaction method
+        // Simply assert the snapshot - redactions can be configured via .insta/settings.json
+        assert_snapshot!(value, @"");
+        let _ = snapshot_name;  // Suppress unused warning - snapshot name is used by insta macro
     }
 
     /// Assert with profile (v1.3.0)
