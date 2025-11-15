@@ -1,26 +1,40 @@
 //! Process noun commands
 //!
-//! Commands for process methodology: DMEDI, DMAIC, ACP, Concept Selection
+//! Demonstrates clap-noun-verb best practices through process methodologies.
+//! Commands for process methodologies: DMEDI, DMAIC, ACP, Concept Selection
 
 use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
 use serde::Serialize;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Guidance information for process methodologies
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct ProcessGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this methodology covers
+    pub description: String,
+    /// Ordered steps for the methodology
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// DMEDI design process guidance
 ///
 /// DMEDI (Define, Measure, Explore, Develop, Implement) is a systematic design methodology
 /// that ensures new designs meet customer needs, business goals, and quality requirements.
 #[verb]
-fn dmedi() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn dmedi() -> Result<ProcessGuidanceInfo> {
+    Ok(ProcessGuidanceInfo {
         command: "process dmedi".to_string(),
         description: "DMEDI Design Process - Multi-Step Workflow".to_string(),
         steps: vec![
@@ -45,8 +59,8 @@ fn dmedi() -> Result<GuidanceInfo> {
 /// DMAIC (Define, Measure, Analyze, Improve, Control) is a systematic approach
 /// for problem-solving and process improvement.
 #[verb]
-fn dmaic() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn dmaic() -> Result<ProcessGuidanceInfo> {
+    Ok(ProcessGuidanceInfo {
         command: "process dmaic".to_string(),
         description: "DMAIC Problem-Solving Methodology".to_string(),
         steps: vec![
@@ -70,8 +84,8 @@ fn dmaic() -> Result<GuidanceInfo> {
 ///
 /// ACP is a structured git workflow for committing changes systematically.
 #[verb]
-fn acp() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn acp() -> Result<ProcessGuidanceInfo> {
+    Ok(ProcessGuidanceInfo {
         command: "process acp".to_string(),
         description: "Add, Commit, Push Workflow".to_string(),
         steps: vec![
@@ -93,8 +107,8 @@ fn acp() -> Result<GuidanceInfo> {
 ///
 /// Systematic approach for selecting the best design concept from multiple alternatives.
 #[verb]
-fn concept() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn concept() -> Result<ProcessGuidanceInfo> {
+    Ok(ProcessGuidanceInfo {
         command: "process concept".to_string(),
         description: "Concept Selection Methodology".to_string(),
         steps: vec![

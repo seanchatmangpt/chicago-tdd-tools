@@ -1,26 +1,40 @@
 //! Quality noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through quality methodologies.
 //! Commands for quality methodologies: FMEA, RCA, Robust Design, Andon Signals
 
 use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
 use serde::Serialize;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Guidance information for quality methodologies
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct QualityGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this methodology covers
+    pub description: String,
+    /// Ordered steps for the methodology
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// FMEA (Failure Mode and Effects Analysis) guidance
 ///
 /// Systematic method for identifying potential failures, assessing severity, frequency,
 /// and detectability, and prioritizing by Risk Priority Number (RPN).
 #[verb]
-fn fmea() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn fmea() -> Result<QualityGuidanceInfo> {
+    Ok(QualityGuidanceInfo {
         command: "quality fmea".to_string(),
         description: "FMEA (Failure Mode and Effects Analysis)".to_string(),
         steps: vec![
@@ -47,8 +61,8 @@ fn fmea() -> Result<GuidanceInfo> {
 /// Systematic approach for identifying root causes of problems using 5 Whys,
 /// fishbone diagrams, and other analysis techniques.
 #[verb]
-fn rca() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn rca() -> Result<QualityGuidanceInfo> {
+    Ok(QualityGuidanceInfo {
         command: "quality rca".to_string(),
         description: "Root Cause Analysis".to_string(),
         steps: vec![
@@ -73,8 +87,8 @@ fn rca() -> Result<GuidanceInfo> {
 ///
 /// Design approach that works reliably under variation and changing conditions.
 #[verb]
-fn robust() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn robust() -> Result<QualityGuidanceInfo> {
+    Ok(QualityGuidanceInfo {
         command: "quality robust".to_string(),
         description: "Robust Design".to_string(),
         steps: vec![
@@ -99,8 +113,8 @@ fn robust() -> Result<GuidanceInfo> {
 ///
 /// Quality signal system for making problems visible and triggering responses.
 #[verb]
-fn andon() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn andon() -> Result<QualityGuidanceInfo> {
+    Ok(QualityGuidanceInfo {
         command: "quality andon".to_string(),
         description: "Andon Signals".to_string(),
         steps: vec![

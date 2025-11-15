@@ -1,26 +1,40 @@
 //! Improve noun commands
 //!
-//! Commands for continuous improvement: Kaizen, Muda, Mura, Gemba, Poka-Yoke
+//! Demonstrates clap-noun-verb best practices through continuous improvement methodologies.
+//! Commands for improvement: Kaizen, Muda, Mura, Gemba, Poka-Yoke
 
 use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
 use serde::Serialize;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Guidance information for continuous improvement methodologies
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct ImprovementGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this methodology covers
+    pub description: String,
+    /// Ordered steps for the methodology
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// Kaizen (continuous improvement) guidance
 ///
 /// Make small, incremental improvements rather than big rewrites.
 /// Continuous small improvements that compound over time.
 #[verb]
-fn kaizen() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn kaizen() -> Result<ImprovementGuidanceInfo> {
+    Ok(ImprovementGuidanceInfo {
         command: "improve kaizen".to_string(),
         description: "Kaizen - Continuous Improvement".to_string(),
         steps: vec![
@@ -45,8 +59,8 @@ fn kaizen() -> Result<GuidanceInfo> {
 /// Identify and eliminate waste (non-value-adding activities)
 /// from processes.
 #[verb]
-fn muda() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn muda() -> Result<ImprovementGuidanceInfo> {
+    Ok(ImprovementGuidanceInfo {
         command: "improve muda".to_string(),
         description: "Eliminate Muda (Waste)".to_string(),
         steps: vec![
@@ -72,8 +86,8 @@ fn muda() -> Result<GuidanceInfo> {
 /// Identify and eliminate inconsistency and variation from processes
 /// to improve reliability and predictability.
 #[verb]
-fn mura() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn mura() -> Result<ImprovementGuidanceInfo> {
+    Ok(ImprovementGuidanceInfo {
         command: "improve mura".to_string(),
         description: "Eliminate Mura (Variation)".to_string(),
         steps: vec![
@@ -99,8 +113,8 @@ fn mura() -> Result<GuidanceInfo> {
 /// Go to the actual place where work happens to understand reality,
 /// observe firsthand, and identify improvement opportunities.
 #[verb]
-fn gemba() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn gemba() -> Result<ImprovementGuidanceInfo> {
+    Ok(ImprovementGuidanceInfo {
         command: "improve gemba".to_string(),
         description: "Gemba Walk".to_string(),
         steps: vec![
@@ -125,8 +139,8 @@ fn gemba() -> Result<GuidanceInfo> {
 ///
 /// Design systems to prevent errors by making mistakes impossible or obvious.
 #[verb]
-fn poka() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn poka() -> Result<ImprovementGuidanceInfo> {
+    Ok(ImprovementGuidanceInfo {
         command: "improve poka".to_string(),
         description: "Poka-Yoke (Mistake-Proofing)".to_string(),
         steps: vec![

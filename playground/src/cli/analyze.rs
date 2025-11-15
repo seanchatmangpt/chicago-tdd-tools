@@ -1,26 +1,40 @@
-//! Analyze noun commands
+//! Analysis noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through analysis methodology guidance.
 //! Commands for analysis methodologies: TRIZ, QFD, Gap Analysis
 
 use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
 use serde::Serialize;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Guidance information for analysis methodologies
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct AnalysisGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this methodology covers
+    pub description: String,
+    /// Ordered steps for the methodology
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// TRIZ (Theory of Inventive Problem Solving) guidance
 ///
 /// Systematic method for solving problems using established patterns
 /// and principles from thousands of patents.
 #[verb]
-fn triz() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn triz() -> Result<AnalysisGuidanceInfo> {
+    Ok(AnalysisGuidanceInfo {
         command: "analyze triz".to_string(),
         description: "TRIZ - Theory of Inventive Problem Solving".to_string(),
         steps: vec![
@@ -46,8 +60,8 @@ fn triz() -> Result<GuidanceInfo> {
 /// Translate customer needs into design requirements and ensure
 /// customer voice drives design decisions.
 #[verb]
-fn qfd() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn qfd() -> Result<AnalysisGuidanceInfo> {
+    Ok(AnalysisGuidanceInfo {
         command: "analyze qfd".to_string(),
         description: "QFD (Quality Function Deployment) - Voice of Customer".to_string(),
         steps: vec![
@@ -73,8 +87,8 @@ fn qfd() -> Result<GuidanceInfo> {
 /// Identify gaps between current state and desired state,
 /// prioritize by 80/20 rule.
 #[verb]
-fn gaps() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn gaps() -> Result<AnalysisGuidanceInfo> {
+    Ok(AnalysisGuidanceInfo {
         command: "analyze gaps".to_string(),
         description: "80-20 Fill Gaps Analysis".to_string(),
         steps: vec![

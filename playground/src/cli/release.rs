@@ -1,26 +1,40 @@
 //! Release noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through release workflows.
 //! Commands for release workflows: Release Preparation
 
 use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
 use serde::Serialize;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Guidance information for release workflows
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct ReleaseGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this methodology covers
+    pub description: String,
+    /// Ordered steps for the methodology
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// Release preparation workflow guidance
 ///
 /// Systematic checklist for preparing releases to production.
 /// Ensures nothing is forgotten and quality is maintained.
 #[verb]
-fn prep() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn prep() -> Result<ReleaseGuidanceInfo> {
+    Ok(ReleaseGuidanceInfo {
         command: "release prep".to_string(),
         description: "Release Preparation Workflow".to_string(),
         steps: vec![
