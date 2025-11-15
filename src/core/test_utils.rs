@@ -47,21 +47,21 @@ impl RetryConfig {
 
     /// Set maximum number of retry attempts
     #[must_use]
-    pub fn with_max_attempts(mut self, attempts: usize) -> Self {
+    pub const fn with_max_attempts(mut self, attempts: usize) -> Self {
         self.max_attempts = attempts;
         self
     }
 
     /// Set delay between retry attempts
     #[must_use]
-    pub fn with_delay(mut self, delay: Duration) -> Self {
+    pub const fn with_delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
         self
     }
 
     /// Enable exponential backoff for retries
     #[must_use]
-    pub fn with_exponential_backoff(mut self) -> Self {
+    pub const fn with_exponential_backoff(mut self) -> Self {
         self.exponential_backoff = true;
         self
     }
@@ -71,6 +71,10 @@ impl RetryConfig {
     /// # Errors
     ///
     /// Returns the last error if all retry attempts fail.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max_attempts` is 0 (should never happen with default configuration).
     pub fn retry<F, T, E>(&self, mut f: F) -> Result<T, E>
     where
         F: FnMut() -> Result<T, E>,
@@ -84,6 +88,7 @@ impl RetryConfig {
                     last_error = Some(e);
 
                     if attempt < self.max_attempts - 1 {
+                        #[allow(clippy::cast_possible_truncation)] // Attempt count won't exceed u32::MAX
                         let delay = if self.exponential_backoff {
                             self.delay * 2_u32.pow(attempt as u32)
                         } else {
@@ -95,7 +100,8 @@ impl RetryConfig {
             }
         }
 
-        Err(last_error.expect("Should have at least one error"))
+        // Safe to unwrap: if max_attempts > 0, last_error will be Some
+        last_error.map_or_else(|| unreachable!("max_attempts should be > 0"), Err)
     }
 }
 
@@ -129,7 +135,8 @@ impl TempDir {
     /// Returns an error if the temporary directory cannot be created.
     pub fn new(prefix: &str) -> Result<Self, std::io::Error> {
         let temp_dir = std::env::temp_dir();
-        let unique_name = format!("{}-{}", prefix, uuid::Uuid::new_v4());
+        let uuid = uuid::Uuid::new_v4();
+        let unique_name = format!("{prefix}-{uuid}");
         let path = temp_dir.join(unique_name);
 
         std::fs::create_dir_all(&path)?;
@@ -139,7 +146,7 @@ impl TempDir {
 
     /// Get the path to the temporary directory
     #[must_use]
-    pub fn path(&self) -> &PathBuf {
+    pub const fn path(&self) -> &PathBuf {
         &self.path
     }
 }
@@ -218,13 +225,13 @@ impl TestData {
     /// Generate a test email address
     #[must_use]
     pub fn email(name: &str) -> String {
-        format!("{}@example.com", name)
+        format!("{name}@example.com")
     }
 
     /// Generate a test phone number
     #[must_use]
     pub fn phone(area: &str, number: &str) -> String {
-        format!("{}-{}", area, number)
+        format!("{area}-{number}")
     }
 
     /// Generate a test UUID string
@@ -241,6 +248,7 @@ impl TestData {
 
     /// Generate a sequence of integers
     #[must_use]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)] // Count is typically small for test data
     pub fn sequence(start: i32, count: usize) -> Vec<i32> {
         (start..start + count as i32).collect()
     }

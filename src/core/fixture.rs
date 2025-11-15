@@ -5,9 +5,12 @@
 //!
 //! **Note**: `TestFixture` uses Rust's automatic memory management (Box drops automatically).
 //! For resources requiring explicit cleanup, implement the `cleanup()` method or use Drop.
+//!
+//! **v1.3.0**: Added fixture introspection with metadata tracking and scoped metadata.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
 /// Test fixture error
@@ -23,6 +26,108 @@ pub enum FixtureError {
 
 /// Result type for fixture operations
 pub type FixtureResult<T> = Result<T, FixtureError>;
+
+/// Fixture metadata for introspection and debugging
+///
+/// **New in v1.3.0**: Track fixture creation time and state snapshots.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::core::fixture::FixtureMetadata;
+///
+/// let metadata = FixtureMetadata::new();
+/// let created_at = metadata.created_at();
+/// let snapshot = metadata.snapshot();
+///
+/// println!("Fixture created at: {}", created_at);
+/// println!("Snapshot: {:?}", snapshot);
+/// ```
+#[derive(Debug, Clone)]
+pub struct FixtureMetadata {
+    created_at: u64,
+    snapshots: Vec<HashMap<String, String>>,
+}
+
+impl FixtureMetadata {
+    /// Create new fixture metadata with current timestamp
+    #[must_use]
+    pub fn new() -> Self {
+        let created_at = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+
+        Self {
+            created_at,
+            snapshots: Vec::new(),
+        }
+    }
+
+    /// Get fixture creation timestamp (seconds since UNIX epoch)
+    #[must_use]
+    pub const fn created_at(&self) -> u64 {
+        self.created_at
+    }
+
+    /// Capture current state snapshot
+    pub fn capture_snapshot(&mut self, state: HashMap<String, String>) {
+        self.snapshots.push(state);
+    }
+
+    /// Get all captured snapshots
+    #[must_use]
+    pub fn snapshots(&self) -> &[HashMap<String, String>] {
+        &self.snapshots
+    }
+
+    /// Get the most recent snapshot
+    #[must_use]
+    pub fn latest_snapshot(&self) -> Option<&HashMap<String, String>> {
+        self.snapshots.last()
+    }
+}
+
+impl Default for FixtureMetadata {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Scoped metadata that automatically expires when dropped
+///
+/// **New in v1.3.0**: RAII-based metadata that cleans up automatically.
+///
+/// # Example
+///
+/// ```rust
+/// use chicago_tdd_tools::core::fixture::TestFixture;
+///
+/// let mut fixture = TestFixture::new().unwrap();
+///
+/// {
+///     let _scope = fixture.with_scoped_metadata("phase", "arrange");
+///     // Metadata is active here
+/// }
+/// // Metadata automatically removed when scope ends
+/// ```
+pub struct ScopedMetadata<'a, T> {
+    fixture: &'a mut TestFixture<T>,
+    key: String,
+}
+
+impl<'a, T> ScopedMetadata<'a, T> {
+    fn new(fixture: &'a mut TestFixture<T>, key: String, value: String) -> Self {
+        fixture.set_metadata(key.clone(), value);
+        Self { fixture, key }
+    }
+}
+
+impl<T> Drop for ScopedMetadata<'_, T> {
+    fn drop(&mut self) {
+        self.fixture.metadata.remove(&self.key);
+    }
+}
 
 /// Fixture provider trait using Generic Associated Types (GATs)
 ///
@@ -47,6 +152,8 @@ pub trait FixtureProvider {
 /// Generic test fixture with type parameter
 ///
 /// This allows fixtures to wrap any type while maintaining type safety.
+///
+/// **v1.3.0**: Added `fixture_metadata` field for introspection.
 pub struct TestFixture<T: ?Sized = ()> {
     /// Inner fixture data
     inner: Box<T>,
@@ -54,6 +161,8 @@ pub struct TestFixture<T: ?Sized = ()> {
     test_counter: u64,
     /// Test metadata
     metadata: HashMap<String, String>,
+    /// Fixture metadata for introspection (v1.3.0)
+    fixture_metadata: FixtureMetadata,
 }
 
 impl TestFixture<()> {
@@ -88,7 +197,12 @@ impl TestFixture<()> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        Ok(Self { inner: Box::new(()), test_counter: counter, metadata: HashMap::new() })
+        Ok(Self {
+            inner: Box::new(()),
+            test_counter: counter,
+            metadata: HashMap::new(),
+            fixture_metadata: FixtureMetadata::new(),
+        })
     }
 }
 
@@ -98,7 +212,12 @@ impl<T> TestFixture<T> {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        Self { inner: Box::new(data), test_counter: counter, metadata: HashMap::new() }
+        Self {
+            inner: Box::new(data),
+            test_counter: counter,
+            metadata: HashMap::new(),
+            fixture_metadata: FixtureMetadata::new(),
+        }
     }
 
     /// Get reference to inner data
@@ -139,6 +258,70 @@ impl<T> TestFixture<T> {
     pub const fn cleanup(&self) -> FixtureResult<()> {
         // Override in specific implementations
         Ok(())
+    }
+
+    /// Get reference to fixture metadata (v1.3.0)
+    ///
+    /// Access creation timestamp and state snapshots for debugging.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::core::fixture::TestFixture;
+    ///
+    /// let fixture = TestFixture::new().unwrap();
+    /// let metadata = fixture.metadata_ref();
+    /// let created_at = metadata.created_at();
+    /// ```
+    #[must_use]
+    pub const fn metadata_ref(&self) -> &FixtureMetadata {
+        &self.fixture_metadata
+    }
+
+    /// Get mutable reference to fixture metadata (v1.3.0)
+    ///
+    /// Capture state snapshots for debugging.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::core::fixture::TestFixture;
+    /// use std::collections::HashMap;
+    ///
+    /// let mut fixture = TestFixture::new().unwrap();
+    /// let mut state = HashMap::new();
+    /// state.insert("key".to_string(), "value".to_string());
+    /// fixture.metadata_mut().capture_snapshot(state);
+    /// ```
+    pub const fn metadata_mut(&mut self) -> &mut FixtureMetadata {
+        &mut self.fixture_metadata
+    }
+
+    /// Create scoped metadata that expires when dropped (v1.3.0)
+    ///
+    /// RAII-based metadata management for test phases.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::core::fixture::TestFixture;
+    ///
+    /// let mut fixture = TestFixture::new().unwrap();
+    ///
+    /// {
+    ///     let _scope = fixture.with_scoped_metadata("phase", "arrange");
+    ///     // Metadata is active in this scope
+    ///     assert_eq!(fixture.get_metadata("phase"), Some(&"arrange".to_string()));
+    /// }
+    /// // Metadata automatically removed when scope ends
+    /// assert_eq!(fixture.get_metadata("phase"), None);
+    /// ```
+    pub fn with_scoped_metadata(
+        &mut self,
+        key: impl Into<String>,
+        value: impl Into<String>,
+    ) -> ScopedMetadata<'_, T> {
+        ScopedMetadata::new(self, key.into(), value.into())
     }
 }
 
@@ -361,5 +544,108 @@ mod tests {
 
         // Assert: Verify metadata was overwritten
         assert_eq!(fixture.get_metadata("key"), Some(&"value2".to_string()));
+    });
+
+    // ========================================================================
+    // 5. FIXTURE METADATA (v1.3.0) - Test introspection features
+    // ========================================================================
+
+    test!(test_fixture_metadata_creation, {
+        // Arrange & Act
+        let metadata = FixtureMetadata::new();
+
+        // Assert
+        assert!(metadata.created_at() > 0);
+        assert_eq!(metadata.snapshots().len(), 0);
+        assert!(metadata.latest_snapshot().is_none());
+    });
+
+    test!(test_fixture_metadata_capture_snapshot, {
+        // Arrange
+        let mut metadata = FixtureMetadata::new();
+        let mut state = HashMap::new();
+        state.insert("key".to_string(), "value".to_string());
+
+        // Act
+        metadata.capture_snapshot(state.clone());
+
+        // Assert
+        assert_eq!(metadata.snapshots().len(), 1);
+        assert_eq!(metadata.latest_snapshot(), Some(&state));
+    });
+
+    test!(test_fixture_metadata_multiple_snapshots, {
+        // Arrange
+        let mut metadata = FixtureMetadata::new();
+
+        // Act: Capture multiple snapshots
+        let mut state1 = HashMap::new();
+        state1.insert("step".to_string(), "1".to_string());
+        metadata.capture_snapshot(state1);
+
+        let mut state2 = HashMap::new();
+        state2.insert("step".to_string(), "2".to_string());
+        metadata.capture_snapshot(state2.clone());
+
+        // Assert: Latest snapshot should be state2
+        assert_eq!(metadata.snapshots().len(), 2);
+        assert_eq!(metadata.latest_snapshot(), Some(&state2));
+    });
+
+    test!(test_fixture_metadata_ref, {
+        // Arrange
+        let fixture = TestFixture::new().unwrap();
+
+        // Act
+        let metadata = fixture.metadata_ref();
+
+        // Assert
+        assert!(metadata.created_at() > 0);
+    });
+
+    test!(test_fixture_metadata_mut, {
+        // Arrange
+        let mut fixture = TestFixture::new().unwrap();
+        let mut state = HashMap::new();
+        state.insert("test".to_string(), "data".to_string());
+
+        // Act
+        fixture.metadata_mut().capture_snapshot(state);
+
+        // Assert
+        assert_eq!(fixture.metadata_ref().snapshots().len(), 1);
+    });
+
+    test!(test_scoped_metadata, {
+        // Arrange
+        let mut fixture = TestFixture::new().unwrap();
+
+        // Set some metadata manually first
+        fixture.set_metadata("permanent".to_string(), "stays".to_string());
+
+        // Act: Create and drop scoped metadata
+        {
+            let _scope = fixture.with_scoped_metadata("phase", "arrange");
+            // Scope is active here - metadata is set but we can't access fixture
+            // due to mutable borrow held by _scope
+        } // _scope dropped here, metadata should be cleaned up
+
+        // Assert: Scoped metadata removed, but permanent metadata remains
+        assert_eq!(fixture.get_metadata("phase"), None);
+        assert_eq!(fixture.get_metadata("permanent"), Some(&"stays".to_string()));
+    });
+
+    test!(test_scoped_metadata_cleanup_on_drop, {
+        // Arrange
+        let mut fixture = TestFixture::new().unwrap();
+
+        // Act: Verify scoped metadata is set then cleaned up
+        {
+            let _scope = fixture.with_scoped_metadata("test_key", "test_value");
+            // Scope holds mutable borrow here
+        } // Cleanup happens on drop
+
+        // Assert: Key should be removed after scope ends
+        assert_eq!(fixture.get_metadata("test_key"), None);
     });
 }
