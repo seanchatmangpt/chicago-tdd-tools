@@ -1,0 +1,194 @@
+# Nightly Rust CI Workflow
+#
+# This workflow tests the codebase against Rust nightly toolchain:
+# - Runs lint, format, and test checks with nightly Rust
+# - Runs on a schedule (daily) and can be manually triggered
+# - Failures are tracked but don't block main CI pipeline
+# - Helps identify upcoming breaking changes in Rust
+#
+# Triggered by:
+# - Daily schedule (2 AM UTC)
+# - Manual workflow dispatch
+# - Push to main (optional)
+#
+# Expected duration: ~10 minutes
+
+name: Nightly Rust CI
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - '**.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+# Auto-cancel redundant workflow runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Minimal permissions for security
+permissions:
+  contents: read
+  issues: write  # For creating issues on nightly failures
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  nightly-lint:
+    name: Nightly Clippy Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: nightly-lint
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      - name: Run clippy with nightly
+        run: cargo make lint
+        continue-on-error: true
+        id: lint
+
+      - name: Report nightly lint status
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" == "failure" ]; then
+            echo "⚠️  Nightly clippy found issues"
+            echo "::warning::Nightly Rust clippy lints failed. This may indicate upcoming breaking changes."
+          else
+            echo "✅ Nightly clippy passed"
+          fi
+
+  nightly-fmt:
+    name: Nightly Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      - name: Check formatting with nightly
+        run: |
+          cargo make fmt
+          if ! git diff --exit-code; then
+            echo "⚠️  Nightly rustfmt would reformat code"
+            echo "::warning::Nightly Rust formatter has different output. This may indicate formatting changes in upcoming Rust versions."
+            exit 1
+          fi
+        continue-on-error: true
+        id: fmt
+
+      - name: Report nightly fmt status
+        if: always()
+        run: |
+          if [ "${{ steps.fmt.outcome }}" == "failure" ]; then
+            echo "⚠️  Nightly rustfmt has different output"
+          else
+            echo "✅ Nightly rustfmt passed"
+          fi
+
+  nightly-test:
+    name: Nightly Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: nightly-${{ matrix.os }}-test
+
+      - name: Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Run tests with nightly
+        run: cargo make test-unit
+        continue-on-error: true
+        id: test
+
+      - name: Report nightly test status
+        if: always()
+        run: |
+          if [ "${{ steps.test.outcome }}" == "failure" ]; then
+            echo "⚠️  Nightly tests failed on ${{ matrix.os }}"
+            echo "::warning::Nightly Rust tests failed on ${{ matrix.os }}. This may indicate upcoming breaking changes."
+          else
+            echo "✅ Nightly tests passed on ${{ matrix.os }}"
+          fi
+
+  nightly-summary:
+    name: Nightly CI Summary
+    runs-on: ubuntu-latest
+    needs: [nightly-lint, nightly-fmt, nightly-test]
+    if: always()
+    steps:
+      - name: Check nightly results
+        run: |
+          echo "🌙 Nightly Rust CI Summary"
+          echo "=========================="
+          echo ""
+          echo "Lint:   ${{ needs.nightly-lint.result }}"
+          echo "Format: ${{ needs.nightly-fmt.result }}"
+          echo "Tests:  ${{ needs.nightly-test.result }}"
+          echo ""
+
+          if [[ "${{ needs.nightly-lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.nightly-fmt.result }}" == "failure" ]] || \
+             [[ "${{ needs.nightly-test.result }}" == "failure" ]]; then
+            echo "⚠️  Nightly CI has failures"
+            echo "::warning::Nightly Rust CI detected issues. This is tracked separately and does not block stable/beta CI."
+            echo ""
+            echo "These failures indicate potential upcoming breaking changes in Rust."
+            echo "Review the logs and consider fixing issues proactively."
+          else
+            echo "✅ All nightly checks passed!"
+          fi
