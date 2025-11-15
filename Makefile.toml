@@ -337,15 +337,15 @@ args = [
 # Expected total time: ~20s (fmt: 5s, lint: 5s, test-unit: 10s)
 # Individual task timeouts ensure no single task hangs
 [tasks.dead-code-check]
-description = "Check for undeclared modules (dead code detection)"
+description = "Check for undeclared modules (dead code detection) - fails on warnings"
 command = "timeout"
 args = [
   "5s",
   "sh",
   "-c",
-  "set -uo pipefail; find src -name '*.rs' -type f 2>/dev/null | while IFS= read -r f || [ -n \"$f\" ]; do if [ -n \"$f\" ] && [ -f \"$f\" ]; then dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\"; fi; fi; fi; done",
+  "set -uo pipefail; TMPFILE=$(mktemp); trap 'rm -f \"$TMPFILE\"' EXIT; find src -name '*.rs' -type f 2>/dev/null | grep -v '^src/bin/' | while IFS= read -r f || [ -n \"$f\" ]; do if [ -n \"$f\" ] && [ -f \"$f\" ]; then dir=$(dirname \"$f\"); file=$(basename \"$f\" .rs); if [ \"$file\" != \"mod\" ] && [ \"$file\" != \"lib\" ]; then if ! grep -q \"mod $file\" \"$dir/mod.rs\" 2>/dev/null && ! grep -q \"mod $file\" \"src/lib.rs\" 2>/dev/null; then echo \"⚠️  Potential dead code: $f (not declared as module)\" >&2; echo \"$f\" >> \"$TMPFILE\"; fi; fi; fi; done; FOUND=$(wc -l < \"$TMPFILE\" 2>/dev/null | tr -d '[:space:]' || echo \"0\"); if [ \"$FOUND\" -gt 0 ]; then echo \"❌ ERROR: Found $FOUND potential dead code file(s). Fix by declaring modules or removing unused files.\" >&2; exit 1; fi",
 ]
-ignore_errors = true
+ignore_errors = false
 
 # Code quality checks - unwrap/expect/TODO detection
 [tasks.check-unwrap-staged]
@@ -437,6 +437,7 @@ dependencies = [
 [tasks.pre-commit]
 description = "Run pre-commit validation checks (format, lint, unit tests only)"
 dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
+ignore_errors = false
 
 [tasks.ci-local]
 description = "Simulate CI environment locally (FMEA: Tests Pass Locally, Fail in CI - RPN 105 → 21)"

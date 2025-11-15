@@ -7,6 +7,7 @@ pub mod alert;
 pub mod assertions;
 pub mod async_fixture;
 pub mod builders;
+pub mod config;
 pub mod const_assert;
 pub mod fixture;
 pub mod macros;
