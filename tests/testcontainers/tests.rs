@@ -27,13 +27,13 @@
 #[cfg(all(feature = "testcontainers", test))]
 mod tests {
     mod common {
-        include!("../common.rs");
+        include!("../test_common.inc");
     }
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::assert_err;
     use chicago_tdd_tools::assert_eq_msg;
-    use chicago_tdd_tools::assertions::{assert_that, assert_that_with_msg};
+    use chicago_tdd_tools::assertions::assert_that_with_msg;
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
     use std::collections::HashMap;
@@ -114,7 +114,7 @@ mod tests {
         let result = container.exec("echo", &["hello"]);
         assert_ok!(&result, "Exec with single arg should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq_msg!(&exec_result.stdout.trim(), "hello", "Echo output should match");
+        assert_eq_msg!(exec_result.stdout.trim(), "hello", "Echo output should match");
 
         // Act & Assert: Multiple args
         let result = container.exec("echo", &["hello", "world", "test"]);
@@ -170,16 +170,13 @@ mod tests {
         require_docker();
         let client = ContainerClient::new();
 
-        // Act & Assert: Invalid port (>65535) should fail
-        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
-        assert_err!(&result, "Port >65535 should fail");
-        match result {
-            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
-                // Expected error variant (either InvalidConfig or CreationFailed)
-            }
-            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
-            Ok(_) => panic!("Expected error, got success"),
-        }
+        // Act & Assert: Maximum valid port (u16::MAX = 65535) should work
+        // Note: Can't test >65535 as it's out of range for u16 type system
+        // Type system prevents invalid ports at compile time
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[u16::MAX]);
+        assert_ok!(&result, "Maximum valid port should work");
+        // Verify container was created successfully
+        let _container = result.expect("Container should be created with maximum valid port");
     });
 
     test!(env_vars_special_characters, {
@@ -238,18 +235,15 @@ mod tests {
         require_docker();
         let client = ContainerClient::new();
 
-        // Act: Attempt to create container with invalid port >65535 (should fail)
-        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
+        // Act: Test maximum valid port (u16::MAX = 65535)
+        // Note: Can't test >65535 as it's out of range for u16 type system
+        // Type system prevents invalid ports at compile time - this is a positive test
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[u16::MAX]);
 
-        // Assert: Verify test correctly detects failure (negative test case)
-        assert_err!(&result, "Invalid port should fail");
-        match result {
-            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
-                // Expected error variant - test correctly detected failure
-            }
-            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
-            Ok(_) => panic!("Expected error for invalid port, but got success - FALSE NEGATIVE DETECTED"),
-        }
+        // Assert: Verify maximum valid port works (positive test case)
+        assert_ok!(&result, "Maximum valid port should work");
+        // Verify container was created successfully
+        let _container = result.expect("Container should be created with maximum valid port");
     });
 
     test!(negative_test_nonexistent_command_fails, {
@@ -440,7 +434,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         // Generate unique test ID based on timestamp to ensure isolation across test runs
@@ -509,7 +503,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()
@@ -579,7 +573,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::{Duration, SystemTime};
+        use std::time::SystemTime;
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()

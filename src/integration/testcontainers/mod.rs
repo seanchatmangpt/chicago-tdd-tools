@@ -293,6 +293,7 @@ pub mod implementation {
     ///
     /// For advanced features (volume mounts, resource limits, determinism),
     /// see clnrm's `TestcontainerBackend`.
+    #[derive(Debug)]
     pub struct GenericContainer {
         container: Container<GenericImage>,
     }
