@@ -12,9 +12,17 @@ Complete documentation index organized using [Diátaxis framework](https://diata
 
 Step-by-step guides to learn Chicago TDD Tools:
 
+### Getting Started
 - **[Getting Started](getting-started/GETTING_STARTED.md)** - Installation, first test, troubleshooting
 - **[Quick Guide](getting-started/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
 - **[User Guide](getting-started/USER_GUIDE.md)** - Comprehensive usage guide
+
+### Examples
+- **[Examples Quick Reference](../EXAMPLES.md)** - All examples with quick commands
+- **[Examples Documentation](../examples/README.md)** - Complete Diátaxis-organized examples
+  - Tutorials: Basic Test, Macro Examples
+  - How-To Guides: Property Testing, Snapshot Testing, Mutation Testing, Concurrency, CLI, Testcontainers, OTEL/Weaver
+  - Explanation: Go the Extra Mile, Advanced Features
 
 ---
 
