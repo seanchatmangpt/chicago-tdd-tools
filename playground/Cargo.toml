@@ -33,8 +33,8 @@ serde_yaml = "^0.9"
 
 # CLI
 clap = { version = "^4.5", features = ["derive"] }
-clap-noun-verb = "3.7.1"
-clap-noun-verb-macros = "3.7.1"
+clap-noun-verb = "3.8.0"
+clap-noun-verb-macros = "3.8.0"
 linkme = "0.3"
 
 # Utilities

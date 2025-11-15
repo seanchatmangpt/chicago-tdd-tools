@@ -89,7 +89,7 @@ fn list(
             Ok(workflows.iter().map(|w| w.name.clone()).collect())
         }
         _ => {
-            Ok(vec![format!("Unknown format: {}. Use 'names', 'paths', or 'json'", output_format)])
+            Ok(vec![format!("Unknown format: {}. Use 'names', 'paths', or 'json'", format)])
         }
     }
 }
