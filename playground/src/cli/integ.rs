@@ -1,5 +1,6 @@
-//! Integ noun commands
+//! Integration noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through integration testing examples.
 //! Commands for integration features: testcontainers
 
 use clap_noun_verb_macros::verb;
@@ -9,56 +10,89 @@ use std::path::PathBuf;
 
 use crate::integration;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct IntegrationFeatureStatus {
+    /// Available integration features
+    pub features: Vec<String>,
+    /// Available example demonstrations
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct IntegrationExecutionResult {
+    /// Names of examples that executed successfully
+    pub executed: Vec<String>,
+    /// Whether all examples executed without errors
+    pub success: bool,
+    /// Summary message about execution
+    pub message: String,
 }
 
-/// Show integration features status
-#[verb]
-fn stat(verbose: usize) -> Result<Status> {
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Collect available integration features based on enabled crate features
+fn collect_integration_features() -> Vec<String> {
     let mut features = Vec::new();
-    let mut examples = Vec::new();
 
     #[cfg(feature = "testcontainers")]
-    {
-        features.push("contain".to_string());
-        examples.push("contain".to_string());
+    features.push("contain".to_string());
+
+    features
+}
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
+
+/// Show integration features status
+///
+/// Displays available integration features (Testcontainers).
+/// Use -v for detailed verbose output.
+#[verb]
+fn stat(
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<IntegrationFeatureStatus> {
+    if verbose > 0 {
+        eprintln!("📋 Integration Features Status");
     }
 
-    Ok(Status { features, examples })
+    let features = collect_integration_features();
+    Ok(IntegrationFeatureStatus {
+        examples: features.clone(),
+        features,
+    })
 }
 
 /// List available integration demos
+///
+/// Shows all integration examples that can be executed.
 #[verb]
 fn list() -> Result<Vec<String>> {
-    let mut examples = Vec::new();
-
-    #[cfg(feature = "testcontainers")]
-    {
-        examples.push("contain".to_string());
-    }
-
-    Ok(examples)
+    Ok(collect_integration_features())
 }
 
 /// Run testcontainers demo
+///
+/// Executes Docker container-based integration testing examples.
+/// Requires Docker to be installed and running.
 #[verb]
 #[cfg(feature = "testcontainers")]
-fn contain(image: Option<String>) -> Result<ExecutionResult> {
+fn contain(
+    #[arg(long)]
+    image: Option<String>,
+) -> Result<IntegrationExecutionResult> {
     integration::testcontainers::example_container_basic().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_ports().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_env().map_err(|e| e.to_string())?;
 
-    Ok(ExecutionResult {
+    Ok(IntegrationExecutionResult {
         executed: vec!["contain".to_string()],
         success: true,
         message: "Testcontainers demo executed successfully".to_string(),

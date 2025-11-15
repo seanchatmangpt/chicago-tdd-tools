@@ -1,5 +1,6 @@
-//! Valid noun commands
+//! Validation noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through quality validation examples.
 //! Commands for validation features: coverage, guards, jtbd, performance
 
 use clap_noun_verb_macros::verb;
@@ -9,23 +10,46 @@ use std::path::PathBuf;
 
 use crate::validation;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct ValidationFeatureStatus {
+    /// Available validation features
+    pub features: Vec<String>,
+    /// Available example demonstrations
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ValidationExecutionResult {
+    /// Names of validation checks that passed
+    pub executed: Vec<String>,
+    /// Whether all validation checks passed
+    pub success: bool,
+    /// Summary message about validation results
+    pub message: String,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// Show validation features status
+///
+/// Displays available validation features: coverage, guards, JTBD, performance.
+/// Use -v for detailed verbose output.
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
-    Ok(Status {
+fn stat(
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<ValidationFeatureStatus> {
+    if verbose > 0 {
+        eprintln!("📋 Validation Features Status");
+    }
+
+    Ok(ValidationFeatureStatus {
         features: vec![
             "cov".to_string(),
             "guard".to_string(),
@@ -42,6 +66,8 @@ fn stat(verbose: usize) -> Result<Status> {
 }
 
 /// List available validation checks
+///
+/// Shows all validation checks that can be executed with `playg valid exec`.
 #[verb]
 fn list() -> Result<Vec<String>> {
     Ok(vec![
@@ -53,21 +79,49 @@ fn list() -> Result<Vec<String>> {
 }
 
 /// Execute multiple validation checks
+///
+/// Run validation checks by name. You can execute multiple checks in one command.
+///
+/// # Arguments
+/// * `names` - Space-separated check names (e.g., "cov guard jtbd")
+///
+/// # Options
+/// * `-o, --output` - Optional output file for results
+/// * `-v, --verbose` - Increase verbosity level
 #[verb]
 fn exec(
+    #[arg(index = 0, value_name = "NAMES")]
     names: String,
+
+    #[arg(short = 'o', long)]
     output: Option<PathBuf>,
+
+    #[arg(short = 'v', action = "count")]
     verbose: usize,
-) -> Result<ExecutionResult> {
+) -> Result<ValidationExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
+    if verbose > 0 {
+        eprintln!("🚀 Executing validation checks...");
+    }
+
     let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
     for name in name_list {
+        if verbose > 1 {
+            eprintln!("  Running: {}", name);
+        }
+
         if let Err(e) = execute_valid_example(&name) {
             errors.push(format!("{}: {}", name, e));
+            if verbose > 0 {
+                eprintln!("  ❌ Error: {}", e);
+            }
         } else {
             executed.push(name.clone());
+            if verbose > 0 {
+                eprintln!("  ✅ {}", name);
+            }
         }
     }
 
@@ -78,7 +132,12 @@ fn exec(
         format!("Executed {} check(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
+    if verbose > 0 {
+        eprintln!();
+        eprintln!("📊 Summary: {}", message);
+    }
+
+    Ok(ValidationExecutionResult {
         executed,
         success,
         message,
