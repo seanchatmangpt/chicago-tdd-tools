@@ -266,6 +266,66 @@ jobs:
         if: success()
         run: echo "✅ All integration tests passed - no Andon signals"
 
+  # **Andon Signal: CRITICAL (Red)** - Playground Tests
+  # Validates that reference implementation examples work correctly
+  # Playground tests ensure all framework features work through real-world examples
+  # FMEA Fix: Playground validation ensures examples stay in sync with framework (RPN: 280 → 28)
+  test-playground:
+    name: 🔴 Playground Tests (Reference Implementation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: playground-test
+
+      - name: 🔨 Install cargo-make
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-make
+
+      - name: 🎯 Format playground code
+        run: |
+          echo "🟡 ANDON SIGNAL: Checking playground formatting..."
+          cargo make playground-fmt
+          # Check if formatting changed anything
+          if ! git diff --exit-code playground/; then
+            echo "❌ ANDON SIGNAL DETECTED: Playground code is not formatted correctly"
+            echo "📝 Fix: Run 'cargo make playground-fmt' to automatically fix formatting"
+            exit 1
+          fi
+          echo "✅ Playground format check passed"
+
+      - name: 🎯 Lint playground code
+        run: |
+          echo "🟡 ANDON SIGNAL: Checking playground linting..."
+          echo "Playground examples must follow best practices"
+          cargo make playground-lint
+          echo "✅ Playground linting passed"
+
+      - name: 🎯 Run playground unit tests
+        run: |
+          echo "🔴 ANDON SIGNAL: Running playground unit tests..."
+          echo "Playground examples validate framework features"
+          cargo make playground-test-unit
+
+      - name: 🎯 Run playground CLI tests
+        run: |
+          echo "🔴 ANDON SIGNAL: Running playground CLI tests..."
+          echo "CLI tests validate command-line interface and feature discovery"
+          cargo make playground-test-cli
+
+      - name: ✅ Playground Test Signal Cleared
+        if: success()
+        run: echo "✅ All playground tests passed - examples validated"
+
   # **Andon Signal: CRITICAL (Red)** - Production Code Safety
   # Panics in production code are unacceptable - unwrap/expect are CRITICAL signals
   # **Stop the Line**: Any unwrap/expect stops the CI pipeline immediately
@@ -420,10 +480,11 @@ jobs:
   # Full CI pipeline - runs all checks and aggregates Andon signal status
   # **Stop the Line**: Any CRITICAL signal stops the pipeline (merge blocked)
   # FMEA Fix: Remove optional jobs from needs (RPN: 210 → 21)
+  # FMEA Fix: Include playground validation in CI pipeline (RPN: 280 → 28)
   ci:
     name: 🎯 Andon Signal Pipeline
     runs-on: ubuntu-latest
-    needs: [lint, fmt, test, test-integration, unwrap-check, coverage]
+    needs: [lint, fmt, test, test-integration, test-playground, unwrap-check, coverage]
     if: always()
     steps:
       - name: 📊 Aggregate Andon signals
@@ -468,6 +529,13 @@ jobs:
             CRITICAL_SIGNALS=$((CRITICAL_SIGNALS + 1))
           else
             echo "  ✅ Integration tests passed"
+          fi
+
+          if [[ "${{ needs.test-playground.result }}" == "failure" ]]; then
+            echo "  🔴 CRITICAL: Playground tests failed (🔴 CRITICAL signal not cleared)"
+            CRITICAL_SIGNALS=$((CRITICAL_SIGNALS + 1))
+          else
+            echo "  ✅ Playground tests passed (examples validated)"
           fi
 
           if [[ "${{ needs.unwrap-check.result }}" == "failure" ]]; then
@@ -516,6 +584,7 @@ jobs:
             echo "  - Multi-Rust version testing (stable, beta, nightly)"
             echo "  - Test retry logic for flaky tests"
             echo "  - Integration tests with Docker/Weaver (RPN: 280 → 28)"
+            echo "  - Playground validation (reference examples, RPN: 280 → 28)"
             echo "  - Coverage tracking and enforcement"
             echo "  - Production code safety (no unwrap/expect)"
             echo "  - Andon signal visualization and stop-the-line response"

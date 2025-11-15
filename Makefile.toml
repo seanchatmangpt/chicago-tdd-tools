@@ -333,6 +333,91 @@ args = [
   "target/coverage",
 ]
 
+# Playground Testing Tasks
+# The playground is a reference implementation that validates all framework features
+# Integration ensures framework features work through both framework tests + playground examples
+
+[tasks.playground-fmt]
+description = "Format playground code"
+cwd = "playground"
+command = "timeout"
+args = ["5s", "cargo", "fmt", "--all"]
+
+[tasks.playground-lint]
+description = "Lint playground code (ensures examples follow best practices)"
+cwd = "playground"
+command = "timeout"
+args = [
+  "300s",
+  "cargo",
+  "clippy",
+  "--all-targets",
+  "--all-features",
+  "--",
+  "-W",
+  "clippy::all",
+  "-W",
+  "clippy::pedantic",
+  "-W",
+  "clippy::nursery",
+  "-W",
+  "clippy::cargo",
+  "-D",
+  "warnings",
+  "-D",
+  "clippy::unwrap_used",
+  "-D",
+  "clippy::expect_used",
+]
+
+[tasks.playground-check]
+description = "Check playground code compiles"
+cwd = "playground"
+command = "timeout"
+args = ["5s", "cargo", "check", "--all-targets", "--all-features"]
+
+[tasks.playground-build]
+description = "Build playground CLI binary (playg)"
+cwd = "playground"
+command = "timeout"
+args = ["10s", "cargo", "build", "--all-features"]
+
+[tasks.playground-test-unit]
+description = "Run playground unit tests (validates core features)"
+cwd = "playground"
+command = "timeout"
+args = [
+  "300s",
+  "cargo",
+  "test",
+  "--lib",
+  "--all-features",
+  "--",
+  "--skip",
+  "cli_tests",
+]
+
+[tasks.playground-test-cli]
+description = "Run playground CLI tests (validates CLI commands)"
+cwd = "playground"
+command = "timeout"
+args = [
+  "60s",
+  "cargo",
+  "test",
+  "--test",
+  "cli_tests",
+  "--all-features",
+]
+
+[tasks.playground-test-all]
+description = "Run all playground tests (unit + CLI validation)"
+dependencies = ["playground-test-unit", "playground-test-cli"]
+
+[tasks.playground-pre-commit]
+description = "Playground pre-commit checks (format + lint + test)"
+dependencies = ["playground-fmt", "playground-lint", "playground-test-unit"]
+
 # Pre-commit validation task
 # Expected total time: ~20s (fmt: 5s, lint: 5s, test-unit: 10s)
 # Individual task timeouts ensure no single task hangs
@@ -435,8 +520,8 @@ dependencies = [
 ]
 
 [tasks.pre-commit]
-description = "Run pre-commit validation checks (format, lint, unit tests only)"
-dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check"]
+description = "Run pre-commit validation checks (format, lint, unit tests, playground validation)"
+dependencies = ["timeout-check", "fmt", "lint", "test-unit", "dead-code-check", "playground-pre-commit"]
 ignore_errors = false
 
 [tasks.ci-local]
@@ -509,8 +594,14 @@ else
 fi
 echo ""
 
-# Step 5: Environment validation
-echo "5️⃣  Environment validation..."
+# Step 5: Playground validation (examples validation)
+echo "5️⃣  Playground validation (reference implementation)..."
+cargo make playground-pre-commit
+echo "✅ Playground validation passed"
+echo ""
+
+# Step 6: Environment validation
+echo "6️⃣  Environment validation..."
 echo "  OS: $(uname -s)"
 echo "  Rust: $(rustc --version)"
 echo "  Cargo: $(cargo --version)"
