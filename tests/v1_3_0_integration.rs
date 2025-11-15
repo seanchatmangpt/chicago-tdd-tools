@@ -3,11 +3,13 @@
 //! Comprehensive integration tests demonstrating all v1.3.0 features working together
 //! in realistic Fortune 500 enterprise scenarios.
 
+use chicago_tdd_tools::core::{RetryConfig, TempDir, TestData, TestTimer};
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::core::{TestData, TestTimer, TempDir, RetryConfig};
-use chicago_tdd_tools::testing::mutation::{MutationTester, MutationOperator, MutationScore, CaseMode};
 #[cfg(feature = "cli-testing")]
-use chicago_tdd_tools::testing::cli::{CliEnvironment, CliAssertions};
+use chicago_tdd_tools::testing::cli::{CliAssertions, CliEnvironment};
+use chicago_tdd_tools::testing::mutation::{
+    CaseMode, MutationOperator, MutationScore, MutationTester,
+};
 #[cfg(feature = "snapshot-testing")]
 use chicago_tdd_tools::testing::snapshot::SnapshotAssert;
 use std::collections::HashMap;
@@ -74,15 +76,21 @@ fn test_ecommerce_order_processing_pipeline() {
     let mut mutation_tester = MutationTester::new(mutation_test_data);
 
     // Demonstrate NumericDelta mutation (works with integers)
-    let mutated_qty = mutation_tester.apply_mutation(MutationOperator::NumericDelta("quantity".to_string(), -2));
+    let mutated_qty =
+        mutation_tester.apply_mutation(MutationOperator::NumericDelta("quantity".to_string(), -2));
     assert_eq!(mutated_qty.get("quantity"), Some(&"3".to_string()), "Quantity should be reduced");
 
     // Demonstrate StringCase mutation
     let mut case_data = order.clone();
     case_data.insert("status_code".to_string(), "pending".to_string());
     let mut case_tester = MutationTester::new(case_data);
-    let upper_case = case_tester.apply_mutation(MutationOperator::StringCase("status_code".to_string(), CaseMode::Upper));
-    assert_eq!(upper_case.get("status_code"), Some(&"PENDING".to_string()), "Status should be uppercase");
+    let upper_case = case_tester
+        .apply_mutation(MutationOperator::StringCase("status_code".to_string(), CaseMode::Upper));
+    assert_eq!(
+        upper_case.get("status_code"),
+        Some(&"PENDING".to_string()),
+        "Status should be uppercase"
+    );
 }
 
 // ============================================================================
@@ -134,7 +142,9 @@ fn test_user_authentication_flow_with_metadata() {
     );
 
     // Verify retry logic for flaky authentication
-    let retry_config = RetryConfig::new().with_max_attempts(3).with_delay(std::time::Duration::from_millis(10));
+    let retry_config = RetryConfig::new()
+        .with_max_attempts(3)
+        .with_delay(std::time::Duration::from_millis(10));
 
     let mut attempts = 0;
     let auth_result = retry_config.retry(|| {
@@ -275,15 +285,21 @@ fn test_complete_order_fulfillment_workflow() {
     let mut mutation_tester = MutationTester::new(order_data.clone());
 
     // Demonstrate StringCase mutation
-    let upper_status = mutation_tester.apply_mutation(MutationOperator::StringCase("status".to_string(), CaseMode::Upper));
-    assert_eq!(upper_status.get("status"), Some(&"PENDING".to_string()), "Status should be uppercase");
+    let upper_status = mutation_tester
+        .apply_mutation(MutationOperator::StringCase("status".to_string(), CaseMode::Upper));
+    assert_eq!(
+        upper_status.get("status"),
+        Some(&"PENDING".to_string()),
+        "Status should be uppercase"
+    );
 
     // Demonstrate SwapValues mutation
     let mut swap_data = order_data.clone();
     swap_data.insert("field_a".to_string(), "value_a".to_string());
     swap_data.insert("field_b".to_string(), "value_b".to_string());
     let mut swap_tester = MutationTester::new(swap_data);
-    let swapped = swap_tester.apply_mutation(MutationOperator::SwapValues("field_a".to_string(), "field_b".to_string()));
+    let swapped = swap_tester
+        .apply_mutation(MutationOperator::SwapValues("field_a".to_string(), "field_b".to_string()));
     assert_eq!(swapped.get("field_a"), Some(&"value_b".to_string()), "Values should be swapped");
     assert_eq!(swapped.get("field_b"), Some(&"value_a".to_string()), "Values should be swapped");
 
@@ -485,11 +501,14 @@ fn test_fortune_500_complete_integration() {
     let mut mutation_tester = MutationTester::new(user.clone());
 
     mutation_tester.apply_mutation(MutationOperator::ToggleBoolean("authenticated".to_string()));
-    mutation_tester.apply_mutation(MutationOperator::StringCase("role".to_string(), CaseMode::Upper));
+    mutation_tester
+        .apply_mutation(MutationOperator::StringCase("role".to_string(), CaseMode::Upper));
     mutation_tester.apply_mutation(MutationOperator::RemoveKey("email".to_string()));
 
     let quality_score = mutation_tester.test_mutation_detection(|data| {
-        data.contains_key("email") && data.contains_key("role") && data.get("role") == Some(&"admin".to_string())
+        data.contains_key("email")
+            && data.contains_key("role")
+            && data.get("role") == Some(&"admin".to_string())
     });
 
     assert!(quality_score, "Enterprise tests must catch all mutations");

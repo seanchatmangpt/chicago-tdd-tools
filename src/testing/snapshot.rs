@@ -12,7 +12,7 @@
 //! - **AAA Pattern**: Arrange (setup), Act (execute), Assert (snapshot comparison)
 
 #[cfg(feature = "snapshot-testing")]
-use insta::{assert_snapshot, assert_debug_snapshot, Settings};
+use insta::{assert_debug_snapshot, assert_snapshot, Settings};
 #[cfg(feature = "snapshot-testing")]
 use std::collections::HashMap;
 
@@ -163,7 +163,9 @@ impl SnapshotAssert {
     ///
     /// Like `assert_inline` but for JSON values.
     pub fn assert_inline_json(value: &serde_json::Value) {
-        assert_snapshot!(serde_json::to_string_pretty(value).unwrap_or_else(|_| "invalid json".to_string()));
+        assert_snapshot!(
+            serde_json::to_string_pretty(value).unwrap_or_else(|_| "invalid json".to_string())
+        );
     }
 
     /// Assert with redaction (v1.3.0)

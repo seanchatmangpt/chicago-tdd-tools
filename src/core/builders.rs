@@ -111,7 +111,8 @@ impl TestDataBuilder {
     {
         let registry = preset_registry();
         {
-            let mut registry_guard = registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+            let mut registry_guard =
+                registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
             registry_guard.insert(name.into(), Box::new(preset_fn));
         }
         Ok(())
@@ -145,7 +146,8 @@ impl TestDataBuilder {
     /// Returns an error if the preset is not found or if the registry lock is poisoned.
     pub fn preset(name: impl AsRef<str>) -> Result<Self, String> {
         let registry = preset_registry();
-        let registry_guard = registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+        let registry_guard =
+            registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
 
         let preset_fn = registry_guard
             .get(name.as_ref())
@@ -1098,12 +1100,10 @@ mod tests {
         let preset1 = "test_preset_alpha_005";
         let preset2 = "test_preset_beta_005";
 
-        let result1 = TestDataBuilder::register_preset(preset1, |builder| {
-            builder.with_var("type", "alpha")
-        });
-        let result2 = TestDataBuilder::register_preset(preset2, |builder| {
-            builder.with_var("type", "beta")
-        });
+        let result1 =
+            TestDataBuilder::register_preset(preset1, |builder| builder.with_var("type", "alpha"));
+        let result2 =
+            TestDataBuilder::register_preset(preset2, |builder| builder.with_var("type", "beta"));
 
         assert!(result1.is_ok());
         assert!(result2.is_ok());

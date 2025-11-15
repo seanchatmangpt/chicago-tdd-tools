@@ -88,7 +88,8 @@ impl RetryConfig {
                     last_error = Some(e);
 
                     if attempt < self.max_attempts - 1 {
-                        #[allow(clippy::cast_possible_truncation)] // Attempt count won't exceed u32::MAX
+                        #[allow(clippy::cast_possible_truncation)]
+                        // Attempt count won't exceed u32::MAX
                         let delay = if self.exponential_backoff {
                             self.delay * 2_u32.pow(attempt as u32)
                         } else {
