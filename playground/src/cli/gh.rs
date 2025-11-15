@@ -26,7 +26,10 @@ struct GhStatus {
 
 /// Show GitHub Actions status
 #[verb]
-fn stat(verbose: usize) -> Result<GhStatus> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<GhStatus> {
     let workflows = discover_workflows();
     let valid_count = workflows.iter().filter(|w| w.valid).count();
     let invalid_count = workflows.len() - valid_count;
@@ -57,7 +60,10 @@ fn stat(verbose: usize) -> Result<GhStatus> {
 
 /// List all GitHub Actions workflows
 #[verb]
-fn list(format: Option<String>) -> Result<Vec<String>> {
+fn list(
+    #[arg(long, value_name = "FORMAT", default_value = "names", help = "Output format: names, paths, or json")]
+    format: Option<String>,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let output_format = format.as_deref().unwrap_or("names");
 
@@ -89,7 +95,12 @@ fn list(format: Option<String>) -> Result<Vec<String>> {
 
 /// Validate GitHub Actions workflows
 #[verb]
-fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
+fn check(
+    #[arg(long, help = "Attempt to auto-fix issues (not yet implemented)")]
+    fix: bool,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let mut issues = Vec::new();
 
@@ -151,7 +162,14 @@ fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
 
 /// Show recent workflow runs (requires gh CLI)
 #[verb]
-fn runs(limit: Option<usize>, workflow: Option<String>, _verbose: usize) -> Result<String> {
+fn runs(
+    #[arg(short = 'l', long, value_name = "NUM", help = "Limit number of runs to display")]
+    limit: Option<usize>,
+    #[arg(short = 'w', long, value_name = "WORKFLOW", help = "Filter by workflow name")]
+    workflow: Option<String>,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    _verbose: usize,
+) -> Result<String> {
     let limit = limit.unwrap_or(10);
     println!("🔄 Fetching recent workflow runs...");
     println!();

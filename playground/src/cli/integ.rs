@@ -24,7 +24,10 @@ struct ExecutionResult {
 
 /// Show integration features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 
@@ -53,7 +56,10 @@ fn list() -> Result<Vec<String>> {
 /// Run testcontainers demo
 #[verb]
 #[cfg(feature = "testcontainers")]
-fn contain(image: Option<String>) -> Result<ExecutionResult> {
+fn contain(
+    #[arg(long, value_name = "IMAGE", help = "Docker image to use")]
+    image: Option<String>,
+) -> Result<ExecutionResult> {
     integration::testcontainers::example_container_basic().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_ports().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_env().map_err(|e| e.to_string())?;

@@ -29,7 +29,10 @@ struct ExecutionResult {
 /// Displays information about all available core features and examples.
 /// Use -v, -vv, or -vvv for more detail.
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level (-v, -vv, -vvv)")]
+    verbose: usize,
+) -> Result<Status> {
     Ok(Status {
         features: vec![
             "fixtures".to_string(),
@@ -73,15 +76,18 @@ fn list() -> Result<Vec<String>> {
 /// Execute one or more core examples
 ///
 /// Run examples by name. You can execute multiple examples in one command.
-/// Example names are positional arguments.
+/// Example names are space-separated.
 ///
 /// Examples:
 ///   playg core exec fixtures
 ///   playg core exec "fixtures builders assert"
 #[verb]
 fn exec(
+    #[arg(help = "Space-separated example names to execute")]
     names: String,
+    #[arg(short = 'o', long, value_name = "FILE", help = "Write output to file")]
     output: Option<PathBuf>,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();

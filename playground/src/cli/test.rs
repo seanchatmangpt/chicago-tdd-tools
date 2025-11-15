@@ -24,7 +24,10 @@ struct ExecutionResult {
 
 /// Show testing features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<Status> {
     let mut features = vec!["gen".to_string()];
     let mut examples = vec!["gen".to_string()];
 
@@ -98,8 +101,11 @@ fn list() -> Result<Vec<String>> {
 /// Execute multiple test examples
 #[verb]
 fn exec(
+    #[arg(help = "Space-separated example names to execute")]
     names: String,
+    #[arg(short = 'o', long, value_name = "FILE", help = "Write output to file")]
     output: Option<PathBuf>,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();

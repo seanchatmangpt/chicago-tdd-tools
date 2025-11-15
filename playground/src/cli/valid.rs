@@ -24,7 +24,10 @@ struct ExecutionResult {
 
 /// Show validation features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<Status> {
     Ok(Status {
         features: vec![
             "cov".to_string(),
@@ -55,8 +58,11 @@ fn list() -> Result<Vec<String>> {
 /// Execute multiple validation checks
 #[verb]
 fn exec(
+    #[arg(help = "Space-separated check names to execute")]
     names: String,
+    #[arg(short = 'o', long, value_name = "FILE", help = "Write output to file")]
     output: Option<PathBuf>,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();

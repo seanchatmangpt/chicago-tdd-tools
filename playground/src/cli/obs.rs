@@ -24,7 +24,10 @@ struct ExecutionResult {
 
 /// Show observability features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
+    verbose: usize,
+) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 
@@ -81,8 +84,11 @@ fn otel() -> Result<ExecutionResult> {
 #[verb]
 #[cfg(feature = "weaver")]
 fn weav(
+    #[arg(long, value_name = "DIR", help = "Weaver report directory")]
     report_dir: Option<PathBuf>,
+    #[arg(long, value_name = "FILE", help = "Weaver registry path")]
     registry: Option<PathBuf>,
+    #[arg(short = 'v', long, action = "count", help = "Increase verbosity level")]
     verbose: usize,
 ) -> Result<ExecutionResult> {
     observability::weaver::example_weaver_basic();
