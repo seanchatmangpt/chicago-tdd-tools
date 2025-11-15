@@ -10,13 +10,14 @@
 //! and do NOT start Weaver CLI. They only test Rust types and validators.
 
 use chicago_tdd_tools::assert_eq_msg;
+use chicago_tdd_tools::assert_ok;
 use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::test;
 
+#[cfg(feature = "weaver")]
+use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, OtelTestHelper, SpanValidator};
-#[cfg(feature = "weaver")]
-use chicago_tdd_tools::weaver::{validate_schema_static, WeaverValidator};
 use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
 
 #[cfg(feature = "otel")]
@@ -110,7 +111,7 @@ mod tests {
 
         // Act: Get span from builder
         let span = builder.into_span();
-        assert_that(&span.is_some(), |v| *v, "Span should be present");
+        assert_that_with_msg(&span.is_some(), |v| *v, "Span should be present");
 
         // Assert: Validate OTEL span
         let span = span.unwrap();
@@ -157,7 +158,7 @@ mod tests {
         assert_eq_msg!(data.get("key2"), Some(&"value2".to_string()), "Key2 should match");
 
         // Assert: Validate OTEL span exists and is valid
-        assert_that(&span_opt.is_some(), |v| *v, "Span should be present");
+        assert_that_with_msg(&span_opt.is_some(), |v| *v, "Span should be present");
         let span = span_opt.unwrap();
         let validator = SpanValidator::new();
         assert_ok!(&validator.validate(&span));
@@ -182,14 +183,15 @@ mod tests {
         let validated =
             ValidatedAssertion::new(value, "test_validated_assertion").assert_that(|v| *v > 0);
 
-        // Act: Get value from validated assertion
+        // Act: Get span, metric, and value from validated assertion (before into_value moves validated)
+        let span = validated.span();
+        let metric = validated.metric();
         let result_value = validated.into_value();
 
         // Assert: Verify value matches expected
-        assert_eq_msg!(result_value, &42, "Value should match");
+        assert_eq_msg!(&result_value, &42, "Value should match");
 
         // Assert: Validate OTEL span
-        let span = validated.span();
         let span_validator = SpanValidator::new();
         assert_ok!(&span_validator.validate(span));
         assert_eq_msg!(
@@ -199,8 +201,7 @@ mod tests {
         );
 
         // Assert: Validate OTEL metric
-        let metric = validated.metric();
-        assert_that(&metric.is_some(), |v| *v, "Metric should be present");
+        assert_that_with_msg(&metric.is_some(), |v| *v, "Metric should be present");
         let metric = metric.unwrap();
         let metric_validator = MetricValidator::new();
         assert_ok!(&metric_validator.validate(metric));
@@ -225,7 +226,11 @@ mod tests {
         let validator = WeaverValidator::new(registry_path);
 
         // Assert: Verify validator was created correctly
-        assert_that(&!validator.is_running(), |v| *v, "Validator should not be running initially");
+        assert_that_with_msg(
+            &!validator.is_running(),
+            |v| *v,
+            "Validator should not be running initially",
+        );
         assert_eq_msg!(
             &validator.otlp_endpoint(),
             &"http://127.0.0.1:4317".to_string(),
@@ -236,18 +241,19 @@ mod tests {
     #[cfg(all(feature = "otel", feature = "weaver"))]
     test!(test_otel_spans_validated_by_helper, {
         // Arrange: Create test OTEL span
-        use chicago_tdd_tools::otel::types::{Span, SpanContext, SpanId, SpanStatus, TraceId};
+        use chicago_tdd_tools::otel::types::{
+            Span, SpanContext, SpanId, SpanRelationship, SpanState, SpanStatus, TraceId,
+        };
 
         let span = Span {
             context: SpanContext {
                 trace_id: TraceId(12345),
                 span_id: SpanId(67890),
-                parent_span_id: None,
+                relationship: SpanRelationship::Root,
                 flags: 1,
             },
             name: "test.span".to_string(),
-            start_time_ms: 1000,
-            end_time_ms: Some(2000),
+            state: SpanState::Completed { start_time_ms: 1000, end_time_ms: 2000 },
             attributes: std::collections::BTreeMap::new(),
             events: Vec::new(),
             status: SpanStatus::Ok,

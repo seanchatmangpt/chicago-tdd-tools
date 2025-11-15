@@ -158,60 +158,84 @@ pub mod implementation {
         // **Root Cause Fix**: Add timeout to prevent hanging when Docker daemon is not running.
         // Pattern: All external commands should have timeouts to fail fast.
         // Implementation: Spawn command in thread, use mpsc channel with recv_timeout.
-        // Timeout duration: 500ms (fast enough to fail within 1s test timeout, enough time for docker info when Docker is running).
-        // This prevents the function from hanging indefinitely when Docker daemon is stopped.
+        // Timeout duration: 5000ms (5 seconds) - increased to handle Docker Desktop startup delays
+        // and parallel test execution. Fast enough to fail within test timeout, enough time for
+        // docker info when Docker is running under load. This prevents the function from hanging
+        // indefinitely when Docker daemon is stopped.
         // Aligns with codebase timeout standards (see docs/features/TIMEOUT_ENFORCEMENT.md).
-        const DOCKER_CHECK_TIMEOUT_MILLIS: u64 = 500;
+        const DOCKER_CHECK_TIMEOUT_MILLIS: u64 = 5000;
+        const MAX_RETRIES: u32 = 2;
 
-        // Use docker info to verify daemon is running
-        // Spawn command in thread to enable timeout
-        let (tx, rx) = mpsc::channel();
-        let _handle = thread::spawn(move || {
-            let output = Command::new("docker").args(["info"]).output();
-            tx.send(output).ok();
-        });
+        // Retry logic for parallel test execution - Docker may be slow to respond under load
+        for attempt in 0..=MAX_RETRIES {
+            // Use docker info to verify daemon is running
+            // Spawn command in thread to enable timeout
+            let (tx, rx) = mpsc::channel();
+            let _handle = thread::spawn(move || {
+                let output = Command::new("docker").args(["info"]).output();
+                tx.send(output).ok();
+            });
 
-        // Wait for result with timeout
-        let Ok(docker_check) = rx.recv_timeout(Duration::from_millis(DOCKER_CHECK_TIMEOUT_MILLIS))
-        else {
-            // 🚨 Timeout - Docker command hung (likely Docker daemon not running)
-            return Err(TestcontainersError::DockerUnavailable(format!(
-                "Docker check timed out after {DOCKER_CHECK_TIMEOUT_MILLIS}ms (Docker daemon likely not running). This prevents hanging indefinitely when Docker is unavailable."
-            )));
-        };
-
-        match docker_check {
-            Ok(output) => {
-                if output.status.success() {
-                    // Verify Docker daemon is responding by checking output
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    if stdout.contains("Server Version") || stdout.contains("Docker Root Dir") {
-                        // ✅ Docker daemon is running and responding
-                        Ok(())
-                    } else {
-                        Err(TestcontainersError::DockerUnavailable(
-                            "Docker daemon is not responding correctly. Output does not contain expected Docker info.".to_string()
-                        ))
+            // Wait for result with timeout
+            if let Ok(docker_check) = rx.recv_timeout(Duration::from_millis(DOCKER_CHECK_TIMEOUT_MILLIS)) {
+                match docker_check {
+                    Ok(output) => {
+                        if output.status.success() {
+                            // Verify Docker daemon is responding by checking output
+                            let stdout = String::from_utf8_lossy(&output.stdout);
+                            if stdout.contains("Server Version")
+                                || stdout.contains("Docker Root Dir")
+                            {
+                                // ✅ Docker daemon is running and responding
+                                return Ok(());
+                            }
+                        }
+                        // If we get here and it's not the last attempt, retry with delay
+                        if attempt < MAX_RETRIES {
+                            // Small delay to reduce contention when multiple tests check Docker simultaneously
+                            thread::sleep(Duration::from_millis(100 * u64::from(attempt + 1)));
+                            continue;
+                        }
+                        // Last attempt failed - return error
+                        let stderr = String::from_utf8_lossy(&output.stderr);
+                        return Err(TestcontainersError::DockerUnavailable(format!(
+                            "Docker daemon is not running. Error: {stderr}"
+                        )));
                     }
-                } else {
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    Err(TestcontainersError::DockerUnavailable(format!(
-                        "Docker daemon is not running. Error: {stderr}"
-                    )))
+                    Err(e) => {
+                        if attempt < MAX_RETRIES {
+                            // Small delay to reduce contention
+                            thread::sleep(Duration::from_millis(100 * u64::from(attempt + 1)));
+                            continue;
+                        }
+                        if e.kind() == std::io::ErrorKind::NotFound {
+                            return Err(TestcontainersError::DockerUnavailable(
+                                "Docker command not found. Please install Docker.".to_string(),
+                            ));
+                        }
+                        return Err(TestcontainersError::DockerUnavailable(format!(
+                            "Failed to check Docker availability: {e}"
+                        )));
+                    }
                 }
             }
-            Err(e) => {
-                if e.kind() == std::io::ErrorKind::NotFound {
-                    Err(TestcontainersError::DockerUnavailable(
-                        "Docker command not found. Please install Docker.".to_string(),
-                    ))
-                } else {
-                    Err(TestcontainersError::DockerUnavailable(format!(
-                        "Failed to check Docker availability: {e}"
-                    )))
-                }
+            // 🚨 Timeout - Docker command hung (likely Docker daemon not running or under heavy load)
+            if attempt < MAX_RETRIES {
+                // Retry on timeout - Docker might be slow under parallel test load
+                // Exponential backoff: 100ms, 200ms delays
+                thread::sleep(Duration::from_millis(100 * u64::from(attempt + 1)));
+                continue;
             }
+            return Err(TestcontainersError::DockerUnavailable(format!(
+                "Docker check timed out after {DOCKER_CHECK_TIMEOUT_MILLIS}ms after {} attempts (Docker daemon likely not running or under heavy load). This prevents hanging indefinitely when Docker is unavailable.",
+                attempt + 1
+            )));
         }
+
+        // Should never reach here, but provide fallback error
+        Err(TestcontainersError::DockerUnavailable(
+            "Docker check failed after all retry attempts".to_string(),
+        ))
     }
 
     /// Docker error message patterns that indicate Docker daemon is unavailable

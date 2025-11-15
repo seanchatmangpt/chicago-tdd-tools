@@ -24,10 +24,11 @@ macro_rules! weaver_test {
             let mut fixture = WeaverTestFixture::new()
                 .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
-            let result: $crate::observability::ObservabilityResult<()> = {
+            // Wrap body in a closure that returns Result to allow `?` operator
+            let result: $crate::observability::ObservabilityResult<()> = (|| {
                 let $fixture = &mut fixture;
                 $body
-            };
+            })();
 
             if let Err(err) = result {
                 panic!("Weaver test body returned error: {err}");

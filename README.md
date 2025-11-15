@@ -65,7 +65,7 @@ version = "0.1.0"
 edition = "2021"  # Required: Edition 2021
 
 [dev-dependencies]
-chicago-tdd-tools = "1.1.0"  # Use version when published
+chicago-tdd-tools = "1.1.2"  # Use version when published
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 

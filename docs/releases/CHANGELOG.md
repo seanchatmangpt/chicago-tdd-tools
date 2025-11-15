@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-11-14
+
+### Fixed
+- **Testcontainers**: Fixed compilation errors in testcontainers module
+  - Added `Debug` derive for error types
+  - Fixed string comparison logic in port tests
+  - Improved Docker availability checking with timeout protection and retry logic
+  - Enhanced error messages for Docker unavailability scenarios
+- **Config Module**: Fixed config module test isolation
+  - Changed working directory to isolate config tests
+  - Added `tempfile` as dev-dependency for config module tests
+  - Declared config module to resolve dead code warnings
+- **Test Assertions**: Fixed `assert_that` usage to `assert_that_with_msg` for message arguments
+  - Updated all test files to use correct assertion macro
+  - Improved test error messages with descriptive assertions
+
+### Enhanced
+- **CI/CD Pipeline**: Comprehensive improvements to GitHub Actions workflows
+  - FMEA improvements: OIDC authentication, path filters, artifact validation
+  - Andon signals implementation for quality monitoring
+  - Enhanced error handling and reporting
+- **Testcontainers**: Improved Docker availability checking
+  - Added timeout protection (5s) to prevent hanging when Docker is unavailable
+  - Implemented retry logic with exponential backoff for parallel test execution
+  - Better error messages with actionable guidance for Docker setup
+- **Documentation**: Added comprehensive guides
+  - Timeout enforcement documentation (`docs/features/TIMEOUT_ENFORCEMENT.md`)
+  - Observability testing guide (`docs/observability/observability-testing-guide.md`)
+  - OTEL/Weaver integration guide (`docs/observability/otel-weaver-guide.md`)
+  - CLI testing guide (`docs/testing/cli-testing-guide.md`)
+  - Coverage strategy documentation (`docs/coverage/v1.2.0-coverage-strategy.md`)
+
+### Changed
+- **Build System**: Improved build reliability
+  - Enhanced timeout handling in testcontainers Docker checks
+  - Better error messages for common failure scenarios
+- **Code Quality**: Applied kaizen improvements
+  - Extracted magic numbers to named constants (Docker check timeout, retry counts)
+  - Improved error message consistency and clarity
+  - Enhanced code documentation with kaizen improvement notes
+
+### Documentation
+- Added timeout enforcement guide explaining timeout SLAs and patterns
+- Added comprehensive observability testing guides (OTEL and Weaver)
+- Added CLI testing guide with examples
+- Added coverage strategy documentation
+- Updated code comments with kaizen improvement documentation
+
 ## [1.1.1] - 2025-11-14
 
 ### Enhanced
