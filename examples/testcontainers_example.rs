@@ -63,6 +63,7 @@
 //! - `DEFAULT_HTTP_PORT`: Default HTTP port (80)
 //! - `SUCCESS_EXIT_CODE`: Successful command exit code (0)
 
+use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::testcontainers::exec::SUCCESS_EXIT_CODE;
 use chicago_tdd_tools::testcontainers::*;
 
@@ -97,13 +98,13 @@ use chicago_tdd_tools::testcontainers::*;
 /// // Container automatically cleaned up on drop
 /// ```
 fn example_basic_container(client: &ContainerClient) -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n1. Creating basic Alpine container...");
+    chicago_tdd_tools::alert_info!("\n1. Creating basic Alpine container...");
     // Note: GenericContainer::new() creates container but it exits immediately.
     // This container cannot be used for exec() operations.
     // For exec operations, use with_command() (see Example 4).
     let _container = GenericContainer::new(client.client(), "alpine", "latest")?;
-    println!("   ✓ Container created successfully");
-    println!("   Note: This container exits immediately - cannot use exec()");
+    chicago_tdd_tools::alert_info!("   ✓ Container created successfully");
+    chicago_tdd_tools::alert_info!("   Note: This container exits immediately - cannot use exec()");
     // Container automatically cleaned up on drop
     Ok(())
 }
@@ -142,7 +143,7 @@ fn example_basic_container(client: &ContainerClient) -> Result<(), Box<dyn std::
 fn example_container_with_ports(
     client: &ContainerClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n2. Creating container with exposed ports...");
+    chicago_tdd_tools::alert_info!("\n2. Creating container with exposed ports...");
     let container_with_ports = GenericContainer::with_ports(
         client.client(),
         "alpine",
@@ -151,8 +152,8 @@ fn example_container_with_ports(
     )?;
     let host_port_80 = container_with_ports.get_host_port(DEFAULT_HTTP_PORT)?;
     let host_port_443 = container_with_ports.get_host_port(443)?;
-    println!("   ✓ Container port {} -> host port {}", DEFAULT_HTTP_PORT, host_port_80);
-    println!("   ✓ Container port 443 -> host port {}", host_port_443);
+    chicago_tdd_tools::alert_info!("   ✓ Container port {} -> host port {}", DEFAULT_HTTP_PORT, host_port_80);
+    chicago_tdd_tools::alert_info!("   ✓ Container port 443 -> host port {}", host_port_443);
     Ok(())
 }
 
@@ -186,13 +187,13 @@ fn example_container_with_ports(
 /// )?;
 /// ```
 fn example_container_with_env(client: &ContainerClient) -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n3. Creating container with environment variables...");
+    chicago_tdd_tools::alert_info!("\n3. Creating container with environment variables...");
     let mut env_vars = std::collections::HashMap::new();
     env_vars.insert("TEST_VAR".to_string(), "test_value".to_string());
     env_vars.insert("ANOTHER_VAR".to_string(), "another_value".to_string());
     let _container_with_env =
         GenericContainer::with_env(client.client(), "alpine", "latest", env_vars)?;
-    println!("   ✓ Container created with environment variables");
+    chicago_tdd_tools::alert_info!("   ✓ Container created with environment variables");
     Ok(())
 }
 
@@ -235,8 +236,8 @@ fn example_container_with_env(client: &ContainerClient) -> Result<(), Box<dyn st
 /// assert_eq!(result.exit_code, SUCCESS_EXIT_CODE);
 /// ```
 fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n4. Executing commands in container...");
-    println!("   Note: Using with_command() - the unified method for all containers");
+    chicago_tdd_tools::alert_info!("\n4. Executing commands in container...");
+    chicago_tdd_tools::alert_info!("   Note: Using with_command() - the unified method for all containers");
 
     // Use Alpine with sleep to keep it running (correct pattern for images that exit)
     // **Unified API**: with_command() works for all containers:
@@ -253,10 +254,10 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
 
     // Execute a simple command
     let exec_result = alpine_container.exec("echo", &["hello", "from", "container"])?;
-    println!("   ✓ Command executed: {}", exec_result.stdout.trim());
+    chicago_tdd_tools::alert_info!("   ✓ Command executed: {}", exec_result.stdout.trim());
     // **Best Practice**: Use SUCCESS_EXIT_CODE constant instead of magic number 0
     assert_eq!(exec_result.exit_code, SUCCESS_EXIT_CODE, "Command should succeed");
-    println!("   ✓ Exit code: {} (SUCCESS)", exec_result.exit_code);
+    chicago_tdd_tools::alert_info!("   ✓ Exit code: {} (SUCCESS)", exec_result.exit_code);
 
     // **Best Practice**: Demonstrate error path handling - show how to check for failures
     let error_result = alpine_container.exec("nonexistent_command", &[]);
@@ -264,7 +265,7 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
         Ok(result) => {
             // Command succeeded but might have non-zero exit code
             if result.exit_code != SUCCESS_EXIT_CODE {
-                println!(
+                chicago_tdd_tools::alert_info!(
                     "   ✓ Error handling demonstrated - command failed with exit code: {}",
                     result.exit_code
                 );
@@ -272,12 +273,12 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
         }
         Err(e) => {
             // Command execution failed (e.g., command not found)
-            println!("   ✓ Error handling demonstrated - exec failed: {e}");
+            chicago_tdd_tools::alert_info!("   ✓ Error handling demonstrated - exec failed: {e}");
             // **Best Practice**: In production code, handle errors appropriately
         }
     }
 
-    println!("   (Pattern: Use with_command() for images that exit immediately)");
+    chicago_tdd_tools::alert_info!("   (Pattern: Use with_command() for images that exit immediately)");
     Ok(())
 }
 
@@ -313,24 +314,24 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
 /// )?;
 /// ```
 fn example_entrypoint_override() {
-    println!("\n4b. Container with entrypoint override (e.g., otel/weaver)...");
-    println!("   Note: For images with entrypoints that interfere, use entrypoint parameter");
-    println!("   Example pattern (commented out - requires otel/weaver image):");
-    println!("   ```rust");
-    println!("   let weaver_container = GenericContainer::with_command(");
-    println!("       client.client(),");
-    println!("       \"otel/weaver\",");
-    println!("       \"latest\",");
-    println!("       \"sleep\",");
-    println!("       &[\"infinity\"],");
-    println!(
+    chicago_tdd_tools::alert_info!("\n4b. Container with entrypoint override (e.g., otel/weaver)...");
+    chicago_tdd_tools::alert_info!("   Note: For images with entrypoints that interfere, use entrypoint parameter");
+    chicago_tdd_tools::alert_info!("   Example pattern (commented out - requires otel/weaver image):");
+    chicago_tdd_tools::alert_info!("   ```rust");
+    chicago_tdd_tools::alert_info!("   let weaver_container = GenericContainer::with_command(");
+    chicago_tdd_tools::alert_info!("       client.client(),");
+    chicago_tdd_tools::alert_info!("       \"otel/weaver\",");
+    chicago_tdd_tools::alert_info!("       \"latest\",");
+    chicago_tdd_tools::alert_info!("       \"sleep\",");
+    chicago_tdd_tools::alert_info!("       &[\"infinity\"],");
+    chicago_tdd_tools::alert_info!(
         "       Some(&[\"/bin/sh\"]), // Entrypoint override needed (uses Docker CLI workaround)"
     );
-    println!("   )?;");
-    println!("   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;");
-    println!("   assert_eq!(weaver_result.exit_code, SUCCESS_EXIT_CODE);");
-    println!("   ```");
-    println!("   (Pattern: Use entrypoint = Some(&[\"/bin/sh\"]) for images like otel/weaver)");
+    chicago_tdd_tools::alert_info!("   )?;");
+    chicago_tdd_tools::alert_info!("   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;");
+    chicago_tdd_tools::alert_info!("   assert_eq!(weaver_result.exit_code, SUCCESS_EXIT_CODE);");
+    chicago_tdd_tools::alert_info!("   ```");
+    chicago_tdd_tools::alert_info!("   (Pattern: Use entrypoint = Some(&[\"/bin/sh\"]) for images like otel/weaver)");
 }
 
 /// Example: Using wait conditions
@@ -355,16 +356,16 @@ fn example_entrypoint_override() {
 ///     .with_wait_for(WaitFor::http("/", DEFAULT_HTTP_PORT));
 /// ```
 fn example_wait_conditions() {
-    println!("\n5. Using wait conditions...");
-    println!("   Note: Wait conditions ensure containers are ready before use");
-    println!("   Example: WaitFor::http(\"/\", {}) for HTTP health checks", DEFAULT_HTTP_PORT);
-    println!("   Example: WaitFor::message(\"ready\") for log message waiting");
-    println!("   ✓ Wait conditions available via GenericContainer::with_wait_for()");
+    chicago_tdd_tools::alert_info!("\n5. Using wait conditions...");
+    chicago_tdd_tools::alert_info!("   Note: Wait conditions ensure containers are ready before use");
+    chicago_tdd_tools::alert_info!("   Example: WaitFor::http(\"/\", {}) for HTTP health checks", DEFAULT_HTTP_PORT);
+    chicago_tdd_tools::alert_info!("   Example: WaitFor::message(\"ready\") for log message waiting");
+    chicago_tdd_tools::alert_info!("   ✓ Wait conditions available via GenericContainer::with_wait_for()");
 }
 
 #[cfg(feature = "testcontainers")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Testcontainers Example - Minimal 80/20 Implementation");
+    chicago_tdd_tools::alert_info!("Testcontainers Example - Minimal 80/20 Implementation");
 
     // Arrange: Create container client
     let client = ContainerClient::new();
@@ -377,16 +378,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     example_entrypoint_override();
     example_wait_conditions();
 
-    println!("\n✓ All examples completed successfully!");
-    println!("  Containers will be automatically cleaned up on drop");
+    chicago_tdd_tools::alert_info!("\n✓ All examples completed successfully!");
+    chicago_tdd_tools::alert_info!("  Containers will be automatically cleaned up on drop");
 
     Ok(())
 }
 
 #[cfg(not(feature = "testcontainers"))]
 fn main() {
-    println!("testcontainers feature is not enabled");
-    println!(
+    chicago_tdd_tools::alert_info!("testcontainers feature is not enabled");
+    chicago_tdd_tools::alert_info!(
         "Enable it with: cargo run --example testcontainers_example --features testcontainers"
     );
 }

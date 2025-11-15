@@ -64,6 +64,7 @@
 //! - **3rd Idea**: Maximum value - type-safe, prevents entire class of errors
 
 #[cfg(feature = "weaver")]
+use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::types::{
@@ -401,56 +402,56 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(feature = "otel")]
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    println!("Go the Extra Mile: 1st/2nd/3rd Idea Progression");
-    println!("================================================\n");
+    chicago_tdd_tools::alert_info!("Go the Extra Mile: 1st/2nd/3rd Idea Progression");
+    chicago_tdd_tools::alert_info!("================================================\n");
 
     // ========================================================================
     // 1st Idea: Basic implementation
     // ========================================================================
-    println!("1st Idea: Parse u32 only");
-    println!("-------------------------");
+    chicago_tdd_tools::alert_info!("1st Idea: Parse u32 only");
+    chicago_tdd_tools::alert_info!("-------------------------");
     let result1 = parse_u32_first_idea("42");
     chicago_tdd_tools::assert_ok!(&result1);
     let value1 = result1?;
     assert_eq!(value1, 42);
-    println!("✓ Parsed u32: 42");
-    println!("  - No telemetry");
-    println!("  - No validation");
-    println!("  - Single type only\n");
+    chicago_tdd_tools::alert_success!("Parsed u32: 42");
+    chicago_tdd_tools::alert_info!("  - No telemetry");
+    chicago_tdd_tools::alert_info!("  - No validation");
+    chicago_tdd_tools::alert_info!("  - Single type only\n");
 
     // ========================================================================
     // 2nd Idea: Go bigger (80/20) - Generic version
     // ========================================================================
-    println!("2nd Idea: Parse any number type (80/20)");
-    println!("----------------------------------------");
+    chicago_tdd_tools::alert_info!("2nd Idea: Parse any number type (80/20)");
+    chicago_tdd_tools::alert_info!("----------------------------------------");
 
     // Works for u32
     let u32_parsed = parse_number_second_idea_no_otel::<u32>("42");
     chicago_tdd_tools::assert_ok!(&u32_parsed);
     let parsed_u32 = u32_parsed?;
     assert_eq!(parsed_u32, 42);
-    println!("✓ Parsed u32: 42");
+    chicago_tdd_tools::alert_success!("Parsed u32: 42");
 
     // Works for i32
     let i32_parsed = parse_number_second_idea_no_otel::<i32>("-42");
     chicago_tdd_tools::assert_ok!(&i32_parsed);
     let parsed_i32 = i32_parsed?;
     assert_eq!(parsed_i32, -42);
-    println!("✓ Parsed i32: -42");
+    chicago_tdd_tools::alert_success!("Parsed i32: -42");
 
     // Works for f64
     let f64_parsed = parse_number_second_idea_no_otel::<f64>("123.456");
     chicago_tdd_tools::assert_ok!(&f64_parsed);
     let parsed_f64 = f64_parsed?;
     assert!((parsed_f64 - 123.456).abs() < f64::EPSILON);
-    println!("✓ Parsed f64: 123.456");
+    chicago_tdd_tools::alert_success!("Parsed f64: 123.456");
 
-    println!("  - Generic: Works for all number types");
-    println!("  - 80% more value, minimal effort");
+    chicago_tdd_tools::alert_info!("  - Generic: Works for all number types");
+    chicago_tdd_tools::alert_info!("  - 80% more value, minimal effort");
 
     #[cfg(feature = "otel")]
     {
-        println!("  - OTEL spans: Basic instrumentation");
+        chicago_tdd_tools::alert_info!("  - OTEL spans: Basic instrumentation");
 
         // Test with OTEL spans
         let (value, span) = parse_number_second_idea::<u32>("42", "parse_number")?;
@@ -459,33 +460,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Validate span with OTEL validator
         let validator = SpanValidator::new();
         validator.validate(&span)?;
-        println!("  - Span validation: ✓ Passed");
+        chicago_tdd_tools::alert_info!("  - Span validation: ✓ Passed");
     }
 
-    println!();
+    chicago_tdd_tools::alert_info!();
 
     // ========================================================================
     // 3rd Idea: Maximum value - Type-level validation + OTEL + Weaver
     // ========================================================================
-    println!("3rd Idea: Type-level validation + OTEL + Weaver");
-    println!("------------------------------------------------");
+    chicago_tdd_tools::alert_info!("3rd Idea: Type-level validation + OTEL + Weaver");
+    chicago_tdd_tools::alert_info!("------------------------------------------------");
 
     // Without OTEL: Type-level validation
     let validated = ValidatedNumberNoOtel::<u32>::parse("42")?;
     assert_eq!(*validated.value(), 42);
-    println!("✓ Type-level validated number: 42");
+    chicago_tdd_tools::alert_success!("Type-level validated number: 42");
 
     #[cfg(feature = "otel")]
     {
         // With OTEL: Full instrumentation
         let validated_otel = ValidatedNumber::<u32>::parse("42", "validated_parse")?;
         assert_eq!(*validated_otel.value(), 42);
-        println!("✓ OTEL-instrumented validated number: 42");
+        chicago_tdd_tools::alert_success!("OTEL-instrumented validated number: 42");
 
         // Validate span
         let span_validator = SpanValidator::new();
         span_validator.validate(validated_otel.span())?;
-        println!("✓ OTEL span validation: Passed");
+        chicago_tdd_tools::alert_success!("OTEL span validation: Passed");
 
         // Create metric for operation
         let timestamp = SystemTime::now()
@@ -506,18 +507,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Validate metric
         let metric_validator = MetricValidator::new();
         metric_validator.validate(&metric)?;
-        println!("✓ OTEL metric validation: Passed");
+        chicago_tdd_tools::alert_success!("OTEL metric validation: Passed");
     }
 
     #[cfg(feature = "weaver")]
     {
-        println!("\nWeaver Live-Check Validation:");
-        println!("-----------------------------");
+        chicago_tdd_tools::alert_info!("\nWeaver Live-Check Validation:");
+        chicago_tdd_tools::alert_info!("-----------------------------");
 
         // Check if Weaver is available
         match WeaverValidator::check_weaver_available() {
             Ok(()) => {
-                println!("✓ Weaver binary available");
+                chicago_tdd_tools::alert_success!("Weaver binary available");
 
                 // In a real scenario, you would:
                 // 1. Start Weaver live-check
@@ -525,34 +526,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // 3. Weaver validates against semantic conventions
                 // 4. Stop Weaver and check results
 
-                println!("  Note: Full Weaver validation requires:");
-                println!("  - Weaver binary installed");
-                println!("  - Semantic convention registry");
-                println!("  - OTLP endpoint configured");
-                println!("  - Telemetry sent to endpoint");
+                chicago_tdd_tools::alert_info!("  Note: Full Weaver validation requires:");
+                chicago_tdd_tools::alert_info!("  - Weaver binary installed");
+                chicago_tdd_tools::alert_info!("  - Semantic convention registry");
+                chicago_tdd_tools::alert_info!("  - OTLP endpoint configured");
+                chicago_tdd_tools::alert_info!("  - Telemetry sent to endpoint");
             }
             Err(e) => {
-                println!("⚠ Weaver not available: {e}");
-                println!("  Bootstrap with: cargo make weaver-bootstrap");
+                chicago_tdd_tools::alert_info!("⚠ Weaver not available: {e}");
+                chicago_tdd_tools::alert_info!("  Bootstrap with: cargo make weaver-bootstrap");
             }
         }
     }
 
-    println!("\n✓ Maximum value: Type-safe, validated, prevents entire class of errors");
-    println!("✓ OTEL instrumentation: Full spans and metrics");
-    println!("✓ Weaver validation: Schema compliance (when available)");
-    println!();
+    chicago_tdd_tools::alert_info!("\n✓ Maximum value: Type-safe, validated, prevents entire class of errors");
+    chicago_tdd_tools::alert_success!("OTEL instrumentation: Full spans and metrics");
+    chicago_tdd_tools::alert_success!("Weaver validation: Schema compliance (when available)");
+    chicago_tdd_tools::alert_info!();
 
     // ========================================================================
     // Decision Framework
     // ========================================================================
-    println!("Decision Framework:");
-    println!("------------------");
-    println!("1st Idea: Works, but narrow scope");
-    println!("2nd Idea: Usually best - 80% more value, reasonable effort");
-    println!("3rd Idea: Maximum value, but evaluate effort vs. benefit");
-    println!();
-    println!("Recommendation: Use 2nd idea for most cases, 3rd idea when type safety is critical");
+    chicago_tdd_tools::alert_info!("Decision Framework:");
+    chicago_tdd_tools::alert_info!("------------------");
+    chicago_tdd_tools::alert_info!("1st Idea: Works, but narrow scope");
+    chicago_tdd_tools::alert_info!("2nd Idea: Usually best - 80% more value, reasonable effort");
+    chicago_tdd_tools::alert_info!("3rd Idea: Maximum value, but evaluate effort vs. benefit");
+    chicago_tdd_tools::alert_info!();
+    chicago_tdd_tools::alert_info!("Recommendation: Use 2nd idea for most cases, 3rd idea when type safety is critical");
 
     Ok(())
 }

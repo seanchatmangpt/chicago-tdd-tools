@@ -63,6 +63,7 @@
 //! - **Score**: Percentage of mutations caught
 //! - **Acceptable**: Score >= 80%
 
+use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::mutation::*;
 use std::collections::HashMap;
 
@@ -98,8 +99,8 @@ use std::collections::HashMap;
 /// ```
 #[tokio::main]
 async fn main() {
-    println!("Mutation Testing Example");
-    println!("========================");
+    chicago_tdd_tools::alert_info!("Mutation Testing Example");
+    chicago_tdd_tools::alert_info!("========================");
 
     // Arrange: Create data and tester
     let mut data = HashMap::new();
@@ -116,7 +117,7 @@ async fn main() {
     });
 
     // Assert: Mutations caught
-    println!("Mutation detection: {}", if caught { "CAUGHT" } else { "MISSED" });
+    chicago_tdd_tools::alert_info!("Mutation detection: {}", if caught { "CAUGHT" } else { "MISSED" });
 
     // Test mutation score
     let mut data2 = HashMap::new();
@@ -136,10 +137,10 @@ async fn main() {
     let score = MutationScore::calculate(caught_mutations, total_mutations);
 
     // Assert: Mutation score is acceptable
-    println!("Mutation score: {}%", score.score());
+    chicago_tdd_tools::alert_info!("Mutation score: {}%", score.score());
     if score.is_acceptable() {
-        println!("✓ Mutation score is acceptable (>= 80%)");
+        chicago_tdd_tools::alert_success!("Mutation score is acceptable (>= 80%)");
     } else {
-        println!("✗ Mutation score is too low (< 80%)");
+        chicago_tdd_tools::alert_warning!("Mutation score is too low (< 80%)");
     }
 }

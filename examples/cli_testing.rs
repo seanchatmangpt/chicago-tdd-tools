@@ -70,19 +70,20 @@
 
 #[cfg(feature = "cli-testing")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
+use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::cli::CliTest;
 
 #[cfg(feature = "cli-testing")]
 fn main() {
-    println!("CLI Testing Example");
-    println!("Run: cargo test --features cli-testing --example cli_testing");
-    println!("\nNote: CLI tests use .trycmd files in tests/cli/ directory");
-    println!("Create .trycmd files to define CLI test cases.");
+    chicago_tdd_tools::alert_info!("CLI Testing Example");
+    chicago_tdd_tools::alert_info!("Run: cargo test --features cli-testing --example cli_testing");
+    chicago_tdd_tools::alert_info!("\nNote: CLI tests use .trycmd files in tests/cli/ directory");
+    chicago_tdd_tools::alert_info!("Create .trycmd files to define CLI test cases.");
 }
 
 #[cfg(not(feature = "cli-testing"))]
 fn main() {
-    println!("CLI testing feature not enabled. Enable with: --features cli-testing");
+    chicago_tdd_tools::alert_info!("CLI testing feature not enabled. Enable with: --features cli-testing");
 }
 
 #[cfg(feature = "cli-testing")]

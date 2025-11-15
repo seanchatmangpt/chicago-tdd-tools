@@ -175,7 +175,7 @@ fn is_in_string_literal(line: &str) -> bool {
     if trimmed.contains(r#"r"assert"#)
         || trimmed.contains(r#""assert"#)
         || trimmed.contains(r#"r\"assert"#)
-        || (trimmed.contains("assert") && (trimmed.contains(r#"r""#) || trimmed.contains(r#"""#)))
+        || (trimmed.contains("assert") && (trimmed.contains(r#"r""#) || trimmed.contains('"')))
     {
         // Additional check: is it in a string literal context?
         if trimmed.starts_with("let") || trimmed.starts_with("const") || trimmed.contains("= ") {

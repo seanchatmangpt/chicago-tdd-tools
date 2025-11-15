@@ -57,6 +57,7 @@
 //! - **Shrinking**: Finding minimal failing cases
 //! - **Seed**: Random seed for reproducible tests
 
+use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::property::*;
 
 /// Example: Property-based testing with PropertyTestGenerator and ProptestStrategy
@@ -88,40 +89,40 @@ use chicago_tdd_tools::property::*;
 /// ```
 #[tokio::main]
 async fn main() {
-    println!("Property-Based Testing Example");
-    println!("==============================");
+    chicago_tdd_tools::alert_info!("Property-Based Testing Example");
+    chicago_tdd_tools::alert_info!("==============================");
 
     // Original PropertyTestGenerator (backward compatible)
-    println!("\n1. Using PropertyTestGenerator (original):");
+    chicago_tdd_tools::alert_info!("1. Using PropertyTestGenerator (original):");
     let mut generator = PropertyTestGenerator::<10, 3>::new().with_seed(42);
     // Note: property_all_data_valid is a placeholder - in real usage, define your property function
     // let property_valid = property_all_data_valid(&mut generator, 100);
-    // println!("Property 'all_data_valid': {}", if property_valid { "PASSED" } else { "FAILED" });
+    // chicago_tdd_tools::alert_info!("Property 'all_data_valid': {}", if property_valid { "PASSED" } else { "FAILED" });
 
     let data = generator.generate_test_data();
-    println!("Generated {} items", data.len());
+    chicago_tdd_tools::alert_info!("Generated {} items", data.len());
 
     #[cfg(feature = "property-testing")]
     {
-        println!("\n2. Using ProptestStrategy (enhanced with proptest):");
+        chicago_tdd_tools::alert_info!("2. Using ProptestStrategy (enhanced with proptest):");
 
         // Enhanced property testing with proptest
         let strategy = ProptestStrategy::new().with_cases(100);
 
-        println!("Testing addition commutativity...");
+        chicago_tdd_tools::alert_info!("Testing addition commutativity...");
         strategy.test(proptest::prelude::any::<(u32, u32)>(), |(x, y)| x + y == y + x);
-        println!("✓ Addition is commutative");
+        chicago_tdd_tools::alert_success!("Addition is commutative");
 
-        println!("Testing multiplication distributivity...");
+        chicago_tdd_tools::alert_info!("Testing multiplication distributivity...");
         strategy.test(proptest::prelude::any::<(u32, u32, u32)>(), |(a, b, c)| {
             a * (b + c) == (a * b) + (a * c)
         });
-        println!("✓ Multiplication is distributive");
+        chicago_tdd_tools::alert_success!("Multiplication is distributive");
     }
 
     #[cfg(not(feature = "property-testing"))]
     {
-        println!("\n2. ProptestStrategy requires 'property-testing' feature");
-        println!("   Enable with: --features property-testing");
+        chicago_tdd_tools::alert_warning!("2. ProptestStrategy requires 'property-testing' feature");
+        chicago_tdd_tools::alert_info!("   Enable with: --features property-testing");
     }
 }
