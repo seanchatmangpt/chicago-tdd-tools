@@ -1004,9 +1004,12 @@ max_batch_size = 0
         )
         .expect("Failed to write config file");
 
-        // Act: Set CARGO_MANIFEST_DIR to temp directory
+        // Act: Set CARGO_MANIFEST_DIR to temp directory and change working directory
+        // This ensures find_config_file() finds the temp config file, not the project config
         let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
+        let original_current_dir = std::env::current_dir().ok();
         std::env::set_var("CARGO_MANIFEST_DIR", temp_dir.path());
+        std::env::set_current_dir(temp_dir.path()).expect("Failed to change to temp directory");
 
         // Assert: Invalid zero values should fall back to defaults (poka-yoke prevention)
         // Poka-yoke types prevent 0 values, so defaults are used
@@ -1021,11 +1024,14 @@ max_batch_size = 0
         assert_eq!(max_run_len(), 8, "Zero run len should use default (poka-yoke)");
         assert_eq!(max_batch_size(), 1000, "Zero batch size should use default (poka-yoke)");
 
-        // Cleanup: Restore original CARGO_MANIFEST_DIR
+        // Cleanup: Restore original CARGO_MANIFEST_DIR and working directory
         if let Some(dir) = original_manifest_dir {
             std::env::set_var("CARGO_MANIFEST_DIR", dir);
         } else {
             std::env::remove_var("CARGO_MANIFEST_DIR");
+        }
+        if let Some(dir) = original_current_dir {
+            std::env::set_current_dir(dir).expect("Failed to restore original directory");
         }
     }
 
