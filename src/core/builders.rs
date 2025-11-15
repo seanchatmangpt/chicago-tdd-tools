@@ -11,6 +11,7 @@
 
 use serde_json::Value;
 use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
 
 #[cfg(feature = "fake-data")]
 use fake::{Fake, Faker};
@@ -20,19 +21,172 @@ use crate::observability::otel::types::{Span, SpanContext, SpanId, SpanStatus, T
 #[cfg(feature = "otel")]
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// ============================================================================
+// BUILDER PRESET SYSTEM
+// ============================================================================
+
+/// Type alias for preset configuration functions
+///
+/// A preset is a function that takes a `TestDataBuilder` and returns a configured `TestDataBuilder`.
+/// Presets are composable - you can chain multiple presets together.
+type PresetFn = Box<dyn Fn(TestDataBuilder) -> TestDataBuilder + Send + Sync>;
+
+/// Global preset registry
+///
+/// Thread-safe registry for storing and retrieving builder presets.
+/// Uses `OnceLock` for initialization and `Mutex` for interior mutability.
+fn preset_registry() -> &'static Mutex<HashMap<String, PresetFn>> {
+    static REGISTRY: OnceLock<Mutex<HashMap<String, PresetFn>>> = OnceLock::new();
+    REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Validation function type for builder validation hooks
+///
+/// Takes a reference to the data being built and returns Ok(()) if valid,
+/// or Err(String) with an error message if invalid.
+type ValidationFn = Box<dyn Fn(&HashMap<String, String>) -> Result<(), String> + Send + Sync>;
+
 /// Builder for test data (case variables)
 ///
 /// This builder creates test data as `HashMap<String, String>` and can convert to JSON.
 /// Provides a fluent API for building test data structures.
+///
+/// Supports optional validation hooks that run when `build()` or `try_build()` is called.
 pub struct TestDataBuilder {
     data: HashMap<String, String>,
+    #[allow(clippy::type_complexity)] // Validation functions are inherently complex
+    validations: Vec<ValidationFn>,
+}
+
+// Custom Debug implementation since ValidationFn doesn't implement Debug
+impl std::fmt::Debug for TestDataBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TestDataBuilder")
+            .field("data", &self.data)
+            .field("validations", &format!("{} validation(s)", self.validations.len()))
+            .finish()
+    }
 }
 
 impl TestDataBuilder {
     /// Create a new test data builder
     #[must_use]
     pub fn new() -> Self {
-        Self { data: HashMap::new() }
+        Self { data: HashMap::new(), validations: Vec::new() }
+    }
+
+    /// Register a named preset for reusable test data configurations
+    ///
+    /// Presets allow you to define common test data patterns once and reuse them across tests.
+    ///
+    /// **Note:** Presets cannot call other presets recursively (this would cause a deadlock).
+    /// If you need to build on another preset, load the base preset first, build it, and
+    /// manually apply the data.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::builders::TestDataBuilder;
+    ///
+    /// // Register a preset for valid orders
+    /// TestDataBuilder::register_preset("valid_order", |builder| {
+    ///     builder
+    ///         .with_var("order_id", "ORD-001")
+    ///         .with_var("amount", "100.00")
+    ///         .with_var("status", "pending")
+    /// });
+    ///
+    /// // Use the preset
+    /// let data = TestDataBuilder::preset("valid_order")
+    ///     .with_var("customer_id", "12345")
+    ///     .build();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the preset registry lock is poisoned.
+    pub fn register_preset<F>(name: impl Into<String>, preset_fn: F) -> Result<(), String>
+    where
+        F: Fn(Self) -> Self + Send + Sync + 'static,
+    {
+        let registry = preset_registry();
+        {
+            let mut registry_guard = registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+            registry_guard.insert(name.into(), Box::new(preset_fn));
+        }
+        Ok(())
+    }
+
+    /// Load a named preset
+    ///
+    /// Applies a previously registered preset to create a configured builder.
+    /// The returned builder can be further customized with additional method calls.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::builders::TestDataBuilder;
+    ///
+    /// // First register a preset
+    /// TestDataBuilder::register_preset("valid_order", |builder| {
+    ///     builder
+    ///         .with_var("order_id", "ORD-001")
+    ///         .with_var("status", "pending")
+    /// }).ok();
+    ///
+    /// // Then use it
+    /// let data = TestDataBuilder::preset("valid_order")
+    ///     .with_var("customer_id", "12345")
+    ///     .build();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the preset is not found or if the registry lock is poisoned.
+    pub fn preset(name: impl AsRef<str>) -> Result<Self, String> {
+        let registry = preset_registry();
+        let registry_guard = registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+
+        let preset_fn = registry_guard
+            .get(name.as_ref())
+            .ok_or_else(|| format!("Preset '{}' not found", name.as_ref()))?;
+
+        let builder = Self::new();
+        let result = preset_fn(builder);
+        drop(registry_guard);
+        Ok(result)
+    }
+
+    /// Add a validation hook that will be called when building
+    ///
+    /// Validation hooks allow you to add custom validation logic that runs when
+    /// `build()` or `try_build()` is called. Multiple validations can be added
+    /// and they will all be run in order.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::builders::TestDataBuilder;
+    ///
+    /// let result = TestDataBuilder::new()
+    ///     .with_validation(|data| {
+    ///         if !data.contains_key("required_field") {
+    ///             return Err("Missing required_field".to_string());
+    ///         }
+    ///         Ok(())
+    ///     })
+    ///     .with_var("required_field", "value")
+    ///     .try_build();
+    ///
+    /// assert!(result.is_ok());
+    /// ```
+    #[must_use]
+    pub fn with_validation<F>(mut self, validation: F) -> Self
+    where
+        F: Fn(&HashMap<String, String>) -> Result<(), String> + Send + Sync + 'static,
+    {
+        self.validations.push(Box::new(validation));
+        self
     }
 
     /// Add a variable
@@ -148,25 +302,87 @@ impl TestDataBuilder {
         self
     }
 
-    /// Build test data as JSON
-    ///
-    /// Converts `HashMap<String, String>` to `serde_json::Value`.
-    /// Matches workflow engine API exactly.
+    /// Run all validation hooks
     ///
     /// # Errors
     ///
-    /// Returns `serde_json::Error` if serialization fails.
+    /// Returns the first validation error encountered.
+    fn run_validations(&self) -> Result<(), String> {
+        for validation in &self.validations {
+            validation(&self.data)?;
+        }
+        Ok(())
+    }
+
+    /// Build test data as JSON
+    ///
+    /// Converts `HashMap<String, String>` to `serde_json::Value`.
+    /// Runs all validation hooks before building.
+    ///
+    /// # Errors
+    ///
+    /// Returns `serde_json::Error` if serialization fails, or validation error if validation fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if validation fails (for backward compatibility with non-validation usage).
     pub fn build_json(self) -> Result<Value, serde_json::Error> {
+        if let Err(e) = self.run_validations() {
+            #[allow(clippy::panic)] // Intentional: panic on validation failure for backward compat
+            {
+                panic!("Validation failed: {e}");
+            }
+        }
         serde_json::to_value(&self.data)
     }
 
     /// Build test data as `HashMap`
     ///
     /// Returns the underlying `HashMap<String, String>`.
-    /// Matches workflow engine API exactly.
+    /// Runs all validation hooks before building.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any validation hook returns an error.
     #[must_use]
     pub fn build(self) -> HashMap<String, String> {
+        if let Err(e) = self.run_validations() {
+            #[allow(clippy::panic)] // Intentional: panic on validation failure for backward compat
+            {
+                panic!("Validation failed: {e}");
+            }
+        }
         self.data
+    }
+
+    /// Build test data with validation
+    ///
+    /// Similar to `build()` but returns a `Result` instead of panicking on validation errors.
+    /// Use this when you want to handle validation errors gracefully.
+    ///
+    /// # Errors
+    ///
+    /// Returns validation error if any validation hook fails.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::builders::TestDataBuilder;
+    ///
+    /// let result = TestDataBuilder::new()
+    ///     .with_validation(|data| {
+    ///         if data.is_empty() {
+    ///             return Err("Data cannot be empty".to_string());
+    ///         }
+    ///         Ok(())
+    ///     })
+    ///     .try_build();
+    ///
+    /// assert!(result.is_err());
+    /// ```
+    pub fn try_build(self) -> Result<HashMap<String, String>, String> {
+        self.run_validations()?;
+        Ok(self.data)
     }
 }
 
@@ -793,4 +1009,259 @@ mod tests {
         assert_eq!(data.get("key0"), Some(&"value0".to_string()));
         assert_eq!(data.get("key99"), Some(&"value99".to_string()));
     });
+
+    // ========================================================================
+    // 6. BUILDER PRESETS - Test preset system
+    // ========================================================================
+
+    test!(test_builder_preset_register_and_use, {
+        // Arrange: Register a preset
+        let preset_name = "test_valid_order_001";
+        let result = TestDataBuilder::register_preset(preset_name, |builder| {
+            builder
+                .with_var("order_id", "ORD-001")
+                .with_var("amount", "100.00")
+                .with_var("status", "pending")
+        });
+
+        // Assert: Registration succeeds
+        assert!(result.is_ok());
+
+        // Act: Use the preset
+        let builder_result = TestDataBuilder::preset(preset_name);
+        assert!(builder_result.is_ok());
+
+        let data = builder_result.unwrap().build();
+
+        // Assert: Verify preset data
+        assert_eq!(data.get("order_id"), Some(&"ORD-001".to_string()));
+        assert_eq!(data.get("amount"), Some(&"100.00".to_string()));
+        assert_eq!(data.get("status"), Some(&"pending".to_string()));
+    });
+
+    test!(test_builder_preset_with_customization, {
+        // Arrange: Register a preset
+        let preset_name = "test_base_order_002";
+        let result = TestDataBuilder::register_preset(preset_name, |builder| {
+            builder.with_var("order_id", "ORD-002").with_var("status", "pending")
+        });
+        assert!(result.is_ok());
+
+        // Act: Use preset and add customization
+        let data = TestDataBuilder::preset(preset_name)
+            .unwrap()
+            .with_var("customer_id", "12345")
+            .with_var("amount", "250.00")
+            .build();
+
+        // Assert: Verify both preset and custom data
+        assert_eq!(data.get("order_id"), Some(&"ORD-002".to_string()));
+        assert_eq!(data.get("status"), Some(&"pending".to_string()));
+        assert_eq!(data.get("customer_id"), Some(&"12345".to_string()));
+        assert_eq!(data.get("amount"), Some(&"250.00".to_string()));
+    });
+
+    test!(test_builder_preset_not_found, {
+        // Act: Try to use non-existent preset
+        let result = TestDataBuilder::preset("nonexistent_preset_xyz");
+
+        // Assert: Should return error
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    });
+
+    test!(test_builder_preset_override, {
+        // Arrange: Register a preset
+        let preset_name = "test_order_with_defaults_004";
+        let result = TestDataBuilder::register_preset(preset_name, |builder| {
+            builder
+                .with_var("status", "pending")
+                .with_var("priority", "normal")
+                .with_var("amount", "100.00")
+        });
+        assert!(result.is_ok());
+
+        // Act: Use preset and override a value
+        let data = TestDataBuilder::preset(preset_name)
+            .unwrap()
+            .with_var("priority", "high")
+            .build();
+
+        // Assert: Override should take effect
+        assert_eq!(data.get("status"), Some(&"pending".to_string()));
+        assert_eq!(data.get("priority"), Some(&"high".to_string()));
+        assert_eq!(data.get("amount"), Some(&"100.00".to_string()));
+    });
+
+    test!(test_builder_preset_multiple_registrations, {
+        // Arrange: Register multiple presets
+        let preset1 = "test_preset_alpha_005";
+        let preset2 = "test_preset_beta_005";
+
+        let result1 = TestDataBuilder::register_preset(preset1, |builder| {
+            builder.with_var("type", "alpha")
+        });
+        let result2 = TestDataBuilder::register_preset(preset2, |builder| {
+            builder.with_var("type", "beta")
+        });
+
+        assert!(result1.is_ok());
+        assert!(result2.is_ok());
+
+        // Act: Use both presets
+        let data1 = TestDataBuilder::preset(preset1).unwrap().build();
+        let data2 = TestDataBuilder::preset(preset2).unwrap().build();
+
+        // Assert: Each preset works independently
+        assert_eq!(data1.get("type"), Some(&"alpha".to_string()));
+        assert_eq!(data2.get("type"), Some(&"beta".to_string()));
+    });
+
+    // ========================================================================
+    // 7. BUILDER VALIDATION HOOKS - Test validation system
+    // ========================================================================
+
+    test!(test_builder_validation_success, {
+        // Arrange: Create builder with validation that passes
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if !data.contains_key("required_field") {
+                    return Err("Missing required_field".to_string());
+                }
+                Ok(())
+            })
+            .with_var("required_field", "value")
+            .try_build();
+
+        // Assert: Validation passes
+        assert!(result.is_ok());
+        let data = result.unwrap();
+        assert_eq!(data.get("required_field"), Some(&"value".to_string()));
+    });
+
+    test!(test_builder_validation_failure, {
+        // Arrange: Create builder with validation that fails
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if !data.contains_key("required_field") {
+                    return Err("Missing required_field".to_string());
+                }
+                Ok(())
+            })
+            .try_build();
+
+        // Assert: Validation fails
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Missing required_field"));
+    });
+
+    test!(test_builder_multiple_validations, {
+        // Arrange: Create builder with multiple validations
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if !data.contains_key("field1") {
+                    return Err("Missing field1".to_string());
+                }
+                Ok(())
+            })
+            .with_validation(|data| {
+                if !data.contains_key("field2") {
+                    return Err("Missing field2".to_string());
+                }
+                Ok(())
+            })
+            .with_var("field1", "value1")
+            .with_var("field2", "value2")
+            .try_build();
+
+        // Assert: All validations pass
+        assert!(result.is_ok());
+    });
+
+    test!(test_builder_multiple_validations_first_fails, {
+        // Arrange: Create builder where first validation fails
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if !data.contains_key("field1") {
+                    return Err("Missing field1".to_string());
+                }
+                Ok(())
+            })
+            .with_validation(|data| {
+                if !data.contains_key("field2") {
+                    return Err("Missing field2".to_string());
+                }
+                Ok(())
+            })
+            .with_var("field2", "value2")
+            .try_build();
+
+        // Assert: First validation fails
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Missing field1"));
+    });
+
+    test!(test_builder_validation_with_custom_logic, {
+        // Arrange: Create builder with custom validation logic
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if let Some(amount) = data.get("amount") {
+                    if let Ok(val) = amount.parse::<f64>() {
+                        if val < 0.0 {
+                            return Err("Amount must be non-negative".to_string());
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .with_var("amount", "100.00")
+            .try_build();
+
+        // Assert: Validation passes
+        assert!(result.is_ok());
+    });
+
+    test!(test_builder_validation_custom_logic_fails, {
+        // Arrange: Create builder with failing custom validation
+        let result = TestDataBuilder::new()
+            .with_validation(|data| {
+                if let Some(amount) = data.get("amount") {
+                    if let Ok(val) = amount.parse::<f64>() {
+                        if val < 0.0 {
+                            return Err("Amount must be non-negative".to_string());
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .with_var("amount", "-50.00")
+            .try_build();
+
+        // Assert: Validation fails
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("non-negative"));
+    });
+
+    test!(test_builder_no_validations, {
+        // Arrange: Create builder without validations
+        let result = TestDataBuilder::new().with_var("key", "value").try_build();
+
+        // Assert: Build succeeds without validations
+        assert!(result.is_ok());
+    });
+
+    #[test]
+    #[should_panic(expected = "Validation failed")]
+    fn test_builder_build_panics_on_validation_failure() {
+        // Arrange: Create builder with validation that will fail
+        // Act & Assert: Should panic
+        let _ = TestDataBuilder::new()
+            .with_validation(|data| {
+                if data.is_empty() {
+                    return Err("Data cannot be empty".to_string());
+                }
+                Ok(())
+            })
+            .build();
+    }
 }

@@ -173,6 +173,83 @@ impl CliAssertions {
             );
         }
     }
+
+    /// Assert exit code is success (v1.3.0)
+    ///
+    /// # Panics
+    ///
+    /// Panics if exit code is not 0
+    pub fn assert_success(exit_code: i32) {
+        assert_eq!(exit_code, 0, "Expected success (exit code 0), got {exit_code}");
+    }
+
+    /// Assert exit code is failure (v1.3.0)
+    ///
+    /// # Panics
+    ///
+    /// Panics if exit code is 0
+    pub fn assert_failure(exit_code: i32) {
+        assert_ne!(exit_code, 0, "Expected failure (non-zero exit code), got {exit_code}");
+    }
+
+    /// Assert specific exit code (v1.3.0)
+    ///
+    /// # Panics
+    ///
+    /// Panics if exit code doesn't match expected
+    pub fn assert_exit_code(actual: i32, expected: i32) {
+        assert_eq!(actual, expected, "Expected exit code {expected}, got {actual}");
+    }
+
+    /// Assert output matches help pattern (v1.3.0)
+    ///
+    /// Commonly requested for CLI help validation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if output doesn't look like help text
+    pub fn assert_is_help(output: &str) {
+        let help_indicators = ["Usage:", "USAGE:", "Options:", "OPTIONS:", "Commands:", "COMMANDS:"];
+        let contains_help = help_indicators.iter().any(|indicator| output.contains(indicator));
+        assert!(contains_help, "Output does not appear to be help text. Output: {output}");
+    }
+
+    /// Assert output matches version pattern (v1.3.0)
+    ///
+    /// Commonly requested for CLI version validation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if output doesn't contain version information
+    pub fn assert_is_version(output: &str) {
+        // Check for common version patterns: "1.0.0", "v1.0.0", "version 1.0.0"
+        let has_version = output.contains(char::is_numeric)
+            && (output.contains('.') || output.to_lowercase().contains("version"));
+        assert!(has_version, "Output does not appear to contain version info. Output: {output}");
+    }
+
+    /// Assert output is empty (v1.3.0)
+    ///
+    /// # Panics
+    ///
+    /// Panics if output is not empty
+    pub fn assert_empty(output: &str) {
+        assert!(output.trim().is_empty(), "Expected empty output, got: {output}");
+    }
+
+    /// Assert stderr is empty (v1.3.0)
+    ///
+    /// Commonly used to ensure no errors/warnings.
+    ///
+    /// # Panics
+    ///
+    /// Panics if stderr is not empty
+    pub fn assert_stderr_empty(stderr: &str) {
+        assert!(
+            stderr.trim().is_empty(),
+            "Expected empty stderr (no errors/warnings), got: {stderr}"
+        );
+    }
 }
 
 /// Environment setup for CLI tests
@@ -196,6 +273,52 @@ impl CliEnvironment {
     #[must_use]
     pub fn set(mut self, key: &str, value: &str) -> Self {
         self.vars.insert(key.to_string(), value.to_string());
+        self
+    }
+
+    /// Create environment for CI testing (v1.3.0)
+    ///
+    /// Sets common CI environment variables.
+    #[must_use]
+    pub fn ci() -> Self {
+        Self::new().set("CI", "true").set("TERM", "dumb").set("NO_COLOR", "1")
+    }
+
+    /// Create environment for development (v1.3.0)
+    ///
+    /// Sets common development environment variables.
+    #[must_use]
+    pub fn development() -> Self {
+        Self::new().set("RUST_LOG", "debug").set("RUST_BACKTRACE", "1")
+    }
+
+    /// Create environment for production (v1.3.0)
+    ///
+    /// Sets common production environment variables.
+    #[must_use]
+    pub fn production() -> Self {
+        Self::new().set("RUST_LOG", "info").set("RUST_BACKTRACE", "0")
+    }
+
+    /// Create clean environment (v1.3.0)
+    ///
+    /// Removes common variables that might affect tests.
+    #[must_use]
+    pub fn clean() -> Self {
+        let mut env = Self::new();
+        // Clear common variables that might interfere with tests
+        env.vars.insert("HOME".to_string(), "/tmp/test-home".to_string());
+        env.vars.insert("USER".to_string(), "test-user".to_string());
+        env.vars.insert("PATH".to_string(), "/usr/bin:/bin".to_string());
+        env
+    }
+
+    /// Set multiple environment variables at once (v1.3.0)
+    #[must_use]
+    pub fn with_vars(mut self, vars: &[(&str, &str)]) -> Self {
+        for (key, value) in vars {
+            self.vars.insert((*key).to_string(), (*value).to_string());
+        }
         self
     }
 
@@ -480,5 +603,251 @@ mod tests {
         // Act & Assert: Command is built correctly
         assert!(cmd.contains("my-tool"));
         assert!(cmd.contains("--version"));
+    }
+
+    // === v1.3.0 Phase 5: CLI Environment Helpers Tests ===
+
+    #[test]
+    fn test_assert_success_with_zero_exit_code() {
+        // Arrange: Exit code 0 (success)
+        let exit_code = 0;
+        // Act & Assert: Should not panic
+        CliAssertions::assert_success(exit_code);
+    }
+
+    #[test]
+    #[should_panic(expected = "Expected success")]
+    fn test_assert_success_fails_with_nonzero() {
+        // Arrange: Exit code 1 (failure)
+        let exit_code = 1;
+        // Act & Assert: Should panic
+        CliAssertions::assert_success(exit_code);
+    }
+
+    #[test]
+    fn test_assert_failure_with_nonzero_exit_code() {
+        // Arrange: Non-zero exit codes
+        // Act & Assert: Should not panic
+        CliAssertions::assert_failure(1);
+        CliAssertions::assert_failure(127);
+        CliAssertions::assert_failure(-1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Expected failure")]
+    fn test_assert_failure_fails_with_zero() {
+        // Arrange: Exit code 0
+        let exit_code = 0;
+        // Act & Assert: Should panic
+        CliAssertions::assert_failure(exit_code);
+    }
+
+    #[test]
+    fn test_assert_exit_code_matches() {
+        // Arrange: Specific exit codes
+        // Act & Assert: Should not panic
+        CliAssertions::assert_exit_code(0, 0);
+        CliAssertions::assert_exit_code(1, 1);
+        CliAssertions::assert_exit_code(127, 127);
+    }
+
+    #[test]
+    #[should_panic(expected = "Expected exit code")]
+    fn test_assert_exit_code_mismatch() {
+        // Arrange: Mismatched exit codes
+        // Act & Assert: Should panic
+        CliAssertions::assert_exit_code(0, 1);
+    }
+
+    #[test]
+    fn test_assert_is_help_with_usage() {
+        // Arrange: Help text with "Usage:"
+        let output = "Usage: my-tool [OPTIONS]\n\nOptions:\n  --help    Display help";
+        // Act & Assert: Should recognize as help text
+        CliAssertions::assert_is_help(output);
+    }
+
+    #[test]
+    fn test_assert_is_help_with_options() {
+        // Arrange: Help text with "OPTIONS:"
+        let output = "my-tool\n\nOPTIONS:\n  -v, --verbose    Verbose output";
+        // Act & Assert: Should recognize as help text
+        CliAssertions::assert_is_help(output);
+    }
+
+    #[test]
+    fn test_assert_is_help_with_commands() {
+        // Arrange: Help text with "Commands:"
+        let output = "Commands:\n  init    Initialize project\n  build   Build project";
+        // Act & Assert: Should recognize as help text
+        CliAssertions::assert_is_help(output);
+    }
+
+    #[test]
+    #[should_panic(expected = "does not appear to be help text")]
+    fn test_assert_is_help_fails_without_indicators() {
+        // Arrange: Regular output without help indicators
+        let output = "Hello, world!";
+        // Act & Assert: Should panic
+        CliAssertions::assert_is_help(output);
+    }
+
+    #[test]
+    fn test_assert_is_version_with_semantic_version() {
+        // Arrange: Version output with semantic version
+        let output = "my-tool 1.2.3";
+        // Act & Assert: Should recognize as version
+        CliAssertions::assert_is_version(output);
+    }
+
+    #[test]
+    fn test_assert_is_version_with_version_keyword() {
+        // Arrange: Version output with "version" keyword
+        let output = "Version: 2.0.0-beta";
+        // Act & Assert: Should recognize as version
+        CliAssertions::assert_is_version(output);
+    }
+
+    #[test]
+    fn test_assert_is_version_with_numbers() {
+        // Arrange: Version with just numbers
+        let output = "1.0.0";
+        // Act & Assert: Should recognize as version
+        CliAssertions::assert_is_version(output);
+    }
+
+    #[test]
+    #[should_panic(expected = "does not appear to contain version info")]
+    fn test_assert_is_version_fails_without_version() {
+        // Arrange: Output without version info
+        let output = "Hello, world!";
+        // Act & Assert: Should panic
+        CliAssertions::assert_is_version(output);
+    }
+
+    #[test]
+    fn test_assert_empty_with_empty_string() {
+        // Arrange: Empty output
+        let output = "";
+        // Act & Assert: Should not panic
+        CliAssertions::assert_empty(output);
+    }
+
+    #[test]
+    fn test_assert_empty_with_whitespace_only() {
+        // Arrange: Whitespace-only output
+        let output = "   \n\t  ";
+        // Act & Assert: Should not panic (whitespace trimmed)
+        CliAssertions::assert_empty(output);
+    }
+
+    #[test]
+    #[should_panic(expected = "Expected empty output")]
+    fn test_assert_empty_fails_with_content() {
+        // Arrange: Non-empty output
+        let output = "Some content";
+        // Act & Assert: Should panic
+        CliAssertions::assert_empty(output);
+    }
+
+    #[test]
+    fn test_assert_stderr_empty_with_empty_stderr() {
+        // Arrange: Empty stderr
+        let stderr = "";
+        // Act & Assert: Should not panic
+        CliAssertions::assert_stderr_empty(stderr);
+    }
+
+    #[test]
+    #[should_panic(expected = "Expected empty stderr")]
+    fn test_assert_stderr_empty_fails_with_errors() {
+        // Arrange: Stderr with error message
+        let stderr = "ERROR: Something went wrong";
+        // Act & Assert: Should panic
+        CliAssertions::assert_stderr_empty(stderr);
+    }
+
+    #[test]
+    fn test_environment_preset_ci() {
+        // Arrange: Create CI environment
+        let env = CliEnvironment::ci();
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: CI-specific variables are set
+        assert_eq!(vars.get("CI"), Some(&"true".to_string()));
+        assert_eq!(vars.get("TERM"), Some(&"dumb".to_string()));
+        assert_eq!(vars.get("NO_COLOR"), Some(&"1".to_string()));
+    }
+
+    #[test]
+    fn test_environment_preset_development() {
+        // Arrange: Create development environment
+        let env = CliEnvironment::development();
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: Development-specific variables are set
+        assert_eq!(vars.get("RUST_LOG"), Some(&"debug".to_string()));
+        assert_eq!(vars.get("RUST_BACKTRACE"), Some(&"1".to_string()));
+    }
+
+    #[test]
+    fn test_environment_preset_production() {
+        // Arrange: Create production environment
+        let env = CliEnvironment::production();
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: Production-specific variables are set
+        assert_eq!(vars.get("RUST_LOG"), Some(&"info".to_string()));
+        assert_eq!(vars.get("RUST_BACKTRACE"), Some(&"0".to_string()));
+    }
+
+    #[test]
+    fn test_environment_preset_clean() {
+        // Arrange: Create clean environment
+        let env = CliEnvironment::clean();
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: Clean environment has isolated variables
+        assert_eq!(vars.get("HOME"), Some(&"/tmp/test-home".to_string()));
+        assert_eq!(vars.get("USER"), Some(&"test-user".to_string()));
+        assert_eq!(vars.get("PATH"), Some(&"/usr/bin:/bin".to_string()));
+    }
+
+    #[test]
+    fn test_environment_with_vars_bulk_set() {
+        // Arrange: Create environment and set multiple vars at once
+        let vars_to_set = [("VAR1", "value1"), ("VAR2", "value2"), ("VAR3", "value3")];
+        let env = CliEnvironment::new().with_vars(&vars_to_set);
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: All variables are set
+        assert_eq!(vars.get("VAR1"), Some(&"value1".to_string()));
+        assert_eq!(vars.get("VAR2"), Some(&"value2".to_string()));
+        assert_eq!(vars.get("VAR3"), Some(&"value3".to_string()));
+    }
+
+    #[test]
+    fn test_environment_preset_chaining() {
+        // Arrange: Chain preset with additional vars
+        let env = CliEnvironment::ci().set("CUSTOM_VAR", "custom_value");
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: Both preset and custom variables are set
+        assert_eq!(vars.get("CI"), Some(&"true".to_string()));
+        assert_eq!(vars.get("CUSTOM_VAR"), Some(&"custom_value".to_string()));
+    }
+
+    #[test]
+    fn test_environment_with_vars_chaining() {
+        // Arrange: Chain with_vars with additional set calls
+        let env = CliEnvironment::new()
+            .with_vars(&[("A", "1"), ("B", "2")])
+            .set("C", "3");
+        // Act: Get environment variables
+        let vars = env.vars();
+        // Assert: All variables are set
+        assert_eq!(vars.get("A"), Some(&"1".to_string()));
+        assert_eq!(vars.get("B"), Some(&"2".to_string()));
+        assert_eq!(vars.get("C"), Some(&"3".to_string()));
     }
 }
