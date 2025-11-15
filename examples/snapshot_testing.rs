@@ -68,12 +68,16 @@ use chicago_tdd_tools::snapshot::SnapshotAssert;
 #[cfg(feature = "snapshot-testing")]
 fn main() {
     chicago_tdd_tools::alert_info!("Snapshot Testing Example");
-    chicago_tdd_tools::alert_info!("Run: cargo test --features snapshot-testing --example snapshot_testing");
+    chicago_tdd_tools::alert_info!(
+        "Run: cargo test --features snapshot-testing --example snapshot_testing"
+    );
 }
 
 #[cfg(not(feature = "snapshot-testing"))]
 fn main() {
-    chicago_tdd_tools::alert_info!("Snapshot testing feature not enabled. Enable with: --features snapshot-testing");
+    chicago_tdd_tools::alert_info!(
+        "Snapshot testing feature not enabled. Enable with: --features snapshot-testing"
+    );
 }
 
 #[cfg(feature = "snapshot-testing")]

@@ -68,10 +68,10 @@
 //! - **Output Verification**: Assertions for command output
 //! - **Environment Isolation**: Automatic environment restoration
 
+use chicago_tdd_tools::cli::CliTest;
 #[cfg(feature = "cli-testing")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::cli::CliTest;
 
 #[cfg(feature = "cli-testing")]
 fn main() {
@@ -83,7 +83,9 @@ fn main() {
 
 #[cfg(not(feature = "cli-testing"))]
 fn main() {
-    chicago_tdd_tools::alert_info!("CLI testing feature not enabled. Enable with: --features cli-testing");
+    chicago_tdd_tools::alert_info!(
+        "CLI testing feature not enabled. Enable with: --features cli-testing"
+    );
 }
 
 #[cfg(feature = "cli-testing")]

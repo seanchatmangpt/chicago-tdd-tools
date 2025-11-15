@@ -212,8 +212,12 @@ fn main() {
     #[cfg(feature = "async")]
     {
         chicago_tdd_tools::alert_info!("3. Async Traits (requires async feature)");
-        chicago_tdd_tools::alert_info!("   Note: Async fixture examples are in src/core/async_fixture.rs tests");
-        chicago_tdd_tools::alert_info!("   Run with: cargo test --features async --lib async_fixture");
+        chicago_tdd_tools::alert_info!(
+            "   Note: Async fixture examples are in src/core/async_fixture.rs tests"
+        );
+        chicago_tdd_tools::alert_info!(
+            "   Run with: cargo test --features async --lib async_fixture"
+        );
     }
     #[cfg(not(feature = "async"))]
     {
@@ -224,6 +228,8 @@ fn main() {
     chicago_tdd_tools::alert_info!("Summary: Advanced features maximize DX by:");
     chicago_tdd_tools::alert_info!("  - Providing compile-time guarantees (catch errors early)");
     chicago_tdd_tools::alert_info!("  - Reducing boilerplate (less code to write)");
-    chicago_tdd_tools::alert_info!("  - Improving error messages (type system guides correct usage)");
+    chicago_tdd_tools::alert_info!(
+        "  - Improving error messages (type system guides correct usage)"
+    );
     chicago_tdd_tools::alert_info!("  - Zero-cost abstractions (no runtime overhead)");
 }

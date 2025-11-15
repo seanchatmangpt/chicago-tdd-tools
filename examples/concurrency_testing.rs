@@ -52,10 +52,10 @@
 //! - **Race Condition**: Bug that occurs in specific interleavings
 //! - **Thread Safety**: Code that works correctly in all interleavings
 
+use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[cfg(feature = "concurrency-testing")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[cfg(feature = "concurrency-testing")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use loom::thread;
@@ -66,7 +66,9 @@ use std::sync::{Arc, Mutex};
 #[cfg(feature = "concurrency-testing")]
 fn main() {
     chicago_tdd_tools::alert_info!("Concurrency Testing Example");
-    chicago_tdd_tools::alert_info!("Run: cargo test --features concurrency-testing --example concurrency_testing");
+    chicago_tdd_tools::alert_info!(
+        "Run: cargo test --features concurrency-testing --example concurrency_testing"
+    );
 }
 
 #[cfg(not(feature = "concurrency-testing"))]
