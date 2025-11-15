@@ -12,7 +12,7 @@
 //! **CRITICAL**: These tests require Weaver binary to be installed and registry path to exist.
 //! If Weaver is not available, these tests MUST fail (not skip).
 //!
-//! **Import pattern**: Use `chicago_tdd_tools::observability::ObservabilityTest` for unified API.
+//! **Import pattern**: Use `chicago_tdd_tools::observability::fixtures::WeaverTestFixture` for unified API.
 
 #[cfg(all(feature = "weaver", feature = "otel", test))]
 mod weaver_integration_tests {
@@ -62,7 +62,7 @@ mod weaver_integration_tests {
         true
     }
 
-    /// Utility: ensure weaver smoke output directory exists before tests run
+    /// Utility: ensure weaver reports output directory exists before tests run
     fn ensure_weaver_reports_dir() {
         let reports_dir = PathBuf::from("weaver-reports");
         if !reports_dir.exists() {
@@ -76,7 +76,13 @@ mod weaver_integration_tests {
         }
     }
 
-    /// Integration test that exercises the new Weaver fixture end-to-end.
+    /// Integration test that exercises the WeaverTestFixture end-to-end.
+    ///
+    /// This test verifies:
+    /// 1. WeaverTestFixture can be created
+    /// 2. Tracer can be acquired from fixture
+    /// 3. Spans can be emitted and validated
+    /// 4. Fixture cleanup works correctly
     #[test]
     fn test_unified_api_weaver_integration() {
         if !ensure_weaver_prerequisites() {
@@ -84,9 +90,11 @@ mod weaver_integration_tests {
         }
         ensure_weaver_reports_dir();
 
+        // Arrange: Create WeaverTestFixture (handles Weaver lifecycle automatically)
         let mut fixture = WeaverTestFixture::new()
             .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
+        // Act: Acquire tracer and emit span
         let tracer = fixture
             .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
             .unwrap_or_else(|err| panic!("Failed to acquire tracer: {err}"));
@@ -95,18 +103,27 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "unified_api_weaver_integration"));
         span.end();
 
+        // Flush telemetry to ensure it's sent to Weaver
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
+        // Act: Finish fixture (flushes telemetry, stops weaver, parses results)
         let results = fixture
             .finish()
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
+        // Assert: Verify telemetry was validated by Weaver
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
     }
 
+    /// Test WeaverTestFixture happy path with minimal configuration.
+    ///
+    /// This test verifies:
+    /// 1. Default configuration works
+    /// 2. Basic span emission and validation
+    /// 3. Automatic cleanup
     #[test]
     fn test_weaver_fixture_happy_path() {
         if !ensure_weaver_prerequisites() {
@@ -114,9 +131,11 @@ mod weaver_integration_tests {
         }
         ensure_weaver_reports_dir();
 
+        // Arrange: Create WeaverTestFixture with default config
         let mut fixture = WeaverTestFixture::new()
             .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
+        // Act: Acquire tracer and emit span
         let tracer = fixture
             .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
             .unwrap_or_else(|err| panic!("Failed to acquire Weaver tracer: {err}"));
@@ -125,18 +144,27 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_happy_path"));
         span.end();
 
+        // Flush telemetry
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
+        // Act: Finish fixture
         let results = fixture
             .finish()
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
+        // Assert: Verify validation succeeded
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
     }
 
+    /// Test that WeaverTestFixture produces validation reports.
+    ///
+    /// This test verifies:
+    /// 1. Reports are generated in output directory
+    /// 2. Reports can be parsed and validated
+    /// 3. Validation results are accessible
     #[test]
     fn test_weaver_fixture_reports_rendered() {
         if !ensure_weaver_prerequisites() {
@@ -144,9 +172,11 @@ mod weaver_integration_tests {
         }
         ensure_weaver_reports_dir();
 
+        // Arrange: Create WeaverTestFixture
         let mut fixture = WeaverTestFixture::new()
             .unwrap_or_else(|err| panic!("Failed to initialise Weaver fixture: {err}"));
 
+        // Act: Acquire tracer and emit span
         let tracer = fixture
             .tracer("weaver-integration", "chicago-tdd-tools-weaver-tests")
             .unwrap_or_else(|err| panic!("Failed to acquire tracer: {err}"));
@@ -155,15 +185,26 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_reports_rendered"));
         span.end();
 
+        // Flush telemetry
         tracer
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
+        // Act: Finish fixture and get results
         let results = fixture
             .finish()
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
+        // Assert: Verify reports were generated and can be validated
         assert_telemetry_valid(&results)
             .unwrap_or_else(|err| panic!("Weaver validation failed: {err}"));
+
+        // Assert: Verify output directory exists and contains reports
+        let output_dir = fixture.output_dir();
+        assert!(
+            output_dir.exists(),
+            "Weaver output directory should exist: {:?}",
+            output_dir
+        );
     }
 }

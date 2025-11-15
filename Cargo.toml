@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "1.1.2"
+version = "1.2.0"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -108,7 +108,7 @@ trycmd = { version = "^0.15", optional = true }
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.1.2" }
+chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "1.2.0" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
