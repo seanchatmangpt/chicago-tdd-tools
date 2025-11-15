@@ -330,8 +330,10 @@ print("OTEL telemetry emitted successfully")
 
                 // If statistics exist, telemetry was likely processed
                 // (Even if empty, the fact that statistics exist means weaver ran)
+                let has_stats = has_telemetry_indicators
+                    || statistics.as_object().map(|o| !o.is_empty()).unwrap_or(false);
                 assert_that_with_msg(
-                    &(has_telemetry_indicators || !statistics.as_object().unwrap().is_empty()),
+                    &has_stats,
                     |v| *v,
                     "Weaver statistics should indicate telemetry processing"
                 );

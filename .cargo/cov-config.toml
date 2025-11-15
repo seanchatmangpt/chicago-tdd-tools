@@ -1,0 +1,53 @@
+# Coverage Configuration for Chicago TDD Tools v1.2.0
+#
+# This configuration file documents the coverage goals and thresholds
+# for the Chicago TDD Tools project.
+
+[coverage]
+# Minimum required line coverage for CI/CD blocking
+# v1.2.0 goal: ≥85% (was: 70% warning-only in v1.1.0)
+minimum_line_coverage = 85.0
+
+# Target coverage for production code (excluding tests)
+# v1.2.0 goal: ≥90%
+target_production_coverage = 90.0
+
+# Target coverage for test utilities
+# v1.2.0 goal: ≥80%
+target_test_coverage = 80.0
+
+[coverage.excluded_paths]
+# Paths excluded from coverage metrics
+examples = "examples/**/*.rs"
+benches = "benches/**/*.rs"
+tests = "tests/**/*.rs"
+
+[coverage.modules]
+# Per-module coverage targets
+core = { target = 90 }
+validation = { target = 90 }
+testing = { target = 85 }
+integration = { target = 85 }
+observability = { target = 85 }
+
+[coverage.strategy]
+# Coverage improvement strategy for v1.2.0
+description = "Systematic test addition to achieve 85% baseline coverage"
+
+steps = [
+  "1. Run: cargo llvm-cov --html --all-features",
+  "2. Review: target/llvm-cov/html/index.html",
+  "3. Identify: uncovered branches and paths",
+  "4. Add: focused tests for uncovered code",
+  "5. Prioritize: error paths (80% of bugs)",
+  "6. Verify: coverage report after each batch",
+]
+
+# Priority areas for test addition
+priority_areas = [
+  "Error handling paths (highest ROI)",
+  "Guard constraint validation",
+  "OTEL observability integration",
+  "Mutation testing operators",
+  "CLI testing helpers",
+]

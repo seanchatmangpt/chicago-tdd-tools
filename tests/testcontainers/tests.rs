@@ -26,14 +26,14 @@
 
 #[cfg(all(feature = "testcontainers", test))]
 mod tests {
-    #[allow(missing_docs)]
     mod common {
-        include!("../test_common.inc");
+        include!("../common.rs");
     }
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_ok;
+    use chicago_tdd_tools::assert_err;
     use chicago_tdd_tools::assert_eq_msg;
-    use chicago_tdd_tools::assertions::assert_that_with_msg;
+    use chicago_tdd_tools::assertions::{assert_that, assert_that_with_msg};
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
     use std::collections::HashMap;
@@ -114,7 +114,7 @@ mod tests {
         let result = container.exec("echo", &["hello"]);
         assert_ok!(&result, "Exec with single arg should work");
         let exec_result = result.expect("Exec should succeed after assert_ok");
-        assert_eq_msg!(&exec_result.stdout.trim(), &"hello", "Echo output should match");
+        assert_eq_msg!(&exec_result.stdout.trim(), "hello", "Echo output should match");
 
         // Act & Assert: Multiple args
         let result = container.exec("echo", &["hello", "world", "test"]);
@@ -144,7 +144,7 @@ mod tests {
 
         // Act & Assert: Empty image name should fail
         let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
-        assert!(result.is_err(), "Empty image name should fail");
+        assert_err!(&result, "Empty image name should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) => {
                 // Expected error variant
@@ -155,7 +155,7 @@ mod tests {
 
         // Act & Assert: Empty tag should fail
         let result = GenericContainer::new(client.client(), ALPINE_IMAGE, "");
-        assert!(result.is_err(), "Empty tag should fail");
+        assert_err!(&result, "Empty tag should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) => {
                 // Expected error variant
@@ -165,8 +165,22 @@ mod tests {
         }
     });
 
-    // Note: Cannot test port >65535 because u16 max is 65535 (compile-time check)
-    // The type system prevents invalid ports at compile time (Poka-yoke design)
+    test!(port_mapping_invalid_boundaries, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act & Assert: Invalid port (>65535) should fail
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
+        assert_err!(&result, "Port >65535 should fail");
+        match result {
+            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant (either InvalidConfig or CreationFailed)
+            }
+            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error, got success"),
+        }
+    });
 
     test!(env_vars_special_characters, {
         // Arrange: Set up Docker and client
@@ -209,7 +223,7 @@ mod tests {
         let result = GenericContainer::new(client.client(), "", ALPINE_TAG);
 
         // Assert: Verify test correctly detects failure (negative test case)
-        assert!(result.is_err(), "Empty image should fail");
+        assert_err!(&result, "Empty image should fail");
         match result {
             Err(TestcontainersError::CreationFailed(_)) | Err(TestcontainersError::InvalidConfig(_)) => {
                 // Expected error variant - test correctly detected failure
@@ -219,8 +233,24 @@ mod tests {
         }
     });
 
-    // Note: Cannot test invalid port >65535 because u16 max is 65535
-    // The type system prevents this at compile time (Poka-yoke design - better than runtime check)
+    test!(negative_test_invalid_port_fails, {
+        // Arrange: Set up Docker and client
+        require_docker();
+        let client = ContainerClient::new();
+
+        // Act: Attempt to create container with invalid port >65535 (should fail)
+        let result = GenericContainer::with_ports(client.client(), NGINX_IMAGE, NGINX_TAG, &[65536]);
+
+        // Assert: Verify test correctly detects failure (negative test case)
+        assert_err!(&result, "Invalid port should fail");
+        match result {
+            Err(TestcontainersError::InvalidConfig(_)) | Err(TestcontainersError::CreationFailed(_)) => {
+                // Expected error variant - test correctly detected failure
+            }
+            Err(e) => panic!("Expected InvalidConfig or CreationFailed error, got: {:?}", e),
+            Ok(_) => panic!("Expected error for invalid port, but got success - FALSE NEGATIVE DETECTED"),
+        }
+    });
 
     test!(negative_test_nonexistent_command_fails, {
         // Arrange: Set up Docker and container
@@ -410,7 +440,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::SystemTime;
+        use std::time::{Duration, SystemTime};
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         // Generate unique test ID based on timestamp to ensure isolation across test runs
@@ -479,7 +509,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::SystemTime;
+        use std::time::{Duration, SystemTime};
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()
@@ -549,7 +579,7 @@ mod tests {
         require_docker();
         use std::sync::Arc;
         use std::thread;
-        use std::time::SystemTime;
+        use std::time::{Duration, SystemTime};
 
         // **FMEA Fix (RPN 144)**: Use unique identifiers for concurrent tests to prevent interference
         let test_id = SystemTime::now()

@@ -12,14 +12,16 @@
 //! - Type-safe API (invalid states unrepresentable)
 //!
 //! **Usage**:
-//! ```rust,ignore
+//! ```ignore
 //! use chicago_tdd_tools::observability::ObservabilityTest;
 //!
+//! # fn test() -> Result<(), Box<dyn std::error::Error>> {
 //! // Simple usage - zero configuration for 80% of cases
-//! let test = ObservabilityTest::new()?;
-//! let span = /* obtained from OTEL */ unimplemented!();
-//! test.validate_span(&span)?;
+//! let _test = ObservabilityTest::new()?;
+//! // Your application generates spans here
 //! // Automatic cleanup via Drop trait
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! **Required Features**:
