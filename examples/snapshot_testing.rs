@@ -81,29 +81,29 @@ fn main() {
 mod tests {
     use super::*;
 
-    /// Example: String snapshot testing
-    ///
-    /// ## How-to: Test String Output
-    ///
-    /// Use `SnapshotAssert::assert_matches()` to test string output. On first run,
-    /// creates a snapshot file. On subsequent runs, compares output to snapshot.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `SnapshotAssert::assert_matches(data, name)`
-    /// - **Parameters**:
-    ///   - `data`: String or `&str` to snapshot
-    ///   - `name`: Snapshot name (used for file naming)
-    /// - **Behavior**: Creates snapshot on first run, compares on subsequent runs
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
-    ///
-    /// let data = "Hello, World!";
-    /// SnapshotAssert::assert_matches(&data, "my_snapshot");
-    /// ```
+    // Example: String snapshot testing
+    //
+    // ## How-to: Test String Output
+    //
+    // Use `SnapshotAssert::assert_matches()` to test string output. On first run,
+    // creates a snapshot file. On subsequent runs, compares output to snapshot.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::assert_matches(data, name)`
+    // - **Parameters**:
+    //   - `data`: String or `&str` to snapshot
+    //   - `name`: Snapshot name (used for file naming)
+    // - **Behavior**: Creates snapshot on first run, compares on subsequent runs
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // let data = "Hello, World!";
+    // SnapshotAssert::assert_matches(&data, "my_snapshot");
+    // ```
     #[test]
     fn test_snapshot_string() {
         // Arrange: Create test data
@@ -114,30 +114,30 @@ mod tests {
         SnapshotAssert::assert_matches(&data, "test_snapshot_string");
     }
 
-    /// Example: JSON snapshot testing
-    ///
-    /// ## How-to: Test JSON Data
-    ///
-    /// Use `SnapshotAssert::assert_json_matches()` to test JSON data. Formats JSON
-    /// with pretty printing for readable snapshots.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `SnapshotAssert::assert_json_matches(data, name)`
-    /// - **Parameters**:
-    ///   - `data`: JSON value (e.g., `serde_json::Value`)
-    ///   - `name`: Snapshot name
-    /// - **Behavior**: Formats JSON with pretty printing
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
-    /// use serde_json::json;
-    ///
-    /// let data = json!({"key": "value"});
-    /// SnapshotAssert::assert_json_matches(&data, "my_json_snapshot");
-    /// ```
+    // Example: JSON snapshot testing
+    //
+    // ## How-to: Test JSON Data
+    //
+    // Use `SnapshotAssert::assert_json_matches()` to test JSON data. Formats JSON
+    // with pretty printing for readable snapshots.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::assert_json_matches(data, name)`
+    // - **Parameters**:
+    //   - `data`: JSON value (e.g., `serde_json::Value`)
+    //   - `name`: Snapshot name
+    // - **Behavior**: Formats JSON with pretty printing
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    // use serde_json::json;
+    //
+    // let data = json!({"key": "value"});
+    // SnapshotAssert::assert_json_matches(&data, "my_json_snapshot");
+    // ```
     #[test]
     fn test_snapshot_json() {
         // Arrange: Create JSON test data
@@ -152,29 +152,29 @@ mod tests {
         SnapshotAssert::assert_json_matches(&data, "test_snapshot_json");
     }
 
-    /// Example: Debug representation snapshot testing
-    ///
-    /// ## How-to: Test Debug Representation
-    ///
-    /// Use `SnapshotAssert::assert_debug_matches()` to test debug representations.
-    /// Useful for complex data structures that implement `Debug`.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `SnapshotAssert::assert_debug_matches(data, name)`
-    /// - **Parameters**:
-    ///   - `data`: Value implementing `Debug`
-    ///   - `name`: Snapshot name
-    /// - **Behavior**: Uses `Debug` trait for snapshot representation
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
-    ///
-    /// let data = vec![1, 2, 3];
-    /// SnapshotAssert::assert_debug_matches(&data, "my_debug_snapshot");
-    /// ```
+    // Example: Debug representation snapshot testing
+    //
+    // ## How-to: Test Debug Representation
+    //
+    // Use `SnapshotAssert::assert_debug_matches()` to test debug representations.
+    // Useful for complex data structures that implement `Debug`.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::assert_debug_matches(data, name)`
+    // - **Parameters**:
+    //   - `data`: Value implementing `Debug`
+    //   - `name`: Snapshot name
+    // - **Behavior**: Uses `Debug` trait for snapshot representation
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // let data = vec![1, 2, 3];
+    // SnapshotAssert::assert_debug_matches(&data, "my_debug_snapshot");
+    // ```
     #[test]
     fn test_snapshot_debug() {
         // Arrange: Create complex data structure
@@ -185,35 +185,35 @@ mod tests {
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_debug");
     }
 
-    /// Example: Snapshot testing with custom settings
-    ///
-    /// ## How-to: Configure Snapshot Settings
-    ///
-    /// Use `SnapshotAssert::with_settings()` to configure snapshot paths, file extensions,
-    /// and other settings. Settings apply only within the closure.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `SnapshotAssert::with_settings(config, test)`
-    /// - **Parameters**:
-    ///   - `config`: Closure that configures `insta::Settings`
-    ///   - `test`: Closure that runs snapshot assertions
-    /// - **Settings**: `set_snapshot_path()`, `set_snapshot_suffix()`, etc.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
-    ///
-    /// SnapshotAssert::with_settings(
-    ///     |settings| {
-    ///         settings.set_snapshot_path("custom_snapshots");
-    ///     },
-    ///     || {
-    ///         SnapshotAssert::assert_matches(&"data", "my_snapshot");
-    ///     },
-    /// );
-    /// ```
+    // Example: Snapshot testing with custom settings
+    //
+    // ## How-to: Configure Snapshot Settings
+    //
+    // Use `SnapshotAssert::with_settings()` to configure snapshot paths, file extensions,
+    // and other settings. Settings apply only within the closure.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::with_settings(config, test)`
+    // - **Parameters**:
+    //   - `config`: Closure that configures `insta::Settings`
+    //   - `test`: Closure that runs snapshot assertions
+    // - **Settings**: `set_snapshot_path()`, `set_snapshot_suffix()`, etc.
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // SnapshotAssert::with_settings(
+    //     |settings| {
+    //         settings.set_snapshot_path("custom_snapshots");
+    //     },
+    //     || {
+    //         SnapshotAssert::assert_matches(&"data", "my_snapshot");
+    //     },
+    // );
+    // ```
     #[test]
     fn test_snapshot_with_settings() {
         // Arrange: Create test data

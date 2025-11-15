@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This command guides agents through comprehensive release preparation for v1.1.0. It systematically validates all components necessary for production release, identifies gaps based on actual codebase state, and creates actionable release artifacts. Uses 80/20 thinking to focus on critical release blockers.
+This command guides agents through comprehensive release preparation for v1.2.0. It systematically validates all components necessary for production release, identifies gaps based on actual codebase state, and creates actionable release artifacts. Uses 80/20 thinking to focus on critical release blockers.
 
 ## Current State Summary
 

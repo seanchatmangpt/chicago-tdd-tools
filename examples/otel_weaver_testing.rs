@@ -110,31 +110,31 @@ mod otel_tests {
     use chicago_tdd_tools::{assert_err, assert_ok, test};
     use std::collections::BTreeMap;
 
-    /// Example: Basic OTEL span validation
-    ///
-    /// ## How-to: Validate a Basic Span
-    ///
-    /// Create a span with `Span::new_active()`, then validate using `ObservabilityTest`.
-    /// Use `TestConfig::default()` for simple unit tests (Weaver disabled).
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `Span::new_active(context, name, start_time, attributes, events, status) -> Span`
-    /// - **Function**: `ObservabilityTest::with_config(config) -> Result<ObservabilityTest, Error>`
-    /// - **Method**: `validate_span(span) -> Result<(), ValidationError>`
-    /// - **Config**: `TestConfig { weaver_enabled: false, ..Default::default() }` for unit tests
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
-    /// use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
-    ///
-    /// let context = SpanContext::root(TraceId(12345), SpanId(67890), 1);
-    /// let span = Span::new_active(context, "operation".to_string(), 1000, BTreeMap::new(), Vec::new(), SpanStatus::Ok);
-    /// let test = ObservabilityTest::with_config(TestConfig::default())?;
-    /// test.validate_span(&span)?;
-    /// ```
+    // Example: Basic OTEL span validation
+    //
+    // ## How-to: Validate a Basic Span
+    //
+    // Create a span with `Span::new_active()`, then validate using `ObservabilityTest`.
+    // Use `TestConfig::default()` for simple unit tests (Weaver disabled).
+    //
+    // ## Reference
+    //
+    // - **Function**: `Span::new_active(context, name, start_time, attributes, events, status) -> Span`
+    // - **Function**: `ObservabilityTest::with_config(config) -> Result<ObservabilityTest, Error>`
+    // - **Method**: `validate_span(span) -> Result<(), ValidationError>`
+    // - **Config**: `TestConfig { weaver_enabled: false, ..Default::default() }` for unit tests
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
+    // use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
+    //
+    // let context = SpanContext::root(TraceId(12345), SpanId(67890), 1);
+    // let span = Span::new_active(context, "operation".to_string(), 1000, BTreeMap::new(), Vec::new(), SpanStatus::Ok);
+    // let test = ObservabilityTest::with_config(TestConfig::default())?;
+    // test.validate_span(&span)?;
+    // ```
     test!(test_otel_span_validation_basic, {
         // Arrange: Create test span
         let context = SpanContext::root(TraceId(12345), SpanId(67890), 1);
@@ -162,26 +162,26 @@ mod otel_tests {
         }
     });
 
-    /// Example: OTEL span validation with custom attributes
-    ///
-    /// ## How-to: Validate Span with Attributes
-    ///
-    /// Add custom attributes to spans using `BTreeMap`. Attributes are key-value pairs
-    /// that provide additional context about the operation.
-    ///
-    /// ## Reference
-    ///
-    /// - **Type**: `BTreeMap<String, String>` for span attributes
-    /// - **Method**: `span.attributes.get(key)` to retrieve attribute values
-    /// - **Best Practice**: Use semantic convention attribute names (e.g., "service.name")
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let mut attrs = BTreeMap::new();
-    /// attrs.insert("service.name".to_string(), "my-service".to_string());
-    /// let span = Span::new_active(context, "operation".to_string(), 1000, attrs, Vec::new(), SpanStatus::Ok);
-    /// ```
+    // Example: OTEL span validation with custom attributes
+    //
+    // ## How-to: Validate Span with Attributes
+    //
+    // Add custom attributes to spans using `BTreeMap`. Attributes are key-value pairs
+    // that provide additional context about the operation.
+    //
+    // ## Reference
+    //
+    // - **Type**: `BTreeMap<String, String>` for span attributes
+    // - **Method**: `span.attributes.get(key)` to retrieve attribute values
+    // - **Best Practice**: Use semantic convention attribute names (e.g., "service.name")
+    //
+    // # Examples
+    //
+    // ```rust
+    // let mut attrs = BTreeMap::new();
+    // attrs.insert("service.name".to_string(), "my-service".to_string());
+    // let span = Span::new_active(context, "operation".to_string(), 1000, attrs, Vec::new(), SpanStatus::Ok);
+    // ```
     test!(test_otel_span_with_attributes, {
         // Arrange: Create span with custom attributes
         let mut attrs = BTreeMap::new();
@@ -209,31 +209,31 @@ mod otel_tests {
         }
     });
 
-    /// Example: OTEL metric validation
-    ///
-    /// ## How-to: Validate OTEL Metrics
-    ///
-    /// Create metrics with `Metric` type, then validate using `validate_metric()`.
-    /// Metrics can be counters, gauges, or histograms.
-    ///
-    /// ## Reference
-    ///
-    /// - **Type**: `Metric` with `name`, `value`, `timestamp_ms`, `attributes`
-    /// - **Value Types**: `MetricValue::Counter(u64)`, `MetricValue::Gauge(f64)`, `MetricValue::Histogram(...)`
-    /// - **Method**: `validate_metric(metric) -> Result<(), ValidationError>`
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::otel::types::MetricValue;
-    /// let metric = Metric {
-    ///     name: "requests.total".to_string(),
-    ///     value: MetricValue::Counter(42),
-    ///     timestamp_ms: 1000,
-    ///     attributes: BTreeMap::new(),
-    /// };
-    /// test.validate_metric(&metric)?;
-    /// ```
+    // Example: OTEL metric validation
+    //
+    // ## How-to: Validate OTEL Metrics
+    //
+    // Create metrics with `Metric` type, then validate using `validate_metric()`.
+    // Metrics can be counters, gauges, or histograms.
+    //
+    // ## Reference
+    //
+    // - **Type**: `Metric` with `name`, `value`, `timestamp_ms`, `attributes`
+    // - **Value Types**: `MetricValue::Counter(u64)`, `MetricValue::Gauge(f64)`, `MetricValue::Histogram(...)`
+    // - **Method**: `validate_metric(metric) -> Result<(), ValidationError>`
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::otel::types::MetricValue;
+    // let metric = Metric {
+    //     name: "requests.total".to_string(),
+    //     value: MetricValue::Counter(42),
+    //     timestamp_ms: 1000,
+    //     attributes: BTreeMap::new(),
+    // };
+    // test.validate_metric(&metric)?;
+    // ```
     test!(test_otel_metric_validation, {
         // Arrange: Create test metric
         use chicago_tdd_tools::otel::types::MetricValue;
@@ -265,28 +265,28 @@ mod otel_tests {
         }
     });
 
-    /// Example: OTEL span validation with error path testing
-    ///
-    /// ## How-to: Test Error Paths
-    ///
-    /// Test validation failure cases by creating invalid spans (e.g., zero trace ID).
-    /// Use `match` to handle both success and error cases properly.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `Span::new_completed(...) -> Result<Span, Error>`
-    /// - **Error Cases**: Invalid trace IDs, invalid timestamps, etc.
-    /// - **Pattern**: Use `match` to handle `Result` properly
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let span_result = Span::new_completed(context, name, start, end, attrs, events, status);
-    /// match span_result {
-    ///     Ok(span) => test.validate_span(&span)?,
-    ///     Err(e) => println!("Expected error: {e}"),
-    /// }
-    /// ```
+    // Example: OTEL span validation with error path testing
+    //
+    // ## How-to: Test Error Paths
+    //
+    // Test validation failure cases by creating invalid spans (e.g., zero trace ID).
+    // Use `match` to handle both success and error cases properly.
+    //
+    // ## Reference
+    //
+    // - **Function**: `Span::new_completed(...) -> Result<Span, Error>`
+    // - **Error Cases**: Invalid trace IDs, invalid timestamps, etc.
+    // - **Pattern**: Use `match` to handle `Result` properly
+    //
+    // # Examples
+    //
+    // ```rust
+    // let span_result = Span::new_completed(context, name, start, end, attrs, events, status);
+    // match span_result {
+    //     Ok(span) => test.validate_span(&span)?,
+    //     Err(e) => println!("Expected error: {e}"),
+    // }
+    // ```
     test!(test_otel_span_validation_error_path, {
         // Arrange: Create span with invalid trace ID (zero)
         let context = SpanContext::root(TraceId(0), SpanId(67890), 1); // Invalid: trace ID is zero
@@ -356,31 +356,31 @@ mod weaver_tests {
     use chicago_tdd_tools::{assert_ok, test};
     use std::path::PathBuf;
 
-    /// Example: Basic Weaver validator creation
-    ///
-    /// ## How-to: Create Weaver Validator
-    ///
-    /// Create `TestConfig` with `registry_path` and `weaver_enabled: true`,
-    /// then create `ObservabilityTest` with the config.
-    ///
-    /// ## Reference
-    ///
-    /// - **Config**: `TestConfig { registry_path: Some(path), weaver_enabled: true, ..Default::default() }`
-    /// - **Function**: `ObservabilityTest::with_config(config) -> Result<ObservabilityTest, Error>`
-    /// - **Method**: `otlp_endpoint() -> String` - Returns OTLP endpoint URL
-    /// - **Default Port**: `4317` for OTLP gRPC
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let config = TestConfig {
-    ///     registry_path: Some(PathBuf::from("registry/")),
-    ///     weaver_enabled: true,
-    ///     ..Default::default()
-    /// };
-    /// let test = ObservabilityTest::with_config(config)?;
-    /// let endpoint = test.otlp_endpoint(); // "http://127.0.0.1:4317"
-    /// ```
+    // Example: Basic Weaver validator creation
+    //
+    // ## How-to: Create Weaver Validator
+    //
+    // Create `TestConfig` with `registry_path` and `weaver_enabled: true`,
+    // then create `ObservabilityTest` with the config.
+    //
+    // ## Reference
+    //
+    // - **Config**: `TestConfig { registry_path: Some(path), weaver_enabled: true, ..Default::default() }`
+    // - **Function**: `ObservabilityTest::with_config(config) -> Result<ObservabilityTest, Error>`
+    // - **Method**: `otlp_endpoint() -> String` - Returns OTLP endpoint URL
+    // - **Default Port**: `4317` for OTLP gRPC
+    //
+    // # Examples
+    //
+    // ```rust
+    // let config = TestConfig {
+    //     registry_path: Some(PathBuf::from("registry/")),
+    //     weaver_enabled: true,
+    //     ..Default::default()
+    // };
+    // let test = ObservabilityTest::with_config(config)?;
+    // let endpoint = test.otlp_endpoint(); // "http://127.0.0.1:4317"
+    // ```
     test!(test_weaver_validator_creation, {
         // Arrange: Create test with registry path
         let registry_path = PathBuf::from("registry/");
@@ -394,28 +394,28 @@ mod weaver_tests {
         }
     });
 
-    /// Example: Weaver validation with custom registry path
-    ///
-    /// ## How-to: Use Custom Registry Path
-    ///
-    /// Specify a custom path to Weaver registry files. Note that validator creation
-    /// succeeds even with invalid paths - validation happens at runtime when telemetry is sent.
-    ///
-    /// ## Reference
-    ///
-    /// - **Config Field**: `registry_path: Option<PathBuf>`
-    /// - **Behavior**: Path validation happens at runtime, not at creation time
-    /// - **Error Handling**: Validation errors occur when telemetry is sent, not when validator is created
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let config = TestConfig {
-    ///     registry_path: Some(PathBuf::from("custom/registry/path")),
-    ///     weaver_enabled: true,
-    ///     ..Default::default()
-    /// };
-    /// ```
+    // Example: Weaver validation with custom registry path
+    //
+    // ## How-to: Use Custom Registry Path
+    //
+    // Specify a custom path to Weaver registry files. Note that validator creation
+    // succeeds even with invalid paths - validation happens at runtime when telemetry is sent.
+    //
+    // ## Reference
+    //
+    // - **Config Field**: `registry_path: Option<PathBuf>`
+    // - **Behavior**: Path validation happens at runtime, not at creation time
+    // - **Error Handling**: Validation errors occur when telemetry is sent, not when validator is created
+    //
+    // # Examples
+    //
+    // ```rust
+    // let config = TestConfig {
+    //     registry_path: Some(PathBuf::from("custom/registry/path")),
+    //     weaver_enabled: true,
+    //     ..Default::default()
+    // };
+    // ```
     test!(test_weaver_validator_custom_path, {
         // Arrange: Create test with custom registry path
         let registry_path = PathBuf::from("registry/");
@@ -432,31 +432,31 @@ mod weaver_tests {
         assert_ok!(&result, "Should create validator successfully");
     });
 
-    /// Example: Weaver validation with custom ports
-    ///
-    /// ## How-to: Use Custom Ports
-    ///
-    /// Configure custom OTLP gRPC and admin ports using `TestConfig`.
-    /// Useful when default ports are already in use.
-    ///
-    /// ## Reference
-    ///
-    /// - **Config Fields**:
-    ///   - `otlp_grpc_port: u16` - OTLP gRPC port (default: 4317)
-    ///   - `admin_port: u16` - Weaver admin port (default: 8080)
-    /// - **Method**: `otlp_endpoint() -> String` - Returns endpoint with custom port
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let config = TestConfig {
-    ///     otlp_grpc_port: 4318,
-    ///     admin_port: 8081,
-    ///     ..Default::default()
-    /// };
-    /// let test = ObservabilityTest::with_config(config)?;
-    /// assert_eq!(test.otlp_endpoint(), "http://127.0.0.1:4318");
-    /// ```
+    // Example: Weaver validation with custom ports
+    //
+    // ## How-to: Use Custom Ports
+    //
+    // Configure custom OTLP gRPC and admin ports using `TestConfig`.
+    // Useful when default ports are already in use.
+    //
+    // ## Reference
+    //
+    // - **Config Fields**:
+    //   - `otlp_grpc_port: u16` - OTLP gRPC port (default: 4317)
+    //   - `admin_port: u16` - Weaver admin port (default: 8080)
+    // - **Method**: `otlp_endpoint() -> String` - Returns endpoint with custom port
+    //
+    // # Examples
+    //
+    // ```rust
+    // let config = TestConfig {
+    //     otlp_grpc_port: 4318,
+    //     admin_port: 8081,
+    //     ..Default::default()
+    // };
+    // let test = ObservabilityTest::with_config(config)?;
+    // assert_eq!(test.otlp_endpoint(), "http://127.0.0.1:4318");
+    // ```
     test!(test_weaver_validator_custom_config, {
         // Arrange: Create test with custom ports
         let registry_path = PathBuf::from("registry/");
@@ -507,30 +507,30 @@ mod integration_tests {
     use chicago_tdd_tools::test;
     use std::path::PathBuf;
 
-    /// Example: Integration test combining OTEL and Weaver
-    ///
-    /// ## How-to: Combine OTEL and Weaver Validation
-    ///
-    /// Create `TestConfig` with both OTEL and Weaver enabled, then validate spans.
-    /// Both validations occur: OTEL structure validation and Weaver semantic convention validation.
-    ///
-    /// ## Reference
-    ///
-    /// - **Config**: `TestConfig { weaver_enabled: true, registry_path: Some(path), ..Default::default() }`
-    /// - **Validation**: Both OTEL and Weaver validation occur
-    /// - **Error Handling**: May fail if Weaver not available - handle gracefully
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let config = TestConfig {
-    ///     registry_path: Some(PathBuf::from("registry/")),
-    ///     weaver_enabled: true,
-    ///     ..Default::default()
-    /// };
-    /// let test = ObservabilityTest::with_config(config)?;
-    /// test.validate_span(&span)?; // OTEL + Weaver validation
-    /// ```
+    // Example: Integration test combining OTEL and Weaver
+    //
+    // ## How-to: Combine OTEL and Weaver Validation
+    //
+    // Create `TestConfig` with both OTEL and Weaver enabled, then validate spans.
+    // Both validations occur: OTEL structure validation and Weaver semantic convention validation.
+    //
+    // ## Reference
+    //
+    // - **Config**: `TestConfig { weaver_enabled: true, registry_path: Some(path), ..Default::default() }`
+    // - **Validation**: Both OTEL and Weaver validation occur
+    // - **Error Handling**: May fail if Weaver not available - handle gracefully
+    //
+    // # Examples
+    //
+    // ```rust
+    // let config = TestConfig {
+    //     registry_path: Some(PathBuf::from("registry/")),
+    //     weaver_enabled: true,
+    //     ..Default::default()
+    // };
+    // let test = ObservabilityTest::with_config(config)?;
+    // test.validate_span(&span)?; // OTEL + Weaver validation
+    // ```
     test!(test_otel_weaver_integration, {
         // Arrange: Create test span and unified test
         let context = SpanContext::root(TraceId(12345), SpanId(67890), 1);

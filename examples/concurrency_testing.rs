@@ -80,37 +80,37 @@ fn main() {
 mod tests {
     use super::*;
 
-    /// Example: Concurrent counter test
-    ///
-    /// ## How-to: Test Concurrent Operations
-    ///
-    /// Use `ConcurrencyTest::run()` to test concurrent operations. Loom explores all
-    /// possible thread interleavings to find race conditions.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `ConcurrencyTest::run(test)`
-    /// - **Parameters**: `test` - Closure containing concurrent test code
-    /// - **Behavior**: Explores all thread interleavings with model checking
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::concurrency::ConcurrencyTest;
-    /// use std::sync::{Arc, Mutex};
-    /// use loom::thread;
-    ///
-    /// ConcurrencyTest::run(|| {
-    ///     let counter = Arc::new(Mutex::new(0));
-    ///     let counter_clone = Arc::clone(&counter);
-    ///     let handle = thread::spawn(move || {
-    ///         *counter_clone.lock().unwrap() += 1;
-    ///     });
-    ///     *counter.lock().unwrap() += 1;
-    ///     handle.join().unwrap();
-    ///     assert_eq!(*counter.lock().unwrap(), 2);
-    /// });
-    /// ```
+    // Example: Concurrent counter test
+    //
+    // ## How-to: Test Concurrent Operations
+    //
+    // Use `ConcurrencyTest::run()` to test concurrent operations. Loom explores all
+    // possible thread interleavings to find race conditions.
+    //
+    // ## Reference
+    //
+    // - **Function**: `ConcurrencyTest::run(test)`
+    // - **Parameters**: `test` - Closure containing concurrent test code
+    // - **Behavior**: Explores all thread interleavings with model checking
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::concurrency::ConcurrencyTest;
+    // use std::sync::{Arc, Mutex};
+    // use loom::thread;
+    //
+    // ConcurrencyTest::run(|| {
+    //     let counter = Arc::new(Mutex::new(0));
+    //     let counter_clone = Arc::clone(&counter);
+    //     let handle = thread::spawn(move || {
+    //         *counter_clone.lock().unwrap() += 1;
+    //     });
+    //     *counter.lock().unwrap() += 1;
+    //     handle.join().unwrap();
+    //     assert_eq!(*counter.lock().unwrap(), 2);
+    // });
+    // ```
     #[test]
     #[allow(clippy::unwrap_used)] // Test code - Loom guarantees Mutex lock won't fail
     fn test_concurrent_counter() {
@@ -137,37 +137,37 @@ mod tests {
         });
     }
 
-    /// Example: Concurrent vector operations test
-    ///
-    /// ## How-to: Test Concurrent Vector Operations
-    ///
-    /// Test concurrent operations on shared vectors. Loom ensures all interleavings
-    /// are explored, catching race conditions that might only occur in specific orders.
-    ///
-    /// ## Reference
-    ///
-    /// - **Pattern**: Use `Arc<Mutex<Vec<T>>>` for shared mutable vectors
-    /// - **Thread Safety**: Mutex ensures only one thread accesses vector at a time
-    /// - **Model Checking**: Loom explores all interleavings automatically
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::concurrency::ConcurrencyTest;
-    /// use std::sync::{Arc, Mutex};
-    /// use loom::thread;
-    ///
-    /// ConcurrencyTest::run(|| {
-    ///     let vec = Arc::new(Mutex::new(Vec::new()));
-    ///     let vec_clone = Arc::clone(&vec);
-    ///     let handle = thread::spawn(move || {
-    ///         vec_clone.lock().unwrap().push(1);
-    ///     });
-    ///     vec.lock().unwrap().push(2);
-    ///     handle.join().unwrap();
-    ///     assert_eq!(vec.lock().unwrap().len(), 2);
-    /// });
-    /// ```
+    // Example: Concurrent vector operations test
+    //
+    // ## How-to: Test Concurrent Vector Operations
+    //
+    // Test concurrent operations on shared vectors. Loom ensures all interleavings
+    // are explored, catching race conditions that might only occur in specific orders.
+    //
+    // ## Reference
+    //
+    // - **Pattern**: Use `Arc<Mutex<Vec<T>>>` for shared mutable vectors
+    // - **Thread Safety**: Mutex ensures only one thread accesses vector at a time
+    // - **Model Checking**: Loom explores all interleavings automatically
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::concurrency::ConcurrencyTest;
+    // use std::sync::{Arc, Mutex};
+    // use loom::thread;
+    //
+    // ConcurrencyTest::run(|| {
+    //     let vec = Arc::new(Mutex::new(Vec::new()));
+    //     let vec_clone = Arc::clone(&vec);
+    //     let handle = thread::spawn(move || {
+    //         vec_clone.lock().unwrap().push(1);
+    //     });
+    //     vec.lock().unwrap().push(2);
+    //     handle.join().unwrap();
+    //     assert_eq!(vec.lock().unwrap().len(), 2);
+    // });
+    // ```
     #[test]
     #[allow(clippy::unwrap_used)] // Test code - Loom guarantees Mutex lock won't fail
     fn test_concurrent_vector_push() {
@@ -196,32 +196,32 @@ mod tests {
         });
     }
 
-    /// Example: Concurrent test with custom configuration
-    ///
-    /// ## How-to: Use Custom Configuration
-    ///
-    /// Use `ConcurrencyTest::run_with_config()` to customize model checking parameters:
-    /// - `threads`: Maximum number of threads to simulate
-    /// - `preemptions`: Maximum number of preemptions to explore
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `ConcurrencyTest::run_with_config(threads, preemptions, test)`
-    /// - **Parameters**:
-    ///   - `threads`: Maximum threads (e.g., 4)
-    ///   - `preemptions`: Maximum preemptions (e.g., 1000)
-    ///   - `test`: Closure containing concurrent test code
-    /// - **Behavior**: Explores interleavings with custom limits
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::concurrency::ConcurrencyTest;
-    ///
-    /// ConcurrencyTest::run_with_config(4, 1000, || {
-    ///     // Concurrent test code
-    /// });
-    /// ```
+    // Example: Concurrent test with custom configuration
+    //
+    // ## How-to: Use Custom Configuration
+    //
+    // Use `ConcurrencyTest::run_with_config()` to customize model checking parameters:
+    // - `threads`: Maximum number of threads to simulate
+    // - `preemptions`: Maximum number of preemptions to explore
+    //
+    // ## Reference
+    //
+    // - **Function**: `ConcurrencyTest::run_with_config(threads, preemptions, test)`
+    // - **Parameters**:
+    //   - `threads`: Maximum threads (e.g., 4)
+    //   - `preemptions`: Maximum preemptions (e.g., 1000)
+    //   - `test`: Closure containing concurrent test code
+    // - **Behavior**: Explores interleavings with custom limits
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::concurrency::ConcurrencyTest;
+    //
+    // ConcurrencyTest::run_with_config(4, 1000, || {
+    //     // Concurrent test code
+    // });
+    // ```
     #[test]
     #[allow(clippy::unwrap_used)] // Test code - Loom guarantees Mutex lock won't fail
     fn test_concurrent_with_config() {

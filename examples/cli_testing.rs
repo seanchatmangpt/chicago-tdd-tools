@@ -168,32 +168,32 @@ mod tests {
         CliAssertions::assert_output_contains(output, "help");
     }
 
-    /// Example: CLI environment management
-    ///
-    /// ## How-to: Manage Environment Variables
-    ///
-    /// Use `CliEnvironment` to set environment variables for CLI tests. Environment
-    /// variables are automatically restored on drop, ensuring test isolation.
-    ///
-    /// ## Reference
-    ///
-    /// - **Manager**: `CliEnvironment::new() -> CliEnvironment`
-    /// - **Methods**:
-    ///   - `set(key, value)` - Set environment variable
-    ///   - `apply()` - Apply environment variables to process
-    /// - **Cleanup**: Environment automatically restored on drop
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::cli::CliEnvironment;
-    ///
-    /// let mut env = CliEnvironment::new()
-    ///     .set("TEST_VAR1", "value1")
-    ///     .set("TEST_VAR2", "value2");
-    /// env.apply();
-    /// // Environment automatically restored when env goes out of scope
-    /// ```
+    // Example: CLI environment management
+    //
+    // ## How-to: Manage Environment Variables
+    //
+    // Use `CliEnvironment` to set environment variables for CLI tests. Environment
+    // variables are automatically restored on drop, ensuring test isolation.
+    //
+    // ## Reference
+    //
+    // - **Manager**: `CliEnvironment::new() -> CliEnvironment`
+    // - **Methods**:
+    //   - `set(key, value)` - Set environment variable
+    //   - `apply()` - Apply environment variables to process
+    // - **Cleanup**: Environment automatically restored on drop
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::cli::CliEnvironment;
+    //
+    // let mut env = CliEnvironment::new()
+    //     .set("TEST_VAR1", "value1")
+    //     .set("TEST_VAR2", "value2");
+    // env.apply();
+    // // Environment automatically restored when env goes out of scope
+    // ```
     #[test]
     fn test_cli_environment() {
         // Arrange: Create CLI environment manager

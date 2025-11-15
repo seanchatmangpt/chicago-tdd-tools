@@ -73,7 +73,9 @@ mod weaver_tests {
         // This prevents "container is not running" errors when executing commands.
         // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
+        // **Root Cause Fix**: When entrypoint is /bin/sh, the command should be -c and args should be the script
+        // Docker will execute: /bin/sh -c "sleep infinity"
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "-c", &["sleep infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
 
         // Act: Execute weaver --version in container
@@ -107,7 +109,9 @@ mod weaver_tests {
         // This prevents "container is not running" errors when executing commands.
         // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
+        // **Root Cause Fix**: When entrypoint is /bin/sh, the command should be -c and args should be the script
+        // Docker will execute: /bin/sh -c "sleep infinity"
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "-c", &["sleep infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
 
         // Act: Execute weaver registry check with non-existent registry
@@ -146,7 +150,9 @@ mod weaver_tests {
         // This prevents "container is not running" errors when executing commands.
         // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
+        // **Root Cause Fix**: When entrypoint is /bin/sh, the command should be -c and args should be the script
+        // Docker will execute: /bin/sh -c "sleep infinity"
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "-c", &["sleep infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
 
         // Act: Check if weaver binary exists and can show help
