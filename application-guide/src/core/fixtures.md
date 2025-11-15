@@ -21,9 +21,13 @@ test!(test_with_fixture, {
     // Create a fresh fixture
     let fixture = TestFixture::new()?;
 
-    // Use the fixture in your test
-    let counter = fixture.test_counter();
-    assert!(counter >= 0);
+    // Fixtures provide isolation and utilities
+    // Store metadata for the test
+    fixture.set_metadata("test_id".to_string(), "123".to_string());
+
+    // Retrieve metadata
+    let test_id = fixture.get_metadata("test_id");
+    assert_eq!(test_id, Some(&"123".to_string()));
 });
 ```
 
@@ -37,7 +41,7 @@ test!(test_fixture_error_handling, {
     match TestFixture::new() {
         Ok(fixture) => {
             // Use fixture
-            let _ = fixture.test_counter();
+            fixture.set_metadata("key".to_string(), "value".to_string());
         }
         Err(e) => {
             alert_critical!("Fixture creation failed: {}", e);
@@ -52,24 +56,33 @@ Or use the `?` operator:
 ```rust
 test!(test_fixture_with_question_mark, {
     let fixture = TestFixture::new()?;  // Propagates error
-    let _ = fixture.test_counter();
+    fixture.set_metadata("test_data".to_string(), "setup_complete".to_string());
 });
 ```
 
-## Fixture Properties
+## Fixture Features
 
 The `TestFixture` provides utilities for tests:
 
 ```rust
-test!(test_fixture_properties, {
-    let fixture = TestFixture::new()?;
+test!(test_fixture_features, {
+    let mut fixture = TestFixture::new()?;
 
-    // Get test counter (how many tests have run)
-    let counter = fixture.test_counter();
-    assert!(counter >= 0);
+    // Store and retrieve metadata
+    fixture.set_metadata("user_id".to_string(), "42".to_string());
+    assert_eq!(
+        fixture.get_metadata("user_id"),
+        Some(&"42".to_string())
+    );
 
-    // Additional fixture features are available
-    // depending on enabled features (docker, etc.)
+    // Capture snapshots of test state
+    let mut state = HashMap::new();
+    state.insert("status".to_string(), "initialized".to_string());
+    fixture.capture_snapshot(state);
+
+    // Retrieve snapshots
+    let snapshots = fixture.snapshots();
+    assert!(!snapshots.is_empty());
 });
 ```
 
@@ -108,13 +121,13 @@ Each test gets a fresh fixture:
 ```rust
 test!(test_isolation_1, {
     let fixture1 = TestFixture::new()?;
-    let counter1 = fixture1.test_counter();
+    fixture1.set_metadata("test".to_string(), "isolation_1".to_string());
     // Uses fixture1
 });
 
 test!(test_isolation_2, {
     let fixture2 = TestFixture::new()?;
-    let counter2 = fixture2.test_counter();
+    fixture2.set_metadata("test".to_string(), "isolation_2".to_string());
     // Uses fixture2
     // fixture1 and fixture2 are completely independent
 });
@@ -132,8 +145,11 @@ test!(test_with_multiple_fixtures, {
     let fixture2 = TestFixture::new()?;
 
     // Both fixtures exist independently
-    let counter1 = fixture1.test_counter();
-    let counter2 = fixture2.test_counter();
+    fixture1.set_metadata("fixture".to_string(), "first".to_string());
+    fixture2.set_metadata("fixture".to_string(), "second".to_string());
+
+    assert_eq!(fixture1.get_metadata("fixture"), Some(&"first".to_string()));
+    assert_eq!(fixture2.get_metadata("fixture"), Some(&"second".to_string()));
 
     // Both are cleaned up when the test ends
 });
@@ -146,13 +162,15 @@ test!(test_with_multiple_fixtures, {
 ```rust
 test!(test_user_service, {
     // Arrange: Set up fixture with data
-    let fixture = TestFixture::new()?;
+    let mut fixture = TestFixture::new()?;
+    fixture.set_metadata("user_id".to_string(), "123".to_string());
 
-    // Act: Use the fixture
-    let user_id = fixture.test_counter();
+    // Act: Perform test operations
+    // Use fixture metadata for test coordination
+    let user_id = fixture.get_metadata("user_id");
 
     // Assert: Verify
-    assert!(user_id >= 0);
+    assert_eq!(user_id, Some(&"123".to_string()));
 
     // Cleanup: Automatic! No explicit cleanup needed.
 });

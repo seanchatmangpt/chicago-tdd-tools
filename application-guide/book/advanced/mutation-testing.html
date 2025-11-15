@@ -266,11 +266,42 @@ test!(test_mutation_basic, {
     "different_value".to_string()
 ));
 <span class="boring">}</span></code></pre></pre>
-<h3 id="negatecondition"><a class="header" href="#negatecondition">NegateCondition</a></h3>
-<p>Negate a boolean condition:</p>
+<h3 id="swapvalues"><a class="header" href="#swapvalues">SwapValues</a></h3>
+<p>Swap values between two keys:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>tester.apply_mutation(MutationOperator::NegateCondition);
+</span>tester.apply_mutation(MutationOperator::SwapValues(
+    "key1".to_string(),
+    "key2".to_string()
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="toggleboolean"><a class="header" href="#toggleboolean">ToggleBoolean</a></h3>
+<p>Toggle a boolean value (flip true/false):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>tester.apply_mutation(MutationOperator::ToggleBoolean(
+    "is_active".to_string()
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="numericdelta"><a class="header" href="#numericdelta">NumericDelta</a></h3>
+<p>Change a numeric value by a delta:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>tester.apply_mutation(MutationOperator::NumericDelta(
+    "count".to_string(),
+    10  // Add 10 to the value
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="stringcase"><a class="header" href="#stringcase">StringCase</a></h3>
+<p>Change string case:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::mutation::CaseMode;
+
+tester.apply_mutation(MutationOperator::StringCase(
+    "name".to_string(),
+    CaseMode::Upper  // or Lower, Mixed
+));
 <span class="boring">}</span></code></pre></pre>
 <h2 id="mutation-score"><a class="header" href="#mutation-score">Mutation Score</a></h2>
 <p>Calculate how many mutations your tests catch:</p>
@@ -442,10 +473,13 @@ assert_eq!(data.get("key1").unwrap(), "expected_value");
 </ul>
 <h2 id="common-mutations-to-check"><a class="header" href="#common-mutations-to-check">Common Mutations to Check</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Mutation</th><th>What to Test</th></tr></thead><tbody>
-<tr><td>RemoveKey</td><td>Verify key exists</td></tr>
-<tr><td>ChangeValue</td><td>Verify exact value</td></tr>
-<tr><td>NegateCondition</td><td>Test both branches</td></tr>
+<tr><td>RemoveKey</td><td>Verify required keys exist</td></tr>
 <tr><td>AddKey</td><td>Verify exact set of keys</td></tr>
+<tr><td>ChangeValue</td><td>Verify exact value, not just type</td></tr>
+<tr><td>SwapValues</td><td>Verify values aren't accidentally swapped</td></tr>
+<tr><td>ToggleBoolean</td><td>Verify both true and false cases</td></tr>
+<tr><td>NumericDelta</td><td>Test boundary values and edge cases</td></tr>
+<tr><td>StringCase</td><td>Verify case-sensitive comparisons</td></tr>
 </tbody></table>
 </div>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>

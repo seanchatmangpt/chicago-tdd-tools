@@ -673,9 +673,13 @@ test!(test_with_fixture, {
     // Create a fresh fixture
     let fixture = TestFixture::new()?;
 
-    // Use the fixture in your test
-    let counter = fixture.test_counter();
-    assert!(counter &gt;= 0);
+    // Fixtures provide isolation and utilities
+    // Store metadata for the test
+    fixture.set_metadata("test_id".to_string(), "123".to_string());
+
+    // Retrieve metadata
+    let test_id = fixture.get_metadata("test_id");
+    assert_eq!(test_id, Some(&amp;"123".to_string()));
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
@@ -687,7 +691,7 @@ test!(test_with_fixture, {
     match TestFixture::new() {
         Ok(fixture) =&gt; {
             // Use fixture
-            let _ = fixture.test_counter();
+            fixture.set_metadata("key".to_string(), "value".to_string());
         }
         Err(e) =&gt; {
             alert_critical!("Fixture creation failed: {}", e);
@@ -701,22 +705,31 @@ test!(test_with_fixture, {
 </span><span class="boring">fn main() {
 </span>test!(test_fixture_with_question_mark, {
     let fixture = TestFixture::new()?;  // Propagates error
-    let _ = fixture.test_counter();
+    fixture.set_metadata("test_data".to_string(), "setup_complete".to_string());
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="fixture-properties"><a class="header" href="#fixture-properties">Fixture Properties</a></h2>
+<h2 id="fixture-features"><a class="header" href="#fixture-features">Fixture Features</a></h2>
 <p>The <code>TestFixture</code> provides utilities for tests:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>test!(test_fixture_properties, {
-    let fixture = TestFixture::new()?;
+</span>test!(test_fixture_features, {
+    let mut fixture = TestFixture::new()?;
 
-    // Get test counter (how many tests have run)
-    let counter = fixture.test_counter();
-    assert!(counter &gt;= 0);
+    // Store and retrieve metadata
+    fixture.set_metadata("user_id".to_string(), "42".to_string());
+    assert_eq!(
+        fixture.get_metadata("user_id"),
+        Some(&amp;"42".to_string())
+    );
 
-    // Additional fixture features are available
-    // depending on enabled features (docker, etc.)
+    // Capture snapshots of test state
+    let mut state = HashMap::new();
+    state.insert("status".to_string(), "initialized".to_string());
+    fixture.capture_snapshot(state);
+
+    // Retrieve snapshots
+    let snapshots = fixture.snapshots();
+    assert!(!snapshots.is_empty());
 });
 <span class="boring">}</span></code></pre></pre>
 <h2 id="fixture-lifecycle"><a class="header" href="#fixture-lifecycle">Fixture Lifecycle</a></h2>
@@ -748,13 +761,13 @@ test!(test_with_fixture, {
 </span><span class="boring">fn main() {
 </span>test!(test_isolation_1, {
     let fixture1 = TestFixture::new()?;
-    let counter1 = fixture1.test_counter();
+    fixture1.set_metadata("test".to_string(), "isolation_1".to_string());
     // Uses fixture1
 });
 
 test!(test_isolation_2, {
     let fixture2 = TestFixture::new()?;
-    let counter2 = fixture2.test_counter();
+    fixture2.set_metadata("test".to_string(), "isolation_2".to_string());
     // Uses fixture2
     // fixture1 and fixture2 are completely independent
 });
@@ -769,8 +782,11 @@ test!(test_isolation_2, {
     let fixture2 = TestFixture::new()?;
 
     // Both fixtures exist independently
-    let counter1 = fixture1.test_counter();
-    let counter2 = fixture2.test_counter();
+    fixture1.set_metadata("fixture".to_string(), "first".to_string());
+    fixture2.set_metadata("fixture".to_string(), "second".to_string());
+
+    assert_eq!(fixture1.get_metadata("fixture"), Some(&amp;"first".to_string()));
+    assert_eq!(fixture2.get_metadata("fixture"), Some(&amp;"second".to_string()));
 
     // Both are cleaned up when the test ends
 });
@@ -781,13 +797,15 @@ test!(test_isolation_2, {
 </span><span class="boring">fn main() {
 </span>test!(test_user_service, {
     // Arrange: Set up fixture with data
-    let fixture = TestFixture::new()?;
+    let mut fixture = TestFixture::new()?;
+    fixture.set_metadata("user_id".to_string(), "123".to_string());
 
-    // Act: Use the fixture
-    let user_id = fixture.test_counter();
+    // Act: Perform test operations
+    // Use fixture metadata for test coordination
+    let user_id = fixture.get_metadata("user_id");
 
     // Assert: Verify
-    assert!(user_id &gt;= 0);
+    assert_eq!(user_id, Some(&amp;"123".to_string()));
 
     // Cleanup: Automatic! No explicit cleanup needed.
 });
@@ -909,27 +927,15 @@ test!(test_data_builder, {
     assert!(json_data.is_object());
 });
 <span class="boring">}</span></code></pre></pre>
-<h3 id="building-different-formats"><a class="header" href="#building-different-formats">Building Different Formats</a></h3>
-<p>JSON format (most common):</p>
+<h3 id="building-json-data"><a class="header" href="#building-json-data">Building JSON Data</a></h3>
+<p>The primary format is JSON:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let data = TestDataBuilder::new()
     .with_var("key", "value")
     .build_json()?;  // Returns serde_json::Value
 <span class="boring">}</span></code></pre></pre>
-<p>Other formats via feature flags:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// YAML (requires yaml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_yaml()?;
-
-// TOML (requires toml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_toml()?;
-<span class="boring">}</span></code></pre></pre>
+<p>All test data is built as JSON, which is flexible and works with most applications.</p>
 <h2 id="fluent-builder-pattern"><a class="header" href="#fluent-builder-pattern">Fluent Builder Pattern</a></h2>
 <p>Builders use method chaining for readability:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2348,11 +2354,42 @@ test!(test_mutation_basic, {
     "different_value".to_string()
 ));
 <span class="boring">}</span></code></pre></pre>
-<h3 id="negatecondition"><a class="header" href="#negatecondition">NegateCondition</a></h3>
-<p>Negate a boolean condition:</p>
+<h3 id="swapvalues"><a class="header" href="#swapvalues">SwapValues</a></h3>
+<p>Swap values between two keys:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>tester.apply_mutation(MutationOperator::NegateCondition);
+</span>tester.apply_mutation(MutationOperator::SwapValues(
+    "key1".to_string(),
+    "key2".to_string()
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="toggleboolean"><a class="header" href="#toggleboolean">ToggleBoolean</a></h3>
+<p>Toggle a boolean value (flip true/false):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>tester.apply_mutation(MutationOperator::ToggleBoolean(
+    "is_active".to_string()
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="numericdelta"><a class="header" href="#numericdelta">NumericDelta</a></h3>
+<p>Change a numeric value by a delta:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>tester.apply_mutation(MutationOperator::NumericDelta(
+    "count".to_string(),
+    10  // Add 10 to the value
+));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="stringcase"><a class="header" href="#stringcase">StringCase</a></h3>
+<p>Change string case:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::mutation::CaseMode;
+
+tester.apply_mutation(MutationOperator::StringCase(
+    "name".to_string(),
+    CaseMode::Upper  // or Lower, Mixed
+));
 <span class="boring">}</span></code></pre></pre>
 <h2 id="mutation-score"><a class="header" href="#mutation-score">Mutation Score</a></h2>
 <p>Calculate how many mutations your tests catch:</p>
@@ -2524,10 +2561,13 @@ assert_eq!(data.get("key1").unwrap(), "expected_value");
 </ul>
 <h2 id="common-mutations-to-check"><a class="header" href="#common-mutations-to-check">Common Mutations to Check</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Mutation</th><th>What to Test</th></tr></thead><tbody>
-<tr><td>RemoveKey</td><td>Verify key exists</td></tr>
-<tr><td>ChangeValue</td><td>Verify exact value</td></tr>
-<tr><td>NegateCondition</td><td>Test both branches</td></tr>
+<tr><td>RemoveKey</td><td>Verify required keys exist</td></tr>
 <tr><td>AddKey</td><td>Verify exact set of keys</td></tr>
+<tr><td>ChangeValue</td><td>Verify exact value, not just type</td></tr>
+<tr><td>SwapValues</td><td>Verify values aren't accidentally swapped</td></tr>
+<tr><td>ToggleBoolean</td><td>Verify both true and false cases</td></tr>
+<tr><td>NumericDelta</td><td>Test boundary values and edge cases</td></tr>
+<tr><td>StringCase</td><td>Verify case-sensitive comparisons</td></tr>
 </tbody></table>
 </div>
 <h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>

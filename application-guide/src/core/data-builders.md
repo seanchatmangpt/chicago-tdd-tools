@@ -44,9 +44,9 @@ test!(test_data_builder, {
 });
 ```
 
-### Building Different Formats
+### Building JSON Data
 
-JSON format (most common):
+The primary format is JSON:
 
 ```rust
 let data = TestDataBuilder::new()
@@ -54,19 +54,7 @@ let data = TestDataBuilder::new()
     .build_json()?;  // Returns serde_json::Value
 ```
 
-Other formats via feature flags:
-
-```rust
-// YAML (requires yaml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_yaml()?;
-
-// TOML (requires toml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_toml()?;
-```
+All test data is built as JSON, which is flexible and works with most applications.
 
 ## Fluent Builder Pattern
 

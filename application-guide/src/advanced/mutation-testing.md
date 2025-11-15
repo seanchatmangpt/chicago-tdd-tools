@@ -103,12 +103,49 @@ tester.apply_mutation(MutationOperator::ChangeValue(
 ));
 ```
 
-### NegateCondition
+### SwapValues
 
-Negate a boolean condition:
+Swap values between two keys:
 
 ```rust
-tester.apply_mutation(MutationOperator::NegateCondition);
+tester.apply_mutation(MutationOperator::SwapValues(
+    "key1".to_string(),
+    "key2".to_string()
+));
+```
+
+### ToggleBoolean
+
+Toggle a boolean value (flip true/false):
+
+```rust
+tester.apply_mutation(MutationOperator::ToggleBoolean(
+    "is_active".to_string()
+));
+```
+
+### NumericDelta
+
+Change a numeric value by a delta:
+
+```rust
+tester.apply_mutation(MutationOperator::NumericDelta(
+    "count".to_string(),
+    10  // Add 10 to the value
+));
+```
+
+### StringCase
+
+Change string case:
+
+```rust
+use chicago_tdd_tools::mutation::CaseMode;
+
+tester.apply_mutation(MutationOperator::StringCase(
+    "name".to_string(),
+    CaseMode::Upper  // or Lower, Mixed
+));
 ```
 
 ## Mutation Score
@@ -297,10 +334,13 @@ assert_eq!(data.get("key1").unwrap(), "expected_value");
 
 | Mutation | What to Test |
 |----------|--------------|
-| RemoveKey | Verify key exists |
-| ChangeValue | Verify exact value |
-| NegateCondition | Test both branches |
+| RemoveKey | Verify required keys exist |
 | AddKey | Verify exact set of keys |
+| ChangeValue | Verify exact value, not just type |
+| SwapValues | Verify values aren't accidentally swapped |
+| ToggleBoolean | Verify both true and false cases |
+| NumericDelta | Test boundary values and edge cases |
+| StringCase | Verify case-sensitive comparisons |
 
 ## Troubleshooting
 

@@ -214,27 +214,15 @@ test!(test_data_builder, {
     assert!(json_data.is_object());
 });
 <span class="boring">}</span></code></pre></pre>
-<h3 id="building-different-formats"><a class="header" href="#building-different-formats">Building Different Formats</a></h3>
-<p>JSON format (most common):</p>
+<h3 id="building-json-data"><a class="header" href="#building-json-data">Building JSON Data</a></h3>
+<p>The primary format is JSON:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let data = TestDataBuilder::new()
     .with_var("key", "value")
     .build_json()?;  // Returns serde_json::Value
 <span class="boring">}</span></code></pre></pre>
-<p>Other formats via feature flags:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// YAML (requires yaml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_yaml()?;
-
-// TOML (requires toml feature)
-let data = TestDataBuilder::new()
-    .with_var("key", "value")
-    .build_toml()?;
-<span class="boring">}</span></code></pre></pre>
+<p>All test data is built as JSON, which is flexible and works with most applications.</p>
 <h2 id="fluent-builder-pattern"><a class="header" href="#fluent-builder-pattern">Fluent Builder Pattern</a></h2>
 <p>Builders use method chaining for readability:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
