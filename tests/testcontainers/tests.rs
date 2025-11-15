@@ -205,12 +205,14 @@ mod tests {
         // Arrange: Create container with entrypoint override (simulating weaver scenario)
         // Use alpine with entrypoint override to test the Docker CLI workaround
         let client = ContainerClient::new();
+        // **Root Cause Fix**: When entrypoint is /bin/sh, the command should be -c and args should be the script
+        // Docker will execute: /bin/sh -c "sleep infinity"
         let container = GenericContainer::with_command(
             client.client(),
             ALPINE_IMAGE,
             ALPINE_TAG,
-            "sleep",
-            &["infinity"],
+            "-c",  // Command is -c when entrypoint is /bin/sh
+            &["sleep infinity"],  // Args are the script to execute
             Some(&["/bin/sh"]),  // Override entrypoint to test Docker CLI workaround
         )
         .unwrap_or_else(|e| panic!("Failed to create container with entrypoint override: {}", e));
