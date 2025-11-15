@@ -99,6 +99,11 @@ cargo make check      # Verify compilation
 cargo make test       # Run tests
 ```
 
+**Verify Installation**:
+- ✅ Compilation succeeds: `cargo make check` completes without errors
+- ✅ Tests run: `cargo make test` shows your tests passing
+- ✅ Macros work: Test file compiles and runs successfully
+
 **Note**: Always use `cargo make` commands (not `cargo test` directly). The build system handles proc-macro crates and includes timeouts.
 
 ## Core Macros
@@ -134,18 +139,39 @@ chicago_tdd_tools = {
 
 Chicago TDD Tools dogfoods Weaver. Follow these steps to exercise live-check locally:
 
+### Prerequisites
+- **Weaver feature**: Enable `weaver` feature in `Cargo.toml` (automatically enables `otel`)
+- **Docker** (for integration tests only): Required for `cargo make test-integration`
+  - Verify Docker is running: `docker ps` should succeed
+  - Install: [Docker Desktop](https://www.docker.com/products/docker-desktop) if not installed
+
+### Setup Steps
+
 1. **Bootstrap prerequisites** (Weaver CLI + semantic convention registry):
    ```bash
    cargo make weaver-bootstrap
    ```
+   - Downloads Weaver binary to `target/<profile>/weaver`
+   - Clones semantic convention registry to `registry/`
+   - Takes ~30-60 seconds on first run
+
 2. **Run the fast smoke test** (version check + telemetry span):
    ```bash
    cargo make weaver-smoke
    ```
+   - Verifies Weaver CLI is installed and working
+   - Sends a test telemetry span
+   - Does not require Docker
+   - Should complete in <5 seconds
+
 3. **Run full integration when Docker is available**:
    ```bash
    cargo make test-integration        # Requires Docker + weaver feature
    ```
+   - Runs container-based Weaver integration tests
+   - Requires Docker daemon running
+   - Requires `weaver` feature enabled
+   - Tests fail fast if prerequisites missing (unless `WEAVER_ALLOW_SKIP=1` is set)
 
 **Need to temporarily skip Weaver tests?** Set `WEAVER_ALLOW_SKIP=1` in your environment. Without that explicit opt-out, Weaver tests fail fast when prerequisites are missing—quality is the default.
 
@@ -160,8 +186,6 @@ cargo make lint       # Run clippy
 
 **Why cargo-make?** The build system handles proc-macro crates correctly, includes timeouts to prevent hanging, and ensures consistency. Using `cargo test` directly may fail with proc-macro errors.
 
-See [Build System Practices](.cursor/rules/build-system-practices.mdc) for details.
-
 ## Documentation
 
 - **[Quick Guide](docs/getting-started/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
@@ -174,21 +198,103 @@ See [Build System Practices](.cursor/rules/build-system-practices.mdc) for detai
 
 ## Requirements
 
-- **Rust**: Edition 2021 (Rust 1.70+)
-- **cargo-make**: `cargo install cargo-make` (verify with `cargo make --version`)
-- **Tokio**: Included in dev-dependencies
+### Prerequisites Checklist
 
-**Optional**: Docker (for `testcontainers` feature), Rust 1.75+ (for `async` feature)
+**Required**:
+- **Rust**: Edition 2021 (Rust 1.70+)
+  - **Verify**: Run `rustc --version` - should show 1.70.0 or higher
+  - **Install**: Use [rustup](https://rustup.rs/) if not installed
+- **Cargo**: Latest stable (comes with Rust)
+  - **Verify**: Run `cargo --version` - should show latest stable
+- **cargo-make**: Required for build system
+  - **Install**: `cargo install cargo-make`
+  - **Verify**: Run `cargo make --version` - should show version number
+  - **If missing**: Install with `cargo install cargo-make`, then verify
+- **Tokio**: Required for async tests (add to `dev-dependencies` in your `Cargo.toml`)
+
+**Optional** (enable features as needed):
+- **Docker**: Required for `testcontainers` feature
+  - **Verify**: Run `docker ps` - should show Docker daemon running
+  - **Install**: [Docker Desktop](https://www.docker.com/products/docker-desktop) for your platform
+- **Rust 1.75+**: Required for `async` feature (async fixture providers)
+  - **Verify**: Run `rustc --version` - should show 1.75.0 or higher
+  - **Upgrade**: Run `rustup update stable` if needed
 
 ## Troubleshooting
 
-**"command not found: cargo-make"**: Install with `cargo install cargo-make`, then verify with `cargo make --version`.
+### Common Setup Errors
 
-**"cannot find crate 'chicago_tdd_tools'"**: Check that `Cargo.toml` has `edition = "2021"` in `[package]` section and path is correct.
+**"command not found: cargo-make"**
+- **Cause**: cargo-make not installed or not in PATH
+- **Fix**: Install with `cargo install cargo-make`, then verify with `cargo make --version`
+- **Verify**: Command should show version number, not "command not found"
 
-**"cannot find macro 'test!'"**: Ensure you have `use chicago_tdd_tools::prelude::*;` at the top of your test file.
+**"cannot find crate 'chicago_tdd_tools'"**
+- **Cause**: Path incorrect, edition missing, or dependency not added
+- **Fix**: 
+  1. Check `Cargo.toml` has `edition = "2021"` in `[package]` section
+  2. Verify path in `[dev-dependencies]` is correct (e.g., `path = "../chicago-tdd-tools"`)
+  3. Ensure dependency is in `[dev-dependencies]`, not `[dependencies]`
+- **Verify**: Run `cargo make check` - should compile without errors
 
-**See [Getting Started - Troubleshooting](docs/getting-started/GETTING_STARTED.md#troubleshooting) for more help.**
+**"cannot find macro 'test!'"**
+- **Cause**: Missing prelude import
+- **Fix**: Add `use chicago_tdd_tools::prelude::*;` at the top of your test file
+- **Alternative**: Use explicit import: `use chicago_tdd_tools::test;`
+- **Verify**: Test file should compile after adding import
+
+**"edition 2021 required"**
+- **Cause**: `Cargo.toml` missing edition specification
+- **Fix**: Add `edition = "2021"` to `[package]` section in `Cargo.toml`:
+  ```toml
+  [package]
+  name = "my-project"
+  version = "0.1.0"
+  edition = "2021"  # Required
+  ```
+
+**"feature 'X' is required for module Y"**
+- **Cause**: Feature flag not enabled for feature-gated module
+- **Fix**: Enable required feature in `Cargo.toml`:
+  ```toml
+  chicago-tdd-tools = { 
+      path = "../chicago-tdd-tools",
+      features = ["feature-name"]  # e.g., "otel", "weaver", "testcontainers"
+  }
+  ```
+- **Common features**: `testing-extras`, `testcontainers`, `otel`, `weaver`, `async`
+
+**"cannot find module 'observability'" or "cannot find module 'integration'"**
+- **Cause**: Feature-gated modules require explicit feature flags
+- **Fix**: Enable required features:
+  ```toml
+  chicago-tdd-tools = { 
+      features = ["otel", "weaver", "testcontainers"] 
+  }
+  ```
+
+**Tests pass locally but fail in CI**
+- **Cause**: Environment differences (missing dependencies, different Rust version)
+- **Fix**: 
+  1. Verify Rust version matches: `rustc --version`
+  2. Run `cargo make ci-local` to simulate CI environment
+  3. Check all prerequisites are installed (cargo-make, Docker if needed)
+
+**Docker/Testcontainers tests fail**
+- **Cause**: Docker daemon not running or not available
+- **Fix**: 
+  1. Start Docker Desktop
+  2. Verify with `docker ps` - should show running containers or empty list (not error)
+  3. Ensure Docker is accessible: `docker info` should succeed
+
+**Weaver tests fail**
+- **Cause**: Weaver CLI not installed or registry not bootstrapped
+- **Fix**: 
+  1. Run `cargo make weaver-bootstrap` to install Weaver CLI and registry
+  2. Verify with `cargo make weaver-smoke` - should pass
+  3. If Docker required: Ensure Docker is running for integration tests
+
+**See [Getting Started - Troubleshooting](docs/getting-started/GETTING_STARTED.md#troubleshooting) for more detailed help.**
 
 ## License
 

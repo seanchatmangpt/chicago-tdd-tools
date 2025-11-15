@@ -759,7 +759,7 @@ done
 - [x] Examples documented ✅
 - [ ] CHANGELOG.md created ⚠️ TODO
 - [ ] Release notes created ⚠️ TODO
-- [ ] Documentation consistency verified ⚠️ TODO
+- [ ] Documentation consistency verified ⚠️ Run `cargo make docs-check`
 
 **Dependencies**:
 - [x] Dependencies stable and compatible ✅
@@ -1029,7 +1029,7 @@ find . -name "*.new" | grep -v "target\|\.git"  # ✅ No incomplete work
 - [x] Examples documented ✅
 - [ ] CHANGELOG.md created ⚠️ TODO
 - [ ] Release notes created ⚠️ TODO
-- [ ] Documentation consistency verified ⚠️ TODO
+- [ ] Documentation consistency verified ⚠️ Run `cargo make docs-check`
 
 ## Dependencies
 - [x] Dependencies stable and compatible ✅

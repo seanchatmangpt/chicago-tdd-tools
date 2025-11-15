@@ -6,6 +6,7 @@ Essential patterns for 80% of common use cases. See [User Guide](USER_GUIDE.md) 
 - **New user?** Start with [Getting Started](GETTING_STARTED.md)
 - **Need API details?** See [API Reference](../reference/API_REFERENCE.md)
 - **Want architecture?** See [Architecture](../reference/ARCHITECTURE.md)
+- **Complete guide?** See [User Guide](USER_GUIDE.md)
 
 ## Test Macros
 

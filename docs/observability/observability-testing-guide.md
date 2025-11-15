@@ -1,4 +1,4 @@
-# Comprehensive Observability Testing Guide - v1.2.0
+# Comprehensive Observability Testing Guide - v1.1.2
 
 ## What is Observability Testing?
 
@@ -16,9 +16,9 @@ Observability testing validates that your application:
 | **Architecture** | [OTEL Integration Patterns](../architecture/otel-integration.md) |
 | **CI/CD** | [OTEL Testing in CI](../ci-cd/otel-testing.md) |
 
-## v1.2.0 Improvements
+## Features
 
-### New in v1.2.0
+Chicago TDD Tools provides comprehensive observability testing capabilities:
 
 1. **Enhanced Documentation**
    - Comprehensive OTEL & Weaver guide
@@ -72,15 +72,15 @@ Observability testing validates that your application:
 
 ## Feature Matrix
 
-| Feature | v1.1.0 | v1.2.0 | Status |
-|---------|--------|--------|--------|
-| OTEL span validation | ✅ | ✅ | Stable |
-| OTEL metric validation | ✅ | ✅ | Stable |
-| Weaver integration | ✅ | ✅ | Stable |
-| Semantic conventions | ✅ | ✅ | Stable |
-| Documentation | ⚠️ Basic | ✅ Comprehensive | **New** |
-| API simplification | - | ✅ | **New** |
-| Error context | ⚠️ Basic | ✅ Enhanced | **Improved** |
+| Feature | Status |
+|---------|--------|
+| OTEL span validation | ✅ Stable |
+| OTEL metric validation | ✅ Stable |
+| Weaver integration | ✅ Stable |
+| Semantic conventions | ✅ Stable |
+| Documentation | ✅ Comprehensive |
+| API simplification | ✅ Available |
+| Error context | ✅ Enhanced |
 
 ## Getting Started
 
@@ -88,7 +88,7 @@ Observability testing validates that your application:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["otel", "weaver"] }
+chicago-tdd-tools = { version = "1.1.2", features = ["otel", "weaver"] }
 ```
 
 ### Step 2: Create Test
@@ -131,7 +131,7 @@ let expected_span = Span {
 ### Step 4: Run Tests
 
 ```bash
-cargo test --lib observability --features otel,weaver
+cargo make test
 ```
 
 ## Common Patterns
@@ -332,7 +332,7 @@ Weaver validation takes ~100-500ms depending on schema size:
 ```rust
 // Use Weaver only for integration tests, not unit tests
 #[test]
-#[ignore]  // Run with: cargo test -- --ignored
+#[ignore]  // Run with: cargo make test -- --ignored
 #[cfg(feature = "weaver")]
 fn test_with_weaver_validation() {
     // Weaver validation here
@@ -387,7 +387,7 @@ mod observability_tests {
 
     #[test]
     #[cfg(feature = "weaver")]
-    #[ignore]  // Run with: cargo test -- --ignored
+    #[ignore]  // Run with: cargo make test -- --ignored
     fn test_weaver_validation() -> Result<(), Box<dyn std::error::Error>> {
         use chicago_tdd_tools::observability::TestConfig;
         use std::path::PathBuf;
@@ -417,17 +417,15 @@ mod observability_tests {
 - [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) - Attribute standards
 - [Weaver](https://github.com/open-telemetry/weaver) - Schema registry
 
-## Migration from v1.1.0
+## API Compatibility
 
-### No Breaking Changes
-
-The v1.2.0 observability API is backward compatible:
+The observability API is backward compatible:
 
 ```rust
-// v1.1.0 code still works
+// Basic usage
 let test = ObservabilityTest::new()?;
 
-// v1.2.0 improvements are optional
+// Advanced configuration
 let config = TestConfig {
     weaver_enabled: true,
     ..Default::default()
@@ -449,4 +447,4 @@ See [OTEL & Weaver Guide](./otel-weaver-guide.md) for latest patterns.
 **Next Steps**:
 1. Read [OTEL & Weaver Guide](./otel-weaver-guide.md)
 2. Try [OTEL Integration Example](../examples/otel_integration.rs)
-3. Run integration tests: `cargo test --lib observability --features otel,weaver`
+3. Run integration tests: `cargo make test`

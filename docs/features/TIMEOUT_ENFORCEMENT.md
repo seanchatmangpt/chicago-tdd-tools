@@ -66,7 +66,7 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 
 **Running Integration Tests**: Use `cargo make test-integration` when you need to verify testcontainers functionality. Uses `integration` profile (30s timeout), requires `--features testcontainers` to be enabled, requires Docker to be running.
 
-**Mocking Testcontainers**: For fast testing without Docker, disable the `testcontainers` feature: `cargo test --no-default-features`. When feature is disabled, testcontainers stubs return `TestcontainersError::InvalidConfig`, which can be tested without Docker.
+**Mocking Testcontainers**: For fast testing without Docker, disable the `testcontainers` feature: `cargo make test --no-default-features`. When feature is disabled, testcontainers stubs return `TestcontainersError::InvalidConfig`, which can be tested without Docker.
 
 ## External Command Timeout Pattern
 

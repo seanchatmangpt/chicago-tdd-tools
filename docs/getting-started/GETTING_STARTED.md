@@ -2,7 +2,7 @@
 
 Get up and running with Chicago TDD Tools in 5 minutes. Verified, runnable examples.
 
-**New to the framework?** Start here → [Quick Start](#quick-start) → [Your First Test](#your-first-test) → [Common Patterns](#common-patterns)
+**New to the framework?** Start here → [Installation](#installation) → [Your First Test](#your-first-test) → [Common Patterns](#common-patterns)
 
 **Looking for specific information?**
 - **Quick reference**: [Quick Guide](QUICK_GUIDE.md) - Essential patterns (80% of use cases)
@@ -37,7 +37,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools" }  # Or use git URL when pub
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-**Note**: For GitHub users, use `chicago-tdd-tools = "1.1.0"` when published to crates.io.
+**Note**: For GitHub users, use `chicago-tdd-tools = "1.1.2"` when published to crates.io.
 
 **Step 3**: Verify installation: `cargo make check`. If errors: verify path, Rust edition 2021, Tokio in dev-dependencies.
 

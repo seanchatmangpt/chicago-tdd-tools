@@ -12,6 +12,8 @@
 //! - Automatic cleanup on drop
 
 #[cfg(feature = "testcontainers")]
+use chicago_tdd_tools::testcontainers::exec::SUCCESS_EXIT_CODE;
+#[cfg(feature = "testcontainers")]
 use chicago_tdd_tools::testcontainers::*;
 
 #[cfg(feature = "testcontainers")]
@@ -23,17 +25,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 1: Basic container
     println!("\n1. Creating basic Alpine container...");
+    // Note: GenericContainer::new() creates container but it exits immediately.
+    // This container cannot be used for exec() operations.
+    // For exec operations, use with_command() (see Example 4).
     let _container = GenericContainer::new(client.client(), "alpine", "latest")?;
     println!("   ✓ Container created successfully");
+    println!("   Note: This container exits immediately - cannot use exec()");
     // Container automatically cleaned up on drop
 
     // Example 2: Container with exposed ports
     println!("\n2. Creating container with exposed ports...");
-    let container_with_ports =
-        GenericContainer::with_ports(client.client(), "alpine", "latest", &[80, 443])?;
-    let host_port_80 = container_with_ports.get_host_port(80)?;
+    let container_with_ports = GenericContainer::with_ports(
+        client.client(),
+        "alpine",
+        "latest",
+        &[DEFAULT_HTTP_PORT, 443],
+    )?;
+    let host_port_80 = container_with_ports.get_host_port(DEFAULT_HTTP_PORT)?;
     let host_port_443 = container_with_ports.get_host_port(443)?;
-    println!("   ✓ Container port 80 -> host port {}", host_port_80);
+    println!("   ✓ Container port {} -> host port {}", DEFAULT_HTTP_PORT, host_port_80);
     println!("   ✓ Container port 443 -> host port {}", host_port_443);
 
     // Example 3: Container with environment variables
@@ -47,22 +57,76 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 4: Command execution
     // Note: For exec to work, container must be running.
-    // Alpine containers exit immediately, so we'll use a service container.
+    // **Root Cause Prevention**: For images that exit immediately (e.g., alpine, otel/weaver),
+    // use with_command() to keep container running. Service containers (postgres, redis, nginx)
+    // typically stay running by default.
     println!("\n4. Executing commands in container...");
-    println!("   Note: Using a service container (postgres) that stays running");
+    println!("   Note: Using with_command() - the unified method for all containers");
 
-    // Use postgres which stays running
-    let _postgres_container = GenericContainer::new(client.client(), "postgres", "15-alpine")?;
+    // Use Alpine with sleep to keep it running (correct pattern for images that exit)
+    // **Unified API**: with_command() works for all containers:
+    // - Regular containers: entrypoint = None (uses testcontainers API)
+    // - Containers needing entrypoint override: entrypoint = Some(&["/bin/sh"]) (uses Docker CLI workaround)
+    let alpine_container = GenericContainer::with_command(
+        client.client(),
+        "alpine",
+        "latest",
+        "sleep",
+        &["infinity"],
+        None, // No entrypoint override needed for alpine (uses testcontainers API)
+    )?;
 
-    // Execute a simple command (postgres containers have psql available)
-    // Note: This is just a demonstration - actual postgres setup would need more configuration
-    println!("   ✓ Container ready for command execution");
-    println!("   (In real tests, you would exec commands like: psql, sh, etc.)");
+    // Execute a simple command
+    let exec_result = alpine_container.exec("echo", &["hello", "from", "container"])?;
+    println!("   ✓ Command executed: {}", exec_result.stdout.trim());
+    // **Best Practice**: Use SUCCESS_EXIT_CODE constant instead of magic number 0
+    assert_eq!(exec_result.exit_code, SUCCESS_EXIT_CODE, "Command should succeed");
+    println!("   ✓ Exit code: {} (SUCCESS)", exec_result.exit_code);
+
+    // **FMEA Fix**: Demonstrate error path handling - show how to check for failures
+    // Example: Execute a command that might fail
+    let error_result = alpine_container.exec("nonexistent_command", &[]);
+    match error_result {
+        Ok(result) => {
+            // Command succeeded but might have non-zero exit code
+            if result.exit_code != SUCCESS_EXIT_CODE {
+                println!(
+                    "   ✓ Error handling demonstrated - command failed with exit code: {}",
+                    result.exit_code
+                );
+            }
+        }
+        Err(e) => {
+            // Command execution failed (e.g., command not found)
+            println!("   ✓ Error handling demonstrated - exec failed: {e}");
+            // **Best Practice**: In actual code, handle errors appropriately
+        }
+    }
+
+    println!("   (Pattern: Use with_command() for images that exit immediately)");
+
+    // Example 4b: Container with entrypoint override (e.g., weaver)
+    println!("\n4b. Container with entrypoint override (e.g., otel/weaver)...");
+    println!("   Note: For images with entrypoints that interfere, use entrypoint parameter");
+    println!("   Example pattern (commented out - requires otel/weaver image):");
+    println!("   ```rust");
+    println!("   let weaver_container = GenericContainer::with_command(");
+    println!("       client.client(),");
+    println!("       \"otel/weaver\",");
+    println!("       \"latest\",");
+    println!("       \"sleep\",");
+    println!("       &[\"infinity\"],");
+    println!("       Some(&[\"/bin/sh\"]), // Entrypoint override needed (uses Docker CLI workaround)");
+    println!("   )?;");
+    println!("   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;");
+    println!("   assert_eq!(weaver_result.exit_code, SUCCESS_EXIT_CODE);");
+    println!("   ```");
+    println!("   (Pattern: Use entrypoint = Some(&[\"/bin/sh\"]) for images like otel/weaver)");
 
     // Example 5: Wait conditions
     println!("\n5. Using wait conditions...");
     println!("   Note: Wait conditions ensure containers are ready before use");
-    println!("   Example: WaitFor::http(\"/\", 80) for HTTP health checks");
+    println!("   Example: WaitFor::http(\"/\", {}) for HTTP health checks", DEFAULT_HTTP_PORT);
     println!("   Example: WaitFor::message(\"ready\") for log message waiting");
     println!("   ✓ Wait conditions available via GenericContainer::with_wait_for()");
 

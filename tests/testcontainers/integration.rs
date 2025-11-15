@@ -17,9 +17,7 @@ mod integration_tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::test;
-    use chicago_tdd_tools::assert_err;
-    use chicago_tdd_tools::assert_ok;
+    use chicago_tdd_tools::prelude::*;
     use chicago_tdd_tools::testcontainers::*;
     use common::require_docker;
 
@@ -74,7 +72,7 @@ mod integration_tests {
         // Arrange: Set up Docker and create real container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: Execute real commands

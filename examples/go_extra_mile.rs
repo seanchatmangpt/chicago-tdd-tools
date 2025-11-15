@@ -42,6 +42,20 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// # Errors
 ///
 /// Returns error if parsing fails.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::examples::go_extra_mile::parse_u32_first_idea;
+///
+/// // Success case
+/// let result = parse_u32_first_idea("42")?;
+/// assert_eq!(result, 42);
+///
+/// // Error case - demonstrates error handling
+/// let result = parse_u32_first_idea("not a number");
+/// assert!(result.is_err());
+/// ```
 pub fn parse_u32_first_idea(input: &str) -> Result<u32, String> {
     input.parse().map_err(|e| format!("Parse error: {e}"))
 }
@@ -67,10 +81,11 @@ where
     T::Err: std::fmt::Display,
 {
     // Create OTEL span for operation
-    #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+    // **FMEA Fix**: SystemTime::duration_since(UNIX_EPOCH) should never fail in practice,
+    // but demonstrate proper error handling pattern for users
     let start_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("SystemTime should always be after UNIX_EPOCH")
+        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
         .as_millis() as u64;
 
     let mut span = Span::new_active(
@@ -91,12 +106,12 @@ where
 
     let end_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("SystemTime should always be after UNIX_EPOCH")
+        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
         .as_millis() as u64;
 
     // End time should always be >= start time in normal operation
-    #[allow(clippy::expect_used)] // Example code - end_time should be >= start_time
-    span.complete(end_time).expect("End time should be >= start time");
+    // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+    span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
     match &result {
         Ok(_) => {
@@ -150,10 +165,10 @@ where
     /// Parse and validate number with full OTEL instrumentation
     pub fn parse(input: &str, span_name: &str) -> Result<Self, String> {
         // Create OTEL span
-        #[allow(clippy::expect_used)] // SystemTime should always be after UNIX_EPOCH
+        // **FMEA Fix**: Demonstrate proper error handling instead of expect()
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("SystemTime should always be after UNIX_EPOCH")
+            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
             .as_millis() as u64;
 
         let mut span = Span::new_active(
@@ -177,12 +192,12 @@ where
 
         let end_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("SystemTime should always be after UNIX_EPOCH")
+            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
             .as_millis() as u64;
 
         // End time should always be >= start time in normal operation
-        #[allow(clippy::expect_used)] // Example code - end_time should be >= start_time
-        span.complete(end_time).expect("End time should be >= start time");
+        // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+        span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
         match &parse_result {
             Ok(value) => {

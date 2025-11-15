@@ -292,7 +292,7 @@ See [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting) for
 
 ## Build System
 
-**CRITICAL**: Always use `cargo make` commands, never direct `cargo` commands. See [Build System Practices](../build-system-practices.mdc) for details.
+**CRITICAL**: Always use `cargo make` commands, never direct `cargo` commands. The build system handles proc-macro crates correctly, includes timeouts to prevent hanging, and ensures consistency.
 
 ```bash
 cargo make test      # Run all tests

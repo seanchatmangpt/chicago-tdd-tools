@@ -1,8 +1,8 @@
-# CLI Testing Guide - v1.2.0
+# CLI Testing Guide - v1.1.2
 
 ## Overview
 
-Chicago TDD Tools provides comprehensive CLI testing capabilities for testing command-line applications. This guide covers the new helpers and patterns introduced in v1.2.0.
+Chicago TDD Tools provides comprehensive CLI testing capabilities for testing command-line applications. This guide covers the CLI testing helpers and patterns.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["cli-testing"] }
+chicago-tdd-tools = { version = "1.1.2", features = ["cli-testing"] }
 ```
 
 ### Basic Test
@@ -39,8 +39,6 @@ fn test_help_command() {
 ```
 
 ## CLI Command Builder
-
-### What's New in v1.2.0
 
 The `CliCommandBuilder` provides a fluent API for building CLI commands:
 
@@ -93,7 +91,7 @@ let env_vars = builder.env_vars();
 
 ## CLI Assertions
 
-### New in v1.2.0
+### CLI Assertions
 
 #### Assert Output Contains
 
@@ -133,8 +131,6 @@ CliAssertions::assert_output_contains_all(
 ```
 
 ## Environment Management
-
-### New in v1.2.0
 
 The `CliEnvironment` helps manage environment variables for isolated tests:
 
@@ -381,7 +377,7 @@ error: unresolved import `chicago_tdd_tools::cli`
 **Solution**: Run with `--test-generate` to create baseline:
 
 ```bash
-cargo test --test cli_tests -- --test-generate
+cargo make test test_name -- --test-generate
 ```
 
 ### Environment Variable Conflicts

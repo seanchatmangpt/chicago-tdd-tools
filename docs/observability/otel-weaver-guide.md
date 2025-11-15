@@ -1,4 +1,4 @@
-# OpenTelemetry and Weaver Testing Guide - v1.2.0
+# OpenTelemetry and Weaver Testing Guide - v1.1.2
 
 ## Overview
 
@@ -22,7 +22,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["otel", "weaver"] }
+chicago-tdd-tools = { version = "1.1.2", features = ["otel", "weaver"] }
 ```
 
 ### Simple OTEL Span Test

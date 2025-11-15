@@ -3,10 +3,6 @@
 //! Demonstrates property-based testing with Chicago TDD tools.
 //! Shows both the original PropertyTestGenerator and the enhanced ProptestStrategy.
 
-#[cfg(feature = "property-testing")]
-use chicago_tdd_tools::property::*;
-
-#[cfg(not(feature = "property-testing"))]
 use chicago_tdd_tools::property::*;
 
 #[tokio::main]

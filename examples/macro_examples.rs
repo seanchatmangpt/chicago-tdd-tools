@@ -11,59 +11,56 @@
 
 // Example macro usage patterns (these would be in test files):
 
-/*
-// Example 1: Basic synchronous test with AAA pattern
-test!(test_basic_aaa_pattern, {
-    // Arrange: Set up test data
-    let input = 5;
-    let expected = 10;
+#[cfg(test)]
+mod macro_examples {
+    use chicago_tdd_tools::test;
+    use chicago_tdd_tools::{assert_err, assert_ok};
 
-    // Act: Execute feature under test
-    let result = input * 2;
+    // Example 1: Basic synchronous test with AAA pattern
+    test!(test_basic_aaa_pattern, {
+        // Arrange: Set up test data
+        let input = 5;
+        let expected = 10;
 
-    // Assert: Verify behavior
-    assert_eq!(result, expected);
-});
+        // Act: Execute feature under test
+        let result = input * 2;
 
-// Example 2: Async test with AAA pattern
-async_test!(test_async_operation, {
-    // Arrange: Set up test data
-    let input = "test";
+        // Assert: Verify behavior
+        assert_eq!(result, expected);
+    });
 
-    // Act: Execute async operation
-    let result = async_operation(input).await;
+    // Example 2: Test with Result handling using assert_ok!
+    test!(test_result_handling, {
+        // Arrange: Create a Result
+        let result: Result<u32, String> = Ok(42);
 
-    // Assert: Verify behavior
-    assert_eq!(result, "test_processed");
-});
+        // Act & Assert: Verify Result is Ok and check value
+        assert_ok!(&result, "Result should be Ok");
+        if let Ok(value) = result {
+            assert_eq!(value, 42, "Value should be 42");
+        }
+    });
 
-// Example 3: Test with automatic fixture setup/teardown
-fixture_test!(test_with_fixture, fixture, {
-    // Arrange: Use provided fixture
-    let counter = fixture.test_counter();
-    fixture.set_metadata("test_key".to_string(), "test_value".to_string());
+    // Example 3: Test with error Result using assert_err!
+    test!(test_error_handling, {
+        // Arrange: Create an error Result
+        let result: Result<u32, String> = Err("test error".to_string());
 
-    // Act: Execute test operation
-    let metadata = fixture.get_metadata("test_key");
+        // Act & Assert: Verify Result is Err
+        assert_err!(&result, "Result should be Err");
+    });
 
-    // Assert: Verify behavior
-    assert_eq!(metadata, Some(&"test_value".to_string()));
-    assert!(counter >= 0);
-});
+    // Example 4: Test with assertions using custom message
+    // Note: For fixture_test! macro usage, see fixture_test! documentation
+    test!(test_with_custom_message, {
+        // Arrange: Set up test data
+        let value = 42;
+        let expected = 42;
 
-// Example 4: Performance test with tick budget validation
-performance_test!(test_hot_path_performance, {
-    // Arrange: Set up test data
-    let input = create_test_input();
-
-    // Act: Execute hot path operation and measure ticks
-    let (result, ticks) = measure_ticks(|| hot_path_operation(&input));
-
-    // Assert: Verify performance constraint
-    assert_within_tick_budget!(ticks, "Hot path operation");
-    assert_ok!(result, "Operation should succeed");
-});
-*/
+        // Act & Assert: Verify with custom message
+        assert_eq!(value, expected, "Value should equal expected");
+    });
+}
 
 fn main() {
     println!("Chicago TDD Tools - Macro Examples");

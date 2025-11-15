@@ -552,12 +552,20 @@ description = "Build documentation without opening"
 command = "timeout"
 args = ["20s", "cargo", "doc", "--no-deps", "--all-features"]
 
+# FMEA Fix: Documentation validation (RPN: 378 → 9)
+# Prevents documentation failures: version mismatches, broken links, wrong commands
+[tasks.docs-check]
+description = "Validate documentation (version numbers, build commands, links, style)"
+command = "timeout"
+args = ["10s", "bash", "scripts/docs-check.sh"]
+ignore_errors = false
+
 # CI/CD tasks
-# Expected total time: ~120s (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s)
+# Expected total time: ~130s (fmt: 5s, lint: 5s, test-unit: 1s, docs-check: 10s, audit-all: 30s)
 # Individual task timeouts ensure no single task hangs
 [tasks.ci]
 description = "Run CI pipeline (unit tests only, excludes slow integration tests)"
-dependencies = ["timeout-check", "fmt", "lint", "test-unit", "audit-all"]
+dependencies = ["timeout-check", "fmt", "lint", "test-unit", "docs-check", "audit-all"]
 
 # Release validation tasks - Prevent release failures (FMEA fixes)
 # These tasks reduce RPN (Risk Priority Number) by improving detection and preventing failures
@@ -638,6 +646,12 @@ args = [
 ]
 ignore_errors = true
 
+# FMEA Fix: Documentation validation in release process (RPN: 378 → 9)
+[tasks.release-validate-docs]
+description = "Validate documentation before release (version numbers, build commands, links, style)"
+dependencies = ["docs-check"]
+ignore_errors = false
+
 # Comprehensive release validation task
 [tasks.release-validate]
 description = "Comprehensive release validation (all FMEA failure mode checks)"
@@ -651,6 +665,7 @@ dependencies = [
   "release-validate-precommit",
   "release-validate-security",
   "release-validate-testcontainers",
+  "release-validate-docs",
 ]
 ignore_errors = false
 

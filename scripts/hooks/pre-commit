@@ -84,4 +84,21 @@ if [ "$TOTAL" -gt 0 ]; then
 fi
 
 echo "✅ No unwrap/expect in production code"
+
+# FMEA Fix: Documentation validation (RPN: 378 → 9)
+# Check if any documentation files are staged
+DOC_FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(md|mdx)$' || true)
+
+if [ -n "$DOC_FILES" ]; then
+    echo ""
+    echo "📚 Pre-commit: Validating documentation..."
+    if cargo make docs-check >/dev/null 2>&1; then
+        echo "✅ Documentation validation passed"
+    else
+        echo "❌ ERROR: Documentation validation failed"
+        echo "Run 'cargo make docs-check' to see details"
+        exit 1
+    fi
+fi
+
 exit 0

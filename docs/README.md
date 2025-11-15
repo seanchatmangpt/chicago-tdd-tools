@@ -40,8 +40,11 @@ Specialized features and integrations:
 
 Development processes and quality standards:
 
+- **[Development Workflows](DEVELOPMENT_WORKFLOWS.md)** - Comprehensive guide to development standards (`.cursorrules`) and workflow commands (`.cursor/commands`)
 - **[SPR Guide](process/SPR_GUIDE.md)** - Elite Rust developer standards and best practices
+- **[Coding Standards](process/CODING_STANDARDS.md)** - Consistent coding standards to eliminate Mura (unevenness)
 - **[Code Review Checklist](process/CODE_REVIEW_CHECKLIST.md)** - Comprehensive code review guidelines
+- **[Documentation Style Guide](process/DOCUMENTATION_STYLE_GUIDE.md)** - Documentation standards and consistency guidelines
 - **[FMEA: Tests, Build, Actions](process/FMEA_TESTS_BUILD_ACTIONS.md)** - Failure Mode and Effects Analysis for infrastructure
 - **[Poka-Yoke Weaver Registry](process/POKA_YOKE_WEAVER_REGISTRY.md)** - Type-level error prevention patterns
 - **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver integration
@@ -66,6 +69,7 @@ Root cause analyses and research documentation:
 Version history and release notes:
 
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete changelog of all releases
+- **[Release Summary v1.1.2](releases/RELEASE_SUMMARY_v1.1.2.md)** - Release summary for version 1.1.2 (current)
 - **[Release Notes v1.1.0](releases/RELEASE_NOTES_v1.1.0.md)** - Detailed release notes for version 1.1.0
 
 ## Diagrams
@@ -114,6 +118,7 @@ docs/
 - [Pattern Cookbook](../cookbook/src/README.md) - Architectural patterns
 
 ### Quality & Process
+- [Development Workflows](DEVELOPMENT_WORKFLOWS.md) - Standards and commands guide
 - [SPR Guide](process/SPR_GUIDE.md) - Development standards
 - [Code Review Checklist](process/CODE_REVIEW_CHECKLIST.md) - Review guidelines
 - [SLA Reference](reference/SLA_REFERENCE.md) - Quality standards

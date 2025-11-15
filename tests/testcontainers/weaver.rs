@@ -13,10 +13,7 @@ mod weaver_tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::assert_ok;
-    use chicago_tdd_tools::async_test;
-    use chicago_tdd_tools::test;
-    use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::prelude::*;
     use chicago_tdd_tools::assertions::assert_that_with_msg;
     use chicago_tdd_tools::testcontainers::*;
     use chicago_tdd_tools::observability::weaver::WeaverValidator;
@@ -49,12 +46,6 @@ mod weaver_tests {
     const PYTHON_IMAGE: &str = "python";
     const PYTHON_TAG: &str = "3-slim";
 
-    // **Kaizen improvement**: Extract magic number `500` to named constant for container readiness wait.
-    // Pattern: Use named constants instead of magic numbers for timing values.
-    // Benefits: Improves readability, maintainability, self-documentation.
-    // Value: 500ms provides sufficient time for container to be ready after creation.
-    const CONTAINER_READINESS_WAIT_MS: u64 = 500;
-
     // Test that Weaver Docker image is available and can execute commands
     //
     // This test verifies:
@@ -67,18 +58,14 @@ mod weaver_tests {
     test!(weaver_container_available, {
         require_docker();
 
-        // Arrange: Create Weaver container
+        // Arrange: Create Weaver container with entrypoint override to keep it running
+        // **Root Cause Fix**: otel/weaver image has entrypoint [/weaver/weaver] that interferes with custom commands.
+        // Use with_command() with entrypoint parameter to override entrypoint to /bin/sh, then run sleep infinity.
+        // This prevents "container is not running" errors when executing commands.
+        // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
-
-        // **Gemba Walk Fix**: Ensure container is running before exec
-        // Previously, exec might be called before container is fully started, causing "container is not running" error.
-        // Fix: Use a command that keeps container running, or wait for container to be ready.
-        // Since GenericContainer::new() starts container, we use a short sleep to ensure it's ready.
-        use std::thread;
-        use std::time::Duration;
-        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
 
         // Act: Execute weaver --version in container
         let result = container.exec("weaver", &["--version"]);
@@ -105,15 +92,14 @@ mod weaver_tests {
     test!(weaver_container_registry_check, {
         require_docker();
 
-        // Arrange: Create Weaver container
+        // Arrange: Create Weaver container with entrypoint override to keep it running
+        // **Root Cause Fix**: otel/weaver image has entrypoint [/weaver/weaver] that interferes with custom commands.
+        // Use with_command() with entrypoint parameter to override entrypoint to /bin/sh, then run sleep infinity.
+        // This prevents "container is not running" errors when executing commands.
+        // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
-
-        // **Gemba Walk Fix**: Ensure container is running before exec
-        use std::thread;
-        use std::time::Duration;
-        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
 
         // Act: Execute weaver registry check with non-existent registry
         let result =
@@ -145,15 +131,14 @@ mod weaver_tests {
     test!(weaver_container_live_check_capability, {
         require_docker();
 
-        // Arrange: Create Weaver container
+        // Arrange: Create Weaver container with entrypoint override to keep it running
+        // **Root Cause Fix**: otel/weaver image has entrypoint [/weaver/weaver] that interferes with custom commands.
+        // Use with_command() with entrypoint parameter to override entrypoint to /bin/sh, then run sleep infinity.
+        // This prevents "container is not running" errors when executing commands.
+        // Note: Entrypoint override is required because weaver entrypoint doesn't accept arbitrary commands.
         let client = ContainerClient::new();
-        let container = GenericContainer::new(client.client(), WEAVER_IMAGE, WEAVER_TAG)
+        let container = GenericContainer::with_command(client.client(), WEAVER_IMAGE, WEAVER_TAG, "sleep", &["infinity"], Some(&["/bin/sh"]))
             .unwrap_or_else(|e| panic!("Failed to create Weaver container: {}", e));
-
-        // **Gemba Walk Fix**: Ensure container is running before exec
-        use std::thread;
-        use std::time::Duration;
-        thread::sleep(Duration::from_millis(CONTAINER_READINESS_WAIT_MS)); // Wait for container to be ready
 
         // Act: Check if weaver binary exists and can show help
         let result = container.exec("weaver", &["--help"]);
@@ -220,6 +205,8 @@ mod weaver_tests {
         let host_address = "host.docker.internal";
 
         // Arrange: Create Python container with OTEL SDK
+        // **Root Cause Fix**: Use with_env_and_command to ensure container stays running for exec.
+        // Python images typically stay running, but using explicit command prevents lifecycle issues.
         let client = ContainerClient::new();
         let mut env_vars = HashMap::new();
         env_vars.insert(
@@ -228,11 +215,12 @@ mod weaver_tests {
         );
         env_vars.insert("OTEL_SERVICE_NAME".to_string(), "testcontainer-app".to_string());
 
-        let container = GenericContainer::with_env(
+        let container = GenericContainer::with_env_and_command(
             client.client(),
             PYTHON_IMAGE,
             PYTHON_TAG,
             env_vars,
+            Some(("sleep", &["infinity"])),
         )
         .unwrap_or_else(|e| panic!("Failed to create Python container: {}", e));
 

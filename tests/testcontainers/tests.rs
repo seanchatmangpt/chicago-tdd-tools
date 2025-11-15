@@ -29,10 +29,7 @@ mod tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::test;
-    use chicago_tdd_tools::assert_ok;
-    use chicago_tdd_tools::assert_err;
-    use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::prelude::*;
     use chicago_tdd_tools::assertions::assert_that_with_msg;
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
@@ -53,7 +50,7 @@ mod tests {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: Try to exec a non-existent command
@@ -74,7 +71,7 @@ mod tests {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: First exec fails (invalid command) - exec succeeds but command fails
@@ -101,7 +98,7 @@ mod tests {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act & Assert: Empty command args
@@ -129,6 +126,110 @@ mod tests {
         let exec_result = result.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result.exit_code, &1, "Command should exit with code 1");
         assert_that_with_msg(&exec_result.stderr.contains("error"), |v| *v, "Should capture stderr");
+    });
+
+    // Test that verifies container lifecycle: containers created with with_command() stay running
+    //
+    // This test verifies:
+    // 1. Containers created with with_command() stay running
+    // 2. Multiple exec operations work on the same container
+    // 3. Container doesn't exit between exec operations
+    //
+    // **Root Cause Prevention**: This test would catch the pattern where containers exit
+    // before exec is called, preventing "container is not running" errors.
+    // Pattern: Use with_command() for images that exit immediately.
+    test!(container_lifecycle_stays_running_for_exec, {
+        require_docker();
+
+        // Arrange: Create container with command to keep it running
+        // **Root Cause Prevention**: Use with_command() to ensure container stays running
+        // This prevents "container is not running" errors when executing commands
+        let client = ContainerClient::new();
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
+            .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
+
+        // Act: Execute first command
+        let result1 = container.exec("echo", &["first"]);
+        assert_ok!(&result1, "First exec should succeed");
+        let exec_result1 = result1.expect("Exec should succeed after assert_ok");
+        assert_eq_msg!(&exec_result1.exit_code, &0, "First command should succeed");
+
+        // Act: Execute second command (verifies container is still running)
+        let result2 = container.exec("echo", &["second"]);
+        assert_ok!(&result2, "Second exec should succeed (container still running)");
+        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        assert_eq_msg!(&exec_result2.exit_code, &0, "Second command should succeed");
+
+        // Act: Execute third command (verifies container remains running)
+        let result3 = container.exec("sh", &["-c", "echo third"]);
+        assert_ok!(&result3, "Third exec should succeed (container still running)");
+        let exec_result3 = result3.expect("Exec should succeed after assert_ok");
+        assert_eq_msg!(&exec_result3.exit_code, &0, "Third command should succeed");
+        assert_that_with_msg(&exec_result3.stdout.contains("third"), |v| *v, "Third command output should match");
+
+        // Assert: Verify all commands executed successfully (container stayed running)
+        // This verifies that with_command() keeps container running for multiple exec operations
+        assert_that_with_msg(
+            &(exec_result1.stdout.contains("first") && exec_result2.stdout.contains("second") && exec_result3.stdout.contains("third")),
+            |v| *v,
+            "All commands should execute successfully, verifying container stays running"
+        );
+    });
+
+    // Test that verifies entrypoint override works for containers with problematic entrypoints
+    //
+    // This test verifies:
+    // 1. Containers with entrypoint override (Docker CLI workaround) stay running
+    // 2. Exec operations work correctly with entrypoint override
+    // 3. Container lifecycle is maintained for Docker CLI-created containers
+    //
+    // **Root Cause Prevention**: This test verifies the entrypoint override workaround
+    // works correctly for images like otel/weaver that have entrypoints that interfere.
+    test!(container_entrypoint_override_works, {
+        require_docker();
+
+        // Arrange: Create container with entrypoint override (simulating weaver scenario)
+        // Use alpine with entrypoint override to test the Docker CLI workaround
+        let client = ContainerClient::new();
+        let container = GenericContainer::with_command(
+            client.client(),
+            ALPINE_IMAGE,
+            ALPINE_TAG,
+            "sleep",
+            &["infinity"],
+            Some(&["/bin/sh"]),  // Override entrypoint to test Docker CLI workaround
+        )
+        .unwrap_or_else(|e| panic!("Failed to create container with entrypoint override: {}", e));
+
+        // Act: Execute first command (verifies container is running and exec works)
+        let result1 = container.exec("echo", &["entrypoint", "override", "test"]);
+        assert_ok!(&result1, "First exec should succeed with entrypoint override");
+        let exec_result1 = result1.expect("Exec should succeed after assert_ok");
+        assert_eq_msg!(&exec_result1.exit_code, &0, "First command should succeed");
+        assert_that_with_msg(
+            &exec_result1.stdout.contains("entrypoint"),
+            |v| *v,
+            "First command output should contain expected text"
+        );
+
+        // Act: Execute second command (verifies container stays running)
+        let result2 = container.exec("sh", &["-c", "echo second command"]);
+        assert_ok!(&result2, "Second exec should succeed (container still running)");
+        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        assert_eq_msg!(&exec_result2.exit_code, &0, "Second command should succeed");
+        assert_that_with_msg(
+            &exec_result2.stdout.contains("second"),
+            |v| *v,
+            "Second command output should contain expected text"
+        );
+
+        // Assert: Verify entrypoint override worked (container stays running, exec works)
+        // This verifies that the Docker CLI workaround for entrypoint override is functional
+        assert_that_with_msg(
+            &(exec_result1.stdout.contains("entrypoint") && exec_result2.stdout.contains("second")),
+            |v| *v,
+            "Entrypoint override should work - container stays running and exec operations succeed"
+        );
     });
 
     // **Gemba Walk Fix**: Add critical boundary condition tests (80/20 - catch 80% of bugs)
@@ -250,7 +351,7 @@ mod tests {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act: Execute non-existent command (exec succeeds, but command fails)
@@ -384,7 +485,7 @@ mod tests {
         // Arrange: Set up Docker and container
         require_docker();
         let client = ContainerClient::new();
-        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+        let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
 
         // Act & Assert: Successful command
@@ -420,8 +521,8 @@ mod tests {
 
         // Act & Assert: Verify clients can be used
         if docker_available() {
-            let _container1 = GenericContainer::with_command(client3.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
-            let _container2 = GenericContainer::with_command(client4.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
+            let _container1 = GenericContainer::with_command(client3.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
+            let _container2 = GenericContainer::with_command(client4.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
         }
     });
 
@@ -457,7 +558,7 @@ mod tests {
                     
                     // Act: Create container in parallel
                     let container_result =
-                        GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"]);
+                        GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
 
                     // Assert: Verify each container is created successfully (observable behavior)
                     assert_ok!(
@@ -512,8 +613,8 @@ mod tests {
             .as_nanos();
 
         let client = ContainerClient::new();
-        let container = Arc::new(
-            GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+            let container = Arc::new(
+            GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
                 .expect("Container should be created for stress testing"),
         );
 
@@ -588,7 +689,7 @@ mod tests {
         // Arrange: Create multiple containers
         let containers: Vec<_> = (0..num_containers)
             .map(|i| {
-                GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"])
+                GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
                     .expect(&format!("Container {} should be created", i))
             })
             .collect();

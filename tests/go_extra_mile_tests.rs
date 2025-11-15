@@ -9,22 +9,20 @@
 //! **CRITICAL**: These tests do NOT use testcontainers, do NOT require Docker,
 //! and do NOT start Weaver CLI. They only test Rust types and validators.
 
-use chicago_tdd_tools::assert_eq_msg;
-use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::test;
-
 #[cfg(feature = "weaver")]
 use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, OtelTestHelper, SpanValidator};
-use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
 
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::ValidatedAssertion;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::test;
+    use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
+    use chicago_tdd_tools::core::builders::TestDataBuilder;
 
     // ========================================================================
     // 1st Idea Tests: Basic implementations

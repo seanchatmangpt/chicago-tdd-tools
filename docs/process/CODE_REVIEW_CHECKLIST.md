@@ -25,6 +25,7 @@ When reviewing test code, verify:
 - [ ] **Concurrent safe**: Tests can run concurrently without conflicts
 - [ ] **No hardcoded paths**: No hardcoded file paths like `/tmp/test.txt` (use tempfile crate)
 - [ ] **No hardcoded ports**: No hardcoded ports (use OS-assigned port 0)
+- [ ] **Import pattern**: Tests use `use chicago_tdd_tools::prelude::*;` for common macros (see CODING_STANDARDS.md)
 
 See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and examples.
 
@@ -36,6 +37,23 @@ See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and e
 - [ ] **Documentation**: Public APIs have doc comments with `# Errors` sections
 - [ ] **Tests**: New code has tests (AAA pattern, behavior verification)
 - [ ] **External command timeouts**: All external commands (docker, git, etc.) must have timeout protection to prevent hanging when dependencies are unavailable (see TIMEOUT_ENFORCEMENT.md for pattern)
+- [ ] **Consistency**: Code follows established patterns (see CODING_STANDARDS.md)
+- [ ] **unwrap/expect usage**: Production code uses `Result<T, E>`, test code can use `unwrap()`/`expect()` with justification
+
+## Documentation Review Checklist (FMEA: Documentation System RPN 189-192 → 16-18)
+
+When reviewing documentation changes, verify:
+
+- [ ] **Version numbers**: All version references match current version (run `cargo make docs-check`)
+- [ ] **Build commands**: All examples use `cargo make` commands, not direct `cargo` commands
+- [ ] **Links**: All internal links work (run `cargo make docs-check`)
+- [ ] **Style guide**: Documentation follows [Documentation Style Guide](DOCUMENTATION_STYLE_GUIDE.md)
+- [ ] **Cross-references**: Major docs have "See Also" or "Next Steps" sections
+- [ ] **Examples**: Code examples are runnable and use correct version/commands
+- [ ] **New features**: New features have documentation
+- [ ] **API changes**: API changes have updated documentation
+
+**Automated checks**: Run `cargo make docs-check` to validate version numbers, build commands, links, and style.
 
 ## Clippy Allow Patterns
 

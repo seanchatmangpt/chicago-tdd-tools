@@ -1,0 +1,73 @@
+#!/bin/sh
+# Chicago TDD Tools Pre-Push Hook
+# FMEA Fix: Ensure examples compile and pass tests before push (RPN: 168 → 9)
+#
+# This hook ensures all examples compile and their tests pass before pushing.
+# It's automatically installed by scripts/install-hooks.sh
+#
+# To bypass temporarily (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push
+# To remove hook: rm .git/hooks/pre-push
+
+set -e
+
+# Allow bypass for emergency situations only
+if [ -n "$SKIP_EXAMPLES_CHECK" ]; then
+    echo "⚠️  WARNING: Skipping examples check (SKIP_EXAMPLES_CHECK set)"
+    echo "This is DISCOURAGED. Fix examples before pushing."
+    exit 0
+fi
+
+echo "🔍 Pre-push: Checking examples compile and tests pass..."
+
+# Check if examples directory exists
+if [ ! -d "examples" ]; then
+    echo "⚠️  No examples directory found, skipping examples check"
+    exit 0
+fi
+
+# Step 1: Build all examples (only examples, not all targets)
+echo "📦 Building all examples..."
+BUILD_OUTPUT=$(timeout 30s cargo build --examples 2>&1) || BUILD_EXIT=$?
+if [ -z "${BUILD_EXIT:-}" ]; then
+    echo "✅ All examples compile successfully"
+else
+    echo ""
+    echo "❌ ERROR: Examples compilation failed"
+    echo ""
+    echo "Last 20 lines of build output:"
+    echo "$BUILD_OUTPUT" | tail -20
+    echo ""
+    echo "🔧 How to fix:"
+    echo "  1. Run 'cargo build --examples --all-targets' to see full errors"
+    echo "  2. Fix compilation errors in examples/"
+    echo "  3. Ensure all required features are enabled"
+    echo ""
+    echo "⚠️  To bypass (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push"
+    exit 1
+fi
+
+# Step 2: Run example tests
+echo "🧪 Running example tests..."
+TEST_OUTPUT=$(timeout 60s cargo test --examples 2>&1) || TEST_EXIT=$?
+if [ -z "${TEST_EXIT:-}" ]; then
+    echo "✅ All example tests pass"
+else
+    echo ""
+    echo "❌ ERROR: Example tests failed"
+    echo ""
+    echo "Last 30 lines of test output:"
+    echo "$TEST_OUTPUT" | tail -30
+    echo ""
+    echo "🔧 How to fix:"
+    echo "  1. Run 'cargo test --examples' to see full test failures"
+    echo "  2. Fix failing tests in examples/"
+    echo "  3. Ensure all required features are enabled for tests"
+    echo ""
+    echo "⚠️  To bypass (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push"
+    exit 1
+fi
+
+echo "✅ Examples check passed"
+
+exit 0
+
