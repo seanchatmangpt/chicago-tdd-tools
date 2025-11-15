@@ -9,6 +9,7 @@ use std::path::PathBuf;
 
 use crate::core::{
     alert, assertions, async_fixtures, builders, const_assert, fixtures, macros, state, type_level,
+    assertions_v130, builders_presets,
 };
 
 #[derive(Serialize)]
@@ -41,6 +42,8 @@ fn stat(verbose: usize) -> Result<Status> {
             "type_level".to_string(),
             "const_assert".to_string(),
             "alert".to_string(),
+            "assert_v130".to_string(),
+            "builders_presets".to_string(),
         ],
         examples: vec![
             "fixtures".to_string(),
@@ -51,6 +54,8 @@ fn stat(verbose: usize) -> Result<Status> {
             "type_level".to_string(),
             "const_assert".to_string(),
             "alert".to_string(),
+            "assert_v130".to_string(),
+            "builders_presets".to_string(),
         ],
     })
 }
@@ -67,6 +72,8 @@ fn list() -> Result<Vec<String>> {
         "type_level".to_string(),
         "const_assert".to_string(),
         "alert".to_string(),
+        "assert_v130".to_string(),
+        "builders_presets".to_string(),
     ])
 }
 
@@ -161,6 +168,14 @@ fn execute_core_example(name: &str) -> std::result::Result<(), String> {
             {
                 alert::example_alert_logger().map_err(|e| e.to_string())?;
             }
+            Ok(())
+        }
+        "assert_v130" => {
+            assertions_v130::run().map_err(|e| e.to_string())?;
+            Ok(())
+        }
+        "builders_presets" => {
+            builders_presets::run().map_err(|e| e.to_string())?;
             Ok(())
         }
         _ => Err(format!("Unknown example: {}", name)),

@@ -37,11 +37,15 @@ fn stat(verbose: usize) -> Result<Status> {
     {
         features.push("mut".to_string());
         examples.push("mut".to_string());
+        features.push("mut_v130".to_string());
+        examples.push("mut_v130".to_string());
     }
     #[cfg(feature = "snapshot-testing")]
     {
         features.push("snap".to_string());
         examples.push("snap".to_string());
+        features.push("snap_redact".to_string());
+        examples.push("snap_redact".to_string());
     }
     #[cfg(feature = "concurrency-testing")]
     {
@@ -52,6 +56,8 @@ fn stat(verbose: usize) -> Result<Status> {
     {
         features.push("cli".to_string());
         examples.push("cli".to_string());
+        features.push("cli_env".to_string());
+        examples.push("cli_env".to_string());
     }
     #[cfg(feature = "parameterized-testing")]
     {
@@ -74,10 +80,12 @@ fn list() -> Result<Vec<String>> {
     #[cfg(feature = "mutation-testing")]
     {
         examples.push("mut".to_string());
+        examples.push("mut_v130".to_string());
     }
     #[cfg(feature = "snapshot-testing")]
     {
         examples.push("snap".to_string());
+        examples.push("snap_redact".to_string());
     }
     #[cfg(feature = "concurrency-testing")]
     {
@@ -86,6 +94,7 @@ fn list() -> Result<Vec<String>> {
     #[cfg(feature = "cli-testing")]
     {
         examples.push("cli".to_string());
+        examples.push("cli_env".to_string());
     }
     #[cfg(feature = "parameterized-testing")]
     {
@@ -205,9 +214,19 @@ fn execute_test_example(name: &str) -> std::result::Result<(), String> {
             testing::mutation::example_mutation_test();
             Ok(())
         }
+        #[cfg(feature = "mutation-testing")]
+        "mut_v130" => {
+            testing::mutation_advanced::run().map_err(|e| e.to_string())?;
+            Ok(())
+        }
         #[cfg(feature = "snapshot-testing")]
         "snap" => {
             testing::snapshot::example_snapshot_test();
+            Ok(())
+        }
+        #[cfg(feature = "snapshot-testing")]
+        "snap_redact" => {
+            testing::snapshot_redaction::run().map_err(|e| e.to_string())?;
             Ok(())
         }
         #[cfg(feature = "concurrency-testing")]
@@ -218,6 +237,11 @@ fn execute_test_example(name: &str) -> std::result::Result<(), String> {
         #[cfg(feature = "cli-testing")]
         "cli" => {
             testing::cli::example_cli_test();
+            Ok(())
+        }
+        #[cfg(feature = "cli-testing")]
+        "cli_env" => {
+            testing::cli_environment::run().map_err(|e| e.to_string())?;
             Ok(())
         }
         #[cfg(feature = "parameterized-testing")]
@@ -231,11 +255,11 @@ fn execute_test_example(name: &str) -> std::result::Result<(), String> {
                 return Err("Property testing feature not enabled".to_string());
             }
             #[cfg(not(feature = "mutation-testing"))]
-            if name == "mut" {
+            if name == "mut" || name == "mut_v130" {
                 return Err("Mutation testing feature not enabled".to_string());
             }
             #[cfg(not(feature = "snapshot-testing"))]
-            if name == "snap" {
+            if name == "snap" || name == "snap_redact" {
                 return Err("Snapshot testing feature not enabled".to_string());
             }
             #[cfg(not(feature = "concurrency-testing"))]
@@ -243,7 +267,7 @@ fn execute_test_example(name: &str) -> std::result::Result<(), String> {
                 return Err("Concurrency testing feature not enabled".to_string());
             }
             #[cfg(not(feature = "cli-testing"))]
-            if name == "cli" {
+            if name == "cli" || name == "cli_env" {
                 return Err("CLI testing feature not enabled".to_string());
             }
             #[cfg(not(feature = "parameterized-testing"))]
