@@ -636,7 +636,7 @@ chicago-tdd-tools = {
 - **[Code Review Checklist](docs/process/CODE_REVIEW_CHECKLIST.md)** - What reviewers look for
 - **[FMEA: Tests, Build, Actions](docs/process/FMEA_TESTS_BUILD_ACTIONS.md)** - Risk analysis, improvements
 - **[Test Isolation Guide](docs/process/TEST_ISOLATION_GUIDE.md)** - Preventing test interdependencies
-- **[Pattern Cookbook](../cookbook/src/README.md)** - Alexander-style patterns (20 documented)
+- **[Pattern Cookbook](cookbook/src/README.md)** - Alexander-style patterns (20 documented)
 
 ### 🔍 Troubleshooting
 

@@ -14,7 +14,7 @@
 #    - Go to: https://crates.io/settings/publishing
 #    - Click "Add a new Trusted Publisher"
 #    - Repository owner: seanchatmangpt
-#    - Repository name: knhk
+#    - Repository name: chicago-tdd-tools
 #    - Workflow filename: release.yml
 #    - Click "Add"
 # 2. No secrets needed - OIDC authentication is automatic!
@@ -358,7 +358,7 @@ jobs:
           echo "Please check:"
           echo "  1. GitHub Actions is added as Trusted Publisher on crates.io"
           echo "     - Go to: https://crates.io/settings/publishing"
-          echo "     - Repository: seanchatmangpt/knhk"
+          echo "     - Repository: seanchatmangpt/chicago-tdd-tools"
           echo "     - Workflow: release.yml"
           echo "  2. Crate version in Cargo.toml matches tag version"
           echo "  3. Crate name is available on crates.io"

@@ -63,8 +63,8 @@
 //! - **Score**: Percentage of mutations caught
 //! - **Acceptable**: Score >= 80%
 
-use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::mutation::*;
+use chicago_tdd_tools::prelude::*;
 use std::collections::HashMap;
 
 /// Example: Mutation testing with MutationTester
@@ -117,7 +117,10 @@ async fn main() {
     });
 
     // Assert: Mutations caught
-    chicago_tdd_tools::alert_info!("Mutation detection: {}", if caught { "CAUGHT" } else { "MISSED" });
+    chicago_tdd_tools::alert_info!(
+        "Mutation detection: {}",
+        if caught { "CAUGHT" } else { "MISSED" }
+    );
 
     // Test mutation score
     let mut data2 = HashMap::new();

@@ -152,7 +152,11 @@ fn example_container_with_ports(
     )?;
     let host_port_80 = container_with_ports.get_host_port(DEFAULT_HTTP_PORT)?;
     let host_port_443 = container_with_ports.get_host_port(443)?;
-    chicago_tdd_tools::alert_info!("   ✓ Container port {} -> host port {}", DEFAULT_HTTP_PORT, host_port_80);
+    chicago_tdd_tools::alert_info!(
+        "   ✓ Container port {} -> host port {}",
+        DEFAULT_HTTP_PORT,
+        host_port_80
+    );
     chicago_tdd_tools::alert_info!("   ✓ Container port 443 -> host port {}", host_port_443);
     Ok(())
 }
@@ -237,7 +241,9 @@ fn example_container_with_env(client: &ContainerClient) -> Result<(), Box<dyn st
 /// ```
 fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std::error::Error>> {
     chicago_tdd_tools::alert_info!("\n4. Executing commands in container...");
-    chicago_tdd_tools::alert_info!("   Note: Using with_command() - the unified method for all containers");
+    chicago_tdd_tools::alert_info!(
+        "   Note: Using with_command() - the unified method for all containers"
+    );
 
     // Use Alpine with sleep to keep it running (correct pattern for images that exit)
     // **Unified API**: with_command() works for all containers:
@@ -278,7 +284,9 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
         }
     }
 
-    chicago_tdd_tools::alert_info!("   (Pattern: Use with_command() for images that exit immediately)");
+    chicago_tdd_tools::alert_info!(
+        "   (Pattern: Use with_command() for images that exit immediately)"
+    );
     Ok(())
 }
 
@@ -314,9 +322,15 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
 /// )?;
 /// ```
 fn example_entrypoint_override() {
-    chicago_tdd_tools::alert_info!("\n4b. Container with entrypoint override (e.g., otel/weaver)...");
-    chicago_tdd_tools::alert_info!("   Note: For images with entrypoints that interfere, use entrypoint parameter");
-    chicago_tdd_tools::alert_info!("   Example pattern (commented out - requires otel/weaver image):");
+    chicago_tdd_tools::alert_info!(
+        "\n4b. Container with entrypoint override (e.g., otel/weaver)..."
+    );
+    chicago_tdd_tools::alert_info!(
+        "   Note: For images with entrypoints that interfere, use entrypoint parameter"
+    );
+    chicago_tdd_tools::alert_info!(
+        "   Example pattern (commented out - requires otel/weaver image):"
+    );
     chicago_tdd_tools::alert_info!("   ```rust");
     chicago_tdd_tools::alert_info!("   let weaver_container = GenericContainer::with_command(");
     chicago_tdd_tools::alert_info!("       client.client(),");
@@ -328,10 +342,14 @@ fn example_entrypoint_override() {
         "       Some(&[\"/bin/sh\"]), // Entrypoint override needed (uses Docker CLI workaround)"
     );
     chicago_tdd_tools::alert_info!("   )?;");
-    chicago_tdd_tools::alert_info!("   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;");
+    chicago_tdd_tools::alert_info!(
+        "   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;"
+    );
     chicago_tdd_tools::alert_info!("   assert_eq!(weaver_result.exit_code, SUCCESS_EXIT_CODE);");
     chicago_tdd_tools::alert_info!("   ```");
-    chicago_tdd_tools::alert_info!("   (Pattern: Use entrypoint = Some(&[\"/bin/sh\"]) for images like otel/weaver)");
+    chicago_tdd_tools::alert_info!(
+        "   (Pattern: Use entrypoint = Some(&[\"/bin/sh\"]) for images like otel/weaver)"
+    );
 }
 
 /// Example: Using wait conditions
@@ -357,10 +375,19 @@ fn example_entrypoint_override() {
 /// ```
 fn example_wait_conditions() {
     chicago_tdd_tools::alert_info!("\n5. Using wait conditions...");
-    chicago_tdd_tools::alert_info!("   Note: Wait conditions ensure containers are ready before use");
-    chicago_tdd_tools::alert_info!("   Example: WaitFor::http(\"/\", {}) for HTTP health checks", DEFAULT_HTTP_PORT);
-    chicago_tdd_tools::alert_info!("   Example: WaitFor::message(\"ready\") for log message waiting");
-    chicago_tdd_tools::alert_info!("   ✓ Wait conditions available via GenericContainer::with_wait_for()");
+    chicago_tdd_tools::alert_info!(
+        "   Note: Wait conditions ensure containers are ready before use"
+    );
+    chicago_tdd_tools::alert_info!(
+        "   Example: WaitFor::http(\"/\", {}) for HTTP health checks",
+        DEFAULT_HTTP_PORT
+    );
+    chicago_tdd_tools::alert_info!(
+        "   Example: WaitFor::message(\"ready\") for log message waiting"
+    );
+    chicago_tdd_tools::alert_info!(
+        "   ✓ Wait conditions available via GenericContainer::with_wait_for()"
+    );
 }
 
 #[cfg(feature = "testcontainers")]

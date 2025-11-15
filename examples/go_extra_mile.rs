@@ -63,8 +63,6 @@
 //! - **2nd Idea**: 80/20 sweet spot - generic, works for all types
 //! - **3rd Idea**: Maximum value - type-safe, prevents entire class of errors
 
-#[cfg(feature = "weaver")]
-use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::types::{
@@ -72,6 +70,8 @@ use chicago_tdd_tools::otel::types::{
 };
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
+#[cfg(feature = "weaver")]
+use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "otel")]
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -539,7 +539,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    chicago_tdd_tools::alert_info!("\n✓ Maximum value: Type-safe, validated, prevents entire class of errors");
+    chicago_tdd_tools::alert_info!(
+        "\n✓ Maximum value: Type-safe, validated, prevents entire class of errors"
+    );
     chicago_tdd_tools::alert_success!("OTEL instrumentation: Full spans and metrics");
     chicago_tdd_tools::alert_success!("Weaver validation: Schema compliance (when available)");
     chicago_tdd_tools::alert_info!();
@@ -553,7 +555,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     chicago_tdd_tools::alert_info!("2nd Idea: Usually best - 80% more value, reasonable effort");
     chicago_tdd_tools::alert_info!("3rd Idea: Maximum value, but evaluate effort vs. benefit");
     chicago_tdd_tools::alert_info!();
-    chicago_tdd_tools::alert_info!("Recommendation: Use 2nd idea for most cases, 3rd idea when type safety is critical");
+    chicago_tdd_tools::alert_info!(
+        "Recommendation: Use 2nd idea for most cases, 3rd idea when type safety is critical"
+    );
 
     Ok(())
 }

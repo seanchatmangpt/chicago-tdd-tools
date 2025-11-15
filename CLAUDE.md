@@ -9,7 +9,7 @@
 
 Rust testing framework enforcing Chicago-style TDD (Classicist) through compile-time guarantees. Type system encodes invariants—if it compiles, correctness follows. Quality default, prevention over detection.
 
-**Stats:** ~8,000 LOC | Rust 2021+ | MIT License | https://github.com/seanchatmangpt/knhk
+**Stats:** ~8,000 LOC | Rust 2021+ | MIT License | https://github.com/seanchatmangpt/chicago-tdd-tools
 
 **Principles:**
 1. **Poka-Yoke Design** - Mistakes prevented at compilation, not runtime

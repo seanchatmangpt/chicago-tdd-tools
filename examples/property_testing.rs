@@ -122,7 +122,9 @@ async fn main() {
 
     #[cfg(not(feature = "property-testing"))]
     {
-        chicago_tdd_tools::alert_warning!("2. ProptestStrategy requires 'property-testing' feature");
+        chicago_tdd_tools::alert_warning!(
+            "2. ProptestStrategy requires 'property-testing' feature"
+        );
         chicago_tdd_tools::alert_info!("   Enable with: --features property-testing");
     }
 }
