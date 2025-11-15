@@ -11,5 +11,6 @@ pub mod obs;
 pub mod process;
 pub mod quality;
 pub mod release;
+pub mod system;
 pub mod test;
 pub mod valid;

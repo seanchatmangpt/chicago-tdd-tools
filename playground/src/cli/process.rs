@@ -18,6 +18,9 @@ pub struct GuidanceInfo {
 ///
 /// DMEDI (Define, Measure, Explore, Develop, Implement) is a systematic design methodology
 /// that ensures new designs meet customer needs, business goals, and quality requirements.
+///
+/// Examples:
+///   playg process dmedi                  # Show DMEDI guidance
 #[verb]
 fn dmedi() -> Result<GuidanceInfo> {
     Ok(GuidanceInfo {
@@ -44,6 +47,9 @@ fn dmedi() -> Result<GuidanceInfo> {
 ///
 /// DMAIC (Define, Measure, Analyze, Improve, Control) is a systematic approach
 /// for problem-solving and process improvement.
+///
+/// Examples:
+///   playg process dmaic                  # Show DMAIC guidance
 #[verb]
 fn dmaic() -> Result<GuidanceInfo> {
     Ok(GuidanceInfo {

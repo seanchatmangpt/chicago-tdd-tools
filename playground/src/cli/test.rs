@@ -22,10 +22,11 @@ pub struct ExecutionResult {
 }
 
 /// Show testing features status
+///
+/// Examples:
+///   playg test stat           # Show status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     let mut features = vec!["gen".to_string()];
     let mut examples = vec!["gen".to_string()];
 
@@ -97,11 +98,12 @@ fn list() -> Result<Vec<String>> {
 }
 
 /// Execute multiple test examples
+///
+/// Examples:
+///   playg test exec gen
+///   playg test exec "gen prop mut"
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated example names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec(names: String) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 

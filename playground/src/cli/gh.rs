@@ -25,29 +25,14 @@ pub struct GhStatus {
 }
 
 /// Show GitHub Actions status
+///
+/// Examples:
+///   playg gh stat              # Summary status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<GhStatus> {
+fn stat() -> Result<GhStatus> {
     let workflows = discover_workflows();
     let valid_count = workflows.iter().filter(|w| w.valid).count();
     let invalid_count = workflows.len() - valid_count;
-
-    if verbose > 0 {
-        println!("📊 GitHub Actions Status");
-        println!("========================");
-        println!();
-
-        for workflow in &workflows {
-            let status_icon = if workflow.valid { "✅" } else { "❌" };
-            println!("{} {} (jobs: {})", status_icon, workflow.name, workflow.jobs);
-
-            if verbose > 1 {
-                println!("   Path: {}", workflow.path);
-            }
-        }
-        println!();
-    }
 
     Ok(GhStatus {
         total_workflows: workflows.len(),
@@ -95,11 +80,11 @@ fn list(
 }
 
 /// Validate GitHub Actions workflows
+///
+/// Examples:
+///   playg gh check              # Basic validation
 #[verb]
-fn check(
-    #[arg(long, help = "Auto-fix issues if possible")] fix: bool,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Vec<String>> {
+fn check() -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let mut issues = Vec::new();
 
@@ -151,21 +136,15 @@ fn check(
         }
     }
 
-    if fix {
-        println!();
-        println!("🔧 Auto-fix is not yet implemented.");
-    }
-
     Ok(issues)
 }
 
 /// Show recent workflow runs (requires gh CLI)
+///
+/// Examples:
+///   playg gh runs                    # Show recent runs
 #[verb]
-fn runs(
-    #[arg(long, default_value = "10", help = "Maximum number of runs to display")] limit: usize,
-    #[arg(long, help = "Filter by specific workflow name")] workflow: Option<String>,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] _verbose: usize,
-) -> Result<String> {
+fn runs() -> Result<String> {
     println!("🔄 Fetching recent workflow runs...");
     println!();
 
@@ -174,15 +153,7 @@ fn runs(
         return Ok("gh CLI not available".to_string());
     }
 
-    let limit_str = limit.to_string();
-    let mut args = vec!["run", "list", "--limit", &limit_str];
-    let wf_str;
-    if let Some(ref wf) = workflow {
-        wf_str = wf.clone();
-        args.extend(["--workflow", &wf_str]);
-    }
-
-    match Command::new("gh").args(&args).output() {
+    match Command::new("gh").args(&["run", "list", "--limit", "10"]).output() {
         Ok(result) if result.status.success() => {
             let stdout = String::from_utf8_lossy(&result.stdout);
             println!("{}", stdout);
