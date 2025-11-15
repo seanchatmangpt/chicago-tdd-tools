@@ -23,7 +23,9 @@ pub struct ExecutionResult {
 
 /// Show testing features status
 #[verb]
-fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Status> {
     let mut features = vec!["gen".to_string()];
     let mut examples = vec!["gen".to_string()];
 
@@ -122,11 +124,11 @@ fn exec(
 }
 
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct GuidanceInfo {
+    pub command: String,
+    pub description: String,
+    pub steps: Vec<String>,
+    pub key_principles: Vec<String>,
 }
 
 /// Expert testing patterns guidance

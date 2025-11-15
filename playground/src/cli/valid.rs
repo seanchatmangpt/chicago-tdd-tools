@@ -23,7 +23,9 @@ pub struct ExecutionResult {
 
 /// Show validation features status
 #[verb]
-fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Status> {
     Ok(Status {
         features: vec![
             "cov".to_string(),

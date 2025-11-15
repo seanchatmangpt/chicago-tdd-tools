@@ -28,7 +28,9 @@ pub struct ExecutionResult {
 /// Displays information about all available core features and examples.
 /// Use -v, -vv, or -vvv for more detail.
 #[verb]
-fn stat(#[arg(short = 'v', action = "count")] verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Status> {
     Ok(Status {
         features: vec![
             "fixtures".to_string(),
