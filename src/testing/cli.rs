@@ -209,7 +209,8 @@ impl CliAssertions {
     ///
     /// Panics if output doesn't look like help text
     pub fn assert_is_help(output: &str) {
-        let help_indicators = ["Usage:", "USAGE:", "Options:", "OPTIONS:", "Commands:", "COMMANDS:"];
+        let help_indicators =
+            ["Usage:", "USAGE:", "Options:", "OPTIONS:", "Commands:", "COMMANDS:"];
         let contains_help = help_indicators.iter().any(|indicator| output.contains(indicator));
         assert!(contains_help, "Output does not appear to be help text. Output: {output}");
     }
@@ -840,9 +841,7 @@ mod tests {
     #[test]
     fn test_environment_with_vars_chaining() {
         // Arrange: Chain with_vars with additional set calls
-        let env = CliEnvironment::new()
-            .with_vars(&[("A", "1"), ("B", "2")])
-            .set("C", "3");
+        let env = CliEnvironment::new().with_vars(&[("A", "1"), ("B", "2")]).set("C", "3");
         // Act: Get environment variables
         let vars = env.vars();
         // Assert: All variables are set

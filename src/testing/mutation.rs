@@ -78,7 +78,9 @@ impl MutationTester {
             // === v1.3.0 Phase 4: New Mutation Operators ===
             MutationOperator::SwapValues(key1, key2) => {
                 // Swap values between two keys
-                if let (Some(val1), Some(val2)) = (mutated.get(&key1).cloned(), mutated.get(&key2).cloned()) {
+                if let (Some(val1), Some(val2)) =
+                    (mutated.get(&key1).cloned(), mutated.get(&key2).cloned())
+                {
                     mutated.insert(key1, val2);
                     mutated.insert(key2, val1);
                 }
@@ -112,7 +114,8 @@ impl MutationTester {
                             // Title case: first character uppercase, rest lowercase
                             let mut chars = val.chars();
                             chars.next().map_or_else(String::new, |first| {
-                                first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
+                                first.to_uppercase().collect::<String>()
+                                    + &chars.as_str().to_lowercase()
                             })
                         }
                     };
@@ -374,10 +377,8 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::SwapValues(
-            "key1".to_string(),
-            "key2".to_string(),
-        ));
+        let mutated = tester
+            .apply_mutation(MutationOperator::SwapValues("key1".to_string(), "key2".to_string()));
 
         // Assert
         assert_eq!(mutated.get("key1"), Some(&"value2".to_string()), "key1 should have value2");
@@ -399,7 +400,11 @@ mod tests {
         ));
 
         // Assert: No change when one key doesn't exist
-        assert_eq!(mutated.get("key1"), Some(&"value1".to_string()), "key1 should remain unchanged");
+        assert_eq!(
+            mutated.get("key1"),
+            Some(&"value1".to_string()),
+            "key1 should remain unchanged"
+        );
     }
 
     #[test]
@@ -459,7 +464,11 @@ mod tests {
         let mutated = tester.apply_mutation(MutationOperator::ToggleBoolean("key".to_string()));
 
         // Assert: Should remain unchanged for non-boolean values
-        assert_eq!(mutated.get("key"), Some(&"not_a_bool".to_string()), "non-boolean should remain unchanged");
+        assert_eq!(
+            mutated.get("key"),
+            Some(&"not_a_bool".to_string()),
+            "non-boolean should remain unchanged"
+        );
     }
 
     #[test]
@@ -486,7 +495,8 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::NumericDelta("count".to_string(), -3));
+        let mutated =
+            tester.apply_mutation(MutationOperator::NumericDelta("count".to_string(), -3));
 
         // Assert
         assert_eq!(mutated.get("count"), Some(&"7".to_string()), "10 - 3 should be 7");
@@ -504,7 +514,11 @@ mod tests {
         let mutated = tester.apply_mutation(MutationOperator::NumericDelta("key".to_string(), 5));
 
         // Assert: Should remain unchanged for non-numeric values
-        assert_eq!(mutated.get("key"), Some(&"not_a_number".to_string()), "non-numeric should remain unchanged");
+        assert_eq!(
+            mutated.get("key"),
+            Some(&"not_a_number".to_string()),
+            "non-numeric should remain unchanged"
+        );
     }
 
     #[test]
@@ -516,10 +530,8 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::StringCase(
-            "text".to_string(),
-            CaseMode::Upper,
-        ));
+        let mutated = tester
+            .apply_mutation(MutationOperator::StringCase("text".to_string(), CaseMode::Upper));
 
         // Assert
         assert_eq!(mutated.get("text"), Some(&"HELLO".to_string()), "should convert to uppercase");
@@ -534,10 +546,8 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::StringCase(
-            "text".to_string(),
-            CaseMode::Lower,
-        ));
+        let mutated = tester
+            .apply_mutation(MutationOperator::StringCase("text".to_string(), CaseMode::Lower));
 
         // Assert
         assert_eq!(mutated.get("text"), Some(&"hello".to_string()), "should convert to lowercase");
@@ -552,13 +562,15 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::StringCase(
-            "text".to_string(),
-            CaseMode::Title,
-        ));
+        let mutated = tester
+            .apply_mutation(MutationOperator::StringCase("text".to_string(), CaseMode::Title));
 
         // Assert
-        assert_eq!(mutated.get("text"), Some(&"Hello world".to_string()), "should convert to title case");
+        assert_eq!(
+            mutated.get("text"),
+            Some(&"Hello world".to_string()),
+            "should convert to title case"
+        );
     }
 
     #[test]
@@ -570,10 +582,8 @@ mod tests {
         let mut tester = MutationTester::new(data);
 
         // Act
-        let mutated = tester.apply_mutation(MutationOperator::StringCase(
-            "text".to_string(),
-            CaseMode::Title,
-        ));
+        let mutated = tester
+            .apply_mutation(MutationOperator::StringCase("text".to_string(), CaseMode::Title));
 
         // Assert: Empty string should remain empty
         assert_eq!(mutated.get("text"), Some(&"".to_string()), "empty string should remain empty");

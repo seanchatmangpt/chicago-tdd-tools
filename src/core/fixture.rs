@@ -53,15 +53,10 @@ impl FixtureMetadata {
     /// Create new fixture metadata with current timestamp
     #[must_use]
     pub fn new() -> Self {
-        let created_at = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+        let created_at =
+            SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
 
-        Self {
-            created_at,
-            snapshots: Vec::new(),
-        }
+        Self { created_at, snapshots: Vec::new() }
     }
 
     /// Get fixture creation timestamp (seconds since UNIX epoch)

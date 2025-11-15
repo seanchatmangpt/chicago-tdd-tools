@@ -12,7 +12,7 @@
 //! - **AAA Pattern**: Arrange (setup), Act (execute), Assert (snapshot comparison)
 
 #[cfg(feature = "snapshot-testing")]
-use insta::{assert_snapshot, assert_debug_snapshot, assert_json_snapshot, Settings};
+use insta::{assert_debug_snapshot, assert_json_snapshot, assert_snapshot, Settings};
 #[cfg(feature = "snapshot-testing")]
 use std::collections::HashMap;
 
