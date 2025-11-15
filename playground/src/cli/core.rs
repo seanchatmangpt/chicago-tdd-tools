@@ -76,8 +76,8 @@ fn list() -> Result<Vec<String>> {
 /// Run examples by name. Multiple examples can be specified space-separated.
 ///
 /// Examples:
-///   playg core exec fixtures
-///   playg core exec "fixtures builders assert"
+///   playg core exec --names fixtures
+///   playg core exec --names "fixtures builders assert"
 #[verb]
 fn exec(names: String) -> Result<ExecutionResult> {
     let mut executed = Vec::new();

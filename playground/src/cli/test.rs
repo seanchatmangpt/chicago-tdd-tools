@@ -100,8 +100,8 @@ fn list() -> Result<Vec<String>> {
 /// Execute multiple test examples
 ///
 /// Examples:
-///   playg test exec gen
-///   playg test exec "gen prop mut"
+///   playg test exec --names gen
+///   playg test exec --names "gen prop mut"
 #[verb]
 fn exec(names: String) -> Result<ExecutionResult> {
     let mut executed = Vec::new();

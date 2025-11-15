@@ -22,10 +22,11 @@ pub struct ExecutionResult {
 }
 
 /// Show validation features status
+///
+/// Examples:
+///   playg valid stat           # Show status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     Ok(Status {
         features: vec![
             "cov".to_string(),
@@ -49,11 +50,12 @@ fn list() -> Result<Vec<String>> {
 }
 
 /// Execute multiple validation checks
+///
+/// Examples:
+///   playg valid exec --names cov
+///   playg valid exec --names "cov guard jtbd"
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated check names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec(names: String) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 

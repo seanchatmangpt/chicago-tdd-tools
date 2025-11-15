@@ -43,14 +43,15 @@ fn stat() -> Result<GhStatus> {
 }
 
 /// List all GitHub Actions workflows
+///
+/// Examples:
+///   playg gh list              # List workflow names
 #[verb]
-fn list(
-    #[arg(long, default_value = "names", help = "Output format: names, paths, or json")]
-    format: String,
-) -> Result<Vec<String>> {
+fn list() -> Result<Vec<String>> {
     let workflows = discover_workflows();
+    let format = "names"; // Default format
 
-    match format.as_str() {
+    match format {
         "names" => {
             let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();
             println!("📋 GitHub Actions Workflows:");
@@ -92,10 +93,6 @@ fn check() -> Result<Vec<String>> {
     println!();
 
     for workflow in &workflows {
-        if verbose > 0 {
-            println!("Checking: {}", workflow.name);
-        }
-
         if !workflow.valid {
             issues.push(format!("{}: Invalid YAML syntax", workflow.name));
         }

@@ -22,10 +22,11 @@ pub struct ExecutionResult {
 }
 
 /// Show integration features status
+///
+/// Examples:
+///   playg integ stat           # Show status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 

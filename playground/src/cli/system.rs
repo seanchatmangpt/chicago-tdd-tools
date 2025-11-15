@@ -66,8 +66,8 @@ fn config() -> Result<ConfigInfo> {
 /// for the playg command and all its subcommands.
 ///
 /// Examples:
-///   playg system completions bash
-///   playg system completions zsh
+///   playg system completions --shell bash
+///   playg system completions --shell zsh
 #[verb]
 fn completions(shell: String) -> Result<String> {
     // Note: This is a placeholder. In a real implementation, we would use
@@ -80,7 +80,10 @@ fn completions(shell: String) -> Result<String> {
         "fish" => generate_fish_completions(),
         "powershell" => generate_powershell_completions(),
         "elvish" => generate_elvish_completions(),
-        _ => return Err(format!("Unsupported shell: {}. Use bash, zsh, fish, powershell, or elvish", shell).into()),
+        _ => {
+            println!("❌ Unsupported shell: {}. Use bash, zsh, fish, powershell, or elvish", shell);
+            return Ok(format!("Error: Unsupported shell: {}", shell));
+        }
     };
 
     // Output completion script to stdout
