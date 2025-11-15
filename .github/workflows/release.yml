@@ -4,21 +4,31 @@
 # - Creates GitHub releases from tags
 # - Generates changelog from commits
 # - Builds and uploads release artifacts
-# - Publishes to crates.io (optional)
+# - Publishes to crates.io automatically using OIDC (Trusted Publisher)
 #
 # Triggered by: Push of version tags (v*.*.*)
 # Expected duration: ~5 minutes
+#
+# Setup required:
+# 1. Add GitHub Actions as Trusted Publisher on crates.io:
+#    - Go to: https://crates.io/settings/publishing
+#    - Click "Add a new Trusted Publisher"
+#    - Repository owner: seanchatmangpt
+#    - Repository name: knhk
+#    - Workflow filename: release.yml
+#    - Click "Add"
+# 2. No secrets needed - OIDC authentication is automatic!
 
 name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g., v1.2.3)'
+        description: "Tag to release (e.g., v1.2.3)"
         required: true
         type: string
 
@@ -45,6 +55,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Validate tag format
+        # FMEA Fix: Validate tag format before processing (RPN reduction)
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "❌ ERROR: Invalid tag format: $TAG"
+            echo "Expected format: v*.*.* (e.g., v1.2.3)"
+            exit 1
+          fi
+          echo "✅ Tag format valid: $TAG"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -100,6 +121,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Build release binary
+        # FMEA Fix: Use cargo make for consistency, but build-release task doesn't support target
+        # Keeping direct cargo build for cross-compilation targets
+        # Note: cargo make build-release doesn't support --target flag
         run: cargo build --release --target ${{ matrix.target }} --all-features
 
       - name: Package artifacts (Unix)
@@ -144,6 +168,18 @@ jobs:
           path: artifacts
           pattern: artifact-*
           merge-multiple: true
+        # FMEA Fix: Add error handling for artifact download failures
+        continue-on-error: false
+
+      - name: Verify artifacts downloaded
+        # FMEA Fix: Validate artifacts were downloaded successfully
+        run: |
+          if [ ! -d "artifacts" ] || [ -z "$(ls -A artifacts 2>/dev/null)" ]; then
+            echo "❌ ERROR: No artifacts downloaded"
+            exit 1
+          fi
+          echo "✅ Artifacts downloaded: $(ls artifacts | wc -l) files"
+          ls -lh artifacts/
 
       - name: Generate changelog
         id: changelog
@@ -186,14 +222,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish to crates.io (optional - requires CARGO_REGISTRY_TOKEN secret)
+  # Publish to crates.io automatically on tag push using OIDC (Trusted Publisher)
+  # Only publishes production releases (skips alpha, beta, rc tags)
+  # Uses OIDC authentication - no secrets required!
+  # Setup: Add GitHub Actions as Trusted Publisher on crates.io
   publish-crate:
     name: Publish to crates.io
     runs-on: ubuntu-latest
     needs: [validate, create-release]
+    # Only publish production releases, skip prereleases
     if: ${{ !contains(github.ref_name, 'alpha') && !contains(github.ref_name, 'beta') && !contains(github.ref_name, 'rc') }}
-    env:
-      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    # OIDC permissions for crates.io authentication
+    permissions:
+      contents: read
+      id-token: write # Required for OIDC authentication
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -204,11 +246,46 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Publish to crates.io
-        if: ${{ env.CARGO_REGISTRY_TOKEN != '' }}
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: true
+      - name: Install cargo-credential-oidc
+        # Install OIDC credential helper for crates.io authentication
+        run: |
+          cargo install cargo-credential-oidc --locked
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Skip crates.io publish (no token)
-        if: ${{ env.CARGO_REGISTRY_TOKEN == '' }}
-        run: echo "⚠️ Skipping crates.io publish - CARGO_REGISTRY_TOKEN not set"
+      - name: Configure cargo for OIDC
+        # Configure cargo to use OIDC credential helper for crates.io
+        run: |
+          cargo credential-oidc configure --registry crates-io
+          echo "✅ Cargo configured for OIDC authentication"
+
+      - name: Publish to crates.io
+        # FMEA Fix: Add retry logic for network operations with exponential backoff
+        run: |
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "📦 Publishing to crates.io (attempt $ATTEMPT/$MAX_ATTEMPTS)..."
+            echo "Using OIDC authentication (Trusted Publisher)"
+            if cargo publish --registry crates-io; then
+              echo "✅ Successfully published to crates.io"
+              echo "🔗 View at: https://crates.io/crates/chicago-tdd-tools"
+              exit 0
+            fi
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              WAIT_TIME=$((ATTEMPT * 10))
+              echo "⚠️  Publish failed, retrying in ${WAIT_TIME}s..."
+              sleep $WAIT_TIME
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+          echo "❌ ERROR: Failed to publish to crates.io after $MAX_ATTEMPTS attempts"
+          echo "Please check:"
+          echo "  1. GitHub Actions is added as Trusted Publisher on crates.io"
+          echo "     - Go to: https://crates.io/settings/publishing"
+          echo "     - Repository: seanchatmangpt/knhk"
+          echo "     - Workflow: release.yml"
+          echo "  2. Crate version in Cargo.toml matches tag version"
+          echo "  3. Crate name is available on crates.io"
+          echo "  4. You have permission to publish this crate"
+          exit 1
+        # Publish failures block the release for production tags

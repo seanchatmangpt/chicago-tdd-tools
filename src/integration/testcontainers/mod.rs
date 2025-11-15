@@ -132,6 +132,12 @@ pub mod implementation {
     /// 2. Docker daemon is responding (not just command execution)
     /// 3. Docker daemon is accessible
     ///
+    /// **Root Cause Fix**: Added timeout to prevent hanging when Docker daemon is not running.
+    /// Pattern: All external commands must have timeout protection to fail fast.
+    /// Implementation: Spawn command in thread, use mpsc channel with `recv_timeout`.
+    /// Timeout duration: 500ms (fast enough to fail within 1s test timeout, enough time for docker info when Docker is running).
+    /// This prevents the function from hanging indefinitely when Docker daemon is stopped.
+    ///
     /// Returns 🚨 CRITICAL signal if Docker is unavailable.
     /// This is a fail-fast check - operations should stop immediately.
     ///
@@ -145,9 +151,34 @@ pub mod implementation {
     /// Returns an error if Docker is unavailable or not responding.
     pub fn check_docker_available() -> TestcontainersResult<()> {
         use std::process::Command;
+        use std::sync::mpsc;
+        use std::thread;
+        use std::time::Duration;
 
-        // Check Docker command exists
-        let docker_check = Command::new("docker").args(["info"]).output();
+        // **Root Cause Fix**: Add timeout to prevent hanging when Docker daemon is not running.
+        // Pattern: All external commands should have timeouts to fail fast.
+        // Implementation: Spawn command in thread, use mpsc channel with recv_timeout.
+        // Timeout duration: 500ms (fast enough to fail within 1s test timeout, enough time for docker info when Docker is running).
+        // This prevents the function from hanging indefinitely when Docker daemon is stopped.
+        // Aligns with codebase timeout standards (see docs/features/TIMEOUT_ENFORCEMENT.md).
+        const DOCKER_CHECK_TIMEOUT_MILLIS: u64 = 500;
+
+        // Use docker info to verify daemon is running
+        // Spawn command in thread to enable timeout
+        let (tx, rx) = mpsc::channel();
+        let _handle = thread::spawn(move || {
+            let output = Command::new("docker").args(["info"]).output();
+            tx.send(output).ok();
+        });
+
+        // Wait for result with timeout
+        let Ok(docker_check) = rx.recv_timeout(Duration::from_millis(DOCKER_CHECK_TIMEOUT_MILLIS))
+        else {
+            // 🚨 Timeout - Docker command hung (likely Docker daemon not running)
+            return Err(TestcontainersError::DockerUnavailable(format!(
+                "Docker check timed out after {DOCKER_CHECK_TIMEOUT_MILLIS}ms (Docker daemon likely not running). This prevents hanging indefinitely when Docker is unavailable."
+            )));
+        };
 
         match docker_check {
             Ok(output) => {
@@ -731,5 +762,71 @@ mod tests {
         let _ref2 = client2.client();
 
         // Assert: Both should work (no panic) - stub clients are valid
+    });
+
+    // ========================================================================
+    // 3. TIMEOUT BEHAVIOR TESTING - Verify timeout prevents hangs
+    // ========================================================================
+
+    #[cfg(feature = "testcontainers")]
+    test!(test_check_docker_available_timeout_prevents_hang, {
+        // **Root Cause Fix Test**: Verify check_docker_available() has timeout protection.
+        // This test verifies that the function completes quickly (within timeout period)
+        // even when Docker daemon might be unavailable, preventing hangs.
+        //
+        // Note: We can't reliably test with Docker stopped in CI, but we verify:
+        // 1. Function completes quickly (doesn't hang)
+        // 2. Error handling works correctly
+        // 3. Timeout mechanism is in place
+        //
+        // Manual verification: Stop Docker daemon and verify function returns error within 500ms.
+
+        use super::implementation::check_docker_available;
+        use std::time::Instant;
+
+        // Arrange: Measure execution time
+        let start = Instant::now();
+
+        // Act: Call check_docker_available() (may succeed or fail depending on Docker state)
+        let result = check_docker_available();
+
+        // Assert: Function completes quickly (within 1 second, well below any reasonable timeout)
+        let elapsed = start.elapsed();
+        assert_that_with_msg(
+            &(elapsed.as_millis() < 1000),
+            |v| *v,
+            "check_docker_available() should complete within 1s (timeout protection prevents hangs)",
+        );
+
+        // Assert: Result is either Ok (Docker available) or DockerUnavailable error (timeout or not running)
+        match result {
+            Ok(()) => {
+                // ✅ Docker is available - this is valid
+            }
+            Err(TestcontainersError::DockerUnavailable(ref msg)) => {
+                // ✅ Docker unavailable - verify error message indicates timeout or connection issue
+                assert_that_with_msg(
+                    &(msg.contains("timed out")
+                        || msg.contains("not running")
+                        || msg.contains("not found")),
+                    |v| *v,
+                    "Error message should indicate timeout or Docker unavailability",
+                );
+            }
+            Err(e) => {
+                panic!("Unexpected error type: {e}");
+            }
+        }
+
+        // Verify timeout mechanism: If Docker is unavailable, error should complete quickly
+        // (This prevents the function from hanging indefinitely)
+        if result.is_err() {
+            // Timeout protection should prevent hangs - error should complete quickly
+            assert_that_with_msg(
+                &(elapsed.as_millis() < 1000),
+                |v| *v,
+                "Timeout protection should prevent hangs - function should complete quickly even when Docker unavailable",
+            );
+        }
     });
 }

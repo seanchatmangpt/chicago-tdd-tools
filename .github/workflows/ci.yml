@@ -163,7 +163,7 @@ jobs:
   test-integration:
     name: Integration Tests (Docker)
     runs-on: ubuntu-latest
-    needs: [test]  # Run after unit tests pass
+    needs: [test] # Run after unit tests pass
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -181,15 +181,22 @@ jobs:
         with:
           tool: cargo-make
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-nextest
-
       - name: Verify Docker availability
+        # FMEA Fix: Fail gracefully if Docker unavailable (RPN reduction)
         run: |
-          docker --version
-          docker ps
+          if ! command -v docker &> /dev/null; then
+            echo "❌ ERROR: Docker is not installed"
+            exit 1
+          fi
+          if ! docker --version; then
+            echo "❌ ERROR: Docker command failed"
+            exit 1
+          fi
+          if ! docker ps &> /dev/null; then
+            echo "❌ ERROR: Docker daemon is not running"
+            echo "Integration tests require Docker to be available and running"
+            exit 1
+          fi
           echo "✅ Docker is available and running"
 
       - name: Run integration tests
@@ -216,7 +223,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Need full history for checking all files
+          fetch-depth: 0 # Need full history for checking all files
 
       - name: Check for unwrap/expect in production code
         run: |
@@ -322,6 +329,8 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
+        # FMEA Fix: Codecov upload is non-blocking (coverage threshold already enforced above)
+        # Secret handling: CODECOV_TOKEN is optional, upload fails gracefully if not set
 
   # Full CI pipeline - runs all checks
   # FMEA Fix: Remove optional jobs from needs (RPN: 210 → 21)

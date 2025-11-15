@@ -17,14 +17,13 @@ mod weaver_tests {
     use chicago_tdd_tools::async_test;
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assert_eq_msg;
-    use chicago_tdd_tools::assertions::{assert_that, assert_that_with_msg};
+    use chicago_tdd_tools::assertions::assert_that_with_msg;
     use chicago_tdd_tools::testcontainers::*;
     use chicago_tdd_tools::observability::weaver::WeaverValidator;
     use common::require_docker;
     use std::collections::HashMap;
     use std::fs;
     use std::path::PathBuf;
-    use std::time::Duration;
     use tokio::time::sleep;
 
     fn allow_weaver_skip() -> bool {
@@ -56,15 +55,15 @@ mod weaver_tests {
     // Value: 500ms provides sufficient time for container to be ready after creation.
     const CONTAINER_READINESS_WAIT_MS: u64 = 500;
 
-    /// Test that Weaver Docker image is available and can execute commands
-    ///
-    /// This test verifies:
-    /// 1. Weaver Docker image can be pulled and run
-    /// 2. Weaver binary exists in the container
-    /// 3. Weaver can execute basic commands (--version)
-    ///
-    /// This is Chicago TDD: Real Collaborators (actual Docker container),
-    /// State Verification (weaver binary exists), Behavior Verification (weaver works)
+    // Test that Weaver Docker image is available and can execute commands
+    //
+    // This test verifies:
+    // 1. Weaver Docker image can be pulled and run
+    // 2. Weaver binary exists in the container
+    // 3. Weaver can execute basic commands (--version)
+    //
+    // This is Chicago TDD: Real Collaborators (actual Docker container),
+    // State Verification (weaver binary exists), Behavior Verification (weaver works)
     test!(weaver_container_available, {
         require_docker();
 
@@ -95,14 +94,14 @@ mod weaver_tests {
         );
     });
 
-    /// Test that Weaver can execute registry check command in container
-    ///
-    /// This test verifies:
-    /// 1. Weaver can execute registry commands
-    /// 2. Weaver provides helpful error messages when registry not found
-    ///
-    /// This is Chicago TDD: Behavior Verification (weaver command behavior),
-    /// Error Path Testing (80% of bugs)
+    // Test that Weaver can execute registry check command in container
+    //
+    // This test verifies:
+    // 1. Weaver can execute registry commands
+    // 2. Weaver provides helpful error messages when registry not found
+    //
+    // This is Chicago TDD: Behavior Verification (weaver command behavior),
+    // Error Path Testing (80% of bugs)
     test!(weaver_container_registry_check, {
         require_docker();
 
@@ -135,14 +134,14 @@ mod weaver_tests {
         );
     });
 
-    /// Test that Weaver container can be used for live-check verification
-    ///
-    /// This test verifies:
-    /// 1. Weaver container has weaver binary available
-    /// 2. Weaver can be used for integration testing
-    ///
-    /// This is Chicago TDD: Real Collaborators (actual Weaver container),
-    /// Working Capability Testing (verify Weaver works in containerized environment)
+    // Test that Weaver container can be used for live-check verification
+    //
+    // This test verifies:
+    // 1. Weaver container has weaver binary available
+    // 2. Weaver can be used for integration testing
+    //
+    // This is Chicago TDD: Real Collaborators (actual Weaver container),
+    // Working Capability Testing (verify Weaver works in containerized environment)
     test!(weaver_container_live_check_capability, {
         require_docker();
 
@@ -171,17 +170,17 @@ mod weaver_tests {
         );
     });
 
-    /// Test that Weaver live-check validates OTEL telemetry emitted from within a testcontainer
-    ///
-    /// This test verifies the complete integration workflow:
-    /// 1. Weaver live-check runs on host
-    /// 2. Container emits OTEL telemetry
-    /// 3. Container sends telemetry to host's weaver OTLP endpoint
-    /// 4. Weaver receives and validates the telemetry
-    ///
-    /// This is Chicago TDD: Real Collaborators (actual containers, real weaver),
-    /// Behavior Verification (verify telemetry validation workflow),
-    /// Integration Testing (end-to-end validation)
+    // Test that Weaver live-check validates OTEL telemetry emitted from within a testcontainer
+    //
+    // This test verifies the complete integration workflow:
+    // 1. Weaver live-check runs on host
+    // 2. Container emits OTEL telemetry
+    // 3. Container sends telemetry to host's weaver OTLP endpoint
+    // 4. Weaver receives and validates the telemetry
+    //
+    // This is Chicago TDD: Real Collaborators (actual containers, real weaver),
+    // Behavior Verification (verify telemetry validation workflow),
+    // Integration Testing (end-to-end validation)
     async_test!(test_weaver_live_check_otel_from_container, {
         require_docker();
 
