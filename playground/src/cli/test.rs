@@ -24,7 +24,6 @@ pub struct ExecutionResult {
 /// Show testing features status
 #[verb]
 fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<Status> {
     let mut features = vec!["gen".to_string()];
     let mut examples = vec!["gen".to_string()];
@@ -96,19 +95,16 @@ fn list() -> Result<Vec<String>> {
     Ok(examples)
 }
 
-/// Execute multiple test examples
+/// Execute multiple test examples (all by default)
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated example names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec() -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
-    let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
-    for name in name_list {
-        match execute_test_example(&name) {
-            Ok(_) => executed.push(name.clone()),
+    let examples = vec!["gen", "prop", "mut", "snap", "conc", "cli", "param"];
+    for name in examples {
+        match execute_test_example(name) {
+            Ok(_) => executed.push(name.to_string()),
             Err(e) => errors.push(format!("{}: {}", name, e)),
         }
     }

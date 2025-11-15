@@ -24,7 +24,6 @@ pub struct ExecutionResult {
 /// Show observability features status
 #[verb]
 fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
@@ -82,7 +81,6 @@ fn otel() -> Result<ExecutionResult> {
 #[verb]
 #[cfg(feature = "weaver")]
 fn weav(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<ExecutionResult> {
     observability::weaver::example_weaver_basic();
     observability::weaver::example_weaver_custom_config();

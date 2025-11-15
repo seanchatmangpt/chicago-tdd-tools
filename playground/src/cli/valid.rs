@@ -23,9 +23,7 @@ pub struct ExecutionResult {
 
 /// Show validation features status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     Ok(Status {
         features: vec![
             "cov".to_string(),
@@ -48,21 +46,18 @@ fn list() -> Result<Vec<String>> {
     Ok(vec!["cov".to_string(), "guard".to_string(), "jtbd".to_string(), "perf".to_string()])
 }
 
-/// Execute multiple validation checks
+/// Execute multiple validation checks (all by default)
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated check names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec() -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
-    let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
-    for name in name_list {
-        if let Err(e) = execute_valid_example(&name) {
+    let examples = vec!["cov", "guard", "jtbd", "perf"];
+    for name in examples {
+        if let Err(e) = execute_valid_example(name) {
             errors.push(format!("{}: {}", name, e));
         } else {
-            executed.push(name.clone());
+            executed.push(name.to_string());
         }
     }
 

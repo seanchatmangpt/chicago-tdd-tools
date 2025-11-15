@@ -29,7 +29,6 @@ pub struct ExecutionResult {
 /// Use -v, -vv, or -vvv for more detail.
 #[verb]
 fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<Status> {
     Ok(Status {
         features: vec![
@@ -71,27 +70,20 @@ fn list() -> Result<Vec<String>> {
     ])
 }
 
-/// Execute one or more core examples
-///
-/// Run examples by name. Multiple examples can be specified space-separated.
-///
-/// Examples:
-///   playg core exec --names fixtures
-///   playg core exec --names "fixtures builders assert"
+/// Execute one or more core examples (all by default)
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated example names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec() -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
-    let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
-    for name in name_list {
-        if let Err(e) = execute_core_example(&name) {
+    let examples = vec![
+        "fixtures", "builders", "assert", "macros", "state", "type_level", "const_assert", "alert"
+    ];
+    for name in examples {
+        if let Err(e) = execute_core_example(name) {
             errors.push(format!("{}: {}", name, e));
         } else {
-            executed.push(name.clone());
+            executed.push(name.to_string());
         }
     }
 
