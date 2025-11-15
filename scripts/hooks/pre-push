@@ -1,73 +1,199 @@
 #!/bin/sh
 # Chicago TDD Tools Pre-Push Hook
-# FMEA Fix: Ensure examples compile and pass tests before push (RPN: 168 → 9)
+# FMEA Fix: Comprehensive validation before push (RPN: 378 → 9)
 #
-# This hook ensures all examples compile and their tests pass before pushing.
+# This hook ensures code quality before pushing by running comprehensive validation:
+# - Cargo check (compilation)
+# - Clippy (linting)
+# - Formatting
+# - Unit tests
+# - Examples compilation and tests
+# - Documentation validation (if docs changed)
+#
 # It's automatically installed by scripts/install-hooks.sh
 #
-# To bypass temporarily (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push
+# To bypass temporarily (DISCOURAGED): SKIP_PRE_PUSH_CHECK=1 git push
 # To remove hook: rm .git/hooks/pre-push
 
-set -e
+set -euo pipefail
 
 # Allow bypass for emergency situations only
-if [ -n "$SKIP_EXAMPLES_CHECK" ]; then
-    echo "⚠️  WARNING: Skipping examples check (SKIP_EXAMPLES_CHECK set)"
-    echo "This is DISCOURAGED. Fix examples before pushing."
+if [ -n "${SKIP_PRE_PUSH_CHECK:-}" ]; then
+    echo "⚠️  WARNING: Skipping pre-push validation (SKIP_PRE_PUSH_CHECK set)"
+    echo "This is DISCOURAGED. Fix issues before pushing."
     exit 0
 fi
 
-echo "🔍 Pre-push: Checking examples compile and tests pass..."
+echo "🚦 Pre-push validation (comprehensive checks)..."
+echo ""
 
-# Check if examples directory exists
+# Gate 1: Cargo check
+echo "Gate 1/6: Cargo check..."
+if timeout 10s cargo make check >/dev/null 2>&1; then
+    echo "✅ Gate 1 passed"
+else
+    echo "❌ ERROR: cargo make check failed"
+    echo "Run 'cargo make check' to see details"
+    exit 1
+fi
+echo ""
+
+# Gate 2: Clippy (strict mode)
+echo "Gate 2/6: Clippy (strict mode)..."
+LINT_OUTPUT=$(timeout 300s cargo make lint 2>&1) || LINT_EXIT=$?
+if [ -z "${LINT_EXIT:-}" ]; then
+    echo "✅ Gate 2 passed"
+else
+    echo "❌ ERROR: cargo make lint failed"
+    echo ""
+    echo "Last 30 lines of lint output:"
+    echo "$LINT_OUTPUT" | tail -30
+    echo ""
+    echo "Run 'cargo make lint' to see full details"
+    exit 1
+fi
+echo ""
+
+# Gate 2.5: TODO & error handling check
+echo "Gate 2.5/6: TODO & error handling check..."
+# Check for unwrap/expect in production code (same as pre-commit)
+PROD_FILES=$(find src proc_macros/src -name '*.rs' -type f 2>/dev/null | \
+  grep -v '/test' | grep -v '/tests/' | grep -v 'build.rs' || true)
+
+if [ -n "$PROD_FILES" ]; then
+    UNWRAP_COUNT=0
+    for FILE in $PROD_FILES; do
+        if grep -q '#\[cfg(test)\]' "$FILE" 2>/dev/null; then
+            continue
+        fi
+        if grep -qE '#!?\[allow\(clippy::(unwrap|expect)_used\)\]' "$FILE" 2>/dev/null; then
+            continue
+        fi
+        COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || echo "0")
+        UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
+    done
+
+    if [ "$UNWRAP_COUNT" -gt 0 ]; then
+        echo "❌ ERROR: Found $UNWRAP_COUNT unwrap/expect in production code"
+        echo "Run pre-commit hook to see details"
+        exit 1
+    fi
+fi
+echo "✅ Gate 2.5 passed"
+echo ""
+
+# Gate 2.6: Docker availability check
+echo "Gate 2.6/6: Docker availability check..."
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    echo "✅ Gate 2.6 passed (Docker available)"
+else
+    echo "⚠️  Gate 2.6 skipped (Docker not available)"
+fi
+echo ""
+
+# Gate 3: Formatting check
+echo "Gate 3/6: Formatting check..."
+# Save git state before formatting
+BEFORE_FMT=$(git diff --name-only 2>/dev/null || true)
+FMT_OUTPUT=$(timeout 10s cargo make fmt 2>&1) || FMT_EXIT=$?
+if [ -n "${FMT_EXIT:-}" ]; then
+    echo "❌ ERROR: cargo make fmt failed"
+    echo ""
+    echo "Last 20 lines of fmt output:"
+    echo "$FMT_OUTPUT" | tail -20
+    exit 1
+fi
+# Check if formatting changed anything
+AFTER_FMT=$(git diff --name-only 2>/dev/null || true)
+if [ "$BEFORE_FMT" != "$AFTER_FMT" ]; then
+    echo "❌ ERROR: Code is not formatted"
+    echo "Run 'cargo make fmt' to format code"
+    exit 1
+fi
+echo "✅ Gate 3 passed"
+echo ""
+
+# Gate 4: Unit tests
+echo "Gate 4/6: Unit tests..."
+if timeout 300s cargo make test-unit >/dev/null 2>&1; then
+    echo "✅ Gate 4 passed"
+else
+    echo "❌ ERROR: cargo make test-unit failed"
+    echo "Run 'cargo make test-unit' to see details"
+    exit 1
+fi
+echo ""
+
+# Gate 5: Examples compilation and tests
+echo "Gate 5/6: Examples compilation and tests..."
 if [ ! -d "examples" ]; then
     echo "⚠️  No examples directory found, skipping examples check"
-    exit 0
-fi
-
-# Step 1: Build all examples (only examples, not all targets)
-echo "📦 Building all examples..."
-BUILD_OUTPUT=$(timeout 30s cargo build --examples 2>&1) || BUILD_EXIT=$?
-if [ -z "${BUILD_EXIT:-}" ]; then
+    echo "✅ Gate 5 passed (skipped)"
+else
+    # Build examples
+    echo "📦 Building all examples..."
+    BUILD_OUTPUT=$(timeout 30s cargo build --examples 2>&1) || BUILD_EXIT=$?
+    if [ -n "${BUILD_EXIT:-}" ]; then
+        echo ""
+        echo "❌ ERROR: Examples compilation failed"
+        echo ""
+        echo "Last 20 lines of build output:"
+        echo "$BUILD_OUTPUT" | tail -20
+        echo ""
+        echo "🔧 How to fix:"
+        echo "  1. Run 'cargo build --examples --all-targets' to see full errors"
+        echo "  2. Fix compilation errors in examples/"
+        echo "  3. Ensure all required features are enabled"
+        exit 1
+    fi
     echo "✅ All examples compile successfully"
-else
-    echo ""
-    echo "❌ ERROR: Examples compilation failed"
-    echo ""
-    echo "Last 20 lines of build output:"
-    echo "$BUILD_OUTPUT" | tail -20
-    echo ""
-    echo "🔧 How to fix:"
-    echo "  1. Run 'cargo build --examples --all-targets' to see full errors"
-    echo "  2. Fix compilation errors in examples/"
-    echo "  3. Ensure all required features are enabled"
-    echo ""
-    echo "⚠️  To bypass (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push"
-    exit 1
-fi
 
-# Step 2: Run example tests
-echo "🧪 Running example tests..."
-TEST_OUTPUT=$(timeout 60s cargo test --examples 2>&1) || TEST_EXIT=$?
-if [ -z "${TEST_EXIT:-}" ]; then
+    # Test examples
+    echo "🧪 Running example tests..."
+    TEST_OUTPUT=$(timeout 60s cargo test --examples 2>&1) || TEST_EXIT=$?
+    if [ -n "${TEST_EXIT:-}" ]; then
+        echo ""
+        echo "❌ ERROR: Example tests failed"
+        echo ""
+        echo "Last 30 lines of test output:"
+        echo "$TEST_OUTPUT" | tail -30
+        echo ""
+        echo "🔧 How to fix:"
+        echo "  1. Run 'cargo test --examples' to see full test failures"
+        echo "  2. Fix failing tests in examples/"
+        echo "  3. Ensure all required features are enabled for tests"
+        exit 1
+    fi
     echo "✅ All example tests pass"
-else
-    echo ""
-    echo "❌ ERROR: Example tests failed"
-    echo ""
-    echo "Last 30 lines of test output:"
-    echo "$TEST_OUTPUT" | tail -30
-    echo ""
-    echo "🔧 How to fix:"
-    echo "  1. Run 'cargo test --examples' to see full test failures"
-    echo "  2. Fix failing tests in examples/"
-    echo "  3. Ensure all required features are enabled for tests"
-    echo ""
-    echo "⚠️  To bypass (DISCOURAGED): SKIP_EXAMPLES_CHECK=1 git push"
-    exit 1
+    echo "✅ Gate 5 passed"
+fi
+echo ""
+
+# Gate 6: Documentation validation (if docs changed)
+echo "Gate 6/6: Documentation validation..."
+DOC_FILES=$(git diff --cached --name-only --diff-filter=d 2>/dev/null | grep -E '\.(md|mdx)$' || true)
+if [ -z "$DOC_FILES" ]; then
+    # Check unstaged docs too
+    DOC_FILES=$(git diff --name-only --diff-filter=d 2>/dev/null | grep -E '\.(md|mdx)$' || true)
 fi
 
-echo "✅ Examples check passed"
+if [ -n "$DOC_FILES" ]; then
+    echo "📚 Documentation files changed, validating..."
+    if timeout 10s cargo make docs-check >/dev/null 2>&1; then
+        echo "✅ Gate 6 passed"
+    else
+        echo "❌ ERROR: Documentation validation failed"
+        echo "Run 'cargo make docs-check' to see details"
+        exit 1
+    fi
+else
+    echo "⚠️  No documentation files changed, skipping docs check"
+    echo "✅ Gate 6 passed (skipped)"
+fi
+echo ""
+
+echo "🎉 All pre-push validation gates passed!"
+echo ""
+echo "Your code is ready to push. Proceeding with push..."
 
 exit 0
-

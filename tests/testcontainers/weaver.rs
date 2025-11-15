@@ -191,8 +191,18 @@ mod weaver_tests {
         }
 
         // Arrange: Start Weaver live-check on host
-        let mut validator = WeaverValidator::new(registry_path);
-        let start_result = validator.start();
+        // **Root Cause Fix**: Start validator in blocking thread to avoid runtime conflicts
+        // The start() method uses blocking operations that can conflict with async runtime
+        let (mut validator, start_result) = {
+            let registry_path_clone = registry_path.clone();
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let mut v = WeaverValidator::new(registry_path_clone);
+                let result = v.start();
+                tx.send((v, result)).unwrap();
+            });
+            rx.recv().unwrap()
+        };
         assert_ok!(&start_result, "Weaver should start successfully");
         assert_that_with_msg(&validator.is_running(), |v| *v, "Weaver should be running after start");
 

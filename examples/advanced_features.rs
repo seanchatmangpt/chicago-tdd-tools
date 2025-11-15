@@ -1,15 +1,63 @@
-//! Advanced Rust Features Examples
+//! # Advanced Rust Features Examples - Comprehensive Guide
 //!
 //! Demonstrates hyper-advanced Rust features used in Chicago TDD Tools:
-//! - Async Traits (Rust 1.75+)
-//! - Generic Associated Types (GATs)
-//! - Sealed Traits
-//! - Type-Level Arithmetic
-//! - Const Generics
-//! - Type State Pattern
+//! async traits, type-level arithmetic, const generics, and type state patterns.
 //!
-//! These features maximize developer experience (DX) and reduce friction
-//! by providing compile-time guarantees and zero-cost abstractions.
+//! ## Tutorial: Getting Started
+//!
+//! This example walks through advanced Rust features:
+//!
+//! 1. **Type-Level Arithmetic**: Use const generics for compile-time size validation
+//! 2. **Type State Pattern**: Enforce test phase ordering at compile time
+//! 3. **Async Traits**: Use async traits for async fixture management (requires `async` feature)
+//!
+//! These features maximize developer experience (DX) by providing compile-time guarantees
+//! and zero-cost abstractions.
+//!
+//! ## Explanation: Concepts
+//!
+//! **Const Generics**: Allow generic parameters to be constant values known at compile time.
+//! Enables type-level arithmetic and size validation without runtime overhead.
+//!
+//! **Type State Pattern**: Use Rust's type system to encode state machines. The compiler
+//! enforces valid state transitions, preventing invalid operations at compile time.
+//!
+//! **Async Traits**: Rust 1.75+ allows async methods in traits. Enables async fixture
+//! management with the same ergonomics as sync code.
+//!
+//! **Sealed Traits**: Prevent external implementations, ensuring only intended types
+//! implement a trait. Provides API stability and prevents misuse.
+//!
+//! **Zero-Cost Abstractions**: Advanced features compile to the same code as manual
+//! implementations, with no runtime overhead. You get safety and ergonomics for free.
+//!
+//! **Compile-Time Guarantees**: Type system catches errors before code runs. Invalid
+//! state transitions, wrong method calls, and type mismatches are compile errors, not runtime bugs.
+//!
+//! ## How-to: Common Tasks
+//!
+//! - Use type-level arithmetic: See `example_type_level_arithmetic()`
+//! - Use type state pattern: See `example_type_state_pattern()`
+//! - Use async traits: See `src/core/async_fixture.rs` tests (requires `async` feature)
+//!
+//! ## Reference: Quick Lookup
+//!
+//! **Key Types**:
+//! - `SizeValidatedArray<const SIZE: usize, const VALIDATED_SIZE: usize>`: Size-validated array with const generics
+//! - `TestState<Phase>`: Type state pattern for test phases (Arrange, Act, Assert)
+//! - `AsyncFixtureProvider`: Async trait for fixture management (requires `async` feature)
+//!
+//! **Key Functions**:
+//! - `SizeValidatedArray::new(data) -> SizeValidatedArray` - Create size-validated array
+//! - `TestState::<Arrange>::new() -> TestState<Arrange>` - Create arrange state
+//! - `TestState::act() -> TestState<Act>` - Transition to act phase
+//! - `TestState::assert() -> TestState<Assert>` - Transition to assert phase
+//!
+//! **Key Concepts**:
+//! - **Const Generics**: Generic parameters that are constant values
+//! - **Type State**: Encode state machines in types
+//! - **Zero-Cost**: No runtime overhead for abstractions
+//! - **Compile-Time**: Errors caught before code runs
 
 #[cfg(feature = "async")]
 #[allow(unused_imports)] // Example code - imports shown for demonstration
@@ -42,6 +90,33 @@ struct DatabaseProvider;
 // Example 2: Type-Level Arithmetic and Const Generics
 // ============================================================================
 
+/// Example: Type-level arithmetic with const generics
+///
+/// ## How-to: Use Const Generics for Size Validation
+///
+/// Use `SizeValidatedArray` with const generics to create arrays with compile-time
+/// size validation. The type system ensures size constraints are met.
+///
+/// **Note**: Current implementation does runtime validation, but const generics
+/// enable future compile-time validation.
+///
+/// ## Reference
+///
+/// - **Type**: `SizeValidatedArray<const SIZE: usize, const VALIDATED_SIZE: usize>`
+/// - **Function**: `SizeValidatedArray::new(data) -> SizeValidatedArray`
+/// - **Methods**:
+///   - `size() -> usize` - Get array size
+///   - `data() -> &[T]` - Get array data
+/// - **Const Generics**: `SIZE` and `VALIDATED_SIZE` are compile-time constants
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::type_level::SizeValidatedArray;
+///
+/// const ARRAY: SizeValidatedArray<8, 8> = SizeValidatedArray::new([0u8; 8]);
+/// assert_eq!(ARRAY.size(), 8);
+/// ```
 fn example_type_level_arithmetic() {
     // Arrange: Create size-validated array using const generics
     // Note: SizeValidatedArray does runtime validation, not compile-time
@@ -56,6 +131,44 @@ fn example_type_level_arithmetic() {
 // Example 3: Type State Pattern with Sealed Traits
 // ============================================================================
 
+/// Example: Type state pattern for test phases
+///
+/// ## How-to: Use Type State Pattern
+///
+/// Use `TestState<Phase>` to enforce test phase ordering at compile time. The type
+/// system prevents calling methods in the wrong order (e.g., calling `assert()` before `act()`).
+///
+/// **Phases**: `Arrange` → `Act` → `Assert`
+/// - Start with `TestState::<Arrange>::new()`
+/// - Transition to `Act` with `.act()`
+/// - Transition to `Assert` with `.assert()`
+///
+/// ## Reference
+///
+/// - **Type**: `TestState<Phase>` where `Phase` is `Arrange`, `Act`, or `Assert`
+/// - **Function**: `TestState::<Arrange>::new() -> TestState<Arrange>`
+/// - **Methods**:
+///   - `with_arrange_data(data)` - Set arrange data
+///   - `act() -> TestState<Act>` - Transition to act phase
+///   - `execute(f)` - Execute action in act phase
+///   - `assert() -> TestState<Assert>` - Transition to assert phase
+///   - `assert_that(f)` - Assert condition in assert phase
+/// - **Compile-Time Safety**: Type system prevents invalid transitions
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::state::{Arrange, TestState};
+///
+/// let arrange = TestState::<Arrange>::new().with_arrange_data(vec![1, 2, 3]);
+/// let act = arrange.act().execute(|data| {
+///     let mut result = data.unwrap_or_default();
+///     result.push(4);
+///     result
+/// });
+/// let assert = act.assert();
+/// assert!(assert.assert_that(|result| result.map(|r| r.len() == 4).unwrap_or(false)));
+/// ```
 fn example_type_state_pattern() {
     // Arrange: Start with Arrange phase (type system enforces order)
     let arrange_state = TestState::<Arrange>::new().with_arrange_data(vec![1, 2, 3]);
