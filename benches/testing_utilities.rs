@@ -10,10 +10,7 @@ use std::collections::HashMap;
 fn benchmark_mutation_operator_creation(c: &mut Criterion) {
     c.bench_function("create_mutation_operator", |b| {
         b.iter(|| {
-            let _op = black_box(MutationOperator::AddKey(
-                "key".to_string(),
-                "value".to_string(),
-            ));
+            let _op = black_box(MutationOperator::AddKey("key".to_string(), "value".to_string()));
         });
     });
 }

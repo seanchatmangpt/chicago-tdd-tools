@@ -157,10 +157,7 @@ impl CliAssertions {
     ///
     /// Panics if output does not end with the expected suffix
     pub fn assert_output_ends_with(output: &str, suffix: &str) {
-        assert!(
-            output.ends_with(suffix),
-            "Output does not end with '{suffix}'. Output: {output}"
-        );
+        assert!(output.ends_with(suffix), "Output does not end with '{suffix}'. Output: {output}");
     }
 
     /// Assert output lines contain all of the given strings

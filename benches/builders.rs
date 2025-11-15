@@ -29,12 +29,7 @@ fn benchmark_vector_of_structs(c: &mut Criterion) {
     c.bench_function("create_100_structs", |b| {
         b.iter(|| {
             let items: Vec<_> = (0..100)
-                .map(|i| {
-                    black_box(TestData::new(
-                        black_box(i),
-                        black_box(format!("item_{}", i)),
-                    ))
-                })
+                .map(|i| black_box(TestData::new(black_box(i), black_box(format!("item_{}", i)))))
                 .collect();
             black_box(items)
         });
