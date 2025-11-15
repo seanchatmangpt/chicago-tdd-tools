@@ -9,12 +9,12 @@ publish = false
 
 [dependencies]
 # Chicago TDD Tools with ALL features enabled
-chicago-tdd-tools = { path = "..", features = [
+chicago-tdd-tools = { version = "1.3.0", features = [
     # Feature groups (convenience bundles)
     "testing-full",      # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
     "observability-full", # Complete observability: otel, weaver
     "integration-full",  # Full integration: testcontainers, weaver
-    
+
     # Individual features
     "async",             # Async fixture providers (Rust 1.75+)
     "mutation-testing",  # Mutation testing (no external deps)
