@@ -1,5 +1,6 @@
 //! Core noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through core feature examples.
 //! Commands for core features: fixtures, builders, assertions, macros, state, type_level, const_assert, alert
 
 use clap_noun_verb_macros::verb;
@@ -11,26 +12,53 @@ use crate::core::{
     alert, assertions, async_fixtures, builders, const_assert, fixtures, macros, state, type_level,
 };
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct CoreFeatureStatus {
+    /// Available core features
+    pub features: Vec<String>,
+    /// Available example demonstrations
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct CoreExecutionResult {
+    /// Names of examples that executed successfully
+    pub executed: Vec<String>,
+    /// Whether all examples executed without errors
+    pub success: bool,
+    /// Summary message about execution
+    pub message: String,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// Show core features status
 ///
 /// Displays information about all available core features and examples.
-/// Use -v, -vv, or -vvv for more detail.
+/// Use -v for basic verbose output, -vv for detailed information, -vvv for debug output.
+///
+/// # Examples
+/// ```text
+/// playg core stat            # Shows features in JSON format
+/// playg core stat -v         # Shows features with verbose output
+/// playg core stat --format yaml  # Shows features in YAML format
+/// ```
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
-    Ok(Status {
+fn stat(
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<CoreFeatureStatus> {
+    if verbose > 0 {
+        eprintln!("📋 Core Features Status");
+    }
+
+    Ok(CoreFeatureStatus {
         features: vec![
             "fixtures".to_string(),
             "async".to_string(),
@@ -56,6 +84,8 @@ fn stat(verbose: usize) -> Result<Status> {
 }
 
 /// List available core examples
+///
+/// Shows all core example modules that can be executed with `playg core exec`.
 #[verb]
 fn list() -> Result<Vec<String>> {
     Ok(vec![
@@ -72,27 +102,56 @@ fn list() -> Result<Vec<String>> {
 
 /// Execute one or more core examples
 ///
-/// Run examples by name. You can execute multiple examples in one command.
-/// Example names are positional arguments.
+/// Run core feature examples by name. You can execute multiple examples in one command.
 ///
-/// Examples:
-///   playg core exec fixtures
-///   playg core exec "fixtures builders assert"
+/// # Arguments
+/// * `names` - Space-separated example names (e.g., "fixtures builders assert")
+///
+/// # Options
+/// * `-o, --output` - Optional output file for results
+/// * `-v, --verbose` - Increase verbosity level
+///
+/// # Examples
+/// ```text
+/// playg core exec "fixtures"
+/// playg core exec "fixtures builders assert"
+/// playg core exec "fixtures builders" --output results.json
+/// playg core exec "assert" -vv
+/// ```
 #[verb]
 fn exec(
+    #[arg(index = 0, value_name = "NAMES")]
     names: String,
+
+    #[arg(short = 'o', long)]
     output: Option<PathBuf>,
+
+    #[arg(short = 'v', action = "count")]
     verbose: usize,
-) -> Result<ExecutionResult> {
+) -> Result<CoreExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
+    if verbose > 0 {
+        eprintln!("🚀 Executing core examples...");
+    }
+
     let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
     for name in name_list {
+        if verbose > 1 {
+            eprintln!("  Running: {}", name);
+        }
+
         if let Err(e) = execute_core_example(&name) {
             errors.push(format!("{}: {}", name, e));
+            if verbose > 0 {
+                eprintln!("  ❌ Error: {}", e);
+            }
         } else {
             executed.push(name.clone());
+            if verbose > 0 {
+                eprintln!("  ✅ {}", name);
+            }
         }
     }
 
@@ -103,7 +162,12 @@ fn exec(
         format!("Executed {} example(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
+    if verbose > 0 {
+        eprintln!();
+        eprintln!("📊 Summary: {}", message);
+    }
+
+    Ok(CoreExecutionResult {
         executed,
         success,
         message,

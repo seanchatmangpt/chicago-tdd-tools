@@ -1,6 +1,8 @@
 //! GitHub Actions noun commands
 //!
-//! Commands for checking GitHub Actions status, workflows, and runs.
+//! Reference implementation demonstrating clap-noun-verb best practices through practical
+//! GitHub Actions workflow management. Showcases type inference, auto-serialization, and
+//! multiple output format support.
 
 use clap_noun_verb::Result;
 use clap_noun_verb_macros::verb;
@@ -8,25 +10,58 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
+/// Information about a single GitHub Actions workflow
 #[derive(Serialize, Debug)]
-struct WorkflowStatus {
-    name: String,
-    path: String,
-    jobs: usize,
-    valid: bool,
+pub struct WorkflowStatus {
+    /// Workflow name
+    pub name: String,
+    /// File path to workflow
+    pub path: String,
+    /// Number of jobs in workflow
+    pub jobs: usize,
+    /// Whether workflow YAML is valid
+    pub valid: bool,
 }
 
+/// Summary of all GitHub Actions workflows
 #[derive(Serialize, Debug)]
-struct GhStatus {
-    workflows: Vec<WorkflowStatus>,
-    total_workflows: usize,
-    valid_workflows: usize,
-    invalid_workflows: usize,
+pub struct GitHubActionsStatus {
+    /// All discovered workflows
+    pub workflows: Vec<WorkflowStatus>,
+    /// Total number of workflow files
+    pub total_workflows: usize,
+    /// Number of workflows with valid YAML
+    pub valid_workflows: usize,
+    /// Number of workflows with invalid YAML
+    pub invalid_workflows: usize,
 }
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
 
 /// Show GitHub Actions status
+///
+/// Displays status of all workflows found in `.github/workflows/`.
+/// Validates YAML syntax and reports summary statistics.
+///
+/// Use -v for detailed per-workflow information, -vv for debug output.
+///
+/// # Examples
+/// ```text
+/// playg gh stat                  # Shows status in JSON format
+/// playg gh stat -v               # Shows status with verbose output
+/// playg gh stat --format yaml    # Shows status in YAML format
+/// ```
 #[verb]
-fn stat(verbose: usize) -> Result<GhStatus> {
+fn stat(
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<GitHubActionsStatus> {
     let workflows = discover_workflows();
     let valid_count = workflows.iter().filter(|w| w.valid).count();
     let invalid_count = workflows.len() - valid_count;
@@ -47,7 +82,20 @@ fn stat(verbose: usize) -> Result<GhStatus> {
         println!();
     }
 
-    Ok(GhStatus {
+    if verbose > 0 {
+        eprintln!("📊 GitHub Actions Status");
+        eprintln!("========================");
+        for workflow in &workflows {
+            let status_icon = if workflow.valid { "✅" } else { "❌" };
+            eprintln!("{} {} (jobs: {})", status_icon, workflow.name, workflow.jobs);
+            if verbose > 1 {
+                eprintln!("   Path: {}", workflow.path);
+            }
+        }
+        eprintln!();
+    }
+
+    Ok(GitHubActionsStatus {
         total_workflows: workflows.len(),
         valid_workflows: valid_count,
         invalid_workflows: invalid_count,
@@ -56,8 +104,21 @@ fn stat(verbose: usize) -> Result<GhStatus> {
 }
 
 /// List all GitHub Actions workflows
+///
+/// Lists all workflow files found in `.github/workflows/`.
+/// Supports multiple output formats via --format flag.
+///
+/// # Examples
+/// ```text
+/// playg gh list                   # Shows workflow names in JSON format
+/// playg gh list --format yaml     # Shows workflows in YAML format
+/// playg gh list --format table    # Shows workflows in ASCII table format
+/// ```
 #[verb]
-fn list(format: Option<String>) -> Result<Vec<String>> {
+fn list(
+    #[arg(long)]
+    format: Option<String>,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let output_format = format.as_deref().unwrap_or("names");
 
@@ -88,17 +149,39 @@ fn list(format: Option<String>) -> Result<Vec<String>> {
 }
 
 /// Validate GitHub Actions workflows
+///
+/// Checks all workflows for:
+/// - Valid YAML syntax
+/// - Missing explicit permissions (security best practice)
+/// - Deprecated action versions
+///
+/// Use -v for detailed output per workflow, -vv for verbose.
+///
+/// # Examples
+/// ```text
+/// playg gh check              # Validates all workflows
+/// playg gh check -v           # Shows each workflow being checked
+/// playg gh check --fix        # Auto-fix (not yet implemented)
+/// ```
 #[verb]
-fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
+fn check(
+    #[arg(long)]
+    fix: bool,
+
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let mut issues = Vec::new();
 
-    println!("🔍 Validating GitHub Actions workflows...");
-    println!();
+    if verbose > 0 {
+        eprintln!("🔍 Validating GitHub Actions workflows...");
+        eprintln!();
+    }
 
     for workflow in &workflows {
         if verbose > 0 {
-            println!("Checking: {}", workflow.name);
+            eprintln!("Checking: {}", workflow.name);
         }
 
         if !workflow.valid {
@@ -133,28 +216,51 @@ fn check(fix: bool, verbose: usize) -> Result<Vec<String>> {
     }
 
     if issues.is_empty() {
-        println!("✅ All workflows validated successfully!");
+        if verbose > 0 {
+            eprintln!("✅ All workflows validated successfully!");
+        }
     } else {
-        println!("⚠️  Found {} issue(s):", issues.len());
+        eprintln!("⚠️  Found {} issue(s):", issues.len());
         for issue in &issues {
-            println!("  • {}", issue);
+            eprintln!("  • {}", issue);
         }
     }
 
     if fix {
-        println!();
-        println!("🔧 Auto-fix is not yet implemented.");
+        eprintln!();
+        eprintln!("🔧 Auto-fix is not yet implemented.");
     }
 
     Ok(issues)
 }
 
 /// Show recent workflow runs (requires gh CLI)
+///
+/// Fetches and displays recent workflow runs.
+/// Requires GitHub CLI (gh) to be installed and authenticated.
+///
+/// # Examples
+/// ```text
+/// playg gh runs               # Shows last 10 runs
+/// playg gh runs --limit 20    # Shows last 20 runs
+/// playg gh runs --workflow ci # Filter by workflow name
+/// ```
 #[verb]
-fn runs(limit: Option<usize>, workflow: Option<String>, _verbose: usize) -> Result<String> {
+fn runs(
+    #[arg(long)]
+    limit: Option<usize>,
+
+    #[arg(long)]
+    workflow: Option<String>,
+
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<String> {
     let limit = limit.unwrap_or(10);
-    println!("🔄 Fetching recent workflow runs...");
-    println!();
+    if verbose > 0 {
+        eprintln!("🔄 Fetching recent workflow runs...");
+        eprintln!();
+    }
 
     if Command::new("gh").arg("--version").output().is_err() {
         println!("❌ GitHub CLI (gh) not found. Install from: https://cli.github.com");
@@ -188,9 +294,17 @@ fn runs(limit: Option<usize>, workflow: Option<String>, _verbose: usize) -> Resu
 }
 
 /// Open GitHub Actions page in browser
+///
+/// Opens the GitHub Actions page for the current repository in your default browser.
+/// Tries using `gh` CLI first, falls back to git remote URL if needed.
+///
+/// # Examples
+/// ```text
+/// playg gh open  # Opens GitHub Actions for current repository
+/// ```
 #[verb]
 fn open() -> Result<String> {
-    println!("🌐 Opening GitHub Actions...");
+    eprintln!("🌐 Opening GitHub Actions...");
 
     if let Ok(result) = Command::new("gh").args(["repo", "view", "--web"]).output() {
         if result.status.success() {

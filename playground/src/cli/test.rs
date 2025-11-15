@@ -1,5 +1,6 @@
 //! Test noun commands
 //!
+//! Demonstrates clap-noun-verb best practices through testing feature examples.
 //! Commands for testing features: property, mutation, snapshot, concurrency, cli, generator, parameterized
 
 use clap_noun_verb_macros::verb;
@@ -9,107 +10,146 @@ use std::path::PathBuf;
 
 use crate::testing;
 
+// ============================================================================
+// Output Types (all implement Serialize for JSON serialization)
+// ============================================================================
+
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct TestFeatureStatus {
+    /// Available testing features
+    pub features: Vec<String>,
+    /// Available example demonstrations
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct TestExecutionResult {
+    /// Names of examples that executed successfully
+    pub executed: Vec<String>,
+    /// Whether all examples executed without errors
+    pub success: bool,
+    /// Summary message about execution
+    pub message: String,
 }
 
-/// Show testing features status
-#[verb]
-fn stat(verbose: usize) -> Result<Status> {
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Collect available test features based on enabled crate features
+fn collect_test_features() -> Vec<String> {
     let mut features = vec!["gen".to_string()];
-    let mut examples = vec!["gen".to_string()];
 
     #[cfg(feature = "property-testing")]
-    {
-        features.push("prop".to_string());
-        examples.push("prop".to_string());
-    }
+    features.push("prop".to_string());
     #[cfg(feature = "mutation-testing")]
-    {
-        features.push("mut".to_string());
-        examples.push("mut".to_string());
-    }
+    features.push("mut".to_string());
     #[cfg(feature = "snapshot-testing")]
-    {
-        features.push("snap".to_string());
-        examples.push("snap".to_string());
-    }
+    features.push("snap".to_string());
     #[cfg(feature = "concurrency-testing")]
-    {
-        features.push("conc".to_string());
-        examples.push("conc".to_string());
-    }
+    features.push("conc".to_string());
     #[cfg(feature = "cli-testing")]
-    {
-        features.push("cli".to_string());
-        examples.push("cli".to_string());
-    }
+    features.push("cli".to_string());
     #[cfg(feature = "parameterized-testing")]
-    {
-        features.push("param".to_string());
-        examples.push("param".to_string());
+    features.push("param".to_string());
+
+    features
+}
+
+// ============================================================================
+// Verb Handlers (automatically registered by #[verb] macro)
+// ============================================================================
+
+/// Show testing features status
+///
+/// Displays information about all available testing features and examples.
+/// Use -v for basic verbose output, -vv for detailed information.
+///
+/// # Examples
+/// ```text
+/// playg test stat           # Shows features in JSON format
+/// playg test stat -v        # Shows features with verbose output
+/// playg test stat --format yaml  # Shows features in YAML format
+/// ```
+#[verb]
+fn stat(
+    #[arg(short = 'v', action = "count")]
+    verbose: usize,
+) -> Result<TestFeatureStatus> {
+    if verbose > 0 {
+        eprintln!("📋 Testing Features Status");
     }
 
-    Ok(Status { features, examples })
+    let features = collect_test_features();
+    Ok(TestFeatureStatus {
+        examples: features.clone(),
+        features,
+    })
 }
 
 /// List available test examples
+///
+/// Shows all test example modules that can be executed with `playg test exec`.
 #[verb]
 fn list() -> Result<Vec<String>> {
-    let mut examples = vec!["gen".to_string()];
-
-    #[cfg(feature = "property-testing")]
-    {
-        examples.push("prop".to_string());
-    }
-    #[cfg(feature = "mutation-testing")]
-    {
-        examples.push("mut".to_string());
-    }
-    #[cfg(feature = "snapshot-testing")]
-    {
-        examples.push("snap".to_string());
-    }
-    #[cfg(feature = "concurrency-testing")]
-    {
-        examples.push("conc".to_string());
-    }
-    #[cfg(feature = "cli-testing")]
-    {
-        examples.push("cli".to_string());
-    }
-    #[cfg(feature = "parameterized-testing")]
-    {
-        examples.push("param".to_string());
-    }
-
-    Ok(examples)
+    Ok(collect_test_features())
 }
 
 /// Execute multiple test examples
+///
+/// Run testing feature examples by name. You can execute multiple examples in one command.
+///
+/// # Arguments
+/// * `names` - Space-separated example names (e.g., "gen prop snap")
+///
+/// # Options
+/// * `-o, --output` - Optional output file for results
+/// * `-v, --verbose` - Increase verbosity level
+///
+/// # Examples
+/// ```text
+/// playg test exec "gen"
+/// playg test exec "gen prop snap"
+/// playg test exec "gen prop" --output results.json
+/// playg test exec "mut" -vv
+/// ```
 #[verb]
 fn exec(
+    #[arg(index = 0, value_name = "NAMES")]
     names: String,
+
+    #[arg(short = 'o', long)]
     output: Option<PathBuf>,
+
+    #[arg(short = 'v', action = "count")]
     verbose: usize,
-) -> Result<ExecutionResult> {
+) -> Result<TestExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 
+    if verbose > 0 {
+        eprintln!("🚀 Executing test examples...");
+    }
+
     let name_list: Vec<String> = names.split_whitespace().map(|s| s.to_string()).collect();
     for name in name_list {
+        if verbose > 1 {
+            eprintln!("  Running: {}", name);
+        }
+
         match execute_test_example(&name) {
-            Ok(_) => executed.push(name.clone()),
-            Err(e) => errors.push(format!("{}: {}", name, e)),
+            Ok(_) => {
+                executed.push(name.clone());
+                if verbose > 0 {
+                    eprintln!("  ✅ {}", name);
+                }
+            }
+            Err(e) => {
+                errors.push(format!("{}: {}", name, e));
+                if verbose > 0 {
+                    eprintln!("  ❌ Error: {}", e);
+                }
+            }
         }
     }
 
@@ -120,27 +160,38 @@ fn exec(
         format!("Executed {} example(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
+    if verbose > 0 {
+        eprintln!();
+        eprintln!("📊 Summary: {}", message);
+    }
+
+    Ok(TestExecutionResult {
         executed,
         success,
         message,
     })
 }
 
+/// Information about testing patterns and best practices
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct TestingGuidanceInfo {
+    /// The command to run this guidance
+    pub command: String,
+    /// Description of what this guidance covers
+    pub description: String,
+    /// Ordered steps for the guidance
+    pub steps: Vec<String>,
+    /// Key principles to follow
+    pub key_principles: Vec<String>,
 }
 
 /// Expert testing patterns guidance
 ///
 /// Advanced testing patterns and techniques for writing more effective tests.
+/// Learn professional testing patterns that improve code quality and maintainability.
 #[verb]
-fn expert() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn expert() -> Result<TestingGuidanceInfo> {
+    Ok(TestingGuidanceInfo {
         command: "test expert".to_string(),
         description: "Expert Testing Patterns".to_string(),
         steps: vec![
@@ -163,9 +214,10 @@ fn expert() -> Result<GuidanceInfo> {
 /// Verify tests workflow guidance
 ///
 /// Systematic approach to verifying that tests are effective and working correctly.
+/// Follow these steps to ensure test quality and effectiveness.
 #[verb]
-fn verify() -> Result<GuidanceInfo> {
-    Ok(GuidanceInfo {
+fn verify() -> Result<TestingGuidanceInfo> {
+    Ok(TestingGuidanceInfo {
         command: "test verify".to_string(),
         description: "Verify Tests".to_string(),
         steps: vec![
