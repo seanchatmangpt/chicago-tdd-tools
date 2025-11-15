@@ -393,3 +393,10 @@ All diagrams are available in PlantUML format:
 
 Render diagrams using PlantUML or view in compatible tools.
 
+## See Also
+
+- **[Weaver Live Check](WEAVER_LIVE_CHECK.md)** - Weaver integration testing guide
+- **[Registry Version Pinning](REGISTRY_VERSION_PINNING.md)** - Managing registry versions
+- **[Upstream Issue Reporting](UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues
+- **[Observability Testing Guide](../observability/observability-testing-guide.md)** - Comprehensive observability testing
+- **[OTEL & Weaver Guide](../observability/otel-weaver-guide.md)** - OTEL and Weaver integration

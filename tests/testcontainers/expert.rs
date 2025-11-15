@@ -5,9 +5,16 @@ mod expert_tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::prelude::*;
+    use chicago_tdd_tools::test;
     use chicago_tdd_tools::testcontainers::*;
     use common::require_docker;
+    
+    // Macros need to be used with full path in nested modules
+    macro_rules! assert_ok {
+        ($($args:tt)*) => {
+            chicago_tdd_tools::assert_ok!($($args)*)
+        };
+    }
 
     const ALPINE_IMAGE: &str = "alpine";
     const ALPINE_TAG: &str = "latest";

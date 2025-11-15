@@ -103,10 +103,9 @@ mod otel_tests {
                     assert_eq!(*count, 42);
                 }
                 _ => {
-                    // **FMEA Fix**: Handle unexpected case properly instead of panic
-                    // In test context, we can assert or handle error appropriately
+                    // **Best Practice**: Handle unexpected cases properly
+                    // In test context, we can assert; in production, return Result
                     panic!("Expected counter metric, got {:?}", metric.value);
-                    // Note: In actual code, return Result or handle error appropriately
                 }
             }
         }
@@ -116,8 +115,7 @@ mod otel_tests {
     test!(test_otel_span_validation_error_path, {
         // Arrange: Create span with invalid trace ID (zero)
         let context = SpanContext::root(TraceId(0), SpanId(67890), 1); // Invalid: trace ID is zero
-                                                                       // **FMEA Fix**: Handle error properly instead of panic - demonstrates error handling pattern
-                                                                       // Note: new_completed returns Result - handle error appropriately
+                                                                       // **Best Practice**: Handle Result properly - demonstrates error handling pattern
         let span_result = chicago_tdd_tools::otel::types::Span::new_completed(
             context,
             "test.operation".to_string(),
@@ -131,7 +129,7 @@ mod otel_tests {
         // Act: Validate span (should fail)
         let config = TestConfig { weaver_enabled: false, ..Default::default() };
         if let Ok(test) = ObservabilityTest::with_config(config) {
-            // **FMEA Fix**: Demonstrate proper error handling - check Result instead of unwrapping
+            // **Best Practice**: Check Result instead of unwrapping - demonstrates proper error handling
             match span_result {
                 Ok(span) => {
                     // If span was created (unexpected for invalid trace ID), validate it
@@ -144,9 +142,8 @@ mod otel_tests {
                 }
                 Err(e) => {
                     // If span creation failed (expected for invalid trace ID), that's correct behavior
-                    // **FMEA Fix**: Handle error case properly - demonstrates error handling pattern
+                    // **Best Practice**: Handle error case properly - demonstrates error handling pattern
                     println!("Expected error for invalid trace ID: {e}");
-                    // Test passes - error handling demonstrated correctly
                 }
             }
         }

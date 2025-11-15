@@ -20,9 +20,9 @@ use chicago_tdd_tools::ValidatedAssertion;
 #[cfg(test)]
 mod tests {
     use chicago_tdd_tools::assert_eq_msg;
+    use chicago_tdd_tools::core::builders::TestDataBuilder;
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
-    use chicago_tdd_tools::core::builders::TestDataBuilder;
 
     // ========================================================================
     // 1st Idea Tests: Basic implementations

@@ -81,11 +81,10 @@ where
     T::Err: std::fmt::Display,
 {
     // Create OTEL span for operation
-    // **FMEA Fix**: SystemTime::duration_since(UNIX_EPOCH) should never fail in practice,
-    // but demonstrate proper error handling pattern for users
+    // **Best Practice**: Handle SystemTime errors properly (should never fail in practice)
     let start_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+        .map_err(|e| format!("SystemTime error: {e}"))?
         .as_millis() as u64;
 
     let mut span = Span::new_active(
@@ -106,11 +105,10 @@ where
 
     let end_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+        .map_err(|e| format!("SystemTime error: {e}"))?
         .as_millis() as u64;
 
-    // End time should always be >= start time in normal operation
-    // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+    // **Best Practice**: Handle span completion errors properly
     span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
     match &result {
@@ -165,10 +163,10 @@ where
     /// Parse and validate number with full OTEL instrumentation
     pub fn parse(input: &str, span_name: &str) -> Result<Self, String> {
         // Create OTEL span
-        // **FMEA Fix**: Demonstrate proper error handling instead of expect()
+        // **Best Practice**: Handle SystemTime errors properly
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+            .map_err(|e| format!("SystemTime error: {e}"))?
             .as_millis() as u64;
 
         let mut span = Span::new_active(
@@ -192,11 +190,10 @@ where
 
         let end_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+            .map_err(|e| format!("SystemTime error: {e}"))?
             .as_millis() as u64;
 
-        // End time should always be >= start time in normal operation
-        // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+        // **Best Practice**: Handle span completion errors properly
         span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
         match &parse_result {

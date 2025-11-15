@@ -76,60 +76,9 @@ TIMEOUT [1.038s] test_assert_ok_macro_fails
 
 ## Contributing Factors
 
-### 1. **Test Framework Overhead** (Primary Factor)
-
-`#[should_panic]` tests require:
-- Setting up panic handler
-- Catching panic signal
-- Verifying panic occurred
-- Cleaning up after panic
-- Extra test framework stack frames
-
-**Measured Impact**: +0.1-0.2s per test
-
-### 2. **Nextest Configuration Too Aggressive** (Primary Factor)
-
-Current setting in `.config/nextest.toml`:
-```toml
-[profile.default]
-slow-timeout = { period = "1s", terminate-after = 1 }
-```
-
-Configuration issues:
-- `slow-timeout.period = "1s"` is too tight
-- Tests are killed at exactly 1s, no grace period
-- Parallel test execution adds context switch overhead
-- Test compilation cached, but not fully reflected
-
-### 3. **Parallel Test Execution** (Contributing Factor)
-
-Running 16 tests in parallel on CI runner:
-- Context switching overhead
-- Memory pressure
-- CPU contention between tests
-- Thread scheduling delays
-
-Each adds ~10-50ms overhead per test
-
-### 4. **Test Framework Startup Overhead** (Minor Factor)
-
-Per-test setup includes:
-- Rust test harness initialization
-- Panic handler installation
-- Assertion function compilation (inline)
-- HRTB predicate evaluation
-
-Total: ~50-100ms for first test
-
-### 5. **Macro Expansion Overhead** (Minor Factor)
-
-Complex assertion macros with:
-- HRTB (Higher-Ranked Trait Bounds)
-- Generic type resolution
-- Inline assertions
-- Error message formatting
-
-Generates ~200-500 bytes of code per invocation
+**Primary**: Nextest timeout too aggressive (1s limit, no grace period) + `#[should_panic]` overhead (+0.1-0.2s)  
+**Secondary**: Parallel execution context switching (+0.5s), macro expansion (+0.05-0.1s)  
+**Minor**: Test framework startup (~50-100ms), HRTB compilation overhead
 
 ---
 
@@ -165,51 +114,25 @@ Generates ~200-500 bytes of code per invocation
 
 ## Test Execution Timeline
 
-```
-┌─ 0ms ────┬────────────────────────────────────┬──── 1.1s ──┐
-│          │  Test Setup & Macro Expansion      │            │
-│          │                                     │            │
-│          ├──────────────────────────────────┬──┤ TIMEOUT!   │
-│          │  Test Execution (assert_*)       │  │            │
-│          │  + Panic Handling                │  │            │
-│          └──────────────────────────────────┘  │            │
-│                                                 │            │
-│ Timeout Budget: 1000ms                         └────────────┘
-│ Used: 1100-1166ms                           Exceeded by: 100-166ms
-```
+**Timeout Budget**: 1000ms | **Actual**: 1100-1166ms | **Exceeded by**: 100-166ms
+
+Breakdown: Test setup (~50ms) + Execution (~800ms) + `#[should_panic]` overhead (~150ms) + Parallel overhead (~100ms) = ~1100ms
 
 ---
 
 ## Impact Assessment
 
-### CI Pipeline Impact
-- ❌ Unit test job: **FAILED**
-- ❌ CI aggregation job: **FAILED**
-- ❌ PR Merge: **BLOCKED**
-- ❌ Feature branches: **BLOCKED**
-
-### Developer Impact
-- 🔴 Cannot merge code changes
-- 🔴 Cannot run CI locally (`cargo make test-unit`)
-- 🔴 Cannot validate fixes
-- 🔴 Blocked for ~3-5 minutes per CI run (with retry logic)
-
-### Team Impact
-- 📊 Failed CI checks visible on all PRs
-- 📉 Reduced developer productivity
-- ⚠️ Loss of confidence in test suite (false positives)
+**CI Pipeline**: Unit test job failed → PR merge blocked → Feature branches blocked  
+**Developer**: Cannot merge code, cannot validate fixes, ~3-5 min delay per CI run  
+**Team**: Failed CI checks visible, reduced productivity, loss of confidence
 
 ---
 
-## Root Cause Summary Table
+## Root Cause Summary
 
-| Contributing Factor | Weight | Impact | Root Cause |
-|---|---|---|---|
-| **Nextest timeout too short** | 40% | Primary | Configuration error |
-| **`#[should_panic]` overhead** | 35% | Primary | Test framework limitation |
-| **Parallel test execution** | 15% | Secondary | CI environment characteristic |
-| **Macro complexity** | 7% | Tertiary | Code generation overhead |
-| **Test framework startup** | 3% | Quaternary | Rust test harness design |
+**Primary (75%)**: Nextest timeout too short (40%) + `#[should_panic]` overhead (35%)  
+**Secondary (15%)**: Parallel test execution  
+**Minor (10%)**: Macro complexity (7%) + Test framework startup (3%)
 
 ---
 
@@ -240,47 +163,9 @@ global-timeout = "60s"
 
 **Trade-off**: Tests take 5s instead of 1s, but at least they pass
 
-### 🟡 SHORT-TERM FIX (30 minutes)
-
-**Option 2: Separate profiles for different test types**
-
-```toml
-[profile.default]
-# Fast tests (no #[should_panic]) - 1s timeout
-slow-timeout = { period = "1s", terminate-after = 1 }
-global-timeout = "10s"
-
-[profile.slow]
-# Slow tests (#[should_panic], complex assertions) - 5s timeout
-slow-timeout = { period = "5s", terminate-after = 1 }
-global-timeout = "60s"
-```
-
-Add to Makefile.toml:
-```toml
-test-unit-slow = """
-cargo nextest run --lib --all-features --profile slow -- --skip testcontainers --skip weaver_integration
-"""
-```
-
-**Benefit**: Maintains 1s timeout for fast tests, 5s for slow tests
-
-### 🟢 LONG-TERM FIX (2 hours)
-
-**Option 3: Optimize test execution time**
-
-1. **Reduce `#[should_panic]` test count**
-   - Merge similar should_panic tests (test multiple failure modes in one)
-   - Use dedicated `#[test]` for success path only
-
-2. **Pre-compile expensive assertions**
-   - Move complex HRTB closures to helper functions
-   - Reduce inline macro expansion
-
-3. **Benchmark test performance**
-   - Document baseline: "assertions tests take 1.1s per test"
-   - Set performance budget: "max 0.5s per unit test"
-   - Monitor in CI metrics dashboard
+**Alternative Options** (not implemented):
+- **Short-term**: Separate profiles (1s for fast tests, 5s for slow) - 30 min
+- **Long-term**: Optimize test execution (reduce `#[should_panic]` count, pre-compile assertions, benchmark) - 2 hours
 
 ---
 

@@ -83,8 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(exec_result.exit_code, SUCCESS_EXIT_CODE, "Command should succeed");
     println!("   ✓ Exit code: {} (SUCCESS)", exec_result.exit_code);
 
-    // **FMEA Fix**: Demonstrate error path handling - show how to check for failures
-    // Example: Execute a command that might fail
+    // **Best Practice**: Demonstrate error path handling - show how to check for failures
     let error_result = alpine_container.exec("nonexistent_command", &[]);
     match error_result {
         Ok(result) => {
@@ -99,7 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => {
             // Command execution failed (e.g., command not found)
             println!("   ✓ Error handling demonstrated - exec failed: {e}");
-            // **Best Practice**: In actual code, handle errors appropriately
+            // **Best Practice**: In production code, handle errors appropriately
         }
     }
 
@@ -116,7 +115,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("       \"latest\",");
     println!("       \"sleep\",");
     println!("       &[\"infinity\"],");
-    println!("       Some(&[\"/bin/sh\"]), // Entrypoint override needed (uses Docker CLI workaround)");
+    println!(
+        "       Some(&[\"/bin/sh\"]), // Entrypoint override needed (uses Docker CLI workaround)"
+    );
     println!("   )?;");
     println!("   let weaver_result = weaver_container.exec(\"weaver\", &[\"--version\"])?;");
     println!("   assert_eq!(weaver_result.exit_code, SUCCESS_EXIT_CODE);");

@@ -82,7 +82,10 @@ All three locations respect the environment variable for consistency.
 - Even with `WEAVER_SKIP_REGISTRY_VALIDATION=1`, Weaver itself validates
 - Pin to older version or wait for upstream fixes
 
-## Related Documentation
+## See Also
 
-- [Weaver Live Check](WEAVER_LIVE_CHECK.md) - Weaver integration testing guide
-
+- **[Weaver Live Check](WEAVER_LIVE_CHECK.md)** - Weaver integration testing guide
+- **[Perfect Weaver Live Check](PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation guide
+- **[Upstream Issue Reporting](UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues
+- **[Observability Testing Guide](../observability/observability-testing-guide.md)** - Comprehensive observability testing
+- **[OTEL & Weaver Guide](../observability/otel-weaver-guide.md)** - OTEL and Weaver integration

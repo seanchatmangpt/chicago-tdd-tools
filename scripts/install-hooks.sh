@@ -62,14 +62,18 @@ else
     # Check if hook already exists
     if [ -f "$HOOK_DEST_PUSH" ]; then
         echo "⚠️  Pre-push hook already exists at: $HOOK_DEST_PUSH"
+        echo "   Existing hook will be backed up to: ${HOOK_DEST_PUSH}.backup"
         read -p "Overwrite? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo "Skipping pre-push hook installation"
         else
+            # Backup existing hook
+            cp "$HOOK_DEST_PUSH" "${HOOK_DEST_PUSH}.backup"
             cp "$HOOK_SOURCE_PUSH" "$HOOK_DEST_PUSH"
             chmod +x "$HOOK_DEST_PUSH"
             echo "✅ Installed pre-push hook: $HOOK_DEST_PUSH"
+            echo "   (Backup saved to: ${HOOK_DEST_PUSH}.backup)"
         fi
     else
         cp "$HOOK_SOURCE_PUSH" "$HOOK_DEST_PUSH"

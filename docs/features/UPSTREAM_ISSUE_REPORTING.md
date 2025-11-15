@@ -85,3 +85,8 @@ Once issue is filed, update documentation:
 3. **Update When Fixed**: Update documentation when upstream fixes are released
 4. **Version Pinning**: Pin to known-good versions until fixes are available
 
+## See Also
+
+- **[Registry Version Pinning](REGISTRY_VERSION_PINNING.md)** - How to pin registry versions
+- **[Weaver Live Check](WEAVER_LIVE_CHECK.md)** - Weaver integration testing guide
+- **[Perfect Weaver Live Check](PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation guide

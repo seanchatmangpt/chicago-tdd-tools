@@ -72,3 +72,11 @@ Pinnacle of Chicago TDD methodology. Embodies all four Chicago TDD principles in
 **Pattern**: Weaver live-check embodies all four Chicago TDD principles. Validates real telemetry (not mocks). Verifies observable behavior (schema conformance). Tests actual state (telemetry structure). Follows AAA pattern. Shows test results (not claims).
 
 **Conclusion**: Weaver live-check is pinnacle of Chicago TDD because it validates working capabilities with real collaborators, verifying observable behavior through state-based testing.
+
+## See Also
+
+- **[Perfect Weaver Live Check](PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation guide with PlantUML diagrams
+- **[Registry Version Pinning](REGISTRY_VERSION_PINNING.md)** - Managing registry versions
+- **[Upstream Issue Reporting](UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues
+- **[Observability Testing Guide](../observability/observability-testing-guide.md)** - Comprehensive observability testing
+- **[OTEL & Weaver Guide](../observability/otel-weaver-guide.md)** - OTEL and Weaver integration
