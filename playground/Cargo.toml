@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 # Chicago TDD Tools with ALL features enabled
-chicago-tdd-tools = { version = "1.3.0", features = [
+chicago-tdd-tools = { path = "..", features = [
     # Feature groups (convenience bundles)
     "testing-full",      # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
     "observability-full", # Complete observability: otel, weaver
@@ -24,7 +24,7 @@ chicago-tdd-tools = { version = "1.3.0", features = [
 ] }
 
 # Tokio for async runtime
-tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros", "sync"] }
 
 # Serialization
 serde = { version = "^1.0", features = ["derive"] }
@@ -33,8 +33,8 @@ serde_yaml = "^0.9"
 
 # CLI
 clap = { version = "^4.5", features = ["derive"] }
-clap-noun-verb = "3.8.0"
-clap-noun-verb-macros = "3.8.0"
+clap-noun-verb = "3.7.1"
+clap-noun-verb-macros = "3.7.1"
 linkme = "0.3"
 
 # Utilities
@@ -46,6 +46,13 @@ thiserror = "^2.0"
 
 # Test utilities
 tempfile = "^3.0"
+
+# Logging and observability
+log = "^0.4"
+env_logger = "^0.11"
+
+# Performance and metrics
+criterion = { version = "^0.5", features = ["html_reports"] }
 
 # Library for sharing modules with binaries
 [lib]
