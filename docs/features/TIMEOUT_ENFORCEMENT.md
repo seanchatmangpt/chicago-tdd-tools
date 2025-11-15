@@ -68,6 +68,87 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 
 **Mocking Testcontainers**: For fast testing without Docker, disable the `testcontainers` feature: `cargo test --no-default-features`. When feature is disabled, testcontainers stubs return `TestcontainersError::InvalidConfig`, which can be tested without Docker.
 
+## External Command Timeout Pattern
+
+**Root Cause Fix**: All external command calls (docker, git, etc.) must have timeout protection to prevent hanging when dependencies are unavailable.
+
+### Pattern Implementation
+
+**Rust Code Pattern** (for external commands in Rust code):
+```rust
+use std::process::Command;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+const COMMAND_TIMEOUT_MILLIS: u64 = 500;
+
+// Spawn command in thread to enable timeout
+let (tx, rx) = mpsc::channel();
+let _handle = thread::spawn(move || {
+    let output = Command::new("docker").args(["info"]).output();
+    tx.send(output).ok();
+});
+
+// Wait for result with timeout
+let result = match rx.recv_timeout(Duration::from_millis(COMMAND_TIMEOUT_MILLIS)) {
+    Ok(result) => result,
+    Err(_) => {
+        // Timeout - command hung (likely dependency unavailable)
+        return Err(Error::Timeout(format!(
+            "Command timed out after {}ms",
+            COMMAND_TIMEOUT_MILLIS
+        )));
+    }
+};
+```
+
+**Makefile Pattern** (for external commands in Makefile.toml):
+```toml
+[tasks.docker-check]
+command = "timeout"
+args = ["5s", "docker", "info"]
+ignore_errors = false
+```
+
+### Examples
+
+**testcontainers/mod.rs** - `check_docker_available()`:
+- Uses thread/mpsc pattern with 500ms timeout
+- Prevents hanging when Docker daemon is not running
+- Returns `DockerUnavailable` error within timeout period
+
+**test_common.inc** - `docker_available()`:
+- Uses same thread/mpsc pattern with 500ms timeout
+- Consistent timeout pattern across codebase
+
+**Makefile.toml** - `docker-check` task:
+- Uses shell `timeout` command with 5s timeout
+- Process-level timeout protection
+
+### When to Apply
+
+- **External command calls**: docker, git, curl, etc.
+- **Network operations**: HTTP requests, socket connections
+- **Any operation that could hang indefinitely**: File I/O on network mounts, database connections, etc.
+
+### Benefits
+
+- **Prevents hangs**: Commands fail fast when dependencies unavailable
+- **Fast feedback**: Errors returned within timeout period (500ms-5s)
+- **Consistent behavior**: Same timeout pattern across all external commands
+- **Fail-fast principle**: Better to break fast than freeze forever
+
+### Timeout Durations
+
+- **Quick checks** (docker info, git status): 500ms (Rust) or 5s (shell)
+- **Compilation**: 10s
+- **Unit tests**: 1s per test
+- **Integration tests**: 30s per test
+- **Long operations**: 60s
+
+See: [Root Cause Analysis - Docker Check Freeze](../analysis/ROOT_CAUSE_ANALYSIS_DOCKER_CHECK_FREEZE.md) for details on the timeout fix.
+
 ## Fallback
 
 If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to standard cargo test).

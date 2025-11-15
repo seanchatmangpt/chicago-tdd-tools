@@ -190,29 +190,59 @@
 - Integration tests cannot run
 - Incomplete test coverage
 - Integration issues not detected until deployment
+- **Root Cause Fix**: Docker check freezes/hangs when daemon is not running (fixed with timeout)
 
 **Causes**:
 - Docker daemon stopped or crashed
 - Docker not installed on CI runner
 - Docker socket permissions issues
 - Docker service degradation
+- **Root Cause**: Docker check functions lacked timeout protection, causing hangs when daemon unavailable
 
 **Current Controls**:
-- `docker-check` task fails fast if Docker unavailable
+- `docker-check` task fails fast if Docker unavailable (uses shell timeout)
 - Integration tests depend on `docker-check`
 - Tests can be skipped with feature flags
+- **Root Cause Fix**: All Docker check functions now have timeout protection:
+  - `check_docker_available()` in `testcontainers/mod.rs`: 500ms timeout using thread/mpsc pattern
+  - `docker_available()` in `test_common.inc`: 500ms timeout using thread/mpsc pattern
+  - `docker-check` task in `Makefile.toml`: 5s timeout using shell timeout command
+- Timeout pattern prevents hangs when Docker daemon is unavailable
 
 **Ratings**:
 - **Severity**: 6 (Integration tests skipped, but detected)
 - **Occurrence**: 4 (Low - Docker usually stable)
 - **Detection**: 2 (High - docker-check detects immediately)
 - **RPN**: **48** (LOW RISK)
+- **Root Cause Fix Impact**: RPN reduced from potential hang (infinite timeout) to 48 (fail-fast with timeout)
+
+**Root Cause Analysis**:
+- **Why #1**: Docker check freezes when daemon not running - `docker info` hangs waiting for daemon response
+- **Why #2**: Timeout wrapper didn't prevent freeze - inconsistent timeout implementations across codebase
+- **Why #3**: Inconsistent timeout implementations - Makefile had timeout, Rust code didn't
+- **Why #4**: Timeout pattern not applied consistently - pattern existed in test_common.inc but not in testcontainers/mod.rs
+- **Why #5**: No systematic enforcement - missing code review checklist, no compile-time enforcement
+- **Root Cause**: Inconsistent application of timeout pattern for external commands
+
+**Fix Implementation**:
+- Added timeout to `check_docker_available()` using thread/mpsc pattern (500ms timeout)
+- Consistent timeout pattern across all Docker check locations
+- Added code review checklist item for external command timeouts
+- Documented timeout pattern in TIMEOUT_ENFORCEMENT.md
+- Added test to verify timeout prevents hangs
+
+**Prevention Measures**:
+- Code review checklist: "All external commands must have timeout protection"
+- Timeout pattern documented in TIMEOUT_ENFORCEMENT.md
+- Test verifies timeout behavior prevents hangs
+- Consistent timeout pattern across all Docker checks
 
 **Recommended Actions**:
-1. Add Docker health check to CI setup phase
-2. Document Docker requirements clearly in README
-3. Add fallback: mock Docker tests for when Docker unavailable
-4. Monitor Docker availability in CI metrics
+1. ✅ **COMPLETED**: Add timeout to all Docker check functions (prevents hangs)
+2. Add Docker health check to CI setup phase
+3. Document Docker requirements clearly in README
+4. Add fallback: mock Docker tests for when Docker unavailable
+5. Monitor Docker availability in CI metrics
 
 ---
 

@@ -35,6 +35,7 @@ See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and e
 - [ ] **Type safety**: Types encode invariants (use newtypes where appropriate)
 - [ ] **Documentation**: Public APIs have doc comments with `# Errors` sections
 - [ ] **Tests**: New code has tests (AAA pattern, behavior verification)
+- [ ] **External command timeouts**: All external commands (docker, git, etc.) must have timeout protection to prevent hanging when dependencies are unavailable (see TIMEOUT_ENFORCEMENT.md for pattern)
 
 ## Clippy Allow Patterns
 
