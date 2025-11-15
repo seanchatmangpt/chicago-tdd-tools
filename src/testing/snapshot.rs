@@ -12,7 +12,9 @@
 //! - **AAA Pattern**: Arrange (setup), Act (execute), Assert (snapshot comparison)
 
 #[cfg(feature = "snapshot-testing")]
-use insta::{assert_snapshot, Settings};
+use insta::{assert_snapshot, assert_debug_snapshot, assert_json_snapshot, Settings};
+#[cfg(feature = "snapshot-testing")]
+use std::collections::HashMap;
 
 /// Snapshot assertion helper for Chicago TDD
 ///
@@ -120,6 +122,176 @@ impl SnapshotAssert {
         settings.bind(|| {
             test();
         });
+    }
+
+    /// Assert inline snapshot (v1.3.0)
+    ///
+    /// Snapshots are stored directly in the test source code for quick review.
+    /// Commonly requested feature for simple assertions.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to snapshot
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value doesn't match the inline snapshot.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
+    ///
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// let result = format!("Hello, {}!", "World");
+    /// // SnapshotAssert::assert_inline(&result);
+    /// // On first run, insta will write the snapshot inline
+    /// ```
+    pub fn assert_inline<T: std::fmt::Display>(value: &T) {
+        assert_snapshot!(format!("{value}"));
+    }
+
+    /// Assert inline debug snapshot (v1.3.0)
+    ///
+    /// Like `assert_inline` but uses Debug formatting.
+    pub fn assert_inline_debug<T: std::fmt::Debug>(value: &T) {
+        assert_debug_snapshot!(value);
+    }
+
+    /// Assert inline JSON snapshot (v1.3.0)
+    ///
+    /// Like `assert_inline` but for JSON values.
+    pub fn assert_inline_json(value: &serde_json::Value) {
+        assert_json_snapshot!(value);
+    }
+
+    /// Assert with redaction (v1.3.0)
+    ///
+    /// Redact sensitive data before snapshot comparison.
+    /// Commonly requested for testing with timestamps, UUIDs, and secrets.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to snapshot
+    /// * `snapshot_name` - Name of the snapshot
+    /// * `redactions` - HashMap of selectors to redaction values
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value doesn't match the stored snapshot.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
+    /// use std::collections::HashMap;
+    ///
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// let data = serde_json::json!({
+    ///     "id": "uuid-12345",
+    ///     "timestamp": "2024-01-01T00:00:00Z",
+    ///     "message": "test"
+    /// });
+    ///
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// let mut redactions = HashMap::new();
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// redactions.insert(".id".to_string(), "[UUID]".to_string());
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// redactions.insert(".timestamp".to_string(), "[TIMESTAMP]".to_string());
+    ///
+    /// // SnapshotAssert::assert_with_redaction(&data, "test_redacted", &redactions);
+    /// ```
+    pub fn assert_with_redaction(
+        value: &serde_json::Value,
+        snapshot_name: &str,
+        redactions: &HashMap<String, String>,
+    ) {
+        Self::with_settings(
+            |settings| {
+                for (selector, replacement) in redactions {
+                    settings.add_redaction(selector, replacement.clone());
+                }
+            },
+            || {
+                Self::assert_json_matches(value, snapshot_name);
+            },
+        );
+    }
+
+    /// Assert with profile (v1.3.0)
+    ///
+    /// Use environment-specific snapshot profiles (e.g., dev, ci, production).
+    /// Commonly requested for different snapshot configurations per environment.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to snapshot
+    /// * `snapshot_name` - Name of the snapshot
+    /// * `profile` - Profile name (e.g., "ci", "dev", "prod")
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value doesn't match the stored snapshot for the given profile.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
+    ///
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// let data = "test_output";
+    /// // SnapshotAssert::assert_with_profile(&data, "test_output", "ci");
+    /// // Snapshot will be stored in snapshots/ci/ directory
+    /// ```
+    pub fn assert_with_profile<T: std::fmt::Display>(
+        value: &T,
+        snapshot_name: &str,
+        profile: &str,
+    ) {
+        Self::with_settings(
+            |settings| {
+                settings.set_snapshot_path(format!("snapshots/{profile}"));
+            },
+            || {
+                Self::assert_matches(value, snapshot_name);
+            },
+        );
+    }
+
+    /// Create a redaction helper for common patterns (v1.3.0)
+    ///
+    /// Provides pre-built redactions for common use cases.
+    ///
+    /// # Returns
+    ///
+    /// A `HashMap` with common redaction patterns (UUIDs, timestamps, etc.)
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// use chicago_tdd_tools::snapshot::SnapshotAssert;
+    ///
+    /// # #[cfg(feature = "snapshot-testing")]
+    /// let redactions = SnapshotAssert::common_redactions();
+    /// // Contains: .id → [UUID], .timestamp → [TIMESTAMP], etc.
+    /// ```
+    #[must_use]
+    pub fn common_redactions() -> HashMap<String, String> {
+        let mut redactions = HashMap::new();
+        redactions.insert(".id".to_string(), "[UUID]".to_string());
+        redactions.insert(".uuid".to_string(), "[UUID]".to_string());
+        redactions.insert(".timestamp".to_string(), "[TIMESTAMP]".to_string());
+        redactions.insert(".created_at".to_string(), "[TIMESTAMP]".to_string());
+        redactions.insert(".updated_at".to_string(), "[TIMESTAMP]".to_string());
+        redactions.insert(".token".to_string(), "[TOKEN]".to_string());
+        redactions.insert(".password".to_string(), "[PASSWORD]".to_string());
+        redactions.insert(".secret".to_string(), "[SECRET]".to_string());
+        redactions
     }
 }
 
@@ -319,5 +491,144 @@ mod tests {
                 SnapshotAssert::assert_matches(&data, "test_custom_path");
             },
         );
+    }
+
+    // ========================================================================
+    // V1.3.0 FEATURES - Inline, Redaction, Profiles
+    // ========================================================================
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_inline_simple() {
+        let data = "inline_test_value";
+        SnapshotAssert::assert_inline(&data);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_inline_debug() {
+        let data = vec![1, 2, 3];
+        SnapshotAssert::assert_inline_debug(&data);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_inline_json() {
+        let data = serde_json::json!({"key": "value", "number": 42});
+        SnapshotAssert::assert_inline_json(&data);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_redaction_basic() {
+        let data = serde_json::json!({
+            "id": "uuid-12345",
+            "message": "test message"
+        });
+
+        let mut redactions = HashMap::new();
+        redactions.insert(".id".to_string(), "[UUID]".to_string());
+
+        SnapshotAssert::assert_with_redaction(&data, "test_redaction_basic", &redactions);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_redaction_multiple() {
+        let data = serde_json::json!({
+            "id": "uuid-12345",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "token": "secret-token-abc",
+            "message": "test"
+        });
+
+        let mut redactions = HashMap::new();
+        redactions.insert(".id".to_string(), "[UUID]".to_string());
+        redactions.insert(".timestamp".to_string(), "[TIMESTAMP]".to_string());
+        redactions.insert(".token".to_string(), "[TOKEN]".to_string());
+
+        SnapshotAssert::assert_with_redaction(&data, "test_redaction_multiple", &redactions);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_common_redactions() {
+        let redactions = SnapshotAssert::common_redactions();
+
+        // Assert: Verify common redactions exist
+        assert!(redactions.contains_key(".id"));
+        assert!(redactions.contains_key(".uuid"));
+        assert!(redactions.contains_key(".timestamp"));
+        assert!(redactions.contains_key(".token"));
+        assert!(redactions.contains_key(".password"));
+        assert_eq!(redactions.get(".id"), Some(&"[UUID]".to_string()));
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_profile_ci() {
+        let data = "ci_profile_test";
+        SnapshotAssert::assert_with_profile(&data, "test_profile_ci", "ci");
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_profile_dev() {
+        let data = "dev_profile_test";
+        SnapshotAssert::assert_with_profile(&data, "test_profile_dev", "dev");
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_redaction_with_common() {
+        let data = serde_json::json!({
+            "id": "uuid-12345",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "message": "test message"
+        });
+
+        let redactions = SnapshotAssert::common_redactions();
+        SnapshotAssert::assert_with_redaction(&data, "test_common_redaction", &redactions);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_inline_complex_struct() {
+        #[derive(Debug)]
+        struct TestStruct {
+            name: String,
+            value: i32,
+            tags: Vec<String>,
+        }
+
+        let data = TestStruct {
+            name: "test".to_string(),
+            value: 42,
+            tags: vec!["tag1".to_string(), "tag2".to_string()],
+        };
+
+        SnapshotAssert::assert_inline_debug(&data);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_redaction_nested() {
+        let data = serde_json::json!({
+            "user": {
+                "id": "uuid-user-123",
+                "email": "test@example.com"
+            },
+            "session": {
+                "token": "secret-session-token",
+                "created_at": "2024-01-01T00:00:00Z"
+            }
+        });
+
+        let mut redactions = HashMap::new();
+        redactions.insert(".user.id".to_string(), "[USER_ID]".to_string());
+        redactions.insert(".session.token".to_string(), "[SESSION_TOKEN]".to_string());
+        redactions.insert(".session.created_at".to_string(), "[TIMESTAMP]".to_string());
+
+        SnapshotAssert::assert_with_redaction(&data, "test_redaction_nested", &redactions);
     }
 }
