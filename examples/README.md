@@ -47,6 +47,8 @@ Learn the fundamental patterns of Chicago TDD through hands-on examples:
 cargo run --example basic_test
 ```
 
+**📖 Full Documentation:** [basic_test.md](basic_test.md)
+
 **What you'll learn:**
 - TestFixture creation and usage
 - TestDataBuilder patterns
@@ -63,6 +65,8 @@ Learn how to use Chicago TDD macros for writing concise, readable tests.
 ```bash
 cargo test --example macro_examples
 ```
+
+**📖 Full Documentation:** [macro_examples.md](macro_examples.md)
 
 **What you'll learn:**
 - `test!` macro for synchronous tests
@@ -92,6 +96,8 @@ How to use property-based testing to verify properties hold for all inputs.
 cargo run --example property_testing --features property-testing
 ```
 
+**📖 Full Documentation:** [property_testing.md](property_testing.md)
+
 **Use this when:**
 - Testing mathematical properties (commutativity, distributivity)
 - Finding edge cases automatically
@@ -113,6 +119,8 @@ How to use snapshot testing for complex data structures and output stability.
 ```bash
 cargo test --features snapshot-testing --example snapshot_testing
 ```
+
+**📖 Full Documentation:** [snapshot_testing.md](snapshot_testing.md)
 
 **Use this when:**
 - Testing complex data structures
@@ -146,6 +154,8 @@ How to validate test quality by introducing mutations to code.
 cargo run --example mutation_testing
 ```
 
+**📖 Full Documentation:** [mutation_testing.md](mutation_testing.md)
+
 **Use this when:**
 - Measuring test quality
 - Finding weak tests
@@ -169,6 +179,8 @@ How to test concurrent code with model checking using loom.
 cargo test --features concurrency-testing --example concurrency_testing
 ```
 
+**📖 Full Documentation:** [concurrency_testing.md](concurrency_testing.md)
+
 **Use this when:**
 - Testing concurrent operations
 - Finding race conditions
@@ -191,6 +203,8 @@ How to test command-line interfaces using golden files.
 cargo test --features cli-testing --example cli_testing
 ```
 
+**📖 Full Documentation:** [cli_testing.md](cli_testing.md)
+
 **Use this when:**
 - Testing CLI applications
 - Verifying command output
@@ -212,6 +226,8 @@ How to use Docker containers in integration tests with automatic lifecycle manag
 ```bash
 cargo run --example testcontainers_example --features testcontainers
 ```
+
+**📖 Full Documentation:** [testcontainers_example.md](testcontainers_example.md)
 
 **Use this when:**
 - Testing with real databases (PostgreSQL, MySQL)
@@ -243,6 +259,8 @@ How to validate observability telemetry with OpenTelemetry and Weaver.
 cargo test --features otel,weaver --example otel_weaver_testing
 ```
 
+**📖 Full Documentation:** [otel_weaver_testing.md](otel_weaver_testing.md)
+
 **Use this when:**
 - Validating OTEL spans and metrics
 - Testing telemetry instrumentation
@@ -273,6 +291,8 @@ Demonstrates the "go the extra mile" paradigm with progressive enhancement:
 cargo run --example go_extra_mile --features otel,weaver
 ```
 
+**📖 Full Documentation:** [go_extra_mile.md](go_extra_mile.md)
+
 **Concepts:**
 - **1st Idea**: Solve the immediate problem (narrow scope)
 - **2nd Idea**: Go bigger (80/20 sweet spot - 80% more value with 20% effort)
@@ -300,6 +320,8 @@ Demonstrates hyper-advanced Rust features used in Chicago TDD Tools:
 ```bash
 cargo run --example advanced_features
 ```
+
+**📖 Full Documentation:** [advanced_features.md](advanced_features.md)
 
 **Concepts:**
 - **Type-Level Arithmetic**: Const generics for compile-time size validation
