@@ -275,7 +275,7 @@ impl Drop for WeaverValidator {
         // This prevents blocking HTTP client from being called in async Drop context
         if self.process.is_some() {
             // Try to stop, but don't panic if it fails (we're in Drop)
-        let _ = self.stop();
+            let _ = self.stop();
         }
     }
 }

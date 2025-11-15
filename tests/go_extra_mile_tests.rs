@@ -17,14 +17,14 @@ mod tests {
     // **Root Cause Fix**: assert_ok! is exported with #[macro_export], so it's available at crate root
     // without import. Importing it causes "unused import" error. Use assert_ok!() directly.
     use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
-    
+
     // **Poka-yoke**: Import validators only where used (conditionally compiled)
     #[cfg(feature = "otel")]
     use chicago_tdd_tools::observability::otel::{MetricValidator, OtelTestHelper, SpanValidator};
-    
+
     #[cfg(feature = "otel")]
     use chicago_tdd_tools::assertions::assert_that_with_msg;
-    
+
     #[cfg(feature = "otel")]
     use chicago_tdd_tools::ValidatedAssertion;
 

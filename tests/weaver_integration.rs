@@ -210,9 +210,9 @@ mod weaver_integration_tests {
         // **Working Capability Pattern**: Use tokio::runtime::Runtime for blocking context
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-        tracer
-            .force_flush()
-            .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
+            tracer
+                .force_flush()
+                .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
             tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
         });
 
@@ -221,7 +221,7 @@ mod weaver_integration_tests {
 
         // Act: Finish fixture and get results (uses blocking operations, move to blocking thread)
         drop(tracer); // Drop tracer before moving fixture
-        // **Poka-yoke**: Clone output_dir path before moving fixture (prevent borrow-after-move)
+                      // **Poka-yoke**: Clone output_dir path before moving fixture (prevent borrow-after-move)
         let output_dir = fixture.output_dir().to_path_buf();
         let results = {
             let (tx, rx) = std::sync::mpsc::channel();
@@ -231,7 +231,7 @@ mod weaver_integration_tests {
             });
             rx.recv().unwrap()
         }
-            .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
+        .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
         // Assert: Verify reports were generated and can be validated (working capability)
         assert_telemetry_valid(&results)

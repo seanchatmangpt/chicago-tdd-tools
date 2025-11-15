@@ -134,7 +134,7 @@ impl WeaverTestFixture {
         // Move blocking operations to blocking thread pool
         // This resolves the async/blocking contradiction by handling context switching internally
         let output_dir = self.output_dir().to_path_buf();
-        
+
         // Use tokio::task::spawn_blocking to handle the blocking stop_weaver_process call
         // We wrap observability in Arc<Mutex<>> to share it between async and blocking contexts
         // **Kaizen improvement**: Clarify why dummy ObservabilityTest is needed
@@ -144,14 +144,13 @@ impl WeaverTestFixture {
         // finish_async(), so this temporary value is safe.
         let observability = Arc::new(Mutex::new(std::mem::replace(
             &mut self.observability,
-            ObservabilityTest::with_config(TestConfig::default())
-                .map_err(|e| {
-                    ObservabilityError::ValidationFailed(format!(
-                        "Failed to create temporary ObservabilityTest for finish_async: {e}"
-                    ))
-                })?,
+            ObservabilityTest::with_config(TestConfig::default()).map_err(|e| {
+                ObservabilityError::ValidationFailed(format!(
+                    "Failed to create temporary ObservabilityTest for finish_async: {e}"
+                ))
+            })?,
         )));
-        
+
         let observability_clone = Arc::clone(&observability);
         let stop_result = tokio::task::spawn_blocking(move || {
             // **Kaizen improvement**: Use map_err instead of unwrap for better error messages
@@ -183,7 +182,8 @@ impl WeaverTestFixture {
         self.observability = Arc::try_unwrap(observability)
             .map_err(|_| {
                 ObservabilityError::ValidationFailed(
-                    "ObservabilityTest Arc should have single owner after finish_async()".to_string(),
+                    "ObservabilityTest Arc should have single owner after finish_async()"
+                        .to_string(),
                 )
             })?
             .into_inner()
