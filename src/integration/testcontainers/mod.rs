@@ -177,7 +177,9 @@ pub mod implementation {
             });
 
             // Wait for result with timeout
-            if let Ok(docker_check) = rx.recv_timeout(Duration::from_millis(DOCKER_CHECK_TIMEOUT_MILLIS)) {
+            if let Ok(docker_check) =
+                rx.recv_timeout(Duration::from_millis(DOCKER_CHECK_TIMEOUT_MILLIS))
+            {
                 match docker_check {
                     Ok(output) => {
                         if output.status.success() {
