@@ -118,8 +118,8 @@ tokio-test = "^0.4"      # Tokio testing utilities
 ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
 trybuild = "^1.0"        # Compile-fail tests (compile-time test validation)
 criterion = { version = "^0.5", features = ["html_reports"] }  # Performance benchmarking
+tempfile = "^3.0"        # Temporary directories for tests (config module tests)
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
-# Note: tempfile moved to regular dependencies (weaver feature) - needed for WeaverTestFixture
 
 [features]
 # Default features: Minimal set for best DX
