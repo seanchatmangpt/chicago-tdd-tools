@@ -49,35 +49,8 @@ fn stat() -> Result<GhStatus> {
 #[verb]
 fn list() -> Result<Vec<String>> {
     let workflows = discover_workflows();
-    let format = "names"; // Default format
-
-    match format {
-        "names" => {
-            let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();
-            println!("📋 GitHub Actions Workflows:");
-            for name in &names {
-                println!("  • {}", name);
-            }
-            Ok(names)
-        }
-        "paths" => {
-            let paths: Vec<String> = workflows.iter().map(|w| w.path.clone()).collect();
-            println!("📁 Workflow Files:");
-            for path in &paths {
-                println!("  • {}", path);
-            }
-            Ok(paths)
-        }
-        "json" => {
-            let json =
-                serde_json::to_string_pretty(&workflows).unwrap_or_else(|_| "[]".to_string());
-            println!("{}", json);
-            Ok(workflows.iter().map(|w| w.name.clone()).collect())
-        }
-        _ => {
-            Ok(vec![format!("Unknown format: {}. Use 'names', 'paths', or 'json'", format)])
-        }
-    }
+    let names: Vec<String> = workflows.iter().map(|w| w.name.clone()).collect();
+    Ok(names)
 }
 
 /// Validate GitHub Actions workflows
@@ -88,9 +61,6 @@ fn list() -> Result<Vec<String>> {
 fn check() -> Result<Vec<String>> {
     let workflows = discover_workflows();
     let mut issues = Vec::new();
-
-    println!("🔍 Validating GitHub Actions workflows...");
-    println!();
 
     for workflow in &workflows {
         if !workflow.valid {
@@ -121,15 +91,6 @@ fn check() -> Result<Vec<String>> {
                     ));
                 }
             }
-        }
-    }
-
-    if issues.is_empty() {
-        println!("✅ All workflows validated successfully!");
-    } else {
-        println!("⚠️  Found {} issue(s):", issues.len());
-        for issue in &issues {
-            println!("  • {}", issue);
         }
     }
 
