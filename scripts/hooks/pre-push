@@ -70,6 +70,7 @@ if [ -n "$PROD_FILES" ]; then
             continue
         fi
         COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || echo "0")
+        COUNT=${COUNT:-0}  # Ensure COUNT is a number
         UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
     done
 
@@ -115,11 +116,16 @@ echo ""
 
 # Gate 4: Unit tests
 echo "Gate 4/6: Unit tests..."
-if timeout 300s cargo make test-unit >/dev/null 2>&1; then
+TEST_OUTPUT=$(timeout 300s cargo make test-unit 2>&1) || TEST_EXIT=$?
+if [ -z "${TEST_EXIT:-}" ]; then
     echo "✅ Gate 4 passed"
 else
     echo "❌ ERROR: cargo make test-unit failed"
-    echo "Run 'cargo make test-unit' to see details"
+    echo ""
+    echo "Last 30 lines of test output:"
+    echo "$TEST_OUTPUT" | tail -30
+    echo ""
+    echo "Run 'cargo make test-unit' to see full details"
     exit 1
 fi
 echo ""
