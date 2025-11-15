@@ -248,7 +248,13 @@ impl WeaverValidator {
 #[cfg(feature = "weaver")]
 impl Drop for WeaverValidator {
     fn drop(&mut self) {
-        let _ = self.stop();
+        // **Root Cause Fix**: Only stop if process is still running
+        // If stop() was already called explicitly, process will be None
+        // This prevents blocking HTTP client from being called in async Drop context
+        if self.process.is_some() {
+            // Try to stop, but don't panic if it fails (we're in Drop)
+            let _ = self.stop();
+        }
     }
 }
 

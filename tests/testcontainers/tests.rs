@@ -215,8 +215,15 @@ mod tests {
         )
         .unwrap_or_else(|e| panic!("Failed to create container with entrypoint override: {}", e));
 
+        // Wait for container to be ready (Docker CLI containers need a moment)
+        // **Root Cause Fix**: Docker CLI containers need time to fully start
+        // Use same delay as implementation (CONTAINER_STARTUP_DELAY_MS = 1000ms)
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+        
         // Act: Execute first command (verifies container is running and exec works)
-        let result1 = container.exec("echo", &["entrypoint", "override", "test"]);
+        // **Root Cause Fix**: When using entrypoint override with /bin/sh, commands need to be executed
+        // through the shell. Use sh -c for proper command execution.
+        let result1 = container.exec("sh", &["-c", "echo entrypoint override test"]);
         assert_ok!(&result1, "First exec should succeed with entrypoint override");
         let exec_result1 = result1.expect("Exec should succeed after assert_ok");
         assert_eq_msg!(&exec_result1.exit_code, &0, "First command should succeed");
