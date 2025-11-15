@@ -6,6 +6,23 @@ Comprehensive playground demonstrating all features of chicago-tdd-tools. This s
 
 This playground validates that all features work correctly for end users and provides copyable examples that can be adapted for real projects.
 
+---
+
+## 📚 Documentation (Diátaxis Framework)
+
+The playground documentation is organized using the **Diátaxis** systematic approach for better discoverability:
+
+- **[Getting Started Tutorial](docs/tutorials/GETTING_STARTED.md)** - Learn to use the playground CLI
+- **[How-To Guides](docs/how-to/INDEX.md)** - Solve specific problems (output formats, scripting, etc.)
+- **[Command Reference](docs/reference/COMMAND_REFERENCE.md)** - Complete API documentation
+- **[Architecture Explanation](docs/explanation/ARCHITECTURE.md)** - Understand the design
+
+👉 **New to playground?** Start with [Getting Started](docs/tutorials/GETTING_STARTED.md)
+
+📖 **Want to do something specific?** Check [How-To Guides](docs/how-to/INDEX.md)
+
+---
+
 ## Features Demonstrated
 
 ### Core Features (Always Available)
