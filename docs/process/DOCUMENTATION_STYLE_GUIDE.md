@@ -192,7 +192,10 @@ All major documentation should include:
 1. **Getting Started Guides**: Link to API Reference, User Guide, Architecture
 2. **Feature Guides**: Link to related features, API Reference, examples
 3. **API Reference**: Link to getting started, user guide, architecture
-4. **Always Include**: Next steps section with relevant links
+4. **Always Include**: "See Also" or "Next Steps" section with relevant links
+5. **Required Sections**: All feature guides and reference docs must have "See Also" section (validated by `docs-check`)
+
+**Kaizen Improvement**: Added "See Also" sections to all feature and reference documentation to improve discoverability. Pattern: Add "See Also" section at end of document with links to related documentation.
 
 ## Writing Style
 

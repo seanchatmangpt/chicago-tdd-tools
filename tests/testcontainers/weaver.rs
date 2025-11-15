@@ -13,15 +13,24 @@ mod weaver_tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::prelude::*;
+    use chicago_tdd_tools::{async_test, test};
     use chicago_tdd_tools::assertions::assert_that_with_msg;
-    use chicago_tdd_tools::testcontainers::*;
+    use chicago_tdd_tools::{assert_eq_msg, assert_ok};
     use chicago_tdd_tools::observability::weaver::WeaverValidator;
+    use chicago_tdd_tools::testcontainers::*;
     use common::require_docker;
     use std::collections::HashMap;
     use std::fs;
     use std::path::PathBuf;
     use tokio::time::sleep;
+    
+    // Macros exported via #[macro_export] need to be used with full path in nested modules
+    #[allow(unused_macros)] // Macro may be used in future tests
+    macro_rules! assert_err {
+        ($($args:tt)*) => {
+            chicago_tdd_tools::assert_err!($($args)*)
+        };
+    }
 
     fn allow_weaver_skip() -> bool {
         matches!(

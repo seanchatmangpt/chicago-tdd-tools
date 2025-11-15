@@ -29,11 +29,25 @@ mod tests {
     mod common {
         include!("../test_common.inc");
     }
-    use chicago_tdd_tools::prelude::*;
+    use chicago_tdd_tools::test;
     use chicago_tdd_tools::assertions::assert_that_with_msg;
+    use chicago_tdd_tools::assert_eq_msg;
     use chicago_tdd_tools::testcontainers::*;
     use common::{docker_available, require_docker};
     use std::collections::HashMap;
+    
+    // Macros exported via #[macro_export] need to be used with full path in nested modules
+    // Use helper macros that delegate to the external crate's macros
+    macro_rules! assert_ok {
+        ($($args:tt)*) => {
+            chicago_tdd_tools::assert_ok!($($args)*)
+        };
+    }
+    macro_rules! assert_err {
+        ($($args:tt)*) => {
+            chicago_tdd_tools::assert_err!($($args)*)
+        };
+    }
 
     // Kaizen improvement: Extract repeated Docker image names to constants
     // Pattern: Use named constants for repeated string literals to improve maintainability

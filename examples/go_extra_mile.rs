@@ -1,12 +1,67 @@
-//! # Go the Extra Mile: 1st/2nd/3rd Idea Progression with OTEL/Weaver Validation
+//! # Go the Extra Mile: 1st/2nd/3rd Idea Progression - Comprehensive Guide
 //!
-//! This example demonstrates the "go the extra mile" paradigm:
+//! Demonstrates the "go the extra mile" paradigm with progressive enhancement:
+//! from basic implementation to maximum value solutions.
 //!
-//! - 1st Idea: Solve the immediate problem
-//! - 2nd Idea: Go bigger with generics (80/20)
-//! - 3rd Idea: Maximum value with type-level validation + OTEL/Weaver validation
+//! ## Tutorial: Getting Started
 //!
-//! Each idea includes increasing levels of telemetry instrumentation and validation.
+//! This example walks through three progressive ideas for number parsing:
+//!
+//! 1. **1st Idea**: Solve the immediate problem - parse `u32` only
+//! 2. **2nd Idea**: Go bigger (80/20) - generic version works for all number types
+//! 3. **3rd Idea**: Maximum value - type-level validation + OTEL/Weaver validation
+//!
+//! Each idea demonstrates increasing levels of:
+//! - **Scope**: Single type → All types → Type-safe validated types
+//! - **Telemetry**: None → Basic OTEL spans → Full OTEL spans + metrics
+//! - **Validation**: None → OTEL validation → OTEL + Weaver validation
+//!
+//! ## Explanation: Concepts
+//!
+//! **80/20 Thinking**: The 2nd idea typically provides 80% more value with 20% more effort.
+//! This is the "sweet spot" for most use cases - significant improvement without excessive complexity.
+//!
+//! **Progressive Enhancement**: Start with the simplest solution that works, then enhance
+//! incrementally. Each idea builds on the previous, adding value without breaking existing functionality.
+//!
+//! **Type-Level Validation**: The 3rd idea uses Rust's type system to prevent entire classes
+//! of errors at compile time. Validated types ensure correctness by construction.
+//!
+//! **OTEL Instrumentation**: OpenTelemetry spans and metrics provide observability into
+//! operations. Spans track operations, metrics track measurements over time.
+//!
+//! **Weaver Live-Check**: Validates telemetry against OpenTelemetry semantic conventions
+//! at runtime, ensuring compliance with industry standards.
+//!
+//! **Decision Framework**:
+//! - 1st Idea: Works, but narrow scope
+//! - 2nd Idea: Usually best - 80% more value, reasonable effort
+//! - 3rd Idea: Maximum value, but evaluate effort vs. benefit
+//!
+//! ## How-to: Common Tasks
+//!
+//! - Parse a number (1st idea): See `parse_u32_first_idea()`
+//! - Parse any number type (2nd idea): See `parse_number_second_idea_no_otel()`
+//! - Parse with validation (3rd idea): See `ValidatedNumberNoOtel::parse()`
+//! - Parse with OTEL instrumentation: See `parse_number_second_idea()` and `ValidatedNumber::parse()`
+//!
+//! ## Reference: Quick Lookup
+//!
+//! **Key Functions**:
+//! - `parse_u32_first_idea(input) -> Result<u32, String>` - 1st idea: Parse u32 only
+//! - `parse_number_second_idea_no_otel<T>(input) -> Result<T, String>` - 2nd idea: Generic parser
+//! - `parse_number_second_idea<T>(input, span_name) -> Result<(T, Span), String>` - 2nd idea with OTEL
+//! - `ValidatedNumberNoOtel::<T>::parse(input) -> Result<ValidatedNumberNoOtel<T>, String>` - 3rd idea: Type-safe
+//! - `ValidatedNumber::<T>::parse(input, span_name) -> Result<ValidatedNumber<T>, String>` - 3rd idea with OTEL
+//!
+//! **Key Types**:
+//! - `ValidatedNumberNoOtel<T>`: Type-safe validated number (no OTEL)
+//! - `ValidatedNumber<T>`: Type-safe validated number with OTEL spans
+//!
+//! **Key Concepts**:
+//! - **1st Idea**: Immediate solution, narrow scope
+//! - **2nd Idea**: 80/20 sweet spot - generic, works for all types
+//! - **3rd Idea**: Maximum value - type-safe, prevents entire class of errors
 
 use chicago_tdd_tools::assert_ok;
 #[cfg(feature = "weaver")]
@@ -31,23 +86,25 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // 1st IDEA: Solve the immediate problem
 // ============================================================================
 
-/// Parse u32 from string.
+/// Example: 1st Idea - Parse u32 from string
 ///
-/// First idea: Parse u32 only.
+/// ## How-to: Parse a Number (1st Idea)
 ///
-/// **Telemetry**: None (basic implementation)
-/// **Validation**: None
-/// **Scope**: Single type only
+/// Parse a `u32` from a string. This is the simplest solution that solves
+/// the immediate problem. Works for `u32` only, no telemetry, no validation.
 ///
-/// # Errors
+/// ## Reference
 ///
-/// Returns error if parsing fails.
+/// - **Function**: `parse_u32_first_idea(input) -> Result<u32, String>`
+/// - **Parameters**: `input: &str` - String to parse
+/// - **Returns**: `Ok(u32)` on success, `Err(String)` on parse failure
+/// - **Telemetry**: None
+/// - **Validation**: None
+/// - **Scope**: Single type only (`u32`)
 ///
 /// # Examples
 ///
 /// ```rust
-/// use chicago_tdd_tools::examples::go_extra_mile::parse_u32_first_idea;
-///
 /// // Success case
 /// let result = parse_u32_first_idea("42")?;
 /// assert_eq!(result, 42);
@@ -64,14 +121,34 @@ pub fn parse_u32_first_idea(input: &str) -> Result<u32, String> {
 // 2nd IDEA: Go bigger (80/20) - Generic version
 // ============================================================================
 
-/// Second idea: Parse any number type
+/// Example: 2nd Idea - Parse any number type with OTEL instrumentation
 ///
-/// **Telemetry**: Basic OTEL spans (if otel feature enabled)
-/// **Validation**: OTEL span validation
-/// **Scope**: Works for u32, i32, u64, f64, etc. - 80% more value, minimal effort
+/// ## How-to: Parse Any Number Type (2nd Idea)
 ///
-/// # Errors
-/// Returns error if parsing fails
+/// Generic version that works for all number types (`u32`, `i32`, `u64`, `f64`, etc.).
+/// This is the 80/20 sweet spot - 80% more value (works for all types) with minimal effort.
+/// Includes OTEL span instrumentation for observability.
+///
+/// ## Reference
+///
+/// - **Function**: `parse_number_second_idea<T>(input, span_name) -> Result<(T, Span), String>`
+/// - **Parameters**:
+///   - `input: &str` - String to parse
+///   - `span_name: &str` - Name for OTEL span
+/// - **Returns**: `Ok((T, Span))` on success - parsed value and OTEL span
+/// - **Telemetry**: OTEL spans with attributes (input, type, success, error)
+/// - **Validation**: OTEL span validation available
+/// - **Scope**: Works for all number types (generic)
+///
+/// # Examples
+///
+/// ```rust
+/// let (value, span) = parse_number_second_idea::<u32>("42", "parse_number")?;
+/// assert_eq!(value, 42);
+/// // Validate span with OTEL validator
+/// let validator = SpanValidator::new();
+/// validator.validate(&span)?;
+/// ```
 #[cfg(feature = "otel")]
 pub fn parse_number_second_idea<T: std::str::FromStr>(
     input: &str,
@@ -81,11 +158,10 @@ where
     T::Err: std::fmt::Display,
 {
     // Create OTEL span for operation
-    // **FMEA Fix**: SystemTime::duration_since(UNIX_EPOCH) should never fail in practice,
-    // but demonstrate proper error handling pattern for users
+    // **Best Practice**: Handle SystemTime errors properly (should never fail in practice)
     let start_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+        .map_err(|e| format!("SystemTime error: {e}"))?
         .as_millis() as u64;
 
     let mut span = Span::new_active(
@@ -106,11 +182,10 @@ where
 
     let end_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+        .map_err(|e| format!("SystemTime error: {e}"))?
         .as_millis() as u64;
 
-    // End time should always be >= start time in normal operation
-    // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+    // **Best Practice**: Handle span completion errors properly
     span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
     match &result {
@@ -128,12 +203,29 @@ where
     result.map(|value| (value, span))
 }
 
-/// Second idea: Parse any number type (without OTEL)
+/// Example: 2nd Idea - Parse any number type (without OTEL)
 ///
-/// Generic version that works for all number types - demonstrates 80/20 thinking.
+/// ## How-to: Parse Any Number Type (2nd Idea, No OTEL)
 ///
-/// # Errors
-/// Returns error if parsing fails
+/// Generic version that works for all number types without OTEL instrumentation.
+/// Demonstrates 80/20 thinking - works for all types with minimal code.
+///
+/// ## Reference
+///
+/// - **Function**: `parse_number_second_idea_no_otel<T>(input) -> Result<T, String>`
+/// - **Parameters**: `input: &str` - String to parse
+/// - **Returns**: `Ok(T)` on success, `Err(String)` on parse failure
+/// - **Telemetry**: None
+/// - **Validation**: None
+/// - **Scope**: Works for all number types (generic)
+///
+/// # Examples
+///
+/// ```rust
+/// let value: u32 = parse_number_second_idea_no_otel("42")?;
+/// let value: i32 = parse_number_second_idea_no_otel("-42")?;
+/// let value: f64 = parse_number_second_idea_no_otel("123.456")?;
+/// ```
 pub fn parse_number_second_idea_no_otel<T: std::str::FromStr>(input: &str) -> Result<T, String>
 where
     T::Err: std::fmt::Display,
@@ -145,11 +237,37 @@ where
 // 3rd IDEA: Maximum value - Type-level validation + OTEL + Weaver
 // ============================================================================
 
-/// Third idea: Type-level validated number with OTEL/Weaver validation
+/// Example: 3rd Idea - Type-level validated number with OTEL/Weaver validation
 ///
-/// **Telemetry**: Full OTEL spans and metrics
-/// **Validation**: OTEL span validation + Weaver live-check schema validation
-/// **Scope**: Type-safe, validated numbers that prevent entire class of errors
+/// ## How-to: Parse with Type-Level Validation (3rd Idea)
+///
+/// Maximum value solution: Type-safe validated numbers that prevent entire classes of errors.
+/// Includes full OTEL spans and metrics instrumentation, plus Weaver live-check validation.
+///
+/// ## Reference
+///
+/// - **Type**: `ValidatedNumber<T>` - Type-safe validated number with OTEL span
+/// - **Function**: `ValidatedNumber::<T>::parse(input, span_name) -> Result<ValidatedNumber<T>, String>`
+/// - **Parameters**:
+///   - `input: &str` - String to parse
+///   - `span_name: &str` - Name for OTEL span
+/// - **Returns**: `Ok(ValidatedNumber<T>)` on success
+/// - **Methods**:
+///   - `value() -> &T` - Get the validated value
+///   - `span() -> &Span` - Get the OTEL span for validation
+/// - **Telemetry**: Full OTEL spans and metrics
+/// - **Validation**: OTEL span validation + Weaver live-check schema validation
+/// - **Scope**: Type-safe, prevents entire class of errors
+///
+/// # Examples
+///
+/// ```rust
+/// let validated = ValidatedNumber::<u32>::parse("42", "validated_parse")?;
+/// assert_eq!(*validated.value(), 42);
+/// // Validate span
+/// let validator = SpanValidator::new();
+/// validator.validate(validated.span())?;
+/// ```
 #[cfg(feature = "otel")]
 pub struct ValidatedNumber<T> {
     value: T,
@@ -165,10 +283,10 @@ where
     /// Parse and validate number with full OTEL instrumentation
     pub fn parse(input: &str, span_name: &str) -> Result<Self, String> {
         // Create OTEL span
-        // **FMEA Fix**: Demonstrate proper error handling instead of expect()
+        // **Best Practice**: Handle SystemTime errors properly
         let start_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+            .map_err(|e| format!("SystemTime error: {e}"))?
             .as_millis() as u64;
 
         let mut span = Span::new_active(
@@ -192,11 +310,10 @@ where
 
         let end_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| format!("SystemTime error (should not happen): {e}"))?
+            .map_err(|e| format!("SystemTime error: {e}"))?
             .as_millis() as u64;
 
-        // End time should always be >= start time in normal operation
-        // **FMEA Fix**: Handle potential error instead of expect() - demonstrates proper error handling
+        // **Best Practice**: Handle span completion errors properly
         span.complete(end_time).map_err(|e| format!("Span completion error: {e}"))?;
 
         match &parse_result {
@@ -228,9 +345,28 @@ where
     }
 }
 
-/// Third idea: Type-level validated number (without OTEL)
+/// Example: 3rd Idea - Type-level validated number (without OTEL)
 ///
-/// Maximum value: Type-safe, validated numbers, prevents entire class of errors.
+/// ## How-to: Use Type-Level Validation (3rd Idea, No OTEL)
+///
+/// Type-safe validated numbers that prevent entire classes of errors at compile time.
+/// No OTEL instrumentation - pure type safety.
+///
+/// ## Reference
+///
+/// - **Type**: `ValidatedNumberNoOtel<T>` - Type-safe validated number
+/// - **Function**: `ValidatedNumberNoOtel::<T>::parse(input) -> Result<ValidatedNumberNoOtel<T>, String>`
+/// - **Method**: `value() -> &T` - Get the validated value
+/// - **Telemetry**: None
+/// - **Validation**: Type-level (compile-time)
+/// - **Scope**: Type-safe, prevents entire class of errors
+///
+/// # Examples
+///
+/// ```rust
+/// let validated = ValidatedNumberNoOtel::<u32>::parse("42")?;
+/// assert_eq!(*validated.value(), 42);
+/// ```
 pub struct ValidatedNumberNoOtel<T> {
     value: T,
 }

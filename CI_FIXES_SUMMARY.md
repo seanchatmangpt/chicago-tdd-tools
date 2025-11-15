@@ -69,87 +69,31 @@ Status: ✅ CI PASSING
 
 ## Root Causes Fixed
 
-### Primary Issue: Timeout Too Aggressive
-| Factor | Impact | Solution |
-|--------|--------|----------|
-| **1s per-test limit** | Tests exceeded at 1.1-1.2s | Increased to 5s |
-| **`#[should_panic]` overhead** | +0.1-0.2s per test | Covered by new 5s budget |
-| **Parallel execution context switching** | +0.5s overhead | Covered by new 5s budget |
-| **Macro expansion** | +0.05-0.1s overhead | Covered by new 5s budget |
+**Primary**: Timeout too aggressive (1s limit, tests took 1.1-1.2s) → Increased to 5s
+- Overhead: `#[should_panic]` (+0.1-0.2s), parallel execution (+0.5s), macro expansion (+0.05-0.1s)
 
-### Secondary Issue: Integration Tests in Unit Suite
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| Weaver tests failing | Require external binary | Skip by default, opt-in with env var |
-| Environment dependencies | Not available in CI | Graceful skip instead of failure |
-| No clear signal | Tests fail with unclear errors | Skip with helpful message |
+**Secondary**: Integration tests in unit suite → Skip by default, opt-in with `WEAVER_REQUIRE_TEST=1`
+
+**See [UNIT_TEST_FAILURE_RCA.md](UNIT_TEST_FAILURE_RCA.md) for detailed analysis.**
 
 ---
 
-## Environment Detection & Testing
+## Environment Detection
 
-### Available Environment Checks
+**Docker**: `tests/common.rs` - `docker_available()`, `require_docker()`  
+**Weaver**: `src/observability/weaver/mod.rs` - Skip by default, opt-in with `WEAVER_REQUIRE_TEST=1`  
+**Features**: Feature flags skip test modules (`testcontainers`, `weaver`, etc.)
 
-1. **Docker Availability** (Already in codebase)
-   ```rust
-   pub fn docker_available() -> bool { ... }
-   pub fn require_docker() { ... }
-   ```
-   - Located in: `tests/common.rs`
-   - Used by: Integration test tasks
-
-2. **Weaver Availability** (Updated)
-   ```rust
-   // Skip if WEAVER_REQUIRE_TEST not set to "1"
-   Set WEAVER_REQUIRE_TEST=1 to run
-   ```
-   - Located in: `src/observability/weaver/mod.rs`
-   - Used by: Weaver integration tests
-
-3. **Feature Flags** (Already in codebase)
-   ```toml
-   features = ["testcontainers", "weaver", ...]
-   ```
-   - Can skip test modules based on features
-
-### Makefile Task Selection
-```bash
-cargo make test-unit          # Unit tests only (always safe)
-cargo make test-integration   # Integration tests (needs Docker)
-cargo make test-all          # Both unit + integration
-```
+**Tasks**: `cargo make test-unit` (always safe) | `cargo make test-integration` (needs Docker) | `cargo make test-all`
 
 ---
 
 ## How to Run Tests
 
-### Standard CI Run (No External Dependencies)
-```bash
-# This is what CI uses
-cargo make test-unit
-# Result: 289/289 tests pass ✅
-```
-
-### Run with Integration Tests (Requires Docker)
-```bash
-# Only if Docker is running
-cargo make test-integration
-# Result: Runs testcontainers + weaver tests
-```
-
-### Run Weaver Tests Explicitly
-```bash
-# Only if weaver binary available
-WEAVER_REQUIRE_TEST=1 cargo test
-# Result: Runs all tests including weaver integration
-```
-
-### Skip Weaver Tests (Default)
-```bash
-# This is default behavior
-cargo test
-# Result: Weaver tests skip gracefully
-```
+- **CI/Standard**: `cargo make test-unit` → 289/289 tests pass (no external deps)
+- **Integration**: `cargo make test-integration` → Requires Docker
+- **Weaver**: `WEAVER_REQUIRE_TEST=1 cargo test` → Opt-in for weaver tests
+- **Default**: `cargo test` → Weaver tests skip gracefully
 
 ---
 
@@ -232,25 +176,11 @@ cargo test
 
 ## Key Learnings
 
-### 1. Configuration Matters
-Small timeout changes (1s → 5s) have huge impact on test reliability.
-**Lesson**: Always validate critical configs against actual runtime behavior.
-
-### 2. Test Framework Overhead Is Real
-`#[should_panic]` tests add measurable overhead (~0.1-0.2s).
-**Lesson**: Profile tests, don't assume they're instant.
-
-### 3. FMEA Needs Validation
-Theoretical FMEA assessments can miss practical issues.
-**Lesson**: Validate FMEA with real system behavior testing.
-
-### 4. Graceful Degradation > Hard Failures
-Tests that skip gracefully are better than tests that fail loudly.
-**Lesson**: When external dependencies are optional, skip tests don't fail them.
-
-### 5. Documentation Is Critical
-Comprehensive FMEA docs help diagnose and fix issues quickly.
-**Lesson**: Document failure modes and mitigations upfront.
+1. **Configuration Matters**: Validate critical configs against runtime (1s → 5s had huge impact)
+2. **Test Framework Overhead Is Real**: Profile tests (`#[should_panic]` adds +0.1-0.2s)
+3. **FMEA Needs Validation**: Validate with real behavior, not just theory
+4. **Graceful Degradation > Hard Failures**: Skip tests gracefully when dependencies optional
+5. **Documentation Is Critical**: Comprehensive docs enable quick diagnosis
 
 ---
 

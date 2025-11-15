@@ -309,6 +309,7 @@ path = "examples/macro_examples.rs"
 [[example]]
 name = "testcontainers_example"
 path = "examples/testcontainers_example.rs"
+required-features = ["testcontainers"]
 [[example]]
 name = "go_extra_mile"
 path = "examples/go_extra_mile.rs"

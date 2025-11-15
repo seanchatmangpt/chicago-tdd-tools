@@ -266,12 +266,7 @@ cargo make lint       # Run clippy
 
 **"cannot find module 'observability'" or "cannot find module 'integration'"**
 - **Cause**: Feature-gated modules require explicit feature flags
-- **Fix**: Enable required features:
-  ```toml
-  chicago-tdd-tools = { 
-      features = ["otel", "weaver", "testcontainers"] 
-  }
-  ```
+- **Fix**: Enable required features: `features = ["otel", "weaver", "testcontainers"]`
 
 **Tests pass locally but fail in CI**
 - **Cause**: Environment differences (missing dependencies, different Rust version)
