@@ -70,7 +70,10 @@ if [ -n "$PROD_FILES" ]; then
             continue
         fi
         COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || echo "0")
-        COUNT=${COUNT:-0}  # Ensure COUNT is a number
+        # Ensure COUNT is numeric (handle empty or non-numeric values)
+        if ! echo "$COUNT" | grep -qE '^[0-9]+$'; then
+            COUNT=0
+        fi
         UNWRAP_COUNT=$((UNWRAP_COUNT + COUNT))
     done
 
