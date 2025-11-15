@@ -2,29 +2,30 @@
 //!
 //! Commands for integration features: testcontainers
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
-use std::path::PathBuf;
 
 use crate::integration;
 
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct Status {
+    pub features: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ExecutionResult {
+    pub executed: Vec<String>,
+    pub success: bool,
+    pub message: String,
 }
 
 /// Show integration features status
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 
@@ -53,7 +54,7 @@ fn list() -> Result<Vec<String>> {
 /// Run testcontainers demo
 #[verb]
 #[cfg(feature = "testcontainers")]
-fn contain(image: Option<String>) -> Result<ExecutionResult> {
+fn contain() -> Result<ExecutionResult> {
     integration::testcontainers::example_container_basic().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_ports().map_err(|e| e.to_string())?;
     integration::testcontainers::example_container_env().map_err(|e| e.to_string())?;
@@ -64,5 +65,3 @@ fn contain(image: Option<String>) -> Result<ExecutionResult> {
         message: "Testcontainers demo executed successfully".to_string(),
     })
 }
-
-

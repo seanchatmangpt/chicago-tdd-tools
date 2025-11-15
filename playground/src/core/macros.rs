@@ -3,7 +3,7 @@
 //! Demonstrates test macros with AAA pattern enforcement, including procedural macros.
 
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::{tdd_test, fixture};
+use chicago_tdd_tools::{fixture, tdd_test};
 
 // Note: Macros expand to test functions, so examples are shown in test module
 
@@ -33,7 +33,8 @@ mod tests {
         let result = async {
             tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
             5 * 2
-        }.await;
+        }
+        .await;
 
         // Assert: Verify behavior
         assert_eq!(result, expected);
@@ -59,9 +60,7 @@ mod tests {
         let input = vec![1, 2, 3];
 
         // Act: Execute hot path operation and measure ticks
-        let (result, ticks) = measure_ticks(|| {
-            input.iter().sum::<i32>()
-        });
+        let (result, ticks) = measure_ticks(|| input.iter().sum::<i32>());
 
         // Assert: Verify performance constraint
         assert_within_tick_budget!(ticks, "Hot path operation");
@@ -77,7 +76,8 @@ mod tests {
         let result = async {
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
             5 * 2
-        }.await;
+        }
+        .await;
 
         // Assert: Verify behavior
         assert_eq!(result, expected);
@@ -123,7 +123,8 @@ mod tests {
         let result = async {
             tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
             50 * 2
-        }.await;
+        }
+        .await;
 
         // Assert: Verify behavior
         assert_eq!(result, expected);
@@ -161,4 +162,3 @@ mod tests {
         assert!(counter >= 0);
     }
 }
-

@@ -2,26 +2,25 @@
 //!
 //! Commands for core features: fixtures, builders, assertions, macros, state, type_level, const_assert, alert
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
-use std::path::PathBuf;
 
 use crate::core::{
     alert, assertions, async_fixtures, builders, const_assert, fixtures, macros, state, type_level,
 };
 
 #[derive(Serialize)]
-struct Status {
-    features: Vec<String>,
-    examples: Vec<String>,
+pub struct Status {
+    pub features: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct ExecutionResult {
-    executed: Vec<String>,
-    success: bool,
-    message: String,
+pub struct ExecutionResult {
+    pub executed: Vec<String>,
+    pub success: bool,
+    pub message: String,
 }
 
 /// Show core features status
@@ -29,7 +28,9 @@ struct ExecutionResult {
 /// Displays information about all available core features and examples.
 /// Use -v, -vv, or -vvv for more detail.
 #[verb]
-fn stat(verbose: usize) -> Result<Status> {
+fn stat(
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
+) -> Result<Status> {
     Ok(Status {
         features: vec![
             "fixtures".to_string(),
@@ -72,17 +73,15 @@ fn list() -> Result<Vec<String>> {
 
 /// Execute one or more core examples
 ///
-/// Run examples by name. You can execute multiple examples in one command.
-/// Example names are positional arguments.
+/// Run examples by name. Multiple examples can be specified space-separated.
 ///
 /// Examples:
-///   playg core exec fixtures
-///   playg core exec "fixtures builders assert"
+///   playg core exec --names fixtures
+///   playg core exec --names "fixtures builders assert"
 #[verb]
 fn exec(
-    names: String,
-    output: Option<PathBuf>,
-    verbose: usize,
+    #[arg(long, help = "Space-separated example names to execute")] names: String,
+    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
 ) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
@@ -103,11 +102,7 @@ fn exec(
         format!("Executed {} example(s), {} error(s)", executed.len(), errors.len())
     };
 
-    Ok(ExecutionResult {
-        executed,
-        success,
-        message,
-    })
+    Ok(ExecutionResult { executed, success, message })
 }
 
 fn execute_core_example(name: &str) -> std::result::Result<(), String> {
@@ -166,4 +161,3 @@ fn execute_core_example(name: &str) -> std::result::Result<(), String> {
         _ => Err(format!("Unknown example: {}", name)),
     }
 }
-

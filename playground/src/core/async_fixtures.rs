@@ -23,12 +23,12 @@ struct DatabaseProvider;
 pub async fn example_async_fixture_manager() -> Result<(), Box<dyn std::error::Error>> {
     // Arrange: Async fixture manager usage pattern
     // Note: This is a demonstration - actual implementation requires sealed trait
-    
+
     // Act: Manager pattern
     // let manager = AsyncFixtureManager::new(provider);
     // let fixture = manager.setup().await?;
     // manager.teardown().await?;
-    
+
     // Assert: Pattern demonstrated
     Ok(())
 }
@@ -49,4 +49,3 @@ mod tests {
         assert_ok!(example_async_fixture_manager().await);
     });
 }
-

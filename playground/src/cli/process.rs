@@ -2,16 +2,16 @@
 //!
 //! Commands for process methodology: DMEDI, DMAIC, ACP, Concept Selection
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
 
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct GuidanceInfo {
+    pub command: String,
+    pub description: String,
+    pub steps: Vec<String>,
+    pub key_principles: Vec<String>,
 }
 
 /// DMEDI design process guidance
@@ -52,7 +52,8 @@ fn dmaic() -> Result<GuidanceInfo> {
         steps: vec![
             "Step 1: Define - Define the problem and project scope".to_string(),
             "Step 2: Measure - Measure current performance and establish baseline".to_string(),
-            "Step 3: Analyze - Analyze root causes and identify improvement opportunities".to_string(),
+            "Step 3: Analyze - Analyze root causes and identify improvement opportunities"
+                .to_string(),
             "Step 4: Improve - Improve by implementing solutions and optimizing".to_string(),
             "Step 5: Control - Control to maintain improvements over time".to_string(),
         ],

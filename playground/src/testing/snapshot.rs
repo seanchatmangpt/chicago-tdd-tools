@@ -2,9 +2,9 @@
 //!
 //! Demonstrates snapshot testing for output comparison and regression testing.
 
+use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "snapshot-testing")]
 use chicago_tdd_tools::testing::snapshot::SnapshotAssert;
-use chicago_tdd_tools::prelude::*;
 
 #[cfg(feature = "snapshot-testing")]
 /// Example: String snapshot
@@ -86,4 +86,3 @@ mod tests {
         example_snapshot_custom_settings();
     });
 }
-

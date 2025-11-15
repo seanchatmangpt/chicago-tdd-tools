@@ -2,8 +2,8 @@
 //!
 //! Demonstrates test coverage analysis and reporting, including comprehensive newtype usage.
 
-use chicago_tdd_tools::validation::coverage::*;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::validation::coverage::*;
 
 /// Example: Basic coverage report
 pub fn example_coverage_basic() {
@@ -128,4 +128,3 @@ mod tests {
         example_coverage_conversions();
     });
 }
-

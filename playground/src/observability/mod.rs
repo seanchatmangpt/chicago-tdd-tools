@@ -7,4 +7,3 @@ pub mod otel;
 
 #[cfg(feature = "weaver")]
 pub mod weaver;
-

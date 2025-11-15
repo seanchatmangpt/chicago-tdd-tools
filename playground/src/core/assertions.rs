@@ -56,9 +56,7 @@ pub fn example_assertion_builder() {
     let value = 42;
 
     // Act-Assert: Use fluent assertion builder
-    let assertion = AssertionBuilder::new(value)
-        .assert_that(|v| *v > 0)
-        .assert_that(|v| *v < 100);
+    let assertion = AssertionBuilder::new(value).assert_that(|v| *v > 0).assert_that(|v| *v < 100);
 
     // Assert: Verify assertion built
     assert_eq!(assertion.into_value(), 42);
@@ -114,4 +112,3 @@ mod tests {
         example_validated_assertion();
     });
 }
-

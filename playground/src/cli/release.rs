@@ -2,16 +2,16 @@
 //!
 //! Commands for release workflows: Release Preparation
 
-use clap_noun_verb_macros::verb;
 use clap_noun_verb::Result;
+use clap_noun_verb_macros::verb;
 use serde::Serialize;
 
 #[derive(Serialize)]
-struct GuidanceInfo {
-    command: String,
-    description: String,
-    steps: Vec<String>,
-    key_principles: Vec<String>,
+pub struct GuidanceInfo {
+    pub command: String,
+    pub description: String,
+    pub steps: Vec<String>,
+    pub key_principles: Vec<String>,
 }
 
 /// Release preparation workflow guidance

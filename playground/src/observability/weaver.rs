@@ -84,4 +84,3 @@ mod tests {
         assert_eq!(validator.otlp_endpoint(), "http://127.0.0.1:4317");
     });
 }
-
