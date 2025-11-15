@@ -88,32 +88,32 @@ fn main() {
 #[cfg(feature = "cli-testing")]
 #[cfg(test)]
 mod tests {
-    /// Example: CLI command building
-    ///
-    /// ## How-to: Build CLI Commands
-    ///
-    /// Use `CliCommandBuilder` to build CLI commands with arguments and environment variables.
-    /// Provides fluent API for constructing commands programmatically.
-    ///
-    /// ## Reference
-    ///
-    /// - **Builder**: `CliCommandBuilder::new(command) -> CliCommandBuilder`
-    /// - **Methods**:
-    ///   - `arg(arg)` - Add command argument
-    ///   - `env(key, value)` - Set environment variable
-    ///   - `build() -> String` - Build command string
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::cli::CliCommandBuilder;
-    ///
-    /// let cmd = CliCommandBuilder::new("echo")
-    ///     .arg("hello")
-    ///     .arg("world")
-    ///     .env("TEST_VAR", "test_value")
-    ///     .build();
-    /// ```
+    // Example: CLI command building
+    //
+    // ## How-to: Build CLI Commands
+    //
+    // Use `CliCommandBuilder` to build CLI commands with arguments and environment variables.
+    // Provides fluent API for constructing commands programmatically.
+    //
+    // ## Reference
+    //
+    // - **Builder**: `CliCommandBuilder::new(command) -> CliCommandBuilder`
+    // - **Methods**:
+    //   - `arg(arg)` - Add command argument
+    //   - `env(key, value)` - Set environment variable
+    //   - `build() -> String` - Build command string
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::cli::CliCommandBuilder;
+    //
+    // let cmd = CliCommandBuilder::new("echo")
+    //     .arg("hello")
+    //     .arg("world")
+    //     .env("TEST_VAR", "test_value")
+    //     .build();
+    // ```
     #[test]
     fn test_cli_command_builder() {
         // Arrange: Create CLI command builder
@@ -132,29 +132,29 @@ mod tests {
         assert!(cmd.contains("world"), "Command should contain 'world'");
     }
 
-    /// Example: CLI output assertions
-    ///
-    /// ## How-to: Assert CLI Output
-    ///
-    /// Use `CliAssertions` to verify command output contains expected text. Provides
-    /// helpers for common output verification patterns.
-    ///
-    /// ## Reference
-    ///
-    /// - **Function**: `CliAssertions::assert_output_contains(output, text)`
-    /// - **Parameters**:
-    ///   - `output`: Command output string
-    ///   - `text`: Expected text to find in output
-    /// - **Behavior**: Panics if text not found in output
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use chicago_tdd_tools::cli::CliAssertions;
-    ///
-    /// let output = "Usage: myapp [OPTIONS]";
-    /// CliAssertions::assert_output_contains(output, "Usage");
-    /// ```
+    // Example: CLI output assertions
+    //
+    // ## How-to: Assert CLI Output
+    //
+    // Use `CliAssertions` to verify command output contains expected text. Provides
+    // helpers for common output verification patterns.
+    //
+    // ## Reference
+    //
+    // - **Function**: `CliAssertions::assert_output_contains(output, text)`
+    // - **Parameters**:
+    //   - `output`: Command output string
+    //   - `text`: Expected text to find in output
+    // - **Behavior**: Panics if text not found in output
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::cli::CliAssertions;
+    //
+    // let output = "Usage: myapp [OPTIONS]";
+    // CliAssertions::assert_output_contains(output, "Usage");
+    // ```
     #[test]
     fn test_cli_assertions() {
         // Arrange: Create test output

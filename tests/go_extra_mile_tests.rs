@@ -11,11 +11,6 @@
 
 #[cfg(feature = "weaver")]
 use chicago_tdd_tools::observability::weaver::WeaverValidator;
-#[cfg(feature = "otel")]
-use chicago_tdd_tools::otel::{MetricValidator, OtelTestHelper, SpanValidator};
-
-#[cfg(feature = "otel")]
-use chicago_tdd_tools::ValidatedAssertion;
 
 #[cfg(test)]
 mod tests {
