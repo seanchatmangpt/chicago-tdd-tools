@@ -2,8 +2,8 @@
 //!
 //! Demonstrates RDTSC benchmarking and tick measurement for hot path validation, including type-level validation.
 
-use chicago_tdd_tools::validation::performance::*;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::validation::performance::*;
 use chicago_tdd_tools::ValidatedTickBudget;
 
 /// Example: Basic tick measurement
@@ -109,4 +109,3 @@ mod tests {
         assert_eq!(result, 8); // Budget value, not ticks
     });
 }
-

@@ -2,9 +2,9 @@
 //!
 //! Demonstrates property-based testing with const generics and reproducible seeds.
 
+use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "property-testing")]
 use chicago_tdd_tools::testing::property::*;
-use chicago_tdd_tools::prelude::*;
 
 #[cfg(feature = "property-testing")]
 /// Example: Property test generator
@@ -66,4 +66,3 @@ mod tests {
         example_proptest_strategy();
     });
 }
-

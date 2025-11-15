@@ -36,4 +36,3 @@ mod tests {
         example_cli_test();
     });
 }
-

@@ -3,7 +3,7 @@
 //! Demonstrates fluent builders for test data, including advanced builder types and derive macro.
 
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::{GenericTestDataBuilder, ValidatedTestDataBuilder, TestBuilder};
+use chicago_tdd_tools::{GenericTestDataBuilder, TestBuilder, ValidatedTestDataBuilder};
 
 /// Example: Basic builder
 pub fn example_basic_builder() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,9 +64,7 @@ pub fn example_fake_data_builder() -> Result<(), Box<dyn std::error::Error>> {
 /// Example: Builder to HashMap
 pub fn example_builder_hashmap() {
     // Arrange: Create builder
-    let data = TestDataBuilder::new()
-        .with_var("key1", "value1")
-        .build();
+    let data = TestDataBuilder::new().with_var("key1", "value1").build();
 
     // Act: Access HashMap
     let value = data.get("key1");
@@ -172,4 +170,3 @@ mod tests {
         example_derive_testbuilder();
     });
 }
-

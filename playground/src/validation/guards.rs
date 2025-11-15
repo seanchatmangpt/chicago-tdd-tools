@@ -2,9 +2,11 @@
 //!
 //! Demonstrates guard constraint enforcement at ingress points, including compile-time validated types.
 
-use chicago_tdd_tools::validation::guards::*;
-use chicago_tdd_tools::validation::guards::validated::{ValidatedRun, ValidatedBatch, AssertRunLen};
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::validation::guards::validated::{
+    AssertRunLen, ValidatedBatch, ValidatedRun,
+};
+use chicago_tdd_tools::validation::guards::*;
 
 /// Example: Basic guard validation
 pub fn example_guard_basic() -> Result<(), Box<dyn std::error::Error>> {

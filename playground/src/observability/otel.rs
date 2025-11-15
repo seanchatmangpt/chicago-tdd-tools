@@ -3,9 +3,9 @@
 //! Demonstrates OpenTelemetry span and metric validation.
 
 #[cfg(feature = "otel")]
-use chicago_tdd_tools::observability::otel::*;
-#[cfg(feature = "otel")]
 use chicago_tdd_tools::observability::otel::types::*;
+#[cfg(feature = "otel")]
+use chicago_tdd_tools::observability::otel::*;
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "otel")]
@@ -37,10 +37,8 @@ pub fn example_otel_span_attributes() -> Result<(), Box<dyn std::error::Error>> 
     let span = test_helpers::create_test_span_with_attributes("test.operation", attrs.clone());
 
     // Act: Validate span with required attributes
-    let validator = SpanValidator::new().with_required_attributes(vec![
-        "service.name".to_string(),
-        "operation.type".to_string(),
-    ]);
+    let validator = SpanValidator::new()
+        .with_required_attributes(vec!["service.name".to_string(), "operation.type".to_string()]);
     validator.validate(&span)?;
 
     // Assert: Verify attributes
@@ -113,4 +111,3 @@ mod tests {
         example_otel_helper();
     });
 }
-

@@ -2,8 +2,8 @@
 //!
 //! Demonstrates mutation testing for test quality validation.
 
-use chicago_tdd_tools::testing::mutation::*;
 use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::testing::mutation::*;
 use std::collections::HashMap;
 
 /// Example: Basic mutation testing
@@ -58,4 +58,3 @@ mod tests {
         example_mutation_score();
     });
 }
-

@@ -11,4 +11,3 @@ use playground::cli;
 fn main() -> Result<()> {
     clap_noun_verb::run()
 }
-

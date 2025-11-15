@@ -7,7 +7,7 @@ use chicago_tdd_tools::prelude::*;
 /// Example: Alert macros (macros are available via prelude)
 pub fn example_alert_macros() {
     // Arrange: Alert macros for visual indicators
-    
+
     // Act: Emit alerts
     alert_critical!("Critical issue detected", "Fix immediately");
     alert_warning!("Warning condition", "Review and fix");
@@ -47,4 +47,3 @@ mod tests {
         assert_ok!(example_alert_logger());
     });
 }
-

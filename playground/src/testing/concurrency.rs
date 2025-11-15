@@ -3,9 +3,9 @@
 //! Demonstrates concurrency testing with loom for deterministic thread model checking.
 
 #[cfg(feature = "concurrency-testing")]
-use chicago_tdd_tools::testing::concurrency::ConcurrencyTest;
-#[cfg(feature = "concurrency-testing")]
 use chicago_tdd_tools::prelude::*;
+#[cfg(feature = "concurrency-testing")]
+use chicago_tdd_tools::testing::concurrency::ConcurrencyTest;
 #[cfg(feature = "concurrency-testing")]
 use loom::thread;
 #[cfg(feature = "concurrency-testing")]
@@ -97,4 +97,3 @@ mod tests {
         example_concurrency_config();
     });
 }
-
