@@ -183,15 +183,11 @@ mod tests {
         let validated =
             ValidatedAssertion::new(value, "test_validated_assertion").assert_that(|v| *v > 0);
 
-        // Act: Get span, metric, and value from validated assertion (before into_value moves validated)
+        // Act: Get span and metric from validated assertion (before into_value moves validated)
         let span = validated.span();
         let metric = validated.metric();
-        let result_value = validated.into_value();
-
-        // Assert: Verify value matches expected
-        assert_eq_msg!(&result_value, &42, "Value should match");
-
-        // Assert: Validate OTEL span
+        
+        // Assert: Validate OTEL span (before moving validated)
         let span_validator = SpanValidator::new();
         assert_ok!(&span_validator.validate(span));
         assert_eq_msg!(
@@ -200,11 +196,17 @@ mod tests {
             "Span status should be Ok"
         );
 
-        // Assert: Validate OTEL metric
+        // Assert: Validate OTEL metric (before moving validated)
         assert_that_with_msg(&metric.is_some(), |v| *v, "Metric should be present");
         let metric = metric.unwrap();
         let metric_validator = MetricValidator::new();
         assert_ok!(&metric_validator.validate(metric));
+        
+        // Now we can move validated to get the value
+        let result_value = validated.into_value();
+
+        // Assert: Verify value matches expected
+        assert_eq_msg!(&result_value, &42, "Value should match");
         assert_eq_msg!(
             &metric.name,
             &"chicago_tdd_tools.assertions.total".to_string(),
