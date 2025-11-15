@@ -14,7 +14,9 @@ mod tests {
     use chicago_tdd_tools::assert_eq_msg;
     use chicago_tdd_tools::core::builders::TestDataBuilder;
     use chicago_tdd_tools::test;
-    use chicago_tdd_tools::{assert_ok, AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
+    // **Root Cause Fix**: assert_ok! is exported with #[macro_export], so it's available at crate root
+    // without import. Importing it causes "unused import" error. Use assert_ok!() directly.
+    use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
     
     // **Poka-yoke**: Import validators only where used (conditionally compiled)
     #[cfg(feature = "otel")]

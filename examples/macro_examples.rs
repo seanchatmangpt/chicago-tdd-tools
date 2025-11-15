@@ -59,9 +59,19 @@
 //! - `assert_eq_msg!(left, right, message)` - Assert equality with message
 //! - `assert_guard_constraint!(guard, constraint)` - Validate guard constraints
 //!
-//! **Usage**: Macros are automatically exported from crate root:
+//! **Usage**: Macros are automatically exported from crate root with `#[macro_export]`,
+//! so they're available **without import**. Use macros directly (e.g., `assert_ok!(result)`).
+//!
+//! **Root Cause Fix**: Importing macros with `use` causes "unused import" errors.
+//! Macros exported with `#[macro_export]` are available at crate root automatically.
+//!
 //! ```rust
-//! use chicago_tdd_tools::*;
+//! // Correct: Use macro directly, no import needed
+//! assert_ok!(result);
+//! test!(my_test, { /* test body */ });
+//!
+//! // Incorrect: Don't import macros (causes unused import error)
+//! // use chicago_tdd_tools::assert_ok;  // ❌ Unused import
 //! ```
 
 // Example macro usage patterns (these would be in test files):
@@ -69,7 +79,9 @@
 #[cfg(test)]
 mod macro_examples {
     use chicago_tdd_tools::test;
-    use chicago_tdd_tools::{assert_err, assert_ok};
+    // **Root Cause Fix**: assert_ok! and assert_err! are exported with #[macro_export],
+    // so they're available at crate root without import. Importing them causes unused import errors.
+    // Use assert_ok!() and assert_err!() directly without importing.
 
     // Example: Basic synchronous test with AAA pattern
     //
@@ -143,7 +155,7 @@ mod macro_examples {
         let result: Result<u32, String> = Ok(42);
 
         // Act & Assert: Verify Result is Ok and check value
-        assert_ok!(&result, "Result should be Ok");
+        chicago_tdd_tools::assert_ok!(&result, "Result should be Ok");
         if let Ok(value) = result {
             assert_eq!(value, 42, "Value should be 42");
         }
@@ -179,7 +191,7 @@ mod macro_examples {
         let result: Result<u32, String> = Err("test error".to_string());
 
         // Act & Assert: Verify Result is Err
-        assert_err!(&result, "Result should be Err");
+        chicago_tdd_tools::assert_err!(&result, "Result should be Err");
     });
 
     // Example: Test with custom assertion messages

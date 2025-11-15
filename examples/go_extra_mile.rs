@@ -63,7 +63,6 @@
 //! - **2nd Idea**: 80/20 sweet spot - generic, works for all types
 //! - **3rd Idea**: Maximum value - type-safe, prevents entire class of errors
 
-use chicago_tdd_tools::assert_ok;
 #[cfg(feature = "weaver")]
 use chicago_tdd_tools::observability::weaver::WeaverValidator;
 #[cfg(feature = "otel")]
@@ -411,7 +410,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("1st Idea: Parse u32 only");
     println!("-------------------------");
     let result1 = parse_u32_first_idea("42");
-    assert_ok!(&result1);
+    chicago_tdd_tools::assert_ok!(&result1);
     let value1 = result1?;
     assert_eq!(value1, 42);
     println!("✓ Parsed u32: 42");
@@ -427,21 +426,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Works for u32
     let u32_parsed = parse_number_second_idea_no_otel::<u32>("42");
-    assert_ok!(&u32_parsed);
+    chicago_tdd_tools::assert_ok!(&u32_parsed);
     let parsed_u32 = u32_parsed?;
     assert_eq!(parsed_u32, 42);
     println!("✓ Parsed u32: 42");
 
     // Works for i32
     let i32_parsed = parse_number_second_idea_no_otel::<i32>("-42");
-    assert_ok!(&i32_parsed);
+    chicago_tdd_tools::assert_ok!(&i32_parsed);
     let parsed_i32 = i32_parsed?;
     assert_eq!(parsed_i32, -42);
     println!("✓ Parsed i32: -42");
 
     // Works for f64
     let f64_parsed = parse_number_second_idea_no_otel::<f64>("123.456");
-    assert_ok!(&f64_parsed);
+    chicago_tdd_tools::assert_ok!(&f64_parsed);
     let parsed_f64 = f64_parsed?;
     assert!((parsed_f64 - 123.456).abs() < f64::EPSILON);
     println!("✓ Parsed f64: 123.456");
@@ -570,7 +569,7 @@ mod tests {
     test!(test_first_idea_basic, {
         // 1st Idea: Basic implementation
         let result = parse_u32_first_idea("42");
-        assert_ok!(&result);
+        chicago_tdd_tools::assert_ok!(&result);
         if let Ok(value) = result {
             assert_eq!(value, 42);
         }
@@ -579,19 +578,19 @@ mod tests {
     test!(test_second_idea_generic, {
         // 2nd Idea: Generic version (80/20)
         let u32_result = parse_number_second_idea_no_otel::<u32>("42");
-        assert_ok!(&u32_result);
+        chicago_tdd_tools::assert_ok!(&u32_result);
         if let Ok(value) = u32_result {
             assert_eq!(value, 42);
         }
 
         let i32_result = parse_number_second_idea_no_otel::<i32>("-42");
-        assert_ok!(&i32_result);
+        chicago_tdd_tools::assert_ok!(&i32_result);
         if let Ok(value) = i32_result {
             assert_eq!(value, -42);
         }
 
         let f64_result = parse_number_second_idea_no_otel::<f64>("123.456");
-        assert_ok!(&f64_result);
+        chicago_tdd_tools::assert_ok!(&f64_result);
         if let Ok(value) = f64_result {
             assert!((value - 123.456).abs() < f64::EPSILON);
         }
@@ -612,7 +611,7 @@ mod tests {
 
             // Validate span
             let validator = SpanValidator::new();
-            assert_ok!(&validator.validate(&span));
+            chicago_tdd_tools::assert_ok!(&validator.validate(&span));
         }
     });
 
@@ -624,7 +623,7 @@ mod tests {
 
             // Validate span
             let validator = SpanValidator::new();
-            assert_ok!(&validator.validate(validated.span()));
+            chicago_tdd_tools::assert_ok!(&validator.validate(validated.span()));
         }
     });
 }

@@ -107,7 +107,6 @@ fn main() {
 mod otel_tests {
     use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
     use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
-    use chicago_tdd_tools::{assert_err, assert_ok, test};
     use std::collections::BTreeMap;
 
     // Example: Basic OTEL span validation
@@ -353,7 +352,6 @@ mod otel_tests {
 #[cfg(test)]
 mod weaver_tests {
     use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
-    use chicago_tdd_tools::{assert_ok, test};
     use std::path::PathBuf;
 
     // Example: Basic Weaver validator creation

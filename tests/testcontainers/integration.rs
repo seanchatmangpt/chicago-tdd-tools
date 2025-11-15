@@ -90,14 +90,14 @@ mod integration_tests {
         // Act: Execute real commands
         let result1 = container.exec("echo", &["integration", "test"]);
         assert_ok!(&result1, "Should execute echo command");
-        let exec_result1 = result1.expect("Exec should succeed after assert_ok");
+        let exec_result1 = result1.expect("Exec result should be available after assert_ok verification");
         assert_eq!(exec_result1.exit_code, 0, "Echo should succeed");
         assert!(exec_result1.stdout.contains("integration"), "Should capture stdout");
 
         // Act: Execute another command (verify container is still usable)
         let result2 = container.exec("sh", &["-c", "echo 'second command'"]);
         assert_ok!(&result2, "Should execute second command");
-        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        let exec_result2 = result2.expect("Exec result should be available after assert_ok verification");
         assert_eq!(exec_result2.exit_code, 0, "Second command should succeed");
 
         // Assert: Verify state changes persist

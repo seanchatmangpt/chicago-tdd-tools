@@ -25,7 +25,11 @@ When reviewing test code, verify:
 - [ ] **Concurrent safe**: Tests can run concurrently without conflicts
 - [ ] **No hardcoded paths**: No hardcoded file paths like `/tmp/test.txt` (use tempfile crate)
 - [ ] **No hardcoded ports**: No hardcoded ports (use OS-assigned port 0)
-- [ ] **Import pattern**: Tests use `use chicago_tdd_tools::prelude::*;` for common macros (see CODING_STANDARDS.md)
+- [ ] **Macro import pattern**: 
+  - Root-level test modules: Don't import macros - use directly (e.g., `assert_ok!(result)`)
+  - Nested test modules: Use macro wrappers that delegate to crate root (see `tests/testcontainers/tests.rs`)
+  - Examples: Use full path (e.g., `chicago_tdd_tools::assert_ok!(result)`)
+  - **Prohibited**: Importing macros with `use` causes "unused import" errors (see CODING_STANDARDS.md)
 
 See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and examples.
 

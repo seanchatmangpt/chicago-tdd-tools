@@ -35,6 +35,10 @@ This document defines the coding standards enforced across the Chicago TDD Tools
 - **Allowed**: `unwrap()`/`expect()` in test code (with justification if needed)
 - **Preferred**: Use `assert_ok!()` and `assert_err!()` macros for better error messages
 - **Pattern**: Test code can use `unwrap()` for test setup/teardown
+- **After `assert_ok!()`**: Use descriptive `.expect()` messages that explain what is being unwrapped
+  - **Pattern**: `assert_ok!()` verifies `Ok`, `.expect()` unwraps with context
+  - **Example**: `result.expect("Exec result should be available after assert_ok verification")`
+  - **Rationale**: More descriptive error messages help debug test failures
 
 ### Error Types
 - **Library**: Use `thiserror` for error types
@@ -65,10 +69,17 @@ This document defines the coding standards enforced across the Chicago TDD Tools
 
 ## Testing Standards
 
-### Test Import Patterns
-- **Standard**: Use `use chicago_tdd_tools::prelude::*;` for common macros
-- **Rationale**: Prevents import duplication, cleaner code, matches documentation examples
-- **Exceptions**: Use explicit imports for modules not in prelude (e.g., `chicago_tdd_tools::observability::weaver::WeaverValidator`)
+### Macro Import Patterns
+- **Root-level test modules**: Don't import macros - use directly (e.g., `assert_ok!(result)`)
+  - **Rationale**: Macros exported with `#[macro_export]` are available at crate root automatically
+  - **Example**: `tests/go_extra_mile_tests.rs` - uses `assert_ok!()` directly without import
+- **Nested test modules**: Use macro wrappers that delegate to crate root
+  - **Rationale**: Nested modules can't access crate root macros directly
+  - **Example**: `tests/testcontainers/tests.rs` - uses `macro_rules! assert_ok { ... }` wrapper
+- **Examples**: Use full path (e.g., `chicago_tdd_tools::assert_ok!(result)`)
+  - **Rationale**: Examples are separate compilation units, need full path
+  - **Example**: `examples/go_extra_mile.rs` - uses `chicago_tdd_tools::assert_ok!()`
+- **Prohibited**: Importing macros with `use` causes "unused import" errors
 - **Enforcement**: Code review checklist enforces import pattern
 
 ### Test Patterns

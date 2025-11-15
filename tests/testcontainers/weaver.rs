@@ -21,11 +21,16 @@ mod weaver_tests {
     }
     use chicago_tdd_tools::test;
     use chicago_tdd_tools::assertions::assert_that_with_msg;
-    use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::testcontainers::*;
     use common::require_docker;
     
     // Macros exported via #[macro_export] need to be used with full path in nested modules
+    // Use helper macros that delegate to the external crate's macros
+    macro_rules! assert_ok {
+        ($($args:tt)*) => {
+            chicago_tdd_tools::assert_ok!($($args)*)
+        };
+    }
     #[allow(unused_macros)] // Macro may be used in future tests
     macro_rules! assert_err {
         ($($args:tt)*) => {
@@ -138,7 +143,7 @@ mod weaver_tests {
 
         // Assert: Verify Weaver provides helpful error (behavior verification)
         assert_ok!(&result, "Weaver should execute command (even if it fails)");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         // Weaver should return non-zero exit code for invalid registry
         assert_that_with_msg(
             &exec_result.exit_code,
@@ -185,7 +190,7 @@ mod weaver_tests {
 
         // Assert: Verify Weaver is functional (working capability)
         assert_ok!(&result, "Weaver should execute --help successfully");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         // Weaver --help may return 0 or 1 depending on version, so just check it executed
         assert_that_with_msg(
             &(!exec_result.stdout.is_empty() || !exec_result.stderr.is_empty()),

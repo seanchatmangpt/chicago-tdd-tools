@@ -97,6 +97,13 @@
 //!
 //! ## Declarative Macros
 //!
+//! **Root Cause Fix**: All macros below are exported with `#[macro_export]`, making them
+//! available at the crate root **without import**. Importing them with `use` causes
+//! "unused import" errors. Use macros directly (e.g., `assert_ok!(result)`) without importing.
+//!
+//! **Exception**: In nested modules, you may need to use the full path (e.g., `chicago_tdd_tools::assert_ok!()`)
+//! or create a macro wrapper. See `tests/testcontainers/tests.rs` for an example.
+//!
 //! - `test!`: Enforce AAA pattern for synchronous tests
 //! - `async_test!`: Enforce AAA pattern for async tests
 //! - `fixture_test!`: Async test with automatic fixture setup/teardown

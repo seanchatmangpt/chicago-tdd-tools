@@ -65,7 +65,8 @@ macro_rules! weaver_async_test {
             }
 
             let validation = fixture
-                .finish()
+                .finish_async()
+                .await
                 .unwrap_or_else(|err| panic!("Failed to finish Weaver fixture: {err}"));
 
             $crate::assert_telemetry_valid!(&validation);

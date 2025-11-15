@@ -72,7 +72,9 @@ mod tests {
 
         // Assert: Exec should succeed (container is running), but command should fail (exit_code != 0)
         assert_ok!(&result, "Exec should succeed even if command doesn't exist");
-        let exec_result = result.expect("Exec should succeed");
+        // Kaizen improvement: After assert_ok!() verification, use descriptive expect message
+        // Pattern: assert_ok!() verifies Ok, expect() unwraps with context about what we're unwrapping
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_that_with_msg(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
         assert_that_with_msg(
             &(exec_result.stderr.contains("executable file not found") || exec_result.stdout.contains("executable file not found")),
@@ -91,7 +93,7 @@ mod tests {
         // Act: First exec fails (invalid command) - exec succeeds but command fails
         let result1 = container.exec("nonexistent_command", &[]);
         assert_ok!(&result1, "Exec should succeed even if command doesn't exist");
-        let exec_result1 = result1.expect("Exec should succeed");
+        let exec_result1 = result1.expect("Exec result should be available after assert_ok verification");
         assert_that_with_msg(&exec_result1.exit_code, |v| *v != 0, "Invalid command should have non-zero exit code");
 
         // Act: Container should still be usable after error
@@ -99,7 +101,7 @@ mod tests {
 
         // Assert: Container should be usable after error
         assert_ok!(&result2, "Container should be usable after error");
-        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        let exec_result2 = result2.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result2.exit_code, &0, "Recovery exec should succeed");
         assert_that_with_msg(&exec_result2.stdout.contains("recovery"), |v| *v, "Should capture recovery output");
     });
@@ -118,26 +120,26 @@ mod tests {
         // Act & Assert: Empty command args
         let result = container.exec("echo", &[]);
         assert_ok!(&result, "Exec with empty args should work");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result.exit_code, &0, "Empty echo should succeed");
 
         // Act & Assert: Single arg
         let result = container.exec("echo", &["hello"]);
         assert_ok!(&result, "Exec with single arg should work");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(exec_result.stdout.trim(), "hello", "Echo output should match");
 
         // Act & Assert: Multiple args
         let result = container.exec("echo", &["hello", "world", "test"]);
         assert_ok!(&result, "Exec with multiple args should work");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_that_with_msg(&exec_result.stdout.contains("hello"), |v| *v, "Output should contain hello");
         assert_that_with_msg(&exec_result.stdout.contains("world"), |v| *v, "Output should contain world");
 
         // Act & Assert: Command that produces stderr (non-zero exit)
         let result = container.exec("sh", &["-c", "echo error >&2; exit 1"]);
         assert_ok!(&result, "Exec should succeed even if command fails");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result.exit_code, &1, "Command should exit with code 1");
         assert_that_with_msg(&exec_result.stderr.contains("error"), |v| *v, "Should capture stderr");
     });
@@ -165,19 +167,19 @@ mod tests {
         // Act: Execute first command
         let result1 = container.exec("echo", &["first"]);
         assert_ok!(&result1, "First exec should succeed");
-        let exec_result1 = result1.expect("Exec should succeed after assert_ok");
+        let exec_result1 = result1.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result1.exit_code, &0, "First command should succeed");
 
         // Act: Execute second command (verifies container is still running)
         let result2 = container.exec("echo", &["second"]);
         assert_ok!(&result2, "Second exec should succeed (container still running)");
-        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        let exec_result2 = result2.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result2.exit_code, &0, "Second command should succeed");
 
         // Act: Execute third command (verifies container remains running)
         let result3 = container.exec("sh", &["-c", "echo third"]);
         assert_ok!(&result3, "Third exec should succeed (container still running)");
-        let exec_result3 = result3.expect("Exec should succeed after assert_ok");
+        let exec_result3 = result3.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result3.exit_code, &0, "Third command should succeed");
         assert_that_with_msg(&exec_result3.stdout.contains("third"), |v| *v, "Third command output should match");
 
@@ -227,7 +229,7 @@ mod tests {
         // through the shell. Use sh -c for proper command execution.
         let result1 = container.exec("sh", &["-c", "echo entrypoint override test"]);
         assert_ok!(&result1, "First exec should succeed with entrypoint override");
-        let exec_result1 = result1.expect("Exec should succeed after assert_ok");
+        let exec_result1 = result1.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result1.exit_code, &0, "First command should succeed");
         assert_that_with_msg(
             &exec_result1.stdout.contains("entrypoint"),
@@ -238,7 +240,7 @@ mod tests {
         // Act: Execute second command (verifies container stays running)
         let result2 = container.exec("sh", &["-c", "echo second command"]);
         assert_ok!(&result2, "Second exec should succeed (container still running)");
-        let exec_result2 = result2.expect("Exec should succeed after assert_ok");
+        let exec_result2 = result2.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result2.exit_code, &0, "Second command should succeed");
         assert_that_with_msg(
             &exec_result2.stdout.contains("second"),
@@ -382,7 +384,7 @@ mod tests {
 
         // Assert: Verify exec succeeds (container is running), but command fails (negative test case)
         assert_ok!(&result, "Exec should succeed even if command doesn't exist");
-        let exec_result = result.expect("Exec should succeed");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_that_with_msg(&exec_result.exit_code, |v| *v != 0, "Non-existent command should have non-zero exit code");
         // Verify test correctly detects command failure (not a false negative)
         assert_that_with_msg(
@@ -514,7 +516,7 @@ mod tests {
         // Act & Assert: Successful command
         let result = container.exec("echo", &["test"]);
         assert_ok!(&result, "Exec should succeed");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
 
         // Verify ExecResult structure
         assert_that_with_msg(
@@ -527,7 +529,7 @@ mod tests {
         // Act & Assert: Failed command
         let result = container.exec("sh", &["-c", "exit 42"]);
         assert_ok!(&result, "Exec should succeed even if command fails");
-        let exec_result = result.expect("Exec should succeed after assert_ok");
+        let exec_result = result.expect("Exec result should be available after assert_ok verification");
         assert_eq_msg!(&exec_result.exit_code, &42, "Exit code should match command exit code");
     });
 
@@ -595,7 +597,7 @@ mod tests {
                     let exec_result = container.exec("echo", &[&unique_id]);
                     assert_ok!(&exec_result, &format!("Exec should succeed in concurrent container {}", unique_id));
 
-                    let exec_result = exec_result.expect("Exec should succeed");
+                    let exec_result = exec_result.expect("Exec result should be available after assert_ok verification");
                     assert_that_with_msg(
                         &exec_result.stdout.contains(&unique_id),
                         |v| *v,
@@ -658,7 +660,7 @@ mod tests {
                     // Assert: Verify command executes successfully (observable behavior)
                     assert_ok!(&exec_result, &format!("Command {} should execute successfully", unique_id));
 
-                    let exec_result = exec_result.expect("Exec should succeed");
+                    let exec_result = exec_result.expect("Exec result should be available after assert_ok verification");
                     assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
                     assert_that_with_msg(
                         &exec_result.stdout.contains(&unique_id),
@@ -742,7 +744,7 @@ mod tests {
                             &format!("Command {} should execute successfully", unique_id)
                         );
 
-                        let exec_result = exec_result.expect("Exec should succeed");
+                        let exec_result = exec_result.expect("Exec result should be available after assert_ok verification");
                         assert_eq_msg!(&exec_result.exit_code, &0, &format!("Command {} should exit with code 0", unique_id));
                         assert_that_with_msg(
                             &exec_result.stdout.contains(&unique_id),

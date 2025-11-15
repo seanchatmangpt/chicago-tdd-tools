@@ -117,17 +117,12 @@ mod weaver_integration_tests {
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
         // Act: Finish fixture (flushes telemetry, stops weaver, parses results)
-        // **Working Capability Pattern**: finish() uses blocking operations, move to blocking thread
-        // to avoid async/blocking conflicts. This is a proven working pattern.
-        drop(tracer); // Drop tracer before moving fixture
-        let results = {
-            let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || {
-                let result = fixture.finish();
-                tx.send(result).unwrap();
-            });
-            rx.recv().unwrap()
-        }
+        // **TRIZ Solution**: Use finish_async() which handles async/blocking context switching internally
+        // This eliminates the need for manual thread spawning (Principle #13: The Other Way Round)
+        drop(tracer); // Drop tracer before finishing fixture
+        let results = fixture
+            .finish_async()
+            .await
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
         // Assert: Verify telemetry was validated by Weaver (working capability)
@@ -169,17 +164,12 @@ mod weaver_integration_tests {
         // Wait for telemetry to be processed
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
-        // Act: Finish fixture (uses blocking operations, move to blocking thread)
-        // **Working Capability Pattern**: Proven pattern for async/blocking conflict resolution
-        drop(tracer); // Drop tracer before moving fixture
-        let results = {
-            let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || {
-                let result = fixture.finish();
-                tx.send(result).unwrap();
-            });
-            rx.recv().unwrap()
-        }
+        // Act: Finish fixture using async-aware method
+        // **TRIZ Solution**: finish_async() handles async/blocking context switching internally
+        drop(tracer); // Drop tracer before finishing fixture
+        let results = fixture
+            .finish_async()
+            .await
             .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
         // Assert: Verify validation succeeded (working capability)

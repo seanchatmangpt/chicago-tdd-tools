@@ -3,6 +3,7 @@
 #![cfg(all(feature = "weaver", feature = "otel"))]
 
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 use tempfile::TempDir;
 
@@ -91,6 +92,9 @@ impl WeaverTestFixture {
     /// Flush captured telemetry, wait for Weaver to produce reports, and parse
     /// the validation output.
     ///
+    /// **Use this method in blocking contexts** (synchronous tests, non-async code).
+    /// For async contexts, use `finish_async()` instead.
+    ///
     /// # Errors
     ///
     /// Returns an error if telemetry capture fails, Weaver processing fails,
@@ -103,6 +107,94 @@ impl WeaverTestFixture {
         }
 
         ValidationResults::from_report_dir(self.output_dir())
+    }
+
+    /// Flush captured telemetry, wait for Weaver to produce reports, and parse
+    /// the validation output (async-aware version).
+    ///
+    /// **Use this method in async contexts** (tokio tests, async functions).
+    /// This method automatically handles async/blocking context switching using
+    /// `tokio::task::spawn_blocking`, eliminating the need for manual thread spawning.
+    ///
+    /// **TRIZ Solution**: Resolves async/blocking contradiction by handling context
+    /// switching internally (Principle #13: The Other Way Round, Principle #24: Intermediary).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if telemetry capture fails, Weaver processing fails,
+    /// or validation results cannot be parsed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called outside a tokio runtime context.
+    pub async fn finish_async(&mut self) -> ObservabilityResult<ValidationResults> {
+        // Flush telemetry first (can be done in async context)
+        self.capture.flush()?;
+
+        // Move blocking operations to blocking thread pool
+        // This resolves the async/blocking contradiction by handling context switching internally
+        let output_dir = self.output_dir().to_path_buf();
+        
+        // Use tokio::task::spawn_blocking to handle the blocking stop_weaver_process call
+        // We wrap observability in Arc<Mutex<>> to share it between async and blocking contexts
+        // **Kaizen improvement**: Clarify why dummy ObservabilityTest is needed
+        // Note: We need a temporary value to replace self.observability because we can't move
+        // it directly into the async closure. The dummy is immediately replaced after the
+        // blocking operation completes. In practice, the fixture is typically dropped after
+        // finish_async(), so this temporary value is safe.
+        let observability = Arc::new(Mutex::new(std::mem::replace(
+            &mut self.observability,
+            ObservabilityTest::with_config(TestConfig::default())
+                .map_err(|e| {
+                    ObservabilityError::ValidationFailed(format!(
+                        "Failed to create temporary ObservabilityTest for finish_async: {e}"
+                    ))
+                })?,
+        )));
+        
+        let observability_clone = Arc::clone(&observability);
+        let stop_result = tokio::task::spawn_blocking(move || {
+            // **Kaizen improvement**: Use map_err instead of unwrap for better error messages
+            let mut obs = observability_clone.lock().map_err(|e| {
+                ObservabilityError::ValidationFailed(format!(
+                    "Failed to acquire lock on ObservabilityTest: {e}"
+                ))
+            })?;
+            #[cfg(feature = "weaver")]
+            {
+                obs.stop_weaver_process()
+            }
+            #[cfg(not(feature = "weaver"))]
+            {
+                Ok(())
+            }
+        })
+        .await
+        .map_err(|e| {
+            ObservabilityError::ValidationFailed(format!(
+                "Failed to execute blocking operation in async context: {e}"
+            ))
+        })?;
+
+        stop_result?;
+
+        // Restore observability (though fixture is typically dropped after this)
+        // **Kaizen improvement**: Consistent error handling pattern (map_err instead of unwrap)
+        self.observability = Arc::try_unwrap(observability)
+            .map_err(|_| {
+                ObservabilityError::ValidationFailed(
+                    "ObservabilityTest Arc should have single owner after finish_async()".to_string(),
+                )
+            })?
+            .into_inner()
+            .map_err(|e| {
+                ObservabilityError::ValidationFailed(format!(
+                    "Failed to extract ObservabilityTest from Mutex: {e}"
+                ))
+            })?;
+
+        // Parse validation results (this is also blocking, but lightweight)
+        ValidationResults::from_report_dir(&output_dir)
     }
 }
 
