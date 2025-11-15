@@ -94,13 +94,13 @@ fn example_fixture_creation() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Example: Building test data with TestDataBuilder
+/// Example: Building test data with `TestDataBuilder`
 ///
 /// ## How-to: Build Test Data
 ///
 /// Use `TestDataBuilder` to construct complex test data structures:
 /// - Chain builder methods for fluent API
-/// - Build JSON or HashMap structures
+/// - Build JSON or `HashMap` structures
 /// - Handle build errors properly
 ///
 /// ## Reference
@@ -193,7 +193,7 @@ fn example_error_handling() {
     // **Best Practice**: Demonstrate error path handling
     let error_result: Result<(), String> = Err("example error".to_string());
     match error_result {
-        Ok(_) => println!("✓ Error result handled - success case"),
+        Ok(()) => println!("✓ Error result handled - success case"),
         Err(e) => {
             println!("✓ Error result handled - error case: {e}");
             // **Best Practice**: In production code, handle errors appropriately:
