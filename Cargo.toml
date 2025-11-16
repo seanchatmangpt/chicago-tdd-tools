@@ -98,7 +98,7 @@ loom = { version = "^0.7", optional = true }
 # When to use: Testing multiple inputs, test matrices, fixture injection
 # Enables: rstest integration, parameterized test macros
 # Common combo: Use with snapshot-testing for parameterized snapshot tests
-rstest = { version = "^0.19", optional = true }
+rstest = { version = "^0.26", optional = true }
 
 # CLI testing (optional, cli-testing feature)
 # When to use: Testing command-line tools, golden file testing, CLI output verification
