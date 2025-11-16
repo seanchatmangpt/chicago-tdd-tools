@@ -7,6 +7,8 @@
 
 - [Quick Start (25 minutes)](tutorials/getting-started.md)
 - [Fixtures Deep Dive (15 minutes)](tutorials/fixtures-tutorial.md)
+- [CLI Application (45 minutes)](tutorials/cli-app-tutorial.md)
+- [REST Web Service (50 minutes)](tutorials/web-service-tutorial.md)
 
 # API Reference
 

@@ -1,0 +1,729 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>CLI Application (45 minutes) - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="building-a-real-cli-application-complete-tutorial"><a class="header" href="#building-a-real-cli-application-complete-tutorial">Building a Real CLI Application: Complete Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Build a complete CLI application using Chicago TDD</p>
+</blockquote>
+<p>This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.</p>
+<p><strong>Prerequisites</strong>: <a href="getting-started.html">Getting Started</a>, <a href="fixtures-tutorial.html">Fixtures Deep Dive</a>
+<strong>Time</strong>: ~45 minutes
+<strong>What you'll build</strong>: A working <code>todo-cli</code> application with tests</p>
+<hr />
+<h2 id="project-overview"><a class="header" href="#project-overview">Project Overview</a></h2>
+<p>You'll build a <strong>todo-cli</strong> app with these features:</p>
+<pre><code class="language-bash"># Add a todo
+$ todo-cli add "Buy groceries"
+
+# List todos
+$ todo-cli list
+
+# Complete a todo
+$ todo-cli done 1
+
+# Delete a todo
+$ todo-cli delete 1
+</code></pre>
+<p>This is a real, testable application.</p>
+<hr />
+<h2 id="step-1-project-setup-2-minutes"><a class="header" href="#step-1-project-setup-2-minutes">Step 1: Project Setup (2 minutes)</a></h2>
+<h3 id="create-the-project"><a class="header" href="#create-the-project">Create the project</a></h3>
+<pre><code class="language-bash">cargo new todo-cli
+cd todo-cli
+</code></pre>
+<h3 id="add-dependencies"><a class="header" href="#add-dependencies">Add dependencies</a></h3>
+<p>Edit <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+name = "todo-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# (no dependencies for basic version)
+
+[dev-dependencies]
+chicago-tdd-tools = { version = "1.1", features = ["testing-extras"] }
+</code></pre>
+<h3 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h3>
+<pre><code>todo-cli/
+├── src/
+│   ├── main.rs           # CLI entry point
+│   ├── commands/
+│   │   ├── mod.rs
+│   │   ├── add.rs
+│   │   ├── list.rs
+│   │   ├── done.rs
+│   │   └── delete.rs
+│   └── store.rs          # Todo storage
+└── tests/
+    ├── cli_tests.rs
+    └── commands_tests.rs
+</code></pre>
+<hr />
+<h2 id="step-2-core-data-structures-5-minutes"><a class="header" href="#step-2-core-data-structures-5-minutes">Step 2: Core Data Structures (5 minutes)</a></h2>
+<h3 id="define-a-todo-struct"><a class="header" href="#define-a-todo-struct">Define a Todo struct</a></h3>
+<p>Create <code>src/store.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Debug, PartialEq)]
+pub struct Todo {
+    pub id: u32,
+    pub title: String,
+    pub completed: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct TodoStore {
+    todos: Vec&lt;Todo&gt;,
+    next_id: u32,
+}
+
+impl TodoStore {
+    pub fn new() -&gt; Self {
+        TodoStore {
+            todos: Vec::new(),
+            next_id: 1,
+        }
+    }
+
+    pub fn add(&amp;mut self, title: &amp;str) -&gt; u32 {
+        let id = self.next_id;
+        self.todos.push(Todo {
+            id,
+            title: title.to_string(),
+            completed: false,
+        });
+        self.next_id += 1;
+        id
+    }
+
+    pub fn list(&amp;self) -&gt; Vec&lt;&amp;Todo&gt; {
+        self.todos.iter().collect()
+    }
+
+    pub fn mark_done(&amp;mut self, id: u32) -&gt; bool {
+        if let Some(todo) = self.todos.iter_mut().find(|t| t.id == id) {
+            todo.completed = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn delete(&amp;mut self, id: u32) -&gt; bool {
+        let original_len = self.todos.len();
+        self.todos.retain(|t| t.id != id);
+        self.todos.len() &lt; original_len
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-3-test-the-core-logic-8-minutes"><a class="header" href="#step-3-test-the-core-logic-8-minutes">Step 3: Test the Core Logic (8 minutes)</a></h2>
+<p>Create <code>tests/commands_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use todo_cli::store::{Todo, TodoStore};
+
+test!(test_add_todo, {
+    let mut store = TodoStore::new();
+
+    let id = store.add("Buy groceries");
+
+    assert_eq!(id, 1);
+    let todos = store.list();
+    assert_eq!(todos.len(), 1);
+    assert_eq!(todos[0].title, "Buy groceries");
+    assert!(!todos[0].completed);
+});
+
+test!(test_add_multiple, {
+    let mut store = TodoStore::new();
+
+    let id1 = store.add("Task 1");
+    let id2 = store.add("Task 2");
+    let id3 = store.add("Task 3");
+
+    assert_eq!(id1, 1);
+    assert_eq!(id2, 2);
+    assert_eq!(id3, 3);
+
+    assert_eq!(store.list().len(), 3);
+});
+
+test!(test_mark_done, {
+    let mut store = TodoStore::new();
+    let id = store.add("Task");
+
+    let result = store.mark_done(id);
+    assert!(result);
+
+    let todos = store.list();
+    assert!(todos[0].completed);
+});
+
+test!(test_mark_nonexistent_as_done, {
+    let mut store = TodoStore::new();
+
+    let result = store.mark_done(999);
+
+    assert!(!result);
+});
+
+test!(test_delete_todo, {
+    let mut store = TodoStore::new();
+    store.add("Task 1");
+    store.add("Task 2");
+
+    let result = store.delete(1);
+
+    assert!(result);
+    assert_eq!(store.list().len(), 1);
+});
+
+test!(test_delete_nonexistent, {
+    let mut store = TodoStore::new();
+
+    let result = store.delete(999);
+
+    assert!(!result);
+});
+
+test!(test_empty_store, {
+    let store = TodoStore::new();
+
+    assert_eq!(store.list().len(), 0);
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Run tests: <code>cargo test</code></p>
+<hr />
+<h2 id="step-4-cli-commands-10-minutes"><a class="header" href="#step-4-cli-commands-10-minutes">Step 4: CLI Commands (10 minutes)</a></h2>
+<p>Create <code>src/commands/add.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: add &lt;title&gt;".to_string());
+    }
+
+    let title = args.join(" ");
+    let id = store.add(&amp;title);
+
+    Ok(format!("Added todo #{}: {}", id, title))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_add_command, {
+        let mut store = TodoStore::new();
+        let args = vec!["Buy milk".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert!(result.unwrap().contains("Buy milk"));
+        assert_eq!(store.list().len(), 1);
+    });
+
+    test!(test_add_with_spaces, {
+        let mut store = TodoStore::new();
+        let args = vec!["Buy".to_string(), "milk".to_string(), "and".to_string(), "eggs".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        let msg = result.unwrap();
+        assert!(msg.contains("Buy milk and eggs"));
+    });
+
+    test!(test_add_no_args, {
+        let mut store = TodoStore::new();
+        let args = vec![];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/list.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;TodoStore) -&gt; String {
+    let todos = store.list();
+
+    if todos.is_empty() {
+        return "No todos".to_string();
+    }
+
+    let mut output = String::new();
+    for todo in todos {
+        let status = if todo.completed { "✓" } else { " " };
+        output.push_str(&amp;format!("[{}] #{}: {}\n", status, todo.id, todo.title));
+    }
+
+    output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_list_empty, {
+        let store = TodoStore::new();
+
+        let output = execute(&amp;store);
+
+        assert_eq!(output, "No todos");
+    });
+
+    test!(test_list_with_items, {
+        let mut store = TodoStore::new();
+        store.add("Task 1");
+        store.add("Task 2");
+
+        let output = execute(&amp;store);
+
+        assert!(output.contains("Task 1"));
+        assert!(output.contains("Task 2"));
+    });
+
+    test!(test_list_shows_completion, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        store.mark_done(id);
+
+        let output = execute(&amp;store);
+
+        assert!(output.contains("✓"));
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-5-main-entry-point-5-minutes"><a class="header" href="#step-5-main-entry-point-5-minutes">Step 5: Main Entry Point (5 minutes)</a></h2>
+<p>Create <code>src/main.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">use std::env;
+use std::io::{self, BufRead};
+
+mod commands;
+mod store;
+
+use commands::{add, list, done, delete};
+use store::TodoStore;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let mut store = TodoStore::new();
+
+    let stdin = io::stdin();
+    let reader = stdin.lock();
+
+    for line in reader.lines() {
+        let line = line?;
+        let parts: Vec&lt;&amp;str&gt; = line.trim().split_whitespace().collect();
+
+        if parts.is_empty() {
+            continue;
+        }
+
+        let command = parts[0];
+        let args: Vec&lt;String&gt; = parts[1..].iter().map(|s| s.to_string()).collect();
+
+        let result = match command {
+            "add" =&gt; add::execute(&amp;mut store, &amp;args),
+            "list" =&gt; Ok(list::execute(&amp;store)),
+            "done" =&gt; done::execute(&amp;mut store, &amp;args),
+            "delete" =&gt; delete::execute(&amp;mut store, &amp;args),
+            _ =&gt; Err(format!("Unknown command: {}", command)),
+        };
+
+        match result {
+            Ok(msg) =&gt; println!("{}", msg),
+            Err(e) =&gt; eprintln!("Error: {}", e),
+        }
+    }
+
+    Ok(())
+}</code></pre></pre>
+<hr />
+<h2 id="step-6-integration-tests-10-minutes"><a class="header" href="#step-6-integration-tests-10-minutes">Step 6: Integration Tests (10 minutes)</a></h2>
+<p>Create <code>tests/cli_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use todo_cli::store::TodoStore;
+
+test!(complete_workflow, {
+    let mut store = TodoStore::new();
+
+    // Add some todos
+    store.add("Buy groceries");
+    store.add("Pay bills");
+    store.add("Call mom");
+
+    let todos = store.list();
+    assert_eq!(todos.len(), 3);
+
+    // Mark one as done
+    store.mark_done(2);
+
+    // Delete one
+    store.delete(3);
+
+    let final_todos = store.list();
+    assert_eq!(final_todos.len(), 2);
+    assert!(!final_todos[0].completed);
+    assert!(final_todos[1].completed);
+});
+
+test!(id_increment, {
+    let mut store = TodoStore::new();
+
+    let id1 = store.add("First");
+    let id2 = store.add("Second");
+    let id3 = store.add("Third");
+
+    assert_eq!(id1, 1);
+    assert_eq!(id2, 2);
+    assert_eq!(id3, 3);
+
+    store.delete(id2);  // Delete middle one
+
+    let id4 = store.add("Fourth");
+    assert_eq!(id4, 4);  // ID still increments
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-7-testing-with-fixtures-5-minutes"><a class="header" href="#step-7-testing-with-fixtures-5-minutes">Step 7: Testing with Fixtures (5 minutes)</a></h2>
+<p>Create <code>tests/fixture_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::fixture::*;
+use todo_cli::store::TodoStore;
+use std::collections::HashMap;
+
+test!(fixture_based_workflow, {
+    let fixture = TestFixture::new()?;
+    let mut store = TodoStore::new();
+
+    // Phase 1: Initial setup
+    let id1 = store.add("Task 1");
+    let id2 = store.add("Task 2");
+    fixture.set_metadata("initial_count", "2");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "1".to_string()),
+        ("todos".to_string(), "2".to_string()),
+    ]));
+
+    // Phase 2: Mark complete
+    store.mark_done(id1);
+    fixture.set_metadata("current_phase", "mark_done");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "2".to_string()),
+        ("completed".to_string(), "1".to_string()),
+    ]));
+
+    // Phase 3: Delete
+    store.delete(id2);
+    fixture.set_metadata("current_phase", "delete");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "3".to_string()),
+        ("remaining".to_string(), "1".to_string()),
+    ]));
+
+    // Verify
+    assert_eq!(fixture.snapshots().len(), 3);
+    assert_eq!(store.list().len(), 1);
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-8-running-everything-5-minutes"><a class="header" href="#step-8-running-everything-5-minutes">Step 8: Running Everything (5 minutes)</a></h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run unit tests only
+cargo test --lib
+
+# Run integration tests only
+cargo test --test '*'
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_add_todo
+</code></pre>
+<p>Expected output:</p>
+<pre><code>running X tests
+...
+test result: ok. X passed; 0 failed; 0 ignored; X measured
+</code></pre>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>You've built a real CLI application with:</p>
+<p>✅ Core data structures with tests
+✅ Command modules with unit tests
+✅ Integration tests
+✅ Fixture-based tests
+✅ Main CLI entry point
+✅ Error handling
+✅ Real-world usage patterns</p>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p><strong>Enhance your application:</strong></p>
+<ul>
+<li>Add persistence (save todos to file)</li>
+<li>Add priorities to todos</li>
+<li>Add due dates</li>
+<li>Add categories/tags</li>
+<li>Build a web API version</li>
+</ul>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="../advanced/snapshot-testing.html">Snapshot Testing</a> - Test CLI output</li>
+<li><a href="../advanced/README.html">Advanced Techniques</a> - More sophisticated testing</li>
+<li><a href="../guides/best-practices.html">Best Practices</a> - Production patterns</li>
+</ul>
+<p><strong>Share your code:</strong></p>
+<ul>
+<li>Push to GitHub</li>
+<li>Add CI/CD pipeline</li>
+<li>Write documentation</li>
+<li>Create GitHub issues for features</li>
+</ul>
+<hr />
+<p><strong>Congratulations!</strong> You've built and tested a real CLI application using Chicago TDD. You're now ready to build production applications!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/fixtures-tutorial.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tutorials/web-service-tutorial.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/fixtures-tutorial.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tutorials/web-service-tutorial.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

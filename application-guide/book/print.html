@@ -1156,6 +1156,1040 @@ let all_snapshots = fixture.snapshots();
 let latest = fixture.latest_snapshot();
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Congratulations!</strong> You've mastered fixtures. You can now write tests with proper isolation and state tracking.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-real-cli-application-complete-tutorial"><a class="header" href="#building-a-real-cli-application-complete-tutorial">Building a Real CLI Application: Complete Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Build a complete CLI application using Chicago TDD</p>
+</blockquote>
+<p>This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.</p>
+<p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>, <a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a>
+<strong>Time</strong>: ~45 minutes
+<strong>What you'll build</strong>: A working <code>todo-cli</code> application with tests</p>
+<hr />
+<h2 id="project-overview"><a class="header" href="#project-overview">Project Overview</a></h2>
+<p>You'll build a <strong>todo-cli</strong> app with these features:</p>
+<pre><code class="language-bash"># Add a todo
+$ todo-cli add "Buy groceries"
+
+# List todos
+$ todo-cli list
+
+# Complete a todo
+$ todo-cli done 1
+
+# Delete a todo
+$ todo-cli delete 1
+</code></pre>
+<p>This is a real, testable application.</p>
+<hr />
+<h2 id="step-1-project-setup-2-minutes"><a class="header" href="#step-1-project-setup-2-minutes">Step 1: Project Setup (2 minutes)</a></h2>
+<h3 id="create-the-project"><a class="header" href="#create-the-project">Create the project</a></h3>
+<pre><code class="language-bash">cargo new todo-cli
+cd todo-cli
+</code></pre>
+<h3 id="add-dependencies"><a class="header" href="#add-dependencies">Add dependencies</a></h3>
+<p>Edit <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+name = "todo-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# (no dependencies for basic version)
+
+[dev-dependencies]
+chicago-tdd-tools = { version = "1.1", features = ["testing-extras"] }
+</code></pre>
+<h3 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h3>
+<pre><code>todo-cli/
+├── src/
+│   ├── main.rs           # CLI entry point
+│   ├── commands/
+│   │   ├── mod.rs
+│   │   ├── add.rs
+│   │   ├── list.rs
+│   │   ├── done.rs
+│   │   └── delete.rs
+│   └── store.rs          # Todo storage
+└── tests/
+    ├── cli_tests.rs
+    └── commands_tests.rs
+</code></pre>
+<hr />
+<h2 id="step-2-core-data-structures-5-minutes"><a class="header" href="#step-2-core-data-structures-5-minutes">Step 2: Core Data Structures (5 minutes)</a></h2>
+<h3 id="define-a-todo-struct"><a class="header" href="#define-a-todo-struct">Define a Todo struct</a></h3>
+<p>Create <code>src/store.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Debug, PartialEq)]
+pub struct Todo {
+    pub id: u32,
+    pub title: String,
+    pub completed: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct TodoStore {
+    todos: Vec&lt;Todo&gt;,
+    next_id: u32,
+}
+
+impl TodoStore {
+    pub fn new() -&gt; Self {
+        TodoStore {
+            todos: Vec::new(),
+            next_id: 1,
+        }
+    }
+
+    pub fn add(&amp;mut self, title: &amp;str) -&gt; u32 {
+        let id = self.next_id;
+        self.todos.push(Todo {
+            id,
+            title: title.to_string(),
+            completed: false,
+        });
+        self.next_id += 1;
+        id
+    }
+
+    pub fn list(&amp;self) -&gt; Vec&lt;&amp;Todo&gt; {
+        self.todos.iter().collect()
+    }
+
+    pub fn mark_done(&amp;mut self, id: u32) -&gt; bool {
+        if let Some(todo) = self.todos.iter_mut().find(|t| t.id == id) {
+            todo.completed = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn delete(&amp;mut self, id: u32) -&gt; bool {
+        let original_len = self.todos.len();
+        self.todos.retain(|t| t.id != id);
+        self.todos.len() &lt; original_len
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-3-test-the-core-logic-8-minutes"><a class="header" href="#step-3-test-the-core-logic-8-minutes">Step 3: Test the Core Logic (8 minutes)</a></h2>
+<p>Create <code>tests/commands_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use todo_cli::store::{Todo, TodoStore};
+
+test!(test_add_todo, {
+    let mut store = TodoStore::new();
+
+    let id = store.add("Buy groceries");
+
+    assert_eq!(id, 1);
+    let todos = store.list();
+    assert_eq!(todos.len(), 1);
+    assert_eq!(todos[0].title, "Buy groceries");
+    assert!(!todos[0].completed);
+});
+
+test!(test_add_multiple, {
+    let mut store = TodoStore::new();
+
+    let id1 = store.add("Task 1");
+    let id2 = store.add("Task 2");
+    let id3 = store.add("Task 3");
+
+    assert_eq!(id1, 1);
+    assert_eq!(id2, 2);
+    assert_eq!(id3, 3);
+
+    assert_eq!(store.list().len(), 3);
+});
+
+test!(test_mark_done, {
+    let mut store = TodoStore::new();
+    let id = store.add("Task");
+
+    let result = store.mark_done(id);
+    assert!(result);
+
+    let todos = store.list();
+    assert!(todos[0].completed);
+});
+
+test!(test_mark_nonexistent_as_done, {
+    let mut store = TodoStore::new();
+
+    let result = store.mark_done(999);
+
+    assert!(!result);
+});
+
+test!(test_delete_todo, {
+    let mut store = TodoStore::new();
+    store.add("Task 1");
+    store.add("Task 2");
+
+    let result = store.delete(1);
+
+    assert!(result);
+    assert_eq!(store.list().len(), 1);
+});
+
+test!(test_delete_nonexistent, {
+    let mut store = TodoStore::new();
+
+    let result = store.delete(999);
+
+    assert!(!result);
+});
+
+test!(test_empty_store, {
+    let store = TodoStore::new();
+
+    assert_eq!(store.list().len(), 0);
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Run tests: <code>cargo test</code></p>
+<hr />
+<h2 id="step-4-cli-commands-10-minutes"><a class="header" href="#step-4-cli-commands-10-minutes">Step 4: CLI Commands (10 minutes)</a></h2>
+<p>Create <code>src/commands/add.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: add &lt;title&gt;".to_string());
+    }
+
+    let title = args.join(" ");
+    let id = store.add(&amp;title);
+
+    Ok(format!("Added todo #{}: {}", id, title))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_add_command, {
+        let mut store = TodoStore::new();
+        let args = vec!["Buy milk".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert!(result.unwrap().contains("Buy milk"));
+        assert_eq!(store.list().len(), 1);
+    });
+
+    test!(test_add_with_spaces, {
+        let mut store = TodoStore::new();
+        let args = vec!["Buy".to_string(), "milk".to_string(), "and".to_string(), "eggs".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        let msg = result.unwrap();
+        assert!(msg.contains("Buy milk and eggs"));
+    });
+
+    test!(test_add_no_args, {
+        let mut store = TodoStore::new();
+        let args = vec![];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/list.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;TodoStore) -&gt; String {
+    let todos = store.list();
+
+    if todos.is_empty() {
+        return "No todos".to_string();
+    }
+
+    let mut output = String::new();
+    for todo in todos {
+        let status = if todo.completed { "✓" } else { " " };
+        output.push_str(&amp;format!("[{}] #{}: {}\n", status, todo.id, todo.title));
+    }
+
+    output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_list_empty, {
+        let store = TodoStore::new();
+
+        let output = execute(&amp;store);
+
+        assert_eq!(output, "No todos");
+    });
+
+    test!(test_list_with_items, {
+        let mut store = TodoStore::new();
+        store.add("Task 1");
+        store.add("Task 2");
+
+        let output = execute(&amp;store);
+
+        assert!(output.contains("Task 1"));
+        assert!(output.contains("Task 2"));
+    });
+
+    test!(test_list_shows_completion, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        store.mark_done(id);
+
+        let output = execute(&amp;store);
+
+        assert!(output.contains("✓"));
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-5-main-entry-point-5-minutes"><a class="header" href="#step-5-main-entry-point-5-minutes">Step 5: Main Entry Point (5 minutes)</a></h2>
+<p>Create <code>src/main.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">use std::env;
+use std::io::{self, BufRead};
+
+mod commands;
+mod store;
+
+use commands::{add, list, done, delete};
+use store::TodoStore;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let mut store = TodoStore::new();
+
+    let stdin = io::stdin();
+    let reader = stdin.lock();
+
+    for line in reader.lines() {
+        let line = line?;
+        let parts: Vec&lt;&amp;str&gt; = line.trim().split_whitespace().collect();
+
+        if parts.is_empty() {
+            continue;
+        }
+
+        let command = parts[0];
+        let args: Vec&lt;String&gt; = parts[1..].iter().map(|s| s.to_string()).collect();
+
+        let result = match command {
+            "add" =&gt; add::execute(&amp;mut store, &amp;args),
+            "list" =&gt; Ok(list::execute(&amp;store)),
+            "done" =&gt; done::execute(&amp;mut store, &amp;args),
+            "delete" =&gt; delete::execute(&amp;mut store, &amp;args),
+            _ =&gt; Err(format!("Unknown command: {}", command)),
+        };
+
+        match result {
+            Ok(msg) =&gt; println!("{}", msg),
+            Err(e) =&gt; eprintln!("Error: {}", e),
+        }
+    }
+
+    Ok(())
+}</code></pre></pre>
+<hr />
+<h2 id="step-6-integration-tests-10-minutes"><a class="header" href="#step-6-integration-tests-10-minutes">Step 6: Integration Tests (10 minutes)</a></h2>
+<p>Create <code>tests/cli_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use todo_cli::store::TodoStore;
+
+test!(complete_workflow, {
+    let mut store = TodoStore::new();
+
+    // Add some todos
+    store.add("Buy groceries");
+    store.add("Pay bills");
+    store.add("Call mom");
+
+    let todos = store.list();
+    assert_eq!(todos.len(), 3);
+
+    // Mark one as done
+    store.mark_done(2);
+
+    // Delete one
+    store.delete(3);
+
+    let final_todos = store.list();
+    assert_eq!(final_todos.len(), 2);
+    assert!(!final_todos[0].completed);
+    assert!(final_todos[1].completed);
+});
+
+test!(id_increment, {
+    let mut store = TodoStore::new();
+
+    let id1 = store.add("First");
+    let id2 = store.add("Second");
+    let id3 = store.add("Third");
+
+    assert_eq!(id1, 1);
+    assert_eq!(id2, 2);
+    assert_eq!(id3, 3);
+
+    store.delete(id2);  // Delete middle one
+
+    let id4 = store.add("Fourth");
+    assert_eq!(id4, 4);  // ID still increments
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-7-testing-with-fixtures-5-minutes"><a class="header" href="#step-7-testing-with-fixtures-5-minutes">Step 7: Testing with Fixtures (5 minutes)</a></h2>
+<p>Create <code>tests/fixture_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::fixture::*;
+use todo_cli::store::TodoStore;
+use std::collections::HashMap;
+
+test!(fixture_based_workflow, {
+    let fixture = TestFixture::new()?;
+    let mut store = TodoStore::new();
+
+    // Phase 1: Initial setup
+    let id1 = store.add("Task 1");
+    let id2 = store.add("Task 2");
+    fixture.set_metadata("initial_count", "2");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "1".to_string()),
+        ("todos".to_string(), "2".to_string()),
+    ]));
+
+    // Phase 2: Mark complete
+    store.mark_done(id1);
+    fixture.set_metadata("current_phase", "mark_done");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "2".to_string()),
+        ("completed".to_string(), "1".to_string()),
+    ]));
+
+    // Phase 3: Delete
+    store.delete(id2);
+    fixture.set_metadata("current_phase", "delete");
+    fixture.capture_snapshot(HashMap::from([
+        ("phase".to_string(), "3".to_string()),
+        ("remaining".to_string(), "1".to_string()),
+    ]));
+
+    // Verify
+    assert_eq!(fixture.snapshots().len(), 3);
+    assert_eq!(store.list().len(), 1);
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-8-running-everything-5-minutes"><a class="header" href="#step-8-running-everything-5-minutes">Step 8: Running Everything (5 minutes)</a></h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run unit tests only
+cargo test --lib
+
+# Run integration tests only
+cargo test --test '*'
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_add_todo
+</code></pre>
+<p>Expected output:</p>
+<pre><code>running X tests
+...
+test result: ok. X passed; 0 failed; 0 ignored; X measured
+</code></pre>
+<hr />
+<h2 id="summary-1"><a class="header" href="#summary-1">Summary</a></h2>
+<p>You've built a real CLI application with:</p>
+<p>✅ Core data structures with tests
+✅ Command modules with unit tests
+✅ Integration tests
+✅ Fixture-based tests
+✅ Main CLI entry point
+✅ Error handling
+✅ Real-world usage patterns</p>
+<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<p><strong>Enhance your application:</strong></p>
+<ul>
+<li>Add persistence (save todos to file)</li>
+<li>Add priorities to todos</li>
+<li>Add due dates</li>
+<li>Add categories/tags</li>
+<li>Build a web API version</li>
+</ul>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="tutorials/../advanced/snapshot-testing.html">Snapshot Testing</a> - Test CLI output</li>
+<li><a href="tutorials/../advanced/README.html">Advanced Techniques</a> - More sophisticated testing</li>
+<li><a href="tutorials/../guides/best-practices.html">Best Practices</a> - Production patterns</li>
+</ul>
+<p><strong>Share your code:</strong></p>
+<ul>
+<li>Push to GitHub</li>
+<li>Add CI/CD pipeline</li>
+<li>Write documentation</li>
+<li>Create GitHub issues for features</li>
+</ul>
+<hr />
+<p><strong>Congratulations!</strong> You've built and tested a real CLI application using Chicago TDD. You're now ready to build production applications!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-rest-web-service-complete-tutorial"><a class="header" href="#building-a-rest-web-service-complete-tutorial">Building a REST Web Service: Complete Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Build a production-ready REST API with Chicago TDD</p>
+</blockquote>
+<p>This tutorial guides you through building a real REST web service with comprehensive tests, using Rust and common web frameworks.</p>
+<p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>, <a href="tutorials/cli-app-tutorial.html">CLI Application Tutorial</a>
+<strong>Time</strong>: ~50 minutes
+<strong>What you'll build</strong>: A working <code>user-api</code> with CRUD operations</p>
+<hr />
+<h2 id="project-overview-1"><a class="header" href="#project-overview-1">Project Overview</a></h2>
+<p>You'll build a <strong>user-api</strong> REST service:</p>
+<pre><code class="language-bash"># Get all users
+GET /api/users
+-&gt; [{"id": 1, "name": "Alice", "email": "alice@example.com"}, ...]
+
+# Get specific user
+GET /api/users/:id
+-&gt; {"id": 1, "name": "Alice", "email": "alice@example.com"}
+
+# Create user
+POST /api/users
+-&gt; {"id": 2, "name": "Bob", "email": "bob@example.com"}
+
+# Update user
+PUT /api/users/:id
+-&gt; {"id": 1, "name": "Alice Updated", ...}
+
+# Delete user
+DELETE /api/users/:id
+-&gt; {}
+</code></pre>
+<hr />
+<h2 id="step-1-project-setup-3-minutes"><a class="header" href="#step-1-project-setup-3-minutes">Step 1: Project Setup (3 minutes)</a></h2>
+<h3 id="create-project"><a class="header" href="#create-project">Create project</a></h3>
+<pre><code class="language-bash">cargo new user-api
+cd user-api
+</code></pre>
+<h3 id="update-cargotoml"><a class="header" href="#update-cargotoml">Update Cargo.toml</a></h3>
+<pre><code class="language-toml">[package]
+name = "user-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# JSON support
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+chicago-tdd-tools = { version = "1.1", features = ["testing-extras"] }
+</code></pre>
+<h3 id="project-structure-1"><a class="header" href="#project-structure-1">Project structure</a></h3>
+<pre><code>user-api/
+├── src/
+│   ├── main.rs
+│   ├── models/
+│   │   └── user.rs
+│   ├── handlers/
+│   │   ├── mod.rs
+│   │   └── users.rs
+│   └── store.rs
+└── tests/
+    ├── user_tests.rs
+    └── api_tests.rs
+</code></pre>
+<hr />
+<h2 id="step-2-data-models-5-minutes"><a class="header" href="#step-2-data-models-5-minutes">Step 2: Data Models (5 minutes)</a></h2>
+<p>Create <code>src/models/user.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct User {
+    pub id: u32,
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct CreateUserRequest {
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct UpdateUserRequest {
+    pub name: Option&lt;String&gt;,
+    pub email: Option&lt;String&gt;,
+}
+
+impl User {
+    pub fn new(id: u32, name: String, email: String) -&gt; Self {
+        User { id, name, email }
+    }
+
+    pub fn validate(&amp;self) -&gt; Result&lt;(), String&gt; {
+        if self.name.is_empty() {
+            return Err("Name cannot be empty".to_string());
+        }
+        if !self.email.contains('@') {
+            return Err("Invalid email format".to_string());
+        }
+        Ok(())
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-3-test-the-models-8-minutes"><a class="header" href="#step-3-test-the-models-8-minutes">Step 3: Test the Models (8 minutes)</a></h2>
+<p>Create <code>tests/user_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use user_api::models::User;
+
+test!(test_create_user, {
+    let user = User::new(1, "Alice".to_string(), "alice@example.com".to_string());
+
+    assert_eq!(user.id, 1);
+    assert_eq!(user.name, "Alice");
+    assert_eq!(user.email, "alice@example.com");
+});
+
+test!(test_user_validation_valid, {
+    let user = User::new(1, "Alice".to_string(), "alice@example.com".to_string());
+
+    let result = user.validate();
+
+    assert_ok!(&amp;result);
+});
+
+test!(test_user_validation_empty_name, {
+    let user = User::new(1, String::new(), "alice@example.com".to_string());
+
+    let result = user.validate();
+
+    assert_err!(&amp;result);
+    if let Err(e) = result {
+        assert!(e.contains("Name"));
+    }
+});
+
+test!(test_user_validation_invalid_email, {
+    let user = User::new(1, "Alice".to_string(), "not-an-email".to_string());
+
+    let result = user.validate();
+
+    assert_err!(&amp;result);
+    if let Err(e) = result {
+        assert!(e.contains("email"));
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-4-user-repository-8-minutes"><a class="header" href="#step-4-user-repository-8-minutes">Step 4: User Repository (8 minutes)</a></h2>
+<p>Create <code>src/store.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::models::{User, CreateUserRequest, UpdateUserRequest};
+use std::collections::HashMap;
+
+pub struct UserStore {
+    users: HashMap&lt;u32, User&gt;,
+    next_id: u32,
+}
+
+impl UserStore {
+    pub fn new() -&gt; Self {
+        UserStore {
+            users: HashMap::new(),
+            next_id: 1,
+        }
+    }
+
+    pub fn create(&amp;mut self, req: CreateUserRequest) -&gt; Result&lt;User, String&gt; {
+        let user = User::new(self.next_id, req.name, req.email);
+        user.validate()?;
+
+        self.users.insert(user.id, user.clone());
+        self.next_id += 1;
+
+        Ok(user)
+    }
+
+    pub fn get(&amp;self, id: u32) -&gt; Option&lt;User&gt; {
+        self.users.get(&amp;id).cloned()
+    }
+
+    pub fn list(&amp;self) -&gt; Vec&lt;User&gt; {
+        let mut users: Vec&lt;_&gt; = self.users.values().cloned().collect();
+        users.sort_by_key(|u| u.id);
+        users
+    }
+
+    pub fn update(&amp;mut self, id: u32, req: UpdateUserRequest) -&gt; Result&lt;User, String&gt; {
+        let user = self.users.get_mut(&amp;id)
+            .ok_or("User not found".to_string())?;
+
+        if let Some(name) = req.name {
+            user.name = name;
+        }
+        if let Some(email) = req.email {
+            user.email = email;
+        }
+
+        user.validate()?;
+        Ok(user.clone())
+    }
+
+    pub fn delete(&amp;mut self, id: u32) -&gt; bool {
+        self.users.remove(&amp;id).is_some()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-5-repository-tests-10-minutes"><a class="header" href="#step-5-repository-tests-10-minutes">Step 5: Repository Tests (10 minutes)</a></h2>
+<p>Create <code>tests/api_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use user_api::models::{User, CreateUserRequest, UpdateUserRequest};
+use user_api::store::UserStore;
+
+test!(test_create_user_success, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    };
+
+    let result = store.create(req);
+
+    assert_ok!(&amp;result);
+    let user = result.unwrap();
+    assert_eq!(user.name, "Alice");
+});
+
+test!(test_create_user_invalid_email, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "invalid".to_string(),
+    };
+
+    let result = store.create(req);
+
+    assert_err!(&amp;result);
+});
+
+test!(test_get_user, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    };
+    let created = store.create(req).unwrap();
+
+    let retrieved = store.get(created.id);
+
+    assert_eq!(retrieved, Some(created));
+});
+
+test!(test_get_nonexistent_user, {
+    let store = UserStore::new();
+
+    let result = store.get(999);
+
+    assert_eq!(result, None);
+});
+
+test!(test_list_users, {
+    let mut store = UserStore::new();
+
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    let users = store.list();
+
+    assert_eq!(users.len(), 2);
+    assert_eq!(users[0].name, "Alice");
+    assert_eq!(users[1].name, "Bob");
+});
+
+test!(test_update_user, {
+    let mut store = UserStore::new();
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    let result = store.update(1, UpdateUserRequest {
+        name: Some("Alice Updated".to_string()),
+        email: None,
+    });
+
+    assert_ok!(&amp;result);
+    let updated = result.unwrap();
+    assert_eq!(updated.name, "Alice Updated");
+});
+
+test!(test_update_nonexistent_user, {
+    let mut store = UserStore::new();
+
+    let result = store.update(999, UpdateUserRequest {
+        name: Some("Bob".to_string()),
+        email: None,
+    });
+
+    assert_err!(&amp;result);
+});
+
+test!(test_delete_user, {
+    let mut store = UserStore::new();
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    let result = store.delete(1);
+
+    assert!(result);
+    assert_eq!(store.list().len(), 0);
+});
+
+test!(test_delete_nonexistent_user, {
+    let mut store = UserStore::new();
+
+    let result = store.delete(999);
+
+    assert!(!result);
+});
+
+test!(complete_api_workflow, {
+    let mut store = UserStore::new();
+
+    // Create users
+    let alice = store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).unwrap();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    // Verify list
+    assert_eq!(store.list().len(), 2);
+
+    // Update Alice
+    store.update(alice.id, UpdateUserRequest {
+        name: Some("Alice Wonder".to_string()),
+        email: None,
+    }).ok();
+
+    // Verify update
+    let updated = store.get(alice.id).unwrap();
+    assert_eq!(updated.name, "Alice Wonder");
+
+    // Delete Bob
+    store.delete(2);
+
+    // Verify deletion
+    assert_eq!(store.list().len(), 1);
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-6-handlers-8-minutes"><a class="header" href="#step-6-handlers-8-minutes">Step 6: Handlers (8 minutes)</a></h2>
+<p>Create <code>src/handlers/users.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::models::CreateUserRequest;
+use crate::store::UserStore;
+use serde_json::json;
+
+pub fn get_users(store: &amp;UserStore) -&gt; String {
+    let users = store.list();
+    serde_json::to_string(&amp;users).unwrap_or_else(|_| "[]".to_string())
+}
+
+pub fn get_user(store: &amp;UserStore, id: u32) -&gt; Result&lt;String, String&gt; {
+    let user = store.get(id).ok_or("User not found".to_string())?;
+    serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+pub fn create_user(store: &amp;mut UserStore, body: &amp;str) -&gt; Result&lt;String, String&gt; {
+    let req: CreateUserRequest = serde_json::from_str(body)
+        .map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    let user = store.create(req)?;
+    serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_get_users_empty, {
+        let store = UserStore::new();
+
+        let result = get_users(&amp;store);
+
+        assert_eq!(result, "[]");
+    });
+
+    test!(test_create_user_from_json, {
+        let mut store = UserStore::new();
+        let json = r#"{"name":"Alice","email":"alice@example.com"}"#;
+
+        let result = create_user(&amp;mut store, json);
+
+        assert_ok!(&amp;result);
+        let response = result.unwrap();
+        assert!(response.contains("Alice"));
+    });
+
+    test!(test_create_user_invalid_json, {
+        let mut store = UserStore::new();
+        let json = "invalid json";
+
+        let result = create_user(&amp;mut store, json);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-7-main-application-5-minutes"><a class="header" href="#step-7-main-application-5-minutes">Step 7: Main Application (5 minutes)</a></h2>
+<p>Create <code>src/main.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">mod models;
+mod handlers;
+mod store;
+
+use models::{User, CreateUserRequest};
+use store::UserStore;
+
+fn main() {
+    let mut store = UserStore::new();
+
+    // Sample data
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    // List users
+    for user in store.list() {
+        println!("User #{}: {} ({})", user.id, user.name, user.email);
+    }
+}</code></pre></pre>
+<hr />
+<h2 id="step-8-running-tests-5-minutes"><a class="header" href="#step-8-running-tests-5-minutes">Step 8: Running Tests (5 minutes)</a></h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_create_user_success
+</code></pre>
+<p>Expected output:</p>
+<pre><code>running 11 tests
+...
+test result: ok. 11 passed; 0 failed
+</code></pre>
+<hr />
+<h2 id="extending-the-api"><a class="header" href="#extending-the-api">Extending the API</a></h2>
+<h3 id="add-error-responses"><a class="header" href="#add-error-responses">Add error responses</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+pub fn format_error(message: String) -&gt; String {
+    serde_json::to_string(&amp;ErrorResponse { error: message })
+        .unwrap_or_else(|_| r#"{"error":"Unknown error"}"#.to_string())
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="add-pagination"><a class="header" href="#add-pagination">Add pagination</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn list_users_paginated(
+    store: &amp;UserStore,
+    page: u32,
+    limit: u32,
+) -&gt; (Vec&lt;User&gt;, u32) {
+    let all = store.list();
+    let total = all.len() as u32;
+    let start = (page - 1) * limit;
+    let end = std::cmp::min(start + limit, total);
+
+    (all[start as usize..end as usize].to_vec(), total)
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<p><strong>Enhance your API:</strong></p>
+<ul>
+<li>Add authentication</li>
+<li>Add validation</li>
+<li>Add pagination</li>
+<li>Add filtering/searching</li>
+<li>Add real database (PostgreSQL/SQLite)</li>
+</ul>
+<p><strong>Testing enhancements:</strong></p>
+<ul>
+<li><a href="tutorials/../guides/integration-docker.html">Integration Testing with Docker</a> - Test with real database</li>
+<li><a href="tutorials/../advanced/snapshot-testing.html">Snapshot Testing</a> - Test API responses</li>
+<li><a href="tutorials/../advanced/property-testing.html">Property Testing</a> - Fuzz test API handlers</li>
+</ul>
+<p><strong>Deployment:</strong></p>
+<ul>
+<li>Build Docker image</li>
+<li>Deploy to cloud (AWS, Heroku, etc.)</li>
+<li>Set up CI/CD pipeline</li>
+<li>Monitor with observability tools</li>
+</ul>
+<hr />
+<p><strong>Congratulations!</strong> You've built a production-ready REST API with comprehensive tests. You're ready to deploy real services!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testfixture-api-reference"><a class="header" href="#testfixture-api-reference">TestFixture API Reference</a></h1>
 <blockquote>
 <p>📚 <strong>REFERENCE</strong> | Complete API documentation for test fixtures</p>
@@ -1663,7 +2697,7 @@ assert_eq!(value, expected);   // Equality check
 <li><a href="core/../advanced/snapshot-testing.html">Snapshot Testing</a> - Golden files</li>
 <li><a href="core/../advanced/cli-testing.html">CLI Testing</a> - Command-line interfaces</li>
 </ul>
-<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
 <p>👉 <strong>Start with <a href="core/fixtures.html">Fixtures</a></strong></p>
 <p>Then learn:</p>
 <ol>
@@ -1908,10 +2942,10 @@ test!(test_with_helper, {
 <li>Rely on global state</li>
 <li>Use <code>unwrap()</code> on fixture creation</li>
 </ul>
-<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
 <p>Learn how to use fixtures with data builders: <a href="core/data-builders.html">Building Test Data</a></p>
 <hr />
-<h2 id="summary-1"><a class="header" href="#summary-1">Summary</a></h2>
+<h2 id="summary-2"><a class="header" href="#summary-2">Summary</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Concept</th><th>Purpose</th></tr></thead><tbody>
 <tr><td><strong>Fixture</strong></td><td>Isolated test state</td></tr>
 <tr><td><strong>Setup</strong></td><td>Happens in <code>TestFixture::new()</code></td></tr>
@@ -2215,10 +3249,10 @@ let builder2 = builder1.with_var("key2", "value2");
 
 // etc.
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
 <p>Learn assertions: <a href="core/assertions.html">Assertions &amp; Verification</a></p>
 <hr />
-<h2 id="summary-2"><a class="header" href="#summary-2">Summary</a></h2>
+<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Purpose</th></tr></thead><tbody>
 <tr><td><strong>Fluent API</strong></td><td>Readable data construction</td></tr>
 <tr><td><strong>Chaining</strong></td><td><code>.with_var()</code> returns <code>Self</code></td></tr>
@@ -2511,10 +3545,10 @@ assert_eq!(user.email, "alice@example.com");
 <tr><td>Empty collection</td><td><code>assert!(collection.is_empty())</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
 <p>Learn about error paths: <a href="core/error-paths.html">Error Path Testing</a></p>
 <hr />
-<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
+<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
 <p>Chicago TDD emphasizes:</p>
 <ul>
 <li>Clear assertions with helper macros</li>
@@ -2849,10 +3883,10 @@ Error recovery is possible</li>
     assert_err!(&amp;result);
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
+<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
 <p>Learn advanced techniques: <a href="core/../advanced/README.html">Advanced Testing Techniques</a></p>
 <hr />
-<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
+<h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
 <p>Chicago TDD prioritizes error testing because:</p>
 <ul>
 <li>Bugs hide in error paths</li>
@@ -3041,7 +4075,7 @@ chicago-tdd-tools = { version = "1.3", features = [
 <li><a href="advanced/cli-testing.html">CLI Testing</a></li>
 <li><a href="advanced/concurrency-testing.html">Concurrency Testing</a></li>
 </ul>
-<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
+<h2 id="next-steps-10"><a class="header" href="#next-steps-10">Next Steps</a></h2>
 <p>👉 <strong>Start with <a href="advanced/property-testing.html">Property-Based Testing</a></strong></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="property-based-testing-1"><a class="header" href="#property-based-testing-1">Property-Based Testing</a></h1>
 <blockquote>
@@ -3304,10 +4338,10 @@ let data = generator.generate_test_data();
 </span>// Too strict: a * b == b * a (fails due to overflow)
 // Better: a.checked_mul(b) == b.checked_mul(a)
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
+<h2 id="next-steps-11"><a class="header" href="#next-steps-11">Next Steps</a></h2>
 <p>Learn mutation testing: <a href="advanced/mutation-testing.html">Mutation Testing</a></p>
 <hr />
-<h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
+<h2 id="summary-6"><a class="header" href="#summary-6">Summary</a></h2>
 <p>Property-based testing:</p>
 <ul>
 <li>✅ Tests properties for all inputs</li>
@@ -3661,10 +4695,10 @@ tester.apply_mutation(MutationOperator::ChangeValue(...));
 // Skip mutations that don't matter
 // (e.g., changing comments, unused variables)
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-10"><a class="header" href="#next-steps-10">Next Steps</a></h2>
+<h2 id="next-steps-12"><a class="header" href="#next-steps-12">Next Steps</a></h2>
 <p>Learn snapshot testing: <a href="advanced/snapshot-testing.html">Snapshot Testing</a></p>
 <hr />
-<h2 id="summary-6"><a class="header" href="#summary-6">Summary</a></h2>
+<h2 id="summary-7"><a class="header" href="#summary-7">Summary</a></h2>
 <p>Mutation testing:</p>
 <ul>
 <li>✅ Validates test quality</li>
@@ -3945,10 +4979,10 @@ assert_matches!(output, "output");
     assert_matches!(report, "fixture_report");
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-11"><a class="header" href="#next-steps-11">Next Steps</a></h2>
+<h2 id="next-steps-13"><a class="header" href="#next-steps-13">Next Steps</a></h2>
 <p>Learn CLI testing: <a href="advanced/cli-testing.html">CLI Testing</a></p>
 <hr />
-<h2 id="summary-7"><a class="header" href="#summary-7">Summary</a></h2>
+<h2 id="summary-8"><a class="header" href="#summary-8">Summary</a></h2>
 <p>Snapshot testing:</p>
 <ul>
 <li>✅ Captures complex output</li>
@@ -4259,10 +5293,10 @@ exit-code: 1  (Failure)
 let normalized = output.replace("2024-11-15", "[DATE]");
 assert!(normalized.contains("Started on [DATE]"));
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-12"><a class="header" href="#next-steps-12">Next Steps</a></h2>
+<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
 <p>Learn concurrency testing: <a href="advanced/concurrency-testing.html">Concurrency Testing</a></p>
 <hr />
-<h2 id="summary-8"><a class="header" href="#summary-8">Summary</a></h2>
+<h2 id="summary-9"><a class="header" href="#summary-9">Summary</a></h2>
 <p>CLI testing:</p>
 <ul>
 <li>✅ Tests command-line interfaces</li>
@@ -4626,10 +5660,10 @@ fn test_with_timeout() {
     });
 }
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-13"><a class="header" href="#next-steps-13">Next Steps</a></h2>
+<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
 <p>Learn the "Go the Extra Mile" pattern: <a href="advanced/../guides/extra-mile.html">Go the Extra Mile</a></p>
 <hr />
-<h2 id="summary-9"><a class="header" href="#summary-9">Summary</a></h2>
+<h2 id="summary-10"><a class="header" href="#summary-10">Summary</a></h2>
 <p>Concurrency testing with Loom:</p>
 <ul>
 <li>✅ Tests all possible thread interleavings</li>
@@ -4975,13 +6009,13 @@ impl ValidatedUserResponse {
 }
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Recommendation</strong>: Use 2nd idea for most endpoints. Only use 3rd for sensitive data (auth, payments).</p>
-<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
+<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
 <ul>
 <li><a href="guides/observability.html">Observability &amp; Quality</a> - Implement 2nd and 3rd ideas</li>
 <li><a href="guides/real-world.html">Real-World Applications</a> - See complete examples</li>
 </ul>
 <hr />
-<h2 id="summary-10"><a class="header" href="#summary-10">Summary</a></h2>
+<h2 id="summary-11"><a class="header" href="#summary-11">Summary</a></h2>
 <p>The "Go the Extra Mile" pattern:</p>
 <p><strong>1st Idea</strong>: Minimal, solves the problem
 <strong>2nd Idea</strong>: 80% more value, 20% more effort (usually best)
@@ -5255,10 +6289,10 @@ Error paths covered</li>
 <li><input disabled="" type="checkbox"/>
 Boundary conditions tested</li>
 </ul>
-<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
+<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
 <p>See how to combine observability with real applications: <a href="guides/real-world.html">Real-World Applications</a></p>
 <hr />
-<h2 id="summary-11"><a class="header" href="#summary-11">Summary</a></h2>
+<h2 id="summary-12"><a class="header" href="#summary-12">Summary</a></h2>
 <p>Observability provides:</p>
 <ul>
 <li>✅ OTEL spans for operation tracking</li>
@@ -5370,7 +6404,7 @@ span.status = SpanStatus::Unset;
 <li>Create excessive spans</li>
 <li>Forget timing information</li>
 </ul>
-<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
+<h2 id="next-steps-18"><a class="header" href="#next-steps-18">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/weaver.html">Weaver Validation</a> - Validate telemetry against semantic conventions</li>
@@ -5463,7 +6497,7 @@ span.attributes.insert("endpoint".to_string(), "/api/users".to_string());
 <pre><code class="language-bash"># See Weaver registry
 cargo make weaver-smoke
 </code></pre>
-<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
+<h2 id="next-steps-19"><a class="header" href="#next-steps-19">Next Steps</a></h2>
 <p>Combine observability with testing: <a href="guides/observability.html">Observability &amp; Quality</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="coverage--performance"><a class="header" href="#coverage--performance">Coverage &amp; Performance</a></h1>
 <blockquote>
@@ -5589,7 +6623,7 @@ cargo flamegraph --test performance_tests
 <li>Assume fast</li>
 <li>Measure on dev machine only</li>
 </ul>
-<h2 id="next-steps-18"><a class="header" href="#next-steps-18">Next Steps</a></h2>
+<h2 id="next-steps-20"><a class="header" href="#next-steps-20">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/../advanced/mutation-testing.html">Mutation Testing</a> - Validate test quality beyond coverage</li>
@@ -5815,7 +6849,7 @@ cargo make release-validate
 <li>CLI testing patterns</li>
 <li>Quality metrics</li>
 </ul>
-<h2 id="next-steps-19"><a class="header" href="#next-steps-19">Next Steps</a></h2>
+<h2 id="next-steps-21"><a class="header" href="#next-steps-21">Next Steps</a></h2>
 <p>Apply what you've learned:</p>
 <ol>
 <li>Start with <a href="guides/../core/README.html">Core Patterns</a></li>
@@ -5828,7 +6862,7 @@ cargo make release-validate
 <p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a CLI application</p>
 </blockquote>
 <p>Complete example of testing a CLI application with Chicago TDD Tools.</p>
-<h2 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h2>
+<h2 id="project-structure-2"><a class="header" href="#project-structure-2">Project Structure</a></h2>
 <pre><code>myapp/
 ├── src/
 │   ├── main.rs         # CLI entry point
@@ -5892,7 +6926,7 @@ cargo make release-validate
 <li>Test external tools</li>
 </ul>
 <p>See: <a href="guides/../advanced/cli-testing.html">CLI Testing</a></p>
-<h2 id="next-steps-20"><a class="header" href="#next-steps-20">Next Steps</a></h2>
+<h2 id="next-steps-22"><a class="header" href="#next-steps-22">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/../advanced/cli-testing.html">CLI Testing Guide</a> - Deep dive into trycmd patterns</li>
@@ -5910,7 +6944,7 @@ cargo make release-validate
 <p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a web service</p>
 </blockquote>
 <p>Complete example of testing a web service with Chicago TDD Tools.</p>
-<h2 id="project-structure-1"><a class="header" href="#project-structure-1">Project Structure</a></h2>
+<h2 id="project-structure-3"><a class="header" href="#project-structure-3">Project Structure</a></h2>
 <pre><code>myservice/
 ├── src/
 │   ├── main.rs
@@ -6035,7 +7069,7 @@ cargo make test-integration
 cargo make ci-local
 </code></pre>
 <p>See: <a href="guides/../advanced/README.html">Advanced Techniques</a></p>
-<h2 id="next-steps-21"><a class="header" href="#next-steps-21">Next Steps</a></h2>
+<h2 id="next-steps-23"><a class="header" href="#next-steps-23">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/integration-docker.html">Integration Testing with Docker</a> - Test with real services</li>
@@ -6251,7 +7285,7 @@ docker stop &lt;container&gt;
 <p>Increase timeout:</p>
 <pre><code class="language-bash">cargo test --lib -- --test-threads=1  # Sequential
 </code></pre>
-<h2 id="next-steps-22"><a class="header" href="#next-steps-22">Next Steps</a></h2>
+<h2 id="next-steps-24"><a class="header" href="#next-steps-24">Next Steps</a></h2>
 <p>See: <a href="guides/best-practices.html">Best Practices</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="best-practices--migration"><a class="header" href="#best-practices--migration">Best Practices &amp; Migration</a></h1>
 <blockquote>
@@ -6549,7 +7583,7 @@ Expert
 <li><a href="guides/../../cookbook/README.html">Pattern Cookbook</a></li>
 <li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a></li>
 </ul>
-<h2 id="next-steps-23"><a class="header" href="#next-steps-23">Next Steps</a></h2>
+<h2 id="next-steps-25"><a class="header" href="#next-steps-25">Next Steps</a></h2>
 <ol>
 <li>Pick a project to refactor</li>
 <li>Start with core patterns</li>
