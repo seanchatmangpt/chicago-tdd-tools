@@ -22,10 +22,11 @@ pub struct ExecutionResult {
 }
 
 /// Show observability features status
+///
+/// Examples:
+///   playg obs stat              # Show status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     let mut features = Vec::new();
     let mut examples = Vec::new();
 
@@ -61,6 +62,9 @@ fn list() -> Result<Vec<String>> {
 }
 
 /// Run OTEL demo
+///
+/// Examples:
+///   playg obs otel              # Run OTEL demo
 #[verb]
 #[cfg(feature = "otel")]
 fn otel() -> Result<ExecutionResult> {
@@ -77,13 +81,13 @@ fn otel() -> Result<ExecutionResult> {
 
 /// Run weaver demo
 ///
-/// Executes the Weaver live validation demo with optional configuration.
-/// Configuration can be provided via command-line arguments or environment variables.
+/// Executes the Weaver live validation demo
+///
+/// Examples:
+///   playg obs weav                    # Run weaver demo
 #[verb]
 #[cfg(feature = "weaver")]
-fn weav(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn weav() -> Result<ExecutionResult> {
     observability::weaver::example_weaver_basic();
     observability::weaver::example_weaver_custom_config();
     observability::weaver::example_weaver_availability();

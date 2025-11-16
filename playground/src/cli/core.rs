@@ -26,11 +26,11 @@ pub struct ExecutionResult {
 /// Show core features status
 ///
 /// Displays information about all available core features and examples.
-/// Use -v, -vv, or -vvv for more detail.
+///
+/// Examples:
+///   playg core stat           # Show status
 #[verb]
-fn stat(
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<Status> {
+fn stat() -> Result<Status> {
     Ok(Status {
         features: vec![
             "fixtures".to_string(),
@@ -79,10 +79,7 @@ fn list() -> Result<Vec<String>> {
 ///   playg core exec --names fixtures
 ///   playg core exec --names "fixtures builders assert"
 #[verb]
-fn exec(
-    #[arg(long, help = "Space-separated example names to execute")] names: String,
-    #[arg(short = 'v', action = "count", help = "Verbosity level")] verbose: usize,
-) -> Result<ExecutionResult> {
+fn exec(names: String) -> Result<ExecutionResult> {
     let mut executed = Vec::new();
     let mut errors = Vec::new();
 

@@ -18,6 +18,9 @@ pub struct GuidanceInfo {
 ///
 /// Make small, incremental improvements rather than big rewrites.
 /// Continuous small improvements that compound over time.
+///
+/// Examples:
+///   playg improve kaizen                  # Show Kaizen guidance
 #[verb]
 fn kaizen() -> Result<GuidanceInfo> {
     Ok(GuidanceInfo {
@@ -124,6 +127,9 @@ fn gemba() -> Result<GuidanceInfo> {
 /// Poka-Yoke (mistake-proofing) design guidance
 ///
 /// Design systems to prevent errors by making mistakes impossible or obvious.
+///
+/// Examples:
+///   playg improve poka                   # Show Poka-Yoke guidance
 #[verb]
 fn poka() -> Result<GuidanceInfo> {
     Ok(GuidanceInfo {

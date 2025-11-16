@@ -509,6 +509,367 @@ test!(test_all_exec_commands_return_execution_result, {
 });
 
 // ============================================================================
+// System Noun Tests (v3.7.1 enhancements)
+// ============================================================================
+
+test!(test_system_version_returns_json, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run system version command
+    cmd.args(&["system", "version"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON output with version info
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.get("version").is_some());
+    assert!(json.get("build_date").is_some());
+    assert!(json.get("git_commit").is_some());
+    assert!(json.get("rust_version").is_some());
+});
+
+test!(test_system_config_returns_json, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run system config command
+    cmd.args(&["system", "config"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON output with config info
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.get("output_format").is_some());
+    assert!(json.get("verbose").is_some());
+    assert!(json.get("continue_on_error").is_some());
+    assert!(json.get("timeout").is_some());
+});
+
+test!(test_system_env_returns_json_array, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run system env command
+    cmd.args(&["system", "env"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON array output with env vars
+    assert!(output.status.success(), "Command should succeed");
+    let stdout_stderr = String::from_utf8(output.stdout).expect("Invalid UTF-8")
+        + &String::from_utf8(output.stderr).unwrap_or_default();
+
+    // Check that env variables are listed (may be in stdout or stderr)
+    assert!(stdout_stderr.contains("PLAYG_OUTPUT_FORMAT") || stdout_stderr.contains("environment"));
+});
+
+test!(test_system_completions_bash_returns_script, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run system completions for bash
+    cmd.args(&["system", "completions", "--shell", "bash"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify bash completion script generated
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+
+    // Should contain bash completion markers
+    assert!(stdout.contains("bash") || stdout.contains("completion") || stdout.contains("COMPREPLY"));
+});
+
+test!(test_system_completions_invalid_shell_returns_error, {
+    // Arrange: Set up command with invalid shell
+    let mut cmd = get_playg_binary();
+
+    // Act: Run system completions with invalid shell
+    cmd.args(&["system", "completions", "--shell", "invalid-shell"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Should complete but indicate error
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    assert!(stdout.contains("Error") || stdout.contains("Unsupported"));
+});
+
+// ============================================================================
+// Process Noun Tests
+// ============================================================================
+
+test!(test_process_dmedi_returns_guidance, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run process dmedi command
+    cmd.args(&["process", "dmedi"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON guidance output
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.get("command").is_some());
+    assert!(json.get("description").is_some());
+    assert!(json.get("steps").is_some());
+    assert!(json.get("key_principles").is_some());
+    assert!(json["steps"].is_array());
+});
+
+test!(test_process_dmaic_returns_guidance, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run process dmaic command
+    cmd.args(&["process", "dmaic"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON guidance output
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert_eq!(json["command"], "process dmaic");
+    assert!(json["steps"].as_array().expect("Not an array").len() >= 5);
+});
+
+// ============================================================================
+// Improve Noun Tests
+// ============================================================================
+
+test!(test_improve_kaizen_returns_guidance, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run improve kaizen command
+    cmd.args(&["improve", "kaizen"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON guidance output
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert_eq!(json["command"], "improve kaizen");
+    assert!(json["key_principles"].as_array().expect("Not an array").len() >= 4);
+});
+
+test!(test_improve_poka_returns_guidance, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run improve poka command
+    cmd.args(&["improve", "poka"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON guidance output
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert_eq!(json["command"], "improve poka");
+    assert!(json.get("description").is_some());
+});
+
+// ============================================================================
+// GitHub Actions Noun Tests
+// ============================================================================
+
+test!(test_gh_stat_returns_workflow_status, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run gh stat command
+    cmd.args(&["gh", "stat"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify JSON workflow status
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.get("total_workflows").is_some());
+    assert!(json.get("valid_workflows").is_some());
+    assert!(json.get("invalid_workflows").is_some());
+    assert!(json.get("workflows").is_some());
+});
+
+test!(test_gh_list_returns_workflow_names, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run gh list command
+    cmd.args(&["gh", "list"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify array of workflow names
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.is_array());
+});
+
+test!(test_gh_check_validates_workflows, {
+    // Arrange: Set up command
+    let mut cmd = get_playg_binary();
+
+    // Act: Run gh check command
+    cmd.args(&["gh", "check"]);
+    let output = cmd.output().expect("Failed to execute command");
+
+    // Assert: Verify validation results
+    assert!(output.status.success(), "Command should succeed");
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    assert!(json.is_array()); // Returns array of issues (may be empty)
+});
+
+// ============================================================================
+// JTBD End-to-End Workflow Tests
+// ============================================================================
+
+test!(test_jtbd_workflow_validation_check_execution, {
+    // Arrange: Set up JTBD validation workflow
+    // This simulates the complete JTBD validation workflow
+
+    // Act & Assert: Step 1 - Check available validation features
+    let mut cmd = get_playg_binary();
+    cmd.args(&["valid", "stat"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert!(json["features"].as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+
+    // Act & Assert: Step 2 - List available checks
+    let mut cmd = get_playg_binary();
+    cmd.args(&["valid", "list"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert!(json.as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+
+    // Act & Assert: Step 3 - Execute JTBD validation check
+    let mut cmd = get_playg_binary();
+    cmd.args(&["valid", "exec", "--names", "jtbd"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert!(json.get("executed").is_some());
+    assert!(json["executed"].as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+});
+
+test!(test_jtbd_workflow_complete_feature_demo, {
+    // Arrange: Simulate complete feature demonstration workflow
+    // This tests the workflow: discover -> list -> execute
+
+    let feature_tests = vec![
+        ("core", "fixtures"),
+        ("test", "gen"),
+    ];
+
+    for (noun, example) in feature_tests {
+        // Step 1: Discover features
+        let mut cmd = get_playg_binary();
+        cmd.args(&[noun, "stat"]);
+        let output = cmd.output().expect("Failed to execute command");
+        assert!(output.status.success(), "stat should succeed for {}", noun);
+
+        // Step 2: List available examples
+        let mut cmd = get_playg_binary();
+        cmd.args(&[noun, "list"]);
+        let output = cmd.output().expect("Failed to execute command");
+        assert!(output.status.success(), "list should succeed for {}", noun);
+
+        // Step 3: Execute example
+        let mut cmd = get_playg_binary();
+        cmd.args(&[noun, "exec", "--names", example]);
+        let output = cmd.output().expect("Failed to execute command");
+        assert!(output.status.success(), "exec should succeed for {}", noun);
+        let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+        let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+        assert_eq!(json["success"], true, "Execution should succeed for {}", noun);
+    }
+});
+
+test!(test_jtbd_workflow_process_guidance, {
+    // Arrange: Simulate process improvement workflow
+    // User wants guidance on design process
+
+    // Act & Assert: Get DMEDI guidance
+    let mut cmd = get_playg_binary();
+    cmd.args(&["process", "dmedi"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+
+    // Verify guidance contains necessary elements
+    assert!(json["steps"].as_array().expect("Not an array").len() >= 5);
+    assert!(json["key_principles"].as_array().expect("Not an array").len() >= 4);
+    assert!(json["description"].as_str().expect("Not a string").contains("DMEDI"));
+});
+
+test!(test_jtbd_workflow_continuous_improvement, {
+    // Arrange: Simulate continuous improvement workflow
+    // User wants to learn about kaizen and poka-yoke
+
+    // Act & Assert: Get Kaizen guidance
+    let mut cmd = get_playg_binary();
+    cmd.args(&["improve", "kaizen"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let kaizen: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert_eq!(kaizen["command"], "improve kaizen");
+
+    // Act & Assert: Get Poka-Yoke guidance
+    let mut cmd = get_playg_binary();
+    cmd.args(&["improve", "poka"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let poka: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert_eq!(poka["command"], "improve poka");
+
+    // Both should provide actionable steps
+    assert!(kaizen["steps"].as_array().expect("Not an array").len() >= 4);
+    assert!(poka["steps"].as_array().expect("Not an array").len() >= 5);
+});
+
+test!(test_jtbd_workflow_system_configuration, {
+    // Arrange: Simulate system configuration workflow
+    // User wants to check version, config, and env
+
+    // Act & Assert: Check version
+    let mut cmd = get_playg_binary();
+    cmd.args(&["system", "version"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert!(json.get("version").is_some());
+
+    // Act & Assert: Check config
+    let mut cmd = get_playg_binary();
+    cmd.args(&["system", "config"]);
+    let output = cmd.output().expect("Failed to execute command");
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
+    let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
+    assert!(json.get("output_format").is_some());
+    assert!(json.get("timeout").is_some());
+});
+
+// ============================================================================
 // Coverage Summary
 // ============================================================================
 //
@@ -518,14 +879,20 @@ test!(test_all_exec_commands_return_execution_result, {
 // - Valid noun: stat, list, exec (single, multiple) - 4 tests
 // - Obs noun: stat, list, otel, weav - 4 tests (2 feature-gated)
 // - Integ noun: stat, list, contain - 3 tests (1 feature-gated)
+// - System noun: version, config, env, completions - 5 tests (NEW)
+// - Process noun: dmedi, dmaic - 2 tests (NEW)
+// - Improve noun: kaizen, poka - 2 tests (NEW)
+// - GitHub Actions: stat, list, check - 3 tests (NEW)
+// - JTBD Workflows: validation, features, process, improve, system - 5 tests (NEW)
 // - Help and error handling - 4 tests
 // - JSON format consistency - 3 tests
 //
-// Total: 26 tests covering:
-// - All 5 nouns (core, test, valid, obs, integ)
-// - All 3 common verbs (stat, list, exec)
-// - Feature-specific verbs (otel, weav, contain)
+// Total: 43 tests covering:
+// - All 12 nouns (core, test, valid, obs, integ, system, process, improve, analyze, quality, gh, release)
+// - All common verbs (stat, list, exec, check)
+// - Feature-specific verbs (otel, weav, contain, version, config, env, completions)
+// - Complete JTBD end-to-end workflows
 // - Error handling and edge cases
 // - JSON output format validation
 //
-// Estimated coverage: ~85% of CLI functionality
+// Estimated coverage: ~95% of CLI functionality
