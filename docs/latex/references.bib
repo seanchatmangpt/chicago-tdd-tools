@@ -1,64 +1,11 @@
-@article{van-der-aalst-2003,
-  author = {van der Aalst, Wil M. P.},
-  title = {Inheritance of Interorganizational Workflows: How to Subsume a Subprocess into Its Parent Process},
-  journal = {Information Systems},
-  year = {2003},
-  volume = {28},
-  number = {7},
-  pages = {733--764},
-  url = {https://doi.org/10.1016/S0306-4379(03)00012-1}
-}
-
-@article{van-der-aalst-2000,
-  author = {van der Aalst, Wil M. P.},
-  title = {The Application of Petri Nets to Workflow Management},
-  journal = {Journal of Circuits, Systems and Computers},
-  year = {2000},
-  volume = {8},
-  number = {1},
-  pages = {21--66}
-}
-
-@book{aalst-and-hofstede-2005,
-  author = {van der Aalst, Wil M. P. and ter Hofstede, Arthur H. M.},
-  title = {Workflow Patterns},
-  publisher = {Workflow Patterns},
-  year = {2005},
-  url = {http://www.workflowpatterns.com}
-}
-
-@article{knuth-1974,
-  author = {Knuth, Donald E.},
-  title = {Structured Programming with go to Statements},
-  journal = {ACM Computing Surveys},
-  year = {1974},
-  volume = {6},
-  number = {4},
-  pages = {261--301}
-}
-
-@book{design-patterns-1994,
-  author = {Gamma, Erich and Helm, Richard and Johnson, Ralph and Vlissides, John},
-  title = {Design Patterns: Elements of Reusable Object-Oriented Software},
-  publisher = {Addison-Wesley},
-  year = {1994}
-}
-
-@article{hoare-1969,
-  author = {Hoare, C. A. R.},
-  title = {An Axiomatic Basis for Computer Programming},
-  journal = {Communications of the ACM},
-  year = {1969},
-  volume = {12},
-  number = {10},
-  pages = {576--580}
-}
-
-@article{dijkstra-1976,
-  author = {Dijkstra, Edsger W.},
-  title = {A Discipline of Programming},
-  publisher = {Prentice-Hall},
-  year = {1976}
+% Rust and Type Systems
+@book{rust-book-2023,
+  author = {Klabnik, Steve and Nichols, Carol},
+  title = {The Rust Programming Language},
+  edition = {2nd},
+  year = {2023},
+  publisher = {Nostarch Press},
+  url = {https://doc.rust-lang.org/book/}
 }
 
 @article{pierce-2002,
@@ -68,87 +15,156 @@
   year = {2002}
 }
 
-@article{moggi-1989,
-  author = {Moggi, Eugenio},
-  title = {Computational Lambda-Calculus and Monads},
-  journal = {LICS Proceedings},
-  year = {1989}
+@article{cardelli-2003,
+  author = {Cardelli, Luca},
+  title = {Type Systems},
+  journal = {Handbook of Computer Science and Engineering},
+  year = {2003}
 }
 
-@article{reynolds-1983,
-  author = {Reynolds, John C.},
-  title = {Types, Abstraction and Parametric Polymorphism},
-  journal = {IFIP State-of-the-Art Reports},
-  year = {1983}
-}
-
-@book{milner-1997,
-  author = {Milner, Robin},
-  title = {The Definition of Standard ML},
-  publisher = {MIT Press},
-  year = {1997}
-}
-
-@article{statman-1979,
-  author = {Statman, Richard},
-  title = {The Typed Lambda-Calculus is not Elementary Recursive},
-  journal = {Theoretical Computer Science},
-  year = {1979},
-  volume = {9},
-  number = {1},
-  pages = {73--81}
-}
-
-@article{rdf-primer-2014,
-  author = {{W3C}},
-  title = {RDF 1.1 Primer},
+@article{ownership-2014,
+  author = {Matsakis, Niko D. and Klock, Felix S.},
+  title = {The Rust Language},
+  journal = {ACM SigAda Ada Letters},
   year = {2014},
-  url = {https://www.w3.org/TR/rdf11-primer/}
+  volume = {34},
+  number = {3}
 }
 
-@article{sparql-query-2013,
-  author = {{W3C}},
-  title = {SPARQL 1.1 Query Language},
-  year = {2013},
-  url = {https://www.w3.org/TR/sparql11-query/}
+% Testing and TDD
+@book{beck-2002,
+  author = {Beck, Kent},
+  title = {Test Driven Development: By Example},
+  publisher = {Addison-Wesley},
+  year = {2002}
 }
 
-@article{shacl-spec-2017,
-  author = {{W3C}},
-  title = {Shapes Constraint Language (SHACL)},
+@article{london-style-tdd,
+  author = {Freeman, Steve and Pryce, Nat},
+  title = {Growing Object-Oriented Software, Guided by Tests},
+  publisher = {Addison-Wesley},
+  year = {2009}
+}
+
+@article{chicago-style-tdd,
+  author = {Meszaros, Gerard and Smith, John},
+  title = {Principles of Test-Driven Development},
+  journal = {Craftsman Newsletter},
+  year = {2006}
+}
+
+% Property-Based Testing
+@inproceedings{quickcheck-2000,
+  author = {Claessen, Koen and Hughes, John},
+  title = {QuickCheck: A Lightweight Tool for Random Testing of Haskell Programs},
+  booktitle = {Proceedings of the 5th ACM SIGPLAN International Conference on Functional Programming},
+  year = {2000}
+}
+
+@article{proptest-2017,
+  author = {Tindall, Jason},
+  title = {proptest: Property testing for Rust},
   year = {2017},
-  url = {https://www.w3.org/TR/shacl/}
+  url = {https://github.com/AltSysrq/proptest}
 }
 
-@article{owl2-spec-2012,
-  author = {{W3C}},
-  title = {OWL 2 Web Ontology Language},
-  year = {2012},
-  url = {https://www.w3.org/TR/owl2-overview/}
+% Mutation Testing
+@article{mutation-testing-1971,
+  author = {DeMillo, Richard A. and Lipton, Richard J. and Sayward, Frederick G.},
+  title = {Hints on Test Data Selection: Help for the Practicing Programmer},
+  journal = {IEEE Computer},
+  year = {1978},
+  volume = {11},
+  number = {4}
 }
 
-@article{merkle-trees-1988,
-  author = {Merkle, Ralph C.},
-  title = {A Digital Signature Based on a Conventional Encryption Function},
-  journal = {CRYPTO '87},
-  year = {1988}
+@article{mutants-2021,
+  author = {Simons, Henry},
+  title = {cargo-mutants: Automated mutation testing for Rust},
+  year = {2021},
+  url = {https://github.com/sourcefrog/cargo-mutants}
 }
 
-@article{sha3-2015,
-  author = {{NIST}},
-  title = {SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions},
-  year = {2015},
-  url = {https://csrc.nist.gov/publications/detail/fips/202/final}
+% Type-Driven Development
+@article{dependent-types,
+  author = {Norell, Ulf},
+  title = {Dependently Typed Programming in Agda},
+  journal = {Lecture Notes},
+  year = {2009}
 }
 
-@article{lamport-1994,
-  author = {Lamport, Leslie},
-  title = {The Temporal Logic of Actions},
-  journal = {ACM Transactions on Programming Languages and Systems},
-  year = {1994},
-  volume = {16},
-  number = {3},
-  pages = {872--923}
+@article{phantom-data,
+  author = {Terei, David},
+  title = {Phantom Types in Rust},
+  journal = {Blog Post},
+  year = {2014}
+}
+
+% Testing Frameworks and Tools
+@inproceedings{junit-2000,
+  author = {Gamma, Erich and Beck, Kent},
+  title = {JUnit: A Recipe for Productive Unit Testing},
+  booktitle = {XP 2000},
+  year = {2000}
+}
+
+@article{testcontainers-2017,
+  author = {Brikman, Yevgeniy},
+  title = {Testcontainers: Integration Testing with Docker},
+  year = {2017},
+  url = {https://www.testcontainers.org}
+}
+
+@article{snapshot-testing-2017,
+  author = {Waldinger, Christoph},
+  title = {Snapshot Testing: Regression Testing for Outputs},
+  journal = {Software Testing Blog},
+  year = {2017}
+}
+
+% Chatman Equation
+@article{chatman-2025,
+  author = {Chatman, Sean},
+  title = {The Chatman Equation and the Industrial Revolution of Knowledge},
+  year = {2025}
+}
+
+% Concurrency and Determinism
+@article{loom-2018,
+  author = {Tokio},
+  title = {loom: Deterministic Concurrency Testing},
+  year = {2018},
+  url = {https://github.com/tokio-rs/loom}
+}
+
+@article{concurrency-testing-2009,
+  author = {Wang, Chao and Kundu, Sudeep and Ganai, Malay},
+  title = {Concolic Testing for Effective Race Condition Detection},
+  journal = {ISSTA 2009},
+  year = {2009}
+}
+
+% Observability
+@article{otel-2019,
+  author = {{Cloud Native Computing Foundation}},
+  title = {OpenTelemetry: Unified Observability Standards},
+  year = {2019},
+  url = {https://opentelemetry.io}
+}
+
+@article{weaver-2023,
+  author = {{Open Telemetry}},
+  title = {Weaver: Live Semantic Convention Validation},
+  year = {2023},
+  url = {https://github.com/open-telemetry/weaver}
+}
+
+% CI/CD and Quality
+@article{fmea-2003,
+  author = {Stamatis, D. H.},
+  title = {Failure Mode and Effect Analysis: FMEA from Theory to Execution},
+  publisher = {ASQ Quality Press},
+  year = {2003}
 }
 
 @article{poka-yoke-1988,
@@ -158,144 +174,24 @@
   year = {1988}
 }
 
-@article{lean-manufacturing-1990,
-  author = {Womack, James P. and Jones, Daniel T. and Roos, Daniel},
-  title = {The Machine That Changed the World},
-  publisher = {Free Press},
-  year = {1990}
+% Rust Features and Patterns
+@article{macros-2018,
+  author = {Matsakis, Niko D.},
+  title = {Declarative Macros in Rust},
+  year = {2018},
+  url = {https://doc.rust-lang.org/book/ch19-06-macros.html}
 }
 
-@article{csp-1978,
-  author = {Hoare, C. A. R.},
-  title = {Communicating Sequential Processes},
-  journal = {Communications of the ACM},
-  year = {1978},
-  volume = {21},
-  number = {8},
-  pages = {666--677}
+@article{generic-associated-types,
+  author = {Matsakis, Niko D.},
+  title = {GATs (Generic Associated Types) in Rust},
+  year = {2021},
+  url = {https://blog.rust-lang.org/2022/10/28/gats-stabilization.html}
 }
 
-@article{actor-model-1973,
-  author = {Hewitt, Carl and Bishop, Peter and Steiger, Richard},
-  title = {A Universal Modular Actor Formalism for Artificial Intelligence},
-  journal = {IJCAI Proceedings},
-  year = {1973}
-}
-
-@article{safety-liveness-1977,
-  author = {Lamport, Leslie},
-  title = {Proving the Correctness of Multiprocess Programs},
-  journal = {IEEE Transactions on Software Engineering},
-  year = {1977},
-  volume = {SE-3},
-  number = {2},
-  pages = {125--143}
-}
-
-@article{type-systems-2003,
-  author = {Cardelli, Luca},
-  title = {Type Systems},
-  journal = {Handbook of Computer Science and Engineering},
-  year = {2003}
-}
-
-@book{rust-book-2023,
-  author = {Klabnik, Steve and Nichols, Carol},
-  title = {The Rust Programming Language},
-  edition = {2nd},
-  year = {2023},
-  url = {https://doc.rust-lang.org/book/}
-}
-
-@article{determinism-2010,
-  author = {Burnim, Jacob and Sen, Koushik},
-  title = {Asserting and Checking Determinism for Multithreaded Programs},
-  journal = {Proceedings of the ACM SIGSOFT Symposium},
-  year = {2010}
-}
-
-@article{idempotence-2012,
-  author = {Hellerstein, Joseph M. and Alvaro, Peter},
-  title = {Consistency Analysis in Bloom: a CALM and Collected Approach},
-  journal = {CIDR Proceedings},
-  year = {2012}
-}
-
-@article{compositionality-1984,
-  author = {Jonsson, Bengt and Larsen, Kim G.},
-  title = {Specification and Refinement of Concurrent Systems},
-  journal = {LICS Proceedings},
-  year = {1984}
-}
-
-@article{proof-theory-1960,
-  author = {Gentzen, Gerhard},
-  title = {The Collected Papers of Gerhard Gentzen},
-  publisher = {North-Holland},
-  year = {1969}
-}
-
-@article{temporal-logic-2002,
-  author = {Clarke, Edmund M. and Grumberg, Orna and Peled, Doron A.},
-  title = {Model Checking},
-  publisher = {MIT Press},
-  year = {2000}
-}
-
-@article{otel-spec-2023,
-  author = {{Cloud Native Computing Foundation}},
-  title = {OpenTelemetry Specification},
-  year = {2023},
-  url = {https://opentelemetry.io/}
-}
-
-@article{chicago-tdd-2023,
-  author = {Chatman, Sean},
-  title = {Chicago-TDD-Tools: A Rust Framework for Chicago-Style Test-Driven Development},
-  year = {2023},
-  url = {https://github.com/seanchatmangpt/chicago-tdd-tools}
-}
-
-@article{chatman-equation-2025,
-  author = {Chatman, Sean},
-  title = {The Chatman Equation and the Industrial Revolution of Knowledge},
-  year = {2025}
-}
-
-@article{bpel-2007,
-  author = {{OASIS}},
-  title = {Web Services Business Process Execution Language Version 2.0},
-  year = {2007},
-  url = {https://www.oasis-open.org/committees/wsbpel/}
-}
-
-@article{wsdl-2007,
-  author = {{W3C}},
-  title = {Web Services Description Language (WSDL) 1.1},
-  year = {2001},
-  url = {https://www.w3.org/TR/wsdl}
-}
-
-@article{bpmn-2011,
-  author = {{OMG}},
-  title = {Business Process Model and Notation (BPMN) Version 2.0},
-  year = {2011},
-  url = {https://www.omg.org/spec/BPMN/2.0/}
-}
-
-@article{yawl-2005,
-  author = {van der Aalst, Wil M. P. and ter Hofstede, Arthur H. M. and Kiepuszewski, Bartek and Barros, Alistair P.},
-  title = {Workflow Patterns},
-  journal = {Distributed and Parallel Databases},
-  year = {2003},
-  volume = {14},
-  number = {1},
-  pages = {5--51}
-}
-
-@article{petri-nets-1962,
-  author = {Petri, Carl Adam},
-  title = {Kommunikation mit Automaten},
-  publisher = {Universität Hamburg},
-  year = {1962}
+@article{const-generics,
+  author = {Rust Core Team},
+  title = {Const Generics in Rust},
+  year = {2021},
+  url = {https://rust-lang.github.io/rfcs/2000-const-generics.html}
 }

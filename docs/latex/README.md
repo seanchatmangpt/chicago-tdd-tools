@@ -1,283 +1,349 @@
-# The Chatman Equation and the Industrial Revolution of Knowledge: LaTeX Formalization
+# chicago-tdd-tools LaTeX Documentation
 
-This directory contains the complete LaTeX documentation for the Chatman Equation (`A = µ(O)`) and its implementation through chicago-tdd-tools.
+## Overview
+
+This directory contains comprehensive LaTeX documentation for **chicago-tdd-tools**, a Rust
+testing framework that enforces Chicago-style Test-Driven Development through compile-time
+type-level verification.
+
+## Document Perspective: Framework-First
+
+**Important**: This documentation is written from the **chicago-tdd-tools perspective**, not
+the Chatman Equation perspective. The framework is the primary subject.
+
+- **What We're Documenting**: chicago-tdd-tools testing framework
+- **Why We're Documenting It**: Shows how it prevents bugs through type-level poka-yoke
+- **How We're Explaining It**: How the framework embodies Chatman Equation principles
+- **For Whom**: Developers using the framework, researchers in testing, practitioners wanting deterministic tests
 
 ## Document Structure
 
 ### Main Document
-- **chatman-equation-formalization.tex** — Root document that includes all chapters and appendices
+- **chicago-tdd-tools-formalization.tex** — Root document that includes all chapters and appendices
 
-### Chapters (chapters/)
+### Chapters (currently 4 completed, 8 total planned)
 
-1. **01-introduction.tex** — Problem statement and verification model
-2. **02-chatman-equation.tex** — Formal definitions, mathematical properties, and proofs
-3. **03-knowledge-hooks.tex** — Knowledge hooks as atomic unit of knowledge work
-4. **04-type-level-enforcement.tex** — Poka-yoke via Rust type system
-5. **05-yawl-patterns.tex** — Complete 43/43 workflow pattern coverage
-6. **06-reflex-stack.tex** — Four-layer architecture (unrdf, KNHK, ggen, Lockchain)
-7. **07-empirical-validation.tex** — Production measurements and test results
-8. **08-zero-decision-making.tex** — Governance model and control mapping
-9. **09-industrial-revolution.tex** — Transformation model and competitive advantage
+1. ✅ **Chapter 1: Framework Overview**
+   - What is chicago-tdd-tools?
+   - Core principle: Poka-yoke design
+   - The AAA pattern enforced via types
+   - Framework statistics
+   - Chicago-style vs. London-style TDD
+   - Why Rust enables poka-yoke
 
-### Appendices (appendix/)
+2. ✅ **Chapter 2: Core Testing Primitives**
+   - Test Fixtures: reusable context with RAII cleanup
+   - Builders: fluent test data construction
+   - Assertions: rich assertion helpers with custom messages
+   - Test Macros: zero-boilerplate test definition
+   - Alert Macros: structured logging
+   - Configuration Loading: validated configuration
 
-- **A-code-examples.tex** — Rust implementation examples from chicago-tdd-tools
-- **B-mathematical-proofs.tex** — Detailed proofs of core theorems
-- **C-operator-registry.tex** — Complete registry of all 43 KNHK operators
-- **D-receipt-schemas.tex** — Receipt structures and guard constraint specifications
+3. ✅ **Chapter 3: Type-Level Safety**
+   - Type state pattern enforcing AAA at compile time
+   - PhantomData and zero-sized types
+   - Sealed traits for API safety and control
+   - Generic fixtures with associated types
+   - Const generics for compile-time validation
+   - Chatman Constant: recursion depth ≤ 8
+   - Error handling without unwrap/expect/panic
+   - Proof that invalid test states are unrepresentable
 
-### Bibliography
+4. 📋 **Chapter 4: Advanced Testing Techniques** (planned)
+   - Property-based testing (proptest)
+   - Mutation testing framework
+   - Snapshot testing (insta)
+   - Concurrency testing (loom)
+   - CLI testing (trycmd)
 
-- **references.bib** — Complete bibliography (56 citations)
+5. 📋 **Chapter 5: Validation and Quality Assurance** (planned)
+   - Coverage analysis
+   - Guard constraints
+   - Jobs To Be Done (JTBD) validation
+   - Performance validation with RDTSC
+
+6. 📋 **Chapter 6: Observability and Telemetry** (planned)
+   - OpenTelemetry integration
+   - Weaver live validation
+   - Unified observability API
+   - Span and metric validation
+
+7. ✅ **Chapter 7: Realizing the Chatman Equation** (DONE)
+   - The Chatman Equation in testing context
+   - Property 1: Determinism (identical inputs → identical results)
+   - Property 2: Idempotence (test(test(x)) = test(x))
+   - Property 3: Type Preservation (types maintained through lifecycle)
+   - Property 4: Boundedness (execution time is measurable and bounded)
+   - Integration: how the framework realizes A = µ(O)
+   - Validation: proving the equation holds
+   - Complete picture: tests are deterministic by design
+
+8. 📋 **Chapter 8: Practical Guide and Best Practices** (planned)
+   - Setting up chicago-tdd-tools
+   - Writing effective tests
+   - Testing patterns from the cookbook
+   - Advanced patterns
+   - CI/CD integration
+
+### Supporting Files
+
+- **FRAMEWORK_FOCUSED_OUTLINE.md** — Detailed outline showing framework-first perspective
+- **references.bib** — Bibliography (40+ citations)
+
+## Key Concepts
+
+### Poka-Yoke Design
+The framework prevents bugs at compile time through the Rust type system:
+- Invalid test states are unrepresentable
+- Type system encodes test invariants
+- Compiler rejects violations before code runs
+
+### Type-Level AAA Pattern
+```
+TestState<Arrange> → act() → TestState<Act> → assert() → TestState<Assert>
+```
+Each phase is a different type. Compiler prevents invalid orderings.
+
+### Chatman Equation Realization
+```
+TestResult = test(Fixture, TestData)
+```
+The framework ensures:
+1. **Determinism**: Identical inputs always produce identical results
+2. **Idempotence**: Running twice = running once
+3. **Type Preservation**: Test data types maintained throughout
+4. **Boundedness**: Execution time is measurable and bounded
 
 ## Building the Document
 
 ### Prerequisites
 
 ```bash
-# Install TeX Live (Ubuntu/Debian)
+# Ubuntu/Debian
 sudo apt-get install texlive texlive-latex-extra texlive-fonts-recommended
 
-# Or install MacTeX (macOS)
+# macOS
 brew install mactex
 
-# Or MiKTeX (Windows)
-# Download from https://miktex.org/
+# Windows
+# Download MiKTeX from https://miktex.org/
 ```
 
-### Compilation
+### Quick Build
 
 ```bash
-# Basic compilation
-pdflatex -interaction=nonstopmode chatman-equation-formalization.tex
+# One-shot compilation (with warnings/errors if needed)
+pdflatex -interaction=nonstopmode chicago-tdd-tools-formalization.tex
 
-# With bibliography and index
-pdflatex chatman-equation-formalization.tex
-bibtex chatman-equation-formalization
-pdflatex chatman-equation-formalization.tex
-pdflatex chatman-equation-formalization.tex
+# Recommended: with bibliography
+pdflatex chicago-tdd-tools-formalization.tex
+bibtex chicago-tdd-tools-formalization
+pdflatex chicago-tdd-tools-formalization.tex
+pdflatex chicago-tdd-tools-formalization.tex
 
-# Or use a Makefile/build script
-latexmk -pdf chatman-equation-formalization.tex
+# Best: using latexmk (automated)
+latexmk -pdf chicago-tdd-tools-formalization.tex
+```
+
+### Cleaning Up
+
+```bash
+# Remove auxiliary files
+latexmk -c
+
+# Remove all generated files
+latexmk -C
 ```
 
 ## Document Features
 
 ### Mathematical Notation
-
 - Formal definitions using LaTeX math mode
-- Theorem environment with proofs
-- Diagram support via TikZ and PGFPlots
-- Code listings with Rust syntax highlighting
+- Theorems with proofs
+- Equations for framework properties
 
 ### Code Examples
-
-All Rust code examples from chicago-tdd-tools are included with:
-- Line numbers for easy reference
-- Syntax highlighting
-- Cross-references to source files
+All Rust code examples come from chicago-tdd-tools source or examples:
+- Syntax highlighting for readability
+- Line numbers for reference
 - Comments explaining key concepts
+- Cross-references to actual source files
 
 ### Tables and Figures
-
-- Comprehensive comparison tables
-- Operator registry with all 43 patterns
-- Performance measurement results
-- Receipt schema documentation
+- Comparison tables (framework vs. traditional approaches)
+- Module organization diagrams
+- Feature flags and dependencies
+- Performance characteristics
 
 ### Cross-References
-
-- Automatic numbering of theorems, definitions, lemmas
-- Table of contents with clickable links (in PDF)
+- Automatic equation and theorem numbering
+- Table of contents with structure
 - Bibliography with hyperlinks
-- Cross-references between sections
+- Clickable references in PDF
 
 ## Content Highlights
 
-### Formal Verification (Chapter 2)
+### Chapter 1: Framework Overview
+- 10,600 LOC across 59 Rust files
+- 7 capability-based module groups
+- 15+ feature flags
+- 30+ exported macros
+- Enforces AAA pattern at compile time
 
-- Determinism proof with implementation details
-- Idempotence validation via snapshot testing
-- Type preservation through operator composition
-- Bounded execution guarantees with RDTSC measurements
-- Guard adjunction for constraint enforcement
+### Chapter 2: Core Primitives
+- **Fixtures**: Automatic cleanup via Rust's Drop trait
+- **Builders**: Fluent API with `#[derive(TestBuilder)]`
+- **Assertions**: `assert_ok!`, `assert_err!`, `assert_in_range!`, etc.
+- **Macros**: `test!`, `async_test!`, `fixture_test!`, `performance_test!`
 
-### Knowledge Hooks (Chapter 3)
+### Chapter 3: Type-Level Safety
+- **Type State Pattern**: Zero-cost AAA enforcement
+- **Sealed Traits**: API safety and extensibility control
+- **Const Generics**: Compile-time bounds validation
+- **Error Handling**: Compiler enforces `?` instead of `.unwrap()`
+- **Proof**: Invalid test states are unrepresentable
 
-- Hook definition and lifecycle (trigger → check → act → receipt)
-- Unit economics model (cost ∝ rules, not workers)
-- Hook coverage metrics (HC, DL, DE, RD, MIA, APR)
-- Data quality hook example with SPARQL/SHACL
+### Chapter 7: Realizing the Chatman Equation
+- Shows how testing framework embodies the equation
+- Proves determinism through property testing
+- Validates idempotence via multiple runs
+- Type system proves type preservation
+- RDTSC measurement proves boundedness
 
-### Type-Level Enforcement (Chapter 4)
+## Usage Guides
 
-- Type state pattern enforcing AAA at compile time
-- Sealed traits for API safety
-- Generic fixtures with associated types
-- Const generics for compile-time validation
-- Proof that invalid AAA states are unrepresentable
+### For Framework Users
+1. Read Chapter 1 for overview
+2. Use Chapters 2-3 as reference for core features
+3. Read Chapter 7 to understand deterministic testing properties
+4. Chapter 8 (when complete) has best practices
 
-### YAWL Patterns (Chapter 5)
+### For Researchers
+1. Study Chapter 3 for type-level verification techniques
+2. Chapter 7 shows empirical validation of Chatman Equation
+3. References section has 40+ citations for further reading
+4. Mathematical proofs demonstrate compile-time guarantees
 
-- Complete mapping of all 43 Van der Aalst patterns
-- KNHK operator registry with hook IDs and SLOs
-- Pattern families: basic control, advanced branching, multiple instance, etc.
-- Conformance testing approach
-- Evidence and verification methodology
-
-### Reflex Stack (Chapter 6)
-
-- Four-layer architecture with responsibilities
-- unrdf (knowledge hooks over RDF/SHACL)
-- KNHK (execution engine with three performance tiers)
-- ggen (ontology projection with bounded regeneration)
-- Lockchain (cryptographic provenance via Merkle chains)
-- Stack economics and non-functional properties
-
-### Empirical Validation (Chapter 7)
-
-- Design-driven empiricism methodology
-- Hot path performance: ≤2 ns (8 ticks) measurements
-- Warm path latency for all 43 patterns
-- Determinism validation: 10,000 test cases, 0 failures
-- Idempotence proof via snapshot testing
-- Guard constraint effectiveness: 100% catch rate
-- Receipt verifiability: bit-perfect reproducibility
-- Bounded regeneration convergence in 3 iterations
-
-### Zero Decision-Making (Chapter 8)
-
-- Governance model enforcing no discretionary routing
-- Change control with dual sign-off
-- Kill switch and rollback capabilities
-- Regulatory alignment: SOX, HIPAA, PCI control mapping
-- Auditability guarantees and compliance evidence
-
-### Industrial Revolution (Chapter 9)
-
-- Transformation model from discretion to determinism
-- Cost comparison: humans vs. hooks (50,000x cheaper)
-- ROI analysis: 1–3 month payback period
-- Labor displacement model with retraining paths
-- Competitive advantage through speed, consistency, scalability
-- Skills transformation (displaced roles vs. emerging roles)
-
-## Key Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Pages | ~200 (estimated with appendices) |
-| Chapters | 9 main chapters |
-| Appendices | 4 comprehensive appendices |
-| Theorems | 20+ with proofs |
-| Code Examples | 15+ Rust implementations |
-| Figures/Tables | 30+ |
-| Bibliography Entries | 56 citations |
-| Mathematical Equations | 100+ |
-
-## Usage
-
-### As a Research Reference
-
-- Cite individual theorems and definitions
-- Reference formalization of workflow patterns
-- Use empirical validation methodology
-
-### As an Implementation Guide
-
-- Extract code examples from Appendix A
-- Follow guard constraint specifications from Appendix D
-- Reference operator registry from Appendix C
-- Implement receipt verification from Appendix D
-
-### As a Governance Document
-
-- Map controls to regulatory requirements (Chapter 8)
-- Audit decision reproducibility via receipts
-- Validate knowledge hook deployments
-- Track labor displacement and ROI
+### For Contributors
+1. Chapter 1 explains module organization
+2. Chapter 2 documents core APIs
+3. Chapter 3 shows design principles
+4. Chapter 7 explains the underlying theory
 
 ## Customization
 
 The document is organized for easy modification:
 
 ```
-chatman-equation-formalization.tex (root)
+chicago-tdd-tools-formalization.tex (root)
 ├── chapters/
-│   ├── 01-introduction.tex
-│   ├── 02-chatman-equation.tex
-│   ├── ...
-│   └── 09-industrial-revolution.tex
-├── appendix/
-│   ├── A-code-examples.tex
-│   ├── B-mathematical-proofs.tex
-│   ├── C-operator-registry.tex
-│   └── D-receipt-schemas.tex
-└── references.bib
+│   ├── 01-framework-overview.tex
+│   ├── 02-core-primitives.tex
+│   ├── 03-type-level-safety.tex
+│   ├── 07-chatman-equation-realization.tex
+│   ├── (04-08 planned)
+│
+├── references.bib
+└── README.md (this file)
 ```
 
-To include only specific chapters, edit the root document:
+To include only specific chapters, edit the root document and comment out unwanted chapters:
 
 ```latex
-% chatman-equation-formalization.tex
-\include{chapters/01-introduction}
-\include{chapters/02-chatman-equation}
-% \include{chapters/03-knowledge-hooks}  % Skip this chapter
-% ...
+% chicago-tdd-tools-formalization.tex
+\include{chapters/01-framework-overview}
+\include{chapters/02-core-primitives}
+\include{chapters/03-type-level-safety}
+% \include{chapters/04-advanced-testing}  % Skip this
+\include{chapters/07-chatman-equation-realization}
 ```
 
-## Document Configuration
+## Related Documentation
 
-Preamble settings (chatman-equation-formalization.tex):
+- **README.md** (main project) — Project overview and quick start
+- **CLAUDE.md** — AI assistant guide (development instructions)
+- **src/** — Rust source code (matches documentation examples)
+- **examples/** — 11 working examples showcasing framework features
+- **cookbook/** — Alexander-style pattern language (20 patterns)
 
-```latex
-% Change paper size
-\usepackage[a4paper]{geometry}  % or letterpaper
+## Key Metrics
 
-% Enable/disable hyperlinks
-\usepackage[colorlinks=true]{hyperref}
+| Metric | Value |
+|--------|-------|
+| **Chapters Completed** | 4 / 8 |
+| **Pages (estimated)** | ~100+ (when complete) |
+| **Code Examples** | 20+ |
+| **Theorems/Properties** | 10+ |
+| **Tables** | 30+ |
+| **Equations** | 50+ |
+| **Bibliography Entries** | 40+ |
+| **Total LaTeX Lines** | ~2,500 (so far) |
 
-% Customize code highlighting
-\lstset{...}  % Modify language/style settings
+## Compilation Tips
 
-% Change theorem styles
-\theoremstyle{definition}  % or plain, remark
+### If you get font errors:
+```bash
+# Install missing fonts
+sudo apt-get install fonts-liberation
+# Or use pdflatex instead of xelatex
 ```
 
-## Related Files
+### If bibliography is wrong:
+```bash
+# Ensure bibtex sees the .bib file
+rm chicago-tdd-tools-formalization.bbl
+bibtex chicago-tdd-tools-formalization
+pdflatex chicago-tdd-tools-formalization.tex
+```
 
-- **README.md** (this file) — Documentation overview
-- **chicago-tdd-tools/docs/** — Full project documentation
-- **chicago-tdd-tools/src/** — Rust implementation source code
-- **chicago-tdd-tools/examples/** — Working examples
+### For incremental builds:
+```bash
+# Watch file and rebuild automatically
+latexmk -pdf -pvc chicago-tdd-tools-formalization.tex
+```
+
+## Planned Chapters (Detailed Outlines)
+
+See **FRAMEWORK_FOCUSED_OUTLINE.md** for detailed section-by-section outlines of all 8 chapters
+and 4 appendices.
 
 ## License
 
 This documentation is part of chicago-tdd-tools (MIT License).
 
-## Contact
-
-For questions about the LaTeX formalization or to suggest improvements:
-- GitHub: https://github.com/seanchatmangpt/chicago-tdd-tools
-- Issues: https://github.com/seanchatmangpt/chicago-tdd-tools/issues
-
 ## Citation
 
-If you use this document in research, cite as:
+If you reference this documentation in academic work:
 
 ```bibtex
-@techreport{chatman-2025,
-  author = {Chatman, Sean},
-  title = {The Chatman Equation and the Industrial Revolution of Knowledge:
-           Formal Verification Through chicago-tdd-tools},
+@techreport{chicago-tdd-tools-2025,
+  author = {KNHK Team},
+  title = {chicago-tdd-tools: A Rust Framework for Type-Safe,
+           Deterministic Testing},
   year = {2025},
-  type = {Technical Report},
-  institution = {KNHK Team}
+  note = {Version 1.3.0},
+  url = {https://github.com/seanchatmangpt/chicago-tdd-tools}
 }
 ```
 
+## Contributing
+
+To contribute to the documentation:
+1. Fork the repository
+2. Create a feature branch
+3. Make edits to .tex files
+4. Build and verify with `latexmk -pdf`
+5. Submit a pull request
+
+## Feedback
+
+Questions or suggestions about the documentation?
+- Open an issue: https://github.com/seanchatmangpt/chicago-tdd-tools/issues
+- Review the CLAUDE.md guide for development instructions
+
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.0 (Chapters 1-3, 7 complete)
 **Last Updated**: November 16, 2025
-**Maintainer**: KNHK Team
+**Framework Version**: chicago-tdd-tools 1.3.0
+**Rust Edition**: 2021

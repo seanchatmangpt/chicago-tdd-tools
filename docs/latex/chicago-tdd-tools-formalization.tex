@@ -1,0 +1,168 @@
+\documentclass[12pt,a4paper]{book}
+
+% ============================================================================
+% PREAMBLE
+% ============================================================================
+
+\usepackage[utf-8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{proof}
+\usepackage{stmaryrd}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{bookmark}
+\usepackage[top=1in, bottom=1in, left=1.25in, right=1.25in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{footmisc}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ============================================================================
+% RUST LISTING CONFIGURATION
+% ============================================================================
+
+\lstdefinelanguage{Rust}{
+  keywords={fn, let, mut, pub, struct, enum, impl, trait, type, mod, use, async, await,
+            if, else, match, for, while, return, true, false, None, Some, Ok, Err},
+  keywordstyle=\color{purple}\bfseries,
+  ndkeywords={Self, i32, u32, i64, u64, f32, f64, bool, String, Vec, Option, Result, Box},
+  ndkeywordstyle=\color{blue},
+  identifierstyle=\color{black},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  morestring=[b]",
+  morestring=[b]',
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  frame=single,
+  rulecolor=\color{black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt
+}
+
+% ============================================================================
+% THEOREM STYLES
+% ============================================================================
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{property}[definition]{Property}
+\newtheorem{example}[definition]{Example}
+
+% ============================================================================
+% CUSTOM COMMANDS
+% ============================================================================
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\text{\texttt{#1}}}
+\newcommand{\ns}[0]{\text{ ns}}
+\newcommand{\ms}[0]{\text{ ms}}
+
+% ============================================================================
+% DOCUMENT METADATA
+% ============================================================================
+
+\title{\textbf{chicago-tdd-tools}\\
+       \large{A Rust Framework for Type-Safe, Deterministic Testing}\\
+       \normalsize{Embodying the Chatman Equation: $A = \mu(O)$}}
+\author{KNHK Team \\
+        Based on Sean Chatman's Knowledge Work Framework}
+\date{November 16, 2025 \\
+      Version 1.3.0}
+
+% ============================================================================
+% DOCUMENT
+% ============================================================================
+
+\frontmatter
+
+\maketitle
+
+\chapter*{Abstract}
+
+\code{chicago-tdd-tools} is a Rust testing framework that enforces Chicago-style Test-Driven
+Development through compile-time guarantees. It embodies the Chatman Equation
+($A = \mu(\text{observations})$) by using Rust's type system to encode test invariants,
+enforce deterministic execution, and prove correctness at compile time.
+
+This document provides a comprehensive technical reference for the framework, demonstrating:
+
+\begin{enumerate}
+  \item How type-level state machines enforce the AAA (Arrange-Act-Assert) pattern at compile time
+  \item How poka-yoke principles prevent invalid test states through the type system
+  \item How fixtures, builders, and assertions implement deterministic test workflows
+  \item How advanced testing techniques (property-based, mutation, snapshot, concurrency) extend
+    testing capabilities
+  \item How the framework validates that tests accomplish their intended purpose (JTBD)
+  \item How observability (OTEL, Weaver) provides verifiable execution traces
+  \item How the complete testing stack realizes the Chatman Equation in practice
+\end{enumerate}
+
+The framework demonstrates that using types as the primary design tool eliminates entire
+categories of bugs before code runs. No runtime panics, no unwrap/expect, no println debugging,
+no invalid test states. If it compiles, it's correct.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\mainmatter
+
+% ============================================================================
+% CHAPTERS
+% ============================================================================
+
+\include{chapters/01-framework-overview}
+\include{chapters/02-core-primitives}
+\include{chapters/03-type-level-safety}
+\include{chapters/04-advanced-testing}
+\include{chapters/05-validation-quality}
+\include{chapters/06-observability}
+\include{chapters/07-chatman-equation-realization}
+\include{chapters/08-practical-guide}
+
+\backmatter
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+
+\include{appendix/A-api-reference}
+\include{appendix/B-macro-reference}
+\include{appendix/C-examples}
+\include{appendix/D-cargo-features}
+
+\end{document}
