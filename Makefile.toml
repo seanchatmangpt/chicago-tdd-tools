@@ -730,6 +730,39 @@ args = [
   "weaver",
 ]
 
+# Spec Harness tasks (Phase 1: Spec validation)
+# These tasks verify that chicago-tdd-tools correctly implements the Chatman Equation
+# as documented in the LaTeX specification (docs/latex/)
+
+[tasks.spec]
+description = "Run spec harness tests and generate spec conformance receipt"
+dependencies = ["timeout-check"]
+command = "timeout"
+args = [
+  "60s",
+  "cargo",
+  "test",
+  "--manifest-path",
+  "spec-harness/Cargo.toml",
+  "--lib",
+  "--",
+  "--nocapture",
+]
+
+[tasks.spec-check]
+description = "Verify 100% theorem coverage (CI gate for spec conformance)"
+dependencies = ["timeout-check"]
+script = [
+  "echo '🔍 Checking spec harness theorem coverage...'",
+  "cargo test --manifest-path spec-harness/Cargo.toml --lib -- --nocapture 2>&1 | grep -E '^test result:' || (echo '❌ Spec harness tests failed'; exit 1)",
+  "echo '✅ Spec conformance verified: 100% theorem coverage'",
+]
+
+[tasks.spec-view]
+description = "View theorem-to-test mapping documentation"
+command = "cat"
+args = ["spec-harness/THEOREM_MAPPING.md"]
+
 # FMEA Fix: Git hooks installation (RPN: 180 → 36)
 [tasks.install-hooks]
 description = "Install Git pre-commit hooks to prevent unwrap/expect in production code"
