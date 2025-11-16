@@ -8,7 +8,7 @@
 //! - Suggest preventive tests
 
 use crate::core::contract::TestContract;
-use crate::core::receipt::{TestReceipt, TestOutcome};
+use crate::core::receipt::{TestOutcome, TestReceipt};
 use std::collections::HashMap;
 
 /// Test execution history entry
@@ -91,12 +91,7 @@ impl ContinuousLearner {
     /// Create a new continuous learner
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            history: Vec::new(),
-            patterns: HashMap::new(),
-            timestamp: 0,
-            min_observations: 5,
-        }
+        Self { history: Vec::new(), patterns: HashMap::new(), timestamp: 0, min_observations: 5 }
     }
 
     /// Record a test execution
@@ -134,7 +129,8 @@ impl ContinuousLearner {
             let total_tau: u64 = entries.iter().map(|e| e.ticks).sum();
             let average_tau = total_tau as f64 / entries.len() as f64;
 
-            let failures = entries.iter().filter(|e| matches!(e.outcome, TestOutcome::Fail)).count();
+            let failures =
+                entries.iter().filter(|e| matches!(e.outcome, TestOutcome::Fail)).count();
             let failure_rate = failures as f64 / entries.len() as f64;
 
             let confidence = (entries.len() as f64 / (entries.len() + 10) as f64).min(1.0);
@@ -186,7 +182,7 @@ impl ContinuousLearner {
             TestPrediction {
                 contract_name: contract.name.to_string(),
                 failure_probability: 0.5, // Unknown
-                predicted_tau: 100, // Conservative estimate
+                predicted_tau: 100,       // Conservative estimate
                 confidence: 0.0,
                 recommendation: Recommendation::RunNormally,
             }
@@ -198,10 +194,7 @@ impl ContinuousLearner {
     /// Orders tests by predicted failure probability (highest first)
     #[must_use]
     pub fn optimize_execution_order(&self, contracts: &[TestContract]) -> Vec<String> {
-        let mut predictions: Vec<_> = contracts
-            .iter()
-            .map(|c| (c.name, self.predict(c)))
-            .collect();
+        let mut predictions: Vec<_> = contracts.iter().map(|c| (c.name, self.predict(c))).collect();
 
         // Sort by failure probability (descending) then by predicted tau (ascending)
         predictions.sort_by(|a, b| {
@@ -221,9 +214,8 @@ impl ContinuousLearner {
 
         for pattern in self.patterns.values() {
             // Check if any changed module is in this pattern
-            let has_changed_module = pattern.modules.iter().any(|m| {
-                changed_modules.iter().any(|cm| m.contains(cm))
-            });
+            let has_changed_module =
+                pattern.modules.iter().any(|m| changed_modules.iter().any(|cm| m.contains(cm)));
 
             if has_changed_module && pattern.failure_rate > 0.05 {
                 suggested.push(pattern.id.clone());
@@ -274,20 +266,14 @@ impl AdaptiveTestSelector {
     /// Create a new adaptive test selector
     #[must_use]
     pub fn new(learner: ContinuousLearner) -> Self {
-        Self {
-            learner,
-            max_tests: 100,
-            min_failure_prob: 0.01,
-        }
+        Self { learner, max_tests: 100, min_failure_prob: 0.01 }
     }
 
     /// Select optimal test subset
     #[must_use]
     pub fn select_tests(&self, contracts: &[TestContract]) -> Vec<String> {
-        let mut predictions: Vec<_> = contracts
-            .iter()
-            .map(|c| (c.name, self.learner.predict(c)))
-            .collect();
+        let mut predictions: Vec<_> =
+            contracts.iter().map(|c| (c.name, self.learner.predict(c))).collect();
 
         // Filter by minimum failure probability
         predictions.retain(|(_, pred)| pred.failure_probability >= self.min_failure_prob);

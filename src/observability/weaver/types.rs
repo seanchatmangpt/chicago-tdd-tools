@@ -172,6 +172,126 @@ impl WeaverLiveCheck {
         }
     }
 
+    /// Check if Weaver semantic convention registry is available and accessible
+    ///
+    /// **FAIL-FAST HARDENING**: Validates registry before tests run, with timeout protection.
+    /// Root cause: Registry availability determines test success/failure, better to fail immediately.
+    /// Solution: Check path exists, is readable, contains required files (5s timeout max).
+    ///
+    /// Checks:
+    /// 1. Registry path exists at `./registry/`
+    /// 2. Registry is readable (not permission denied)
+    /// 3. Contains expected semantic convention files
+    /// 4. All operations complete within timeout
+    ///
+    /// # Returns
+    /// Ok if registry is available and accessible, Err with clear message otherwise
+    ///
+    /// # Example
+    /// ```ignore
+    /// if WeaverLiveCheck::check_registry_available().is_err() {
+    ///     eprintln!("Registry not available, skipping Weaver tests");
+    ///     return;
+    /// }
+    /// ```
+    pub fn check_registry_available() -> Result<(), String> {
+        use std::fs;
+        use std::path::PathBuf;
+        use std::time::Instant;
+
+        let registry_path = PathBuf::from("registry");
+        let start_time = Instant::now();
+        const MAX_CHECK_TIME_MS: u128 = 5000; // 5 second timeout
+
+        // Check 1: Path exists
+        if !registry_path.exists() {
+            return Err(format!(
+                "🚨 Registry path does not exist: {:?}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap",
+                registry_path
+            ));
+        }
+
+        // Check timeout hasn't elapsed
+        if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
+            return Err("Registry check timed out (5s). Filesystem may be slow.".to_string());
+        }
+
+        // Check 2: Path is a directory and readable
+        match fs::metadata(&registry_path) {
+            Ok(metadata) => {
+                if !metadata.is_dir() {
+                    return Err(format!(
+                        "🚨 Registry path is not a directory: {:?}",
+                        registry_path
+                    ));
+                }
+                // Check if we can read the directory
+                if metadata.permissions().readonly() && cfg!(unix) {
+                    return Err(format!(
+                        "⚠️  Registry path is not readable (permission denied): {:?}",
+                        registry_path
+                    ));
+                }
+            }
+            Err(e) => {
+                return Err(format!(
+                    "⚠️  Cannot read registry metadata: {:?} - {}",
+                    registry_path, e
+                ))
+            }
+        }
+
+        // Check timeout again before final checks
+        if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
+            return Err("Registry check timed out (5s) during metadata validation.".to_string());
+        }
+
+        // Check 3: Contains expected structure (at least one .yaml file or subdirectory)
+        // This is a best-effort check - the exact structure may vary
+        match fs::read_dir(&registry_path) {
+            Ok(entries) => {
+                let has_content = entries
+                    .take(100) // Limit iterations to prevent long hangs
+                    .any(|entry| {
+                        entry
+                            .ok()
+                            .and_then(|e| {
+                                e.path().extension().and_then(|ext| {
+                                    if ext == "yaml" || ext == "yml" || ext == "json" {
+                                        Some(())
+                                    } else {
+                                        e.metadata().ok().and_then(|m| {
+                                            if m.is_dir() { Some(()) } else { None }
+                                        })
+                                    }
+                                })
+                            })
+                            .is_some()
+                    });
+
+                if !has_content {
+                    return Err(format!(
+                        "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {:?}",
+                        registry_path
+                    ));
+                }
+            }
+            Err(e) => {
+                return Err(format!(
+                    "⚠️  Cannot read registry directory: {:?} - {}",
+                    registry_path, e
+                ))
+            }
+        }
+
+        // Final timeout check
+        if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
+            return Err("Registry check timed out (5s) during content validation.".to_string());
+        }
+
+        Ok(())
+    }
+
     /// Download weaver binary at runtime if not found
     #[cfg(feature = "weaver")]
     fn download_weaver_runtime() -> Result<(), String> {

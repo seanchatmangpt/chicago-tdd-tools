@@ -7,8 +7,8 @@
 
 use crate::core::contract::{TestContract, TestContractRegistry};
 use crate::core::receipt::{TestOutcome, TestReceipt, TestReceiptRegistry, TimingMeasurement};
-use crate::swarm::test_orchestrator::{TestOrchestrator, TestPlan, QoSClass, ResourceBudget};
-use crate::validation::thermal::{HotPathTest, HotPathConfig, ThermalTestError};
+use crate::swarm::test_orchestrator::{QoSClass, ResourceBudget, TestOrchestrator, TestPlan};
+use crate::validation::thermal::{HotPathConfig, HotPathTest, ThermalTestError};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -201,7 +201,8 @@ impl VerificationPipeline {
         // Update metrics
         self.metrics.max_tau = self.metrics.max_tau.max(ticks);
         let total_tau = self.metrics.average_tau * (self.metrics.thermal_tests_executed - 1) as f64;
-        self.metrics.average_tau = (total_tau + ticks as f64) / self.metrics.thermal_tests_executed as f64;
+        self.metrics.average_tau =
+            (total_tau + ticks as f64) / self.metrics.thermal_tests_executed as f64;
 
         // Phase 5: Receipt Generation
         let meets_tau = ticks <= self.config.thermal_config.max_ticks;
@@ -282,23 +283,26 @@ impl VerificationPipeline {
         let contracts = self.orchestrator.suggest_tests_for_change(changed_modules);
 
         // Convert contracts to test plans
-        contracts.iter().map(|contract| {
-            TestPlan {
-                plan_id: format!("auto_{}", contract.name),
-                contracts: vec![contract.name.to_string()],
-                requester: "pipeline".to_string(),
-                priority: 50,
-                qos: QoSClass::Standard,
-                resource_budget: ResourceBudget {
-                    max_cores: 1,
-                    max_memory_bytes: 1024 * 1024 * 1024, // 1GB
-                    max_wall_clock_seconds: 60,
-                    allow_network: true,
-                    allow_storage: true,
-                },
-                metadata: HashMap::new(),
-            }
-        }).collect()
+        contracts
+            .iter()
+            .map(|contract| {
+                TestPlan {
+                    plan_id: format!("auto_{}", contract.name),
+                    contracts: vec![contract.name.to_string()],
+                    requester: "pipeline".to_string(),
+                    priority: 50,
+                    qos: QoSClass::Standard,
+                    resource_budget: ResourceBudget {
+                        max_cores: 1,
+                        max_memory_bytes: 1024 * 1024 * 1024, // 1GB
+                        max_wall_clock_seconds: 60,
+                        allow_network: true,
+                        allow_storage: true,
+                    },
+                    metadata: HashMap::new(),
+                }
+            })
+            .collect()
     }
 
     /// Get governance decision for deployment
@@ -405,9 +409,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
         let mut pipeline = VerificationPipeline::new(CONTRACTS, config);
 
-        let result = pipeline.execute_test(&CONTRACT, || {
-            42
-        });
+        let result = pipeline.execute_test(&CONTRACT, || 42);
 
         assert!(result.is_ok());
         let result = result.unwrap();
@@ -439,10 +441,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
         let pipeline = VerificationPipeline::new(CONTRACTS, config);
 
-        let (uncovered_modules, _) = pipeline.coverage_gaps(
-            &["module1", "module2"],
-            &["τ ≤ 8"],
-        );
+        let (uncovered_modules, _) = pipeline.coverage_gaps(&["module1", "module2"], &["τ ≤ 8"]);
 
         assert_eq!(uncovered_modules, vec!["module2"]);
     }

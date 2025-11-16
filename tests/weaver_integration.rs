@@ -32,22 +32,25 @@ mod weaver_integration_tests {
     }
 
     fn ensure_weaver_prerequisites() -> bool {
-        let registry_path = PathBuf::from("registry");
-        if !registry_path.exists() {
+        use chicago_tdd_tools::observability::weaver::types::WeaverLiveCheck;
+
+        // **FAIL-FAST HARDENING**: Check registry first with timeout protection
+        // Root cause: Registry availability is a blocking dependency, fail immediately if unavailable
+        // Solution: Use new check_registry_available() with timeout (5s max)
+        if let Err(err) = WeaverLiveCheck::check_registry_available() {
             if allow_weaver_skip() {
-                eprintln!("⏭️  Skipping Weaver test: Registry path missing (run cargo make weaver-bootstrap)");
+                eprintln!("⏭️  Skipping Weaver test: {}", err);
                 return false;
             }
             panic!(
-                "🚨 Registry path does not exist: {:?}\n\
-                 ⚠️  STOP: Cannot proceed with Weaver integration test\n\
-                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                "🚨 Registry check failed (FAIL-FAST)\n\
+                 {}\n\
                  💡 ALT: Set WEAVER_ALLOW_SKIP=1 to bypass intentionally",
-                registry_path
+                err
             );
         }
 
-        use chicago_tdd_tools::observability::weaver::types::WeaverLiveCheck;
+        // Check Weaver binary availability
         if WeaverLiveCheck::check_weaver_available().is_err() {
             if allow_weaver_skip() {
                 eprintln!("⏭️  Skipping Weaver test: Weaver binary not available (run cargo make weaver-bootstrap)");

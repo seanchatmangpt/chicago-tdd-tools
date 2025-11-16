@@ -7,8 +7,8 @@
 //! This module defines all 47 invariant violation types across the 12 phases
 //! of the testing framework, plus validators for each phase.
 
-use std::fmt::{self, Display};
 use std::error::Error;
+use std::fmt::{self, Display};
 
 /// The single enum for all internal framework invariant violations.
 /// If any of these occurs, the framework cannot certify correctness;
@@ -166,7 +166,9 @@ impl Display for UnrecoverableInvariantViolation {
             Self::ContractMalformed(msg) => write!(f, "Contract malformed: {}", msg),
             Self::DuplicateContractId(id) => write!(f, "Duplicate contract ID: {}", id),
             Self::InvalidPhaseSequence(msg) => write!(f, "Invalid phase sequence: {}", msg),
-            Self::ContractEscapedValidation(msg) => write!(f, "Contract escaped validation: {}", msg),
+            Self::ContractEscapedValidation(msg) => {
+                write!(f, "Contract escaped validation: {}", msg)
+            }
             Self::MalformedMetadata(msg) => write!(f, "Malformed metadata: {}", msg),
 
             Self::ClockBackward { prev, current } => {
@@ -176,7 +178,9 @@ impl Display for UnrecoverableInvariantViolation {
                 write!(f, "Clock monster jump: {} -> {} (threshold: {})", prev, current, threshold)
             }
             Self::ThermalCannotMeasure(msg) => write!(f, "Cannot measure thermal: {}", msg),
-            Self::ThermalComputationCorrupted(msg) => write!(f, "Thermal computation corrupted: {}", msg),
+            Self::ThermalComputationCorrupted(msg) => {
+                write!(f, "Thermal computation corrupted: {}", msg)
+            }
 
             Self::UnobservedEffect(msg) => write!(f, "Unobserved effect: {}", msg),
             Self::EffectLost(msg) => write!(f, "Effect lost: {}", msg),
@@ -197,7 +201,9 @@ impl Display for UnrecoverableInvariantViolation {
             Self::ReceiptVersionMismatch { expected, found } => {
                 write!(f, "Receipt version mismatch: expected {}, found {}", expected, found)
             }
-            Self::ReceiptPersistenceFailure(msg) => write!(f, "Receipt persistence failure: {}", msg),
+            Self::ReceiptPersistenceFailure(msg) => {
+                write!(f, "Receipt persistence failure: {}", msg)
+            }
 
             Self::AbandonedTest(msg) => write!(f, "Abandoned test: {}", msg),
             Self::DuplicateExecution(msg) => write!(f, "Duplicate execution: {}", msg),
@@ -206,7 +212,9 @@ impl Display for UnrecoverableInvariantViolation {
             Self::PartialPipelineSuccess(msg) => write!(f, "Partial pipeline success: {}", msg),
             Self::PipelineConfigInvalid(msg) => write!(f, "Pipeline config invalid: {}", msg),
             Self::PipelinePhaseSkipped(msg) => write!(f, "Pipeline phase skipped: {}", msg),
-            Self::PipelineInternalStateCorruption(msg) => write!(f, "Pipeline state corruption: {}", msg),
+            Self::PipelineInternalStateCorruption(msg) => {
+                write!(f, "Pipeline state corruption: {}", msg)
+            }
 
             Self::LearnerMathCorrupted(msg) => write!(f, "Learner math corrupted: {}", msg),
             Self::LearnerLockout(msg) => write!(f, "Learner lockout: {}", msg),
@@ -218,7 +226,11 @@ impl Display for UnrecoverableInvariantViolation {
             Self::ConsensusDeadlock(msg) => write!(f, "Consensus deadlock: {}", msg),
 
             Self::SnapshotSchemaVersionMismatch { expected, found } => {
-                write!(f, "Snapshot schema version mismatch: expected {}, found {}", expected, found)
+                write!(
+                    f,
+                    "Snapshot schema version mismatch: expected {}, found {}",
+                    expected, found
+                )
             }
             Self::ReplayDiverges(msg) => write!(f, "Replay diverges: {}", msg),
             Self::SnapshotLost(msg) => write!(f, "Snapshot lost: {}", msg),
@@ -226,14 +238,20 @@ impl Display for UnrecoverableInvariantViolation {
             Self::NonDeterministicReplay(msg) => write!(f, "Non-deterministic replay: {}", msg),
 
             Self::ProphetSelfCheckFailed(msg) => write!(f, "Prophet self-check failed: {}", msg),
-            Self::PredictionOverridesActual(msg) => write!(f, "Prediction overrides actual: {}", msg),
+            Self::PredictionOverridesActual(msg) => {
+                write!(f, "Prediction overrides actual: {}", msg)
+            }
             Self::PredictionMathOverflow(msg) => write!(f, "Prediction math overflow: {}", msg),
-            Self::ProphetTrainingDataInvalid(msg) => write!(f, "Prophet training data invalid: {}", msg),
+            Self::ProphetTrainingDataInvalid(msg) => {
+                write!(f, "Prophet training data invalid: {}", msg)
+            }
 
             Self::DashboardInconsistency(msg) => write!(f, "Dashboard inconsistency: {}", msg),
             Self::ApproximateMetrics(msg) => write!(f, "Approximate metrics: {}", msg),
             Self::DashboardRenderFailure(msg) => write!(f, "Dashboard render failure: {}", msg),
-            Self::MissingReceiptDataInDashboard(msg) => write!(f, "Missing receipt data in dashboard: {}", msg),
+            Self::MissingReceiptDataInDashboard(msg) => {
+                write!(f, "Missing receipt data in dashboard: {}", msg)
+            }
             Self::CorruptedAggregations(msg) => write!(f, "Corrupted aggregations: {}", msg),
 
             Self::Other(msg) => write!(f, "Invariant violation: {}", msg),
@@ -293,11 +311,15 @@ pub struct ContractValidator;
 impl ContractValidator {
     /// Verify contract is completely specified and valid.
     pub fn validate(contract_id: &str, phase_count: usize) -> InvariantResult<()> {
-        ensure_invariant!(!contract_id.is_empty(),
-            UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string()));
+        ensure_invariant!(
+            !contract_id.is_empty(),
+            UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string())
+        );
 
-        ensure_invariant!(phase_count > 0,
-            UnrecoverableInvariantViolation::InvalidPhaseSequence("no phases defined".to_string()));
+        ensure_invariant!(
+            phase_count > 0,
+            UnrecoverableInvariantViolation::InvalidPhaseSequence("no phases defined".to_string())
+        );
 
         Ok(())
     }
@@ -312,10 +334,7 @@ pub struct ThermalValidator {
 impl ThermalValidator {
     /// Create a new thermal validator with configured jump threshold.
     pub fn new(max_jump_threshold: u64) -> Self {
-        Self {
-            last_tau: None,
-            max_jump_threshold,
-        }
+        Self { last_tau: None, max_jump_threshold }
     }
 
     /// Validate new τ measurement for monotonicity and bounds.
@@ -323,10 +342,7 @@ impl ThermalValidator {
         if let Some(prev) = self.last_tau {
             ensure_invariant!(
                 current_tau >= prev,
-                UnrecoverableInvariantViolation::ClockBackward {
-                    prev,
-                    current: current_tau,
-                }
+                UnrecoverableInvariantViolation::ClockBackward { prev, current: current_tau }
             );
 
             let jump = current_tau.saturating_sub(prev);
@@ -353,12 +369,14 @@ pub struct EffectValidator {
 impl EffectValidator {
     /// Create a new effect validator with declared effect set.
     pub fn new(declared: Vec<String>) -> InvariantResult<Self> {
-        ensure_invariant!(!declared.is_empty(),
-            UnrecoverableInvariantViolation::EffectCompositionError("no effects declared".to_string()));
+        ensure_invariant!(
+            !declared.is_empty(),
+            UnrecoverableInvariantViolation::EffectCompositionError(
+                "no effects declared".to_string()
+            )
+        );
 
-        Ok(Self {
-            declared_effects: declared.into_iter().collect(),
-        })
+        Ok(Self { declared_effects: declared.into_iter().collect() })
     }
 
     /// Verify observed effects are a subset of declared effects.
@@ -366,9 +384,10 @@ impl EffectValidator {
         for effect in observed {
             ensure_invariant!(
                 self.declared_effects.contains(effect),
-                UnrecoverableInvariantViolation::UnobservedEffect(
-                    format!("effect '{}' not declared", effect)
-                )
+                UnrecoverableInvariantViolation::UnobservedEffect(format!(
+                    "effect '{}' not declared",
+                    effect
+                ))
             );
         }
         Ok(())
@@ -384,8 +403,12 @@ pub struct StateValidator {
 impl StateValidator {
     /// Create a new state validator with initial state and complete state set.
     pub fn new(initial_state: String, all_states: Vec<String>) -> InvariantResult<Self> {
-        ensure_invariant!(!initial_state.is_empty(),
-            UnrecoverableInvariantViolation::InvalidStateTransition("empty initial state".to_string()));
+        ensure_invariant!(
+            !initial_state.is_empty(),
+            UnrecoverableInvariantViolation::InvalidStateTransition(
+                "empty initial state".to_string()
+            )
+        );
 
         let all_set: std::collections::BTreeSet<_> = all_states.into_iter().collect();
         ensure_invariant!(
@@ -403,8 +426,10 @@ impl StateValidator {
 
     /// Verify transition to next state is valid.
     pub fn validate_transition(&mut self, next_state: &str) -> InvariantResult<()> {
-        ensure_invariant!(!next_state.is_empty(),
-            UnrecoverableInvariantViolation::InvalidStateTransition("empty next state".to_string()));
+        ensure_invariant!(
+            !next_state.is_empty(),
+            UnrecoverableInvariantViolation::InvalidStateTransition("empty next state".to_string())
+        );
 
         self.current_state = next_state.to_string();
         self.reachable_states.insert(next_state.to_string());
@@ -420,13 +445,16 @@ pub struct ReceiptValidator {
 impl ReceiptValidator {
     /// Create a new receipt validator expecting a specific schema version.
     pub fn new(version: u32) -> Self {
-        Self {
-            expected_version: version,
-        }
+        Self { expected_version: version }
     }
 
     /// Verify receipt has all required fields and valid version.
-    pub fn validate_receipt(&self, version: u32, checksum: u32, computed: u32) -> InvariantResult<()> {
+    pub fn validate_receipt(
+        &self,
+        version: u32,
+        checksum: u32,
+        computed: u32,
+    ) -> InvariantResult<()> {
         ensure_invariant!(
             version == self.expected_version,
             UnrecoverableInvariantViolation::ReceiptVersionMismatch {
@@ -437,9 +465,10 @@ impl ReceiptValidator {
 
         ensure_invariant!(
             checksum == computed,
-            UnrecoverableInvariantViolation::CorruptedReceipt(
-                format!("checksum mismatch: {} vs {}", checksum, computed)
-            )
+            UnrecoverableInvariantViolation::CorruptedReceipt(format!(
+                "checksum mismatch: {} vs {}",
+                checksum, computed
+            ))
         );
 
         Ok(())
@@ -477,7 +506,8 @@ mod tests {
         let mut sv = StateValidator::new(
             "Init".to_string(),
             vec!["Init".to_string(), "Running".to_string(), "Done".to_string()],
-        ).unwrap();
+        )
+        .unwrap();
         assert!(sv.validate_transition("Running").is_ok());
         assert!(sv.validate_transition("Done").is_ok());
     }

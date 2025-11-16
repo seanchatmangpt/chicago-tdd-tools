@@ -12,8 +12,8 @@
 
 #[cfg(test)]
 mod properties {
-    use crate::core::invariants::*;
     use crate::core::fail_fast::*;
+    use crate::core::invariants::*;
     use proptest::prelude::*;
 
     // ========================================================================
@@ -372,7 +372,10 @@ pub mod helpers {
     ///
     /// # Returns
     /// `Ok(())` if observed ⊆ declared, or an error.
-    pub fn validate_all_effects(declared: Vec<String>, observed: Vec<String>) -> InvariantResult<()> {
+    pub fn validate_all_effects(
+        declared: Vec<String>,
+        observed: Vec<String>,
+    ) -> InvariantResult<()> {
         let validator = EffectValidator::new(declared)?;
         validator.validate_observed(&observed)?;
         Ok(())

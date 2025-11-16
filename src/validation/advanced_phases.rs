@@ -6,7 +6,7 @@
 //! - Phase 11: Performance Prophet
 //! - Phase 12: Quality Metrics Dashboard
 
-use crate::core::receipt::{TestReceipt, TestOutcome};
+use crate::core::receipt::{TestOutcome, TestReceipt};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -118,7 +118,7 @@ pub enum ConsensusStatus {
         /// Number of votes received
         votes: usize,
         /// Number of votes needed for consensus
-        needed: usize
+        needed: usize,
     },
 }
 
@@ -155,11 +155,7 @@ impl TimeTravelDebugger {
     /// Create a new time-travel debugger
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            snapshots: Vec::new(),
-            current_index: 0,
-            recording: true,
-        }
+        Self { snapshots: Vec::new(), current_index: 0, recording: true }
     }
 
     /// Start recording snapshots
@@ -269,10 +265,7 @@ impl PerformanceProphet {
     /// Create a new performance prophet
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            history: Vec::new(),
-            window_size: 10,
-        }
+        Self { history: Vec::new(), window_size: 10 }
     }
 
     /// Record a performance measurement
@@ -302,12 +295,8 @@ impl PerformanceProphet {
         }
 
         // Use moving average of recent executions
-        let recent: Vec<u64> = contract_history
-            .iter()
-            .rev()
-            .take(self.window_size)
-            .copied()
-            .collect();
+        let recent: Vec<u64> =
+            contract_history.iter().rev().take(self.window_size).copied().collect();
 
         let sum: u64 = recent.iter().sum();
         let avg = sum / recent.len() as u64;
@@ -383,10 +372,7 @@ impl QualityMetrics {
     /// Create new quality metrics
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            min_tau: u64::MAX,
-            ..Default::default()
-        }
+        Self { min_tau: u64::MAX, ..Default::default() }
     }
 
     /// Update metrics with a test receipt
@@ -485,7 +471,10 @@ mod tests {
 
         consensus.vote(receipt_id.clone(), true);
         // Byzantine FT threshold is 0.67, so for 3 nodes: ceil(3 * 0.67) = 3 votes needed
-        assert_eq!(consensus.consensus_status(&receipt_id), ConsensusStatus::Pending { votes: 1, needed: 3 });
+        assert_eq!(
+            consensus.consensus_status(&receipt_id),
+            ConsensusStatus::Pending { votes: 1, needed: 3 }
+        );
 
         let vote2 = ConsensusVote {
             node_id: "node2".to_string(),
@@ -497,7 +486,10 @@ mod tests {
         consensus.record_vote(vote2);
 
         // Still pending with 2/3 votes
-        assert_eq!(consensus.consensus_status(&receipt_id), ConsensusStatus::Pending { votes: 2, needed: 3 });
+        assert_eq!(
+            consensus.consensus_status(&receipt_id),
+            ConsensusStatus::Pending { votes: 2, needed: 3 }
+        );
 
         // Add third vote to reach consensus
         let vote3 = ConsensusVote {
