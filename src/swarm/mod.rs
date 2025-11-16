@@ -20,11 +20,13 @@ pub mod member;
 pub mod task;
 pub mod composition;
 pub mod coordinator;
+pub mod test_orchestrator;
 
 pub use coordinator::{SwarmCoordinator, SwarmMembership};
 pub use member::SwarmMember;
 pub use task::{TaskReceipt, TaskRequest, TaskStatus};
 pub use composition::{ComposedOperation, OperationChain};
+pub use test_orchestrator::{TestOrchestrator, TestPlan, TestPlanningAPI, QoSClass, ResourceBudget};
 
 #[cfg(test)]
 mod tests {
