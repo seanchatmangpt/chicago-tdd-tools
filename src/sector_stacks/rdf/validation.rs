@@ -3,7 +3,7 @@
 //! This module closes the loop between RDF ontology definitions and Rust runtime operations
 //! by validating sector operations against their ontology specifications.
 
-use super::ontology::{GuardConstraint, SectorOntology, WorkflowStage};
+use super::ontology::{GuardConstraint, SectorOntology};
 
 /// Result of RDF validation
 pub type RdfValidationResult = Result<(), RdfValidationError>;
@@ -178,6 +178,7 @@ impl Default for RdfOperationValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::ontology::WorkflowStage;
 
     #[test]
     fn test_validator_creation() {
