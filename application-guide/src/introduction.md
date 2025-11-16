@@ -4,15 +4,17 @@
 
 ## Quick Navigation: What's Your Goal?
 
+**Not sure where to start?** See [Choosing Your Learning Path](choosing-your-path.md) for a complete navigation guide with decision matrices.
+
 Choose your path based on what you're trying to do:
 
 | Your Goal | Read This | Time |
 |-----------|-----------|------|
-| **I want to learn the basics** | [Core Testing Patterns](core/README.md) → [Getting Started with Fixtures](core/fixtures.md) | 30 min |
-| **I need to solve a specific problem** | Find your problem in [How-to Guides](guides/best-practices.md#common-tasks) | 10-20 min |
-| **I need to find an API** | Go to [Reference Documentation](#reference-section) below | 2-5 min |
+| **I'm just getting started** | [Quick Start Tutorial](tutorials/getting-started.md) → [Fixtures Deep Dive](tutorials/fixtures-tutorial.md) | 40 min |
+| **I want to build a CLI app** | [CLI Application Tutorial](tutorials/cli-app-tutorial.md) | 45 min |
+| **I want to build a web service** | [REST Web Service Tutorial](tutorials/web-service-tutorial.md) | 50 min |
+| **I need to find an API** | Go to [API Reference](reference/fixtures-api.md) | 2-5 min |
 | **I want to understand Chicago TDD** | Read this introduction + [Go the Extra Mile](guides/extra-mile.md) | 45 min |
-| **I want to build a real project** | [Real-World Applications](guides/real-world.md) | 1-2 hours |
 | **I'm migrating from traditional testing** | [Best Practices & Migration](guides/best-practices.md) | 1 hour |
 
 ---

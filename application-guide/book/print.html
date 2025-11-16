@@ -312,13 +312,14 @@ test!(my_test, {
 <p>📖 <strong>EXPLANATION</strong> | Learn the philosophy and principles</p>
 </blockquote>
 <h2 id="quick-navigation-whats-your-goal"><a class="header" href="#quick-navigation-whats-your-goal">Quick Navigation: What's Your Goal?</a></h2>
+<p><strong>Not sure where to start?</strong> See <a href="choosing-your-path.html">Choosing Your Learning Path</a> for a complete navigation guide with decision matrices.</p>
 <p>Choose your path based on what you're trying to do:</p>
 <div class="table-wrapper"><table><thead><tr><th>Your Goal</th><th>Read This</th><th>Time</th></tr></thead><tbody>
-<tr><td><strong>I want to learn the basics</strong></td><td><a href="core/README.html">Core Testing Patterns</a> → <a href="core/fixtures.html">Getting Started with Fixtures</a></td><td>30 min</td></tr>
-<tr><td><strong>I need to solve a specific problem</strong></td><td>Find your problem in <a href="guides/best-practices.html#common-tasks">How-to Guides</a></td><td>10-20 min</td></tr>
-<tr><td><strong>I need to find an API</strong></td><td>Go to <a href="introduction.html#reference-section">Reference Documentation</a> below</td><td>2-5 min</td></tr>
+<tr><td><strong>I'm just getting started</strong></td><td><a href="tutorials/getting-started.html">Quick Start Tutorial</a> → <a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a></td><td>40 min</td></tr>
+<tr><td><strong>I want to build a CLI app</strong></td><td><a href="tutorials/cli-app-tutorial.html">CLI Application Tutorial</a></td><td>45 min</td></tr>
+<tr><td><strong>I want to build a web service</strong></td><td><a href="tutorials/web-service-tutorial.html">REST Web Service Tutorial</a></td><td>50 min</td></tr>
+<tr><td><strong>I need to find an API</strong></td><td>Go to <a href="reference/fixtures-api.html">API Reference</a></td><td>2-5 min</td></tr>
 <tr><td><strong>I want to understand Chicago TDD</strong></td><td>Read this introduction + <a href="guides/extra-mile.html">Go the Extra Mile</a></td><td>45 min</td></tr>
-<tr><td><strong>I want to build a real project</strong></td><td><a href="guides/real-world.html">Real-World Applications</a></td><td>1-2 hours</td></tr>
 <tr><td><strong>I'm migrating from traditional testing</strong></td><td><a href="guides/best-practices.html">Best Practices &amp; Migration</a></td><td>1 hour</td></tr>
 </tbody></table>
 </div>
@@ -525,6 +526,257 @@ let result = actual_function(&amp;fixture)?;  // Real code
 <p>❌ Don't skip boundary condition testing</p>
 <hr />
 <p><strong>Next</strong>: <a href="core/README.html">Core Testing Patterns</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="choosing-your-learning-path"><a class="header" href="#choosing-your-learning-path">Choosing Your Learning Path</a></h1>
+<blockquote>
+<p>🗺️ <strong>NAVIGATION</strong> | Find the right resources for your goals</p>
+</blockquote>
+<p>This page helps you navigate the documentation based on what you want to accomplish.</p>
+<hr />
+<h2 id="quick-navigation-by-goal"><a class="header" href="#quick-navigation-by-goal">Quick Navigation by Goal</a></h2>
+<h3 id="im-just-getting-started"><a class="header" href="#im-just-getting-started">"I'm just getting started"</a></h3>
+<p><strong>Duration</strong>: 1-2 hours | <strong>Difficulty</strong>: Beginner</p>
+<p>Start here and follow in order:</p>
+<ol>
+<li><strong><a href="introduction.html">Introduction</a></strong> (10 min) - Understand Chicago TDD philosophy</li>
+<li><strong><a href="tutorials/getting-started.html">Quick Start Tutorial</a></strong> (25 min) - Write your first test</li>
+<li><strong><a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a></strong> (15 min) - Master test isolation</li>
+<li><strong><a href="core/README.html">Core Testing Patterns</a></strong> (20 min) - Learn the essentials</li>
+<li><strong><a href="core/error-paths.html">Error Path Testing</a></strong> (15 min) - Find where bugs hide</li>
+</ol>
+<p><strong>Next step</strong>: Pick one real-world tutorial based on what you want to build.</p>
+<hr />
+<h3 id="i-want-to-build-a-cli-application"><a class="header" href="#i-want-to-build-a-cli-application">"I want to build a CLI application"</a></h3>
+<p><strong>Duration</strong>: 1-2 hours | <strong>Difficulty</strong>: Intermediate</p>
+<p>Follow this path:</p>
+<ol>
+<li><strong><a href="tutorials/getting-started.html">Quick Start</a></strong> (25 min) - Review basics</li>
+<li><strong><a href="tutorials/cli-app-tutorial.html">CLI Application Tutorial</a></strong> (45 min) - Build complete CLI</li>
+<li><strong><a href="advanced/cli-testing.html">CLI Testing</a></strong> (20 min) - Test CLI output with golden files</li>
+<li><strong><a href="guides/best-practices.html">Best Practices</a></strong> (30 min) - Production patterns</li>
+</ol>
+<p><strong>Key files to reference</strong>:</p>
+<ul>
+<li><a href="reference/fixtures-api.html">TestFixture API</a> - For test isolation</li>
+<li><a href="core/error-paths.html">Error Path Testing</a> - Test error cases</li>
+</ul>
+<hr />
+<h3 id="i-want-to-build-a-rest-api--web-service"><a class="header" href="#i-want-to-build-a-rest-api--web-service">"I want to build a REST API / Web Service"</a></h3>
+<p><strong>Duration</strong>: 1.5-2.5 hours | <strong>Difficulty</strong>: Intermediate</p>
+<p>Follow this path:</p>
+<ol>
+<li><strong><a href="tutorials/getting-started.html">Quick Start</a></strong> (25 min) - Review basics</li>
+<li><strong><a href="tutorials/web-service-tutorial.html">REST Web Service Tutorial</a></strong> (50 min) - Build complete API</li>
+<li><strong><a href="guides/integration-docker.html">Integration Testing with Docker</a></strong> (30 min) - Test with real database</li>
+<li><strong><a href="guides/observability.html">Observability &amp; Quality</a></strong> (20 min) - Add monitoring</li>
+</ol>
+<p><strong>Key files to reference</strong>:</p>
+<ul>
+<li><a href="core/data-builders.html">Data Builders</a> - For building test data</li>
+<li><a href="core/error-paths.html">Error Path Testing</a> - Test error responses</li>
+</ul>
+<hr />
+<h3 id="i-need-to-test-complex-logic"><a class="header" href="#i-need-to-test-complex-logic">"I need to test complex logic"</a></h3>
+<p><strong>Duration</strong>: 2-3 hours | <strong>Difficulty</strong>: Intermediate-Advanced</p>
+<p>Follow this path:</p>
+<ol>
+<li><strong><a href="core/error-paths.html">Error Path Testing</a></strong> (15 min) - Comprehensive error testing</li>
+<li><strong><a href="advanced/property-testing.html">Property-Based Testing</a></strong> (30 min) - Generate test cases</li>
+<li><strong><a href="advanced/mutation-testing.html">Mutation Testing</a></strong> (20 min) - Validate test quality</li>
+<li><strong><a href="advanced/concurrency-testing.html">Concurrency Testing</a></strong> (20 min) - Test thread safety</li>
+</ol>
+<p><strong>Key files to reference</strong>:</p>
+<ul>
+<li><a href="core/README.html">Core Testing Patterns</a> - For building blocks</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - Quality assurance patterns</li>
+</ul>
+<hr />
+<h3 id="i-want-to-ensure-high-quality-tests"><a class="header" href="#i-want-to-ensure-high-quality-tests">"I want to ensure high-quality tests"</a></h3>
+<p><strong>Duration</strong>: 1-2 hours | <strong>Difficulty</strong>: Intermediate</p>
+<p>Follow this path:</p>
+<ol>
+<li><strong><a href="core/error-paths.html">Error Path Testing</a></strong> (15 min) - Test error cases thoroughly</li>
+<li><strong><a href="advanced/mutation-testing.html">Mutation Testing</a></strong> (20 min) - Validate test quality</li>
+<li><strong><a href="guides/coverage-performance.html">Coverage &amp; Performance</a></strong> (20 min) - Measure metrics</li>
+<li><strong><a href="guides/best-practices.html">Best Practices</a></strong> (30 min) - Industry patterns</li>
+</ol>
+<p><strong>Tools</strong>:</p>
+<ul>
+<li>Run <code>cargo make coverage</code> - Generate coverage reports</li>
+<li>Run <code>cargo make test-mutation</code> - Validate test quality</li>
+<li>Use <code>TestFixture</code> snapshots - Track state changes</li>
+</ul>
+<hr />
+<h3 id="im-migrating-from-another-testing-framework"><a class="header" href="#im-migrating-from-another-testing-framework">"I'm migrating from another testing framework"</a></h3>
+<p><strong>Duration</strong>: 1.5-2 hours | <strong>Difficulty</strong>: Beginner-Intermediate</p>
+<p>Follow this path:</p>
+<ol>
+<li><strong><a href="introduction.html">Introduction</a></strong> (10 min) - Understand differences</li>
+<li><strong><a href="tutorials/getting-started.html">Quick Start</a></strong> (25 min) - Learn Chicago TDD style</li>
+<li><strong><a href="core/README.html">Core Testing Patterns</a></strong> (20 min) - Relearn with new approach</li>
+<li><strong><a href="guides/best-practices.html">Best Practices &amp; Migration</a></strong> (30 min) - Strategies for migration</li>
+</ol>
+<p><strong>Key concepts to learn</strong>:</p>
+<ul>
+<li>Real dependencies vs mocks</li>
+<li>Type-level correctness</li>
+<li>AAA pattern enforcement</li>
+<li>Poka-yoke design</li>
+</ul>
+<hr />
+<h3 id="i-need-a-specific-feature"><a class="header" href="#i-need-a-specific-feature">"I need a specific feature"</a></h3>
+<p>Find your feature in this table:</p>
+<div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Where to Find It</th></tr></thead><tbody>
+<tr><td>Testing basic functions</td><td><a href="core/README.html">Core Patterns</a></td></tr>
+<tr><td>Fixtures &amp; setup</td><td><a href="tutorials/fixtures-tutorial.html">Fixtures Tutorial</a></td></tr>
+<tr><td>Building test data</td><td><a href="core/data-builders.html">Data Builders</a></td></tr>
+<tr><td>Assertions</td><td><a href="core/assertions.html">Assertions &amp; Verification</a></td></tr>
+<tr><td>Error testing</td><td><a href="core/error-paths.html">Error Path Testing</a></td></tr>
+<tr><td>Random test data</td><td><a href="advanced/property-testing.html">Property Testing</a></td></tr>
+<tr><td>Test output validation</td><td><a href="advanced/snapshot-testing.html">Snapshot Testing</a></td></tr>
+<tr><td>Testing CLI apps</td><td><a href="advanced/cli-testing.html">CLI Testing</a></td></tr>
+<tr><td>Testing threads</td><td><a href="advanced/concurrency-testing.html">Concurrency Testing</a></td></tr>
+<tr><td>Test quality validation</td><td><a href="advanced/mutation-testing.html">Mutation Testing</a></td></tr>
+<tr><td>Test metrics</td><td><a href="guides/coverage-performance.html">Coverage &amp; Performance</a></td></tr>
+<tr><td>Observability</td><td><a href="guides/otel.html">OTEL Instrumentation</a></td></tr>
+<tr><td>Production patterns</td><td><a href="guides/best-practices.html">Best Practices</a></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="learning-path-summary"><a class="header" href="#learning-path-summary">Learning Path Summary</a></h2>
+<h3 id="beginner-0-1-day"><a class="header" href="#beginner-0-1-day">Beginner (0-1 day)</a></h3>
+<pre><code>Quick Start (25 min)
+  ↓
+Fixtures Deep Dive (15 min)
+  ↓
+Core Patterns (20 min)
+  ↓
+Pick a real-world tutorial (45-50 min)
+</code></pre>
+<h3 id="intermediate-1-3-days"><a class="header" href="#intermediate-1-3-days">Intermediate (1-3 days)</a></h3>
+<pre><code>Complete Beginner path
+  ↓
+Advanced Techniques (property, mutation, snapshot)
+  ↓
+Real-world applications (CLI, Web Service, Docker)
+  ↓
+Best Practices
+</code></pre>
+<h3 id="advanced-3-days"><a class="header" href="#advanced-3-days">Advanced (3+ days)</a></h3>
+<pre><code>Complete Intermediate path
+  ↓
+Observability &amp; OTEL
+  ↓
+Performance &amp; Coverage
+  ↓
+Mutation testing &amp; quality validation
+  ↓
+Write your own applications
+</code></pre>
+<hr />
+<h2 id="decision-matrix"><a class="header" href="#decision-matrix">Decision Matrix</a></h2>
+<p>Choose based on your situation:</p>
+<h3 id="if-youre-"><a class="header" href="#if-youre-">If you're ...</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Situation</th><th>Time Available</th><th>Difficulty</th><th>Start Here</th></tr></thead><tbody>
+<tr><td>Completely new to testing</td><td>2 hours</td><td>Easy</td><td><a href="tutorials/getting-started.html">Quick Start</a></td></tr>
+<tr><td>Have testing experience</td><td>1.5 hours</td><td>Medium</td><td><a href="introduction.html">Introduction</a></td></tr>
+<tr><td>Experienced developer</td><td>1 hour</td><td>Medium</td><td><a href="tutorials/cli-app-tutorial.html">CLI</a> or <a href="tutorials/web-service-tutorial.html">Web Service</a></td></tr>
+<tr><td>Need specific feature</td><td>Varies</td><td>Varies</td><td><a href="choosing-your-path.html#need-a-specific-feature">Feature table above</a></td></tr>
+<tr><td>Want certification-level knowledge</td><td>1 week</td><td>Hard</td><td>Complete all tutorials + real-world projects</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="common-starting-points"><a class="header" href="#common-starting-points">Common Starting Points</a></h2>
+<h3 id="show-me-code-examples"><a class="header" href="#show-me-code-examples">"Show me code examples"</a></h3>
+<p>→ Jump to <a href="guides/real-world.html">Real-World Applications</a></p>
+<h3 id="i-need-to-solve-a-problem-right-now"><a class="header" href="#i-need-to-solve-a-problem-right-now">"I need to solve a problem right now"</a></h3>
+<p>→ Search <a href="guides/best-practices.html">Best Practices</a> or use feature table above</p>
+<h3 id="i-want-to-understand-the-philosophy"><a class="header" href="#i-want-to-understand-the-philosophy">"I want to understand the philosophy"</a></h3>
+<p>→ Read <a href="introduction.html">Introduction</a> and <a href="guides/extra-mile.html">"Go the Extra Mile"</a></p>
+<h3 id="im-evaluating-this-for-my-team"><a class="header" href="#im-evaluating-this-for-my-team">"I'm evaluating this for my team"</a></h3>
+<p>→ Read <a href="introduction.html">Introduction</a> and skim <a href="guides/best-practices.html">Best Practices</a></p>
+<h3 id="i-want-to-learn-everything"><a class="header" href="#i-want-to-learn-everything">"I want to learn everything"</a></h3>
+<p>→ Follow the progressive learning paths in "Learning Path Summary" above</p>
+<hr />
+<h2 id="next-steps-after-learning"><a class="header" href="#next-steps-after-learning">Next Steps After Learning</a></h2>
+<h3 id="after-completing-quick-start--fixtures"><a class="header" href="#after-completing-quick-start--fixtures">After completing Quick Start &amp; Fixtures</a></h3>
+<p>→ Choose one real-world tutorial to build something real</p>
+<h3 id="after-completing-a-real-world-tutorial"><a class="header" href="#after-completing-a-real-world-tutorial">After completing a real-world tutorial</a></h3>
+<p>→ Explore Advanced Techniques that match your needs</p>
+<h3 id="after-exploring-multiple-areas"><a class="header" href="#after-exploring-multiple-areas">After exploring multiple areas</a></h3>
+<p>→ <a href="guides/best-practices.html">Best Practices</a> - See industry patterns</p>
+<h3 id="after-mastering-the-basics"><a class="header" href="#after-mastering-the-basics">After mastering the basics</a></h3>
+<p>→ Build something with Chicago TDD:</p>
+<ul>
+<li>Open-source contribution</li>
+<li>Side project</li>
+<li>Production application</li>
+<li>Team migration</li>
+</ul>
+<hr />
+<h2 id="faq"><a class="header" href="#faq">FAQ</a></h2>
+<p><strong>Q: What's the best starting point?</strong>
+A: <a href="tutorials/getting-started.html">Quick Start</a> if brand new, otherwise <a href="introduction.html">Introduction</a>.</p>
+<p><strong>Q: How long does it take to learn?</strong>
+A: 2-4 hours for basics, 1-2 weeks to master all techniques.</p>
+<p><strong>Q: Should I read everything?</strong>
+A: No. Focus on tutorials matching your needs, use reference as needed.</p>
+<p><strong>Q: Can I skip sections?</strong>
+A: Yes. Each section is independent except tutorials (follow in order).</p>
+<p><strong>Q: Where's the API reference?</strong>
+A: <a href="reference/fixtures-api.html">API Reference</a> - More coming soon!</p>
+<p><strong>Q: Do I need prior testing experience?</strong>
+A: No, but experience helps. Chicago TDD teaches a specific approach.</p>
+<hr />
+<h2 id="document-index"><a class="header" href="#document-index">Document Index</a></h2>
+<h3 id="tutorials-learning-oriented"><a class="header" href="#tutorials-learning-oriented">Tutorials (Learning-Oriented)</a></h3>
+<ul>
+<li><a href="tutorials/getting-started.html">Quick Start</a> - 25 min, beginner</li>
+<li><a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a> - 15 min, beginner</li>
+<li><a href="tutorials/cli-app-tutorial.html">CLI Application</a> - 45 min, intermediate</li>
+<li><a href="tutorials/web-service-tutorial.html">REST Web Service</a> - 50 min, intermediate</li>
+</ul>
+<h3 id="core-how-to-guides"><a class="header" href="#core-how-to-guides">Core (How-To Guides)</a></h3>
+<ul>
+<li><a href="core/fixtures.html">Fixtures</a> - How to use fixtures</li>
+<li><a href="core/data-builders.html">Data Builders</a> - Build complex test data</li>
+<li><a href="core/assertions.html">Assertions</a> - Make clear assertions</li>
+<li><a href="core/error-paths.html">Error Paths</a> - Test failure cases</li>
+</ul>
+<h3 id="advanced-how-to-guides"><a class="header" href="#advanced-how-to-guides">Advanced (How-To Guides)</a></h3>
+<ul>
+<li><a href="advanced/property-testing.html">Property Testing</a> - Generate test cases</li>
+<li><a href="advanced/mutation-testing.html">Mutation Testing</a> - Validate tests</li>
+<li><a href="advanced/snapshot-testing.html">Snapshot Testing</a> - Compare golden files</li>
+<li><a href="advanced/cli-testing.html">CLI Testing</a> - Test CLI apps</li>
+<li><a href="advanced/concurrency-testing.html">Concurrency Testing</a> - Thread safety</li>
+</ul>
+<h3 id="guides-how-to--explanation"><a class="header" href="#guides-how-to--explanation">Guides (How-To + Explanation)</a></h3>
+<ul>
+<li><a href="guides/extra-mile.html">The Extra Mile Pattern</a> - Design decisions</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - Production patterns</li>
+<li><a href="guides/coverage-performance.html">Coverage &amp; Performance</a> - Metrics</li>
+<li><a href="guides/observability.html">Observability</a> - Monitoring &amp; telemetry</li>
+<li><a href="guides/otel.html">OTEL Instrumentation</a> - Add OpenTelemetry</li>
+<li><a href="guides/weaver.html">Weaver Validation</a> - Validate telemetry</li>
+<li><a href="guides/real-world.html">Real-World Applications</a> - Example projects</li>
+</ul>
+<h3 id="reference-lookup-oriented"><a class="header" href="#reference-lookup-oriented">Reference (Lookup-Oriented)</a></h3>
+<ul>
+<li><a href="reference/fixtures-api.html">TestFixture API</a> - Complete API docs</li>
+</ul>
+<hr />
+<h2 id="quick-links-1"><a class="header" href="#quick-links-1">Quick Links</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Need</th><th>Link</th></tr></thead><tbody>
+<tr><td>Quick start</td><td><a href="tutorials/getting-started.html">Getting Started</a></td></tr>
+<tr><td>Code examples</td><td><a href="guides/real-world.html">Real-World Applications</a></td></tr>
+<tr><td>Specific feature</td><td>Search this page or use feature table</td></tr>
+<tr><td>API documentation</td><td><a href="reference/fixtures-api.html">API Reference</a></td></tr>
+<tr><td>Best practices</td><td><a href="guides/best-practices.html">Best Practices</a></td></tr>
+<tr><td>Understanding concepts</td><td><a href="introduction.html">Introduction</a></td></tr>
+</tbody></table>
+</div>
+<hr />
+<p><strong>Tip</strong>: Bookmark this page and return when you need guidance on what to learn next.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started-25-minute-tutorial"><a class="header" href="#getting-started-25-minute-tutorial">Getting Started: 25-Minute Tutorial</a></h1>
 <blockquote>
 <p>🎓 <strong>TUTORIAL</strong> | Learn the basics of Chicago TDD in 25 minutes</p>
