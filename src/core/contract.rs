@@ -518,7 +518,7 @@ mod tests {
 
         // Check invariant coverage
         let no_panic_tests = registry.tests_verifying_invariant("no_panics");
-        assert_eq!(no_panic_tests.len(), 1);
+        assert_eq!(no_panic_tests.len(), 2); // Both hot and warm paths include no_panics
 
         let tau_tests = registry.tests_verifying_invariant("τ ≤ 8");
         assert_eq!(tau_tests.len(), 1); // Only hot path test

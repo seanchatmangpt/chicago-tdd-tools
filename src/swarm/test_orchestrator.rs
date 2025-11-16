@@ -418,9 +418,9 @@ mod tests {
 
     #[test]
     fn test_execution_summary() {
-        let mut summary = ExecutionSummary::new();
+        let summary = ExecutionSummary::new();
         assert_eq!(summary.total_tests, 0);
-        assert!(summary.all_passed()); // Vacuously true
+        assert!(!summary.all_passed()); // Empty set: no tests to pass
     }
 
     #[test]
@@ -507,13 +507,13 @@ mod tests {
 
         let gap = api.coverage_gap(
             &["module1", "module2"], // module2 not covered
-            &["τ ≤ 8", "no_panics"], // no_panics not covered
+            &["τ ≤ 8", "error_recovery"], // error_recovery not covered (hot_path includes τ ≤ 8 and no_panics)
         );
 
         assert!(gap.has_gaps());
         assert_eq!(gap.uncovered_modules.len(), 1);
         assert_eq!(gap.uncovered_modules[0], "module2");
         assert_eq!(gap.uncovered_invariants.len(), 1);
-        assert_eq!(gap.uncovered_invariants[0], "no_panics");
+        assert_eq!(gap.uncovered_invariants[0], "error_recovery");
     }
 }

@@ -464,7 +464,6 @@ mod rustc_version_runtime {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::contract::ResourceEnvelope;
 
     #[test]
     fn test_environment_fingerprint() {
@@ -525,11 +524,11 @@ mod tests {
             vec!["τ ≤ 8".to_string()],
             timing,
             vec![],
-            TestResult::Pass,
+            TestOutcome::Pass,
         );
 
         assert_eq!(receipt.contract_name, "test_hot_path");
-        assert_eq!(receipt.result, TestResult::Pass);
+        assert_eq!(receipt.result, TestOutcome::Pass);
         assert!(!receipt.receipt_id.is_empty());
     }
 
@@ -537,7 +536,7 @@ mod tests {
     fn test_receipt_from_contract() {
         let contract = TestContract::hot_path("test_hot", &["core::hot"]);
         let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
-        let receipt = TestReceipt::from_contract(&contract, timing, TestResult::Pass);
+        let receipt = TestReceipt::from_contract(&contract, timing, TestOutcome::Pass);
 
         assert_eq!(receipt.contract_name, "test_hot");
         assert!(receipt.invariants_checked.contains(&"τ ≤ 8".to_string()));
@@ -554,7 +553,7 @@ mod tests {
             vec![],
             timing,
             vec![],
-            TestResult::Pass,
+            TestOutcome::Pass,
         );
 
         assert!(receipt.signature.is_none());
@@ -576,7 +575,7 @@ mod tests {
             vec![],
             timing,
             vec![],
-            TestResult::Pass,
+            TestOutcome::Pass,
         );
 
         receipt.add_metadata("author", "test_user");
@@ -598,7 +597,7 @@ mod tests {
             vec!["τ ≤ 8".to_string()],
             timing,
             vec![],
-            TestResult::Pass,
+            TestOutcome::Pass,
         );
 
         let json = receipt.to_json();
@@ -626,7 +625,7 @@ mod tests {
             vec!["τ ≤ 8".to_string()],
             timing.clone(),
             vec!["NetworkRead".to_string()],
-            TestResult::Pass,
+            TestOutcome::Pass,
         );
 
         let receipt2 = TestReceipt::new(
