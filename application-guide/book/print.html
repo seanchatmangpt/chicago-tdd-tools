@@ -525,9 +525,1012 @@ let result = actual_function(&amp;fixture)?;  // Real code
 <p>❌ Don't skip boundary condition testing</p>
 <hr />
 <p><strong>Next</strong>: <a href="core/README.html">Core Testing Patterns</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started-25-minute-tutorial"><a class="header" href="#getting-started-25-minute-tutorial">Getting Started: 25-Minute Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Learn the basics of Chicago TDD in 25 minutes</p>
+</blockquote>
+<p>This tutorial teaches you everything you need to write your first test with Chicago TDD Tools. No prior knowledge required.</p>
+<p><strong>Time</strong>: ~25 minutes
+<strong>Level</strong>: Beginner
+<strong>What you'll learn</strong>: Write a complete test from start to finish</p>
+<hr />
+<h2 id="part-1-your-first-test-5-minutes"><a class="header" href="#part-1-your-first-test-5-minutes">Part 1: Your First Test (5 minutes)</a></h2>
+<h3 id="step-1-create-a-test-function"><a class="header" href="#step-1-create-a-test-function">Step 1: Create a test function</a></h3>
+<p>Chicago TDD uses the <code>test!</code> macro for declaring tests:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+
+test!(my_first_test, {
+    // Test code goes here
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="step-2-add-test-logic-arrange-act-assert"><a class="header" href="#step-2-add-test-logic-arrange-act-assert">Step 2: Add test logic (Arrange-Act-Assert)</a></h3>
+<p>Every test follows three steps:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_number_parsing, {
+    // Arrange: Set up test data
+    let input = "42";
+
+    // Act: Execute the code being tested
+    let result = input.parse::&lt;u32&gt;();
+
+    // Assert: Verify the result
+    assert_ok!(&amp;result);
+    assert_eq!(result.unwrap(), 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<p><strong>That's it!</strong> You've written your first test. Let's break it down:</p>
+<ul>
+<li><strong>Arrange</strong> (<code>let input = "42"</code>) - Prepare test data</li>
+<li><strong>Act</strong> (<code>let result = input.parse()</code>) - Call the code you're testing</li>
+<li><strong>Assert</strong> (<code>assert_ok!</code> and <code>assert_eq!</code>) - Verify it worked</li>
+</ul>
+<hr />
+<h2 id="part-2-testing-success-and-failure-7-minutes"><a class="header" href="#part-2-testing-success-and-failure-7-minutes">Part 2: Testing Success and Failure (7 minutes)</a></h2>
+<h3 id="test-the-happy-path"><a class="header" href="#test-the-happy-path">Test the Happy Path</a></h3>
+<p>When code works:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_valid_number, {
+    let result = "100".parse::&lt;u32&gt;();
+
+    // Verify it's Ok
+    assert_ok!(&amp;result);
+
+    // Verify the value is correct
+    assert_eq!(result.unwrap(), 100);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="test-the-error-path"><a class="header" href="#test-the-error-path">Test the Error Path</a></h3>
+<p>When code fails (most bugs hide here!):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_invalid_number, {
+    let result = "not_a_number".parse::&lt;u32&gt;();
+
+    // Verify it's an error
+    assert_err!(&amp;result);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="test-boundary-conditions"><a class="header" href="#test-boundary-conditions">Test Boundary Conditions</a></h3>
+<p>Edge cases are important:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_boundaries, {
+    // Zero (special case)
+    assert_ok!(&amp;"0".parse::&lt;u32&gt;());
+
+    // Maximum value
+    assert_ok!(&amp;u32::MAX.to_string().parse::&lt;u32&gt;());
+
+    // Negative (not valid for u32)
+    assert_err!(&amp;"-1".parse::&lt;u32&gt;());
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-assertion-helpers"><a class="header" href="#key-assertion-helpers">Key Assertion Helpers</a></h3>
+<p>Chicago TDD provides clear assertion helpers:</p>
+<div class="table-wrapper"><table><thead><tr><th>Helper</th><th>What it checks</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>assert_ok!(&amp;result)</code></td><td>Is this an <code>Ok</code>?</td><td><code>assert_ok!(&amp;my_result)</code></td></tr>
+<tr><td><code>assert_err!(&amp;result)</code></td><td>Is this an <code>Err</code>?</td><td><code>assert_err!(&amp;my_result)</code></td></tr>
+<tr><td><code>assert_eq!(a, b)</code></td><td>Are these equal?</td><td><code>assert_eq!(value, 42)</code></td></tr>
+<tr><td><code>assert!(condition)</code></td><td>Is this true?</td><td><code>assert!(value &gt; 0)</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-3-using-fixtures-for-test-setup-6-minutes"><a class="header" href="#part-3-using-fixtures-for-test-setup-6-minutes">Part 3: Using Fixtures for Test Setup (6 minutes)</a></h2>
+<p>For complex tests, use <code>TestFixture</code> to set up test data:</p>
+<h3 id="creating-a-fixture"><a class="header" href="#creating-a-fixture">Creating a Fixture</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::fixture::*;
+
+test!(test_with_fixture, {
+    // Create a fixture (isolated test environment)
+    let fixture = TestFixture::new()?;
+
+    // Store test data
+    fixture.set_metadata("user_id", "123");
+    fixture.set_metadata("username", "alice");
+
+    // Retrieve test data
+    let user_id = fixture.get_metadata("user_id");
+    assert_eq!(user_id, Some("123"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="capturing-test-state"><a class="header" href="#capturing-test-state">Capturing Test State</a></h3>
+<p>You can save snapshots of your test data:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_snapshots, {
+    let fixture = TestFixture::new()?;
+
+    // ... do some work ...
+
+    // Capture the current state
+    let state = HashMap::from([
+        ("step".to_string(), "completed".to_string()),
+        ("items_processed".to_string(), "5".to_string()),
+    ]);
+    fixture.capture_snapshot(state);
+
+    // Access all snapshots
+    let snapshots = fixture.snapshots();
+    assert_eq!(snapshots.len(), 1);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="benefits-of-fixtures"><a class="header" href="#benefits-of-fixtures">Benefits of Fixtures</a></h3>
+<p>✅ Each test gets its own isolated environment
+✅ Automatic cleanup when test ends
+✅ State tracking with metadata and snapshots
+✅ Great for complex multi-step tests</p>
+<hr />
+<h2 id="part-4-building-test-data-5-minutes"><a class="header" href="#part-4-building-test-data-5-minutes">Part 4: Building Test Data (5 minutes)</a></h2>
+<p>For complex test data, use <code>TestDataBuilder</code>:</p>
+<h3 id="basic-data-building"><a class="header" href="#basic-data-building">Basic Data Building</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::builders::*;
+
+test!(test_with_builder, {
+    // Create a builder
+    let builder = TestDataBuilder::new()
+        .with_var("name", "Alice")
+        .with_var("email", "alice@example.com");
+
+    // Build as JSON
+    let json = builder.build_json()?;
+    assert!(json["name"] == "Alice");
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="building-maps"><a class="header" href="#building-maps">Building Maps</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_building_map, {
+    let data = TestDataBuilder::new()
+        .with_var("key1", "value1")
+        .with_var("key2", "value2")
+        .build();
+
+    // Returns HashMap&lt;String, String&gt;
+    assert_eq!(data.get("key1"), Some(&amp;"value1".to_string()));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="fluent-api-style"><a class="header" href="#fluent-api-style">Fluent API Style</a></h3>
+<p>Builders use a fluent API - chain method calls:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fluent_style, {
+    let data = TestDataBuilder::new()
+        .with_var("first", "hello")
+        .with_var("second", "world")
+        .with_var("third", "!")
+        .build_json()?;
+
+    // Clean, readable syntax
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="part-5-complete-example-2-minutes"><a class="header" href="#part-5-complete-example-2-minutes">Part 5: Complete Example (2 minutes)</a></h2>
+<p>Putting it all together:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::builders::*;
+use chicago_tdd_tools::fixture::*;
+
+test!(complete_example, {
+    // Arrange: Create fixture and test data
+    let fixture = TestFixture::new()?;
+
+    let user_data = TestDataBuilder::new()
+        .with_var("username", "alice")
+        .with_var("email", "alice@example.com")
+        .build_json()?;
+
+    // Act: Parse the email
+    let email = user_data["email"].as_str().unwrap();
+    let valid = email.contains("@");
+
+    // Assert: Verify the result
+    assert!(valid, "Email should contain @");
+
+    // Store result in fixture
+    fixture.set_metadata("test_passed", "true");
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="summary-what-youve-learned"><a class="header" href="#summary-what-youve-learned">Summary: What You've Learned</a></h2>
+<p>✅ Basic test structure with <code>test!</code> macro
+✅ Arrange-Act-Assert pattern
+✅ Assertion helpers (<code>assert_ok!</code>, <code>assert_err!</code>, etc.)
+✅ Testing success, error, and boundary cases
+✅ Using fixtures for test isolation
+✅ Building complex test data</p>
+<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<p><strong>Ready to dive deeper?</strong></p>
+<ol>
+<li><strong><a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a></strong> (10 minutes) - Master test isolation</li>
+<li><strong><a href="tutorials/../core/error-paths.html">Error Path Testing</a></strong> - Learn where bugs hide</li>
+<li><strong><a href="tutorials/../guides/real-world.html">Real-World Examples</a></strong> - See complete projects</li>
+</ol>
+<p><strong>Or choose your path:</strong></p>
+<ul>
+<li><strong>I want to learn more patterns</strong> → <a href="tutorials/../core/README.html">Core Testing Patterns</a></li>
+<li><strong>I want advanced techniques</strong> → <a href="tutorials/../advanced/README.html">Advanced Testing</a></li>
+<li><strong>I want to test a web service</strong> → <a href="tutorials/../guides/web-service.html">Web Service Tutorial</a></li>
+<li><strong>I want to test a CLI tool</strong> → <a href="tutorials/../guides/cli-application.html">CLI Application Tutorial</a></li>
+</ul>
+<hr />
+<h2 id="quick-reference-card"><a class="header" href="#quick-reference-card">Quick Reference Card</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Basic test
+test!(test_name, { /* code */ });
+
+// Fixtures
+let fixture = TestFixture::new()?;
+fixture.set_metadata("key", "value");
+
+// Data builders
+TestDataBuilder::new()
+    .with_var("key", "value")
+    .build_json()?
+
+// Assertions
+assert_ok!(&amp;result);          // Result is Ok
+assert_err!(&amp;result);         // Result is Err
+assert_eq!(actual, expected); // Values match
+assert!(condition);           // Condition is true
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<p><strong>Congratulations!</strong> You can now write tests with Chicago TDD Tools. The rest is practice and learning specific patterns for your use case.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="fixtures-deep-dive-15-minute-tutorial"><a class="header" href="#fixtures-deep-dive-15-minute-tutorial">Fixtures Deep Dive: 15-Minute Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master test isolation with fixtures</p>
+</blockquote>
+<p>Fixtures are the foundation of isolated testing. This tutorial builds on the basics and shows you how to use fixtures for real-world scenarios.</p>
+<p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>
+<strong>Time</strong>: ~15 minutes
+<strong>What you'll learn</strong>: Advanced fixture patterns and isolation techniques</p>
+<hr />
+<h2 id="what-are-fixtures"><a class="header" href="#what-are-fixtures">What Are Fixtures?</a></h2>
+<p>A <strong>fixture</strong> is a isolated test environment. Each test gets its own copy:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_isolation_example, {
+    // Each test gets a completely separate fixture
+    let fixture = TestFixture::new()?;
+
+    // Changes here don't affect other tests
+    fixture.set_metadata("value", "100");
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-fixtures-matter"><a class="header" href="#why-fixtures-matter">Why Fixtures Matter</a></h3>
+<p>✅ <strong>Isolation</strong>: Tests don't interfere with each other
+✅ <strong>Cleanup</strong>: Resources are automatically cleaned up
+✅ <strong>Repeatability</strong>: Same test always behaves the same way
+✅ <strong>Parallel execution</strong>: Tests can run safely in parallel</p>
+<hr />
+<h2 id="storing-test-state"><a class="header" href="#storing-test-state">Storing Test State</a></h2>
+<h3 id="simple-key-value-storage"><a class="header" href="#simple-key-value-storage">Simple Key-Value Storage</a></h3>
+<p>Store and retrieve test data:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_storing_state, {
+    let fixture = TestFixture::new()?;
+
+    // Store data
+    fixture.set_metadata("user_id", "123");
+    fixture.set_metadata("status", "active");
+
+    // Retrieve data
+    let user_id = fixture.get_metadata("user_id");
+    assert_eq!(user_id, Some("123"));
+
+    // Non-existent key returns None
+    let missing = fixture.get_metadata("missing");
+    assert_eq!(missing, None);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="practical-example-user-setup"><a class="header" href="#practical-example-user-setup">Practical Example: User Setup</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_user_creation, {
+    let fixture = TestFixture::new()?;
+
+    // Setup: Create a user
+    let user = create_user("alice", "alice@example.com")?;
+    fixture.set_metadata("user_id", &amp;user.id.to_string());
+    fixture.set_metadata("username", &amp;user.name);
+
+    // Test: Can we retrieve the user?
+    let stored_id = fixture.get_metadata("user_id").unwrap();
+    let retrieved = get_user(stored_id.parse()?)?;
+    assert_eq!(retrieved.name, "alice");
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="snapshots-capturing-state-over-time"><a class="header" href="#snapshots-capturing-state-over-time">Snapshots: Capturing State Over Time</a></h2>
+<p>Snapshots record your test's state at different points:</p>
+<h3 id="taking-a-snapshot"><a class="header" href="#taking-a-snapshot">Taking a Snapshot</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::collections::HashMap;
+
+test!(test_with_snapshots, {
+    let fixture = TestFixture::new()?;
+
+    // Perform some operations
+    let data = vec![1, 2, 3];
+
+    // Capture state as a snapshot
+    let state = HashMap::from([
+        ("step".to_string(), "initial".to_string()),
+        ("count".to_string(), data.len().to_string()),
+    ]);
+    fixture.capture_snapshot(state);
+
+    // ... more operations ...
+
+    let state2 = HashMap::from([
+        ("step".to_string(), "processed".to_string()),
+        ("count".to_string(), "5".to_string()),
+    ]);
+    fixture.capture_snapshot(state2);
+
+    // Access all snapshots
+    let snapshots = fixture.snapshots();
+    assert_eq!(snapshots.len(), 2);
+
+    // Access latest snapshot
+    let latest = fixture.latest_snapshot();
+    assert_eq!(latest.get("step"), Some(&amp;"processed".to_string()));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="real-world-example-multi-step-workflow"><a class="header" href="#real-world-example-multi-step-workflow">Real-World Example: Multi-Step Workflow</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_order_workflow, {
+    let fixture = TestFixture::new()?;
+
+    // Step 1: Create order
+    let order = create_order("alice", 100.0)?;
+    fixture.capture_snapshot(HashMap::from([
+        ("stage".to_string(), "created".to_string()),
+        ("order_id".to_string(), order.id.to_string()),
+        ("amount".to_string(), "100.0".to_string()),
+    ]));
+
+    // Step 2: Process payment
+    process_payment(&amp;order)?;
+    fixture.capture_snapshot(HashMap::from([
+        ("stage".to_string(), "paid".to_string()),
+        ("payment_status".to_string(), "completed".to_string()),
+    ]));
+
+    // Step 3: Ship order
+    ship_order(&amp;order)?;
+    fixture.capture_snapshot(HashMap::from([
+        ("stage".to_string(), "shipped".to_string()),
+        ("tracking".to_string(), "12345".to_string()),
+    ]));
+
+    // Verify all stages completed
+    let snapshots = fixture.snapshots();
+    assert_eq!(snapshots.len(), 3);
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="multiple-fixtures-in-one-test"><a class="header" href="#multiple-fixtures-in-one-test">Multiple Fixtures in One Test</a></h2>
+<p>You can use multiple fixtures for complex scenarios:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_multiple_fixtures, {
+    // Fixture 1: First test environment
+    let fixture1 = TestFixture::new()?;
+    fixture1.set_metadata("context", "database");
+
+    // Fixture 2: Separate test environment
+    let fixture2 = TestFixture::new()?;
+    fixture2.set_metadata("context", "cache");
+
+    // They don't interfere
+    let ctx1 = fixture1.get_metadata("context");
+    let ctx2 = fixture2.get_metadata("context");
+
+    assert_eq!(ctx1, Some("database"));
+    assert_eq!(ctx2, Some("cache"));
+    assert_ne!(ctx1, ctx2);  // Different values
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="fixtures-with-error-handling"><a class="header" href="#fixtures-with-error-handling">Fixtures with Error Handling</a></h2>
+<p>Fixtures handle errors gracefully:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fixture_error_handling, {
+    // Create fixture might fail
+    let fixture = TestFixture::new()?;
+
+    // Operations might fail
+    if let Err(e) = risky_operation() {
+        // Record the error
+        fixture.set_metadata("error", &amp;e.to_string());
+
+        // Assert error was expected
+        let recorded = fixture.get_metadata("error");
+        assert!(recorded.is_some());
+    }
+
+    // Fixture cleanup still happens automatically
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="fixture-initialization-pattern"><a class="header" href="#fixture-initialization-pattern">Fixture Initialization Pattern</a></h2>
+<p>For repeated setup, create a helper function:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn setup_user_fixture() -&gt; Result&lt;(TestFixture, User), Box&lt;dyn std::error::Error&gt;&gt; {
+    let fixture = TestFixture::new()?;
+
+    let user = create_user("test_user", "test@example.com")?;
+    fixture.set_metadata("user_id", &amp;user.id.to_string());
+    fixture.set_metadata("username", &amp;user.name);
+
+    Ok((fixture, user))
+}
+
+test!(test_using_setup, {
+    let (fixture, user) = setup_user_fixture()?;
+
+    // Test can now use pre-initialized fixture
+    assert_eq!(user.name, "test_user");
+
+    // ... rest of test ...
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="best-practices-for-fixtures"><a class="header" href="#best-practices-for-fixtures">Best Practices for Fixtures</a></h2>
+<h3 id="-do"><a class="header" href="#-do">✅ Do:</a></h3>
+<ol>
+<li>
+<p><strong>Create one fixture per test</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test1, { let f = TestFixture::new()?; /* ... */ });
+test!(test2, { let f = TestFixture::new()?; /* ... */ }); // Separate!
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Use metadata for state tracking</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture.set_metadata("step", "processing");
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Capture snapshots at key points</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture.capture_snapshot(state);
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Use descriptive metadata keys</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture.set_metadata("user_id", "123");  // Clear
+// Not: fixture.set_metadata("id", "123");  // Vague
+<span class="boring">}</span></code></pre></pre>
+</li>
+</ol>
+<h3 id="-dont"><a class="header" href="#-dont">❌ Don't:</a></h3>
+<ol>
+<li>
+<p><strong>Share fixtures between tests</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG - fixture is shared!
+let shared_fixture = TestFixture::new();
+test!(test1, { /* use shared_fixture */ });
+test!(test2, { /* use shared_fixture */ });
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Use global state</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG - global state affects test isolation
+static FIXTURE: Lazy&lt;TestFixture&gt; = Lazy::new(|| TestFixture::new().unwrap());
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Forget to handle errors</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// WRONG - TestFixture::new() can fail
+let fixture = TestFixture::new().unwrap();  // Better: ?
+<span class="boring">}</span></code></pre></pre>
+</li>
+</ol>
+<hr />
+<h2 id="common-fixture-patterns"><a class="header" href="#common-fixture-patterns">Common Fixture Patterns</a></h2>
+<h3 id="pattern-1-setup-teardown"><a class="header" href="#pattern-1-setup-teardown">Pattern 1: Setup-Teardown</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_setup_teardown, {
+    let fixture = TestFixture::new()?;
+
+    // Setup
+    setup_database(&amp;fixture)?;
+    fixture.set_metadata("db_ready", "true");
+
+    // Test logic
+    assert_eq!(fixture.get_metadata("db_ready"), Some("true"));
+
+    // Teardown happens automatically when fixture is dropped
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-2-state-validation"><a class="header" href="#pattern-2-state-validation">Pattern 2: State Validation</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_state_validation, {
+    let fixture = TestFixture::new()?;
+
+    // Perform operations
+    let result = do_work()?;
+
+    // Capture and validate state
+    let state = HashMap::from([
+        ("success".to_string(), "true".to_string()),
+        ("items".to_string(), "5".to_string()),
+    ]);
+    fixture.capture_snapshot(state);
+
+    // Verify final state
+    let latest = fixture.latest_snapshot().unwrap();
+    assert_eq!(latest.get("success"), Some(&amp;"true".to_string()));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-3-progressive-testing"><a class="header" href="#pattern-3-progressive-testing">Pattern 3: Progressive Testing</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_progressive, {
+    let fixture = TestFixture::new()?;
+
+    // Phase 1
+    let result1 = operation1()?;
+    fixture.set_metadata("phase", "1");
+    assert_ok!(&amp;result1);
+
+    // Phase 2
+    let result2 = operation2()?;
+    fixture.set_metadata("phase", "2");
+    assert_ok!(&amp;result2);
+
+    // Phase 3
+    let result3 = operation3()?;
+    fixture.set_metadata("phase", "3");
+    assert_ok!(&amp;result3);
+
+    // Verify we completed all phases
+    assert_eq!(fixture.get_metadata("phase"), Some("3"));
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>Fixtures provide:</p>
+<p>✅ <strong>Isolation</strong> - Each test has its own environment
+✅ <strong>State tracking</strong> - Store and retrieve metadata
+✅ <strong>Snapshots</strong> - Capture state at different points
+✅ <strong>Cleanup</strong> - Automatic resource cleanup
+✅ <strong>Parallel safety</strong> - Tests can run in parallel</p>
+<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<p><strong>Ready for more?</strong></p>
+<ol>
+<li><strong><a href="tutorials/../core/error-paths.html">Error Path Testing</a></strong> - Test error cases thoroughly</li>
+<li><strong><a href="tutorials/../core/fixtures.html">Advanced Fixtures</a></strong> - API reference and examples</li>
+<li><strong><a href="tutorials/../guides/real-world.html">Real-World Applications</a></strong> - See fixtures in action</li>
+</ol>
+<hr />
+<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Create fixture
+let fixture = TestFixture::new()?;
+
+// Store metadata
+fixture.set_metadata("key", "value");
+
+// Retrieve metadata
+let value = fixture.get_metadata("key");  // Returns Option&lt;&amp;str&gt;
+
+// Capture snapshot
+let state = HashMap::from([("key".to_string(), "value".to_string())]);
+fixture.capture_snapshot(state);
+
+// Access snapshots
+let all_snapshots = fixture.snapshots();
+let latest = fixture.latest_snapshot();
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Congratulations!</strong> You've mastered fixtures. You can now write tests with proper isolation and state tracking.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="testfixture-api-reference"><a class="header" href="#testfixture-api-reference">TestFixture API Reference</a></h1>
+<blockquote>
+<p>📚 <strong>REFERENCE</strong> | Complete API documentation for test fixtures</p>
+</blockquote>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p><code>TestFixture</code> provides isolated test environments with metadata storage and state snapshots.</p>
+<p><strong>Module</strong>: <code>chicago_tdd_tools::fixture</code>
+<strong>Stability</strong>: Stable
+<strong>Feature flag</strong>: Core (always available)</p>
+<hr />
+<h2 id="constructor"><a class="header" href="#constructor">Constructor</a></h2>
+<h3 id="testfixturenew---resulttestfixture-fixtureerror"><a class="header" href="#testfixturenew---resulttestfixture-fixtureerror"><code>TestFixture::new() -&gt; Result&lt;TestFixture, FixtureError&gt;</code></a></h3>
+<p>Creates a new isolated test fixture.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Ok(TestFixture)</code> - New fixture instance</li>
+<li><code>Err(FixtureError)</code> - Fixture creation failed</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let fixture = TestFixture::new()?;
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Error cases:</strong></p>
+<ul>
+<li>IO errors during fixture initialization</li>
+<li>Permission errors</li>
+<li>System resource unavailability</li>
+</ul>
+<hr />
+<h2 id="metadata-methods"><a class="header" href="#metadata-methods">Metadata Methods</a></h2>
+<h3 id="set_metadatakey-impl-asrefstr-value-impl-asrefstr---"><a class="header" href="#set_metadatakey-impl-asrefstr-value-impl-asrefstr---"><code>set_metadata(key: impl AsRef&lt;str&gt;, value: impl AsRef&lt;str&gt;) -&gt; ()</code></a></h3>
+<p>Stores a key-value pair in fixture metadata.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>key: impl AsRef&lt;str&gt;</code> - Metadata key (e.g., "user_id")</li>
+<li><code>value: impl AsRef&lt;str&gt;</code> - Metadata value (e.g., "123")</li>
+</ul>
+<p><strong>Returns:</strong> Unit (always succeeds)</p>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture.set_metadata("user_id", "123");
+fixture.set_metadata("status", "active");
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Overwrites existing key if present</li>
+<li>Keys and values are strings</li>
+<li>No size limits on metadata</li>
+</ul>
+<h3 id="get_metadatakey-str---optionstring"><a class="header" href="#get_metadatakey-str---optionstring"><code>get_metadata(key: &amp;str) -&gt; Option&lt;&amp;String&gt;</code></a></h3>
+<p>Retrieves a value from fixture metadata.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>key: &amp;str</code> - Metadata key to look up</li>
+</ul>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Some(&amp;String)</code> - Value if key exists</li>
+<li><code>None</code> - Key not found</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let user_id = fixture.get_metadata("user_id");
+match user_id {
+    Some(id) =&gt; println!("User: {}", id),
+    None =&gt; println!("User ID not set"),
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Returns reference, not owned value</li>
+<li>Reference is valid only while fixture exists</li>
+<li>Returns None for non-existent keys</li>
+</ul>
+<hr />
+<h2 id="snapshot-methods"><a class="header" href="#snapshot-methods">Snapshot Methods</a></h2>
+<h3 id="capture_snapshotstate-hashmapstring-string---"><a class="header" href="#capture_snapshotstate-hashmapstring-string---"><code>capture_snapshot(state: HashMap&lt;String, String&gt;) -&gt; ()</code></a></h3>
+<p>Captures the current test state as a snapshot.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>state: HashMap&lt;String, String&gt;</code> - State to capture</li>
+</ul>
+<p><strong>Returns:</strong> Unit (always succeeds)</p>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::collections::HashMap;
+
+let state = HashMap::from([
+    ("step".to_string(), "processing".to_string()),
+    ("count".to_string(), "5".to_string()),
+]);
+fixture.capture_snapshot(state);
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Creates immutable snapshot of provided state</li>
+<li>State is copied, original HashMap can be modified</li>
+<li>Snapshots are stored in order</li>
+</ul>
+<h3 id="snapshots---hashmapstring-string"><a class="header" href="#snapshots---hashmapstring-string"><code>snapshots() -&gt; &amp;[HashMap&lt;String, String&gt;]</code></a></h3>
+<p>Returns all captured snapshots.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>&amp;[HashMap&lt;String, String&gt;]</code> - Slice of all snapshots</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let all = fixture.snapshots();
+println!("Total snapshots: {}", all.len());
+
+for (i, snapshot) in all.iter().enumerate() {
+    println!("Snapshot {}: {:?}", i, snapshot);
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Returns empty slice if no snapshots captured</li>
+<li>Snapshots are in capture order (chronological)</li>
+<li>Reference is valid only while fixture exists</li>
+</ul>
+<h3 id="latest_snapshot---optionhashmapstring-string"><a class="header" href="#latest_snapshot---optionhashmapstring-string"><code>latest_snapshot() -&gt; Option&lt;&amp;HashMap&lt;String, String&gt;&gt;</code></a></h3>
+<p>Returns the most recently captured snapshot.</p>
+<p><strong>Returns:</strong></p>
+<ul>
+<li><code>Some(&amp;HashMap)</code> - Last captured snapshot</li>
+<li><code>None</code> - No snapshots captured yet</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>if let Some(latest) = fixture.latest_snapshot() {
+    if let Some(step) = latest.get("step") {
+        println!("Current step: {}", step);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Convenience method for accessing most recent state</li>
+<li>Returns None if <code>snapshots().is_empty()</code></li>
+<li>Equivalent to <code>snapshots().last()</code></li>
+</ul>
+<hr />
+<h2 id="lifecycle"><a class="header" href="#lifecycle">Lifecycle</a></h2>
+<h3 id="creation-and-cleanup"><a class="header" href="#creation-and-cleanup">Creation and Cleanup</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(fixture_lifecycle, {
+    // Creation: new() initializes resources
+    let fixture = TestFixture::new()?;
+
+    // Usage: store state and snapshots
+    fixture.set_metadata("key", "value");
+
+    // Cleanup: automatic when fixture is dropped
+    // (at end of test scope)
+}); // Fixture dropped here - cleanup happens
+<span class="boring">}</span></code></pre></pre>
+<h3 id="automatic-cleanup"><a class="header" href="#automatic-cleanup">Automatic Cleanup</a></h3>
+<p>When <code>TestFixture</code> is dropped:</p>
+<ol>
+<li>All metadata is cleared</li>
+<li>All snapshots are cleared</li>
+<li>File handles/resources are released</li>
+<li>Directory/files created by fixture are removed</li>
+</ol>
+<p><strong>Note:</strong> You don't need to manually call cleanup. It happens automatically.</p>
+<hr />
+<h2 id="common-patterns"><a class="header" href="#common-patterns">Common Patterns</a></h2>
+<h3 id="pattern-setup-and-verify-state"><a class="header" href="#pattern-setup-and-verify-state">Pattern: Setup and Verify State</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(verify_state_pattern, {
+    let fixture = TestFixture::new()?;
+
+    // Setup phase
+    fixture.set_metadata("initialized", "false");
+    assert_eq!(fixture.get_metadata("initialized"), Some("false"));
+
+    // Initialization happens
+    // ...
+
+    // Verify state changed
+    fixture.set_metadata("initialized", "true");
+    assert_eq!(fixture.get_metadata("initialized"), Some("true"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-multi-phase-test"><a class="header" href="#pattern-multi-phase-test">Pattern: Multi-Phase Test</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(multi_phase_pattern, {
+    let fixture = TestFixture::new()?;
+
+    // Phase 1
+    fixture.set_metadata("phase", "1");
+    let result1 = do_phase_1()?;
+    fixture.capture_snapshot(state_at_phase1());
+    assert_ok!(&amp;result1);
+
+    // Phase 2
+    fixture.set_metadata("phase", "2");
+    let result2 = do_phase_2()?;
+    fixture.capture_snapshot(state_at_phase2());
+    assert_ok!(&amp;result2);
+
+    // Verify all phases completed
+    assert_eq!(fixture.get_metadata("phase"), Some("2"));
+    assert_eq!(fixture.snapshots().len(), 2);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-context-association"><a class="header" href="#pattern-context-association">Pattern: Context Association</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(context_pattern, {
+    let fixture = TestFixture::new()?;
+
+    // Associate test context
+    fixture.set_metadata("test_name", "my_test");
+    fixture.set_metadata("test_version", "1.0");
+    fixture.set_metadata("test_category", "integration");
+
+    // ... test code ...
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<h3 id="handling-fixture-creation-errors"><a class="header" href="#handling-fixture-creation-errors">Handling Fixture Creation Errors</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(error_handling, {
+    match TestFixture::new() {
+        Ok(fixture) =&gt; {
+            // Use fixture
+            fixture.set_metadata("key", "value");
+        }
+        Err(e) =&gt; {
+            // Log error or skip test
+            eprintln!("Failed to create fixture: {}", e);
+            return;  // Skip this test
+        }
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="propagating-errors-with-"><a class="header" href="#propagating-errors-with-">Propagating Errors with <code>?</code></a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(error_propagation, {
+    let fixture = TestFixture::new()?;
+    // If creation fails, entire test returns error
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Operation</th><th>Time</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>~1ms</td><td>I/O heavy, system dependent</td></tr>
+<tr><td><code>set_metadata()</code></td><td>&lt;1μs</td><td>In-memory</td></tr>
+<tr><td><code>get_metadata()</code></td><td>&lt;1μs</td><td>In-memory lookup</td></tr>
+<tr><td><code>capture_snapshot()</code></td><td>&lt;1μs</td><td>Copy HashMap to internal storage</td></tr>
+<tr><td><code>snapshots()</code></td><td>&lt;1μs</td><td>Returns slice reference</td></tr>
+<tr><td><code>latest_snapshot()</code></td><td>&lt;1μs</td><td>Slice operation</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="memory-usage"><a class="header" href="#memory-usage">Memory Usage</a></h2>
+<ul>
+<li><strong>Metadata</strong>: ~50 bytes per key-value pair (plus string data)</li>
+<li><strong>Snapshots</strong>: ~100 bytes per snapshot (plus HashMap overhead)</li>
+<li><strong>Total per test</strong>: Usually &lt;1MB unless storing large amounts of state</li>
+</ul>
+<hr />
+<h2 id="limitations-and-constraints"><a class="header" href="#limitations-and-constraints">Limitations and Constraints</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Constraint</th><th>Limit</th><th>Workaround</th></tr></thead><tbody>
+<tr><td>Metadata key length</td><td>Unlimited</td><td>Use short, memorable keys</td></tr>
+<tr><td>Metadata value length</td><td>Unlimited</td><td>Avoid storing binary data</td></tr>
+<tr><td>Number of snapshots</td><td>Unlimited</td><td>Limit snapshots to key points</td></tr>
+<tr><td>Parallel tests</td><td>Fully safe</td><td>Tests run with separate fixtures</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="integration-with-other-tools"><a class="header" href="#integration-with-other-tools">Integration with Other Tools</a></h2>
+<h3 id="with-testdatabuilder"><a class="header" href="#with-testdatabuilder">With TestDataBuilder</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(integration_builder, {
+    let fixture = TestFixture::new()?;
+
+    let data = TestDataBuilder::new()
+        .with_var("key", "value")
+        .build_json()?;
+
+    fixture.set_metadata("data", &amp;data.to_string());
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="with-async-tests"><a class="header" href="#with-async-tests">With Async Tests</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let fixture = TestFixture::new()?;
+
+    fixture.set_metadata("async", "true");
+
+    // async operations
+
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="example-1-simple-setup"><a class="header" href="#example-1-simple-setup">Example 1: Simple Setup</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(simple_setup, {
+    let fixture = TestFixture::new()?;
+    fixture.set_metadata("user", "alice");
+    assert_eq!(fixture.get_metadata("user"), Some("alice"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="example-2-complex-state-tracking"><a class="header" href="#example-2-complex-state-tracking">Example 2: Complex State Tracking</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(complex_tracking, {
+    let fixture = TestFixture::new()?;
+
+    for i in 0..3 {
+        fixture.set_metadata("iteration", &amp;i.to_string());
+
+        let state = HashMap::from([
+            ("step".to_string(), format!("step_{}", i)),
+            ("count".to_string(), i.to_string()),
+        ]);
+        fixture.capture_snapshot(state);
+    }
+
+    assert_eq!(fixture.snapshots().len(), 3);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="example-3-error-recovery"><a class="header" href="#example-3-error-recovery">Example 3: Error Recovery</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(error_recovery, {
+    let fixture = TestFixture::new()?;
+
+    fixture.set_metadata("status", "starting");
+
+    if let Err(e) = risky_operation() {
+        fixture.set_metadata("status", "failed");
+        fixture.set_metadata("error", &amp;e.to_string());
+
+        // Can still verify error was recorded
+        assert!(fixture.get_metadata("error").is_some());
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="related-types"><a class="header" href="#related-types">Related Types</a></h2>
+<ul>
+<li><code>FixtureError</code> - Error type for fixture operations</li>
+<li><code>HashMap&lt;String, String&gt;</code> - Type for snapshot state</li>
+</ul>
+<hr />
+<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<ul>
+<li><a href="reference/../tutorials/getting-started.html">Getting Started</a> - Tutorial on basic fixtures</li>
+<li><a href="reference/../tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a> - Advanced patterns</li>
+<li><a href="reference/../core/fixtures.html">Fixtures How-to</a> - Practical guide</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="core-testing-patterns"><a class="header" href="#core-testing-patterns">Core Testing Patterns</a></h1>
 <p>Welcome to the core testing patterns section! Here you'll learn the everyday patterns you'll use in almost every test.</p>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>Core patterns include:</p>
 <ol>
 <li><strong>Fixtures</strong> - Isolated test state and setup</li>
@@ -598,7 +1601,7 @@ assert_eq!(value, expected);   // Equality check
 <li><a href="core/assertions.html">Assertions &amp; Verification</a> - Assertion helpers and patterns</li>
 <li><a href="core/error-paths.html">Error Path Testing</a> - Testing failure scenarios</li>
 </ul>
-<h2 id="common-patterns"><a class="header" href="#common-patterns">Common Patterns</a></h2>
+<h2 id="common-patterns-1"><a class="header" href="#common-patterns-1">Common Patterns</a></h2>
 <h3 id="pattern-arrange-act-assert"><a class="header" href="#pattern-arrange-act-assert">Pattern: Arrange-Act-Assert</a></h3>
 <p>Every test follows this structure:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -660,7 +1663,7 @@ assert_eq!(value, expected);   // Equality check
 <li><a href="core/../advanced/snapshot-testing.html">Snapshot Testing</a> - Golden files</li>
 <li><a href="core/../advanced/cli-testing.html">CLI Testing</a> - Command-line interfaces</li>
 </ul>
-<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
 <p>👉 <strong>Start with <a href="core/fixtures.html">Fixtures</a></strong></p>
 <p>Then learn:</p>
 <ol>
@@ -681,7 +1684,7 @@ assert_eq!(value, expected);   // Equality check
 <li>Cleans up resources when the test ends</li>
 <li>Prevents state leakage between tests</li>
 </ul>
-<h2 id="creating-a-fixture"><a class="header" href="#creating-a-fixture">Creating a Fixture</a></h2>
+<h2 id="creating-a-fixture-1"><a class="header" href="#creating-a-fixture-1">Creating a Fixture</a></h2>
 <h3 id="basic-fixture-creation"><a class="header" href="#basic-fixture-creation">Basic Fixture Creation</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -700,7 +1703,7 @@ test!(test_with_fixture, {
     assert_eq!(test_id, Some(&amp;"123".to_string()));
 });
 <span class="boring">}</span></code></pre></pre>
-<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<h3 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h3>
 <p>Fixtures return <code>Result</code> - always handle the error:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -838,7 +1841,7 @@ test!(test_isolation_2, {
     // Cleanup: Automatic! No explicit cleanup needed.
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="common-patterns-1"><a class="header" href="#common-patterns-1">Common Patterns</a></h2>
+<h2 id="common-patterns-2"><a class="header" href="#common-patterns-2">Common Patterns</a></h2>
 <h3 id="pattern-reusable-fixture-setup"><a class="header" href="#pattern-reusable-fixture-setup">Pattern: Reusable Fixture Setup</a></h3>
 <p>Create a helper function:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -905,10 +1908,10 @@ test!(test_with_helper, {
 <li>Rely on global state</li>
 <li>Use <code>unwrap()</code> on fixture creation</li>
 </ul>
-<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
 <p>Learn how to use fixtures with data builders: <a href="core/data-builders.html">Building Test Data</a></p>
 <hr />
-<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<h2 id="summary-1"><a class="header" href="#summary-1">Summary</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Concept</th><th>Purpose</th></tr></thead><tbody>
 <tr><td><strong>Fixture</strong></td><td>Isolated test state</td></tr>
 <tr><td><strong>Setup</strong></td><td>Happens in <code>TestFixture::new()</code></td></tr>
@@ -1001,7 +2004,7 @@ test!(test_data_builder, {
 </span><span class="boring">fn main() {
 </span>.with_order_data(id, amount)    // Add order information
 <span class="boring">}</span></code></pre></pre>
-<h3 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h3>
+<h3 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h3>
 <p>Always handle the Result from <code>build_*()</code>:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1160,7 +2163,7 @@ assert_eq!(user.age, 30);
 <li>Build data after acting (arrange first!)</li>
 <li>Ignore build errors</li>
 </ul>
-<h2 id="common-patterns-2"><a class="header" href="#common-patterns-2">Common Patterns</a></h2>
+<h2 id="common-patterns-3"><a class="header" href="#common-patterns-3">Common Patterns</a></h2>
 <h3 id="pattern-reusable-builder-factory"><a class="header" href="#pattern-reusable-builder-factory">Pattern: Reusable Builder Factory</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1212,10 +2215,10 @@ let builder2 = builder1.with_var("key2", "value2");
 
 // etc.
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
 <p>Learn assertions: <a href="core/assertions.html">Assertions &amp; Verification</a></p>
 <hr />
-<h2 id="summary-1"><a class="header" href="#summary-1">Summary</a></h2>
+<h2 id="summary-2"><a class="header" href="#summary-2">Summary</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Purpose</th></tr></thead><tbody>
 <tr><td><strong>Fluent API</strong></td><td>Readable data construction</td></tr>
 <tr><td><strong>Chaining</strong></td><td><code>.with_var()</code> returns <code>Self</code></td></tr>
@@ -1508,10 +2511,10 @@ assert_eq!(user.email, "alice@example.com");
 <tr><td>Empty collection</td><td><code>assert!(collection.is_empty())</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
 <p>Learn about error paths: <a href="core/error-paths.html">Error Path Testing</a></p>
 <hr />
-<h2 id="summary-2"><a class="header" href="#summary-2">Summary</a></h2>
+<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
 <p>Chicago TDD emphasizes:</p>
 <ul>
 <li>Clear assertions with helper macros</li>
@@ -1846,10 +2849,10 @@ Error recovery is possible</li>
     assert_err!(&amp;result);
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next Steps</a></h2>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
 <p>Learn advanced techniques: <a href="core/../advanced/README.html">Advanced Testing Techniques</a></p>
 <hr />
-<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
+<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
 <p>Chicago TDD prioritizes error testing because:</p>
 <ul>
 <li>Bugs hide in error paths</li>
@@ -1866,7 +2869,7 @@ Error recovery is possible</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="advanced-testing-techniques"><a class="header" href="#advanced-testing-techniques">Advanced Testing Techniques</a></h1>
 <p>Welcome to advanced testing techniques! These specialized methods help you test complex scenarios effectively.</p>
-<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
+<h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>Advanced techniques include:</p>
 <ol>
 <li><strong>Property-Based Testing</strong> - Generate random data and verify properties</li>
@@ -1884,7 +2887,7 @@ Error recovery is possible</li>
 <tr><td><strong>Concurrency</strong></td><td>Thread-safe code</td><td>Concurrent systems, race conditions</td></tr>
 </tbody></table>
 </div>
-<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<h2 id="quick-reference-1"><a class="header" href="#quick-reference-1">Quick Reference</a></h2>
 <h3 id="property-based-testing"><a class="header" href="#property-based-testing">Property-Based Testing</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2038,7 +3041,7 @@ chicago-tdd-tools = { version = "1.3", features = [
 <li><a href="advanced/cli-testing.html">CLI Testing</a></li>
 <li><a href="advanced/concurrency-testing.html">Concurrency Testing</a></li>
 </ul>
-<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
 <p>👉 <strong>Start with <a href="advanced/property-testing.html">Property-Based Testing</a></strong></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="property-based-testing-1"><a class="header" href="#property-based-testing-1">Property-Based Testing</a></h1>
 <blockquote>
@@ -2301,10 +3304,10 @@ let data = generator.generate_test_data();
 </span>// Too strict: a * b == b * a (fails due to overflow)
 // Better: a.checked_mul(b) == b.checked_mul(a)
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
+<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
 <p>Learn mutation testing: <a href="advanced/mutation-testing.html">Mutation Testing</a></p>
 <hr />
-<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
+<h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
 <p>Property-based testing:</p>
 <ul>
 <li>✅ Tests properties for all inputs</li>
@@ -2658,10 +3661,10 @@ tester.apply_mutation(MutationOperator::ChangeValue(...));
 // Skip mutations that don't matter
 // (e.g., changing comments, unused variables)
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
+<h2 id="next-steps-10"><a class="header" href="#next-steps-10">Next Steps</a></h2>
 <p>Learn snapshot testing: <a href="advanced/snapshot-testing.html">Snapshot Testing</a></p>
 <hr />
-<h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
+<h2 id="summary-6"><a class="header" href="#summary-6">Summary</a></h2>
 <p>Mutation testing:</p>
 <ul>
 <li>✅ Validates test quality</li>
@@ -2942,10 +3945,10 @@ assert_matches!(output, "output");
     assert_matches!(report, "fixture_report");
 });
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
+<h2 id="next-steps-11"><a class="header" href="#next-steps-11">Next Steps</a></h2>
 <p>Learn CLI testing: <a href="advanced/cli-testing.html">CLI Testing</a></p>
 <hr />
-<h2 id="summary-6"><a class="header" href="#summary-6">Summary</a></h2>
+<h2 id="summary-7"><a class="header" href="#summary-7">Summary</a></h2>
 <p>Snapshot testing:</p>
 <ul>
 <li>✅ Captures complex output</li>
@@ -3256,10 +4259,10 @@ exit-code: 1  (Failure)
 let normalized = output.replace("2024-11-15", "[DATE]");
 assert!(normalized.contains("Started on [DATE]"));
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-10"><a class="header" href="#next-steps-10">Next Steps</a></h2>
+<h2 id="next-steps-12"><a class="header" href="#next-steps-12">Next Steps</a></h2>
 <p>Learn concurrency testing: <a href="advanced/concurrency-testing.html">Concurrency Testing</a></p>
 <hr />
-<h2 id="summary-7"><a class="header" href="#summary-7">Summary</a></h2>
+<h2 id="summary-8"><a class="header" href="#summary-8">Summary</a></h2>
 <p>CLI testing:</p>
 <ul>
 <li>✅ Tests command-line interfaces</li>
@@ -3623,10 +4626,10 @@ fn test_with_timeout() {
     });
 }
 <span class="boring">}</span></code></pre></pre>
-<h2 id="next-steps-11"><a class="header" href="#next-steps-11">Next Steps</a></h2>
+<h2 id="next-steps-13"><a class="header" href="#next-steps-13">Next Steps</a></h2>
 <p>Learn the "Go the Extra Mile" pattern: <a href="advanced/../guides/extra-mile.html">Go the Extra Mile</a></p>
 <hr />
-<h2 id="summary-8"><a class="header" href="#summary-8">Summary</a></h2>
+<h2 id="summary-9"><a class="header" href="#summary-9">Summary</a></h2>
 <p>Concurrency testing with Loom:</p>
 <ul>
 <li>✅ Tests all possible thread interleavings</li>
@@ -3972,13 +4975,13 @@ impl ValidatedUserResponse {
 }
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Recommendation</strong>: Use 2nd idea for most endpoints. Only use 3rd for sensitive data (auth, payments).</p>
-<h2 id="next-steps-12"><a class="header" href="#next-steps-12">Next Steps</a></h2>
+<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
 <ul>
 <li><a href="guides/observability.html">Observability &amp; Quality</a> - Implement 2nd and 3rd ideas</li>
 <li><a href="guides/real-world.html">Real-World Applications</a> - See complete examples</li>
 </ul>
 <hr />
-<h2 id="summary-9"><a class="header" href="#summary-9">Summary</a></h2>
+<h2 id="summary-10"><a class="header" href="#summary-10">Summary</a></h2>
 <p>The "Go the Extra Mile" pattern:</p>
 <p><strong>1st Idea</strong>: Minimal, solves the problem
 <strong>2nd Idea</strong>: 80% more value, 20% more effort (usually best)
@@ -4003,7 +5006,7 @@ impl ValidatedUserResponse {
 <tr><td><code>SpanValidator::new()</code></td><td>Validate span format</td><td><code>.validate(&amp;span)</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
+<h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
 <p>Observability helps you understand what your code is doing:</p>
 <ul>
 <li><strong>OTEL Instrumentation</strong>: Track operations with spans and metrics</li>
@@ -4252,10 +5255,10 @@ Error paths covered</li>
 <li><input disabled="" type="checkbox"/>
 Boundary conditions tested</li>
 </ul>
-<h2 id="next-steps-13"><a class="header" href="#next-steps-13">Next Steps</a></h2>
+<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
 <p>See how to combine observability with real applications: <a href="guides/real-world.html">Real-World Applications</a></p>
 <hr />
-<h2 id="summary-10"><a class="header" href="#summary-10">Summary</a></h2>
+<h2 id="summary-11"><a class="header" href="#summary-11">Summary</a></h2>
 <p>Observability provides:</p>
 <ul>
 <li>✅ OTEL spans for operation tracking</li>
@@ -4367,7 +5370,7 @@ span.status = SpanStatus::Unset;
 <li>Create excessive spans</li>
 <li>Forget timing information</li>
 </ul>
-<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
+<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/weaver.html">Weaver Validation</a> - Validate telemetry against semantic conventions</li>
@@ -4460,7 +5463,7 @@ span.attributes.insert("endpoint".to_string(), "/api/users".to_string());
 <pre><code class="language-bash"># See Weaver registry
 cargo make weaver-smoke
 </code></pre>
-<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
+<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
 <p>Combine observability with testing: <a href="guides/observability.html">Observability &amp; Quality</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="coverage--performance"><a class="header" href="#coverage--performance">Coverage &amp; Performance</a></h1>
 <blockquote>
@@ -4586,7 +5589,7 @@ cargo flamegraph --test performance_tests
 <li>Assume fast</li>
 <li>Measure on dev machine only</li>
 </ul>
-<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
+<h2 id="next-steps-18"><a class="header" href="#next-steps-18">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/../advanced/mutation-testing.html">Mutation Testing</a> - Validate test quality beyond coverage</li>
@@ -4812,7 +5815,7 @@ cargo make release-validate
 <li>CLI testing patterns</li>
 <li>Quality metrics</li>
 </ul>
-<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
+<h2 id="next-steps-19"><a class="header" href="#next-steps-19">Next Steps</a></h2>
 <p>Apply what you've learned:</p>
 <ol>
 <li>Start with <a href="guides/../core/README.html">Core Patterns</a></li>
@@ -4889,7 +5892,7 @@ cargo make release-validate
 <li>Test external tools</li>
 </ul>
 <p>See: <a href="guides/../advanced/cli-testing.html">CLI Testing</a></p>
-<h2 id="next-steps-18"><a class="header" href="#next-steps-18">Next Steps</a></h2>
+<h2 id="next-steps-20"><a class="header" href="#next-steps-20">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/../advanced/cli-testing.html">CLI Testing Guide</a> - Deep dive into trycmd patterns</li>
@@ -5032,7 +6035,7 @@ cargo make test-integration
 cargo make ci-local
 </code></pre>
 <p>See: <a href="guides/../advanced/README.html">Advanced Techniques</a></p>
-<h2 id="next-steps-19"><a class="header" href="#next-steps-19">Next Steps</a></h2>
+<h2 id="next-steps-21"><a class="header" href="#next-steps-21">Next Steps</a></h2>
 <p><strong>Learn more:</strong></p>
 <ul>
 <li><a href="guides/integration-docker.html">Integration Testing with Docker</a> - Test with real services</li>
@@ -5248,7 +6251,7 @@ docker stop &lt;container&gt;
 <p>Increase timeout:</p>
 <pre><code class="language-bash">cargo test --lib -- --test-threads=1  # Sequential
 </code></pre>
-<h2 id="next-steps-20"><a class="header" href="#next-steps-20">Next Steps</a></h2>
+<h2 id="next-steps-22"><a class="header" href="#next-steps-22">Next Steps</a></h2>
 <p>See: <a href="guides/best-practices.html">Best Practices</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="best-practices--migration"><a class="header" href="#best-practices--migration">Best Practices &amp; Migration</a></h1>
 <blockquote>
@@ -5546,7 +6549,7 @@ Expert
 <li><a href="guides/../../cookbook/README.html">Pattern Cookbook</a></li>
 <li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a></li>
 </ul>
-<h2 id="next-steps-21"><a class="header" href="#next-steps-21">Next Steps</a></h2>
+<h2 id="next-steps-23"><a class="header" href="#next-steps-23">Next Steps</a></h2>
 <ol>
 <li>Pick a project to refactor</li>
 <li>Start with core patterns</li>

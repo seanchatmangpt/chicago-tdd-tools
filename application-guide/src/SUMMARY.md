@@ -2,6 +2,18 @@
 
 - [Application Guide](README.md)
 - [Introduction](introduction.md)
+
+# Tutorials
+
+- [Quick Start (25 minutes)](tutorials/getting-started.md)
+- [Fixtures Deep Dive (15 minutes)](tutorials/fixtures-tutorial.md)
+
+# API Reference
+
+- [TestFixture API](reference/fixtures-api.md)
+
+# Core Testing Patterns
+
 - [Core Testing Patterns](core/README.md)
   - [Getting Started with Fixtures](core/fixtures.md)
   - [Building Test Data](core/data-builders.md)
