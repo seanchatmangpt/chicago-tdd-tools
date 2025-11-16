@@ -4,6 +4,8 @@
 
 This guide helps you choose the right pattern(s) based on your testing situation.
 
+> **Want a learning order after choosing?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) to understand what to learn first.
+
 ---
 
 ## Quick Pattern Finder

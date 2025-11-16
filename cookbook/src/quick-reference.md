@@ -2,6 +2,8 @@
 
 One-page lookup for all Chicago TDD patterns. Each row = core idea in 1 sentence.
 
+> **Need a learning order instead of a quick lookup?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) for recommended paths (45 min to 4 hours).
+
 ## Testing Patterns (Patterns 1-5)
 
 | # | Pattern | Problem | Core Solution | Key Benefit |

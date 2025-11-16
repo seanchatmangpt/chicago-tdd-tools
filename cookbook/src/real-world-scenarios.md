@@ -2,6 +2,8 @@
 
 This guide shows how patterns combine to solve actual problems you'll encounter.
 
+> **Want to learn patterns in order?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) for recommended learning paths.
+
 ---
 
 ## Scenario 1: Building a Database Query Service

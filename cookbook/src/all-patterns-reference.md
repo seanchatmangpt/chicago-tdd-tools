@@ -4,6 +4,8 @@
 
 Quick lookup for all patterns. Use this to find a pattern and jump to its full description.
 
+> **Want a learning order?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) for recommended paths.
+
 ---
 
 ## Testing Patterns (5)

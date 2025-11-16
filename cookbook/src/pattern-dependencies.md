@@ -50,7 +50,7 @@ INDEPENDENT PATTERNS (Apply to any of above)
 
 ## Foundation Patterns (Must Learn First)
 
-### Pattern 1: AAA Pattern
+### [Pattern 1: AAA Pattern](testing-patterns/aaa-pattern.md)
 **What it is:** Arrange-Act-Assert structure for tests
 **Why first:** All other testing patterns build on this foundation
 **Prerequisite:** None
@@ -60,7 +60,7 @@ INDEPENDENT PATTERNS (Apply to any of above)
 
 ---
 
-### Pattern 6: Generic Base Layer
+### [Pattern 6: Generic Base Layer](architecture-patterns/generic-base.md)
 **What it is:** Keep core layer generic, domain logic in extensions
 **Why first:** All architecture patterns build on this structure
 **Prerequisite:** None
@@ -72,14 +72,14 @@ INDEPENDENT PATTERNS (Apply to any of above)
 
 ## Testing Patterns (Depend on Pattern 1)
 
-Learn these in any order after mastering Pattern 1:
+Learn these in any order after mastering [Pattern 1](testing-patterns/aaa-pattern.md):
 
 | Pattern | Builds On | Core Idea | Time |
 |---------|-----------|-----------|------|
-| **2: Error Paths** | 1: AAA | Test each error variant | 15 min |
-| **3: Boundaries** | 1: AAA | Test below/at/above limits | 15 min |
-| **4: Cleanup** | 1: AAA | RAII for resource release | 10 min |
-| **5: Real Collaborators** | 1: AAA | Use actual services, not mocks | 15 min |
+| **[2: Error Paths](testing-patterns/error-path-testing.md)** | 1: AAA | Test each error variant | 15 min |
+| **[3: Boundaries](testing-patterns/boundary-conditions.md)** | 1: AAA | Test below/at/above limits | 15 min |
+| **[4: Cleanup](testing-patterns/resource-cleanup.md)** | 1: AAA | RAII for resource release | 10 min |
+| **[5: Real Collaborators](testing-patterns/real-collaborators.md)** | 1: AAA | Use actual services, not mocks | 15 min |
 
 **Recommended order:** 1 → 2 → 3 → 5 → 4
 
@@ -94,15 +94,15 @@ Learn these in any order after mastering Pattern 1:
 
 ## Architecture Patterns (Depend on Pattern 6)
 
-### Core Pattern: Pattern 6 (Generic Base)
+### Core Pattern: [Pattern 6 (Generic Base)](architecture-patterns/generic-base.md)
 Learn this first. Builds foundation for all architecture patterns.
 
 ### Tier 1 (Depends only on 6)
 
 | Pattern | What It Adds | Time |
 |---------|-------------|------|
-| **10: Capability Groups** | How to organize modules | 10 min |
-| **9: Single Source of Truth** | Centralize constants | 10 min |
+| **[10: Capability Groups](architecture-patterns/capability-groups.md)** | How to organize modules | 10 min |
+| **[9: Single Source of Truth](architecture-patterns/single-source-of-truth.md)** | Centralize constants | 10 min |
 
 **Learn after 6:** 6 → 10 OR 6 → 9 (either order)
 
@@ -110,12 +110,12 @@ Learn this first. Builds foundation for all architecture patterns.
 
 | Pattern | Depends On | What It Adds | Time |
 |---------|-----------|-------------|------|
-| **7: Extension Layer** | 6 | Domain logic in extensions | 10 min |
-| **8: Composition** | 6, 7 | Wrap don't copy | 10 min |
+| **[7: Extension Layer](architecture-patterns/extension-layer.md)** | 6 | Domain logic in extensions | 10 min |
+| **[8: Composition](architecture-patterns/composition-over-duplication.md)** | 6, 7 | Wrap don't copy | 10 min |
 
 **Learn after Tier 1:** 6 → 10 → 7 → 8 OR 6 → 7 → 8
 
-### Pattern 19: Feature Gates
+### [Pattern 19: Feature Gates](design-patterns/feature-gating.md)
 **Depends on:** 6: Generic Base
 **When to learn:** After you have multiple features in your crate
 **Time:** 10 min
@@ -132,11 +132,11 @@ These patterns don't depend on each other. Learn based on your needs:
 
 | # | Pattern | Problem | Time |
 |---|---------|---------|------|
-| **11** | Zero-Cost Abstractions | Trait objects slow hot paths | 15 min |
-| **14** | Compile-Time Validation | Validate at runtime vs compile time | 15 min |
-| **12** | Type Safety (GATs) | Lifetimes escape scope | 20 min |
-| **15** | Type State Enforcement | Call order can be wrong | 15 min |
-| **13** | Sealed Traits | Downstream breaks invariants | 10 min |
+| **[11](design-patterns/zero-cost-abstractions.md)** | Zero-Cost Abstractions | Trait objects slow hot paths | 15 min |
+| **[14](design-patterns/compile-time-validation.md)** | Compile-Time Validation | Validate at runtime vs compile time | 15 min |
+| **[12](design-patterns/type-safety-patterns.md)** | Type Safety (GATs) | Lifetimes escape scope | 20 min |
+| **[15](design-patterns/type-state-pattern.md)** | Type State Enforcement | Call order can be wrong | 15 min |
+| **[13](design-patterns/sealed-traits.md)** | Sealed Traits | Downstream breaks invariants | 10 min |
 
 **Why this order:** Build on each other's concepts for safety
 
@@ -146,9 +146,9 @@ These patterns don't depend on each other. Learn based on your needs:
 
 | # | Pattern | What It Does | Time |
 |---|---------|-------------|------|
-| **13** | Sealed Traits | Prevent downstream implementations | 10 min |
-| **20** | Macro Enforcement | Embed best practices in macros | 15 min |
-| **19** | Feature Gates | Group features into slices | 10 min |
+| **[13](design-patterns/sealed-traits.md)** | Sealed Traits | Prevent downstream implementations | 10 min |
+| **[20](design-patterns/macro-enforcement.md)** | Macro Enforcement | Embed best practices in macros | 15 min |
+| **[19](design-patterns/feature-gating.md)** | Feature Gates | Group features into slices | 10 min |
 
 ### For Reliability & Correctness
 
@@ -156,9 +156,9 @@ These patterns don't depend on each other. Learn based on your needs:
 
 | # | Pattern | What It Does | Time |
 |---|---------|-------------|------|
-| **16** | Fixture Lifecycle | Automatic cleanup via Drop | 10 min |
-| **17** | Builder Test Data | Fluent test data construction | 10 min |
-| **18** | Timeout Defense | Layer timeouts for safety | 10 min |
+| **[16](design-patterns/fixture-lifecycle.md)** | Fixture Lifecycle | Automatic cleanup via Drop | 10 min |
+| **[17](design-patterns/builder-test-data.md)** | Builder Test Data | Fluent test data construction | 10 min |
+| **[18](design-patterns/timeout-defense.md)** | Timeout Defense | Layer timeouts for safety | 10 min |
 
 ---
 
@@ -321,10 +321,10 @@ PHASE 5: DESIGN PATTERNS (80 min)
 
 ### Question 1: What's your main goal?
 
-**A) Better tests** → Path 1 (Testing Excellence)
-**B) Better code organization** → Path 2 (Architecture)
-**C) Type safety & performance** → Path 3 (Type Safety)
-**D) Everything** → Path 4 (Production Ready)
+**A) Better tests** → [Path 1 (Testing Excellence)](#path-1-testing-excellence-90-minutes)
+**B) Better code organization** → [Path 2 (Architecture)](#path-2-architecture--organization-60-minutes)
+**C) Type safety & performance** → [Path 3 (Type Safety)](#path-3-type-safety--performance-120-minutes)
+**D) Everything** → [Path 4 (Production Ready)](#path-4-production-ready-180-minutes)
 
 ### Question 2: How much time do you have?
 
@@ -428,4 +428,24 @@ Design patterns (11-15, 20) stand alone.
 5. **Pattern 5: Real Collaborators** (5 min) - Integration confidence
 
 **Result:** You'll have 80% of the value with these 5 patterns. Everything else adds depth.
+
+---
+
+## Related Guides
+
+**Want quick lookup instead of learning paths?**
+- [Quick Reference Card](quick-reference.md) - One-page pattern table (2 min)
+- [Common Mistakes](common-mistakes.md) - Aggregated gotchas for all 20 patterns (10 min)
+- [All Patterns: Quick Reference](all-patterns-reference.md) - All 20 patterns at a glance (10 min)
+
+**Need to find a pattern for your specific problem?**
+- [Choosing Your Pattern](choosing-your-pattern.md) - Decision matrix by problem (5 min)
+
+**Ready to dive deep into a specific pattern?**
+- [Testing Patterns](testing-patterns/) - Patterns 1-5
+- [Architecture Patterns](architecture-patterns/) - Patterns 6-10
+- [Design Patterns](design-patterns/) - Patterns 11-20
+
+**Want real-world examples?**
+- [Real-World Scenarios](real-world-scenarios.md) - 5 scenarios showing patterns combined (15 min)
 

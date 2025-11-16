@@ -2,6 +2,8 @@
 
 This guide aggregates "The Gotcha" from each pattern and shows how to avoid it.
 
+> **Want to learn patterns in order?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) for recommended learning paths. **Want a quick lookup?** See [Quick Reference Card](quick-reference.md).
+
 ---
 
 ## Testing Patterns
