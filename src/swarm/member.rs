@@ -177,8 +177,8 @@ mod tests {
 
     #[test]
     fn test_member_capacity() {
-        let mut member = SwarmMember::new("agent-1".to_string(), "Agent".to_string())
-            .with_capacity(2);
+        let mut member =
+            SwarmMember::new("agent-1".to_string(), "Agent".to_string()).with_capacity(2);
 
         assert!(member.has_capacity());
         assert!(member.assign_task().is_ok());
@@ -190,8 +190,8 @@ mod tests {
 
     #[test]
     fn test_member_state_transitions() {
-        let mut member = SwarmMember::new("agent-1".to_string(), "Agent".to_string())
-            .with_capacity(1);
+        let mut member =
+            SwarmMember::new("agent-1".to_string(), "Agent".to_string()).with_capacity(1);
 
         assert_eq!(member.state, MemberState::Alive);
 

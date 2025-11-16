@@ -203,10 +203,8 @@ impl TestReceipt {
         result: TestOutcome,
     ) -> Self {
         let receipt_id = Self::generate_receipt_id(&contract_name);
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64;
+        let timestamp =
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
 
         Self {
             receipt_id,
@@ -248,10 +246,8 @@ impl TestReceipt {
 
     /// Generate a unique receipt ID
     fn generate_receipt_id(contract_name: &str) -> String {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis();
+        let timestamp =
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis();
         let mut hasher = Sha256::new();
         hasher.update(contract_name.as_bytes());
         hasher.update(timestamp.to_string().as_bytes());
@@ -312,10 +308,7 @@ impl TestReceipt {
     /// Get metadata value
     #[must_use]
     pub fn get_metadata(&self, key: &str) -> Option<&str> {
-        self.metadata
-            .iter()
-            .find(|(k, _)| k == key)
-            .map(|(_, v)| v.as_str())
+        self.metadata.iter().find(|(k, _)| k == key).map(|(_, v)| v.as_str())
     }
 
     /// Serialize to JSON
@@ -366,10 +359,7 @@ impl TestReceiptRegistry {
     /// Get receipts for a specific test
     #[must_use]
     pub fn receipts_for_test(&self, test_name: &str) -> Vec<&TestReceipt> {
-        self.receipts
-            .iter()
-            .filter(|r| r.contract_name == test_name)
-            .collect()
+        self.receipts.iter().filter(|r| r.contract_name == test_name).collect()
     }
 
     /// Get receipts that verified a specific invariant
@@ -393,19 +383,13 @@ impl TestReceiptRegistry {
     /// Get failed test receipts
     #[must_use]
     pub fn failed_receipts(&self) -> Vec<&TestReceipt> {
-        self.receipts
-            .iter()
-            .filter(|r| r.result == TestOutcome::Fail)
-            .collect()
+        self.receipts.iter().filter(|r| r.result == TestOutcome::Fail).collect()
     }
 
     /// Get receipts that violated τ
     #[must_use]
     pub fn tau_violations(&self) -> Vec<&TestReceipt> {
-        self.receipts
-            .iter()
-            .filter(|r| r.timing.violates_tau())
-            .collect()
+        self.receipts.iter().filter(|r| r.timing.violates_tau()).collect()
     }
 
     /// Total number of receipts
@@ -478,13 +462,7 @@ mod tests {
 
     #[test]
     fn test_timing_measurement() {
-        let timing = TimingMeasurement::new(
-            5,
-            1,
-            "hot".to_string(),
-            true,
-            8,
-        );
+        let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
 
         assert_eq!(timing.total_ticks, 5);
         assert!(timing.budget_met);
@@ -493,13 +471,7 @@ mod tests {
 
     #[test]
     fn test_timing_violation() {
-        let timing = TimingMeasurement::new(
-            10,
-            1,
-            "hot".to_string(),
-            false,
-            8,
-        );
+        let timing = TimingMeasurement::new(10, 1, "hot".to_string(), false, 8);
 
         assert!(!timing.budget_met);
         assert!(timing.violates_tau());

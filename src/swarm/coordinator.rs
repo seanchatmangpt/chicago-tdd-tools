@@ -20,10 +20,7 @@ pub struct SwarmMembership {
 impl SwarmMembership {
     /// Create a new swarm membership
     pub fn new() -> Self {
-        Self {
-            swarm_id: format!("swarm-{}", uuid::Uuid::new_v4()),
-            members: HashMap::new(),
-        }
+        Self { swarm_id: format!("swarm-{}", uuid::Uuid::new_v4()), members: HashMap::new() }
     }
 
     /// Add a member to the swarm
@@ -53,10 +50,7 @@ impl SwarmMembership {
 
     /// Get members handling a specific sector
     pub fn members_for_sector(&self, sector: &str) -> Vec<&SwarmMember> {
-        self.members
-            .values()
-            .filter(|m| m.can_handle(sector))
-            .collect()
+        self.members.values().filter(|m| m.can_handle(sector)).collect()
     }
 
     /// Get member count
@@ -309,8 +303,7 @@ mod tests {
     fn test_swarm_status() {
         let mut coordinator = SwarmCoordinator::new();
 
-        let member = SwarmMember::new("agent-1".to_string(), "Agent".to_string())
-            .with_capacity(5);
+        let member = SwarmMember::new("agent-1".to_string(), "Agent".to_string()).with_capacity(5);
 
         coordinator.register_member(member);
 

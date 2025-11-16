@@ -159,10 +159,7 @@ pub struct TaskQueue {
 impl TaskQueue {
     /// Create a new task queue
     pub fn new() -> Self {
-        Self {
-            tasks: Vec::new(),
-            receipts: Vec::new(),
-        }
+        Self { tasks: Vec::new(), receipts: Vec::new() }
     }
 
     /// Enqueue a task
@@ -281,8 +278,13 @@ mod tests {
         ));
 
         queue.enqueue(
-            TaskRequest::new("t2".to_string(), "Claims".to_string(), "op".to_string(), "data".to_string())
-                .with_priority(10),
+            TaskRequest::new(
+                "t2".to_string(),
+                "Claims".to_string(),
+                "op".to_string(),
+                "data".to_string(),
+            )
+            .with_priority(10),
         );
 
         // Higher priority should be dequeued first

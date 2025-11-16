@@ -54,7 +54,13 @@ impl ResourceEnvelope {
         requires_storage: bool,
         requires_privileged: bool,
     ) -> Self {
-        Self { max_ticks, max_memory_bytes, requires_network, requires_storage, requires_privileged }
+        Self {
+            max_ticks,
+            max_memory_bytes,
+            requires_network,
+            requires_storage,
+            requires_privileged,
+        }
     }
 
     /// Hot path envelope: τ ≤ 8, minimal resources, no IO
@@ -73,7 +79,7 @@ impl ResourceEnvelope {
     #[must_use]
     pub const fn warm() -> Self {
         Self {
-            max_ticks: 500_000, // ~125μs at 4GHz
+            max_ticks: 500_000,          // ~125μs at 4GHz
             max_memory_bytes: 1_048_576, // 1MB
             requires_network: false,
             requires_storage: false,
@@ -85,7 +91,7 @@ impl ResourceEnvelope {
     #[must_use]
     pub const fn cold() -> Self {
         Self {
-            max_ticks: u64::MAX, // No tick limit for integration
+            max_ticks: u64::MAX,        // No tick limit for integration
             max_memory_bytes: u64::MAX, // No memory limit
             requires_network: true,
             requires_storage: true,
@@ -193,10 +199,7 @@ impl TestContract {
     /// - No syscalls
     /// - No panics
     #[must_use]
-    pub const fn hot_path(
-        name: &'static str,
-        coverage: &'static [&'static str],
-    ) -> Self {
+    pub const fn hot_path(name: &'static str, coverage: &'static [&'static str]) -> Self {
         Self {
             name,
             coverage,
@@ -213,13 +216,7 @@ impl TestContract {
         coverage: &'static [&'static str],
         invariants: &'static [&'static str],
     ) -> Self {
-        Self {
-            name,
-            coverage,
-            invariants,
-            resources: ResourceEnvelope::warm(),
-            environment: &[],
-        }
+        Self { name, coverage, invariants, resources: ResourceEnvelope::warm(), environment: &[] }
     }
 
     /// Create a cold path test contract
@@ -311,46 +308,31 @@ impl TestContractRegistry {
     /// Get all hot path tests
     #[must_use]
     pub fn hot_path_tests(&self) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.resources.is_hot_path())
-            .collect()
+        self.contracts.iter().filter(|c| c.resources.is_hot_path()).collect()
     }
 
     /// Get all warm path tests
     #[must_use]
     pub fn warm_path_tests(&self) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.resources.is_warm_path())
-            .collect()
+        self.contracts.iter().filter(|c| c.resources.is_warm_path()).collect()
     }
 
     /// Get all cold path tests
     #[must_use]
     pub fn cold_path_tests(&self) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.resources.is_cold_path())
-            .collect()
+        self.contracts.iter().filter(|c| c.resources.is_cold_path()).collect()
     }
 
     /// Get all tests that cover a specific module
     #[must_use]
     pub fn tests_covering_module(&self, module: &str) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.covers_module_runtime(module))
-            .collect()
+        self.contracts.iter().filter(|c| c.covers_module_runtime(module)).collect()
     }
 
     /// Get all tests that verify a specific invariant
     #[must_use]
     pub fn tests_verifying_invariant(&self, invariant: &str) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.verifies_invariant(invariant))
-            .collect()
+        self.contracts.iter().filter(|c| c.verifies_invariant(invariant)).collect()
     }
 
     /// Get all tests that require a specific environment
@@ -434,10 +416,8 @@ mod tests {
 
     #[test]
     fn test_contract_hot_path() {
-        const CONTRACT: TestContract = TestContract::hot_path(
-            "test_hot_operation",
-            &["core::hot_path"],
-        );
+        const CONTRACT: TestContract =
+            TestContract::hot_path("test_hot_operation", &["core::hot_path"]);
 
         assert_eq!(CONTRACT.name, "test_hot_operation");
         assert_eq!(CONTRACT.coverage.len(), 1);

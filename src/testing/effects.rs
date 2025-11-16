@@ -190,6 +190,7 @@ impl<E> EffectTest<E> {
     ///
     /// The closure receives the effect set, which can be used to call
     /// effect-restricted operations.
+    #[allow(clippy::unused_self)] // API consistency: instance method matches test framework patterns
     pub fn run<F, T>(&self, f: F) -> T
     where
         F: FnOnce(&E) -> T,
@@ -209,6 +210,10 @@ pub trait RequiresEffect<E> {
     type Effect;
 
     /// Execute the operation (only callable with the required effect)
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the operation cannot be executed.
     fn execute(&self, effect: &Self::Effect) -> Result<(), String>;
 }
 
@@ -273,7 +278,7 @@ impl RequiresEffect<StorageWrite> for FileWrite {
 /// Analyzes which effects are tested and under what invariants.
 #[derive(Debug, Clone)]
 pub struct EffectCoverage {
-    /// Effect name (e.g., "NetworkRead", "StorageWrite")
+    /// Effect name (e.g., "`NetworkRead`", "`StorageWrite`")
     pub effect_name: String,
     /// Number of tests covering this effect
     pub test_count: usize,
@@ -285,11 +290,7 @@ impl EffectCoverage {
     /// Create a new effect coverage report
     #[must_use]
     pub fn new(effect_name: impl Into<String>) -> Self {
-        Self {
-            effect_name: effect_name.into(),
-            test_count: 0,
-            invariants: Vec::new(),
-        }
+        Self { effect_name: effect_name.into(), test_count: 0, invariants: Vec::new() }
     }
 
     /// Add a test to this coverage
@@ -305,7 +306,7 @@ impl EffectCoverage {
     ///
     /// Adequate coverage means at least one test per critical invariant.
     #[must_use]
-    pub fn has_adequate_coverage(&self, min_tests: usize) -> bool {
+    pub const fn has_adequate_coverage(&self, min_tests: usize) -> bool {
         self.test_count >= min_tests && !self.invariants.is_empty()
     }
 }
@@ -321,7 +322,7 @@ pub struct EffectCoverageRegistry {
 impl EffectCoverageRegistry {
     /// Create a new effect coverage registry
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { effects: Vec::new() }
     }
 
@@ -348,25 +349,26 @@ impl EffectCoverageRegistry {
     /// Get all effects with inadequate coverage
     #[must_use]
     pub fn inadequate_coverage(&self, min_tests: usize) -> Vec<&EffectCoverage> {
-        self.effects
-            .iter()
-            .filter(|e| !e.has_adequate_coverage(min_tests))
-            .collect()
+        self.effects.iter().filter(|e| !e.has_adequate_coverage(min_tests)).collect()
     }
 
     /// Generate a coverage report
     #[must_use]
     pub fn report(&self) -> String {
+        use std::fmt::Write;
+
         let mut report = String::from("Effect Coverage Report\n");
         report.push_str("======================\n\n");
 
         for effect in &self.effects {
-            report.push_str(&format!(
-                "Effect: {}\n  Tests: {}\n  Invariants: {}\n\n",
+            let _ = writeln!(
+                report,
+                "Effect: {}\n  Tests: {}\n  Invariants: {}",
                 effect.effect_name,
                 effect.test_count,
                 effect.invariants.join(", ")
-            ));
+            );
+            report.push('\n');
         }
 
         report

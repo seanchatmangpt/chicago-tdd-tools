@@ -99,21 +99,13 @@ impl HotPathConfig {
     /// Create default hot path configuration
     #[must_use]
     pub const fn new() -> Self {
-        Self {
-            max_ticks: HOT_PATH_TICK_BUDGET,
-            enforce_no_alloc: true,
-            enforce_no_syscall: true,
-        }
+        Self { max_ticks: HOT_PATH_TICK_BUDGET, enforce_no_alloc: true, enforce_no_syscall: true }
     }
 
     /// Create relaxed hot path configuration (for testing/development)
     #[must_use]
     pub const fn relaxed() -> Self {
-        Self {
-            max_ticks: HOT_PATH_TICK_BUDGET,
-            enforce_no_alloc: false,
-            enforce_no_syscall: false,
-        }
+        Self { max_ticks: HOT_PATH_TICK_BUDGET, enforce_no_alloc: false, enforce_no_syscall: false }
     }
 }
 
@@ -125,7 +117,7 @@ impl HotPathConfig {
 /// - No network/storage IO
 #[derive(Debug, Clone, Copy)]
 pub struct WarmPathConfig {
-    /// Maximum allowed ticks (default: 500_000 ~= 125μs at 4GHz)
+    /// Maximum allowed ticks (default: `500_000` ~= 125μs at 4GHz)
     pub max_ticks: u64,
     /// Maximum memory usage in bytes (default: 1MB)
     pub max_memory_bytes: usize,
@@ -146,7 +138,7 @@ impl WarmPathConfig {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            max_ticks: 500_000, // ~125μs at 4GHz
+            max_ticks: 500_000,          // ~125μs at 4GHz
             max_memory_bytes: 1_048_576, // 1MB
             enforce_no_network: true,
             enforce_no_storage: true,
@@ -157,7 +149,7 @@ impl WarmPathConfig {
     #[must_use]
     pub const fn relaxed() -> Self {
         Self {
-            max_ticks: 1_000_000, // ~250μs at 4GHz
+            max_ticks: 1_000_000,         // ~250μs at 4GHz
             max_memory_bytes: 10_485_760, // 10MB
             enforce_no_network: false,
             enforce_no_storage: false,
@@ -233,8 +225,8 @@ impl HotPathTest {
     ///
     /// Returns error if:
     /// - Tick budget exceeded (τ violation)
-    /// - Allocation detected (when enforce_no_alloc is true)
-    /// - Syscall detected (when enforce_no_syscall is true)
+    /// - Allocation detected (when `enforce_no_alloc` is true)
+    /// - Syscall detected (when `enforce_no_syscall` is true)
     pub fn run<F, T>(&self, f: F) -> ThermalTestResult<(T, u64)>
     where
         F: FnOnce() -> T,
@@ -359,6 +351,7 @@ impl ColdPathTest {
     /// Run a cold path test
     ///
     /// No constraints enforced, but measures timing for observability.
+    #[allow(clippy::unused_self)] // API consistency: instance method matches hot/warm path test API
     pub fn run<F, T>(&self, f: F) -> (T, u64)
     where
         F: FnOnce() -> T,
@@ -389,11 +382,8 @@ mod tests {
     #[test]
     fn test_hot_path_success() {
         // Use relaxed config for test environment (production would use strict τ ≤ 8)
-        let relaxed_config = HotPathConfig {
-            max_ticks: 1000,
-            enforce_no_alloc: false,
-            enforce_no_syscall: false,
-        };
+        let relaxed_config =
+            HotPathConfig { max_ticks: 1000, enforce_no_alloc: false, enforce_no_syscall: false };
         let test = HotPathTest::new(relaxed_config);
         let result = test.run(|| {
             // Fast operation

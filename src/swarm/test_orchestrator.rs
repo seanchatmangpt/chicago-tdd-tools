@@ -24,7 +24,7 @@
 //! ```
 
 use crate::core::contract::{TestContract, TestContractRegistry};
-use crate::core::receipt::{TestReceipt, TestOutcome};
+use crate::core::receipt::{TestOutcome, TestReceipt};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
@@ -92,7 +92,7 @@ impl ResourceBudget {
         Self {
             max_cores: 1,
             max_memory_bytes: 1_073_741_824, // 1 GB
-            max_wall_clock_seconds: 300, // 5 minutes
+            max_wall_clock_seconds: 300,     // 5 minutes
             allow_network: false,
             allow_storage: false,
         }
@@ -202,11 +202,7 @@ impl TestOrchestrator {
     /// Create a new test orchestrator
     #[must_use]
     pub fn new(registry: TestContractRegistry) -> Self {
-        Self {
-            registry,
-            pending: VecDeque::new(),
-            executed: Vec::new(),
-        }
+        Self { registry, pending: VecDeque::new(), executed: Vec::new() }
     }
 
     /// Submit a test plan
@@ -215,7 +211,9 @@ impl TestOrchestrator {
         let insert_idx = self
             .pending
             .iter()
-            .position(|p| p.priority < plan.priority || (p.priority == plan.priority && p.qos < plan.qos))
+            .position(|p| {
+                p.priority < plan.priority || (p.priority == plan.priority && p.qos < plan.qos)
+            })
             .unwrap_or(self.pending.len());
 
         // Assign plan ID if not set
@@ -246,11 +244,7 @@ impl TestOrchestrator {
         let summary = ExecutionSummary::new();
         let receipts = Vec::new(); // Would be populated by actual test execution
 
-        let result = TestExecutionResult {
-            plan_id: plan.plan_id.clone(),
-            receipts,
-            summary,
-        };
+        let result = TestExecutionResult { plan_id: plan.plan_id.clone(), receipts, summary };
 
         self.executed.push(result.clone());
         result
@@ -498,15 +492,13 @@ mod tests {
 
     #[test]
     fn test_coverage_gap() {
-        const CONTRACTS: &[TestContract] = &[
-            TestContract::hot_path("test1", &["module1"]),
-        ];
+        const CONTRACTS: &[TestContract] = &[TestContract::hot_path("test1", &["module1"])];
 
         let registry = TestContractRegistry::new(CONTRACTS);
         let api = TestPlanningAPI::new(registry);
 
         let gap = api.coverage_gap(
-            &["module1", "module2"], // module2 not covered
+            &["module1", "module2"],      // module2 not covered
             &["τ ≤ 8", "error_recovery"], // error_recovery not covered (hot_path includes τ ≤ 8 and no_panics)
         );
 

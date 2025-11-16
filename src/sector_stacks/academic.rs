@@ -5,9 +5,9 @@
 //! Review Collection → Decision → Notification
 
 use crate::sector_stacks::{OperationReceipt, OperationStatus, SectorOperation};
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
 use hex;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 /// Paper submission
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,11 +111,7 @@ impl AcademicOperation {
     /// Create new academic operation
     pub fn new(paper: PaperSubmission, reviews: Vec<Review>) -> Self {
         let decision = Decision::from_reviews(&reviews);
-        Self {
-            paper,
-            reviews,
-            decision,
-        }
+        Self { paper, reviews, decision }
     }
 
     /// Generate reviewer assignment (deterministic)
@@ -216,14 +212,12 @@ mod tests {
 
     #[test]
     fn test_decision_from_reviews_reject() {
-        let reviews = vec![
-            Review {
-                reviewer: "reviewer1".to_string(),
-                score: 2.0,
-                comments: "Not suitable".to_string(),
-                recommendation: ReviewRecommendation::Reject,
-            },
-        ];
+        let reviews = vec![Review {
+            reviewer: "reviewer1".to_string(),
+            score: 2.0,
+            comments: "Not suitable".to_string(),
+            recommendation: ReviewRecommendation::Reject,
+        }];
 
         assert_eq!(Decision::from_reviews(&reviews), Decision::Rejected);
     }
@@ -259,14 +253,12 @@ mod tests {
             file_size_bytes: 1000,
         };
 
-        let reviews = vec![
-            Review {
-                reviewer: "reviewer1".to_string(),
-                score: 3.5,
-                comments: "Good".to_string(),
-                recommendation: ReviewRecommendation::Accept,
-            },
-        ];
+        let reviews = vec![Review {
+            reviewer: "reviewer1".to_string(),
+            score: 3.5,
+            comments: "Good".to_string(),
+            recommendation: ReviewRecommendation::Accept,
+        }];
 
         let op = AcademicOperation::new(paper, reviews);
         let receipt = op.generate_receipt(OperationStatus::Success);

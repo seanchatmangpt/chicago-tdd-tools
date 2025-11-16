@@ -11,11 +11,22 @@
 //! 6. Swarm Orchestration: Agent-driven test scheduling
 
 use chicago_tdd_tools::core::contract::{TestContract, TestContractRegistry, TestThermalClass};
-use chicago_tdd_tools::core::receipt::{TestReceipt, TestOutcome, TimingMeasurement, EnvironmentFingerprint, TestReceiptRegistry};
-use chicago_tdd_tools::validation::thermal::{HotPathTest, WarmPathTest, ColdPathTest, HotPathConfig, WarmPathConfig};
-use chicago_tdd_tools::testing::effects::{EffectTest, Effects, NetworkRead, StorageWrite, Pure, HttpGet, FileWrite, RequiresEffect, EffectCoverageRegistry};
-use chicago_tdd_tools::testing::state_machine::{State, Transition, StateMachine, Actor, Schedule, ScheduleStep};
-use chicago_tdd_tools::swarm::test_orchestrator::{TestOrchestrator, TestPlan, TestPlanningAPI, QoSClass, ResourceBudget};
+use chicago_tdd_tools::core::receipt::{
+    EnvironmentFingerprint, TestOutcome, TestReceipt, TestReceiptRegistry, TimingMeasurement,
+};
+use chicago_tdd_tools::swarm::test_orchestrator::{
+    QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
+};
+use chicago_tdd_tools::testing::effects::{
+    EffectCoverageRegistry, EffectTest, Effects, FileWrite, HttpGet, NetworkRead, Pure,
+    RequiresEffect, StorageWrite,
+};
+use chicago_tdd_tools::testing::state_machine::{
+    Actor, Schedule, ScheduleStep, State, StateMachine, Transition,
+};
+use chicago_tdd_tools::validation::thermal::{
+    ColdPathTest, HotPathConfig, HotPathTest, WarmPathConfig, WarmPathTest,
+};
 
 // ============================================================================
 // Track 1: Test Contracts - Compile-Time Verification
@@ -24,10 +35,8 @@ use chicago_tdd_tools::swarm::test_orchestrator::{TestOrchestrator, TestPlan, Te
 #[test]
 fn test_contracts_provide_compile_time_coverage_analysis() {
     // Arrange: Define contracts for different thermal classes
-    const HOT_CONTRACT: TestContract = TestContract::hot_path(
-        "test_critical_hot_path",
-        &["core::hot_path", "validation::guards"],
-    );
+    const HOT_CONTRACT: TestContract =
+        TestContract::hot_path("test_critical_hot_path", &["core::hot_path", "validation::guards"]);
 
     const WARM_CONTRACT: TestContract = TestContract::warm_path(
         "test_business_logic",
@@ -72,7 +81,8 @@ fn test_contracts_provide_compile_time_coverage_analysis() {
     assert_eq!(hot_path_coverage.len(), 1);
 
     // Detect coverage gaps
-    let required_modules = vec!["core::hot_path", "core::business", "integration::database", "missing::module"];
+    let required_modules =
+        vec!["core::hot_path", "core::business", "integration::database", "missing::module"];
     let uncovered = registry.uncovered_modules(&required_modules);
     assert_eq!(uncovered.len(), 1);
     assert_eq!(uncovered[0], "missing::module");
@@ -270,12 +280,16 @@ fn test_effect_coverage_tracks_which_effects_are_tested() {
 // Define states for a simple lock state machine
 struct Locked;
 impl State for Locked {
-    fn name() -> &'static str { "Locked" }
+    fn name() -> &'static str {
+        "Locked"
+    }
 }
 
 struct Unlocked;
 impl State for Unlocked {
-    fn name() -> &'static str { "Unlocked" }
+    fn name() -> &'static str {
+        "Unlocked"
+    }
 }
 
 // Define transitions
@@ -360,17 +374,15 @@ fn test_concurrent_actors_generate_schedules() {
 #[test]
 fn test_receipts_provide_cryptographic_provenance() {
     // Arrange: Create test contract and timing measurement
-    const CONTRACT: TestContract = TestContract::hot_path(
-        "test_critical_path",
-        &["core::critical"],
-    );
+    const CONTRACT: TestContract =
+        TestContract::hot_path("test_critical_path", &["core::critical"]);
 
     let timing = TimingMeasurement::new(
-        5,                       // 5 ticks (within τ ≤ 8)
-        1,                       // 1 ms wall clock
+        5, // 5 ticks (within τ ≤ 8)
+        1, // 1 ms wall clock
         "hot".to_string(),
-        true,                    // Budget met
-        8,                       // Expected budget
+        true, // Budget met
+        8,    // Expected budget
     );
 
     // Act: Create receipt from contract
@@ -577,16 +589,14 @@ fn test_orchestrator_suggests_minimal_test_set_for_changes() {
 #[test]
 fn test_planning_api_analyzes_coverage_gaps() {
     // Arrange: Create registry with partial coverage
-    const CONTRACTS: &[TestContract] = &[
-        TestContract::hot_path("test1", &["module1"]),
-    ];
+    const CONTRACTS: &[TestContract] = &[TestContract::hot_path("test1", &["module1"])];
 
     let registry = TestContractRegistry::new(CONTRACTS);
     let api = TestPlanningAPI::new(registry);
 
     // Act: Analyze coverage gap
     let gap = api.coverage_gap(
-        &["module1", "module2", "module3"], // Required modules
+        &["module1", "module2", "module3"],        // Required modules
         &["τ ≤ 8", "no_panics", "error_recovery"], // Required invariants
     );
 
@@ -643,17 +653,12 @@ fn test_full_hyper_advanced_workflow() {
     // Contract → Test → Receipt → Orchestration → Governance
 
     // Step 1: Define test contract
-    const CONTRACT: TestContract = TestContract::hot_path(
-        "test_critical_workflow",
-        &["workflow::critical"],
-    );
+    const CONTRACT: TestContract =
+        TestContract::hot_path("test_critical_workflow", &["workflow::critical"]);
 
     // Step 2: Execute τ-aware test (relaxed for test environment)
-    let relaxed_config = HotPathConfig {
-        max_ticks: 1000,
-        enforce_no_alloc: false,
-        enforce_no_syscall: false,
-    };
+    let relaxed_config =
+        HotPathConfig { max_ticks: 1000, enforce_no_alloc: false, enforce_no_syscall: false };
     let hot_test = HotPathTest::new(relaxed_config);
     let result = hot_test.run(|| {
         // Critical business logic
@@ -670,8 +675,8 @@ fn test_full_hyper_advanced_workflow() {
         ticks,
         1,
         "hot".to_string(),
-        true,  // Test passed with relaxed config, so mark as meeting tau
-        8,     // Production budget is still 8 (Chatman Constant)
+        true, // Test passed with relaxed config, so mark as meeting tau
+        8,    // Production budget is still 8 (Chatman Constant)
     );
 
     let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);

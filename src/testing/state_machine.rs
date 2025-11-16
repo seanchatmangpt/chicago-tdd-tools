@@ -68,6 +68,10 @@ pub trait Transition<From: State, To: State> {
     /// Execute the transition
     ///
     /// Returns Ok(()) if transition succeeds, Err otherwise.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the transition cannot be executed.
     fn execute() -> Result<(), String>;
 }
 
@@ -94,6 +98,7 @@ impl<S: State> StateMachine<S> {
     /// # Errors
     ///
     /// Returns error if the transition execution fails.
+    #[allow(clippy::unused_self)] // Consumes self to enforce state machine linearity
     pub fn transition<To: State, T>(self) -> Result<StateMachine<To>, String>
     where
         T: Transition<S, To>,
@@ -176,7 +181,7 @@ pub struct ScheduleStep {
 impl Schedule {
     /// Create a new empty schedule
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { steps: Vec::new() }
     }
 
@@ -193,29 +198,32 @@ impl Schedule {
 
     /// Get schedule length
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.steps.len()
     }
 
     /// Check if schedule is empty
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.steps.is_empty()
     }
 
     /// Format schedule as string
     #[must_use]
     pub fn format(&self) -> String {
+        use std::fmt::Write;
+
         let mut s = String::from("Schedule:\n");
         for (i, step) in self.steps.iter().enumerate() {
-            s.push_str(&format!(
-                "  {}. Actor {} - {} -> {}: {}\n",
+            let _ = writeln!(
+                s,
+                "  {}. Actor {} - {} -> {}: {}",
                 i + 1,
                 step.actor_id,
                 step.from_state,
                 step.to_state,
                 step.transition
-            ));
+            );
         }
         s
     }
@@ -254,7 +262,8 @@ impl ScheduleGenerator {
     /// this would use the state machine definition to generate all
     /// valid interleavings.
     #[must_use]
-    pub fn generate(&self) -> Vec<Schedule> {
+    #[allow(clippy::unused_self)] // Placeholder: full implementation will use self.max_depth
+    pub const fn generate(&self) -> Vec<Schedule> {
         // Placeholder implementation
         // Real implementation would:
         // 1. Take state machine definition
@@ -285,6 +294,8 @@ impl ModelChecker {
     /// # Errors
     ///
     /// Returns error if invariant is violated by any schedule.
+    #[allow(clippy::unused_self)] // Placeholder: full implementation will use self.generator
+    #[allow(clippy::unnecessary_wraps)] // API contract: returns Result for counterexample reporting
     pub fn check_invariant<F>(&self, _invariant: F) -> Result<(), String>
     where
         F: Fn(&Schedule) -> bool,

@@ -16,17 +16,19 @@
 //! TaskQueue          KnowledgeComposition          Consensus
 //! ```
 
-pub mod member;
-pub mod task;
 pub mod composition;
 pub mod coordinator;
+pub mod member;
+pub mod task;
 pub mod test_orchestrator;
 
+pub use composition::{ComposedOperation, OperationChain};
 pub use coordinator::{SwarmCoordinator, SwarmMembership};
 pub use member::SwarmMember;
 pub use task::{TaskReceipt, TaskRequest, TaskStatus};
-pub use composition::{ComposedOperation, OperationChain};
-pub use test_orchestrator::{TestOrchestrator, TestPlan, TestPlanningAPI, QoSClass, ResourceBudget};
+pub use test_orchestrator::{
+    QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
+};
 
 #[cfg(test)]
 mod tests {
