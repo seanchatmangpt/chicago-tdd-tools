@@ -288,6 +288,7 @@ impl TestContract {
 /// - "Which tests cover capability C?"
 /// - "Do we have tests for all invariants?"
 /// - "Which tests require Docker?"
+#[derive(Debug, Clone, Copy)]
 pub struct TestContractRegistry {
     contracts: &'static [TestContract],
 }

@@ -8,6 +8,7 @@
 pub mod cli;
 #[cfg(feature = "concurrency-testing")]
 pub mod concurrency;
+pub mod continuous_learning;
 pub mod effects;
 pub mod generator;
 pub mod mutation;
@@ -21,6 +22,7 @@ pub mod state_machine;
 pub use cli::*;
 #[cfg(feature = "concurrency-testing")]
 pub use concurrency::*;
+pub use continuous_learning::*;
 pub use effects::*;
 pub use generator::*;
 #[cfg(feature = "mutation-testing")]

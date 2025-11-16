@@ -18,6 +18,7 @@ pub mod receipt;
 pub mod state;
 pub mod test_utils;
 pub mod type_level;
+pub mod verification_pipeline;
 
 // Re-export commonly used items
 pub use alert::*;
@@ -33,3 +34,4 @@ pub use receipt::*;
 pub use state::*;
 pub use test_utils::*;
 pub use type_level::*;
+pub use verification_pipeline::*;
