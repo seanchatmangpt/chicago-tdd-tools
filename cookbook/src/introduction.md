@@ -62,6 +62,9 @@ Learn 5 patterns first (45 min), get 80% of benefits. Everything else adds speci
 | **I need to solve a problem** | [Choosing Your Pattern](choosing-your-pattern.md) - Decision guide | 5 min |
 | **I want to see patterns in action** | [Real-World Scenarios](real-world-scenarios.md) - 5 examples | 15 min |
 | **I want a quick overview** | [All Patterns Reference](all-patterns-reference.md) - All 20 at a glance | 10 min |
+| **I'm adding patterns to existing project** | [Adoption Guide](adoption-guide.md) - Week-by-week implementation | 20 min |
+| **Something isn't working** | [Troubleshooting](troubleshooting.md) - Fix 10 common issues | 5 min |
+| **I want to instrument tests with telemetry** | [Observability Guide](observability-instrumentation.md) - Weaver & OTEL | 20 min |
 | **I want to learn systematically** | Choose a learning sequence below | 60-120 min |
 | **I want a specific pattern** | Jump to pattern reference below | Varies |
 
@@ -87,6 +90,11 @@ Learn patterns progressively through structured tutorials:
 - **[Quick Reference Card](quick-reference.md)** - One-page lookup table, 2 min
 - **[Common Mistakes](common-mistakes.md)** - Avoid the gotchas, 10 min
 - **[Real-World Scenarios](real-world-scenarios.md)** - See patterns in action, 15 min
+
+**Getting Started with Adoption**:
+- **[Adoption Guide](adoption-guide.md)** - 45 min over 3 weeks to get started, 20 min
+- **[Troubleshooting](troubleshooting.md)** - Fix 10 common issues, 5 min
+- **[Observability Guide](observability-instrumentation.md)** - Instrument with Weaver & OTEL, 20 min
 
 **Navigation & Discovery**:
 - **[Pattern Dependencies & Learning Order](pattern-dependencies.md)** - Learning paths and foundations first, 5 min

@@ -9,6 +9,12 @@
 - [Common Mistakes](common-mistakes.md) - "The Gotcha" from each pattern, aggregated
 - [Real-World Scenarios](real-world-scenarios.md) - How patterns combine to solve actual problems
 
+# Getting Started with Adoption
+
+- [Adoption Guide](adoption-guide.md) - Week-by-week plan for adding patterns to existing projects
+- [Troubleshooting](troubleshooting.md) - Fix 10 common issues when using patterns
+- [Observability & Instrumentation](observability-instrumentation.md) - Instrument tests with Weaver & OpenTelemetry
+
 # Navigation & Learning
 
 - [Choosing Your Pattern](choosing-your-pattern.md)
