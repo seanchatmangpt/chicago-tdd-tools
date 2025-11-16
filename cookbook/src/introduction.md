@@ -14,7 +14,43 @@ Combine these ingredients to build resilient Rust systems aligned with Chicago T
 
 ---
 
-## Getting Started
+## Core Team Philosophy
+
+Every pattern in this cookbook embodies **four principles** that the chicago-tdd-tools core team lives by:
+
+### 🚫 **Poka-Yoke: Prevent Errors at Compile-Time**
+Mistakes are prevented by the type system, not caught at runtime. **If it compiles, correctness follows.**
+- Pattern 1 (AAA) + Pattern 14 (Compile-Time Validation) → Wrong test structure = compiler error
+- Pattern 15 (Type State) → Wrong call order = compiler error
+- Pattern 13 (Sealed Traits) → Unsafe downstream code = compiler error
+
+**Core team rule:** Use types to encode invariants. Never rely on documentation or runtime checks.
+
+### 🎯 **FMEA: Quantify Risk Reduction**
+Every pattern reduces Risk Priority Numbers (RPN). Patterns aren't optional—they prevent failures.
+- Pattern 2 (Error Paths) → Production panics: RPN 180 → 36
+- Pattern 4 (Resource Cleanup) → Resource leaks: RPN 112 → 22
+- Pattern 18 (Timeout Defense) → Hanging tests: RPN 120 → 24
+
+**Core team rule:** If a pattern doesn't reduce a known failure mode, don't use it.
+
+### 🔒 **Production Safety: No Unwrap, Panic, or Println**
+Production code must be bulletproof. Errors propagate, never crash.
+- Pattern 2 (Error Paths) teaches `?` operator, never `.unwrap()`
+- Pattern 5 (Real Collaborators) catches integration issues before production
+- Pattern 16 (Fixture Lifecycle) guarantees cleanup even on failure
+
+**Core team rule:** Clippy denies `unwrap_used`, `expect_used`, `panic` in production code.
+
+### ⚡ **80/20 Thinking: Maximum Value, Minimum Effort**
+Learn 5 patterns first (45 min), get 80% of benefits. Everything else adds specialized depth.
+- Foundation: Pattern 1 (AAA) + Pattern 6 (Generic Base)
+- High-impact testing: Pattern 2 (Error Paths) + Pattern 5 (Real Collaborators)
+- High-impact organization: Pattern 10 (Capability Groups)
+
+**Core team rule:** Start with foundations, add patterns when you hit their problem.
+
+---
 
 **Not sure where to start?** Choose your path:
 

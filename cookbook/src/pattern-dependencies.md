@@ -2,6 +2,44 @@
 
 This guide shows which patterns depend on which others, helping you build a foundation before moving to advanced patterns.
 
+> **Core Team Philosophy:** Every pattern reduces a known failure mode (FMEA). Patterns aren't optional—they prevent production failures. See [Introduction: Core Team Philosophy](introduction.md#core-team-philosophy) for how each pattern embodies **Poka-Yoke** (compile-time prevention), **FMEA** (quantified risk reduction), **Production Safety** (no unwrap/panic), and **80/20 thinking**.
+
+---
+
+## Feature Requirements
+
+Some patterns require optional features. Add them to your `Cargo.toml`:
+
+```toml
+# Minimal testing (most common)
+chicago-tdd-tools = { version = "1.1.0", features = ["testing-extras"] }
+
+# Real collaborators (requires Docker)
+chicago-tdd-tools = { version = "1.1.0", features = ["testing-full"] }
+
+# Observability patterns
+chicago-tdd-tools = { version = "1.1.0", features = ["observability-full"] }
+```
+
+**Pattern → Feature mapping:**
+- **Pattern 5 (Real Collaborators)**: `testcontainers` feature → Docker required
+- **Pattern 19 (Feature Gates)**: All features (crate-level feature slices)
+- **Observability patterns**: `weaver` feature + OpenTelemetry support
+
+---
+
+## Core Team Process Documents
+
+These patterns are part of the core team's larger system. Understand the context:
+
+| Process | What It Covers | Relevant Patterns |
+|---------|------------|-------------------|
+| **[SPR_GUIDE.md](../process/SPR_GUIDE.md)** | Error handling rules, Clippy standards, no unwrap/panic | 2, 5, 16, 20 |
+| **[FMEA_TESTS_BUILD_ACTIONS.md](../process/FMEA_TESTS_BUILD_ACTIONS.md)** | Failure modes each pattern prevents, RPN reductions | All patterns |
+| **[POKA_YOKE_WEAVER_REGISTRY.md](../process/POKA_YOKE_WEAVER_REGISTRY.md)** | Type-level error prevention examples | 13, 14, 15 |
+| **[DOG_FOODING.md](../process/DOG_FOODING.md)** | Framework dogfoods its own patterns | All patterns |
+| **[CODE_REVIEW_CHECKLIST.md](../process/CODE_REVIEW_CHECKLIST.md)** | Shipping checklist: no unwrap, FMEA compliance | All patterns |
+
 ---
 
 ## Quick Answer: Minimum Viable Pattern Sets
@@ -428,6 +466,50 @@ Design patterns (11-15, 20) stand alone.
 5. **Pattern 5: Real Collaborators** (5 min) - Integration confidence
 
 **Result:** You'll have 80% of the value with these 5 patterns. Everything else adds depth.
+
+---
+
+## Shipping Checklist: Before You Ship
+
+Every pattern comes with a **production guarantee**. Use this checklist before shipping:
+
+**Error Handling (Pattern 2 + SPR_GUIDE):**
+- ✅ No `.unwrap()` in error paths (Clippy -D unwrap_used)
+- ✅ No `.expect()` in production code (Clippy -D expect_used)
+- ✅ All errors propagate via `?` operator or explicit match
+- ✅ Run: `cargo make lint` (catches all violations)
+
+**Test Isolation (Pattern 1 + Pattern 4):**
+- ✅ Tests use AAA pattern (Arrange-Act-Assert)
+- ✅ Tests clean up resources via Drop (no manual teardown)
+- ✅ Tests run in parallel without flakiness
+- ✅ Run: `cargo make test-unit && cargo make test-all`
+
+**Type Safety (Pattern 14 + Pattern 15):**
+- ✅ Invalid states impossible to construct
+- ✅ Wrong call order = compile error (not runtime bug)
+- ✅ Sealed traits prevent unsafe downstream code
+- ✅ Run: `cargo make check` (catches all violations)
+
+**Real Collaborators (Pattern 5):**
+- ✅ Integration tests use actual services (not mocks)
+- ✅ Docker container tests in CI (testcontainers feature)
+- ✅ Catching integration bugs before production
+- ✅ Run: `cargo make test-integration`
+
+**Resource Safety (Pattern 4 + Pattern 16):**
+- ✅ Fixtures guarantee cleanup even on panic
+- ✅ No resource leaks detected
+- ✅ Timeout defense prevents hanging tests
+- ✅ Run: `cargo make test-all` with `RUST_BACKTRACE=1`
+
+**Production Readiness (Full Pipeline):**
+- ✅ `cargo make pre-commit` passes (format + lint + unit tests)
+- ✅ `cargo make ci-local` passes (simulates GitHub Actions)
+- ✅ All clippy warnings fixed or justified with `#[allow(...)]`
+- ✅ Code review checklist passed (see CODE_REVIEW_CHECKLIST.md)
+
+**If ANY check fails**, your code is NOT ready to ship. Don't work around it—fix it.
 
 ---
 

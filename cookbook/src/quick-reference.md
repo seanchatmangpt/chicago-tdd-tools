@@ -41,6 +41,36 @@ One-page lookup for all Chicago TDD patterns. Each row = core idea in 1 sentence
 
 ---
 
+## Safety Guarantees: What Each Pattern Prevents
+
+Each pattern encodes compile-time, build-time, or runtime guarantees using the Poka-Yoke principle:
+
+**Compile-Time Guarantees (If it compiles, it works):**
+- **Pattern 1 (AAA)**: Structured tests via type-level state machine
+- **Pattern 12 (Type Safety)**: Lifetimes bound to fixture scope
+- **Pattern 13 (Sealed Traits)**: Downstream implementations prevented by type
+- **Pattern 14 (Compile-Time Validation)**: Invalid values impossible to construct
+- **Pattern 15 (Type State)**: Wrong call order detected at compile-time
+
+**Build-Time Guarantees (Clippy enforcement via CI/CD):**
+- **Pattern 2 (Error Paths)**: No `.unwrap()` in error handling (Clippy -D unwrap_used)
+- **Pattern 11 (Zero-Cost)**: Generics verified at monomorphization
+- **Pattern 20 (Macro Enforcement)**: Best practices embedded in macro expansion
+
+**Runtime Guarantees (Enforced at execution):**
+- **Pattern 4 (Resource Cleanup)**: Resources freed even on panic via Drop
+- **Pattern 5 (Real Collaborators)**: Integration bugs caught before production
+- **Pattern 16 (Fixture Lifecycle)**: Guaranteed cleanup on test success OR failure
+- **Pattern 18 (Timeout Defense)**: Layered timeouts prevent indefinite hangs
+
+**Data Consistency Guarantees (Enforced by structure):**
+- **Pattern 6 (Generic Base)**: Type-level separation prevents domain leakage
+- **Pattern 8 (Composition)**: Changes to base automatically propagate (no copy-paste)
+- **Pattern 9 (Single Source)**: Constants synced by re-export, never drift
+- **Pattern 10 (Capability Groups)**: Modules organized by capability, not alphabetically
+
+---
+
 ## Lookup by Problem
 
 **Need to write better tests?**
