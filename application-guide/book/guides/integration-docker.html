@@ -1,0 +1,434 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Integration Testing with Docker - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="integration-testing-with-docker"><a class="header" href="#integration-testing-with-docker">Integration Testing with Docker</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test with real services using Docker</p>
+</blockquote>
+<p>Test with real services using Docker containers.</p>
+<h2 id="why-docker-for-testing"><a class="header" href="#why-docker-for-testing">Why Docker for Testing?</a></h2>
+<p>Docker provides:</p>
+<ul>
+<li>Real service instances (not mocks)</li>
+<li>Isolated test environment</li>
+<li>Reproducible results</li>
+<li>Easy cleanup</li>
+</ul>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<pre><code class="language-bash"># Ensure Docker is running
+docker --version
+
+# Enable testcontainers feature
+[dev-dependencies]
+chicago-tdd-tools = { version = "1.3", features = ["testcontainers"] }
+</code></pre>
+<h2 id="docker-compose-for-tests"><a class="header" href="#docker-compose-for-tests">Docker Compose for Tests</a></h2>
+<p>Create <code>docker-compose.test.yml</code>:</p>
+<pre><code class="language-yaml">version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+</code></pre>
+<p>Run tests:</p>
+<pre><code class="language-bash"># Start services
+docker-compose -f docker-compose.test.yml up -d
+
+# Run tests
+cargo make test-integration
+
+# Stop services
+docker-compose -f docker-compose.test.yml down
+</code></pre>
+<h2 id="testing-with-database"><a class="header" href="#testing-with-database">Testing with Database</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_postgres, {
+    // Fixture provides database connection
+    let fixture = TestFixture::new()?;
+
+    // Create test user
+    fixture.db().create_user("alice", "alice@example.com")?;
+
+    // Query database
+    let user = fixture.db().get_user_by_email("alice@example.com")?;
+    assert_eq!(user.name, "alice");
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="testing-with-redis"><a class="header" href="#testing-with-redis">Testing with Redis</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_redis, {
+    let fixture = TestFixture::new()?;
+
+    // Use Redis from fixture
+    let cache = fixture.redis();
+
+    // Set value
+    cache.set("key", "value")?;
+
+    // Get value
+    let value = cache.get("key")?;
+    assert_eq!(value, "value");
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="complete-integration-test"><a class="header" href="#complete-integration-test">Complete Integration Test</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(complete_integration_test, {
+    let fixture = TestFixture::new()?;
+    let db = fixture.db();
+    let cache = fixture.redis();
+
+    // 1. Create user in database
+    let user = db.create_user("alice", "alice@example.com")?;
+
+    // 2. Cache user
+    cache.set(&amp;format!("user:{}", user.id), &amp;user.to_json())?;
+
+    // 3. Verify database
+    let retrieved = db.get_user(user.id)?;
+    assert_eq!(retrieved.email, "alice@example.com");
+
+    // 4. Verify cache
+    let cached = cache.get(&amp;format!("user:{}", user.id))?;
+    assert!(!cached.is_empty());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="handling-docker-failures"><a class="header" href="#handling-docker-failures">Handling Docker Failures</a></h2>
+<p>If Docker is unavailable:</p>
+<pre><code class="language-bash"># Skip integration tests
+WEAVER_ALLOW_SKIP=1 cargo make test-unit
+
+# Or just run unit tests
+cargo test --lib
+</code></pre>
+<h2 id="performance-optimization"><a class="header" href="#performance-optimization">Performance Optimization</a></h2>
+<p>Docker containers have overhead:</p>
+<ul>
+<li>Slow: 30-60 seconds per test</li>
+<li>Solution: Batch related tests</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_db_operations_batch, {
+    let fixture = TestFixture::new()?;
+
+    // Test 1: Create
+    let user = fixture.db().create_user("alice", "alice@example.com")?;
+    assert_ok!(&amp;user);
+
+    // Test 2: Read
+    let retrieved = fixture.db().get_user(user.id)?;
+    assert_ok!(&amp;retrieved);
+
+    // Test 3: Update
+    fixture.db().update_user(user.id, "new_email@example.com")?;
+    let updated = fixture.db().get_user(user.id)?;
+    assert_eq!(updated.email, "new_email@example.com");
+
+    // Test 4: Delete
+    fixture.db().delete_user(user.id)?;
+    let result = fixture.db().get_user(user.id);
+    assert_err!(&amp;result);
+
+    // One test, multiple operations, one fixture overhead
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="cicd-pipeline"><a class="header" href="#cicd-pipeline">CI/CD Pipeline</a></h2>
+<h3 id="github-actions-example"><a class="header" href="#github-actions-example">GitHub Actions Example</a></h3>
+<pre><code class="language-yaml">name: Integration Tests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: password
+        options: --health-cmd pg_isready
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+      - run: cargo make test-integration
+</code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Use Docker for real services</li>
+<li>Batch related tests</li>
+<li>Use fixtures for isolation</li>
+<li>Clean up after tests</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Mock Docker services</li>
+<li>Share containers between tests</li>
+<li>Run Docker tests in CI for every commit</li>
+<li>Forget about cleanup</li>
+</ul>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="docker-daemon-not-running"><a class="header" href="#docker-daemon-not-running">"Docker daemon not running"</a></h3>
+<p>Start Docker:</p>
+<pre><code class="language-bash"># macOS
+open /Applications/Docker.app
+
+# Linux
+sudo systemctl start docker
+
+# Windows
+Start Docker Desktop
+</code></pre>
+<h3 id="port-already-in-use"><a class="header" href="#port-already-in-use">"Port already in use"</a></h3>
+<p>Check ports:</p>
+<pre><code class="language-bash">docker ps  # See running containers
+docker stop &lt;container&gt;
+</code></pre>
+<h3 id="tests-timeout"><a class="header" href="#tests-timeout">Tests Timeout</a></h3>
+<p>Increase timeout:</p>
+<pre><code class="language-bash">cargo test --lib -- --test-threads=1  # Sequential
+</code></pre>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>See: <a href="best-practices.html">Best Practices</a></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guides/web-service.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guides/best-practices.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guides/web-service.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guides/best-practices.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

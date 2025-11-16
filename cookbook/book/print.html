@@ -198,10 +198,1697 @@
 <li><strong>Design Patterns</strong> – type-level techniques, zero-cost abstractions, and compile-time validation.</li>
 </ol>
 <p>Combine these ingredients to build resilient Rust systems aligned with Chicago TDD principles: state-based testing, real collaborators, behavior verification, and the AAA pattern.</p>
+<hr />
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h2>
+<p><strong>Not sure where to start?</strong> Choose your path:</p>
+<div class="table-wrapper"><table><thead><tr><th>Your Situation</th><th>Go To</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong>I need to solve a problem</strong></td><td><a href="choosing-your-pattern.html">Choosing Your Pattern</a></td><td>5 min</td></tr>
+<tr><td><strong>I want a quick overview</strong></td><td><a href="all-patterns-reference.html">All Patterns Reference</a></td><td>10 min</td></tr>
+<tr><td><strong>I want to learn systematically</strong></td><td>Choose a learning sequence below</td><td>60-120 min</td></tr>
+<tr><td><strong>I want a specific pattern</strong></td><td>Jump to pattern reference below</td><td>Varies</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="learning-sequences"><a class="header" href="#learning-sequences">Learning Sequences</a></h2>
+<p>Learn patterns progressively through structured tutorials:</p>
+<div class="table-wrapper"><table><thead><tr><th>Sequence</th><th>Focus</th><th>Time</th><th>Difficulty</th></tr></thead><tbody>
+<tr><td><a href="tutorials/learning-testing-patterns.html">Testing Patterns</a></td><td>How to write better tests</td><td>90 min</td><td>Beginner</td></tr>
+<tr><td><a href="tutorials/learning-architecture-patterns.html">Architecture Patterns</a></td><td>How to organize code</td><td>60 min</td><td>Intermediate</td></tr>
+<tr><td><a href="tutorials/learning-design-patterns.html">Design Patterns</a></td><td>Type safety and optimization</td><td>120 min</td><td>Advanced</td></tr>
+</tbody></table>
+</div>
+<p><strong>Recommended</strong>: Follow in order (Testing → Architecture → Design).</p>
+<hr />
+<h2 id="quick-links"><a class="header" href="#quick-links">Quick Links</a></h2>
+<ul>
+<li><strong><a href="choosing-your-pattern.html">Choosing Your Pattern</a></strong> - Decision matrices to find the right pattern</li>
+<li><strong><a href="all-patterns-reference.html">All Patterns Reference</a></strong> - All 20 patterns at a glance</li>
+<li><strong><a href="testing-patterns/">Testing Patterns</a></strong> - Learn to write great tests</li>
+<li><strong><a href="architecture-patterns/">Architecture Patterns</a></strong> - Learn to organize code</li>
+<li><strong><a href="design-patterns/">Design Patterns</a></strong> - Learn advanced safety and design</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="choosing-your-pattern"><a class="header" href="#choosing-your-pattern">Choosing Your Pattern</a></h1>
+<blockquote>
+<p>🗺️ <strong>NAVIGATION</strong> | Find the right pattern for your testing problem</p>
+</blockquote>
+<p>This guide helps you choose the right pattern(s) based on your testing situation.</p>
+<hr />
+<h2 id="quick-pattern-finder"><a class="header" href="#quick-pattern-finder">Quick Pattern Finder</a></h2>
+<p><strong>What's your challenge?</strong> Find it in the table below:</p>
+<div class="table-wrapper"><table><thead><tr><th>Your Challenge</th><th>Pattern Family</th><th>Pattern Name</th><th>Go To</th></tr></thead><tbody>
+<tr><td>How do I structure a test?</td><td>Testing</td><td>Pattern 1: AAA Pattern</td><td><a href="testing-patterns/aaa-pattern.html">Learn</a></td></tr>
+<tr><td>How do I test error cases?</td><td>Testing</td><td>Pattern 2: Error Path Testing</td><td><a href="testing-patterns/error-path-testing.html">Learn</a></td></tr>
+<tr><td>How do I test edge cases?</td><td>Testing</td><td>Pattern 3: Boundary Conditions</td><td><a href="testing-patterns/boundary-conditions.html">Learn</a></td></tr>
+<tr><td>How do I clean up resources?</td><td>Testing</td><td>Pattern 4: Resource Cleanup</td><td><a href="testing-patterns/resource-cleanup.html">Learn</a></td></tr>
+<tr><td>Should I use mocks?</td><td>Testing</td><td>Pattern 5: Real Collaborators</td><td><a href="testing-patterns/real-collaborators.html">Learn</a></td></tr>
+<tr><td>How do I organize my code?</td><td>Architecture</td><td>Pattern 6: Generic Base Layer</td><td><a href="architecture-patterns/generic-base.html">Learn</a></td></tr>
+<tr><td>How do I extend without duplicating?</td><td>Architecture</td><td>Pattern 7: Extension Layer</td><td><a href="architecture-patterns/extension-layer.html">Learn</a></td></tr>
+<tr><td>How do I avoid code duplication?</td><td>Architecture</td><td>Pattern 8: Composition Over Duplication</td><td><a href="architecture-patterns/composition-over-duplication.html">Learn</a></td></tr>
+<tr><td>How do I avoid data inconsistency?</td><td>Architecture</td><td>Pattern 9: Single Source of Truth</td><td><a href="architecture-patterns/single-source-of-truth.html">Learn</a></td></tr>
+<tr><td>How do I organize large modules?</td><td>Architecture</td><td>Pattern 10: Capability Grouping</td><td><a href="architecture-patterns/capability-groups.html">Learn</a></td></tr>
+<tr><td>How do I optimize for performance?</td><td>Design</td><td>Pattern 11: Zero-Cost Abstractions</td><td><a href="design-patterns/zero-cost-abstractions.html">Learn</a></td></tr>
+<tr><td>How do I prevent type errors?</td><td>Design</td><td>Pattern 12: Type Safety with GATs</td><td><a href="design-patterns/type-safety-patterns.html">Learn</a></td></tr>
+<tr><td>How do I prevent API misuse?</td><td>Design</td><td>Pattern 13: Sealed Traits</td><td><a href="design-patterns/sealed-traits.html">Learn</a></td></tr>
+<tr><td>How do I validate at compile-time?</td><td>Design</td><td>Pattern 14: Compile-Time Validation</td><td><a href="design-patterns/compile-time-validation.html">Learn</a></td></tr>
+<tr><td>How do I enforce state machines?</td><td>Design</td><td>Pattern 15: Type State Enforcement</td><td><a href="design-patterns/type-state-pattern.html">Learn</a></td></tr>
+<tr><td>How do I manage fixture lifecycle?</td><td>Design</td><td>Pattern 16: Fixture Lifecycle Management</td><td><a href="design-patterns/fixture-lifecycle.html">Learn</a></td></tr>
+<tr><td>How do I build test data easily?</td><td>Design</td><td>Pattern 17: Builder-Driven Test Data</td><td><a href="design-patterns/builder-test-data.html">Learn</a></td></tr>
+<tr><td>How do I prevent timeouts?</td><td>Design</td><td>Pattern 18: Timeout Defense</td><td><a href="design-patterns/timeout-defense.html">Learn</a></td></tr>
+<tr><td>How do I manage feature flags?</td><td>Design</td><td>Pattern 19: Feature Gate Slices</td><td><a href="design-patterns/feature-gating.html">Learn</a></td></tr>
+<tr><td>How do I enforce patterns with macros?</td><td>Design</td><td>Pattern 20: Macro Pattern Enforcement</td><td><a href="design-patterns/macro-enforcement.html">Learn</a></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="by-category"><a class="header" href="#by-category">By Category</a></h2>
+<h3 id="testing-patterns-how-do-i-write-better-tests"><a class="header" href="#testing-patterns-how-do-i-write-better-tests">Testing Patterns: "How Do I Write Better Tests?"</a></h3>
+<p>These patterns solve fundamental testing problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 1: AAA</strong></td><td>Tests are hard to read</td><td>Structure: Arrange, Act, Assert</td></tr>
+<tr><td><strong>Pattern 2: Error Paths</strong></td><td>I don't test failures</td><td>Test both success and error cases</td></tr>
+<tr><td><strong>Pattern 3: Boundaries</strong></td><td>I miss edge cases</td><td>Systematically test limits</td></tr>
+<tr><td><strong>Pattern 4: Resource Cleanup</strong></td><td>Tests leak resources</td><td>Automatic fixture cleanup</td></tr>
+<tr><td><strong>Pattern 5: Real Collaborators</strong></td><td>Mocks hide integration bugs</td><td>Test with real implementations</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: All the time. These are foundational.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-testing-patterns.html">Testing Patterns Learning Sequence</a></p>
+<hr />
+<h3 id="architecture-patterns-how-do-i-organize-code"><a class="header" href="#architecture-patterns-how-do-i-organize-code">Architecture Patterns: "How Do I Organize Code?"</a></h3>
+<p>These patterns solve structural problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 6: Generic Base</strong></td><td>Code is duplicate</td><td>Extract generic abstractions</td></tr>
+<tr><td><strong>Pattern 7: Extension Layer</strong></td><td>I can't extend without modifying</td><td>Add layers for extensions</td></tr>
+<tr><td><strong>Pattern 8: Composition</strong></td><td>DRY violations everywhere</td><td>Compose instead of duplicating</td></tr>
+<tr><td><strong>Pattern 9: Single Source</strong></td><td>Data gets out of sync</td><td>One canonical source of truth</td></tr>
+<tr><td><strong>Pattern 10: Capability Groups</strong></td><td>Module is too large</td><td>Organize by capability, not type</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: During architecture phase and refactoring.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-architecture-patterns.html">Architecture Patterns Learning Sequence</a></p>
+<hr />
+<h3 id="design-patterns-how-do-i-make-code-safer"><a class="header" href="#design-patterns-how-do-i-make-code-safer">Design Patterns: "How Do I Make Code Safer?"</a></h3>
+<p>These patterns solve design and safety problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 11: Zero-Cost</strong></td><td>Abstractions are slow</td><td>Zero-cost abstractions via generics</td></tr>
+<tr><td><strong>Pattern 12: Type Safety</strong></td><td>Type errors at runtime</td><td>Use GATs for safety</td></tr>
+<tr><td><strong>Pattern 13: Sealed Traits</strong></td><td>API is too easy to misuse</td><td>Seal traits to prevent misuse</td></tr>
+<tr><td><strong>Pattern 14: Compile-Time</strong></td><td>Errors caught at runtime</td><td>Validate at compile-time</td></tr>
+<tr><td><strong>Pattern 15: Type State</strong></td><td>State machines are error-prone</td><td>Encode states in types</td></tr>
+<tr><td><strong>Pattern 16: Fixture Lifecycle</strong></td><td>Test setup is complex</td><td>Manage lifecycle with traits</td></tr>
+<tr><td><strong>Pattern 17: Builder Test Data</strong></td><td>Building test data is tedious</td><td>Fluent builders for test data</td></tr>
+<tr><td><strong>Pattern 18: Timeout Defense</strong></td><td>Tests hang forever</td><td>Timeout defense in depth</td></tr>
+<tr><td><strong>Pattern 19: Feature Gates</strong></td><td>Feature flags are unreliable</td><td>Gate slices across codebase</td></tr>
+<tr><td><strong>Pattern 20: Macro Enforcement</strong></td><td>Patterns are easy to violate</td><td>Use macros to enforce patterns</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: During design and implementation.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-design-patterns.html">Design Patterns Learning Sequence</a></p>
+<hr />
+<h2 id="decision-trees"><a class="header" href="#decision-trees">Decision Trees</a></h2>
+<h3 id="im-writing-a-test-which-pattern-do-i-need"><a class="header" href="#im-writing-a-test-which-pattern-do-i-need">"I'm writing a test. Which pattern do I need?"</a></h3>
+<pre><code>┌─ Start: Writing a test
+│
+├─ What am I testing?
+│  ├─ Normal behavior ──→ Pattern 1: AAA Pattern
+│  ├─ Error behavior ──→ Pattern 2: Error Path Testing
+│  ├─ Edge cases ──→ Pattern 3: Boundary Conditions
+│  └─ Setup/teardown ──→ Pattern 4: Resource Cleanup
+│
+├─ What should I test against?
+│  ├─ Mock/fake ──→ Consider Pattern 5: Real Collaborators
+│  └─ Real implementation ──→ Pattern 5: Real Collaborators ✓
+│
+└─ How do I build test data?
+   └─ Complex data ──→ Pattern 17: Builder-Driven Test Data
+</code></pre>
+<hr />
+<h3 id="im-designing-an-architecture-which-patterns-apply"><a class="header" href="#im-designing-an-architecture-which-patterns-apply">"I'm designing an architecture. Which patterns apply?"</a></h3>
+<pre><code>┌─ Start: Designing architecture
+│
+├─ How do I organize modules?
+│  ├─ By type (models, handlers, etc.) ──→ Consider Pattern 10: Capability Groups
+│  └─ By capability ──→ Pattern 10: Capability Groups ✓
+│
+├─ How do I reuse code?
+│  ├─ Copy-paste ──→ NO! Use Pattern 8: Composition Over Duplication
+│  └─ Abstract base ──→ Pattern 6: Generic Base Layer
+│
+├─ How do I extend without modifying?
+│  └─ Pattern 7: Extension Layer
+│
+└─ Where is the source of truth?
+   └─ Pattern 9: Single Source of Truth
+</code></pre>
+<hr />
+<h3 id="im-designing-apis-which-patterns-keep-them-safe"><a class="header" href="#im-designing-apis-which-patterns-keep-them-safe">"I'm designing APIs. Which patterns keep them safe?"</a></h3>
+<pre><code>┌─ Start: Designing public API
+│
+├─ Can downstream code misuse my API?
+│  └─ YES ──→ Pattern 13: Sealed Traits
+│
+├─ Should errors be compile-time or runtime?
+│  ├─ Compile-time ──→ Pattern 14: Compile-Time Validation
+│  └─ Runtime ──→ Less safe, but sometimes necessary
+│
+├─ Does state machine matter?
+│  ├─ YES (auth states, connection states) ──→ Pattern 15: Type State Enforcement
+│  └─ NO ──→ Continue
+│
+├─ Are lifetimes complex?
+│  └─ YES ──→ Pattern 12: Type Safety with GATs
+│
+└─ Should this be in macros?
+   └─ Pattern 20: Macro Pattern Enforcement
+</code></pre>
+<hr />
+<h2 id="learning-by-difficulty"><a class="header" href="#learning-by-difficulty">Learning by Difficulty</a></h2>
+<h3 id="beginner-start-here"><a class="header" href="#beginner-start-here">Beginner (Start Here)</a></h3>
+<ol>
+<li><strong>Pattern 1: AAA Pattern</strong> - Foundation</li>
+<li><strong>Pattern 2: Error Path Testing</strong> - See what not to do</li>
+<li><strong>Pattern 3: Boundary Conditions</strong> - Edge cases matter</li>
+<li><strong>Pattern 4: Resource Cleanup</strong> - Don't leak resources</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - Test with real code</li>
+</ol>
+<p><strong>Time</strong>: ~3 hours | <strong>Content</strong>: Testing fundamentals</p>
+<h3 id="intermediate-build-on-basics"><a class="header" href="#intermediate-build-on-basics">Intermediate (Build on Basics)</a></h3>
+<ol start="6">
+<li><strong>Pattern 6: Generic Base Layer</strong> - Code organization</li>
+<li><strong>Pattern 8: Composition Over Duplication</strong> - DRY principle</li>
+<li><strong>Pattern 10: Capability Grouping</strong> - Module organization</li>
+<li><strong>Pattern 17: Builder-Driven Test Data</strong> - Practical testing</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Type safety</li>
+</ol>
+<p><strong>Time</strong>: ~4 hours | <strong>Content</strong>: Architecture and safety</p>
+<h3 id="advanced-master-the-craft"><a class="header" href="#advanced-master-the-craft">Advanced (Master the Craft)</a></h3>
+<ol start="11">
+<li><strong>Pattern 11: Zero-Cost Abstractions</strong> - Performance</li>
+<li><strong>Pattern 12: Type Safety with GATs</strong> - Advanced types</li>
+<li><strong>Pattern 15: Type State Enforcement</strong> - State machines</li>
+<li><strong>Pattern 13: Sealed Traits</strong> - API design</li>
+<li><strong>Pattern 18: Timeout Defense</strong> - Robustness</li>
+</ol>
+<p><strong>Time</strong>: ~5 hours | <strong>Content</strong>: Advanced design and optimization</p>
+<hr />
+<h2 id="pattern-combination-guide"><a class="header" href="#pattern-combination-guide">Pattern Combination Guide</a></h2>
+<h3 id="i-want-to-write-production-quality-tests"><a class="header" href="#i-want-to-write-production-quality-tests">"I want to write production-quality tests"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 1: AAA</strong> - Structure your tests</li>
+<li><strong>Pattern 2: Error Paths</strong> - Test failures</li>
+<li><strong>Pattern 3: Boundaries</strong> - Test edge cases</li>
+<li><strong>Pattern 4: Resource Cleanup</strong> - Clean automatically</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - Use real dependencies</li>
+<li><strong>Pattern 17: Builder Test Data</strong> - Build complex test data</li>
+</ol>
+<p><strong>Expected outcome</strong>: Comprehensive, maintainable test suite</p>
+<h3 id="i-want-to-build-a-safe-extensible-api"><a class="header" href="#i-want-to-build-a-safe-extensible-api">"I want to build a safe, extensible API"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 6: Generic Base</strong> - Reusable abstractions</li>
+<li><strong>Pattern 7: Extension Layer</strong> - Allow extensibility</li>
+<li><strong>Pattern 13: Sealed Traits</strong> - Prevent misuse</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Validate early</li>
+<li><strong>Pattern 15: Type State</strong> - Enforce state machines</li>
+<li><strong>Pattern 20: Macro Enforcement</strong> - Enforce usage patterns</li>
+</ol>
+<p><strong>Expected outcome</strong>: Safe, extensible, hard-to-misuse API</p>
+<h3 id="i-want-maximum-performance"><a class="header" href="#i-want-maximum-performance">"I want maximum performance"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 11: Zero-Cost Abstractions</strong> - Generic dispatch</li>
+<li><strong>Pattern 12: Type Safety with GATs</strong> - Type-safe lifetimes</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Zero runtime checks</li>
+<li><strong>Pattern 8: Composition Over Duplication</strong> - Avoid copies</li>
+</ol>
+<p><strong>Expected outcome</strong>: Fast code with safety guarantees</p>
+<hr />
+<h2 id="faq"><a class="header" href="#faq">FAQ</a></h2>
+<p><strong>Q: How many patterns should I learn?</strong>
+A: Start with Testing Patterns (5), then Architecture (5) for production code. Advanced designers learn all 20.</p>
+<p><strong>Q: Do I need to learn them in order?</strong>
+A: No, but the beginner patterns are prerequisites for understanding advanced ones.</p>
+<p><strong>Q: Can I use just one pattern?</strong>
+A: Yes, but patterns work together. Combine related patterns for best results.</p>
+<p><strong>Q: Where do I go from here?</strong>
+A: Choose a <a href="tutorials/">Learning Sequence</a> or pick a pattern you need right now.</p>
+<p><strong>Q: How do patterns relate to the application guide?</strong>
+A: Application guide shows <em>how to apply patterns in practice</em>. Cookbook explains <em>why patterns exist</em>. Use both together.</p>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Choose your learning path:</p>
+<ul>
+<li><strong><a href="tutorials/learning-testing-patterns.html">Testing Patterns Learning Path</a></strong> (90 minutes)</li>
+<li><strong><a href="tutorials/learning-architecture-patterns.html">Architecture Patterns Learning Path</a></strong> (60 minutes)</li>
+<li><strong><a href="tutorials/learning-design-patterns.html">Design Patterns Learning Path</a></strong> (120 minutes)</li>
+<li><strong><a href="all-patterns-reference.html">All Patterns Quick Reference</a></strong> (Lookup table for all 20)</li>
+</ul>
+<p>Or jump directly to the pattern you need from the Quick Finder above.</p>
+<hr />
+<p><strong>Remember</strong>: Patterns work together. As you learn each one, you'll recognize them appearing in others. That's the power of a pattern language.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="all-patterns-quick-reference-card"><a class="header" href="#all-patterns-quick-reference-card">All Patterns: Quick Reference Card</a></h1>
+<blockquote>
+<p>📚 <strong>REFERENCE</strong> | All 20 patterns at a glance</p>
+</blockquote>
+<p>Quick lookup for all patterns. Use this to find a pattern and jump to its full description.</p>
+<hr />
+<h2 id="testing-patterns-5"><a class="header" href="#testing-patterns-5">Testing Patterns (5)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>1</td><td><strong>AAA Pattern</strong></td><td>Tests are unreadable</td><td>Structure into Arrange-Act-Assert</td><td><a href="testing-patterns/aaa-pattern.html">→</a></td></tr>
+<tr><td>2</td><td><strong>Error Path Testing</strong></td><td>Failures aren't tested</td><td>Test both success AND error paths</td><td><a href="testing-patterns/error-path-testing.html">→</a></td></tr>
+<tr><td>3</td><td><strong>Boundary Conditions</strong></td><td>Edge cases are missed</td><td>Systematically test limits</td><td><a href="testing-patterns/boundary-conditions.html">→</a></td></tr>
+<tr><td>4</td><td><strong>Resource Cleanup</strong></td><td>Tests leak resources</td><td>Automatic fixture cleanup</td><td><a href="testing-patterns/resource-cleanup.html">→</a></td></tr>
+<tr><td>5</td><td><strong>Real Collaborators</strong></td><td>Mocks hide bugs</td><td>Test with real implementations</td><td><a href="testing-patterns/real-collaborators.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 5 patterns are the <strong>foundation</strong>. Use them in every test.</p>
+<hr />
+<h2 id="architecture-patterns-5"><a class="header" href="#architecture-patterns-5">Architecture Patterns (5)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>6</td><td><strong>Generic Base Layer</strong></td><td>Code duplication</td><td>Extract generic abstractions</td><td><a href="architecture-patterns/generic-base.html">→</a></td></tr>
+<tr><td>7</td><td><strong>Extension Layer</strong></td><td>Can't extend without modifying</td><td>Add layers for safe extension</td><td><a href="architecture-patterns/extension-layer.html">→</a></td></tr>
+<tr><td>8</td><td><strong>Composition Over Duplication</strong></td><td>DRY violations</td><td>Compose instead of copying</td><td><a href="architecture-patterns/composition-over-duplication.html">→</a></td></tr>
+<tr><td>9</td><td><strong>Single Source of Truth</strong></td><td>Data inconsistencies</td><td>One canonical source</td><td><a href="architecture-patterns/single-source-of-truth.html">→</a></td></tr>
+<tr><td>10</td><td><strong>Capability Grouping</strong></td><td>Monolithic modules</td><td>Organize by capability</td><td><a href="architecture-patterns/capability-groups.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 5 patterns organize code structure. Use during architecture phase.</p>
+<hr />
+<h2 id="design-patterns-10"><a class="header" href="#design-patterns-10">Design Patterns (10)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>11</td><td><strong>Zero-Cost Abstractions</strong></td><td>Abstractions are slow</td><td>Use generics, compile away overhead</td><td><a href="design-patterns/zero-cost-abstractions.html">→</a></td></tr>
+<tr><td>12</td><td><strong>Type Safety with GATs</strong></td><td>Type errors at runtime</td><td>Generic Associated Types</td><td><a href="design-patterns/type-safety-patterns.html">→</a></td></tr>
+<tr><td>13</td><td><strong>Sealed Traits</strong></td><td>API is too easy to misuse</td><td>Seal traits to prevent misuse</td><td><a href="design-patterns/sealed-traits.html">→</a></td></tr>
+<tr><td>14</td><td><strong>Compile-Time Validation</strong></td><td>Errors caught at runtime</td><td>Validate during compilation</td><td><a href="design-patterns/compile-time-validation.html">→</a></td></tr>
+<tr><td>15</td><td><strong>Type State Enforcement</strong></td><td>State machines are error-prone</td><td>Encode states in the type system</td><td><a href="design-patterns/type-state-pattern.html">→</a></td></tr>
+<tr><td>16</td><td><strong>Fixture Lifecycle</strong></td><td>Complex test setup</td><td>Manage with sealed traits</td><td><a href="design-patterns/fixture-lifecycle.html">→</a></td></tr>
+<tr><td>17</td><td><strong>Builder-Driven Test Data</strong></td><td>Building test data is tedious</td><td>Fluent builders for data</td><td><a href="design-patterns/builder-test-data.html">→</a></td></tr>
+<tr><td>18</td><td><strong>Timeout Defense</strong></td><td>Tests hang indefinitely</td><td>Timeout defense in depth</td><td><a href="design-patterns/timeout-defense.html">→</a></td></tr>
+<tr><td>19</td><td><strong>Feature Gate Slices</strong></td><td>Feature flags are unreliable</td><td>Slice-based feature gating</td><td><a href="design-patterns/feature-gating.html">→</a></td></tr>
+<tr><td>20</td><td><strong>Macro Pattern Enforcement</strong></td><td>Patterns are easy to violate</td><td>Use macros to enforce</td><td><a href="design-patterns/macro-enforcement.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 10 patterns provide safety, performance, and design tools. Use during implementation.</p>
+<hr />
+<h2 id="pattern-organization"><a class="header" href="#pattern-organization">Pattern Organization</a></h2>
+<h3 id="by-complexity-learning-path"><a class="header" href="#by-complexity-learning-path">By Complexity (Learning Path)</a></h3>
+<p><strong>Phase 1 - Foundation (Read First)</strong></p>
+<ol>
+<li>Pattern 1: AAA Pattern</li>
+<li>Pattern 2: Error Path Testing</li>
+<li>Pattern 3: Boundary Conditions</li>
+</ol>
+<p><strong>Phase 2 - Production Ready (Read Next)</strong>
+4. Pattern 4: Resource Cleanup
+5. Pattern 5: Real Collaborators
+6. Pattern 17: Builder-Driven Test Data</p>
+<p><strong>Phase 3 - Architecture (Advanced)</strong>
+6. Pattern 8: Composition Over Duplication
+7. Pattern 10: Capability Grouping
+8. Pattern 9: Single Source of Truth</p>
+<p><strong>Phase 4 - Advanced Design (Mastery)</strong>
+11. Pattern 11: Zero-Cost Abstractions
+12. Pattern 13: Sealed Traits
+13. Pattern 15: Type State Enforcement
+14. Pattern 20: Macro Pattern Enforcement</p>
+<hr />
+<h3 id="by-category-type-system"><a class="header" href="#by-category-type-system">By Category (Type System)</a></h3>
+<p><strong>Testing Patterns</strong>: Patterns 1-5
+<strong>Architecture Patterns</strong>: Patterns 6-10
+<strong>Design Patterns</strong>: Patterns 11-20</p>
+<hr />
+<h3 id="by-problem-domain"><a class="header" href="#by-problem-domain">By Problem Domain</a></h3>
+<p><strong>Testing Problems</strong>: Patterns 1-5, 17
+<strong>Code Organization</strong>: Patterns 6-10
+<strong>Type Safety</strong>: Patterns 12, 14, 15
+<strong>API Design</strong>: Patterns 13, 20
+<strong>Performance</strong>: Pattern 11
+<strong>Robustness</strong>: Pattern 18
+<strong>Reliability</strong>: Pattern 19</p>
+<hr />
+<h2 id="how-to-use-this-card"><a class="header" href="#how-to-use-this-card">How to Use This Card</a></h2>
+<ol>
+<li><strong>Find your problem</strong> in the Problem column</li>
+<li><strong>See the solution</strong> in the Solution column</li>
+<li><strong>Click Learn More</strong> to read the full pattern</li>
+<li><strong>Bookmark</strong> the pattern for future reference</li>
+</ol>
+<hr />
+<h2 id="quick-links-1"><a class="header" href="#quick-links-1">Quick Links</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Want to...</th><th>Go to...</th></tr></thead><tbody>
+<tr><td>Choose a pattern</td><td><a href="choosing-your-pattern.html">Choosing Your Pattern</a></td></tr>
+<tr><td>Learn testing</td><td><a href="tutorials/learning-testing-patterns.html">Testing Learning Sequence</a></td></tr>
+<tr><td>Learn architecture</td><td><a href="tutorials/learning-architecture-patterns.html">Architecture Learning Sequence</a></td></tr>
+<tr><td>Learn design</td><td><a href="tutorials/learning-design-patterns.html">Design Learning Sequence</a></td></tr>
+<tr><td>All 20 patterns</td><td>This page (you are here)</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="pattern-dependencies"><a class="header" href="#pattern-dependencies">Pattern Dependencies</a></h2>
+<p>Some patterns build on others. Recommended learning order:</p>
+<pre><code>Pattern 1 (AAA)
+  ├─→ Pattern 2 (Error Paths)
+  ├─→ Pattern 3 (Boundaries)
+  ├─→ Pattern 4 (Resource Cleanup)
+  └─→ Pattern 5 (Real Collaborators)
+       └─→ Pattern 17 (Builder Test Data)
+
+Pattern 6 (Generic Base)
+  └─→ Pattern 8 (Composition)
+       └─→ Pattern 10 (Capability Groups)
+
+Pattern 14 (Compile-Time)
+  └─→ Pattern 15 (Type State)
+
+Pattern 13 (Sealed Traits)
+  └─→ Pattern 20 (Macro Enforcement)
+</code></pre>
+<hr />
+<h2 id="statistics"><a class="header" href="#statistics">Statistics</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+<tr><td>Total Patterns</td><td>20</td></tr>
+<tr><td>Testing Patterns</td><td>5</td></tr>
+<tr><td>Architecture Patterns</td><td>5</td></tr>
+<tr><td>Design Patterns</td><td>10</td></tr>
+<tr><td>Difficulty Range</td><td>Beginner → Advanced</td></tr>
+<tr><td>Total Learning Time</td><td>~10 hours</td></tr>
+<tr><td>Estimated Implementation</td><td>2-3 weeks</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="pro-tips"><a class="header" href="#pro-tips">Pro Tips</a></h2>
+<p>💡 <strong>Tip 1</strong>: You don't need to learn all 20 patterns at once. Start with Testing (1-5), then add what you need.</p>
+<p>💡 <strong>Tip 2</strong>: Patterns often appear in combinations. When you use Pattern 5 (Real Collaborators), you'll probably also use Pattern 17 (Builder Test Data).</p>
+<p>💡 <strong>Tip 3</strong>: Look for patterns in the codebase you're reading. The more you see patterns, the better you'll understand them.</p>
+<p>💡 <strong>Tip 4</strong>: Bookmark the <a href="choosing-your-pattern.html">Decision Guide</a>. You'll return to it when solving problems.</p>
+<hr />
+<p><strong>Next</strong>: Choose your learning path or jump to a pattern you need right now!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-testing-patterns-90-minute-mastery"><a class="header" href="#learning-testing-patterns-90-minute-mastery">Learning Testing Patterns: 90-Minute Mastery</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master the 5 fundamental testing patterns</p>
+</blockquote>
+<p>This tutorial guides you through the 5 testing patterns in a natural progression. Each builds on the previous one.</p>
+<p><strong>Time</strong>: ~90 minutes | <strong>Difficulty</strong>: Beginner | <strong>Prerequisites</strong>: Basic Rust knowledge</p>
+<hr />
+<h2 id="module-overview"><a class="header" href="#module-overview">Module Overview</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Time</th><th>Focus</th></tr></thead><tbody>
+<tr><td>Pattern 1: AAA</td><td>15 min</td><td>Test structure and readability</td></tr>
+<tr><td>Pattern 2: Error Paths</td><td>20 min</td><td>Testing failures and error cases</td></tr>
+<tr><td>Pattern 3: Boundaries</td><td>15 min</td><td>Edge cases and limits</td></tr>
+<tr><td>Pattern 4: Resource Cleanup</td><td>15 min</td><td>Automatic cleanup and fixtures</td></tr>
+<tr><td>Pattern 5: Real Collaborators</td><td>15 min</td><td>Testing with real dependencies</td></tr>
+<tr><td><strong>Practice Exercises</strong></td><td><strong>15 min</strong></td><td><strong>Apply what you've learned</strong></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-1-aaa-pattern-15-minutes"><a class="header" href="#part-1-aaa-pattern-15-minutes">Part 1: AAA Pattern (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Understand how to structure tests for readability</p>
+<h3 id="the-three-phases"><a class="header" href="#the-three-phases">The Three Phases</a></h3>
+<p>Every test has three parts:</p>
+<ol>
+<li><strong>Arrange</strong>: Set up the test data and environment</li>
+<li><strong>Act</strong>: Execute the behavior you're testing</li>
+<li><strong>Assert</strong>: Verify the result is correct</li>
+</ol>
+<h3 id="example-structure"><a class="header" href="#example-structure">Example Structure</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_name, {
+    // Arrange: Set up
+    let input = 42;
+
+    // Act: Execute
+    let result = process(input);
+
+    // Assert: Verify
+    assert_eq!(result, 84);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-points"><a class="header" href="#key-points">Key Points</a></h3>
+<p>✅ <strong>Do</strong>: Label each phase with comments
+✅ <strong>Do</strong>: Test one behavior per test
+✅ <strong>Do</strong>: Make test names describe what they test</p>
+<p>❌ <strong>Don't</strong>: Mix phases together
+❌ <strong>Don't</strong>: Put logic in assertions
+❌ <strong>Don't</strong>: Test multiple behaviors in one test</p>
+<h3 id="checkpoint-question"><a class="header" href="#checkpoint-question">Checkpoint Question</a></h3>
+<p>How would you structure a test that:</p>
+<ol>
+<li>Creates a user</li>
+<li>Verifies the user was created correctly</li>
+</ol>
+<p><strong>Answer</strong>: Create → Verify (Pattern 1: AAA structure)</p>
+<hr />
+<h2 id="part-2-error-path-testing-20-minutes"><a class="header" href="#part-2-error-path-testing-20-minutes">Part 2: Error Path Testing (20 minutes)</a></h2>
+<p><strong>Goal</strong>: Test both success AND failure cases</p>
+<h3 id="why-error-testing-matters"><a class="header" href="#why-error-testing-matters">Why Error Testing Matters</a></h3>
+<p>Tests that only verify success hide bugs. Real systems fail. You must test how code behaves when things go wrong.</p>
+<h3 id="success-path-vs-error-path"><a class="header" href="#success-path-vs-error-path">Success Path vs. Error Path</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Success path: Everything works
+test!(test_add_user_success, {
+    // Arrange
+    let mut db = Database::new();
+
+    // Act
+    let result = db.add_user("alice@example.com");
+
+    // Assert
+    assert_ok!(&amp;result);  // Should succeed
+});
+
+// Error path: Something goes wrong
+test!(test_add_duplicate_user_fails, {
+    // Arrange
+    let mut db = Database::new();
+    db.add_user("alice@example.com").ok();  // Add once
+
+    // Act
+    let result = db.add_user("alice@example.com");  // Try to add again
+
+    // Assert
+    assert_err!(&amp;result);  // Should fail
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="what-to-test"><a class="header" href="#what-to-test">What to Test</a></h3>
+<p>For each behavior, test:</p>
+<ol>
+<li><strong>Normal case</strong> - Everything works perfectly</li>
+<li><strong>Invalid input</strong> - Bad data</li>
+<li><strong>Boundary case</strong> - Limits (empty, max size, etc.)</li>
+<li><strong>Error case</strong> - Something fails</li>
+<li><strong>Concurrent case</strong> (if applicable) - Multiple threads</li>
+</ol>
+<h3 id="checkpoint-question-1"><a class="header" href="#checkpoint-question-1">Checkpoint Question</a></h3>
+<p>You have a function <code>divide(a, b)</code> that returns <code>Result&lt;i32, Error&gt;</code>.</p>
+<p><strong>What test cases should you write?</strong></p>
+<p>Answers:</p>
+<ol>
+<li>✅ Normal: <code>divide(10, 2)</code> → <code>Ok(5)</code></li>
+<li>✅ Error: <code>divide(10, 0)</code> → <code>Err(Division by zero)</code></li>
+<li>✅ Boundary: Negative numbers?  Large numbers?</li>
+</ol>
+<hr />
+<h2 id="part-3-boundary-conditions-15-minutes"><a class="header" href="#part-3-boundary-conditions-15-minutes">Part 3: Boundary Conditions (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Systematically test edge cases</p>
+<h3 id="what-are-boundaries"><a class="header" href="#what-are-boundaries">What Are Boundaries?</a></h3>
+<p>Boundaries are the limits where bugs often hide:</p>
+<ul>
+<li>Empty collections (size 0)</li>
+<li>Full collections (size = capacity)</li>
+<li>Negative numbers</li>
+<li>Maximum values</li>
+<li>Null/None cases</li>
+<li>First vs. Last elements</li>
+</ul>
+<h3 id="boundary-testing-pattern"><a class="header" href="#boundary-testing-pattern">Boundary Testing Pattern</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_boundaries, {
+    // Arrange
+    let mut list = List::new();
+
+    // Test: Empty list (boundary)
+    assert_eq!(list.len(), 0);
+
+    // Test: Add one (crossing boundary)
+    list.add(42);
+    assert_eq!(list.len(), 1);
+
+    // Test: Add many (stress)
+    for i in 0..1000 {
+        list.add(i);
+    }
+    assert_eq!(list.len(), 1001);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="common-boundaries-to-test"><a class="header" href="#common-boundaries-to-test">Common Boundaries to Test</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Boundary</th><th>Test Values</th><th>Example</th></tr></thead><tbody>
+<tr><td>Empty</td><td>0 items</td><td><code>vec![]</code></td></tr>
+<tr><td>Single</td><td>1 item</td><td><code>vec![1]</code></td></tr>
+<tr><td>Multiple</td><td>2-many items</td><td><code>vec![1, 2, 3...]</code></td></tr>
+<tr><td>Negative</td><td>Negative numbers</td><td><code>-1, -100</code></td></tr>
+<tr><td>Maximum</td><td>Max value</td><td><code>u32::MAX</code></td></tr>
+<tr><td>Minimum</td><td>Min value</td><td><code>u32::MIN</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="checkpoint-question-2"><a class="header" href="#checkpoint-question-2">Checkpoint Question</a></h3>
+<p>You're testing a <code>split_string(s, limit)</code> function.</p>
+<p><strong>What boundary cases should you test?</strong></p>
+<p>Answers:</p>
+<ol>
+<li>✅ Empty string</li>
+<li>✅ Limit = 0</li>
+<li>✅ Limit = 1</li>
+<li>✅ Limit &gt; length</li>
+<li>✅ Very long string</li>
+</ol>
+<hr />
+<h2 id="part-4-resource-cleanup-15-minutes"><a class="header" href="#part-4-resource-cleanup-15-minutes">Part 4: Resource Cleanup (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Ensure tests clean up automatically</p>
+<h3 id="why-cleanup-matters"><a class="header" href="#why-cleanup-matters">Why Cleanup Matters</a></h3>
+<p>Tests often create resources:</p>
+<ul>
+<li>Files</li>
+<li>Database connections</li>
+<li>Network sockets</li>
+<li>Memory allocations</li>
+</ul>
+<p>If not cleaned up, tests <strong>leak resources</strong> and fail.</p>
+<h3 id="the-fixture-pattern"><a class="header" href="#the-fixture-pattern">The Fixture Pattern</a></h3>
+<p>Chicago TDD provides <code>TestFixture</code> for automatic cleanup:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_cleanup, {
+    // Create fixture - sets up
+    let fixture = TestFixture::new()?;
+
+    // Use the fixture
+    fixture.set_metadata("key", "value");
+
+    // No need to cleanup - happens automatically
+    // when fixture is dropped!
+});  // Cleanup happens here automatically
+<span class="boring">}</span></code></pre></pre>
+<h3 id="what-gets-cleaned-up"><a class="header" href="#what-gets-cleaned-up">What Gets Cleaned Up</a></h3>
+<ul>
+<li>File handles closed</li>
+<li>Connections closed</li>
+<li>Memory freed</li>
+<li>Temporary directories removed</li>
+</ul>
+<p>All automatic! ✅</p>
+<h3 id="checkpoint-question-3"><a class="header" href="#checkpoint-question-3">Checkpoint Question</a></h3>
+<p>You're writing tests that use a database. What should you do?</p>
+<p>Answer: Use a <code>TestFixture</code> that:</p>
+<ul>
+<li>Connects to test database on creation</li>
+<li>Runs tests</li>
+<li>Closes connection automatically on drop</li>
+</ul>
+<hr />
+<h2 id="part-5-real-collaborators-15-minutes"><a class="header" href="#part-5-real-collaborators-15-minutes">Part 5: Real Collaborators (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Test with real implementations, not mocks</p>
+<h3 id="mocks-vs-real-implementations"><a class="header" href="#mocks-vs-real-implementations">Mocks vs. Real Implementations</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Using a mock (hides integration bugs)
+test!(test_with_mock, {
+    let mock_client = MockApiClient::new();  // Fake
+    mock_client.set_response(Ok(User { ... }));
+    let result = my_service.fetch_user(&amp;mock_client);
+    assert_ok!(&amp;result);
+    // But does real client work? Who knows!
+});
+
+// ✅ Using real implementation (catches real bugs)
+test!(test_with_real_client, {
+    let real_client = RealApiClient::new();  // Actually calls API
+    let result = my_service.fetch_user(&amp;real_client);
+    assert_ok!(&amp;result);
+    // Proves it works with the real API
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-use-real-collaborators"><a class="header" href="#when-to-use-real-collaborators">When to Use Real Collaborators</a></h3>
+<p>✅ <strong>Always preferred</strong>:</p>
+<ul>
+<li>Database queries</li>
+<li>File I/O</li>
+<li>Web services</li>
+<li>Network calls</li>
+</ul>
+<p>✅ <strong>When it's fast</strong> (&lt; 100ms):</p>
+<ul>
+<li>Real implementations</li>
+</ul>
+<p>❌ <strong>Only when necessary</strong>:</p>
+<ul>
+<li>Slow external services (use test doubles)</li>
+<li>Non-deterministic behavior</li>
+<li>Expensive operations</li>
+</ul>
+<h3 id="the-philosophy"><a class="header" href="#the-philosophy">The Philosophy</a></h3>
+<p><strong>Chicago TDD principle</strong>: Test behavior with real dependencies. This proves code actually works, not just in the test's imagination.</p>
+<h3 id="checkpoint-question-4"><a class="header" href="#checkpoint-question-4">Checkpoint Question</a></h3>
+<p>You're testing a payment service. What should you test against?</p>
+<p>Answer: A real (test) payment processor, not a mock. Why? Because the real one is what you'll use in production.</p>
+<hr />
+<h2 id="putting-it-together-practice-exercise-15-minutes"><a class="header" href="#putting-it-together-practice-exercise-15-minutes">Putting It Together: Practice Exercise (15 minutes)</a></h2>
+<h3 id="exercise-user-registration-service"><a class="header" href="#exercise-user-registration-service">Exercise: User Registration Service</a></h3>
+<p>Write tests for this service:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct UserService {
+    db: UserDatabase,
+}
+
+impl UserService {
+    pub fn register(&amp;mut self, email: &amp;str, password: &amp;str) -&gt; Result&lt;User, Error&gt; {
+        // Validate input
+        if email.is_empty() || password.len() &lt; 8 {
+            return Err(Error::InvalidInput);
+        }
+
+        // Check if user exists
+        if self.db.user_exists(email) {
+            return Err(Error::UserExists);
+        }
+
+        // Create user
+        let user = User::new(email, password);
+        self.db.save(&amp;user)?;
+        Ok(user)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="what-tests-should-you-write"><a class="header" href="#what-tests-should-you-write">What Tests Should You Write?</a></h3>
+<p>Using all 5 patterns, write tests for:</p>
+<ol>
+<li><strong>Pattern 1 (AAA)</strong>: Structure tests clearly</li>
+<li><strong>Pattern 2 (Error Paths)</strong>:
+<ul>
+<li>Empty email ❌</li>
+<li>Short password ❌</li>
+<li>User already exists ❌</li>
+<li>Valid registration ✅</li>
+</ul>
+</li>
+<li><strong>Pattern 3 (Boundaries)</strong>:
+<ul>
+<li>Minimum password length (7, 8, 9 chars)</li>
+<li>Very long email</li>
+</ul>
+</li>
+<li><strong>Pattern 4 (Resource Cleanup)</strong>:
+<ul>
+<li>Use fixture for database cleanup</li>
+</ul>
+</li>
+<li><strong>Pattern 5 (Real Collaborators)</strong>:
+<ul>
+<li>Use real UserDatabase, not mock</li>
+</ul>
+</li>
+</ol>
+<h3 id="example-solution-framework"><a class="header" href="#example-solution-framework">Example Solution Framework</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_register_success, {
+    // Arrange
+    let fixture = TestFixture::new()?;
+    let db = fixture.test_database();  // Real database
+    let mut service = UserService::new(db);
+
+    // Act
+    let result = service.register("alice@example.com", "password123");
+
+    // Assert
+    assert_ok!(&amp;result);
+    let user = result.unwrap();
+    assert_eq!(user.email, "alice@example.com");
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="summary-the-5-testing-patterns"><a class="header" href="#summary-the-5-testing-patterns">Summary: The 5 Testing Patterns</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Goal</th><th>Use When</th></tr></thead><tbody>
+<tr><td><strong>Pattern 1: AAA</strong></td><td>Read­able tests</td><td>Every test</td></tr>
+<tr><td><strong>Pattern 2: Error Paths</strong></td><td>Test failures</td><td>Every function</td></tr>
+<tr><td><strong>Pattern 3: Boundaries</strong></td><td>Test limits</td><td>Every input</td></tr>
+<tr><td><strong>Pattern 4: Resource Cleanup</strong></td><td>Auto cleanup</td><td>Complex tests</td></tr>
+<tr><td><strong>Pattern 5: Real Collaborators</strong></td><td>Real deps</td><td>Integration tests</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<h3 id="immediate-today"><a class="header" href="#immediate-today">Immediate (Today)</a></h3>
+<p>Write 5-10 tests using all patterns for something in your codebase.</p>
+<h3 id="short-term-this-week"><a class="header" href="#short-term-this-week">Short-term (This Week)</a></h3>
+<p>Review existing tests. Rewrite any that don't follow these patterns.</p>
+<h3 id="long-term-this-month"><a class="header" href="#long-term-this-month">Long-term (This Month)</a></h3>
+<p>Learn <a href="tutorials/learning-architecture-patterns.html">Architecture Patterns</a> to organize your code structure.</p>
+<hr />
+<h2 id="checkpoint-do-you-know"><a class="header" href="#checkpoint-do-you-know">Checkpoint: Do You Know...?</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+How to structure a test with AAA?</li>
+<li><input disabled="" type="checkbox"/>
+How to test both success and error cases?</li>
+<li><input disabled="" type="checkbox"/>
+What boundary conditions to test?</li>
+<li><input disabled="" type="checkbox"/>
+How fixtures provide automatic cleanup?</li>
+<li><input disabled="" type="checkbox"/>
+Why real collaborators are better than mocks?</li>
+</ul>
+<p>If you answered yes to all, you've mastered Testing Patterns! 🎉</p>
+<hr />
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<ul>
+<li><strong>Full Pattern Details</strong>: <a href="tutorials/../testing-patterns/">Testing Patterns</a></li>
+<li><strong>Decision Guide</strong>: <a href="tutorials/../choosing-your-pattern.html">Choosing Your Pattern</a></li>
+<li><strong>All Patterns</strong>: <a href="tutorials/../all-patterns-reference.html">Quick Reference</a></li>
+</ul>
+<hr />
+<p><strong>Congratulations!</strong> You now understand the 5 fundamental testing patterns. Next, learn how to organize your code with Architecture Patterns.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-architecture-patterns-60-minute-mastery"><a class="header" href="#learning-architecture-patterns-60-minute-mastery">Learning Architecture Patterns: 60-Minute Mastery</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master the 5 fundamental architecture patterns</p>
+</blockquote>
+<p>This tutorial guides you through the 5 architecture patterns that organize your codebase.</p>
+<p><strong>Time</strong>: ~60 minutes | <strong>Difficulty</strong>: Intermediate | <strong>Prerequisites</strong>: <a href="tutorials/learning-testing-patterns.html">Testing Patterns</a></p>
+<hr />
+<h2 id="module-overview-1"><a class="header" href="#module-overview-1">Module Overview</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Time</th><th>Focus</th></tr></thead><tbody>
+<tr><td>Pattern 6: Generic Base Layer</td><td>15 min</td><td>Eliminating duplication with abstractions</td></tr>
+<tr><td>Pattern 7: Extension Layer</td><td>12 min</td><td>Safe extensibility without modification</td></tr>
+<tr><td>Pattern 8: Composition Over Duplication</td><td>12 min</td><td>DRY principle in action</td></tr>
+<tr><td>Pattern 9: Single Source of Truth</td><td>12 min</td><td>Keeping data consistent</td></tr>
+<tr><td>Pattern 10: Capability Grouping</td><td>9 min</td><td>Organizing large modules</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-1-generic-base-layer-15-minutes"><a class="header" href="#part-1-generic-base-layer-15-minutes">Part 1: Generic Base Layer (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Eliminate code duplication through generic abstractions</p>
+<h3 id="the-problem-code-duplication"><a class="header" href="#the-problem-code-duplication">The Problem: Code Duplication</a></h3>
+<p>Imagine you have multiple types that behave similarly:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Duplicate code everywhere
+struct FileStorage {
+    path: String,
+}
+
+impl FileStorage {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt; { ... }
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt; { ... }
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt; { ... }
+}
+
+struct DatabaseStorage {
+    connection: Connection,
+}
+
+impl DatabaseStorage {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt; { ... }
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt; { ... }
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt; { ... }
+}
+
+// Duplicated 9 times!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-generic-abstraction"><a class="header" href="#the-solution-generic-abstraction">The Solution: Generic Abstraction</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Define generic behavior once
+pub trait KeyValueStore {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt;;
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt;;
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt;;
+}
+
+// Both implement the same trait
+struct FileStorage { ... }
+impl KeyValueStore for FileStorage { ... }
+
+struct DatabaseStorage { ... }
+impl KeyValueStore for DatabaseStorage { ... }
+
+// Code that works with BOTH
+fn backup_all_data(store: &amp;dyn KeyValueStore) {
+    // Works with file, database, or any implementation!
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-use-this-pattern"><a class="header" href="#when-to-use-this-pattern">When to Use This Pattern</a></h3>
+<p>✅ <strong>Use when</strong>: You have similar code in multiple places
+✅ <strong>Use when</strong>: You want to swap implementations
+✅ <strong>Use when</strong>: You want to test with fakes/stubs</p>
+<h3 id="checkpoint-question-5"><a class="header" href="#checkpoint-question-5">Checkpoint Question</a></h3>
+<p>You have <code>RedisCache</code> and <code>MemoryCache</code> with nearly identical code.</p>
+<p><strong>What should you do?</strong></p>
+<p>Answer: Extract a <code>Cache</code> trait and implement it for both.</p>
+<hr />
+<h2 id="part-2-extension-layer-12-minutes"><a class="header" href="#part-2-extension-layer-12-minutes">Part 2: Extension Layer (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Allow safe extensions without modifying existing code</p>
+<h3 id="the-problem-modifying-core-code"><a class="header" href="#the-problem-modifying-core-code">The Problem: Modifying Core Code</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Original code
+pub struct HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        // Handle request
+    }
+}
+
+// ❌ To add logging, you modify the core:
+impl HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);  // Logging added
+        // Handle request
+    }
+}
+
+// ❌ To add authentication, you modify again:
+impl HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);  // Still here
+        // Check auth
+        // Handle request
+    }
+}
+
+// ❌ Code gets messy fast!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-extension-layer"><a class="header" href="#the-solution-extension-layer">The Solution: Extension Layer</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Core code - never changes
+pub struct HttpServer { ... }
+
+// Extension layer - add features here
+pub struct LoggingHttpServer {
+    inner: HttpServer,
+}
+
+impl LoggingHttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);
+        self.inner.handle_request(req);
+    }
+}
+
+// Another extension layer
+pub struct AuthHttpServer {
+    inner: LoggingHttpServer,
+}
+
+impl AuthHttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        if !req.is_authenticated() {
+            return Err(Unauthorized);
+        }
+        self.inner.handle_request(req);
+    }
+}
+
+// Usage: Stack them!
+let server = HttpServer::new();
+let logged = LoggingHttpServer::new(server);
+let secured = AuthHttpServer::new(logged);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters"><a class="header" href="#why-this-matters">Why This Matters</a></h3>
+<ul>
+<li><strong>Original code never changes</strong> → No bugs introduced</li>
+<li><strong>Easy to test</strong> → Test each layer separately</li>
+<li><strong>Composable</strong> → Mix and match features</li>
+<li><strong>Reversible</strong> → Remove a layer anytime</li>
+</ul>
+<h3 id="checkpoint-question-6"><a class="header" href="#checkpoint-question-6">Checkpoint Question</a></h3>
+<p>You need to add timeout handling to a database connection.</p>
+<p><strong>Using the Extension Layer pattern, how would you do it?</strong></p>
+<p>Answer: Create a <code>TimeoutConnection</code> wrapper that wraps the original <code>Connection</code>.</p>
+<hr />
+<h2 id="part-3-composition-over-duplication-12-minutes"><a class="header" href="#part-3-composition-over-duplication-12-minutes">Part 3: Composition Over Duplication (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use composition instead of copying code</p>
+<h3 id="the-problem-copy-paste-duplication"><a class="header" href="#the-problem-copy-paste-duplication">The Problem: Copy-Paste Duplication</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Copy-pasting code
+struct Logger {
+    buffer: Vec&lt;String&gt;,
+}
+
+impl Logger {
+    fn log(&amp;mut self, msg: &amp;str) {
+        self.buffer.push(msg.to_string());
+    }
+}
+
+struct FileWriter {
+    buffer: Vec&lt;String&gt;,  // DUPLICATE: Same buffer
+    path: String,
+}
+
+impl FileWriter {
+    fn write(&amp;mut self, data: &amp;str) {
+        self.buffer.push(data.to_string());  // DUPLICATE: Same logic
+    }
+}
+
+// Now you need to fix a bug in the buffer logic...
+// You have to fix it in TWO places! 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-composition"><a class="header" href="#the-solution-composition">The Solution: Composition</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Create a shared component
+pub struct StringBuffer {
+    data: Vec&lt;String&gt;,
+}
+
+impl StringBuffer {
+    fn append(&amp;mut self, s: &amp;str) {
+        self.data.push(s.to_string());
+    }
+}
+
+// Compose it into both
+struct Logger {
+    buffer: StringBuffer,
+}
+
+struct FileWriter {
+    buffer: StringBuffer,  // Same component
+    path: String,
+}
+
+// Now: Fix bug in StringBuffer once, both are fixed! ✅
+<span class="boring">}</span></code></pre></pre>
+<h3 id="composition-vs-inheritance"><a class="header" href="#composition-vs-inheritance">Composition vs. Inheritance</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Composition</th><th>Inheritance</th></tr></thead><tbody>
+<tr><td><strong>Reusability</strong></td><td>✅ Mix and match</td><td>❌ Rigid hierarchy</td></tr>
+<tr><td><strong>Maintainability</strong></td><td>✅ Changes in one place</td><td>❌ Changes everywhere</td></tr>
+<tr><td><strong>Flexibility</strong></td><td>✅ Swap parts easily</td><td>❌ Can't swap</td></tr>
+<tr><td><strong>Testability</strong></td><td>✅ Test component alone</td><td>❌ Test whole tree</td></tr>
+</tbody></table>
+</div>
+<p><strong>Rule of thumb</strong>: If you're copy-pasting code, use composition instead.</p>
+<h3 id="checkpoint-question-7"><a class="header" href="#checkpoint-question-7">Checkpoint Question</a></h3>
+<p>You have <code>JsonParser</code> and <code>XmlParser</code> with 50 lines of duplicate validation code.</p>
+<p><strong>What should you do?</strong></p>
+<p>Answer: Extract a <code>Validator</code> component and use it in both.</p>
+<hr />
+<h2 id="part-4-single-source-of-truth-12-minutes"><a class="header" href="#part-4-single-source-of-truth-12-minutes">Part 4: Single Source of Truth (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Keep data consistent by having one canonical source</p>
+<h3 id="the-problem-data-inconsistency"><a class="header" href="#the-problem-data-inconsistency">The Problem: Data Inconsistency</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Multiple copies of the same data
+struct UserCache {
+    users: HashMap&lt;u32, User&gt;,  // Copy of database
+}
+
+struct UserService {
+    cache: UserCache,
+    database: Database,  // Original
+}
+
+// Update database
+service.database.update_user(123, new_data)?;
+
+// Oops! Cache is now stale
+// service.cache.users[&amp;123] is out of date!
+
+// Different code paths get different data 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-one-source-of-truth"><a class="header" href="#the-solution-one-source-of-truth">The Solution: One Source of Truth</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Truth in one place
+struct UserService {
+    database: Database,  // Only source of truth
+}
+
+// Cache is derived from database
+fn get_user(&amp;self, id: u32) -&gt; Result&lt;User&gt; {
+    // Get from database (single source)
+    self.database.fetch(id)
+}
+
+// Update
+fn update_user(&amp;mut self, id: u32, data: UserUpdate) -&gt; Result&lt;()&gt; {
+    // Update only the source
+    self.database.update(id, data)
+}
+
+// Always consistent! ✅
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-apply"><a class="header" href="#when-to-apply">When to Apply</a></h3>
+<p>✅ <strong>Apply when</strong>: Data appears in multiple places
+✅ <strong>Apply when</strong>: Synchronization is complex
+✅ <strong>Apply when</strong>: Consistency matters (payment systems, authorization, etc.)</p>
+<h3 id="examples"><a class="header" href="#examples">Examples</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Domain</th><th>Truth</th><th>Derived</th></tr></thead><tbody>
+<tr><td><strong>E-commerce</strong></td><td>Database (orders)</td><td>Cache, indices, reports</td></tr>
+<tr><td><strong>Auth</strong></td><td>Database (permissions)</td><td>Session tokens, caches</td></tr>
+<tr><td><strong>Analytics</strong></td><td>Raw events</td><td>Aggregations, reports</td></tr>
+</tbody></table>
+</div>
+<h3 id="checkpoint-question-8"><a class="header" href="#checkpoint-question-8">Checkpoint Question</a></h3>
+<p>You have user data in both database and cache.</p>
+<p><strong>Which is the single source of truth?</strong></p>
+<p>Answer: Database. Cache is derived/cached from it. Update database first, invalidate cache.</p>
+<hr />
+<h2 id="part-5-capability-grouping-9-minutes"><a class="header" href="#part-5-capability-grouping-9-minutes">Part 5: Capability Grouping (9 minutes)</a></h2>
+<p><strong>Goal</strong>: Organize large modules by capability, not by type</p>
+<h3 id="the-problem-type-based-organization"><a class="header" href="#the-problem-type-based-organization">The Problem: Type-Based Organization</a></h3>
+<pre><code>project/
+├── models/          # All data types
+│   ├── user.rs
+│   ├── order.rs
+│   └── payment.rs
+├── handlers/        # All HTTP handlers
+│   ├── user_handler.rs
+│   ├── order_handler.rs
+│   └── payment_handler.rs
+├── persistence/     # All database code
+│   ├── user_repo.rs
+│   ├── order_repo.rs
+│   └── payment_repo.rs
+
+// ❌ To understand "user" feature, you jump between 4 files!
+// ❌ Each file is small but scattered
+// ❌ Hard to find related code
+</code></pre>
+<h3 id="the-solution-capability-based-organization"><a class="header" href="#the-solution-capability-based-organization">The Solution: Capability-Based Organization</a></h3>
+<pre><code>project/
+├── users/               # Everything for users
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+├── orders/              # Everything for orders
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+├── payments/            # Everything for payments
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+
+// ✅ To understand "users", all code is in `users/`!
+// ✅ Related code is together
+// ✅ Easy to find dependencies
+</code></pre>
+<h3 id="benefits"><a class="header" href="#benefits">Benefits</a></h3>
+<ul>
+<li><strong>Cohesion</strong>: Related code together</li>
+<li><strong>Discoverability</strong>: Find code easily</li>
+<li><strong>Modularity</strong>: Move features together</li>
+<li><strong>Testability</strong>: Test capability in one place</li>
+</ul>
+<h3 id="checkpoint-question-9"><a class="header" href="#checkpoint-question-9">Checkpoint Question</a></h3>
+<p>Your project has <code>models/</code>, <code>handlers/</code>, and <code>db/</code> directories.</p>
+<p><strong>How would you reorganize for better capability grouping?</strong></p>
+<p>Answer: Create <code>users/</code>, <code>orders/</code>, <code>products/</code> directories, each containing models, handlers, and db code.</p>
+<hr />
+<h2 id="putting-it-together-complete-exercise-15-minutes"><a class="header" href="#putting-it-together-complete-exercise-15-minutes">Putting It Together: Complete Exercise (15 minutes)</a></h2>
+<h3 id="exercise-building-an-order-processing-system"><a class="header" href="#exercise-building-an-order-processing-system">Exercise: Building an Order Processing System</a></h3>
+<p>You're building an order system with these requirements:</p>
+<ol>
+<li>Accept orders</li>
+<li>Store them in database</li>
+<li>Can switch between PostgreSQL and SQLite</li>
+<li>Add logging without modifying core code</li>
+<li>Keep inventory count accurate</li>
+<li>Organize code clearly</li>
+</ol>
+<h3 id="design-using-all-5-patterns"><a class="header" href="#design-using-all-5-patterns">Design Using All 5 Patterns</a></h3>
+<p><strong>Pattern 6 (Generic Base)</strong>: Create <code>Storage</code> trait</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait OrderStorage {
+    fn save(&amp;mut self, order: &amp;Order) -&gt; Result&lt;()&gt;;
+    fn get(&amp;self, id: u32) -&gt; Result&lt;Order&gt;;
+}
+
+// Both implementations
+struct PostgresStorage { ... }
+struct SqliteStorage { ... }
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 7 (Extension Layer)</strong>: Add logging</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct LoggingStorage {
+    inner: Box&lt;dyn OrderStorage&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 8 (Composition)</strong>: Shared validation</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct OrderValidator { ... }
+struct Order Service {
+    storage: Box&lt;dyn OrderStorage&gt;,
+    validator: OrderValidator,  // Composed
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 9 (Single Source)</strong>: Inventory truth</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct InventoryService {
+    database: Database,  // Single source
+    // NOT: inventory_cache
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 10 (Capability)</strong>: Organize by feature</p>
+<pre><code>order_service/
+├── model.rs
+├── handler.rs
+├── storage.rs
+├── validator.rs
+└── tests.rs
+</code></pre>
+<hr />
+<h2 id="summary-the-5-architecture-patterns"><a class="header" href="#summary-the-5-architecture-patterns">Summary: The 5 Architecture Patterns</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>6: Generic Base</strong></td><td>Duplication</td><td>Traits and abstraction</td></tr>
+<tr><td><strong>7: Extension Layer</strong></td><td>Modification</td><td>Wrapping instead of changing</td></tr>
+<tr><td><strong>8: Composition</strong></td><td>Copy-paste</td><td>Share components</td></tr>
+<tr><td><strong>9: Single Source</strong></td><td>Inconsistency</td><td>One source of truth</td></tr>
+<tr><td><strong>10: Capability</strong></td><td>Disorganization</td><td>Group by feature</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next Steps</a></h2>
+<h3 id="apply-these-patterns"><a class="header" href="#apply-these-patterns">Apply These Patterns</a></h3>
+<p>Choose one pattern and apply it to your current project this week.</p>
+<h3 id="learn-design-patterns"><a class="header" href="#learn-design-patterns">Learn Design Patterns</a></h3>
+<p>Once you master architecture, learn <a href="tutorials/learning-design-patterns.html">Design Patterns</a> for type safety and optimization.</p>
+<hr />
+<h2 id="checkpoint-do-you-know-1"><a class="header" href="#checkpoint-do-you-know-1">Checkpoint: Do You Know...?</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+How to use traits to eliminate duplication?</li>
+<li><input disabled="" type="checkbox"/>
+How to extend code without modifying it?</li>
+<li><input disabled="" type="checkbox"/>
+When to use composition over inheritance?</li>
+<li><input disabled="" type="checkbox"/>
+How to keep data consistent?</li>
+<li><input disabled="" type="checkbox"/>
+How to organize code by capability?</li>
+</ul>
+<p>If yes to all, you've mastered Architecture Patterns! 🎉</p>
+<hr />
+<p><strong>Congratulations!</strong> You now understand how to organize production code. Next, master type safety and design with Design Patterns.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-design-patterns-120-minute-mastery"><a class="header" href="#learning-design-patterns-120-minute-mastery">Learning Design Patterns: 120-Minute Mastery</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master the 10 advanced design patterns</p>
+</blockquote>
+<p>This tutorial guides you through the 10 design patterns that create safe, fast, maintainable systems.</p>
+<p><strong>Time</strong>: ~120 minutes | <strong>Difficulty</strong>: Advanced | <strong>Prerequisites</strong>: <a href="tutorials/learning-testing-patterns.html">Testing</a> + <a href="tutorials/learning-architecture-patterns.html">Architecture</a></p>
+<hr />
+<h2 id="module-overview-2"><a class="header" href="#module-overview-2">Module Overview</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Time</th><th>Focus</th></tr></thead><tbody>
+<tr><td>Pattern 11: Zero-Cost Abstractions</td><td>12 min</td><td>Performance without sacrifice</td></tr>
+<tr><td>Pattern 12: Type Safety with GATs</td><td>12 min</td><td>Lifetimes and type safety</td></tr>
+<tr><td>Pattern 13: Sealed Traits</td><td>10 min</td><td>Prevent API misuse</td></tr>
+<tr><td>Pattern 14: Compile-Time Validation</td><td>12 min</td><td>Move errors left</td></tr>
+<tr><td>Pattern 15: Type State Enforcement</td><td>12 min</td><td>Encode state in types</td></tr>
+<tr><td>Pattern 16: Fixture Lifecycle</td><td>12 min</td><td>Safe resource management</td></tr>
+<tr><td>Pattern 17: Builder-Driven Test Data</td><td>12 min</td><td>Fluent test builders</td></tr>
+<tr><td>Pattern 18: Timeout Defense</td><td>12 min</td><td>Prevent hangs</td></tr>
+<tr><td>Pattern 19: Feature Gate Slices</td><td>12 min</td><td>Reliable feature flags</td></tr>
+<tr><td>Pattern 20: Macro Pattern Enforcement</td><td>12 min</td><td>Enforce patterns with code</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-1-zero-cost-abstractions-12-minutes"><a class="header" href="#part-1-zero-cost-abstractions-12-minutes">Part 1: Zero-Cost Abstractions (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Performance through generics and compile-time specialization</p>
+<h3 id="the-problem-abstraction-vs-performance"><a class="header" href="#the-problem-abstraction-vs-performance">The Problem: Abstraction vs. Performance</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Abstraction adds runtime cost
+fn process_data(data: &amp;dyn Iterator&lt;Item = i32&gt;) {
+    // Dynamic dispatch = function pointers = overhead
+    for item in data {
+        // ...
+    }
+}
+
+// Result: Slower than necessary
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-generics--zero-cost"><a class="header" href="#the-solution-generics--zero-cost">The Solution: Generics = Zero Cost</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Generic = compile specialization
+fn process_data&lt;I: Iterator&lt;Item = i32&gt;&gt;(data: I) {
+    // Compiler generates specialized code for EACH type
+    // No function pointers, no indirection
+    for item in data {
+        // ...
+    }
+}
+
+// Rust compiles:
+// - process_data::&lt;Vec&lt;i32&gt;::IntoIter&gt;
+// - process_data::&lt;ArrayIter&gt;
+// - process_data::&lt;CustomIterator&gt;
+// Each one optimized for its type!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-principle"><a class="header" href="#key-principle">Key Principle</a></h3>
+<p>Rust compiler can <strong>monomorphize</strong> generics - it creates specialized versions for each type. This costs compilation time but <strong>zero runtime cost</strong>.</p>
+<h3 id="when-to-use-generics-vs-trait-objects"><a class="header" href="#when-to-use-generics-vs-trait-objects">When to Use Generics vs. Trait Objects</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Choice</th><th>Cost</th><th>Use When</th></tr></thead><tbody>
+<tr><td><strong>Generics</strong></td><td>Compile-time</td><td>Size known, type fixed</td></tr>
+<tr><td><strong>Trait objects</strong></td><td>Runtime</td><td>Size unknown, type varies</td></tr>
+</tbody></table>
+</div>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Generics - no runtime cost
+fn sort&lt;T: Ord&gt;(list: &amp;mut [T]) { ... }
+
+// ✅ Trait objects - when you need dynamic dispatch
+fn apply_filter(items: &amp;[i32], filter: &amp;dyn Fn(i32) -&gt; bool) { ... }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="checkpoint-question-10"><a class="header" href="#checkpoint-question-10">Checkpoint Question</a></h3>
+<p>You have a function that processes different collection types.</p>
+<p><strong>Should you use generics or trait objects?</strong></p>
+<p>Answer: <strong>Generics</strong>. Let compiler specialize for each type.</p>
+<hr />
+<h2 id="part-2-type-safety-with-gats-12-minutes"><a class="header" href="#part-2-type-safety-with-gats-12-minutes">Part 2: Type Safety with GATs (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use Generic Associated Types to prevent lifetime bugs</p>
+<h3 id="the-problem-complex-lifetimes"><a class="header" href="#the-problem-complex-lifetimes">The Problem: Complex Lifetimes</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Lifetime issues with references
+trait DataProvider {
+    fn get(&amp;self) -&gt; &amp;str;
+}
+
+// Can this reference outlive the provider?
+// The compiler can't tell!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-gats"><a class="header" href="#the-solution-gats">The Solution: GATs</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GATs bind lifetime to self
+trait DataProvider {
+    type Data&lt;'a&gt; where Self: 'a;
+
+    fn get(&amp;'a self) -&gt; Self::Data&lt;'a&gt;;
+}
+
+// Now compiler KNOWS: returned data is tied to self's lifetime
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters-1"><a class="header" href="#why-this-matters-1">Why This Matters</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// With GATs, this is impossible:
+fn use_provider(provider: &amp;Provider) {
+    let data = provider.get();
+    drop(provider);  // ❌ Compiler error!
+    println!("{:?}", data);  // data would be dangling
+}
+
+// Without GATs, it might compile (dangerous!)
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-use-gats"><a class="header" href="#when-to-use-gats">When to Use GATs</a></h3>
+<p>✅ <strong>Use when</strong>: Returning references from traits
+✅ <strong>Use when</strong>: Fixture providers with borrowed data
+✅ <strong>Use when</strong>: APIs that care about lifetimes</p>
+<h3 id="checkpoint-question-11"><a class="header" href="#checkpoint-question-11">Checkpoint Question</a></h3>
+<p>You have a trait that returns a reference to internal data.</p>
+<p><strong>How do you ensure it can't outlive the source?</strong></p>
+<p>Answer: Use GATs to bind the returned reference lifetime to <code>self</code>.</p>
+<hr />
+<h2 id="part-3-sealed-traits-10-minutes"><a class="header" href="#part-3-sealed-traits-10-minutes">Part 3: Sealed Traits (10 minutes)</a></h2>
+<p><strong>Goal</strong>: Prevent external implementations of your traits</p>
+<h3 id="the-problem-api-misuse"><a class="header" href="#the-problem-api-misuse">The Problem: API Misuse</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Public trait - anyone can implement!
+pub trait Serializable {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+// External code implements it wrongly:
+impl Serializable for String {
+    fn serialize(&amp;self) -&gt; String {
+        "nope".to_string()  // Wrong!
+    }
+}
+
+// Your code breaks!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-sealed-traits"><a class="header" href="#the-solution-sealed-traits">The Solution: Sealed Traits</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Private sealing module
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait Serializable: sealed::Sealed {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+// Only WE can implement Sealed
+impl sealed::Sealed for MyType {}
+impl Serializable for MyType { ... }
+
+// External code CANNOT implement Serializable
+// because they can't implement sealed::Sealed!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters-2"><a class="header" href="#why-this-matters-2">Why This Matters</a></h3>
+<ul>
+<li><strong>Prevents misuse</strong> → Forced to use correct implementations</li>
+<li><strong>API evolution</strong> → Can change internals safely</li>
+<li><strong>Documentation</strong> → Readers know this is sealed</li>
+</ul>
+<h3 id="pattern"><a class="header" href="#pattern">Pattern</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait PublicTrait: sealed::Sealed {
+    fn public_method(&amp;self);
+}
+
+// Only internal types can implement
+pub struct InternalType;
+impl sealed::Sealed for InternalType {}
+impl PublicTrait for InternalType { ... }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="checkpoint-question-12"><a class="header" href="#checkpoint-question-12">Checkpoint Question</a></h3>
+<p>You have an important trait that must have specific implementations.</p>
+<p><strong>How do you prevent user code from breaking it?</strong></p>
+<p>Answer: Seal the trait so only your code can implement it.</p>
+<hr />
+<h2 id="part-4-compile-time-validation-12-minutes"><a class="header" href="#part-4-compile-time-validation-12-minutes">Part 4: Compile-Time Validation (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Catch errors during compilation, not at runtime</p>
+<h3 id="the-problem-runtime-errors"><a class="header" href="#the-problem-runtime-errors">The Problem: Runtime Errors</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Errors at runtime
+fn process(config: &amp;str) -&gt; Result&lt;Data, Error&gt; {
+    let parsed = parse_config(config)?;  // Might fail at runtime
+    validate_config(parsed)?;  // Another runtime check
+    Ok(build_data(parsed))
+}
+
+// Errors are found after deployment 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-phantom-types"><a class="header" href="#the-solution-phantom-types">The Solution: Phantom Types</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Errors at compile time
+struct Config&lt;S&gt; {
+    data: String,
+    _state: PhantomData&lt;S&gt;,
+}
+
+// Parsing: Raw → Parsed
+impl Config&lt;Raw&gt; {
+    fn parse(s: &amp;str) -&gt; Result&lt;Config&lt;Parsed&gt;, Error&gt; {
+        let data = validate(s)?;
+        Ok(Config { data, _state: PhantomData })
+    }
+}
+
+// Building: Only works with Parsed
+impl Config&lt;Parsed&gt; {
+    fn build(self) -&gt; Data {
+        // Can only call this on Parsed, never Raw
+        Data::new(&amp;self.data)
+    }
+}
+
+// ✅ This is impossible:
+let raw = Config::&lt;Raw&gt;::from("config");
+raw.build();  // ❌ Compiler error! Use .parse() first
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-idea"><a class="header" href="#key-idea">Key Idea</a></h3>
+<p><strong>Encode requirements in types</strong>. Make it impossible to violate at compile-time.</p>
+<h3 id="common-examples"><a class="header" href="#common-examples">Common Examples</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Types</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><strong>Builder pattern</strong></td><td>Raw → Built</td><td>Ensure all fields set</td></tr>
+<tr><td><strong>State machines</strong></td><td>Idle → Running</td><td>Prevent invalid operations</td></tr>
+<tr><td><strong>Type tokens</strong></td><td>Foo&lt;_&gt; with phantom</td><td>Track type information</td></tr>
+</tbody></table>
+</div>
+<h3 id="checkpoint-question-13"><a class="header" href="#checkpoint-question-13">Checkpoint Question</a></h3>
+<p>You have an API that requires:</p>
+<ol>
+<li>Initialize</li>
+<li>Configure</li>
+<li>Start</li>
+</ol>
+<p><strong>How do you prevent wrong order?</strong></p>
+<p>Answer: Use phantom types to track state:</p>
+<ul>
+<li><code>Service&lt;Uninitialized&gt;</code> → <code>.init()</code> → <code>Service&lt;Initialized&gt;</code></li>
+<li><code>Service&lt;Initialized&gt;</code> → <code>.configure()</code> → <code>Service&lt;Configured&gt;</code></li>
+<li><code>Service&lt;Configured&gt;</code> → <code>.start()</code> → <code>Service&lt;Running&gt;</code></li>
+</ul>
+<hr />
+<h2 id="part-5-type-state-enforcement-12-minutes"><a class="header" href="#part-5-type-state-enforcement-12-minutes">Part 5: Type State Enforcement (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use the type system to enforce valid state transitions</p>
+<h3 id="the-problem-invalid-states"><a class="header" href="#the-problem-invalid-states">The Problem: Invalid States</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Can access before initialization
+struct Connection {
+    socket: Option&lt;Socket&gt;,  // None until connected
+}
+
+impl Connection {
+    fn send(&amp;mut self, data: &amp;[u8]) -&gt; Result&lt;()&gt; {
+        match self.socket {
+            Some(ref mut s) =&gt; s.write(data),
+            None =&gt; Err("Not connected"),  // Runtime error!
+        }
+    }
+}
+
+// Code can call send() before connect() - runtime error!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-type-state"><a class="header" href="#the-solution-type-state">The Solution: Type State</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Types enforce state
+struct Connection&lt;State&gt; { ... }
+
+// States
+pub struct Disconnected;
+pub struct Connected;
+
+// Only Disconnected can connect
+impl Connection&lt;Disconnected&gt; {
+    fn connect(mut self, addr: &amp;str) -&gt; Result&lt;Connection&lt;Connected&gt;&gt; {
+        self.socket = Some(Socket::new(addr)?);
+        Ok(Connection { ... })
+    }
+}
+
+// Only Connected can send
+impl Connection&lt;Connected&gt; {
+    fn send(&amp;mut self, data: &amp;[u8]) -&gt; Result&lt;()&gt; {
+        self.socket.write(data)?;  // socket is guaranteed Some
+        Ok(())
+    }
+}
+
+// ✅ Impossible to call send() before connect():
+let conn = Connection::new();  // Disconnected
+conn.send(b"data")?;  // ❌ Compiler error!
+
+let conn = conn.connect("127.0.0.1")?;  // Now Connected
+conn.send(b"data")?;  // ✅ Allowed!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="benefits-1"><a class="header" href="#benefits-1">Benefits</a></h3>
+<ul>
+<li><strong>Compile-time safety</strong> → No panics from invalid states</li>
+<li><strong>No runtime checks</strong> → No Option/Result overhead</li>
+<li><strong>Clear API</strong> → Code documents valid transitions</li>
+<li><strong>Impossible states</strong> → Some states just can't happen</li>
+</ul>
+<h3 id="checkpoint-question-14"><a class="header" href="#checkpoint-question-14">Checkpoint Question</a></h3>
+<p>You have a database transaction that must:</p>
+<ol>
+<li>Begin</li>
+<li>Execute</li>
+<li>Commit/Rollback</li>
+</ol>
+<p><strong>How do you prevent calling Commit before Begin?</strong></p>
+<p>Answer: Use type states:</p>
+<ul>
+<li><code>Tx&lt;NotStarted&gt;</code> → <code>.begin()</code> → <code>Tx&lt;Started&gt;</code></li>
+<li><code>Tx&lt;Started&gt;</code> → <code>.commit()</code> → <code>Tx&lt;Finished&gt;</code></li>
+</ul>
+<hr />
+<h2 id="part-6-10-summary-of-advanced-patterns"><a class="header" href="#part-6-10-summary-of-advanced-patterns">Part 6-10: Summary of Advanced Patterns</a></h2>
+<p>The remaining 5 patterns build on what you've learned:</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>What It Does</th></tr></thead><tbody>
+<tr><td>16</td><td><strong>Fixture Lifecycle</strong></td><td>Manage resources with sealed traits (combines patterns 13+2)</td></tr>
+<tr><td>17</td><td><strong>Builder Test Data</strong></td><td>Fluent builders for test setup (applies compilation validation)</td></tr>
+<tr><td>18</td><td><strong>Timeout Defense</strong></td><td>Multiple timeout strategies (zero-cost + compile-time)</td></tr>
+<tr><td>19</td><td><strong>Feature Gates</strong></td><td>Type-safe feature flags (type state + sealed traits)</td></tr>
+<tr><td>20</td><td><strong>Macro Enforcement</strong></td><td>Compile-time pattern checks via macros (ultimate compile-time validation)</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="putting-it-together-complete-design"><a class="header" href="#putting-it-together-complete-design">Putting It Together: Complete Design</a></h2>
+<h3 id="exercise-build-a-safe-transaction-system"><a class="header" href="#exercise-build-a-safe-transaction-system">Exercise: Build a Safe Transaction System</a></h3>
+<p>Requirements:</p>
+<ol>
+<li>Transactions must go: Begin → Execute → Commit</li>
+<li>Can't add statements after commit</li>
+<li>Type-safe with zero runtime overhead</li>
+<li>Can't be misused by users</li>
+<li>Test data builder for testing</li>
+</ol>
+<h3 id="solution-using-all-patterns"><a class="header" href="#solution-using-all-patterns">Solution Using All Patterns</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pattern 15 + 14: Type state
+pub struct Transaction&lt;State&gt; {
+    id: u32,
+    statements: Vec&lt;String&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+
+pub struct NotStarted;
+pub struct Started;
+pub struct Committed;
+
+// Pattern 14 + 15: Compile-time validation
+impl Transaction&lt;NotStarted&gt; {
+    pub fn begin() -&gt; Transaction&lt;Started&gt; {
+        Transaction { ... }
+    }
+}
+
+impl Transaction&lt;Started&gt; {
+    pub fn add_statement(&amp;mut self, sql: &amp;str) -&gt; Result&lt;()&gt; {
+        self.statements.push(sql.to_string());
+        Ok(())
+    }
+
+    pub fn commit(self) -&gt; Transaction&lt;Committed&gt; {
+        // Execute all statements
+        Transaction { ... }
+    }
+}
+
+// Pattern 13: Sealed to prevent misuse
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait TransactionOps: sealed::Sealed {
+    fn execute(&amp;self) -&gt; Result&lt;()&gt;;
+}
+
+impl sealed::Sealed for Transaction&lt;Started&gt; {}
+impl TransactionOps for Transaction&lt;Started&gt; {
+    fn execute(&amp;self) -&gt; Result&lt;()&gt; { ... }
+}
+
+// Pattern 17: Builder for tests
+pub struct TransactionBuilder {
+    statements: Vec&lt;String&gt;,
+}
+
+impl TransactionBuilder {
+    pub fn new() -&gt; Self { ... }
+    pub fn add(mut self, sql: &amp;str) -&gt; Self {
+        self.statements.push(sql.to_string());
+        self
+    }
+    pub fn build(self) -&gt; Transaction&lt;Started&gt; { ... }
+}
+
+// ✅ Usage is type-safe:
+let mut tx = Transaction::begin();
+tx.add_statement("INSERT ...")?;
+let tx = tx.commit();  // Type changes to Committed
+
+// ❌ Impossible:
+let tx = Transaction::begin();
+let tx = tx.commit();
+tx.add_statement("SELECT");  // ❌ Compiler error! tx is Committed
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="summary-the-10-design-patterns"><a class="header" href="#summary-the-10-design-patterns">Summary: The 10 Design Patterns</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Goal</th><th>Mechanism</th></tr></thead><tbody>
+<tr><td>11</td><td>Zero-cost</td><td>Generics + monomorphization</td></tr>
+<tr><td>12</td><td>Lifetimes</td><td>GATs (Generic Associated Types)</td></tr>
+<tr><td>13</td><td>API safety</td><td>Sealed traits</td></tr>
+<tr><td>14</td><td>Validation</td><td>Phantom types + state</td></tr>
+<tr><td>15</td><td>State machines</td><td>Type states</td></tr>
+<tr><td>16</td><td>Resources</td><td>Lifecycle traits</td></tr>
+<tr><td>17</td><td>Test data</td><td>Fluent builders</td></tr>
+<tr><td>18</td><td>Robustness</td><td>Timeout strategies</td></tr>
+<tr><td>19</td><td>Features</td><td>Type-safe gates</td></tr>
+<tr><td>20</td><td>Enforcement</td><td>Procedural macros</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next Steps</a></h2>
+<h3 id="master-one-pattern-per-week"><a class="header" href="#master-one-pattern-per-week">Master One Pattern Per Week</a></h3>
+<ol>
+<li><strong>Week 1</strong>: Zero-Cost &amp; GATs</li>
+<li><strong>Week 2</strong>: Sealed &amp; Compile-Time</li>
+<li><strong>Week 3</strong>: Type State &amp; Lifecycle</li>
+<li><strong>Week 4</strong>: Builder, Timeout, Features, Macros</li>
+</ol>
+<h3 id="apply-to-your-project"><a class="header" href="#apply-to-your-project">Apply to Your Project</a></h3>
+<p>Choose the top 3 patterns that would improve your code safety and refactor this month.</p>
+<hr />
+<h2 id="checkpoint-do-you-know-2"><a class="header" href="#checkpoint-do-you-know-2">Checkpoint: Do You Know...?</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+How generics create zero-cost abstractions?</li>
+<li><input disabled="" type="checkbox"/>
+When to use GATs for lifetime safety?</li>
+<li><input disabled="" type="checkbox"/>
+How sealed traits prevent API misuse?</li>
+<li><input disabled="" type="checkbox"/>
+How to encode validation in types?</li>
+<li><input disabled="" type="checkbox"/>
+How type states prevent invalid operations?</li>
+<li><input disabled="" type="checkbox"/>
+How to manage resource lifecycles?</li>
+<li><input disabled="" type="checkbox"/>
+How builders simplify test setup?</li>
+<li><input disabled="" type="checkbox"/>
+Why timeouts matter?</li>
+<li><input disabled="" type="checkbox"/>
+How to implement type-safe features?</li>
+<li><input disabled="" type="checkbox"/>
+When to use macros for enforcement?</li>
+</ul>
+<p>If yes to most, you've mastered Design Patterns! 🎉</p>
+<hr />
+<p><strong>Congratulations!</strong> You now understand the complete pattern language of Chicago TDD Tools.</p>
+<h2 id="final-advice"><a class="header" href="#final-advice">Final Advice</a></h2>
+<p>These patterns work together:</p>
+<ul>
+<li><strong>Testing patterns</strong> help you verify code works</li>
+<li><strong>Architecture patterns</strong> help you organize code</li>
+<li><strong>Design patterns</strong> help you prevent bugs at compile-time</li>
+</ul>
+<p>Master them all, and you'll write code that's:
+✅ Tested thoroughly
+✅ Well-organized
+✅ Type-safe
+✅ High-performance
+✅ Hard to misuse</p>
+<p>That's the Chicago TDD difference.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testing-patterns"><a class="header" href="#testing-patterns">Testing Patterns</a></h1>
 <p>Tests are executable specifications. The Chicago TDD Tools testing patterns capture how to write fast, trustworthy, and expressive tests that verify observable behavior. Each pattern layers on the previous ones; together they reflect the AAA mindset, the insistence on real collaborators, and the bias toward fast failure.</p>
 <p>Use these patterns when a test feels brittle, slow, or unclear. The language highlights which macro to reach for, how to structure the test body, and how to keep failures meaningful.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-1-aaa-pattern"><a class="header" href="#pattern-1-aaa-pattern">Pattern 1: AAA Pattern</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | Structure every test with Arrange-Act-Assert clarity</p>
+</blockquote>
+<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem Solved</strong></td><td>Tests that intermingle setup, behavior, and assertions become hard to read and debug</td></tr>
+<tr><td><strong>Core Solution</strong></td><td>Divide test into three explicit phases: Arrange, Act, Assert</td></tr>
+<tr><td><strong>When to Use</strong></td><td>✅ All unit tests, ✅ Integration tests, ✅ Even simple assertions</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>❌ Property-based tests (different structure), ❌ Complex multi-stage workflows (use fixtures)</td></tr>
+<tr><td><strong>Difficulty</strong></td><td>Low - Easy to learn and apply immediately</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Slight verbosity for clarity</td></tr>
+<tr><td><strong>Related Patterns</strong></td><td>Error Path Testing, Real Collaborators, Fixture Lifecycle</td></tr>
+</tbody></table>
+</div>
 <h2 id="context"><a class="header" href="#context">Context</a></h2>
 <p>You are writing or reviewing a test in Chicago TDD Tools. You want the test to communicate intent instantly and fail with a precise message when behavior regresses.</p>
 <h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
@@ -214,46 +1901,201 @@
 <li>Fast diagnosis vs. runtime overhead: compile-time enforcement should cost nothing</li>
 <li>Behavior proof vs. implementation detail: assertions must verify observable outcomes</li>
 </ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h2 id="examples-1"><a class="header" href="#examples-1">Examples</a></h2>
+<h3 id="basic-example-simple-calculation"><a class="header" href="#basic-example-simple-calculation">Basic Example: Simple Calculation</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
 
 test!(test_scaling_multiplier, {
-    // Arrange
+    // Arrange: Set up test data
     let multiplier = 3;
     let input = 7;
 
-    // Act
+    // Act: Execute the behavior
     let result = multiplier * input;
 
-    // Assert
+    // Assert: Verify the result
     assert_eq!(result, 21, "multiplier should scale the input");
 });
 <span class="boring">}</span></code></pre></pre>
-<p>Async tests follow the same skeleton:</p>
+<h3 id="async-example-fetching-data"><a class="header" href="#async-example-fetching-data">Async Example: Fetching Data</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
 
 async_test!(test_fetch_customer, {
-    // Arrange
+    // Arrange: Set up dependencies
     let client = FakeCrmClient::connected();
 
-    // Act
+    // Act: Perform async operation
     let customer = client.fetch("cust-123").await?;
 
-    // Assert
+    // Assert: Verify outcome
     assert_eq!(customer.id, "cust-123");
     Ok(())
 });
 <span class="boring">}</span></code></pre></pre>
+<h3 id="with-fixtures-complex-setup"><a class="header" href="#with-fixtures-complex-setup">With Fixtures: Complex Setup</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::fixture::*;
+
+fixture_test!(test_user_creation, fixture, {
+    // Arrange: Create fixture and prepare state
+    fixture.set_metadata("user_type", "admin");
+    let db = fixture.database();
+
+    // Act: Execute business logic
+    let user = db.create_user("alice", "admin")?;
+
+    // Assert: Verify the result
+    assert_eq!(user.name, "alice");
+    assert_eq!(user.role, "admin");
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Arrange phase</strong> clearly sets up all necessary test data</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Act phase</strong> calls the function or method exactly once</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Assert phase</strong> verifies the result with specific assertions</li>
+<li><input disabled="" type="checkbox"/>
+Comments label each phase (even if obvious)</li>
+<li><input disabled="" type="checkbox"/>
+Test name describes what is being tested</li>
+<li><input disabled="" type="checkbox"/>
+Each test tests one behavior</li>
+<li><input disabled="" type="checkbox"/>
+No logic in assertions (e.g., no <code>if</code> statements)</li>
+</ul>
+<h2 id="common-mistakes--how-to-avoid-them"><a class="header" href="#common-mistakes--how-to-avoid-them">Common Mistakes &amp; How to Avoid Them</a></h2>
+<h3 id="-mistake-1-mixing-arrange-and-act"><a class="header" href="#-mistake-1-mixing-arrange-and-act">❌ Mistake 1: Mixing Arrange and Act</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: Hidden state between phases
+test!(test_bad_mixing, {
+    let result = setup_and_call();  // Mixes arrange + act
+    assert_eq!(result, 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: Clear separation
+test!(test_good_mixing, {
+    // Arrange
+    let input = 42;
+
+    // Act
+    let result = calculate(input);
+
+    // Assert
+    assert_eq!(result, 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-mistake-2-multiple-assertions-without-context"><a class="header" href="#-mistake-2-multiple-assertions-without-context">❌ Mistake 2: Multiple Assertions Without Context</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: No comment explaining what each asserts
+test!(test_bad_assertions, {
+    // ... arrange and act ...
+    assert_eq!(user.id, 1);
+    assert_eq!(user.name, "Alice");
+    assert!(user.is_active);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: Clear what each assertion verifies
+test!(test_good_assertions, {
+    // ... arrange and act ...
+
+    // Assert: User created with correct ID
+    assert_eq!(user.id, 1);
+
+    // Assert: User name matches input
+    assert_eq!(user.name, "Alice");
+
+    // Assert: User is active by default
+    assert!(user.is_active);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-mistake-3-act-phase-doing-multiple-things"><a class="header" href="#-mistake-3-act-phase-doing-multiple-things">❌ Mistake 3: Act Phase Doing Multiple Things</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: Multiple behaviors in Act
+test!(test_bad_act, {
+    let user = db.create_user("alice");
+    user.send_welcome_email();  // Second behavior!
+    assert!(user.email_sent);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: One behavior per test
+test!(test_user_creation, {
+    let user = db.create_user("alice");
+    assert_eq!(user.name, "alice");
+});
+
+test!(test_welcome_email, {
+    let user = db.create_user("alice");
+    user.send_welcome_email();
+    assert!(user.email_sent);
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<p>The AAA pattern is foundational to Chicago TDD Tools. Every example test follows this structure, found throughout:</p>
+<ul>
+<li><code>examples/basic_test.rs</code> - Simple unit tests</li>
+<li><code>tests/common.rs</code> - Shared test utilities</li>
+<li>Test suites in the source code</li>
+</ul>
+<h2 id="advanced-multiple-assertions-in-assert-phase"><a class="header" href="#advanced-multiple-assertions-in-assert-phase">Advanced: Multiple Assertions in Assert Phase</a></h2>
+<p>✅ <strong>Allowed</strong>: Multiple assertions that verify the same behavior:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_user_properties, {
+    // Arrange
+    let user_data = vec!["alice", "25", "alice@example.com"];
+
+    // Act
+    let user = parse_user_csv(&amp;user_data)?;
+
+    // Assert: All properties of the user
+    assert_eq!(user.name, "alice");
+    assert_eq!(user.age, 25);
+    assert_eq!(user.email, "alice@example.com");
+    assert!(user.is_valid());
+});
+<span class="boring">}</span></code></pre></pre>
+<p>This is acceptable because all assertions verify related properties of the same object.</p>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 2: Error Path Testing</li>
-<li>Pattern 5: Real Collaborators</li>
-<li>Pattern 11: Zero-Cost Abstractions</li>
+<li><strong>Pattern 2: Error Path Testing</strong> - Same AAA structure for error cases</li>
+<li><strong>Pattern 3: Boundary Conditions</strong> - AAA structure for edge cases</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - AAA with actual dependencies</li>
+<li><strong>Pattern 16: Fixture Lifecycle Management</strong> - AAA with fixtures for complex setup</li>
+<li><strong>Pattern 17: Builder-Driven Test Data</strong> - AAA with fluent builders for Arrange phase</li>
 </ul>
+<h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next Steps</a></h2>
+<p>Learn these related patterns to master test structure:</p>
+<ol>
+<li><strong>Next</strong>: <a href="testing-patterns/error-path-testing.html">Pattern 2: Error Path Testing</a> - How to test failure cases</li>
+<li><strong>Then</strong>: <a href="testing-patterns/real-collaborators.html">Pattern 5: Real Collaborators</a> - Testing with actual dependencies</li>
+<li><strong>Advanced</strong>: <a href="testing-patterns/../design-patterns/fixture-lifecycle.html">Pattern 16: Fixture Lifecycle</a> - Complex multi-phase tests</li>
+</ol>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>The AAA pattern is the foundation of readable, maintainable tests. By consistently separating <strong>Arrange</strong>, <strong>Act</strong>, and <strong>Assert</strong>, you create tests that:</p>
+<p>✅ Are easy to read and understand
+✅ Fail with clear messages about what went wrong
+✅ Scale from simple to complex tests
+✅ Can be easily maintained by teammates</p>
+<p><strong>Pro tip</strong>: Use comments to label each phase, even in simple tests. It takes one line and makes the intent crystal clear.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-2-error-path-testing"><a class="header" href="#pattern-2-error-path-testing">Pattern 2: Error Path Testing</a></h1>
 <h2 id="context-1"><a class="header" href="#context-1">Context</a></h2>
 <p>A function returns <code>Result</code> or <code>Option</code>, and the happy path already behaves as expected. You must guarantee that every failure mode is observable and carries actionable context.</p>
@@ -267,7 +2109,7 @@ async_test!(test_fetch_customer, {
 <li>Realistic behavior vs. test speed: use in-memory collaborators where possible, but ensure pathways stay intact</li>
 <li>Diagnostic clarity vs. maintenance: error text should be specific yet stable</li>
 </ul>
-<h2 id="examples-1"><a class="header" href="#examples-1">Examples</a></h2>
+<h2 id="examples-2"><a class="header" href="#examples-2">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
@@ -303,7 +2145,7 @@ param_test! {
 <li>Performance vs. realism: small data sets reproduce the failure quickly</li>
 <li>Maintainability vs. specificity: boundary constants should live in one place</li>
 </ul>
-<h2 id="examples-2"><a class="header" href="#examples-2">Examples</a></h2>
+<h2 id="examples-3"><a class="header" href="#examples-3">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
@@ -342,7 +2184,7 @@ param_test! {
 <li>Simplicity vs. observability: cleanup should be invisible unless a failure occurs</li>
 <li>Isolation vs. reuse: fixtures create fresh state while sharing setup logic</li>
 </ul>
-<h2 id="examples-3"><a class="header" href="#examples-3">Examples</a></h2>
+<h2 id="examples-4"><a class="header" href="#examples-4">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
@@ -386,7 +2228,7 @@ fixture_test!(test_exec_container_command, fixture, {
 <li>Determinism vs. variability: control randomness via fixtures and builders</li>
 <li>Observability vs. complexity: prefer higher-level validators over low-level asserts</li>
 </ul>
-<h2 id="examples-4"><a class="header" href="#examples-4">Examples</a></h2>
+<h2 id="examples-5"><a class="header" href="#examples-5">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
@@ -444,7 +2286,7 @@ fixture_test_with_timeout!(test_postgres_roundtrip, fixture, 30, {
 <li>Build time vs. flexibility: optional features load only when needed</li>
 <li>Stability vs. growth: base APIs should be stable; extensions add behavior</li>
 </ul>
-<h2 id="examples-5"><a class="header" href="#examples-5">Examples</a></h2>
+<h2 id="examples-6"><a class="header" href="#examples-6">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// src/lib.rs
@@ -475,7 +2317,7 @@ pub use core::{fixture, builders, assertions};
 <li>Stability vs. iteration speed: upstream stays stable while the extension can iterate quickly</li>
 <li>Discoverability vs. sprawl: re-export only what the domain needs</li>
 </ul>
-<h2 id="examples-6"><a class="header" href="#examples-6">Examples</a></h2>
+<h2 id="examples-7"><a class="header" href="#examples-7">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// workflow-fixture crate
@@ -512,7 +2354,7 @@ impl WorkflowFixture {
 <li>Ergonomics vs. explicitness: wrappers can augment APIs without obscuring the base</li>
 <li>Ownership vs. contribution: contribute upstream when the behavior benefits all users</li>
 </ul>
-<h2 id="examples-7"><a class="header" href="#examples-7">Examples</a></h2>
+<h2 id="examples-8"><a class="header" href="#examples-8">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct OrderBuilder {
@@ -553,7 +2395,7 @@ impl OrderBuilder {
 <li>Flexibility vs. safety: allow customization through builders or configuration rather than duplicating constants</li>
 <li>Documentation vs. code: comments and docs should reference the single source, not restated values</li>
 </ul>
-<h2 id="examples-8"><a class="header" href="#examples-8">Examples</a></h2>
+<h2 id="examples-9"><a class="header" href="#examples-9">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// src/core/macros/test.rs
@@ -582,7 +2424,7 @@ pub const MAX_RUN_LEN: usize = 8;
 <li>Stability vs. evolution: groups rarely change, making documentation and IDE tooling reliable</li>
 <li>Compilation vs. optionality: feature flags enable or disable entire capability slices</li>
 </ul>
-<h2 id="examples-9"><a class="header" href="#examples-9">Examples</a></h2>
+<h2 id="examples-10"><a class="header" href="#examples-10">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// src/lib.rs
@@ -614,7 +2456,7 @@ pub mod integration;   // testcontainers
 <li>Safety vs. control: compile-time guarantees should not block optimization</li>
 <li>Maintainability vs. specialization: macros and generics prevent copy-paste</li>
 </ul>
-<h2 id="examples-10"><a class="header" href="#examples-10">Examples</a></h2>
+<h2 id="examples-11"><a class="header" href="#examples-11">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn measure_ticks&lt;F, T&gt;(operation: F) -&gt; (T, u64)
@@ -644,7 +2486,7 @@ where
 <li>Extensibility vs. soundness: sealing the trait permits internal evolution while preserving invariants</li>
 <li>Async vs. sync: async fixtures require lifetimes that sync code cannot express without GATs</li>
 </ul>
-<h2 id="examples-11"><a class="header" href="#examples-11">Examples</a></h2>
+<h2 id="examples-12"><a class="header" href="#examples-12">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait AsyncFixtureProvider: private::Sealed {
@@ -673,7 +2515,7 @@ where
 <li>Flexibility vs. versioning: internal changes become possible without breaking downstream code</li>
 <li>Testability vs. encapsulation: tests can still construct fixtures via provided builders</li>
 </ul>
-<h2 id="examples-12"><a class="header" href="#examples-12">Examples</a></h2>
+<h2 id="examples-13"><a class="header" href="#examples-13">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>mod private {
@@ -703,7 +2545,7 @@ pub trait AsyncFixtureProvider: private::Sealed {
 <li>Compile time vs. ergonomics: const generics expose parameters without macros</li>
 <li>Diagnostics vs. noise: compile errors must explain the invariant succinctly</li>
 </ul>
-<h2 id="examples-13"><a class="header" href="#examples-13">Examples</a></h2>
+<h2 id="examples-14"><a class="header" href="#examples-14">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub const fn assert_tick_budget(ticks: u64) {
@@ -734,7 +2576,7 @@ pub struct SizeValidatedArray&lt;const SIZE: usize, const MAX: usize&gt; {
 <li>Flexibility vs. constraints: provide escape hatches only when absolutely necessary</li>
 <li>Zero-cost vs. clarity: type state should erase at compile time</li>
 </ul>
-<h2 id="examples-14"><a class="header" href="#examples-14">Examples</a></h2>
+<h2 id="examples-15"><a class="header" href="#examples-15">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct TestState&lt;Phase&gt; {
@@ -767,7 +2609,7 @@ impl TestState&lt;Arrange&gt; {
 <li>Async vs. sync complexity: asynchronous resources require explicit lifecycle boundaries</li>
 <li>Performance vs. safety: reuse is tempting, but fresh fixtures avoid hidden coupling</li>
 </ul>
-<h2 id="examples-15"><a class="header" href="#examples-15">Examples</a></h2>
+<h2 id="examples-16"><a class="header" href="#examples-16">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct DbProvider;
@@ -810,7 +2652,7 @@ async_test!(test_query_latency, {
 <li>Defaults vs. explicitness: provide safe defaults but allow overrides</li>
 <li>Reuse vs. specialization: share base builder logic; extensions add convenience</li>
 </ul>
-<h2 id="examples-16"><a class="header" href="#examples-16">Examples</a></h2>
+<h2 id="examples-17"><a class="header" href="#examples-17">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct CustomerBuilder {
@@ -860,7 +2702,7 @@ impl CustomerBuilder {
 <li>Diagnostics vs. overhead: detailed error messages help triage without cluttering success paths</li>
 <li>Configurability vs. consistency: shared constants keep expectations aligned</li>
 </ul>
-<h2 id="examples-17"><a class="header" href="#examples-17">Examples</a></h2>
+<h2 id="examples-18"><a class="header" href="#examples-18">Examples</a></h2>
 <pre><code class="language-toml"># .config/nextest.toml
 [profile.default]
 slow-timeout = { period = "1s", terminate-after = 1 }
@@ -894,7 +2736,7 @@ slow-timeout = { period = "30s", terminate-after = 1 }
 <li>Discoverability vs. complexity: a small number of curated slices keeps onboarding simple</li>
 <li>Compatibility vs. optionality: code must compile cleanly with features disabled</li>
 </ul>
-<h2 id="examples-18"><a class="header" href="#examples-18">Examples</a></h2>
+<h2 id="examples-19"><a class="header" href="#examples-19">Examples</a></h2>
 <pre><code class="language-toml">[features]
 default = ["logging"]
 testing-extras = ["property-testing", "snapshot-testing", "fake-data"]
@@ -924,7 +2766,7 @@ pub mod weaver;
 <li>Zero cost vs. tooling: expansions must stay small and compile quickly</li>
 <li>Guidance vs. noise: failures should point to the missing convention explicitly</li>
 </ul>
-<h2 id="examples-19"><a class="header" href="#examples-19">Examples</a></h2>
+<h2 id="examples-20"><a class="header" href="#examples-20">Examples</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[macro_export]

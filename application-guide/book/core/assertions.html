@@ -1,0 +1,526 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Assertions &amp; Verification - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="assertions--verification"><a class="header" href="#assertions--verification">Assertions &amp; Verification</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Write clear, effective assertions</p>
+</blockquote>
+<p>Assertions verify that code behaves correctly. Chicago TDD Tools provides helpers for clear, readable assertions.</p>
+<h2 id="basic-assertions"><a class="header" href="#basic-assertions">Basic Assertions</a></h2>
+<h3 id="standard-assertions"><a class="header" href="#standard-assertions">Standard Assertions</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+
+test!(test_basic_assertions, {
+    let result: Result&lt;u32, String&gt; = Ok(42);
+
+    // ✅ Chicago TDD style - clear intent
+    assert_ok!(&amp;result);
+    assert_eq!(result.unwrap(), 42);
+
+    // Error result
+    let error: Result&lt;u32, String&gt; = Err("failed".to_string());
+    assert_err!(&amp;error);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="common-assertion-helpers"><a class="header" href="#common-assertion-helpers">Common Assertion Helpers</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Success/Error checks
+assert_ok!(&amp;result);           // Verifies Ok(_)
+assert_err!(&amp;result);          // Verifies Err(_)
+
+// Equality
+assert_eq!(actual, expected);   // Equality check
+assert_ne!(actual, expected);   // Inequality check
+
+// Boolean
+assert!(condition);             // Checks true
+assert!(!condition);            // Checks false
+<span class="boring">}</span></code></pre></pre>
+<h2 id="numeric-assertions"><a class="header" href="#numeric-assertions">Numeric Assertions</a></h2>
+<h3 id="range-checking"><a class="header" href="#range-checking">Range Checking</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_numeric_assertions, {
+    let value = 42;
+
+    // Standard assertions
+    assert_eq!(value, 42);
+    assert!(value &gt; 40);
+    assert!(value &lt; 50);
+
+    // Chicago TDD helper
+    assert_in_range!(value, 40, 50);  // Inclusive range
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="floating-point"><a class="header" href="#floating-point">Floating Point</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_floating_point, {
+    let value: f64 = 3.14159;
+    let expected: f64 = 3.14;
+
+    // ✅ Epsilon comparison (handles rounding errors)
+    assert!((value - expected).abs() &lt; 0.01);
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="string-assertions"><a class="header" href="#string-assertions">String Assertions</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_string_assertions, {
+    let text = "Hello, World!";
+
+    // Equality
+    assert_eq!(text, "Hello, World!");
+
+    // Containment
+    assert!(text.contains("World"));
+
+    // Pattern matching
+    assert!(text.starts_with("Hello"));
+    assert!(text.ends_with("!"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="collection-assertions"><a class="header" href="#collection-assertions">Collection Assertions</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_collection_assertions, {
+    let vec = vec![1, 2, 3];
+
+    // Length
+    assert_eq!(vec.len(), 3);
+
+    // Containment
+    assert!(vec.contains(&amp;2));
+
+    // Empty check
+    assert!(!vec.is_empty());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="optionresult-assertions"><a class="header" href="#optionresult-assertions">Option/Result Assertions</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_option_result_assertions, {
+    let some_value: Option&lt;i32&gt; = Some(42);
+    let none_value: Option&lt;i32&gt; = None;
+
+    // Option checks
+    assert!(some_value.is_some());
+    assert!(none_value.is_none());
+
+    // Result checks
+    let ok_result: Result&lt;i32, String&gt; = Ok(42);
+    let err_result: Result&lt;i32, String&gt; = Err("error".to_string());
+
+    assert!(ok_result.is_ok());
+    assert!(err_result.is_err());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="custom-messages"><a class="header" href="#custom-messages">Custom Messages</a></h2>
+<p>Add context to assertions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_messages, {
+    let result = divide(10, 2);
+    assert_eq!(result, 5, "Expected division to work correctly");
+
+    let empty = vec![];
+    assert!(!empty.is_empty(), "Vector should not be empty after initialization");
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example-user-creation"><a class="header" href="#real-world-example-user-creation">Real-World Example: User Creation</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_user_creation, {
+    // Create user
+    let user_data = TestDataBuilder::new()
+        .with_var("name", "Alice")
+        .with_var("email", "alice@example.com")
+        .build_json()?;
+
+    let result = create_user(&amp;user_data)?;
+
+    // Assert success
+    assert_ok!(&amp;result);
+    let user = result.unwrap();
+
+    // Assert properties
+    assert_eq!(user.name, "Alice");
+    assert_eq!(user.email, "alice@example.com");
+    assert!(user.id &gt; 0);
+    assert!(user.created_at.len() &gt; 0);
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example-collection-processing"><a class="header" href="#real-world-example-collection-processing">Real-World Example: Collection Processing</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_filter_operations, {
+    let numbers = vec![1, 2, 3, 4, 5];
+
+    // Filter evens
+    let evens: Vec&lt;_&gt; = numbers
+        .iter()
+        .filter(|n| n % 2 == 0)
+        .cloned()
+        .collect();
+
+    // Assertions
+    assert_eq!(evens.len(), 2);
+    assert!(evens.contains(&amp;2));
+    assert!(evens.contains(&amp;4));
+    assert!(!evens.contains(&amp;1));  // 1 is odd
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="assert-patterns"><a class="header" href="#assert-patterns">Assert Patterns</a></h2>
+<h3 id="pattern-positive-case"><a class="header" href="#pattern-positive-case">Pattern: Positive Case</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_positive, {
+    let result = parse_number("42");
+    assert_ok!(&amp;result);
+    assert_eq!(result.unwrap(), 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-negative-case"><a class="header" href="#pattern-negative-case">Pattern: Negative Case</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_negative, {
+    let result = parse_number("invalid");
+    assert_err!(&amp;result);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-boundary-case"><a class="header" href="#pattern-boundary-case">Pattern: Boundary Case</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_boundary, {
+    // Zero
+    assert_ok!(&amp;parse_number("0"));
+
+    // Large value
+    assert_ok!(&amp;parse_number("999999"));
+
+    // Negative
+    assert_ok!(&amp;parse_number("-42"));
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="avoiding-common-pitfalls"><a class="header" href="#avoiding-common-pitfalls">Avoiding Common Pitfalls</a></h2>
+<h3 id="-dont-use-unwrap-in-assertions"><a class="header" href="#-dont-use-unwrap-in-assertions">❌ Don't: Use unwrap() in assertions</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Bad - panics if result is Err
+let value = result.unwrap();
+assert_eq!(value, 42);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-do-check-first"><a class="header" href="#-do-check-first">✅ Do: Check first</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Good - checks properly
+assert_ok!(&amp;result);
+if let Ok(value) = result {
+    assert_eq!(value, 42);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-dont-assert-implementation-details"><a class="header" href="#-dont-assert-implementation-details">❌ Don't: Assert implementation details</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Bad - depends on internal structure
+assert_eq!(user.internal_id, 123);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-do-assert-behavior"><a class="header" href="#-do-assert-behavior">✅ Do: Assert behavior</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Good - asserts external behavior
+assert_eq!(user.name, "Alice");
+assert_eq!(user.email, "alice@example.com");
+<span class="boring">}</span></code></pre></pre>
+<h2 id="assertion-order"><a class="header" href="#assertion-order">Assertion Order</a></h2>
+<p>Follow AAA pattern:</p>
+<ol>
+<li><strong>Arrange</strong> - Build data</li>
+<li><strong>Act</strong> - Execute code</li>
+<li><strong>Assert</strong> - Verify behavior</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_order, {
+    // Arrange
+    let input = 5;
+
+    // Act
+    let result = multiply_by_two(input);
+
+    // Assert (all together, at the end)
+    assert_eq!(result, 10);
+    assert!(result &gt; 0);
+    assert!(result &lt; 100);
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Use helper macros (<code>assert_ok!</code>, <code>assert_err!</code>)</li>
+<li>Assert one behavior per test</li>
+<li>Add context with messages</li>
+<li>Check both success and error paths</li>
+<li>Use descriptive assertion messages</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Use <code>unwrap()</code> in assertions</li>
+<li>Mix act and assert</li>
+<li>Assert implementation details</li>
+<li>Skip error case assertions</li>
+<li>Use vague assertion messages</li>
+</ul>
+<h2 id="common-assertions-reference"><a class="header" href="#common-assertions-reference">Common Assertions Reference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Code</th></tr></thead><tbody>
+<tr><td>Value matches</td><td><code>assert_eq!(actual, expected)</code></td></tr>
+<tr><td>Value different</td><td><code>assert_ne!(actual, expected)</code></td></tr>
+<tr><td>True condition</td><td><code>assert!(condition)</code></td></tr>
+<tr><td>Ok result</td><td><code>assert_ok!(&amp;result)</code></td></tr>
+<tr><td>Err result</td><td><code>assert_err!(&amp;result)</code></td></tr>
+<tr><td>In range</td><td><code>assert_in_range!(value, min, max)</code></td></tr>
+<tr><td>Contains text</td><td><code>assert!(text.contains("substring"))</code></td></tr>
+<tr><td>Empty collection</td><td><code>assert!(collection.is_empty())</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Learn about error paths: <a href="error-paths.html">Error Path Testing</a></p>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>Chicago TDD emphasizes:</p>
+<ul>
+<li>Clear assertions with helper macros</li>
+<li>Both success and error case verification</li>
+<li>AAA pattern (Arrange-Act-Assert)</li>
+<li>Behavior verification, not implementation details</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../core/data-builders.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../core/error-paths.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../core/data-builders.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../core/error-paths.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

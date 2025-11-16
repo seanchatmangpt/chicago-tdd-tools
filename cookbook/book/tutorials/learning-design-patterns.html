@@ -1,0 +1,718 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Learning Design Patterns (120 min) - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="learning-design-patterns-120-minute-mastery"><a class="header" href="#learning-design-patterns-120-minute-mastery">Learning Design Patterns: 120-Minute Mastery</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master the 10 advanced design patterns</p>
+</blockquote>
+<p>This tutorial guides you through the 10 design patterns that create safe, fast, maintainable systems.</p>
+<p><strong>Time</strong>: ~120 minutes | <strong>Difficulty</strong>: Advanced | <strong>Prerequisites</strong>: <a href="learning-testing-patterns.html">Testing</a> + <a href="learning-architecture-patterns.html">Architecture</a></p>
+<hr />
+<h2 id="module-overview"><a class="header" href="#module-overview">Module Overview</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Time</th><th>Focus</th></tr></thead><tbody>
+<tr><td>Pattern 11: Zero-Cost Abstractions</td><td>12 min</td><td>Performance without sacrifice</td></tr>
+<tr><td>Pattern 12: Type Safety with GATs</td><td>12 min</td><td>Lifetimes and type safety</td></tr>
+<tr><td>Pattern 13: Sealed Traits</td><td>10 min</td><td>Prevent API misuse</td></tr>
+<tr><td>Pattern 14: Compile-Time Validation</td><td>12 min</td><td>Move errors left</td></tr>
+<tr><td>Pattern 15: Type State Enforcement</td><td>12 min</td><td>Encode state in types</td></tr>
+<tr><td>Pattern 16: Fixture Lifecycle</td><td>12 min</td><td>Safe resource management</td></tr>
+<tr><td>Pattern 17: Builder-Driven Test Data</td><td>12 min</td><td>Fluent test builders</td></tr>
+<tr><td>Pattern 18: Timeout Defense</td><td>12 min</td><td>Prevent hangs</td></tr>
+<tr><td>Pattern 19: Feature Gate Slices</td><td>12 min</td><td>Reliable feature flags</td></tr>
+<tr><td>Pattern 20: Macro Pattern Enforcement</td><td>12 min</td><td>Enforce patterns with code</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-1-zero-cost-abstractions-12-minutes"><a class="header" href="#part-1-zero-cost-abstractions-12-minutes">Part 1: Zero-Cost Abstractions (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Performance through generics and compile-time specialization</p>
+<h3 id="the-problem-abstraction-vs-performance"><a class="header" href="#the-problem-abstraction-vs-performance">The Problem: Abstraction vs. Performance</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Abstraction adds runtime cost
+fn process_data(data: &amp;dyn Iterator&lt;Item = i32&gt;) {
+    // Dynamic dispatch = function pointers = overhead
+    for item in data {
+        // ...
+    }
+}
+
+// Result: Slower than necessary
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-generics--zero-cost"><a class="header" href="#the-solution-generics--zero-cost">The Solution: Generics = Zero Cost</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Generic = compile specialization
+fn process_data&lt;I: Iterator&lt;Item = i32&gt;&gt;(data: I) {
+    // Compiler generates specialized code for EACH type
+    // No function pointers, no indirection
+    for item in data {
+        // ...
+    }
+}
+
+// Rust compiles:
+// - process_data::&lt;Vec&lt;i32&gt;::IntoIter&gt;
+// - process_data::&lt;ArrayIter&gt;
+// - process_data::&lt;CustomIterator&gt;
+// Each one optimized for its type!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-principle"><a class="header" href="#key-principle">Key Principle</a></h3>
+<p>Rust compiler can <strong>monomorphize</strong> generics - it creates specialized versions for each type. This costs compilation time but <strong>zero runtime cost</strong>.</p>
+<h3 id="when-to-use-generics-vs-trait-objects"><a class="header" href="#when-to-use-generics-vs-trait-objects">When to Use Generics vs. Trait Objects</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Choice</th><th>Cost</th><th>Use When</th></tr></thead><tbody>
+<tr><td><strong>Generics</strong></td><td>Compile-time</td><td>Size known, type fixed</td></tr>
+<tr><td><strong>Trait objects</strong></td><td>Runtime</td><td>Size unknown, type varies</td></tr>
+</tbody></table>
+</div>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Generics - no runtime cost
+fn sort&lt;T: Ord&gt;(list: &amp;mut [T]) { ... }
+
+// ✅ Trait objects - when you need dynamic dispatch
+fn apply_filter(items: &amp;[i32], filter: &amp;dyn Fn(i32) -&gt; bool) { ... }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="checkpoint-question"><a class="header" href="#checkpoint-question">Checkpoint Question</a></h3>
+<p>You have a function that processes different collection types.</p>
+<p><strong>Should you use generics or trait objects?</strong></p>
+<p>Answer: <strong>Generics</strong>. Let compiler specialize for each type.</p>
+<hr />
+<h2 id="part-2-type-safety-with-gats-12-minutes"><a class="header" href="#part-2-type-safety-with-gats-12-minutes">Part 2: Type Safety with GATs (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use Generic Associated Types to prevent lifetime bugs</p>
+<h3 id="the-problem-complex-lifetimes"><a class="header" href="#the-problem-complex-lifetimes">The Problem: Complex Lifetimes</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Lifetime issues with references
+trait DataProvider {
+    fn get(&amp;self) -&gt; &amp;str;
+}
+
+// Can this reference outlive the provider?
+// The compiler can't tell!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-gats"><a class="header" href="#the-solution-gats">The Solution: GATs</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GATs bind lifetime to self
+trait DataProvider {
+    type Data&lt;'a&gt; where Self: 'a;
+
+    fn get(&amp;'a self) -&gt; Self::Data&lt;'a&gt;;
+}
+
+// Now compiler KNOWS: returned data is tied to self's lifetime
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters"><a class="header" href="#why-this-matters">Why This Matters</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// With GATs, this is impossible:
+fn use_provider(provider: &amp;Provider) {
+    let data = provider.get();
+    drop(provider);  // ❌ Compiler error!
+    println!("{:?}", data);  // data would be dangling
+}
+
+// Without GATs, it might compile (dangerous!)
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-use-gats"><a class="header" href="#when-to-use-gats">When to Use GATs</a></h3>
+<p>✅ <strong>Use when</strong>: Returning references from traits
+✅ <strong>Use when</strong>: Fixture providers with borrowed data
+✅ <strong>Use when</strong>: APIs that care about lifetimes</p>
+<h3 id="checkpoint-question-1"><a class="header" href="#checkpoint-question-1">Checkpoint Question</a></h3>
+<p>You have a trait that returns a reference to internal data.</p>
+<p><strong>How do you ensure it can't outlive the source?</strong></p>
+<p>Answer: Use GATs to bind the returned reference lifetime to <code>self</code>.</p>
+<hr />
+<h2 id="part-3-sealed-traits-10-minutes"><a class="header" href="#part-3-sealed-traits-10-minutes">Part 3: Sealed Traits (10 minutes)</a></h2>
+<p><strong>Goal</strong>: Prevent external implementations of your traits</p>
+<h3 id="the-problem-api-misuse"><a class="header" href="#the-problem-api-misuse">The Problem: API Misuse</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Public trait - anyone can implement!
+pub trait Serializable {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+// External code implements it wrongly:
+impl Serializable for String {
+    fn serialize(&amp;self) -&gt; String {
+        "nope".to_string()  // Wrong!
+    }
+}
+
+// Your code breaks!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-sealed-traits"><a class="header" href="#the-solution-sealed-traits">The Solution: Sealed Traits</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Private sealing module
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait Serializable: sealed::Sealed {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+// Only WE can implement Sealed
+impl sealed::Sealed for MyType {}
+impl Serializable for MyType { ... }
+
+// External code CANNOT implement Serializable
+// because they can't implement sealed::Sealed!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters-1"><a class="header" href="#why-this-matters-1">Why This Matters</a></h3>
+<ul>
+<li><strong>Prevents misuse</strong> → Forced to use correct implementations</li>
+<li><strong>API evolution</strong> → Can change internals safely</li>
+<li><strong>Documentation</strong> → Readers know this is sealed</li>
+</ul>
+<h3 id="pattern"><a class="header" href="#pattern">Pattern</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait PublicTrait: sealed::Sealed {
+    fn public_method(&amp;self);
+}
+
+// Only internal types can implement
+pub struct InternalType;
+impl sealed::Sealed for InternalType {}
+impl PublicTrait for InternalType { ... }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="checkpoint-question-2"><a class="header" href="#checkpoint-question-2">Checkpoint Question</a></h3>
+<p>You have an important trait that must have specific implementations.</p>
+<p><strong>How do you prevent user code from breaking it?</strong></p>
+<p>Answer: Seal the trait so only your code can implement it.</p>
+<hr />
+<h2 id="part-4-compile-time-validation-12-minutes"><a class="header" href="#part-4-compile-time-validation-12-minutes">Part 4: Compile-Time Validation (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Catch errors during compilation, not at runtime</p>
+<h3 id="the-problem-runtime-errors"><a class="header" href="#the-problem-runtime-errors">The Problem: Runtime Errors</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Errors at runtime
+fn process(config: &amp;str) -&gt; Result&lt;Data, Error&gt; {
+    let parsed = parse_config(config)?;  // Might fail at runtime
+    validate_config(parsed)?;  // Another runtime check
+    Ok(build_data(parsed))
+}
+
+// Errors are found after deployment 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-phantom-types"><a class="header" href="#the-solution-phantom-types">The Solution: Phantom Types</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Errors at compile time
+struct Config&lt;S&gt; {
+    data: String,
+    _state: PhantomData&lt;S&gt;,
+}
+
+// Parsing: Raw → Parsed
+impl Config&lt;Raw&gt; {
+    fn parse(s: &amp;str) -&gt; Result&lt;Config&lt;Parsed&gt;, Error&gt; {
+        let data = validate(s)?;
+        Ok(Config { data, _state: PhantomData })
+    }
+}
+
+// Building: Only works with Parsed
+impl Config&lt;Parsed&gt; {
+    fn build(self) -&gt; Data {
+        // Can only call this on Parsed, never Raw
+        Data::new(&amp;self.data)
+    }
+}
+
+// ✅ This is impossible:
+let raw = Config::&lt;Raw&gt;::from("config");
+raw.build();  // ❌ Compiler error! Use .parse() first
+<span class="boring">}</span></code></pre></pre>
+<h3 id="key-idea"><a class="header" href="#key-idea">Key Idea</a></h3>
+<p><strong>Encode requirements in types</strong>. Make it impossible to violate at compile-time.</p>
+<h3 id="common-examples"><a class="header" href="#common-examples">Common Examples</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Types</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><strong>Builder pattern</strong></td><td>Raw → Built</td><td>Ensure all fields set</td></tr>
+<tr><td><strong>State machines</strong></td><td>Idle → Running</td><td>Prevent invalid operations</td></tr>
+<tr><td><strong>Type tokens</strong></td><td>Foo&lt;_&gt; with phantom</td><td>Track type information</td></tr>
+</tbody></table>
+</div>
+<h3 id="checkpoint-question-3"><a class="header" href="#checkpoint-question-3">Checkpoint Question</a></h3>
+<p>You have an API that requires:</p>
+<ol>
+<li>Initialize</li>
+<li>Configure</li>
+<li>Start</li>
+</ol>
+<p><strong>How do you prevent wrong order?</strong></p>
+<p>Answer: Use phantom types to track state:</p>
+<ul>
+<li><code>Service&lt;Uninitialized&gt;</code> → <code>.init()</code> → <code>Service&lt;Initialized&gt;</code></li>
+<li><code>Service&lt;Initialized&gt;</code> → <code>.configure()</code> → <code>Service&lt;Configured&gt;</code></li>
+<li><code>Service&lt;Configured&gt;</code> → <code>.start()</code> → <code>Service&lt;Running&gt;</code></li>
+</ul>
+<hr />
+<h2 id="part-5-type-state-enforcement-12-minutes"><a class="header" href="#part-5-type-state-enforcement-12-minutes">Part 5: Type State Enforcement (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use the type system to enforce valid state transitions</p>
+<h3 id="the-problem-invalid-states"><a class="header" href="#the-problem-invalid-states">The Problem: Invalid States</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Can access before initialization
+struct Connection {
+    socket: Option&lt;Socket&gt;,  // None until connected
+}
+
+impl Connection {
+    fn send(&amp;mut self, data: &amp;[u8]) -&gt; Result&lt;()&gt; {
+        match self.socket {
+            Some(ref mut s) =&gt; s.write(data),
+            None =&gt; Err("Not connected"),  // Runtime error!
+        }
+    }
+}
+
+// Code can call send() before connect() - runtime error!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-type-state"><a class="header" href="#the-solution-type-state">The Solution: Type State</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Types enforce state
+struct Connection&lt;State&gt; { ... }
+
+// States
+pub struct Disconnected;
+pub struct Connected;
+
+// Only Disconnected can connect
+impl Connection&lt;Disconnected&gt; {
+    fn connect(mut self, addr: &amp;str) -&gt; Result&lt;Connection&lt;Connected&gt;&gt; {
+        self.socket = Some(Socket::new(addr)?);
+        Ok(Connection { ... })
+    }
+}
+
+// Only Connected can send
+impl Connection&lt;Connected&gt; {
+    fn send(&amp;mut self, data: &amp;[u8]) -&gt; Result&lt;()&gt; {
+        self.socket.write(data)?;  // socket is guaranteed Some
+        Ok(())
+    }
+}
+
+// ✅ Impossible to call send() before connect():
+let conn = Connection::new();  // Disconnected
+conn.send(b"data")?;  // ❌ Compiler error!
+
+let conn = conn.connect("127.0.0.1")?;  // Now Connected
+conn.send(b"data")?;  // ✅ Allowed!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="benefits"><a class="header" href="#benefits">Benefits</a></h3>
+<ul>
+<li><strong>Compile-time safety</strong> → No panics from invalid states</li>
+<li><strong>No runtime checks</strong> → No Option/Result overhead</li>
+<li><strong>Clear API</strong> → Code documents valid transitions</li>
+<li><strong>Impossible states</strong> → Some states just can't happen</li>
+</ul>
+<h3 id="checkpoint-question-4"><a class="header" href="#checkpoint-question-4">Checkpoint Question</a></h3>
+<p>You have a database transaction that must:</p>
+<ol>
+<li>Begin</li>
+<li>Execute</li>
+<li>Commit/Rollback</li>
+</ol>
+<p><strong>How do you prevent calling Commit before Begin?</strong></p>
+<p>Answer: Use type states:</p>
+<ul>
+<li><code>Tx&lt;NotStarted&gt;</code> → <code>.begin()</code> → <code>Tx&lt;Started&gt;</code></li>
+<li><code>Tx&lt;Started&gt;</code> → <code>.commit()</code> → <code>Tx&lt;Finished&gt;</code></li>
+</ul>
+<hr />
+<h2 id="part-6-10-summary-of-advanced-patterns"><a class="header" href="#part-6-10-summary-of-advanced-patterns">Part 6-10: Summary of Advanced Patterns</a></h2>
+<p>The remaining 5 patterns build on what you've learned:</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>What It Does</th></tr></thead><tbody>
+<tr><td>16</td><td><strong>Fixture Lifecycle</strong></td><td>Manage resources with sealed traits (combines patterns 13+2)</td></tr>
+<tr><td>17</td><td><strong>Builder Test Data</strong></td><td>Fluent builders for test setup (applies compilation validation)</td></tr>
+<tr><td>18</td><td><strong>Timeout Defense</strong></td><td>Multiple timeout strategies (zero-cost + compile-time)</td></tr>
+<tr><td>19</td><td><strong>Feature Gates</strong></td><td>Type-safe feature flags (type state + sealed traits)</td></tr>
+<tr><td>20</td><td><strong>Macro Enforcement</strong></td><td>Compile-time pattern checks via macros (ultimate compile-time validation)</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="putting-it-together-complete-design"><a class="header" href="#putting-it-together-complete-design">Putting It Together: Complete Design</a></h2>
+<h3 id="exercise-build-a-safe-transaction-system"><a class="header" href="#exercise-build-a-safe-transaction-system">Exercise: Build a Safe Transaction System</a></h3>
+<p>Requirements:</p>
+<ol>
+<li>Transactions must go: Begin → Execute → Commit</li>
+<li>Can't add statements after commit</li>
+<li>Type-safe with zero runtime overhead</li>
+<li>Can't be misused by users</li>
+<li>Test data builder for testing</li>
+</ol>
+<h3 id="solution-using-all-patterns"><a class="header" href="#solution-using-all-patterns">Solution Using All Patterns</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pattern 15 + 14: Type state
+pub struct Transaction&lt;State&gt; {
+    id: u32,
+    statements: Vec&lt;String&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+
+pub struct NotStarted;
+pub struct Started;
+pub struct Committed;
+
+// Pattern 14 + 15: Compile-time validation
+impl Transaction&lt;NotStarted&gt; {
+    pub fn begin() -&gt; Transaction&lt;Started&gt; {
+        Transaction { ... }
+    }
+}
+
+impl Transaction&lt;Started&gt; {
+    pub fn add_statement(&amp;mut self, sql: &amp;str) -&gt; Result&lt;()&gt; {
+        self.statements.push(sql.to_string());
+        Ok(())
+    }
+
+    pub fn commit(self) -&gt; Transaction&lt;Committed&gt; {
+        // Execute all statements
+        Transaction { ... }
+    }
+}
+
+// Pattern 13: Sealed to prevent misuse
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait TransactionOps: sealed::Sealed {
+    fn execute(&amp;self) -&gt; Result&lt;()&gt;;
+}
+
+impl sealed::Sealed for Transaction&lt;Started&gt; {}
+impl TransactionOps for Transaction&lt;Started&gt; {
+    fn execute(&amp;self) -&gt; Result&lt;()&gt; { ... }
+}
+
+// Pattern 17: Builder for tests
+pub struct TransactionBuilder {
+    statements: Vec&lt;String&gt;,
+}
+
+impl TransactionBuilder {
+    pub fn new() -&gt; Self { ... }
+    pub fn add(mut self, sql: &amp;str) -&gt; Self {
+        self.statements.push(sql.to_string());
+        self
+    }
+    pub fn build(self) -&gt; Transaction&lt;Started&gt; { ... }
+}
+
+// ✅ Usage is type-safe:
+let mut tx = Transaction::begin();
+tx.add_statement("INSERT ...")?;
+let tx = tx.commit();  // Type changes to Committed
+
+// ❌ Impossible:
+let tx = Transaction::begin();
+let tx = tx.commit();
+tx.add_statement("SELECT");  // ❌ Compiler error! tx is Committed
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="summary-the-10-design-patterns"><a class="header" href="#summary-the-10-design-patterns">Summary: The 10 Design Patterns</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Goal</th><th>Mechanism</th></tr></thead><tbody>
+<tr><td>11</td><td>Zero-cost</td><td>Generics + monomorphization</td></tr>
+<tr><td>12</td><td>Lifetimes</td><td>GATs (Generic Associated Types)</td></tr>
+<tr><td>13</td><td>API safety</td><td>Sealed traits</td></tr>
+<tr><td>14</td><td>Validation</td><td>Phantom types + state</td></tr>
+<tr><td>15</td><td>State machines</td><td>Type states</td></tr>
+<tr><td>16</td><td>Resources</td><td>Lifecycle traits</td></tr>
+<tr><td>17</td><td>Test data</td><td>Fluent builders</td></tr>
+<tr><td>18</td><td>Robustness</td><td>Timeout strategies</td></tr>
+<tr><td>19</td><td>Features</td><td>Type-safe gates</td></tr>
+<tr><td>20</td><td>Enforcement</td><td>Procedural macros</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h3 id="master-one-pattern-per-week"><a class="header" href="#master-one-pattern-per-week">Master One Pattern Per Week</a></h3>
+<ol>
+<li><strong>Week 1</strong>: Zero-Cost &amp; GATs</li>
+<li><strong>Week 2</strong>: Sealed &amp; Compile-Time</li>
+<li><strong>Week 3</strong>: Type State &amp; Lifecycle</li>
+<li><strong>Week 4</strong>: Builder, Timeout, Features, Macros</li>
+</ol>
+<h3 id="apply-to-your-project"><a class="header" href="#apply-to-your-project">Apply to Your Project</a></h3>
+<p>Choose the top 3 patterns that would improve your code safety and refactor this month.</p>
+<hr />
+<h2 id="checkpoint-do-you-know"><a class="header" href="#checkpoint-do-you-know">Checkpoint: Do You Know...?</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+How generics create zero-cost abstractions?</li>
+<li><input disabled="" type="checkbox"/>
+When to use GATs for lifetime safety?</li>
+<li><input disabled="" type="checkbox"/>
+How sealed traits prevent API misuse?</li>
+<li><input disabled="" type="checkbox"/>
+How to encode validation in types?</li>
+<li><input disabled="" type="checkbox"/>
+How type states prevent invalid operations?</li>
+<li><input disabled="" type="checkbox"/>
+How to manage resource lifecycles?</li>
+<li><input disabled="" type="checkbox"/>
+How builders simplify test setup?</li>
+<li><input disabled="" type="checkbox"/>
+Why timeouts matter?</li>
+<li><input disabled="" type="checkbox"/>
+How to implement type-safe features?</li>
+<li><input disabled="" type="checkbox"/>
+When to use macros for enforcement?</li>
+</ul>
+<p>If yes to most, you've mastered Design Patterns! 🎉</p>
+<hr />
+<p><strong>Congratulations!</strong> You now understand the complete pattern language of Chicago TDD Tools.</p>
+<h2 id="final-advice"><a class="header" href="#final-advice">Final Advice</a></h2>
+<p>These patterns work together:</p>
+<ul>
+<li><strong>Testing patterns</strong> help you verify code works</li>
+<li><strong>Architecture patterns</strong> help you organize code</li>
+<li><strong>Design patterns</strong> help you prevent bugs at compile-time</li>
+</ul>
+<p>Master them all, and you'll write code that's:
+✅ Tested thoroughly
+✅ Well-organized
+✅ Type-safe
+✅ High-performance
+✅ Hard to misuse</p>
+<p>That's the Chicago TDD difference.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/learning-architecture-patterns.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../testing-patterns/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/learning-architecture-patterns.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../testing-patterns/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

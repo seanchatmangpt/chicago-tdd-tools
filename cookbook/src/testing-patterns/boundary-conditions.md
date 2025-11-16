@@ -1,46 +1,102 @@
 # Pattern 3: Boundary Conditions
 
-## Context
+> 🔧 **HOW-TO** | Test limits to catch off-by-one errors and guardrail regressions
 
-Logic depends on limits: minimum quantities, maximum run lengths, exclusive ranges. You must guarantee behavior at and around those boundaries.
+## Quick Reference
 
-## Problem
+| Aspect | Details |
+|--------|---------|
+| **Problem Solved** | Off-by-one errors, buffer overflows, missed guardrails silently fail in production |
+| **Core Solution** | Test three cases per boundary: below, at, and above the limit |
+| **When to Use** | ✅ Array sizes, ✅ Range checks, ✅ Min/max values, ✅ Exclusive boundaries |
+| **When NOT to Use** | ❌ Floating-point ranges (use tolerance instead), ❌ Estimated quantities (use ranges) |
+| **Difficulty** | Medium - Requires identifying all boundaries first |
 
-Happy-path tests routinely miss off-by-one errors, buffer limits, or guardrail regressions. Without explicit boundary coverage, downstream invariants fail silently.
+## The Problem
 
-## Solution
+Happy-path tests miss off-by-one errors and guardrail regressions. A buffer accepts 100 items but fails at 101. Tests only checked 50 and 100. In production, the 101st request crashes silently.
 
-Adopt a deliberate boundary grid: **below**, **at**, and **above** each documented limit. Use `param_test!` to table-drive the grid and Chicago TDD Tools assertions such as `assert_in_range!` and `assert_guard_constraint!`. Include boundary-focused names so a failing case communicates which edge is breached.
+## The Solution
 
-## Forces
+For each boundary, test three cases: **below** (n-1), **at** (n), and **above** (n+1). Use parametrized tests to keep the grid concise. Each case should have a clear name showing which boundary is being tested.
 
-- Thoroughness vs. duplication: table-driven tests keep boundaries concise
-- Performance vs. realism: small data sets reproduce the failure quickly
-- Maintainability vs. specificity: boundary constants should live in one place
-
-## Examples
+## Essential Code Example
 
 ```rust
 use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::validation::guards::{GuardValidator, MAX_RUN_LEN};
 
 param_test! {
-    #[case("below", MAX_RUN_LEN - 1, true)]
-    #[case("at", MAX_RUN_LEN, true)]
-    #[case("above", MAX_RUN_LEN + 1, false)]
-    fn test_run_length_boundaries(label: &str, length: usize, expected_ok: bool) {
-        let validator = GuardValidator::new();
-        let result = validator.validate_run_length(length);
+    #[case(9, true, "below max")]
+    #[case(10, true, "at max")]
+    #[case(11, false, "above max")]
+    fn test_message_length_boundary(length: usize, expected_ok: bool, label: &str) {
+        let message = "x".repeat(length);
+        let result = validate_message(&message);
+
         match expected_ok {
-            true => assert_ok!(&result, "{label} should be accepted"),
-            false => assert_err!(&result, "{label} should be rejected"),
+            true => assert_ok!(&result, "{label}"),
+            false => assert_err!(&result, "{label}"),
         }
     }
 }
 ```
 
+## Implementation Checklist
+
+- [ ] Identify all boundary values in the specification
+- [ ] For each boundary, test below/at/above cases
+- [ ] Use parametrized tests (param_test!) to keep grid concise
+- [ ] Each test case has a descriptive label (shows which boundary)
+- [ ] Boundary constants are defined once (not duplicated)
+- [ ] Include both inclusive and exclusive boundary tests
+
+## The Gotcha (Most Common Mistake)
+
+Testing only the happy path at a round number, missing boundaries entirely:
+
+```rust
+// ❌ WRONG: No boundary testing
+test!(test_max_items, {
+    let result = process_items(vec![1, 2, 3, 4, 5]);  // Safe middle ground
+    assert_ok!(&result);
+});
+
+// ✅ RIGHT: Test below, at, and above
+param_test! {
+    #[case(9)]
+    #[case(10)]  // MAX
+    #[case(11)]
+    fn test_max_items_boundary(count: usize) {
+        let items = vec![0; count];
+        let result = process_items(items);
+        match count {
+            0..=10 => assert_ok!(&result),
+            _ => assert_err!(&result),
+        }
+    }
+}
+```
+
+**Why**: Boundary bugs are common (off-by-one) and invisible in happy-path tests. Testing them explicitly prevents production outages.
+
+## Codebase Example
+
+File: `tests/go_extra_mile_tests.rs`
+Purpose: Parametrized boundary tests for validation guards and constraints
+
 ## Related Patterns
 
-- Pattern 2: Error Path Testing
-- Pattern 4: Resource Cleanup
-- Pattern 20: Macro Pattern Enforcement
+- **Before this**: [Pattern 2: Error Paths](error-path-testing.md) (error cases)
+- **Next**: [Pattern 4: Resource Cleanup](resource-cleanup.md) (cleanup after boundary tests)
+- **Use with**: [Pattern 20: Macro Enforcement](../design-patterns/macro-enforcement.md) (compile-time boundaries)
+
+---
+
+**Why It Works**: Off-by-one errors are the most common boundary bug. Testing below/at/above catches them before production.
+
+**Production Checklist**:
+- [ ] Every numeric limit has below/at/above tests
+- [ ] String length limits are tested
+- [ ] Array capacity limits are tested
+- [ ] Exclusive ranges are clearly tested
+- [ ] Boundary violations produce clear error messages

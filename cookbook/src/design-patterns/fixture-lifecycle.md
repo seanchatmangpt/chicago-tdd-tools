@@ -1,50 +1,100 @@
 # Pattern 16: Fixture Lifecycle Management
 
-## Context
+> 🔧 **HOW-TO** | Manage complex test setup and teardown without manual coordination
 
-Complex tests require deterministic setup and teardown of shared state: databases, telemetry, temporary directories.
+## Quick Reference
 
-## Problem
+| Aspect | Details |
+|--------|---------|
+| **Problem Solved** | Manual lifecycle logic is error-prone; forgotten teardown cascades to other tests |
+| **Core Solution** | Wrap lifecycle in TestFixture or AsyncFixtureManager; Let Drop/teardown guarantee cleanup |
+| **When to Use** | ✅ Database connections, ✅ Containers, ✅ Async resource setup, ✅ Temporary directories |
+| **When NOT to Use** | ❌ Stateless data (no cleanup needed), ❌ Shared state between tests (use isolation) |
+| **Difficulty** | Medium - Requires understanding async lifecycle |
 
-Manual lifecycle logic is error-prone. Forgetting teardown causes cascading failures across tests. Async setup complicates matters further.
+## The Problem
 
-## Solution
+Complex tests require deterministic setup and teardown. Manual lifecycle logic is scattered across tests and error-prone. Forgetting teardown causes cascading failures in subsequent tests. Async setup adds complexity with explicit boundaries.
 
-Wrap lifecycle responsibilities in `TestFixture` or `AsyncFixtureManager`. Use the fixture to hold handles and expose helper methods. Let Drop and the manager `.teardown()` guarantee cleanup. For async resources, implement `AsyncFixtureProvider` and return strongly typed handles.
+## The Solution
 
-## Forces
+Wrap all setup/teardown in `TestFixture` or `AsyncFixtureManager`. Use `AsyncFixtureProvider` trait to define resource creation. The manager handles both setup and guaranteed teardown, even on test failure.
 
-- Determinism vs. flexibility: fixtures must isolate state yet allow custom behavior per test
-- Async vs. sync complexity: asynchronous resources require explicit lifecycle boundaries
-- Performance vs. safety: reuse is tempting, but fresh fixtures avoid hidden coupling
-
-## Examples
+## Essential Code Example
 
 ```rust
-struct DbProvider;
+use chicago_tdd_tools::core::async_fixture::*;
 
-impl chicago_tdd_tools::core::async_fixture::private::Sealed for DbProvider {}
+struct DatabaseProvider;
 
-impl AsyncFixtureProvider for DbProvider {
+impl AsyncFixtureProvider for DatabaseProvider {
     type Fixture<'a> = DatabaseHandle;
     type Error = DbError;
 
-    fn create_fixture<'a>(&'a self) -> DbFuture<'a, DatabaseHandle> {
-        Box::pin(async move { DatabaseHandle::connect().await })
+    async fn create_fixture<'a>(&'a self) -> Result<Self::Fixture<'a>, Self::Error> {
+        DatabaseHandle::connect().await
     }
 }
 
-async_test!(test_query_latency, {
-    let manager = AsyncFixtureManager::new(DbProvider);
-    let handle = manager.setup().await?;
-    // ...
-    manager.teardown().await?;
+async_test!(test_query, fixture, {
+    let db = fixture.get_database().await?;
+    let result = db.query("SELECT 1").await?;
+    assert_eq!(result, 1);
     Ok(())
 });
 ```
 
+## Implementation Checklist
+
+- [ ] All resources are wrapped in fixtures
+- [ ] Setup happens in create/setup methods
+- [ ] Teardown is automatic (Drop or explicit teardown())
+- [ ] Fresh fixtures per test (no shared state)
+- [ ] Async resources have explicit lifecycle boundaries
+- [ ] Error messages explain cleanup failures
+
+## The Gotcha (Most Common Mistake)
+
+Manual cleanup after assertions, which doesn't run if assertion fails:
+
+```rust
+// ❌ WRONG: Cleanup doesn't run if assertion fails
+async_test!(test_bad, {
+    let db = Database::connect().await?;
+    let result = db.query().await?;
+    assert_eq!(result, 42);  // If this fails...
+    db.close().await;  // ...this never runs!
+});
+
+// ✅ RIGHT: Fixture guarantees cleanup
+async_test!(test_good, fixture, {
+    let db = fixture.get_database().await?;
+    let result = db.query().await?;
+    assert_eq!(result, 42);  // Cleanup happens regardless
+    Ok(())
+});
+```
+
+**Why**: Explicit cleanup is bypassed by early returns and panics. Fixtures guarantee cleanup via Drop.
+
+## Codebase Example
+
+File: `src/core/async_fixture.rs`
+Purpose: AsyncFixtureManager and AsyncFixtureProvider trait
+
 ## Related Patterns
 
-- Pattern 4: Resource Cleanup
-- Pattern 12: Type Safety with GATs
-- Pattern 18: Timeout Defense in Depth
+- **Before this**: [Pattern 4: Resource Cleanup](../testing-patterns/resource-cleanup.md) (basic cleanup)
+- **Use with**: [Pattern 12: Type Safety](type-safety-patterns.md) (GATs for lifetimes)
+- **Next**: [Pattern 18: Timeout Defense](timeout-defense.md) (timeout long-running fixtures)
+
+---
+
+**Why It Works**: Fixtures hold resources and guarantee cleanup via Drop, even on early return or panic.
+
+**Production Checklist**:
+- [ ] Every resource-allocating test uses a fixture
+- [ ] No manual cleanup code
+- [ ] Async resources have explicit setup/teardown
+- [ ] Tests run in any order without pollution
+- [ ] Cleanup failures are reported clearly

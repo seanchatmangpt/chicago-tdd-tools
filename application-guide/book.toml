@@ -1,0 +1,19 @@
+[book]
+title = "Chicago TDD Tools - Application Guide"
+author = "Chicago TDD Tools Team"
+description = "Practical applications and real-world usage patterns"
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+default-theme = "light"
+create-missing = false
+build-dir = "book"
+
+[output.html]
+preferred-dark-theme = "navy"
+no-section-label = false
+site-url = ""
+
+[preprocessor.links]

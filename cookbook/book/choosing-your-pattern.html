@@ -1,0 +1,449 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Choosing Your Pattern - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="choosing-your-pattern"><a class="header" href="#choosing-your-pattern">Choosing Your Pattern</a></h1>
+<blockquote>
+<p>🗺️ <strong>NAVIGATION</strong> | Find the right pattern for your testing problem</p>
+</blockquote>
+<p>This guide helps you choose the right pattern(s) based on your testing situation.</p>
+<hr />
+<h2 id="quick-pattern-finder"><a class="header" href="#quick-pattern-finder">Quick Pattern Finder</a></h2>
+<p><strong>What's your challenge?</strong> Find it in the table below:</p>
+<div class="table-wrapper"><table><thead><tr><th>Your Challenge</th><th>Pattern Family</th><th>Pattern Name</th><th>Go To</th></tr></thead><tbody>
+<tr><td>How do I structure a test?</td><td>Testing</td><td>Pattern 1: AAA Pattern</td><td><a href="testing-patterns/aaa-pattern.html">Learn</a></td></tr>
+<tr><td>How do I test error cases?</td><td>Testing</td><td>Pattern 2: Error Path Testing</td><td><a href="testing-patterns/error-path-testing.html">Learn</a></td></tr>
+<tr><td>How do I test edge cases?</td><td>Testing</td><td>Pattern 3: Boundary Conditions</td><td><a href="testing-patterns/boundary-conditions.html">Learn</a></td></tr>
+<tr><td>How do I clean up resources?</td><td>Testing</td><td>Pattern 4: Resource Cleanup</td><td><a href="testing-patterns/resource-cleanup.html">Learn</a></td></tr>
+<tr><td>Should I use mocks?</td><td>Testing</td><td>Pattern 5: Real Collaborators</td><td><a href="testing-patterns/real-collaborators.html">Learn</a></td></tr>
+<tr><td>How do I organize my code?</td><td>Architecture</td><td>Pattern 6: Generic Base Layer</td><td><a href="architecture-patterns/generic-base.html">Learn</a></td></tr>
+<tr><td>How do I extend without duplicating?</td><td>Architecture</td><td>Pattern 7: Extension Layer</td><td><a href="architecture-patterns/extension-layer.html">Learn</a></td></tr>
+<tr><td>How do I avoid code duplication?</td><td>Architecture</td><td>Pattern 8: Composition Over Duplication</td><td><a href="architecture-patterns/composition-over-duplication.html">Learn</a></td></tr>
+<tr><td>How do I avoid data inconsistency?</td><td>Architecture</td><td>Pattern 9: Single Source of Truth</td><td><a href="architecture-patterns/single-source-of-truth.html">Learn</a></td></tr>
+<tr><td>How do I organize large modules?</td><td>Architecture</td><td>Pattern 10: Capability Grouping</td><td><a href="architecture-patterns/capability-groups.html">Learn</a></td></tr>
+<tr><td>How do I optimize for performance?</td><td>Design</td><td>Pattern 11: Zero-Cost Abstractions</td><td><a href="design-patterns/zero-cost-abstractions.html">Learn</a></td></tr>
+<tr><td>How do I prevent type errors?</td><td>Design</td><td>Pattern 12: Type Safety with GATs</td><td><a href="design-patterns/type-safety-patterns.html">Learn</a></td></tr>
+<tr><td>How do I prevent API misuse?</td><td>Design</td><td>Pattern 13: Sealed Traits</td><td><a href="design-patterns/sealed-traits.html">Learn</a></td></tr>
+<tr><td>How do I validate at compile-time?</td><td>Design</td><td>Pattern 14: Compile-Time Validation</td><td><a href="design-patterns/compile-time-validation.html">Learn</a></td></tr>
+<tr><td>How do I enforce state machines?</td><td>Design</td><td>Pattern 15: Type State Enforcement</td><td><a href="design-patterns/type-state-pattern.html">Learn</a></td></tr>
+<tr><td>How do I manage fixture lifecycle?</td><td>Design</td><td>Pattern 16: Fixture Lifecycle Management</td><td><a href="design-patterns/fixture-lifecycle.html">Learn</a></td></tr>
+<tr><td>How do I build test data easily?</td><td>Design</td><td>Pattern 17: Builder-Driven Test Data</td><td><a href="design-patterns/builder-test-data.html">Learn</a></td></tr>
+<tr><td>How do I prevent timeouts?</td><td>Design</td><td>Pattern 18: Timeout Defense</td><td><a href="design-patterns/timeout-defense.html">Learn</a></td></tr>
+<tr><td>How do I manage feature flags?</td><td>Design</td><td>Pattern 19: Feature Gate Slices</td><td><a href="design-patterns/feature-gating.html">Learn</a></td></tr>
+<tr><td>How do I enforce patterns with macros?</td><td>Design</td><td>Pattern 20: Macro Pattern Enforcement</td><td><a href="design-patterns/macro-enforcement.html">Learn</a></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="by-category"><a class="header" href="#by-category">By Category</a></h2>
+<h3 id="testing-patterns-how-do-i-write-better-tests"><a class="header" href="#testing-patterns-how-do-i-write-better-tests">Testing Patterns: "How Do I Write Better Tests?"</a></h3>
+<p>These patterns solve fundamental testing problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 1: AAA</strong></td><td>Tests are hard to read</td><td>Structure: Arrange, Act, Assert</td></tr>
+<tr><td><strong>Pattern 2: Error Paths</strong></td><td>I don't test failures</td><td>Test both success and error cases</td></tr>
+<tr><td><strong>Pattern 3: Boundaries</strong></td><td>I miss edge cases</td><td>Systematically test limits</td></tr>
+<tr><td><strong>Pattern 4: Resource Cleanup</strong></td><td>Tests leak resources</td><td>Automatic fixture cleanup</td></tr>
+<tr><td><strong>Pattern 5: Real Collaborators</strong></td><td>Mocks hide integration bugs</td><td>Test with real implementations</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: All the time. These are foundational.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-testing-patterns.html">Testing Patterns Learning Sequence</a></p>
+<hr />
+<h3 id="architecture-patterns-how-do-i-organize-code"><a class="header" href="#architecture-patterns-how-do-i-organize-code">Architecture Patterns: "How Do I Organize Code?"</a></h3>
+<p>These patterns solve structural problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 6: Generic Base</strong></td><td>Code is duplicate</td><td>Extract generic abstractions</td></tr>
+<tr><td><strong>Pattern 7: Extension Layer</strong></td><td>I can't extend without modifying</td><td>Add layers for extensions</td></tr>
+<tr><td><strong>Pattern 8: Composition</strong></td><td>DRY violations everywhere</td><td>Compose instead of duplicating</td></tr>
+<tr><td><strong>Pattern 9: Single Source</strong></td><td>Data gets out of sync</td><td>One canonical source of truth</td></tr>
+<tr><td><strong>Pattern 10: Capability Groups</strong></td><td>Module is too large</td><td>Organize by capability, not type</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: During architecture phase and refactoring.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-architecture-patterns.html">Architecture Patterns Learning Sequence</a></p>
+<hr />
+<h3 id="design-patterns-how-do-i-make-code-safer"><a class="header" href="#design-patterns-how-do-i-make-code-safer">Design Patterns: "How Do I Make Code Safer?"</a></h3>
+<p>These patterns solve design and safety problems:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>Pattern 11: Zero-Cost</strong></td><td>Abstractions are slow</td><td>Zero-cost abstractions via generics</td></tr>
+<tr><td><strong>Pattern 12: Type Safety</strong></td><td>Type errors at runtime</td><td>Use GATs for safety</td></tr>
+<tr><td><strong>Pattern 13: Sealed Traits</strong></td><td>API is too easy to misuse</td><td>Seal traits to prevent misuse</td></tr>
+<tr><td><strong>Pattern 14: Compile-Time</strong></td><td>Errors caught at runtime</td><td>Validate at compile-time</td></tr>
+<tr><td><strong>Pattern 15: Type State</strong></td><td>State machines are error-prone</td><td>Encode states in types</td></tr>
+<tr><td><strong>Pattern 16: Fixture Lifecycle</strong></td><td>Test setup is complex</td><td>Manage lifecycle with traits</td></tr>
+<tr><td><strong>Pattern 17: Builder Test Data</strong></td><td>Building test data is tedious</td><td>Fluent builders for test data</td></tr>
+<tr><td><strong>Pattern 18: Timeout Defense</strong></td><td>Tests hang forever</td><td>Timeout defense in depth</td></tr>
+<tr><td><strong>Pattern 19: Feature Gates</strong></td><td>Feature flags are unreliable</td><td>Gate slices across codebase</td></tr>
+<tr><td><strong>Pattern 20: Macro Enforcement</strong></td><td>Patterns are easy to violate</td><td>Use macros to enforce patterns</td></tr>
+</tbody></table>
+</div>
+<p><strong>When to use</strong>: During design and implementation.</p>
+<p><strong>Learning Path</strong>: <a href="tutorials/learning-design-patterns.html">Design Patterns Learning Sequence</a></p>
+<hr />
+<h2 id="decision-trees"><a class="header" href="#decision-trees">Decision Trees</a></h2>
+<h3 id="im-writing-a-test-which-pattern-do-i-need"><a class="header" href="#im-writing-a-test-which-pattern-do-i-need">"I'm writing a test. Which pattern do I need?"</a></h3>
+<pre><code>┌─ Start: Writing a test
+│
+├─ What am I testing?
+│  ├─ Normal behavior ──→ Pattern 1: AAA Pattern
+│  ├─ Error behavior ──→ Pattern 2: Error Path Testing
+│  ├─ Edge cases ──→ Pattern 3: Boundary Conditions
+│  └─ Setup/teardown ──→ Pattern 4: Resource Cleanup
+│
+├─ What should I test against?
+│  ├─ Mock/fake ──→ Consider Pattern 5: Real Collaborators
+│  └─ Real implementation ──→ Pattern 5: Real Collaborators ✓
+│
+└─ How do I build test data?
+   └─ Complex data ──→ Pattern 17: Builder-Driven Test Data
+</code></pre>
+<hr />
+<h3 id="im-designing-an-architecture-which-patterns-apply"><a class="header" href="#im-designing-an-architecture-which-patterns-apply">"I'm designing an architecture. Which patterns apply?"</a></h3>
+<pre><code>┌─ Start: Designing architecture
+│
+├─ How do I organize modules?
+│  ├─ By type (models, handlers, etc.) ──→ Consider Pattern 10: Capability Groups
+│  └─ By capability ──→ Pattern 10: Capability Groups ✓
+│
+├─ How do I reuse code?
+│  ├─ Copy-paste ──→ NO! Use Pattern 8: Composition Over Duplication
+│  └─ Abstract base ──→ Pattern 6: Generic Base Layer
+│
+├─ How do I extend without modifying?
+│  └─ Pattern 7: Extension Layer
+│
+└─ Where is the source of truth?
+   └─ Pattern 9: Single Source of Truth
+</code></pre>
+<hr />
+<h3 id="im-designing-apis-which-patterns-keep-them-safe"><a class="header" href="#im-designing-apis-which-patterns-keep-them-safe">"I'm designing APIs. Which patterns keep them safe?"</a></h3>
+<pre><code>┌─ Start: Designing public API
+│
+├─ Can downstream code misuse my API?
+│  └─ YES ──→ Pattern 13: Sealed Traits
+│
+├─ Should errors be compile-time or runtime?
+│  ├─ Compile-time ──→ Pattern 14: Compile-Time Validation
+│  └─ Runtime ──→ Less safe, but sometimes necessary
+│
+├─ Does state machine matter?
+│  ├─ YES (auth states, connection states) ──→ Pattern 15: Type State Enforcement
+│  └─ NO ──→ Continue
+│
+├─ Are lifetimes complex?
+│  └─ YES ──→ Pattern 12: Type Safety with GATs
+│
+└─ Should this be in macros?
+   └─ Pattern 20: Macro Pattern Enforcement
+</code></pre>
+<hr />
+<h2 id="learning-by-difficulty"><a class="header" href="#learning-by-difficulty">Learning by Difficulty</a></h2>
+<h3 id="beginner-start-here"><a class="header" href="#beginner-start-here">Beginner (Start Here)</a></h3>
+<ol>
+<li><strong>Pattern 1: AAA Pattern</strong> - Foundation</li>
+<li><strong>Pattern 2: Error Path Testing</strong> - See what not to do</li>
+<li><strong>Pattern 3: Boundary Conditions</strong> - Edge cases matter</li>
+<li><strong>Pattern 4: Resource Cleanup</strong> - Don't leak resources</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - Test with real code</li>
+</ol>
+<p><strong>Time</strong>: ~3 hours | <strong>Content</strong>: Testing fundamentals</p>
+<h3 id="intermediate-build-on-basics"><a class="header" href="#intermediate-build-on-basics">Intermediate (Build on Basics)</a></h3>
+<ol start="6">
+<li><strong>Pattern 6: Generic Base Layer</strong> - Code organization</li>
+<li><strong>Pattern 8: Composition Over Duplication</strong> - DRY principle</li>
+<li><strong>Pattern 10: Capability Grouping</strong> - Module organization</li>
+<li><strong>Pattern 17: Builder-Driven Test Data</strong> - Practical testing</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Type safety</li>
+</ol>
+<p><strong>Time</strong>: ~4 hours | <strong>Content</strong>: Architecture and safety</p>
+<h3 id="advanced-master-the-craft"><a class="header" href="#advanced-master-the-craft">Advanced (Master the Craft)</a></h3>
+<ol start="11">
+<li><strong>Pattern 11: Zero-Cost Abstractions</strong> - Performance</li>
+<li><strong>Pattern 12: Type Safety with GATs</strong> - Advanced types</li>
+<li><strong>Pattern 15: Type State Enforcement</strong> - State machines</li>
+<li><strong>Pattern 13: Sealed Traits</strong> - API design</li>
+<li><strong>Pattern 18: Timeout Defense</strong> - Robustness</li>
+</ol>
+<p><strong>Time</strong>: ~5 hours | <strong>Content</strong>: Advanced design and optimization</p>
+<hr />
+<h2 id="pattern-combination-guide"><a class="header" href="#pattern-combination-guide">Pattern Combination Guide</a></h2>
+<h3 id="i-want-to-write-production-quality-tests"><a class="header" href="#i-want-to-write-production-quality-tests">"I want to write production-quality tests"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 1: AAA</strong> - Structure your tests</li>
+<li><strong>Pattern 2: Error Paths</strong> - Test failures</li>
+<li><strong>Pattern 3: Boundaries</strong> - Test edge cases</li>
+<li><strong>Pattern 4: Resource Cleanup</strong> - Clean automatically</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - Use real dependencies</li>
+<li><strong>Pattern 17: Builder Test Data</strong> - Build complex test data</li>
+</ol>
+<p><strong>Expected outcome</strong>: Comprehensive, maintainable test suite</p>
+<h3 id="i-want-to-build-a-safe-extensible-api"><a class="header" href="#i-want-to-build-a-safe-extensible-api">"I want to build a safe, extensible API"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 6: Generic Base</strong> - Reusable abstractions</li>
+<li><strong>Pattern 7: Extension Layer</strong> - Allow extensibility</li>
+<li><strong>Pattern 13: Sealed Traits</strong> - Prevent misuse</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Validate early</li>
+<li><strong>Pattern 15: Type State</strong> - Enforce state machines</li>
+<li><strong>Pattern 20: Macro Enforcement</strong> - Enforce usage patterns</li>
+</ol>
+<p><strong>Expected outcome</strong>: Safe, extensible, hard-to-misuse API</p>
+<h3 id="i-want-maximum-performance"><a class="header" href="#i-want-maximum-performance">"I want maximum performance"</a></h3>
+<p>Use these patterns together:</p>
+<ol>
+<li><strong>Pattern 11: Zero-Cost Abstractions</strong> - Generic dispatch</li>
+<li><strong>Pattern 12: Type Safety with GATs</strong> - Type-safe lifetimes</li>
+<li><strong>Pattern 14: Compile-Time Validation</strong> - Zero runtime checks</li>
+<li><strong>Pattern 8: Composition Over Duplication</strong> - Avoid copies</li>
+</ol>
+<p><strong>Expected outcome</strong>: Fast code with safety guarantees</p>
+<hr />
+<h2 id="faq"><a class="header" href="#faq">FAQ</a></h2>
+<p><strong>Q: How many patterns should I learn?</strong>
+A: Start with Testing Patterns (5), then Architecture (5) for production code. Advanced designers learn all 20.</p>
+<p><strong>Q: Do I need to learn them in order?</strong>
+A: No, but the beginner patterns are prerequisites for understanding advanced ones.</p>
+<p><strong>Q: Can I use just one pattern?</strong>
+A: Yes, but patterns work together. Combine related patterns for best results.</p>
+<p><strong>Q: Where do I go from here?</strong>
+A: Choose a <a href="tutorials/">Learning Sequence</a> or pick a pattern you need right now.</p>
+<p><strong>Q: How do patterns relate to the application guide?</strong>
+A: Application guide shows <em>how to apply patterns in practice</em>. Cookbook explains <em>why patterns exist</em>. Use both together.</p>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Choose your learning path:</p>
+<ul>
+<li><strong><a href="tutorials/learning-testing-patterns.html">Testing Patterns Learning Path</a></strong> (90 minutes)</li>
+<li><strong><a href="tutorials/learning-architecture-patterns.html">Architecture Patterns Learning Path</a></strong> (60 minutes)</li>
+<li><strong><a href="tutorials/learning-design-patterns.html">Design Patterns Learning Path</a></strong> (120 minutes)</li>
+<li><strong><a href="all-patterns-reference.html">All Patterns Quick Reference</a></strong> (Lookup table for all 20)</li>
+</ul>
+<p>Or jump directly to the pattern you need from the Quick Finder above.</p>
+<hr />
+<p><strong>Remember</strong>: Patterns work together. As you learn each one, you'll recognize them appearing in others. That's the power of a pattern language.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="all-patterns-reference.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="all-patterns-reference.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

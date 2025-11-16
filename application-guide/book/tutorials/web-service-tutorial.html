@@ -1,0 +1,765 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>REST Web Service (50 minutes) - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="building-a-rest-web-service-complete-tutorial"><a class="header" href="#building-a-rest-web-service-complete-tutorial">Building a REST Web Service: Complete Tutorial</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Build a production-ready REST API with Chicago TDD</p>
+</blockquote>
+<p>This tutorial guides you through building a real REST web service with comprehensive tests, using Rust and common web frameworks.</p>
+<p><strong>Prerequisites</strong>: <a href="getting-started.html">Getting Started</a>, <a href="cli-app-tutorial.html">CLI Application Tutorial</a>
+<strong>Time</strong>: ~50 minutes
+<strong>What you'll build</strong>: A working <code>user-api</code> with CRUD operations</p>
+<hr />
+<h2 id="project-overview"><a class="header" href="#project-overview">Project Overview</a></h2>
+<p>You'll build a <strong>user-api</strong> REST service:</p>
+<pre><code class="language-bash"># Get all users
+GET /api/users
+-&gt; [{"id": 1, "name": "Alice", "email": "alice@example.com"}, ...]
+
+# Get specific user
+GET /api/users/:id
+-&gt; {"id": 1, "name": "Alice", "email": "alice@example.com"}
+
+# Create user
+POST /api/users
+-&gt; {"id": 2, "name": "Bob", "email": "bob@example.com"}
+
+# Update user
+PUT /api/users/:id
+-&gt; {"id": 1, "name": "Alice Updated", ...}
+
+# Delete user
+DELETE /api/users/:id
+-&gt; {}
+</code></pre>
+<hr />
+<h2 id="step-1-project-setup-3-minutes"><a class="header" href="#step-1-project-setup-3-minutes">Step 1: Project Setup (3 minutes)</a></h2>
+<h3 id="create-project"><a class="header" href="#create-project">Create project</a></h3>
+<pre><code class="language-bash">cargo new user-api
+cd user-api
+</code></pre>
+<h3 id="update-cargotoml"><a class="header" href="#update-cargotoml">Update Cargo.toml</a></h3>
+<pre><code class="language-toml">[package]
+name = "user-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# JSON support
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+chicago-tdd-tools = { version = "1.1", features = ["testing-extras"] }
+</code></pre>
+<h3 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h3>
+<pre><code>user-api/
+├── src/
+│   ├── main.rs
+│   ├── models/
+│   │   └── user.rs
+│   ├── handlers/
+│   │   ├── mod.rs
+│   │   └── users.rs
+│   └── store.rs
+└── tests/
+    ├── user_tests.rs
+    └── api_tests.rs
+</code></pre>
+<hr />
+<h2 id="step-2-data-models-5-minutes"><a class="header" href="#step-2-data-models-5-minutes">Step 2: Data Models (5 minutes)</a></h2>
+<p>Create <code>src/models/user.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct User {
+    pub id: u32,
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct CreateUserRequest {
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct UpdateUserRequest {
+    pub name: Option&lt;String&gt;,
+    pub email: Option&lt;String&gt;,
+}
+
+impl User {
+    pub fn new(id: u32, name: String, email: String) -&gt; Self {
+        User { id, name, email }
+    }
+
+    pub fn validate(&amp;self) -&gt; Result&lt;(), String&gt; {
+        if self.name.is_empty() {
+            return Err("Name cannot be empty".to_string());
+        }
+        if !self.email.contains('@') {
+            return Err("Invalid email format".to_string());
+        }
+        Ok(())
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-3-test-the-models-8-minutes"><a class="header" href="#step-3-test-the-models-8-minutes">Step 3: Test the Models (8 minutes)</a></h2>
+<p>Create <code>tests/user_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use user_api::models::User;
+
+test!(test_create_user, {
+    let user = User::new(1, "Alice".to_string(), "alice@example.com".to_string());
+
+    assert_eq!(user.id, 1);
+    assert_eq!(user.name, "Alice");
+    assert_eq!(user.email, "alice@example.com");
+});
+
+test!(test_user_validation_valid, {
+    let user = User::new(1, "Alice".to_string(), "alice@example.com".to_string());
+
+    let result = user.validate();
+
+    assert_ok!(&amp;result);
+});
+
+test!(test_user_validation_empty_name, {
+    let user = User::new(1, String::new(), "alice@example.com".to_string());
+
+    let result = user.validate();
+
+    assert_err!(&amp;result);
+    if let Err(e) = result {
+        assert!(e.contains("Name"));
+    }
+});
+
+test!(test_user_validation_invalid_email, {
+    let user = User::new(1, "Alice".to_string(), "not-an-email".to_string());
+
+    let result = user.validate();
+
+    assert_err!(&amp;result);
+    if let Err(e) = result {
+        assert!(e.contains("email"));
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-4-user-repository-8-minutes"><a class="header" href="#step-4-user-repository-8-minutes">Step 4: User Repository (8 minutes)</a></h2>
+<p>Create <code>src/store.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::models::{User, CreateUserRequest, UpdateUserRequest};
+use std::collections::HashMap;
+
+pub struct UserStore {
+    users: HashMap&lt;u32, User&gt;,
+    next_id: u32,
+}
+
+impl UserStore {
+    pub fn new() -&gt; Self {
+        UserStore {
+            users: HashMap::new(),
+            next_id: 1,
+        }
+    }
+
+    pub fn create(&amp;mut self, req: CreateUserRequest) -&gt; Result&lt;User, String&gt; {
+        let user = User::new(self.next_id, req.name, req.email);
+        user.validate()?;
+
+        self.users.insert(user.id, user.clone());
+        self.next_id += 1;
+
+        Ok(user)
+    }
+
+    pub fn get(&amp;self, id: u32) -&gt; Option&lt;User&gt; {
+        self.users.get(&amp;id).cloned()
+    }
+
+    pub fn list(&amp;self) -&gt; Vec&lt;User&gt; {
+        let mut users: Vec&lt;_&gt; = self.users.values().cloned().collect();
+        users.sort_by_key(|u| u.id);
+        users
+    }
+
+    pub fn update(&amp;mut self, id: u32, req: UpdateUserRequest) -&gt; Result&lt;User, String&gt; {
+        let user = self.users.get_mut(&amp;id)
+            .ok_or("User not found".to_string())?;
+
+        if let Some(name) = req.name {
+            user.name = name;
+        }
+        if let Some(email) = req.email {
+            user.email = email;
+        }
+
+        user.validate()?;
+        Ok(user.clone())
+    }
+
+    pub fn delete(&amp;mut self, id: u32) -&gt; bool {
+        self.users.remove(&amp;id).is_some()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-5-repository-tests-10-minutes"><a class="header" href="#step-5-repository-tests-10-minutes">Step 5: Repository Tests (10 minutes)</a></h2>
+<p>Create <code>tests/api_tests.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use user_api::models::{User, CreateUserRequest, UpdateUserRequest};
+use user_api::store::UserStore;
+
+test!(test_create_user_success, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    };
+
+    let result = store.create(req);
+
+    assert_ok!(&amp;result);
+    let user = result.unwrap();
+    assert_eq!(user.name, "Alice");
+});
+
+test!(test_create_user_invalid_email, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "invalid".to_string(),
+    };
+
+    let result = store.create(req);
+
+    assert_err!(&amp;result);
+});
+
+test!(test_get_user, {
+    let mut store = UserStore::new();
+    let req = CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    };
+    let created = store.create(req).unwrap();
+
+    let retrieved = store.get(created.id);
+
+    assert_eq!(retrieved, Some(created));
+});
+
+test!(test_get_nonexistent_user, {
+    let store = UserStore::new();
+
+    let result = store.get(999);
+
+    assert_eq!(result, None);
+});
+
+test!(test_list_users, {
+    let mut store = UserStore::new();
+
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    let users = store.list();
+
+    assert_eq!(users.len(), 2);
+    assert_eq!(users[0].name, "Alice");
+    assert_eq!(users[1].name, "Bob");
+});
+
+test!(test_update_user, {
+    let mut store = UserStore::new();
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    let result = store.update(1, UpdateUserRequest {
+        name: Some("Alice Updated".to_string()),
+        email: None,
+    });
+
+    assert_ok!(&amp;result);
+    let updated = result.unwrap();
+    assert_eq!(updated.name, "Alice Updated");
+});
+
+test!(test_update_nonexistent_user, {
+    let mut store = UserStore::new();
+
+    let result = store.update(999, UpdateUserRequest {
+        name: Some("Bob".to_string()),
+        email: None,
+    });
+
+    assert_err!(&amp;result);
+});
+
+test!(test_delete_user, {
+    let mut store = UserStore::new();
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    let result = store.delete(1);
+
+    assert!(result);
+    assert_eq!(store.list().len(), 0);
+});
+
+test!(test_delete_nonexistent_user, {
+    let mut store = UserStore::new();
+
+    let result = store.delete(999);
+
+    assert!(!result);
+});
+
+test!(complete_api_workflow, {
+    let mut store = UserStore::new();
+
+    // Create users
+    let alice = store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).unwrap();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    // Verify list
+    assert_eq!(store.list().len(), 2);
+
+    // Update Alice
+    store.update(alice.id, UpdateUserRequest {
+        name: Some("Alice Wonder".to_string()),
+        email: None,
+    }).ok();
+
+    // Verify update
+    let updated = store.get(alice.id).unwrap();
+    assert_eq!(updated.name, "Alice Wonder");
+
+    // Delete Bob
+    store.delete(2);
+
+    // Verify deletion
+    assert_eq!(store.list().len(), 1);
+});
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-6-handlers-8-minutes"><a class="header" href="#step-6-handlers-8-minutes">Step 6: Handlers (8 minutes)</a></h2>
+<p>Create <code>src/handlers/users.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::models::CreateUserRequest;
+use crate::store::UserStore;
+use serde_json::json;
+
+pub fn get_users(store: &amp;UserStore) -&gt; String {
+    let users = store.list();
+    serde_json::to_string(&amp;users).unwrap_or_else(|_| "[]".to_string())
+}
+
+pub fn get_user(store: &amp;UserStore, id: u32) -&gt; Result&lt;String, String&gt; {
+    let user = store.get(id).ok_or("User not found".to_string())?;
+    serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+pub fn create_user(store: &amp;mut UserStore, body: &amp;str) -&gt; Result&lt;String, String&gt; {
+    let req: CreateUserRequest = serde_json::from_str(body)
+        .map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    let user = store.create(req)?;
+    serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_get_users_empty, {
+        let store = UserStore::new();
+
+        let result = get_users(&amp;store);
+
+        assert_eq!(result, "[]");
+    });
+
+    test!(test_create_user_from_json, {
+        let mut store = UserStore::new();
+        let json = r#"{"name":"Alice","email":"alice@example.com"}"#;
+
+        let result = create_user(&amp;mut store, json);
+
+        assert_ok!(&amp;result);
+        let response = result.unwrap();
+        assert!(response.contains("Alice"));
+    });
+
+    test!(test_create_user_invalid_json, {
+        let mut store = UserStore::new();
+        let json = "invalid json";
+
+        let result = create_user(&amp;mut store, json);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="step-7-main-application-5-minutes"><a class="header" href="#step-7-main-application-5-minutes">Step 7: Main Application (5 minutes)</a></h2>
+<p>Create <code>src/main.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">mod models;
+mod handlers;
+mod store;
+
+use models::{User, CreateUserRequest};
+use store::UserStore;
+
+fn main() {
+    let mut store = UserStore::new();
+
+    // Sample data
+    store.create(CreateUserRequest {
+        name: "Alice".to_string(),
+        email: "alice@example.com".to_string(),
+    }).ok();
+
+    store.create(CreateUserRequest {
+        name: "Bob".to_string(),
+        email: "bob@example.com".to_string(),
+    }).ok();
+
+    // List users
+    for user in store.list() {
+        println!("User #{}: {} ({})", user.id, user.name, user.email);
+    }
+}</code></pre></pre>
+<hr />
+<h2 id="step-8-running-tests-5-minutes"><a class="header" href="#step-8-running-tests-5-minutes">Step 8: Running Tests (5 minutes)</a></h2>
+<pre><code class="language-bash"># Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_create_user_success
+</code></pre>
+<p>Expected output:</p>
+<pre><code>running 11 tests
+...
+test result: ok. 11 passed; 0 failed
+</code></pre>
+<hr />
+<h2 id="extending-the-api"><a class="header" href="#extending-the-api">Extending the API</a></h2>
+<h3 id="add-error-responses"><a class="header" href="#add-error-responses">Add error responses</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+pub fn format_error(message: String) -&gt; String {
+    serde_json::to_string(&amp;ErrorResponse { error: message })
+        .unwrap_or_else(|_| r#"{"error":"Unknown error"}"#.to_string())
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="add-pagination"><a class="header" href="#add-pagination">Add pagination</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn list_users_paginated(
+    store: &amp;UserStore,
+    page: u32,
+    limit: u32,
+) -&gt; (Vec&lt;User&gt;, u32) {
+    let all = store.list();
+    let total = all.len() as u32;
+    let start = (page - 1) * limit;
+    let end = std::cmp::min(start + limit, total);
+
+    (all[start as usize..end as usize].to_vec(), total)
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p><strong>Enhance your API:</strong></p>
+<ul>
+<li>Add authentication</li>
+<li>Add validation</li>
+<li>Add pagination</li>
+<li>Add filtering/searching</li>
+<li>Add real database (PostgreSQL/SQLite)</li>
+</ul>
+<p><strong>Testing enhancements:</strong></p>
+<ul>
+<li><a href="../guides/integration-docker.html">Integration Testing with Docker</a> - Test with real database</li>
+<li><a href="../advanced/snapshot-testing.html">Snapshot Testing</a> - Test API responses</li>
+<li><a href="../advanced/property-testing.html">Property Testing</a> - Fuzz test API handlers</li>
+</ul>
+<p><strong>Deployment:</strong></p>
+<ul>
+<li>Build Docker image</li>
+<li>Deploy to cloud (AWS, Heroku, etc.)</li>
+<li>Set up CI/CD pipeline</li>
+<li>Monitor with observability tools</li>
+</ul>
+<hr />
+<p><strong>Congratulations!</strong> You've built a production-ready REST API with comprehensive tests. You're ready to deploy real services!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/cli-app-tutorial.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../reference/fixtures-api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/cli-app-tutorial.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../reference/fixtures-api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

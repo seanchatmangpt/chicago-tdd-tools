@@ -1,0 +1,510 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Observability &amp; Quality - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="observability--quality"><a class="header" href="#observability--quality">Observability &amp; Quality</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add observability and measure quality</p>
+</blockquote>
+<p>Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.</p>
+<h2 id="quick-reference-observability-api"><a class="header" href="#quick-reference-observability-api">Quick Reference: Observability API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Purpose</th><th>Key Methods/Fields</th></tr></thead><tbody>
+<tr><td><code>Span::new_active()</code></td><td>Create an OTEL span</td><td>Parameters: context, name, start_time, attributes, events, status</td></tr>
+<tr><td><code>Span.attributes</code></td><td>Store span metadata</td><td><code>.insert(key, value)</code></td></tr>
+<tr><td><code>Span.complete()</code></td><td>Finish span timing</td><td>Parameter: end_time</td></tr>
+<tr><td><code>Span.status</code></td><td>Set result status</td><td>Variants: Ok, Error, Unknown</td></tr>
+<tr><td><code>Span.validate()</code></td><td>Verify span correctness</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>Metric</code> struct</td><td>Track measurements</td><td>Fields: name, value, timestamp_ms, attributes</td></tr>
+<tr><td><code>MetricValue</code> enum</td><td>Metric types</td><td>Variants: Counter, Gauge, Histogram</td></tr>
+<tr><td><code>MetricValidator::new()</code></td><td>Validate metrics</td><td><code>.validate(&amp;metric)</code></td></tr>
+<tr><td><code>WeaverValidator::check_weaver_available()</code></td><td>Check Weaver CLI</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>SpanValidator::new()</code></td><td>Validate span format</td><td><code>.validate(&amp;span)</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Observability helps you understand what your code is doing:</p>
+<ul>
+<li><strong>OTEL Instrumentation</strong>: Track operations with spans and metrics</li>
+<li><strong>Weaver Validation</strong>: Ensure telemetry matches semantic conventions</li>
+<li><strong>Coverage Measurement</strong>: Verify test coverage</li>
+<li><strong>Performance Tracking</strong>: Measure operation timing</li>
+</ul>
+<h2 id="otel-spans"><a class="header" href="#otel-spans">OTEL Spans</a></h2>
+<p>OTEL (OpenTelemetry) spans track operations:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::otel::*;
+
+test!(test_with_span, {
+    let start_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()?
+        .as_millis() as u64;
+
+    // Create a span
+    let mut span = Span::new_active(
+        SpanContext::root(TraceId(123), SpanId(456), 1),
+        "parse_operation",
+        start_time,
+        BTreeMap::new(),
+        Vec::new(),
+        SpanStatus::Unset,
+    );
+
+    // Add attributes
+    span.attributes.insert("input".to_string(), "42".to_string());
+
+    // Do work
+    let result = "42".parse::&lt;u32&gt;()?;
+
+    // Complete span
+    let end_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()?
+        .as_millis() as u64;
+
+    span.complete(end_time)?;
+    span.status = SpanStatus::Ok;
+
+    // Span is now complete with timing
+    assert_ok!(&amp;span.validate());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="otel-metrics"><a class="header" href="#otel-metrics">OTEL Metrics</a></h2>
+<p>Track measurements over time:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::otel::*;
+
+test!(test_with_metric, {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()?
+        .as_millis() as u64;
+
+    let mut metric = Metric {
+        name: "requests_total".to_string(),
+        value: MetricValue::Counter(42),
+        timestamp_ms: timestamp,
+        attributes: BTreeMap::new(),
+    };
+
+    metric.attributes.insert("endpoint".to_string(), "/api/users".to_string());
+    metric.attributes.insert("status".to_string(), "success".to_string());
+
+    // Validate metric
+    let validator = MetricValidator::new();
+    assert_ok!(&amp;validator.validate(&amp;metric));
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="weaver-live-check"><a class="header" href="#weaver-live-check">Weaver Live-Check</a></h2>
+<p>Validate telemetry against semantic conventions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_weaver_validation, {
+    // Check if Weaver is available
+    match WeaverValidator::check_weaver_available() {
+        Ok(()) =&gt; {
+            // Weaver is available
+            // Can validate OTEL spans against semantic conventions
+            alert_success!("Weaver available");
+        }
+        Err(e) =&gt; {
+            alert_info!("Weaver not available: {}", e);
+            alert_info!("Install with: cargo make weaver-bootstrap");
+        }
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="coverage-measurement"><a class="header" href="#coverage-measurement">Coverage Measurement</a></h2>
+<p>Measure test coverage:</p>
+<pre><code class="language-bash"># Run coverage
+cargo make coverage
+
+# Generate report
+cargo make coverage-report
+</code></pre>
+<p>Coverage shows:</p>
+<ul>
+<li>Code coverage percentage</li>
+<li>Covered lines</li>
+<li>Uncovered lines</li>
+<li>Branch coverage</li>
+</ul>
+<p><strong>Target</strong>: 80%+ coverage for critical code</p>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="otel-spans-1"><a class="header" href="#otel-spans-1">OTEL Spans</a></h3>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Add meaningful attributes</li>
+<li>Track timing</li>
+<li>Mark errors with SpanStatus</li>
+<li>Propagate context between services</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Create spans for every operation (too noisy)</li>
+<li>Include sensitive data in attributes</li>
+<li>Forget to complete spans</li>
+</ul>
+<h3 id="weaver-validation"><a class="header" href="#weaver-validation">Weaver Validation</a></h3>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Use semantic conventions</li>
+<li>Validate telemetry early</li>
+<li>Document telemetry schema</li>
+<li>Keep conventions up-to-date</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Use custom attribute names</li>
+<li>Skip validation</li>
+<li>Ignore schema mismatches</li>
+</ul>
+<h3 id="coverage"><a class="header" href="#coverage">Coverage</a></h3>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Aim for 80%+ coverage</li>
+<li>Focus on critical paths</li>
+<li>Test error paths (often uncovered)</li>
+<li>Review coverage reports</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Obsess over 100% coverage</li>
+<li>Ignore untested lines</li>
+<li>Only focus on coverage number</li>
+</ul>
+<h2 id="combining-observability-with-testing"><a class="header" href="#combining-observability-with-testing">Combining Observability with Testing</a></h2>
+<h3 id="otel--unit-tests"><a class="header" href="#otel--unit-tests">OTEL + Unit Tests</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_otel, {
+    let span = create_test_span("my_operation");
+
+    // Do work
+    let result = my_function()?;
+
+    // Verify behavior AND telemetry
+    assert_ok!(&amp;result);
+    span.validate()?;
+    assert_eq!(span.status, SpanStatus::Ok);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="metrics--property-based-testing"><a class="header" href="#metrics--property-based-testing">Metrics + Property-Based Testing</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_metrics, {
+    let strategy = ProptestStrategy::new().with_cases(100);
+
+    strategy.test(any::&lt;u32&gt;(), |num| {
+        let timestamp = SystemTime::now()...;
+        let mut metric = Metric {
+            name: "parsing_attempts".to_string(),
+            value: MetricValue::Counter(1),
+            timestamp_ms: timestamp,
+            attributes: BTreeMap::new(),
+        };
+
+        // Validate metric
+        let validator = MetricValidator::new();
+        validator.validate(&amp;metric).is_ok()
+    });
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_api_with_observability, {
+    // Span for entire operation
+    let mut operation_span = Span::new_active(
+        SpanContext::root(TraceId(1), SpanId(1), 1),
+        "api_request",
+        start_time,
+        BTreeMap::new(),
+        Vec::new(),
+        SpanStatus::Unset,
+    );
+
+    // Make API call
+    let result = api_client.get_user(123)?;
+
+    // Record metric
+    let mut metric = Metric {
+        name: "api_requests_total".to_string(),
+        value: MetricValue::Counter(1),
+        timestamp_ms: current_time,
+        attributes: {
+            let mut m = BTreeMap::new();
+            m.insert("endpoint".to_string(), "/users".to_string());
+            m.insert("status".to_string(), "success".to_string());
+            m
+        },
+    };
+
+    // Validate everything
+    let span_validator = SpanValidator::new();
+    assert_ok!(&amp;span_validator.validate(&amp;operation_span));
+
+    let metric_validator = MetricValidator::new();
+    assert_ok!(&amp;metric_validator.validate(&amp;metric));
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="observability-checklist"><a class="header" href="#observability-checklist">Observability Checklist</a></h2>
+<p>For production code:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Operations tracked with OTEL spans</li>
+<li><input disabled="" type="checkbox"/>
+Meaningful attributes on spans</li>
+<li><input disabled="" type="checkbox"/>
+Metrics for important measurements</li>
+<li><input disabled="" type="checkbox"/>
+Error cases marked in telemetry</li>
+<li><input disabled="" type="checkbox"/>
+Telemetry validates against conventions</li>
+<li><input disabled="" type="checkbox"/>
+80%+ test coverage</li>
+<li><input disabled="" type="checkbox"/>
+Error paths covered</li>
+<li><input disabled="" type="checkbox"/>
+Boundary conditions tested</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>See how to combine observability with real applications: <a href="real-world.html">Real-World Applications</a></p>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>Observability provides:</p>
+<ul>
+<li>✅ OTEL spans for operation tracking</li>
+<li>✅ Metrics for measurements</li>
+<li>✅ Weaver validation for compliance</li>
+<li>✅ Coverage for test quality</li>
+</ul>
+<p>Combined with testing for complete confidence.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guides/extra-mile.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guides/otel.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guides/extra-mile.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guides/otel.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

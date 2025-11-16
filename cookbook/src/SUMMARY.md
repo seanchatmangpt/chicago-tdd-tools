@@ -2,6 +2,33 @@
 
 - [Cookbook Overview](README.md)
 - [Introduction](introduction.md)
+
+# Quick Start
+
+- [Quick Reference Card](quick-reference.md) - One-page lookup for all 20 patterns
+- [Common Mistakes](common-mistakes.md) - "The Gotcha" from each pattern, aggregated
+- [Real-World Scenarios](real-world-scenarios.md) - How patterns combine to solve actual problems
+
+# Getting Started with Adoption
+
+- [Adoption Guide](adoption-guide.md) - Week-by-week plan for adding patterns to existing projects
+- [Troubleshooting](troubleshooting.md) - Fix 10 common issues when using patterns
+- [Observability & Instrumentation](observability-instrumentation.md) - Instrument tests with Weaver & OpenTelemetry
+
+# Navigation & Learning
+
+- [Choosing Your Pattern](choosing-your-pattern.md)
+- [Pattern Dependencies & Learning Order](pattern-dependencies.md)
+- [All Patterns: Quick Reference](all-patterns-reference.md)
+
+# Learning Sequences (Tutorials)
+
+- [Learning Testing Patterns (90 min)](tutorials/learning-testing-patterns.md)
+- [Learning Architecture Patterns (60 min)](tutorials/learning-architecture-patterns.md)
+- [Learning Design Patterns (120 min)](tutorials/learning-design-patterns.md)
+
+# Pattern Reference
+
 - [Testing Patterns](testing-patterns/README.md)
   - [Pattern 1: AAA Pattern](testing-patterns/aaa-pattern.md)
   - [Pattern 2: Error Path Testing](testing-patterns/error-path-testing.md)

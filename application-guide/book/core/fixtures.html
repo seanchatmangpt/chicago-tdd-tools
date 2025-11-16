@@ -1,0 +1,478 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Getting Started with Fixtures - Chicago TDD Tools - Application Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Practical applications and real-world usage patterns">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools - Application Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="getting-started-with-fixtures"><a class="header" href="#getting-started-with-fixtures">Getting Started with Fixtures</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to use fixtures for test isolation</p>
+</blockquote>
+<p>Fixtures are isolated test environments that provide controlled setup and automatic cleanup.</p>
+<h2 id="what-is-a-fixture"><a class="header" href="#what-is-a-fixture">What is a Fixture?</a></h2>
+<p>A fixture is a test object that:</p>
+<ul>
+<li>Provides fresh, isolated state for each test</li>
+<li>Handles setup automatically</li>
+<li>Cleans up resources when the test ends</li>
+<li>Prevents state leakage between tests</li>
+</ul>
+<h2 id="creating-a-fixture"><a class="header" href="#creating-a-fixture">Creating a Fixture</a></h2>
+<h3 id="basic-fixture-creation"><a class="header" href="#basic-fixture-creation">Basic Fixture Creation</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+
+test!(test_with_fixture, {
+    // Create a fresh fixture
+    let fixture = TestFixture::new()?;
+
+    // Fixtures provide isolation and utilities
+    // Store metadata for the test
+    fixture.set_metadata("test_id".to_string(), "123".to_string());
+
+    // Retrieve metadata
+    let test_id = fixture.get_metadata("test_id");
+    assert_eq!(test_id, Some(&amp;"123".to_string()));
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<p>Fixtures return <code>Result</code> - always handle the error:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fixture_error_handling, {
+    // ✅ Handle the Result properly
+    match TestFixture::new() {
+        Ok(fixture) =&gt; {
+            // Use fixture
+            fixture.set_metadata("key".to_string(), "value".to_string());
+        }
+        Err(e) =&gt; {
+            alert_critical!("Fixture creation failed: {}", e);
+            return Err(e.into());
+        }
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Or use the <code>?</code> operator:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fixture_with_question_mark, {
+    let fixture = TestFixture::new()?;  // Propagates error
+    fixture.set_metadata("test_data".to_string(), "setup_complete".to_string());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="fixture-features"><a class="header" href="#fixture-features">Fixture Features</a></h2>
+<p>The <code>TestFixture</code> provides utilities for tests:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fixture_features, {
+    let mut fixture = TestFixture::new()?;
+
+    // Store and retrieve metadata
+    fixture.set_metadata("user_id".to_string(), "42".to_string());
+    assert_eq!(
+        fixture.get_metadata("user_id"),
+        Some(&amp;"42".to_string())
+    );
+
+    // Capture snapshots of test state
+    let mut state = HashMap::new();
+    state.insert("status".to_string(), "initialized".to_string());
+    fixture.capture_snapshot(state);
+
+    // Retrieve snapshots
+    let snapshots = fixture.snapshots();
+    assert!(!snapshots.is_empty());
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="quick-reference-testfixture-api"><a class="header" href="#quick-reference-testfixture-api">Quick Reference: TestFixture API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>none</td><td><code>Result&lt;TestFixture, FixtureError&gt;</code></td><td>Create new isolated fixture</td></tr>
+<tr><td><code>set_metadata()</code></td><td><code>key: String</code>, <code>value: String</code></td><td><code>()</code></td><td>Store test state</td></tr>
+<tr><td><code>get_metadata()</code></td><td><code>key: &amp;str</code></td><td><code>Option&lt;&amp;String&gt;</code></td><td>Retrieve stored state</td></tr>
+<tr><td><code>capture_snapshot()</code></td><td><code>state: HashMap&lt;String, String&gt;</code></td><td><code>()</code></td><td>Save test state snapshot</td></tr>
+<tr><td><code>snapshots()</code></td><td>none</td><td><code>&amp;[HashMap&lt;String, String&gt;]</code></td><td>Get all snapshots</td></tr>
+<tr><td><code>latest_snapshot()</code></td><td>none</td><td><code>Option&lt;&amp;HashMap&lt;...&gt;&gt;</code></td><td>Get most recent snapshot</td></tr>
+</tbody></table>
+</div>
+<h2 id="fixture-lifecycle"><a class="header" href="#fixture-lifecycle">Fixture Lifecycle</a></h2>
+<h3 id="setup-phase"><a class="header" href="#setup-phase">Setup Phase</a></h3>
+<p>Setup happens when <code>TestFixture::new()</code> is called:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_setup, {
+    // This is the setup phase
+    let fixture = TestFixture::new()?;
+    // Fixture is fully initialized here
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="cleanup-phase"><a class="header" href="#cleanup-phase">Cleanup Phase</a></h3>
+<p>Cleanup happens automatically when the fixture is dropped (at the end of the test):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_cleanup, {
+    let fixture = TestFixture::new()?;
+    // Use fixture
+
+    // When this scope ends, fixture is dropped and cleaned up
+    // No explicit cleanup needed!
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="test-isolation"><a class="header" href="#test-isolation">Test Isolation</a></h2>
+<p>Each test gets a fresh fixture:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_isolation_1, {
+    let fixture1 = TestFixture::new()?;
+    fixture1.set_metadata("test".to_string(), "isolation_1".to_string());
+    // Uses fixture1
+});
+
+test!(test_isolation_2, {
+    let fixture2 = TestFixture::new()?;
+    fixture2.set_metadata("test".to_string(), "isolation_2".to_string());
+    // Uses fixture2
+    // fixture1 and fixture2 are completely independent
+});
+<span class="boring">}</span></code></pre></pre>
+<p>Both tests can run in parallel with no interference.</p>
+<h2 id="advanced-multiple-fixtures"><a class="header" href="#advanced-multiple-fixtures">Advanced: Multiple Fixtures</a></h2>
+<p>Create multiple fixtures in one test:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_with_multiple_fixtures, {
+    let fixture1 = TestFixture::new()?;
+    let fixture2 = TestFixture::new()?;
+
+    // Both fixtures exist independently
+    fixture1.set_metadata("fixture".to_string(), "first".to_string());
+    fixture2.set_metadata("fixture".to_string(), "second".to_string());
+
+    assert_eq!(fixture1.get_metadata("fixture"), Some(&amp;"first".to_string()));
+    assert_eq!(fixture2.get_metadata("fixture"), Some(&amp;"second".to_string()));
+
+    // Both are cleaned up when the test ends
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<h3 id="scenario-testing-a-user-service"><a class="header" href="#scenario-testing-a-user-service">Scenario: Testing a User Service</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_user_service, {
+    // Arrange: Set up fixture with data
+    let mut fixture = TestFixture::new()?;
+    fixture.set_metadata("user_id".to_string(), "123".to_string());
+
+    // Act: Perform test operations
+    // Use fixture metadata for test coordination
+    let user_id = fixture.get_metadata("user_id");
+
+    // Assert: Verify
+    assert_eq!(user_id, Some(&amp;"123".to_string()));
+
+    // Cleanup: Automatic! No explicit cleanup needed.
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="common-patterns"><a class="header" href="#common-patterns">Common Patterns</a></h2>
+<h3 id="pattern-reusable-fixture-setup"><a class="header" href="#pattern-reusable-fixture-setup">Pattern: Reusable Fixture Setup</a></h3>
+<p>Create a helper function:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn setup_user_fixture() -&gt; Result&lt;TestFixture, Box&lt;dyn std::error::Error&gt;&gt; {
+    let fixture = TestFixture::new()?;
+    // Additional setup here if needed
+    Ok(fixture)
+}
+
+test!(test_with_helper, {
+    let fixture = setup_user_fixture()?;
+    // Use configured fixture
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-nested-fixtures"><a class="header" href="#pattern-nested-fixtures">Pattern: Nested Fixtures</a></h3>
+<p>Fixtures can use other fixtures:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_nested, {
+    let outer = TestFixture::new()?;
+    let inner = TestFixture::new()?;
+    // Both are available
+    // Inner is cleaned up first (LIFO order)
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="failed-to-create-fixture"><a class="header" href="#failed-to-create-fixture">"Failed to create fixture"</a></h3>
+<p>This usually means an environment issue:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_fixture_error, {
+    match TestFixture::new() {
+        Ok(fixture) =&gt; {
+            // Successfully created
+        }
+        Err(e) =&gt; {
+            // Check your environment configuration
+            alert_critical!("Environment issue: {}", e);
+            return Err(e.into());
+        }
+    }
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="tests-running-sequentially"><a class="header" href="#tests-running-sequentially">Tests Running Sequentially</a></h3>
+<p>Chicago TDD Tools tests run in parallel by default. If you see sequential execution:</p>
+<ol>
+<li>Check for shared state (file I/O, network)</li>
+<li>Ensure each test has its own fixture</li>
+<li>Use <code>cargo test -- --test-threads=1</code> to force sequential (for debugging)</li>
+</ol>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Create a fresh fixture in each test</li>
+<li>Handle the <code>Result</code> with <code>?</code> or <code>match</code></li>
+<li>Let fixtures clean up automatically</li>
+<li>Use multiple fixtures if needed</li>
+</ul>
+<p>❌ <strong>Don't:</strong></p>
+<ul>
+<li>Share fixtures between tests</li>
+<li>Manually clean up (let the fixture drop)</li>
+<li>Rely on global state</li>
+<li>Use <code>unwrap()</code> on fixture creation</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Learn how to use fixtures with data builders: <a href="data-builders.html">Building Test Data</a></p>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><strong>Fixture</strong></td><td>Isolated test state</td></tr>
+<tr><td><strong>Setup</strong></td><td>Happens in <code>TestFixture::new()</code></td></tr>
+<tr><td><strong>Cleanup</strong></td><td>Automatic on drop</td></tr>
+<tr><td><strong>Isolation</strong></td><td>Each test gets fresh fixture</td></tr>
+<tr><td><strong>Error Handling</strong></td><td>Use <code>?</code> operator or <code>match</code></td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../core/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../core/data-builders.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../core/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../core/data-builders.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
