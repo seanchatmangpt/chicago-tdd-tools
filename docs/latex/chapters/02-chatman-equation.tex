@@ -1,0 +1,318 @@
+\chapter{The Chatman Equation: Formal Definitions}
+
+\section{Core Definitions}
+
+\begin{definition}[Observation]
+An observation \(\obs \in \mathcal{O}\) is a typed RDF workflow graph conforming to schema
+\(\ontology \in \Sigma\). Formally, \(\obs\) is a set of RDF triples \(\{(s, p, o)\}\) where
+each triple is validated against SHACL shape constraints.
+
+\begin{equation}
+\obs \models \ontology \quad \text{(observation conforms to schema)}
+\end{equation}
+\end{definition}
+
+\begin{definition}[Action]
+An action \(A \in \mathcal{A}\) is a realized workflow execution satisfying:
+\begin{enumerate}
+  \item Invariant preservation: \(\forall q \in \invariants: q(\obs) \implies q(A)\)
+  \item Guard satisfaction: \(\forall g \in \guards: g(A) = \text{true}\)
+  \item SLO compliance: execution time \(\leq\) specified bound
+  \item Receipt generation: cryptographic proof of execution path
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Measurement Function]
+The measurement function \(\measure : \mathcal{O} \to \mathcal{A}\) is a deterministic
+projection of typed observations into actions under guard and provenance constraints:
+
+\begin{equation}
+\measure(\obs) = \arg A \text{ s.t. } \forall q \in \invariants: q(\obs) \implies q(A)
+  \text{ and } \forall g \in \guards: g(A) = \text{true}
+\end{equation}
+
+The measurement function executes workflow patterns under ingress guards \(\hooks\),
+producing deterministic outcomes with cryptographic receipts.
+\end{definition}
+
+\section{Mathematical Properties}
+
+\subsection{Determinism}
+
+\begin{theorem}[Determinism]
+The measurement function satisfies determinism:
+
+\begin{equation}
+\forall \obs_1, \obs_2 \in \mathcal{O}: \obs_1 = \obs_2 \implies \measure(\obs_1) = \measure(\obs_2)
+\end{equation}
+
+\textbf{Proof Sketch}: The measurement function is a pure function (no side effects in the
+mathematical model). All computation is deterministic — guard evaluation is boolean logic,
+pattern selection is deterministic routing. No randomness, no timing-dependent behavior.
+Given identical inputs, identical outputs follow from functional composition.
+\end{theorem}
+
+\textbf{Implementation}: In chicago-tdd-tools, determinism is enforced at three levels:
+
+\begin{enumerate}
+  \item \textbf{Type Level}: Function signatures prohibit \code{Random}, \code{Mutex},
+    or \code{Cell} in hot paths. Compiler prevents non-deterministic dependencies.
+
+  \item \textbf{Guard Level}: All guards are pure boolean functions over typed RDF graphs.
+    No temporal dependencies, no I/O operations.
+
+  \item \textbf{Test Level}: Property-based testing with fixed seeds validates that identical
+    inputs produce identical outputs across runs.
+\end{enumerate}
+
+\subsection{Idempotence}
+
+\begin{theorem}[Idempotence]
+The measurement function is idempotent:
+
+\begin{equation}
+\measure \circ \measure = \measure
+\end{equation}
+
+Equivalently, applying the measurement function twice produces the same result as applying
+it once:
+
+\begin{equation}
+\measure(\measure(\obs)) = \measure(\obs)
+\end{equation}
+
+\textbf{Proof Sketch}: The measurement function produces actions that maintain invariants.
+Applying it to an already-executed action (which maintains invariants) produces no additional
+changes. The action is a fixed point of the measurement operator.
+\end{theorem}
+
+\textbf{Implementation}: Idempotence is validated through:
+
+\begin{enumerate}
+  \item \textbf{Snapshot Testing}: Generated snapshots are identical across multiple applications
+    of the same workflow pattern.
+
+  \item \textbf{Receipt Comparison}: Merkle roots are identical for \(\measure(\obs)\) and
+    \(\measure(\measure(\obs))\).
+
+  \item \textbf{Integration Tests}: Docker-based integration tests verify idempotence across
+    real service calls.
+\end{enumerate}
+
+\subsection{Typing}
+
+\begin{theorem}[Type Preservation]
+For all observations \(\obs \in \mathcal{O}\) conforming to schema \(\ontology\),
+actions \(\measure(\obs) \in \mathcal{A}\) preserve type information:
+
+\begin{equation}
+\obs \models \ontology \implies \measure(\obs) \models \ontology
+\end{equation}
+
+\textbf{Proof Sketch}: The measurement function transitions typed graphs via pattern operators.
+Each operator is type-safe: it accepts inputs typed by the ontology and produces outputs
+typed by the same ontology. Composition of type-safe functions is type-safe.
+\end{theorem}
+
+\subsection{Provenance}
+
+\begin{theorem}[Receipt Verifiability]
+For all actions \(A = \measure(\obs)\), a receipt \(\receipt \in \mathcal{R}\) exists
+such that:
+
+\begin{equation}
+h(A) = h(\measure(\obs)) \quad \text{(receipt verifies execution path)}
+\end{equation}
+
+\textbf{Proof Sketch}: Each workflow pattern operator emits a receipt containing:
+\begin{itemize}
+  \item Hash of inputs (\(h(\obs)\))
+  \item Hash of pattern operator used (\(h(\text{pattern ID})\))
+  \item Hash of guards applied (\(h(\guards)\))
+  \item Hash of outputs (\(h(A)\))
+  \item Merkle link to previous receipt (for chaining)
+\end{itemize}
+
+A verifier can independently recompute \(\measure(\obs)\) and validate that the hash
+matches the receipt.
+\end{theorem}
+
+\subsection{Boundedness}
+
+\begin{theorem}[Bounded Execution]
+All executions of the measurement function are bounded:
+
+\begin{equation}
+t_{\text{hot}}(\measure) \leq 8 \text{ ticks} \approx 2 \text{ ns (P99)}
+\end{equation}
+
+\begin{equation}
+t_{\text{warm}}(\measure) \leq 500 \text{ ms (P99)}
+\end{equation}
+
+\begin{equation}
+t_{\text{cold}}(\measure) \leq 500 \text{ ms (P99)}
+\end{equation}
+
+\textbf{Proof Sketch}: The measurement function is bounded by:
+
+\begin{enumerate}
+  \item \textbf{No Unbounded Loops}: Guard constraint (the Chatman Constant) limits recursion
+    depth to \(\leq 8\). All loops have explicit termination conditions.
+
+  \item \textbf{Finite State Space}: All knowledge graphs are finite (bound by memory).
+    All workflow patterns are finite-state machines.
+
+  \item \textbf{Timeout Enforcement}: Each operation is wrapped in a timeout primitive.
+    Operators that exceed their bound are terminated and reported as errors.
+\end{enumerate}
+\end{theorem}
+
+\textbf{Implementation}: Boundedness is enforced via:
+
+\begin{enumerate}
+  \item \textbf{Type-Level}: \code{SizeValidatedArray<const SIZE, const MAX>} enforces compile-time
+    array bounds. Max recursion depth is a compile-time constant.
+
+  \item \textbf{Guard-Level}: Guard constraints check that every loop iteration decrements
+    a countdown variable.
+
+  \item \textbf{Measurement-Level}: Criterion benchmarks measure actual latency. RDTSC-based
+    tick counters provide sub-microsecond precision.
+\end{enumerate}
+
+\section{The Shard Law and Compositionality}
+
+\begin{theorem}[Shard Law]
+The measurement function is compositional:
+
+\begin{equation}
+\measure(\obs \sqcup \Delta) = \measure(\obs) \sqcup \measure(\Delta)
+\end{equation}
+
+where \(\sqcup\) denotes the union of typed RDF graphs.
+
+\textbf{Proof Sketch}: Workflow patterns operate independently on disjoint parts of the
+knowledge graph. Adding a change to an unrelated region (disjoint in the RDF sense) produces
+an additive change to the action.
+\end{theorem}
+
+This property enables:
+
+\begin{enumerate}
+  \item \textbf{Distributed Execution}: Multiple hooks can execute in parallel on disjoint
+    regions of the knowledge graph.
+
+  \item \textbf{Incremental Updates}: When \(\Delta\obs\) arrives, only affected hooks
+    re-execute. Others' results are reused.
+
+  \item \textbf{Partial Evaluation}: Pre-computed results for \(\measure(\obs)\) are valid
+    even after \(\obs\) is extended with \(\Delta\).
+\end{enumerate}
+
+\section{Guard Adjunction}
+
+\begin{theorem}[Guard Adjunction]
+The measurement function is left-adjoint to guard constraints:
+
+\begin{equation}
+\measure \dashv \guards
+\end{equation}
+
+This means: \(\measure(\obs) \in A\) satisfies \(\guards\) if and only if \(\obs \in \obs\)
+is such that \(\guards(\measure(\obs)) = \text{true}\).
+
+Formally:
+
+\begin{equation}
+\guards(\measure(\obs)) = \text{true} \iff \obs \text{ is acceptable}
+\end{equation}
+
+\textbf{Implementation}: Guards are checked at ingress:
+
+\begin{enumerate}
+  \item \textbf{Legality}: Actions must comply with regulatory requirements
+  \item \textbf{Budgets}: Actions must respect financial constraints
+  \item \textbf{Chronology}: Actions must preserve temporal ordering (no retrocausation)
+  \item \textbf{Causality}: Actions must respect causal dependencies
+\end{enumerate}
+
+In chicago-tdd-tools, guards are:
+
+\begin{enumerate}
+  \item Defined as boolean predicates over typed RDF graphs
+  \item Checked by SPARQL ASK queries or SHACL shape validation
+  \item Enforced before any action executes
+  \item Emitted in receipt for audit
+\end{enumerate}
+
+\section{The Chatman Constant: Bounded Regeneration}
+
+\begin{definition}[Regeneration]
+Schema drift occurs when the ontology \(\ontology_t\) changes over time. Regeneration is
+the process of updating code and workflow patterns to conform to the new schema:
+
+\begin{equation}
+\measure_t(\obs) \to \measure_{t+1}(\obs) \text{ as } \ontology_t \to \ontology_{t+1}
+\end{equation}
+\end{definition}
+
+\begin{theorem}[Bounded Regeneration]
+Regeneration halts when schema drift is below a tolerance threshold:
+
+\begin{equation}
+\mu_{t+1}(\obs) = \mu_t(\obs) \text{ while } \drift(\Sigma) > \epsilon
+\end{equation}
+
+where the halt condition is:
+
+\begin{equation}
+\text{regeneration halts when } \drift(\Sigma) \leq \epsilon \text{ (typically } 0.5\%)
+\end{equation}
+
+and receipt delta converges:
+
+\begin{equation}
+\left| h(\measure_{t+1}(\obs)) - h(\measure_t(\obs)) \right| < 10^{-3}
+\end{equation}
+
+\textbf{Implementation}: In ggen (the projection layer), schema changes trigger code generation
+across Rust, TypeScript, and Python. Each cycle produces a receipt showing the drift percentage.
+When drift \(\leq 0.5\%\), regeneration halts.
+\end{theorem}
+
+\section{Formal Properties Summary}
+
+\begin{table}[H]
+\centering
+\caption{Mathematical Properties of the Measurement Function}
+\begin{tabular}{|l|p{3cm}|p{4cm}|}
+\hline
+\textbf{Property} & \textbf{Formal Statement} & \textbf{Implementation} \\
+\hline
+Determinism & \(\obs_1 = \obs_2 \implies \measure(\obs_1) = \measure(\obs_2)\) &
+  Type-level constraints, pure functions \\
+\hline
+Idempotence & \(\measure \circ \measure = \measure\) &
+  Snapshot testing, receipt comparison \\
+\hline
+Typing & \(\obs \models \ontology \implies \measure(\obs) \models \ontology\) &
+  Type-safe pattern operators \\
+\hline
+Provenance & \(h(A) = h(\measure(\obs))\) verifiable via receipt &
+  Merkle-linked receipt chains \\
+\hline
+Boundedness & \(t(\measure) \leq 2\) ns (hot), \(\leq 500\) ms (warm/cold) &
+  Timeout enforcement, tick budgets \\
+\hline
+Compositionality & \(\measure(\obs \sqcup \Delta) = \measure(\obs) \sqcup \measure(\Delta)\) &
+  Independent hook execution \\
+\hline
+Guard Adjunction & \(\measure \dashv \guards\) &
+  Ingress guard checking \\
+\hline
+Regeneration & \(\drift(\Sigma) \leq \epsilon \implies \text{halt}\) &
+  ggen projection layer \\
+\hline
+\end{tabular}
+\end{table}

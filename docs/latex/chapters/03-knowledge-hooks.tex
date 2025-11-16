@@ -1,0 +1,327 @@
+\chapter{Knowledge Hooks: Unit of Knowledge Work}
+
+\section{Definition and Scope}
+
+\begin{definition}[Knowledge Hook]
+A knowledge hook \(h \in \hooks\) is the atomic unit of knowledge work. It is a tuple:
+
+\begin{equation}
+h = (\text{trigger}, \text{check}, \text{act}, \text{receipt})
+\end{equation}
+
+where:
+
+\begin{enumerate}
+  \item \textbf{trigger}: A change \(\Delta \obs\) detected in the knowledge graph
+  \item \textbf{check}: A bounded evaluation (SPARQL/SHACL/threshold) preserving invariants
+    and guards
+  \item \textbf{act}: A workflow step executed via KNHK with \(t_{\text{hot}} \leq 2\) ns or
+    \(t_{\text{warm}} \leq 500\) ms
+  \item \textbf{receipt}: A Merkle-linked record with \(h(A) = h(\measure(\obs))\)
+\end{enumerate}
+\end{definition}
+
+Knowledge hooks replace all manual knowledge operations:
+
+\begin{center}
+\begin{tabular}{|l|p{4cm}|p{4cm}|}
+\hline
+\textbf{Operation} & \textbf{Manual Process} & \textbf{Knowledge Hook} \\
+\hline
+Triage & Human reads cases, assigns priority & Hook evaluates SPARQL/SHACL query \\
+\hline
+Validation & Human checks constraints & Hook validates against SHACL shapes \\
+\hline
+Routing & Human decides next step & Hook executes workflow pattern \\
+\hline
+Entitlements & Human verifies permissions & Hook checks role-based access control \\
+\hline
+SLA Management & Human tracks timers & Hook monitors temporal constraints \\
+\hline
+Compliance Gates & Human reviews requirements & Hook enforces regulatory rules \\
+\hline
+Case Progression & Human advances workflow & Hook executes state transition \\
+\hline
+Aggregation & Human computes metrics & Hook executes SPARQL aggregate query \\
+\hline
+Deduplication & Human merges duplicates & Hook identifies and merges entities \\
+\hline
+Escalation & Human routes exceptions & Hook executes exception workflow \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Hook Architecture}
+
+\subsection{Trigger Mechanisms}
+
+Knowledge hooks support multiple trigger types:
+
+\begin{definition}[Trigger Types]
+\begin{enumerate}
+  \item \textbf{SPARQL ASK}: Boolean queries over knowledge graphs
+    \begin{lstlisting}[language=bash,numbers=none]
+    ASK { ?person a foaf:Person .
+          FILTER NOT EXISTS { ?person foaf:name ?name } }
+    \end{lstlisting}
+
+  \item \textbf{SHACL Validation}: Shape constraint checking
+    \begin{lstlisting}[language=bash,numbers=none]
+    sh:shape [ sh:targetNode ?person ;
+              sh:property [ sh:path foaf:name ;
+                          sh:minCount 1 ] ]
+    \end{lstlisting}
+
+  \item \textbf{Threshold}: Numeric comparisons (count, sum, average)
+    \begin{lstlisting}[language=bash,numbers=none]
+    COUNT(?case) > 100  // escalate if queue exceeds 100
+    \end{lstlisting}
+
+  \item \textbf{Delta Detection}: Change events in the knowledge graph
+    \begin{lstlisting}[language=bash,numbers=none]
+    ON INSERT { ?o a Order . ?o orderStatus "pending" }
+    \end{lstlisting}
+
+  \item \textbf{Temporal}: Time-based triggers (schedules, deadlines)
+    \begin{lstlisting}[language=bash,numbers=none]
+    NOW() - ?case.createdAt > 24 hours  // escalate old cases
+    \end{lstlisting}
+\end{enumerate}
+\end{definition}
+
+\subsection{Check Phase: Constraint Evaluation}
+
+The check phase evaluates invariants and guards:
+
+\begin{equation}
+\text{check}(\Delta \obs) = \begin{cases}
+\text{proceed} & \text{if } \forall q \in \invariants: q(\Delta \obs) = \text{true} \\
+              & \text{ and } \forall g \in \guards: g(\Delta \obs) = \text{true} \\
+\text{reject}  & \text{otherwise}
+\end{cases}
+\end{equation}
+
+Implementation in chicago-tdd-tools:
+
+\begin{lstlisting}[language=Rust]
+pub struct KnowledgeHook {
+    trigger: SparqlQuery,
+    check: ValidatedConstraint,  // Invariants + Guards
+    act: WorkflowPattern,
+}
+
+impl KnowledgeHook {
+    pub fn evaluate(&self, delta: &RdfGraph)
+        -> Result<Action, HookError>
+    {
+        // 1. Trigger check
+        let triggered = self.trigger.ask(delta)?;
+        if !triggered {
+            return Ok(Action::NoOp);
+        }
+
+        // 2. Constraint validation
+        self.check.validate(delta)?;
+
+        // 3. Action execution
+        let action = self.act.execute(delta)?;
+
+        // 4. Receipt generation
+        let receipt = Receipt::from_action(&action);
+
+        Ok(action.with_receipt(receipt))
+    }
+}
+\end{lstlisting}
+
+The check phase is bounded: all constraint evaluations complete within 500 ms (warm path).
+
+\subsection{Act Phase: Workflow Execution}
+
+The act phase executes a workflow pattern operator:
+
+\begin{equation}
+\text{act}(\Delta \obs) = \text{op}_{\text{pattern}}(\Delta \obs)
+\end{equation}
+
+where \(\text{op}_{\text{pattern}}\) is one of the 43 KNHK operators (mapped to YAWL patterns
+in Chapter 5).
+
+Each operator satisfies:
+\begin{enumerate}
+  \item Determinism: identical inputs produce identical outputs
+  \item Guard preservation: outputs satisfy all guards
+  \item Receipt generation: cryptographic proof of execution
+\end{enumerate}
+
+\subsection{Receipt Phase: Provenance Generation}
+
+Every hook execution produces a receipt:
+
+\begin{definition}[Receipt Schema]
+\begin{equation}
+\receipt = (h_\obs, h_\Gamma, h_{\guards}, h_A, h_\measure)
+\end{equation}
+
+where:
+\begin{itemize}
+  \item \(h_\obs\): Hash of observations \(\obs\)
+  \item \(h_\Gamma\): Hash of candidate proposals (alternatives considered)
+  \item \(h_{\guards}\): Hash of guard set \(\guards\)
+  \item \(h_A\): Hash of actions \(A\)
+  \item \(h_\measure\): Hash of measurement function \(\measure\)
+\end{itemize}
+
+Receipts are Merkle-linked:
+
+\begin{equation}
+h_t = \text{SHA3-256}(\receipt_t \parallel h_{t-1})
+\end{equation}
+
+This creates an immutable, tamper-evident chain of all decisions.
+\end{definition}
+
+\section{Hook Economics: The Unit Model}
+
+\begin{theorem}[Hook Unit Economics]
+Knowledge hooks shift the unit of production from human judgment to machine execution.
+
+\textbf{Unit of Production}: A verified decision (single hook evaluation)
+
+\textbf{Cost Model}:
+\begin{enumerate}
+  \item \textbf{Hot-path cost}: Amortized compute + receipt write $\approx 0.1-1$ micro-cent per decision
+  \item \textbf{Warm-path cost}: Batch orchestration + connectors $\approx 0.01-0.1$ cent per decision
+  \item \textbf{Cold-path cost}: Complex query processing $\approx 0.1-1$ cent per decision
+\end{enumerate}
+
+\textbf{Throughput Model}:
+\begin{enumerate}
+  \item Scales linearly with hook count: throughput \(\propto\) \#hooks
+  \item Independent of headcount: adding workers provides no benefit
+  \item Deterministic: P99 latency is bounded and predictable
+\end{enumerate}
+\end{theorem}
+
+Key economic metrics:
+
+\begin{table}[H]
+\centering
+\caption{Knowledge Hook Economics}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Metric} & \textbf{Definition} & \textbf{Target} \\
+\hline
+Hook Coverage (HC) & Hooks per process, \% of activities covered & 90-100\% \\
+\hline
+Decision Latency (DL\(_{P99}\)) & P99 decision latency & \(\leq 2\) ns hot, \(\leq 500\) ms warm \\
+\hline
+Determinism Error (DE) & \(|\Delta A| / |A|\) deviation & \(<10^{-4}\) \\
+\hline
+Receipt Delta (RD) & Merkle root drift & \(<10^{-3}\) \\
+\hline
+Manual Interventions Avoided (MIA) & Baseline vs. current quarter & +30\% year 1 \\
+\hline
+Audit Pass Rate (APR) & \% of runs reproducible from receipts & 100\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Bounded Execution Guarantees}
+
+\begin{theorem}[Hook Execution Bounds]
+Knowledge hooks execute within strict time bounds:
+
+\begin{enumerate}
+  \item \textbf{Hot path}: \(\leq 8\) ticks \(\approx 2\) ns for rule checks (ASK, COUNT, COMPARE, VALIDATE)
+  \item \textbf{Warm path}: \(\leq 500\) ms for hook service time (SPARQL queries, SHACL validation, workflow orchestration)
+  \item \textbf{Cold path}: \(\leq 500\) ms for complex queries and historical reconciliation
+\end{enumerate}
+
+No hook executes unbounded loops. All operations terminate within stated SLOs.
+
+\textbf{Implementation}: Bounded execution is enforced via:
+
+\begin{enumerate}
+  \item \textbf{Type Constraints}: \code{SizeValidatedArray} enforces compile-time bounds
+  \item \textbf{Guard Constraints}: Every loop decrements a countdown variable (Chatman Constant: max 8 iterations)
+  \item \textbf{Timeout Wrappers}: Each operation is wrapped in a timeout primitive
+  \item \textbf{RDTSC Measurement}: Sub-microsecond precision tick counting validates SLOs
+\end{enumerate}
+\end{theorem}
+
+\section{Example: Data Quality Hook}
+
+The following example demonstrates a complete knowledge hook implementation:
+
+\begin{lstlisting}[language=Rust]
+// Define the data quality hook
+let hook = KnowledgeHook {
+    // Trigger: Detect new Person entities without names
+    trigger: SparqlQuery::ask(
+        "ASK { ?person a foaf:Person .
+              FILTER NOT EXISTS { ?person foaf:name ?name } }"
+    ),
+
+    // Check: Enforce name is required (invariant)
+    check: ValidatedConstraint::require_name(),
+
+    // Act: Route to data-quality-escalation workflow
+    act: WorkflowPattern::exclusive_choice()
+        .route_to("data-quality-escalation"),
+
+    // Receipt: Generated automatically by framework
+    receipt: ReceiptTemplate::default(),
+};
+
+// Evaluate hook on delta observation
+let delta = RdfGraph::from_triples(vec![
+    Triple(Person, Type, foaf::Person),  // Missing name triggers hook
+]);
+
+let action = hook.evaluate(&delta)?;
+// Receipt: (h(delta), h(escalation), h(guards), h(action), h(measure))
+\end{lstlisting}
+
+When a \code{Person} entity is added without a \code{foaf:name}, the hook:
+
+\begin{enumerate}
+  \item Detects the missing name via SPARQL ASK query
+  \item Validates that the invariant was violated (justifies escalation)
+  \item Routes to the \code{data-quality-escalation} workflow
+  \item Generates a Merkle-linked receipt proving:
+    \begin{enumerate}
+      \item What was observed (\(\Delta \obs\))
+      \item What rule was applied (name validation)
+      \item What action was taken (escalation routing)
+      \item Cryptographic proof of the entire chain
+    \end{enumerate}
+\end{enumerate}
+
+\section{Industrial Revolution Analogy}
+
+Just as the Industrial Revolution standardized manufacturing through interchangeable parts,
+knowledge hooks standardize knowledge work through interchangeable decision units.
+
+\begin{center}
+\begin{tabular}{|l|p{5cm}|p{5cm}|}
+\hline
+\textbf{Dimension} & \textbf{Manufacturing} & \textbf{Knowledge Work} \\
+\hline
+Standardization & Interchangeable parts & Interchangeable hooks \\
+\hline
+Quality Metric & Physical defect rate & Decision audit pass rate \\
+\hline
+Scalability & Machines replace workers & Hooks replace analysts \\
+\hline
+Measurement & Precision instruments & Cryptographic receipts \\
+\hline
+Verification & Inspection gates & Guard constraints \\
+\hline
+Economics & Cost \(\propto\) output, not labor & Cost \(\propto\) rules, not headcount \\
+\hline
+\end{tabular}
+\end{center}
+
+Each knowledge hook is a measurable, verifiable, bounded unit of production. Quality is
+receipts, not anecdotes. Throughput scales with hooks, not headcount.

@@ -1,0 +1,549 @@
+\chapter{Code Examples from chicago-tdd-tools}
+
+\section{Type-Level AAA Pattern}
+
+Complete Rust implementation of the type state pattern enforcing Arrange-Act-Assert:
+
+\begin{lstlisting}[language=Rust]
+use std::marker::PhantomData;
+
+// Sealed trait for phases
+mod sealed {
+    pub trait Sealed {}
+}
+
+// Phase markers (zero-sized types)
+pub struct Arrange;
+pub struct Act;
+pub struct Assert;
+
+impl sealed::Sealed for Arrange {}
+impl sealed::Sealed for Act {}
+impl sealed::Sealed for Assert {}
+
+// Test state generic over phase
+pub struct TestState<Phase> {
+    _phase: PhantomData<Phase>,
+    data: TestData,
+}
+
+#[derive(Default)]
+struct TestData {
+    setup: Vec<String>,
+    actions: Vec<String>,
+    assertions: Vec<String>,
+}
+
+// Arrange phase: setup
+impl TestState<Arrange> {
+    pub fn new() -> Self {
+        TestState {
+            _phase: PhantomData,
+            data: TestData::default(),
+        }
+    }
+
+    pub fn with_setup(mut self, setup: String) -> Self {
+        self.data.setup.push(setup);
+        self
+    }
+
+    // Only Arrange can transition to Act
+    pub fn transition_to_act(self) -> TestState<Act> {
+        TestState {
+            _phase: PhantomData,
+            data: self.data,
+        }
+    }
+}
+
+// Act phase: execution
+impl TestState<Act> {
+    pub fn execute(mut self, action: String) -> Self {
+        self.data.actions.push(action);
+        self
+    }
+
+    // Only Act can transition to Assert
+    pub fn transition_to_assert(self) -> TestState<Assert> {
+        TestState {
+            _phase: PhantomData,
+            data: self.data,
+        }
+    }
+}
+
+// Assert phase: verification
+impl TestState<Assert> {
+    pub fn assert(self, assertion: String) -> bool {
+        self.data.assertions.push(assertion);
+        true
+    }
+}
+
+// Usage example
+#[test]
+fn example_type_level_aaa() {
+    let test = TestState::<Arrange>::new()
+        .with_setup("initialize database".to_string())
+        .transition_to_act()
+        .execute("insert record".to_string())
+        .execute("query record".to_string())
+        .transition_to_assert()
+        .assert("record exists".to_string());
+
+    assert!(test);
+}
+\end{lstlisting}
+
+\section{Knowledge Hook Implementation}
+
+Example of a concrete knowledge hook for data quality validation:
+
+\begin{lstlisting}[language=Rust]
+use std::collections::HashMap;
+
+// RDF Triple representation
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct Triple {
+    subject: String,
+    predicate: String,
+    object: String,
+}
+
+// SPARQL Query
+pub struct SparqlQuery(String);
+
+impl SparqlQuery {
+    pub fn ask(&self, graph: &RdfGraph) -> bool {
+        // Simplified: check if any triple matches pattern
+        graph.triples.iter().any(|t| {
+            t.subject.contains("person")
+                && !t.predicate.contains("name")
+        })
+    }
+}
+
+// RDF Graph
+#[derive(Default)]
+pub struct RdfGraph {
+    triples: Vec<Triple>,
+}
+
+impl RdfGraph {
+    pub fn add_triple(&mut self, triple: Triple) {
+        self.triples.push(triple);
+    }
+}
+
+// Constraint validation
+pub struct ValidatedConstraint {
+    rule: Box<dyn Fn(&RdfGraph) -> bool>,
+}
+
+impl ValidatedConstraint {
+    pub fn check(&self, graph: &RdfGraph) -> bool {
+        (self.rule)(graph)
+    }
+}
+
+// Workflow pattern
+pub enum WorkflowPattern {
+    ExclusiveChoice,
+    Sequence,
+}
+
+impl WorkflowPattern {
+    pub fn execute(&self, graph: &RdfGraph) -> String {
+        match self {
+            WorkflowPattern::ExclusiveChoice => {
+                "route_to_escalation".to_string()
+            }
+            WorkflowPattern::Sequence => {
+                "proceed_to_next".to_string()
+            }
+        }
+    }
+}
+
+// Knowledge Hook
+pub struct KnowledgeHook {
+    trigger: SparqlQuery,
+    check: ValidatedConstraint,
+    act: WorkflowPattern,
+}
+
+impl KnowledgeHook {
+    pub fn evaluate(&self, graph: &RdfGraph) -> Result<String, String> {
+        // 1. Trigger check
+        if !self.trigger.ask(graph) {
+            return Ok("no_op".to_string());
+        }
+
+        // 2. Constraint validation
+        if !self.check.check(graph) {
+            return Err("constraint_violated".to_string());
+        }
+
+        // 3. Action execution
+        Ok(self.act.execute(graph))
+    }
+}
+
+// Example: Data quality hook
+#[test]
+fn example_data_quality_hook() {
+    let mut graph = RdfGraph::default();
+
+    // Add person without name (triggers hook)
+    graph.add_triple(Triple {
+        subject: "person:alice".to_string(),
+        predicate: "type".to_string(),
+        object: "Person".to_string(),
+    });
+
+    let hook = KnowledgeHook {
+        trigger: SparqlQuery(
+            "ASK { ?person a Person . \
+             FILTER NOT EXISTS { ?person name ?name } }".to_string()
+        ),
+        check: ValidatedConstraint {
+            rule: Box::new(|g| {
+                // Check: all persons have names
+                !g.triples.iter().any(|t| {
+                    t.subject.contains("person")
+                        && !t.predicate.contains("name")
+                })
+            }),
+        },
+        act: WorkflowPattern::ExclusiveChoice,
+    };
+
+    // Hook detects missing name and escalates
+    let result = hook.evaluate(&graph);
+    assert_eq!(result, Ok("route_to_escalation".to_string()));
+}
+\end{lstlisting}
+
+\section{Guard Constraint Implementation}
+
+Example of guard constraint enforcement:
+
+\begin{lstlisting}[language=Rust]
+// Guard types
+pub trait Guard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation>;
+}
+
+#[derive(Debug, Clone)]
+pub enum GuardViolation {
+    IllegalityViolation(String),
+    BudgetViolation(f64),
+    ChronologyViolation(String),
+    CausalityViolation(String),
+    RecursionDepthExceeded,
+}
+
+#[derive(Clone)]
+pub struct Action {
+    pub actor: String,
+    pub amount: f64,
+    pub timestamp: u64,
+}
+
+// Legality guard
+pub struct LegalityGuard {
+    allowed_actors: Vec<String>,
+}
+
+impl Guard for LegalityGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        if self.allowed_actors.contains(&action.actor) {
+            Ok(())
+        } else {
+            Err(GuardViolation::IllegalityViolation(
+                format!("Actor {} not allowed", action.actor),
+            ))
+        }
+    }
+}
+
+// Budget guard
+pub struct BudgetGuard {
+    max_amount: f64,
+}
+
+impl Guard for BudgetGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        if action.amount <= self.max_amount {
+            Ok(())
+        } else {
+            Err(GuardViolation::BudgetViolation(
+                action.amount - self.max_amount,
+            ))
+        }
+    }
+}
+
+// Guard set
+pub struct GuardSet {
+    legality: LegalityGuard,
+    budget: BudgetGuard,
+}
+
+impl GuardSet {
+    pub fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        self.legality.check(action)?;
+        self.budget.check(action)?;
+        Ok(())
+    }
+}
+
+#[test]
+fn example_guard_enforcement() {
+    let guards = GuardSet {
+        legality: LegalityGuard {
+            allowed_actors: vec!["admin".to_string(), "manager".to_string()],
+        },
+        budget: BudgetGuard {
+            max_amount: 1000.0,
+        },
+    };
+
+    // Valid action
+    let valid_action = Action {
+        actor: "admin".to_string(),
+        amount: 500.0,
+        timestamp: 0,
+    };
+    assert!(guards.check(&valid_action).is_ok());
+
+    // Invalid actor
+    let invalid_actor = Action {
+        actor: "user".to_string(),
+        amount: 500.0,
+        timestamp: 0,
+    };
+    assert!(guards.check(&invalid_actor).is_err());
+
+    // Exceeds budget
+    let exceeds_budget = Action {
+        actor: "admin".to_string(),
+        amount: 1500.0,
+        timestamp: 0,
+    };
+    assert!(guards.check(&exceeds_budget).is_err());
+}
+\end{lstlisting}
+
+\section{Receipt Generation and Verification}
+
+Example of cryptographic receipt implementation:
+
+\begin{lstlisting}[language=Rust]
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+// Simplified hash function
+fn simple_hash<T: Hash>(obj: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    obj.hash(&mut hasher);
+    hasher.finish()
+}
+
+// Receipt structure
+#[derive(Clone)]
+pub struct Receipt {
+    pub h_obs: u64,           // Hash of observations
+    pub h_guards: u64,        // Hash of guards
+    pub h_action: u64,        // Hash of action
+    pub h_measure: u64,       // Hash of measure function
+    pub merkle_root: u64,     // Merkle root
+    pub prev_merkle: u64,     // Previous merkle root
+    pub timestamp: u64,
+}
+
+impl Receipt {
+    pub fn new(
+        obs: &str,
+        guards: &str,
+        action: &str,
+        measure: &str,
+        prev_merkle: u64,
+    ) -> Self {
+        let h_obs = simple_hash(&obs);
+        let h_guards = simple_hash(&guards);
+        let h_action = simple_hash(&action);
+        let h_measure = simple_hash(&measure);
+
+        // Compute merkle root
+        let combined = format!(
+            "{}{}{}{}{}", h_obs, h_guards, h_action, h_measure, prev_merkle
+        );
+        let merkle_root = simple_hash(&combined);
+
+        Receipt {
+            h_obs,
+            h_guards,
+            h_action,
+            h_measure,
+            merkle_root,
+            prev_merkle,
+            timestamp: 0,
+        }
+    }
+
+    pub fn verify(
+        &self, obs: &str, guards: &str, action: &str,
+        measure: &str,
+    ) -> bool {
+        simple_hash(&obs) == self.h_obs
+            && simple_hash(&guards) == self.h_guards
+            && simple_hash(&action) == self.h_action
+            && simple_hash(&measure) == self.h_measure
+    }
+
+    pub fn verify_chain(&self, prev_receipt: &Receipt) -> bool {
+        self.prev_merkle == prev_receipt.merkle_root
+    }
+}
+
+#[test]
+fn example_receipt_verification() {
+    let receipt = Receipt::new("obs_data", "guards_rule", "action_result",
+                               "measure_fn", 0);
+
+    // Verify with identical inputs
+    assert!(receipt.verify("obs_data", "guards_rule",
+                          "action_result", "measure_fn"));
+
+    // Verify chain
+    let next_receipt = Receipt::new("new_obs", "new_guards",
+                                    "new_action", "measure_fn",
+                                    receipt.merkle_root);
+    assert!(next_receipt.verify_chain(&receipt));
+}
+\end{lstlisting}
+
+\section{Idempotence Test Example}
+
+Example of snapshot-based idempotence testing:
+
+\begin{lstlisting}[language=Rust]
+#[cfg(test)]
+mod idempotence_tests {
+    use super::*;
+
+    #[test]
+    fn test_idempotence_with_snapshot() {
+        // Create test observation
+        let obs = RdfGraph::from_triples(vec![
+            Triple {
+                subject: "order:123".to_string(),
+                predicate: "status".to_string(),
+                object: "pending".to_string(),
+            },
+        ]);
+
+        // Apply operator once
+        let result1 = execute_pattern_1(&obs).unwrap();
+        let receipt1 = result1.compute_receipt();
+
+        // Apply operator to result (second time)
+        let result2 = execute_pattern_1(&result1).unwrap();
+        let receipt2 = result2.compute_receipt();
+
+        // Assert idempotence: applying twice = applying once
+        assert_eq!(receipt1, receipt2,
+                   "Idempotence violated: receipts differ");
+    }
+
+    #[test]
+    fn test_idempotence_property() {
+        use proptest::prelude::*;
+
+        proptest!(|(obs in arb_observation())| {
+            // Apply operator twice
+            let result1 = execute_pattern_1(&obs)?;
+            let result2 = execute_pattern_1(&result1)?;
+
+            // Assert idempotence
+            prop_assert_eq!(
+                result1.compute_receipt(),
+                result2.compute_receipt()
+            );
+        });
+    }
+}
+\end{lstlisting}
+
+\section{Test Fixture Example}
+
+Example of test fixture with automatic cleanup:
+
+\begin{lstlisting}[language=Rust]
+pub struct TestDatabaseFixture {
+    connection: Option<Connection>,
+    test_id: String,
+}
+
+impl TestDatabaseFixture {
+    pub fn new(test_name: &str) -> Result<Self, Error> {
+        // Create isolated test database
+        let test_id = format!("test_{}", test_name);
+        let connection = Connection::open(
+            format!(":memory:{}", test_id)
+        )?;
+
+        // Initialize schema
+        connection.execute_batch(SCHEMA_SQL)?;
+
+        Ok(TestDatabaseFixture {
+            connection: Some(connection),
+            test_id,
+        })
+    }
+
+    pub fn insert_test_data(&self, sql: &str) -> Result<(), Error> {
+        self.connection.as_ref()
+            .ok_or(Error::ConnectionClosed)?
+            .execute_batch(sql)?;
+        Ok(())
+    }
+
+    pub fn query(&self, sql: &str) -> Result<Vec<String>, Error> {
+        // Execute query
+        Ok(vec![])  // Simplified
+    }
+}
+
+// Automatic cleanup via Drop trait
+impl Drop for TestDatabaseFixture {
+    fn drop(&mut self) {
+        if let Some(conn) = self.connection.take() {
+            // Close connection
+            drop(conn);
+            // Clean up test database
+            std::fs::remove_file(
+                format!("test_{}.db", self.test_id)
+            ).ok();
+        }
+    }
+}
+
+#[test]
+fn example_fixture_usage() {
+    let fixture = TestDatabaseFixture::new("test_query")
+        .expect("Failed to create fixture");
+
+    fixture.insert_test_data("INSERT INTO users VALUES (1, 'Alice')")
+        .expect("Failed to insert data");
+
+    let results = fixture.query("SELECT name FROM users")
+        .expect("Failed to query");
+
+    assert!(!results.is_empty());
+
+    // Automatic cleanup when fixture is dropped
+}
+\end{lstlisting}

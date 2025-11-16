@@ -1,0 +1,449 @@
+\chapter{Receipt Schemas and Guard Constraints}
+
+\section{Receipt Schema Definition}
+
+\begin{definition}[Complete Receipt Structure]
+A receipt $R$ contains:
+
+\begin{equation}
+R = (h_\obs, h_\Gamma, h_\guards, h_A, h_\measure, h_t, \text{actor}, \text{timestamp}, \text{slo})
+\end{equation}
+
+where:
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Field} & \textbf{Meaning} \\
+\hline
+$h_\obs$ & SHA3-256 hash of observations $\obs$ \\
+\hline
+$h_\Gamma$ & SHA3-256 hash of candidate proposals (alternatives considered) \\
+\hline
+$h_\guards$ & SHA3-256 hash of applied guard set $\guards$ \\
+\hline
+$h_A$ & SHA3-256 hash of action result $A$ \\
+\hline
+$h_\measure$ & SHA3-256 hash of measurement function $\measure$ \\
+\hline
+$h_t$ & SHA3-256(receipt $\parallel$ $h_{t-1}$) — Merkle root linking to previous receipt \\
+\hline
+actor & User or system that triggered the action \\
+\hline
+timestamp & Unix timestamp of action execution \\
+\hline
+slo & Service level objective (Hot/2ns, Warm/500ms, Cold/500ms) \\
+\hline
+\end{tabular}
+\end{definition}
+
+\section{Receipt JSON Schema}
+
+\begin{lstlisting}[language=json]
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Execution Receipt",
+  "type": "object",
+  "required": [
+    "h_obs",
+    "h_guards",
+    "h_action",
+    "h_measure",
+    "merkle_root",
+    "actor",
+    "timestamp",
+    "slo"
+  ],
+  "properties": {
+    "h_obs": {
+      "type": "string",
+      "description": "SHA3-256 hash of observations",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "h_gamma": {
+      "type": "string",
+      "description": "SHA3-256 hash of candidate proposals",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "h_guards": {
+      "type": "string",
+      "description": "SHA3-256 hash of guard set",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "h_action": {
+      "type": "string",
+      "description": "SHA3-256 hash of action",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "h_measure": {
+      "type": "string",
+      "description": "SHA3-256 hash of measurement function",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "merkle_root": {
+      "type": "string",
+      "description": "Merkle root linking receipts",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "prev_merkle": {
+      "type": "string",
+      "description": "Previous receipt's merkle root",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "actor": {
+      "type": "string",
+      "description": "Actor that triggered the action",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Unix timestamp",
+      "minimum": 0
+    },
+    "slo": {
+      "type": "string",
+      "enum": ["hot/2ns", "warm/500ms", "cold/500ms"],
+      "description": "Service level objective"
+    },
+    "pattern_id": {
+      "type": "integer",
+      "description": "Van der Aalst pattern ID",
+      "minimum": 1,
+      "maximum": 43
+    },
+    "hook_id": {
+      "type": "string",
+      "description": "Knowledge hook identifier"
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Guard Constraint Specifications}
+
+\subsection{Legality Guard}
+
+\begin{definition}[Legality Guard]
+Ensures actions comply with legal and regulatory requirements.
+
+\textbf{Specification}:
+\begin{enumerate}
+  \item Action must be mapped to a workflow pattern (no ad-hoc routing)
+  \item Action must not violate segregation of duties (initiator $\neq$ approver)
+  \item Action must comply with role-based access control (RBAC)
+  \item Action must not create retroactive events (no time-travel)
+\end{enumerate}
+
+\textbf{Implementation}:
+\begin{lstlisting}[language=Rust]
+pub struct LegalityGuard {
+    allowed_patterns: HashSet<u32>,  // YAWL pattern IDs
+    rbac_rules: Vec<RbacRule>,
+}
+
+impl Guard for LegalityGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        // Check 1: Action follows a workflow pattern
+        if !self.allowed_patterns.contains(&action.pattern_id) {
+            return Err(GuardViolation::IllegalityViolation(
+                "Action does not follow registered pattern".to_string()
+            ));
+        }
+
+        // Check 2: Segregation of duties
+        if action.initiator == action.approver {
+            return Err(GuardViolation::IllegalityViolation(
+                "Segregation of duties violated".to_string()
+            ));
+        }
+
+        // Check 3: RBAC
+        for rule in &self.rbac_rules {
+            rule.check(action)?;
+        }
+
+        Ok(())
+    }
+}
+\end{lstlisting}
+\end{definition}
+
+\subsection{Budget Guard}
+
+\begin{definition}[Budget Guard]
+Ensures actions respect financial constraints and spending limits.
+
+\textbf{Specification}:
+\begin{enumerate}
+  \item Individual transaction must not exceed per-transaction limit
+  \item Daily spending must not exceed daily limit
+  \item Monthly spending must not exceed monthly limit
+  \item Quarterly spending must not exceed quarterly limit
+\end{enumerate}
+
+\textbf{Implementation}:
+\begin{lstlisting}[language=Rust]
+pub struct BudgetGuard {
+    per_transaction_limit: f64,
+    daily_limit: f64,
+    monthly_limit: f64,
+    quarterly_limit: f64,
+    spending_tracker: SpendingTracker,
+}
+
+impl Guard for BudgetGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        // Check 1: Per-transaction limit
+        if action.amount > self.per_transaction_limit {
+            return Err(GuardViolation::BudgetViolation(
+                action.amount - self.per_transaction_limit
+            ));
+        }
+
+        // Check 2: Daily limit
+        let daily_spent = self.spending_tracker.daily_total();
+        if daily_spent + action.amount > self.daily_limit {
+            return Err(GuardViolation::BudgetViolation(
+                daily_spent + action.amount - self.daily_limit
+            ));
+        }
+
+        // Check 3: Monthly limit
+        let monthly_spent = self.spending_tracker.monthly_total();
+        if monthly_spent + action.amount > self.monthly_limit {
+            return Err(GuardViolation::BudgetViolation(
+                monthly_spent + action.amount - self.monthly_limit
+            ));
+        }
+
+        // Check 4: Quarterly limit
+        let quarterly_spent = self.spending_tracker.quarterly_total();
+        if quarterly_spent + action.amount > self.quarterly_limit {
+            return Err(GuardViolation::BudgetViolation(
+                quarterly_spent + action.amount - self.quarterly_limit
+            ));
+        }
+
+        Ok(())
+    }
+}
+\end{lstlisting}
+\end{definition}
+
+\subsection{Chronology Guard}
+
+\begin{definition}[Chronology Guard]
+Ensures actions preserve temporal ordering (no retrocausation).
+
+\textbf{Specification}:
+\begin{enumerate}
+  \item Action timestamp must be $\geq$ observation timestamp
+  \item Action must not pre-date its dependencies
+  \item Causal ordering must be preserved (if event A causes event B, then
+    timestamp(A) $<$ timestamp(B))
+\end{enumerate}
+
+\textbf{Implementation}:
+\begin{lstlisting}[language=Rust]
+pub struct ChronologyGuard {
+    current_time: fn() -> u64,
+}
+
+impl Guard for ChronologyGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        let now = (self.current_time)();
+
+        // Check 1: Action cannot be in future
+        if action.timestamp > now {
+            return Err(GuardViolation::ChronologyViolation(
+                "Action timestamp is in the future".to_string()
+            ));
+        }
+
+        // Check 2: Action must not pre-date dependencies
+        for dep in &action.dependencies {
+            if action.timestamp < dep.timestamp {
+                return Err(GuardViolation::ChronologyViolation(
+                    format!("Action predates dependency: {}",
+                            dep.id)
+                ));
+            }
+        }
+
+        Ok(())
+    }
+}
+\end{lstlisting}
+\end{definition}
+
+\subsection{Causality Guard}
+
+\begin{definition}[Causality Guard]
+Ensures actions respect causal dependencies.
+
+\textbf{Specification}:
+\begin{enumerate}
+  \item All prerequisites must be satisfied before action executes
+  \item Circular dependencies are forbidden
+  \item Branching is allowed; convergence must synchronize
+\end{enumerate}
+
+\textbf{Implementation}:
+\begin{lstlisting}[language=Rust]
+pub struct CausalityGuard {
+    dependency_graph: DependencyGraph,
+}
+
+impl Guard for CausalityGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        // Check 1: All prerequisites satisfied
+        for prereq in &action.prerequisites {
+            if !self.dependency_graph.is_satisfied(prereq) {
+                return Err(GuardViolation::CausalityViolation(
+                    format!("Prerequisite not satisfied: {}",
+                            prereq.id)
+                ));
+            }
+        }
+
+        // Check 2: No circular dependencies
+        if self.dependency_graph.has_cycle(action.id) {
+            return Err(GuardViolation::CausalityViolation(
+                "Circular dependency detected".to_string()
+            ));
+        }
+
+        Ok(())
+    }
+}
+\end{lstlisting}
+\end{definition}
+
+\subsection{Recursion Depth Guard (Chatman Constant)}
+
+\begin{definition}[Recursion Depth Guard]
+Enforces the Chatman Constant: maximum recursion depth $\leq 8$.
+
+\textbf{Specification}:
+\begin{enumerate}
+  \item All recursive operations must have depth $\leq 8$
+  \item Patterns that support iteration (loops, recursion) are bounded
+  \item Each loop iteration decrements a countdown variable
+\end{enumerate}
+
+\textbf{Implementation}:
+\begin{lstlisting}[language=Rust]
+pub struct RecursionDepthGuard {
+    max_depth: u8,  // Chatman Constant = 8
+}
+
+impl Guard for RecursionDepthGuard {
+    fn check(&self, action: &Action) -> Result<(), GuardViolation> {
+        // Verify recursion depth
+        if let Some(recursion) = &action.recursion_info {
+            if recursion.depth > self.max_depth {
+                return Err(GuardViolation::RecursionDepthExceeded);
+            }
+        }
+
+        Ok(())
+    }
+}
+
+// Enforce at compile time with const generics
+pub struct ValidatedRecursion<const DEPTH: u8>
+where
+    // Compile-time check: DEPTH <= 8
+    [(); 8 - DEPTH as usize]:,
+{
+    depth: u8,
+}
+\end{lstlisting}
+\end{definition}
+
+\section{Guard Composition}
+
+\begin{definition}[Guard Set]
+Multiple guards are composed into a GuardSet that all must pass:
+
+\begin{equation}
+\text{GuardSet} = (\text{Legality}, \text{Budget}, \text{Chronology}, \text{Causality}, \text{RecursionDepth})
+\end{equation}
+
+An action passes if all guards pass:
+
+\begin{equation}
+\text{pass} = \bigwedge_{g \in \text{GuardSet}} g(\text{action})
+\end{equation}
+\end{definition}
+
+\begin{lstlisting}[language=Rust]
+pub struct GuardSet {
+    legality: LegalityGuard,
+    budget: BudgetGuard,
+    chronology: ChronologyGuard,
+    causality: CausalityGuard,
+    recursion: RecursionDepthGuard,
+}
+
+impl GuardSet {
+    pub fn check_all(&self, action: &Action) -> Result<(), Vec<GuardViolation>> {
+        let mut violations = Vec::new();
+
+        // Check all guards, collect violations
+        if let Err(e) = self.legality.check(action) {
+            violations.push(e);
+        }
+        if let Err(e) = self.budget.check(action) {
+            violations.push(e);
+        }
+        if let Err(e) = self.chronology.check(action) {
+            violations.push(e);
+        }
+        if let Err(e) = self.causality.check(action) {
+            violations.push(e);
+        }
+        if let Err(e) = self.recursion.check(action) {
+            violations.push(e);
+        }
+
+        if violations.is_empty() {
+            Ok(())
+        } else {
+            Err(violations)
+        }
+    }
+}
+\end{lstlisting}
+
+\section{Example Receipt}
+
+\begin{lstlisting}[language=json]
+{
+  "h_obs": "abc123def456...",
+  "h_guards": "def789ghi012...",
+  "h_action": "xyz789abc012...",
+  "h_measure": "measure_fn_hash...",
+  "merkle_root": "merkle_hash...",
+  "prev_merkle": "prev_merkle_hash...",
+  "actor": "user:alice",
+  "timestamp": 1731754800,
+  "slo": "hot/2ns",
+  "pattern_id": 4,
+  "hook_id": "hook_xor_split"
+}
+\end{lstlisting}
+
+This receipt cryptographically proves that:
+
+\begin{enumerate}
+  \item Observations were received (hash $h_{obs}$)
+  \item Legality, budget, chronology, and causality guards passed (hash $h_{guards}$)
+  \item A specific action was executed (hash $h_{action}$)
+  \item The measurement function was applied (hash $h_{measure}$)
+  \item The action links to the previous receipt (merkle root)
+  \item The actor was $\text{user:alice}$ (timestamp $1731754800$)
+  \item Pattern 4 (Exclusive Choice) was used
+  \item Execution stayed within SLO (hot path $\leq 2$ ns)
+\end{enumerate}
+
+The receipt can be independently verified by recomputing hashes and checking the Merkle chain.
