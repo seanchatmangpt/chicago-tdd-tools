@@ -454,6 +454,92 @@ async_test!(test_async_fixture, {
 });
 ```
 
+## Hyper-Advanced μ-Kernel Verification (Quick Reference)
+
+**All hyper-advanced features are core (no feature flags required).**
+
+### Test Contracts (Track 1)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Define compile-time contract
+const CONTRACT: TestContract = TestContract::hot_path(
+    "test_critical",
+    &["module::critical"],
+);
+
+// Coverage gap analysis
+let registry = TestContractRegistry::new(&[CONTRACT]);
+let uncovered = registry.uncovered_modules(&["module::critical", "module::missing"]);
+```
+
+### τ-Aware Thermal Testing (Track 2)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Hot path: τ ≤ 8 ticks (use relaxed config in tests)
+let relaxed_config = HotPathConfig {
+    max_ticks: 1000,
+    enforce_no_alloc: false,
+    enforce_no_syscall: false,
+};
+let hot_test = HotPathTest::new(relaxed_config);
+
+let (value, ticks) = hot_test.run(|| critical_function()).unwrap();
+assert!(ticks <= 1000); // In production: ticks <= 8
+```
+
+### Effect-Typed Tests (Track 3)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Type-level effect constraints
+let _pure: Effects<Pure> = Effects::new();
+let _network: Effects<NetworkRead> = Effects::new();
+```
+
+### State Machine Testing (Track 4)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Compile-time transition validation
+let sm: StateMachine<Init> = StateMachine::new();
+let sm = sm.transition::<Connected, Connect>().unwrap();
+// Invalid transitions are compile errors!
+```
+
+### Test Receipts (Track 5)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Cryptographic provenance
+let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);
+receipt.sign();
+receipt.add_metadata("deploy_env", "production");
+
+let mut registry = TestReceiptRegistry::new();
+registry.add_receipt(receipt);
+let violations = registry.tau_violations();
+```
+
+### Test Orchestrator (Track 6)
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Agent-driven scheduling
+let mut orchestrator = TestOrchestrator::new(registry);
+orchestrator.submit_plan(plan);
+let suggested = orchestrator.suggest_tests_for_change(&["module::changed"]);
+```
+
+**See**: [Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md) for complete documentation.
+
 ## Next Steps
 
 - **[User Guide](USER_GUIDE.md)** - Complete usage guide
@@ -461,5 +547,6 @@ async_test!(test_async_fixture, {
 - **[Getting Started](GETTING_STARTED.md)** - Quick start guide
 - **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
 - **[Examples](../examples/)** - Working code examples
+- **[Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md)** - Complete μ-kernel verification substrate
 
 > **Short-term skip?** Export `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests explicitly. Without it, missing prerequisites cause a panic to enforce dogfooding.

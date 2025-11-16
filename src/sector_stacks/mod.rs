@@ -58,10 +58,10 @@ pub enum OperationStatus {
 impl fmt::Display for OperationStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            OperationStatus::Success => write!(f, "Success"),
-            OperationStatus::PartialSuccess => write!(f, "PartialSuccess"),
-            OperationStatus::Failed => write!(f, "Failed"),
-            OperationStatus::PendingReview => write!(f, "PendingReview"),
+            Self::Success => write!(f, "Success"),
+            Self::PartialSuccess => write!(f, "PartialSuccess"),
+            Self::Failed => write!(f, "Failed"),
+            Self::PendingReview => write!(f, "PendingReview"),
         }
     }
 }
@@ -69,10 +69,10 @@ impl fmt::Display for OperationStatus {
 /// Trait for sector-specific operations
 pub trait SectorOperation: Send + Sync {
     /// Get sector name
-    fn sector_name(&self) -> &str;
+    fn sector_name(&self) -> &'static str;
 
     /// Get operation description
-    fn description(&self) -> &str;
+    fn description(&self) -> &'static str;
 
     /// Check if operation is deterministic
     fn is_deterministic(&self) -> bool;

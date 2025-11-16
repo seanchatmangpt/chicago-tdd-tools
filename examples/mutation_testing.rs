@@ -146,3 +146,33 @@ async fn main() {
         chicago_tdd_tools::alert_warning!("Mutation score is too low (< 80%)");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_mutation_tester_creation, {
+        // Arrange
+        let data = HashMap::new();
+
+        // Act
+        let tester = MutationTester::new(data);
+
+        // Assert: Tester created successfully
+        assert!(true); // If we get here, creation succeeded
+    });
+
+    test!(test_mutation_score_calculation, {
+        // Arrange
+        let caught = 8;
+        let total = 10;
+
+        // Act
+        let score = MutationScore::calculate(caught, total);
+
+        // Assert
+        assert_eq!(score.score(), 80);
+        assert!(score.is_acceptable());
+    });
+}

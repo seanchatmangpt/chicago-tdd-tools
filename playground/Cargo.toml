@@ -9,18 +9,18 @@ publish = false
 
 [dependencies]
 # Chicago TDD Tools with ALL features enabled
-chicago-tdd-tools = { version = "1.3.0", features = [
+chicago-tdd-tools = { version = "1.4.0", features = [
     # Feature groups (convenience bundles)
-    "testing-full",      # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
+    "testing-full",       # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
     "observability-full", # Complete observability: otel, weaver
-    "integration-full",  # Full integration: testcontainers, weaver
+    "integration-full",   # Full integration: testcontainers, weaver
 
     # Individual features
-    "async",             # Async fixture providers (Rust 1.75+)
-    "mutation-testing",  # Mutation testing (no external deps)
-    "benchmarking",      # Criterion benchmarking support
-    "workflow-engine",   # Workflow-specific features
-    "logging",           # Log crate integration (enabled by default)
+    "async",            # Async fixture providers (Rust 1.75+)
+    "mutation-testing", # Mutation testing (no external deps)
+    "benchmarking",     # Criterion benchmarking support
+    "workflow-engine",  # Workflow-specific features
+    "logging",          # Log crate integration (enabled by default)
 ] }
 
 # Tokio for async runtime
@@ -81,4 +81,3 @@ expect_used = "deny"
 panic = "deny"
 todo = "deny"
 unimplemented = "deny"
-

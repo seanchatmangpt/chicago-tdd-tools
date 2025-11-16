@@ -20,10 +20,10 @@ pub mod contract;
 /// Strict verification pipeline with fail-fast semantics for all 12 phases.
 pub mod fail_fast;
 pub mod fixture;
-/// Unrecoverable invariant violations - core type system for hardening.
-pub mod invariants;
 /// Property-based tests validating invariant detection using proptest.
 pub mod invariant_properties;
+/// Unrecoverable invariant violations - core type system for hardening.
+pub mod invariants;
 pub mod macros;
 pub mod poka_yoke;
 pub mod receipt;
@@ -42,8 +42,8 @@ pub use const_assert::*;
 pub use contract::*;
 pub use fail_fast::*;
 pub use fixture::*;
-pub use invariants::*;
 pub use invariant_properties::helpers;
+pub use invariants::*;
 pub use poka_yoke::*;
 pub use receipt::*;
 pub use state::*;

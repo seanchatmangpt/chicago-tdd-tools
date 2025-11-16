@@ -28,7 +28,7 @@ pub struct ClaimSubmission {
 }
 
 /// Validation result
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ValidationResult {
     /// Claim is valid
     Valid,
@@ -49,7 +49,9 @@ pub struct FraudScore {
 
 impl FraudScore {
     /// Determine fraud based on indicators
+    #[must_use]
     pub fn new(indicators: Vec<String>) -> Self {
+        #[allow(clippy::cast_possible_truncation)] // Score is clamped to 100, so truncation is safe
         let score = (indicators.len() * 20).min(100) as u32;
         // Any fraud indicator triggers fraud flag
         let is_fraudulent = !indicators.is_empty();
@@ -59,7 +61,7 @@ impl FraudScore {
 }
 
 /// Entitlements check
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EntitlementsResult {
     /// Claimant is entitled to settlement
     Entitled,
@@ -82,6 +84,7 @@ pub struct Settlement {
 
 impl Settlement {
     /// Calculate final settlement
+    #[must_use]
     pub fn calculate(claim_amount: f64, deductible: f64, policy_limit: f64) -> Self {
         let final_amount = ((claim_amount - deductible).max(0.0)).min(policy_limit);
 
@@ -100,6 +103,7 @@ pub struct ClaimsOperation {
 
 impl ClaimsOperation {
     /// Create new claims operation
+    #[must_use]
     pub fn new(claim: ClaimSubmission) -> Self {
         // Validation (deterministic)
         let validation = if !claim.claim_id.is_empty()
@@ -134,7 +138,32 @@ impl ClaimsOperation {
         Self { claim, validation, fraud_score, entitlements, settlement }
     }
 
+    /// Get validation result
+    #[must_use]
+    pub const fn validation(&self) -> ValidationResult {
+        self.validation
+    }
+
+    /// Get fraud score
+    #[must_use]
+    pub const fn fraud_score(&self) -> &FraudScore {
+        &self.fraud_score
+    }
+
+    /// Get entitlements result
+    #[must_use]
+    pub const fn entitlements(&self) -> EntitlementsResult {
+        self.entitlements
+    }
+
+    /// Get settlement
+    #[must_use]
+    pub const fn settlement(&self) -> &Settlement {
+        &self.settlement
+    }
+
     /// Check if claim should be approved
+    #[must_use]
     pub fn should_approve(&self) -> bool {
         self.validation == ValidationResult::Valid
             && !self.fraud_score.is_fraudulent
@@ -143,14 +172,15 @@ impl ClaimsOperation {
     }
 
     /// Generate settlement receipt
+    #[must_use]
     pub fn generate_settlement_receipt(&self) -> OperationReceipt {
         let status =
             if self.should_approve() { OperationStatus::Success } else { OperationStatus::Failed };
 
         let mut hasher = Sha256::new();
         hasher.update(self.claim.claim_id.as_bytes());
-        hasher.update(self.fraud_score.score.to_string().as_bytes());
-        hasher.update(self.settlement.final_amount.to_string().as_bytes());
+        hasher.update(self.fraud_score().score.to_string().as_bytes());
+        hasher.update(self.settlement().final_amount.to_string().as_bytes());
         let hash = hasher.finalize();
 
         OperationReceipt {
@@ -160,10 +190,10 @@ impl ClaimsOperation {
             status,
             result: format!(
                 "Settlement: ${:.2} (Validated: {}, Fraud Score: {}, Entitled: {})",
-                self.settlement.final_amount,
-                self.validation == ValidationResult::Valid,
-                self.fraud_score.score,
-                self.entitlements == EntitlementsResult::Entitled
+                self.settlement().final_amount,
+                self.validation() == ValidationResult::Valid,
+                self.fraud_score().score,
+                self.entitlements() == EntitlementsResult::Entitled
             ),
             merkle_root: hex::encode(hash),
             timestamp: "2025-11-16T00:00:00Z".to_string(),
@@ -172,11 +202,11 @@ impl ClaimsOperation {
 }
 
 impl SectorOperation for ClaimsOperation {
-    fn sector_name(&self) -> &str {
+    fn sector_name(&self) -> &'static str {
         "Enterprise Claims"
     }
 
-    fn description(&self) -> &str {
+    fn description(&self) -> &'static str {
         "Insurance claims processing workflow"
     }
 
@@ -194,16 +224,19 @@ pub struct SyntheticClaimsGenerator;
 
 impl SyntheticClaimsGenerator {
     /// Generate synthetic test claims
+    #[must_use]
     pub fn generate(count: usize) -> Vec<ClaimSubmission> {
         let mut claims = Vec::new();
 
         for i in 0..count {
+            #[allow(clippy::cast_precision_loss)]
+            // Precision loss acceptable for test data generation
             let claim = ClaimSubmission {
-                claim_id: format!("CLAIM-{:06}", i),
+                claim_id: format!("CLAIM-{i:06}"),
                 claimant_id: format!("CLT-{:04}", i % 100),
                 claim_amount: 1000.0 + (i as f64 * 100.0) % 50_000.0,
                 claim_date: "2025-11-16".to_string(),
-                incident_description: format!("Incident description for claim {}", i),
+                incident_description: format!("Incident description for claim {i}"),
             };
             claims.push(claim);
         }
@@ -227,7 +260,7 @@ mod tests {
         };
 
         let op = ClaimsOperation::new(claim);
-        assert_eq!(op.validation, ValidationResult::Valid);
+        assert_eq!(op.validation(), ValidationResult::Valid);
     }
 
     #[test]
@@ -241,7 +274,7 @@ mod tests {
         };
 
         let op = ClaimsOperation::new(claim);
-        assert_eq!(op.validation, ValidationResult::Invalid);
+        assert_eq!(op.validation(), ValidationResult::Invalid);
     }
 
     #[test]
@@ -255,7 +288,7 @@ mod tests {
         };
 
         let op = ClaimsOperation::new(claim);
-        assert!(op.fraud_score.is_fraudulent);
+        assert!(op.fraud_score().is_fraudulent);
         assert!(!op.should_approve());
     }
 
@@ -297,7 +330,7 @@ mod tests {
             .iter()
             .map(|c| {
                 let op = ClaimsOperation::new(c.clone());
-                (op.should_approve(), op.settlement.final_amount)
+                (op.should_approve(), op.settlement().final_amount)
             })
             .collect();
 
@@ -305,7 +338,7 @@ mod tests {
             .iter()
             .map(|c| {
                 let op = ClaimsOperation::new(c.clone());
-                (op.should_approve(), op.settlement.final_amount)
+                (op.should_approve(), op.settlement().final_amount)
             })
             .collect();
 

@@ -19,6 +19,7 @@ pub struct SwarmMembership {
 
 impl SwarmMembership {
     /// Create a new swarm membership
+    #[must_use]
     pub fn new() -> Self {
         Self { swarm_id: format!("swarm-{}", uuid::Uuid::new_v4()), members: HashMap::new() }
     }
@@ -34,6 +35,7 @@ impl SwarmMembership {
     }
 
     /// Get a member by ID
+    #[must_use]
     pub fn get_member(&self, member_id: &str) -> Option<&SwarmMember> {
         self.members.get(member_id)
     }
@@ -44,21 +46,25 @@ impl SwarmMembership {
     }
 
     /// Get all members
-    pub fn members(&self) -> &HashMap<String, SwarmMember> {
+    #[must_use]
+    pub const fn members(&self) -> &HashMap<String, SwarmMember> {
         &self.members
     }
 
     /// Get members handling a specific sector
+    #[must_use]
     pub fn members_for_sector(&self, sector: &str) -> Vec<&SwarmMember> {
         self.members.values().filter(|m| m.can_handle(sector)).collect()
     }
 
     /// Get member count
+    #[must_use]
     pub fn member_count(&self) -> usize {
         self.members.len()
     }
 
     /// Get active member count
+    #[must_use]
     pub fn active_members(&self) -> usize {
         self.members
             .values()
@@ -67,11 +73,13 @@ impl SwarmMembership {
     }
 
     /// Get total capacity
+    #[must_use]
     pub fn total_capacity(&self) -> u32 {
         self.members.values().map(|m| m.capacity).sum()
     }
 
     /// Get total current tasks
+    #[must_use]
     pub fn total_current_tasks(&self) -> u32 {
         self.members.values().map(|m| m.current_tasks).sum()
     }
@@ -91,6 +99,7 @@ pub struct SwarmCoordinator {
 
 impl SwarmCoordinator {
     /// Create a new swarm coordinator
+    #[must_use]
     pub fn new() -> Self {
         Self {
             membership: SwarmMembership::new(),
@@ -111,10 +120,13 @@ impl SwarmCoordinator {
     }
 
     /// Assign next queued task to an available member
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(String)` if no tasks are queued or no available members can handle the task.
     pub fn distribute_next_task(&mut self) -> Result<(String, String), String> {
-        let task = match self.task_queue.dequeue() {
-            Some(t) => t,
-            None => return Err("No tasks queued".to_string()),
+        let Some(task) = self.task_queue.dequeue() else {
+            return Err("No tasks queued".to_string());
         };
 
         // Find best member for task
@@ -154,7 +166,7 @@ impl SwarmCoordinator {
     }
 
     /// Record task completion
-    pub fn record_completion(&mut self, receipt: TaskReceipt) -> Result<(), String> {
+    pub fn record_completion(&mut self, receipt: TaskReceipt) {
         // Update member state
         if let Some(member) = self.membership.get_member_mut(&receipt.agent_id) {
             member.complete_task();
@@ -168,10 +180,11 @@ impl SwarmCoordinator {
         }
 
         self.task_queue.record_receipt(receipt);
-        Ok(())
     }
 
     /// Check swarm consensus on a result
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for consensus calculation (usize to f32)
     pub fn check_consensus(&self, sector: &str) -> bool {
         let members = self.membership.members_for_sector(sector);
         let total = members.len() as f32;
@@ -185,6 +198,7 @@ impl SwarmCoordinator {
     }
 
     /// Get swarm status
+    #[must_use]
     pub fn status(&self) -> SwarmStatus {
         SwarmStatus {
             swarm_id: self.membership.swarm_id.clone(),

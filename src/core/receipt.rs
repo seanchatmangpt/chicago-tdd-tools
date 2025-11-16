@@ -87,7 +87,7 @@ pub struct EnvironmentFingerprint {
     /// Operating system (e.g., "Linux", "macOS", "Windows")
     pub os: String,
 
-    /// Architecture (e.g., "x86_64", "aarch64")
+    /// Architecture (e.g., `"x86_64"`, `"aarch64"`)
     pub arch: String,
 
     /// Enabled features (comma-separated)
@@ -160,7 +160,7 @@ impl TimingMeasurement {
     /// Check if this violates τ (for hot path)
     #[must_use]
     pub const fn violates_tau(&self) -> bool {
-        self.thermal_class.as_bytes().len() == 3 // "hot"
+        self.thermal_class.len() == 3 // "hot"
             && !self.budget_met
     }
 }
@@ -203,6 +203,8 @@ impl TestReceipt {
         result: TestOutcome,
     ) -> Self {
         let receipt_id = Self::generate_receipt_id(&contract_name);
+        #[allow(clippy::cast_possible_truncation)]
+        // Timestamp truncation acceptable for receipt IDs
         let timestamp =
             SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
 
@@ -230,7 +232,8 @@ impl TestReceipt {
     ) -> Self {
         let code_hash = Self::compute_code_hash(contract);
         let environment = EnvironmentFingerprint::capture();
-        let invariants_checked = contract.invariants.iter().map(|s| s.to_string()).collect();
+        let invariants_checked =
+            contract.invariants.iter().map(std::string::ToString::to_string).collect();
         let effects_exercised = Vec::new(); // Would be populated by effect system
 
         Self::new(
@@ -286,7 +289,7 @@ impl TestReceipt {
     /// In a real implementation, this would verify an Ed25519 signature.
     #[must_use]
     pub fn verify_signature(&self) -> bool {
-        if let Some(sig) = &self.signature {
+        self.signature.as_ref().is_some_and(|sig| {
             let signature_input = format!(
                 "{}-{}-{}-{}",
                 self.receipt_id, self.contract_name, self.timestamp, self.result
@@ -295,9 +298,7 @@ impl TestReceipt {
             hasher.update(signature_input.as_bytes());
             let expected = format!("{:x}", hasher.finalize());
             sig == &expected
-        } else {
-            false // No signature to verify
-        }
+        })
     }
 
     /// Add metadata
@@ -341,7 +342,7 @@ pub struct TestReceiptRegistry {
 impl TestReceiptRegistry {
     /// Create a new receipt registry
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { receipts: Vec::new() }
     }
 
@@ -394,13 +395,13 @@ impl TestReceiptRegistry {
 
     /// Total number of receipts
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.receipts.len()
     }
 
     /// Check if registry is empty
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.receipts.is_empty()
     }
 }
@@ -439,7 +440,7 @@ mod rustc_version_runtime {
         }
     }
 
-    pub fn version() -> Version {
+    pub const fn version() -> Version {
         // Mock version - in real implementation, parse from rustc --version
         Version { major: 1, minor: 75, patch: 0 }
     }

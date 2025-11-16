@@ -231,3 +231,25 @@ fn main() {
     );
     chicago_tdd_tools::alert_info!("  - Zero-cost abstractions (no runtime overhead)");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_type_level_arithmetic_runs, {
+        // Arrange & Act: Verify function runs without panicking
+        example_type_level_arithmetic();
+
+        // Assert: If we get here, function executed successfully
+        assert!(true);
+    });
+
+    test!(test_type_state_pattern_runs, {
+        // Arrange & Act: Verify function runs without panicking
+        example_type_state_pattern();
+
+        // Assert: If we get here, function executed successfully
+        assert!(true);
+    });
+}

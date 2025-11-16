@@ -5,6 +5,120 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-01-16
+
+### Added - Production-Grade Verification Infrastructure
+
+This release extends the μ-kernel verification substrate with production-grade sector implementations, fail-fast hardening, and complete verification pipeline phases. The framework now supports real-world workflows with deterministic guarantees and cryptographic proofs.
+
+#### Fail-Fast Hardening Infrastructure (`core::fail_fast`)
+- **StrictExecutionContext**: Zero-tolerance execution context with 12-phase verification pipeline
+- **47 Invariant Violations**: Comprehensive invariant checking across all phases
+- **PhaseResult**: Unified result type for phase execution (Ok or Violation)
+- **PhaseLabel**: 12 distinct phases from Contract Definition to Quality Dashboard
+- **Receipt Validation**: Self-validating receipts with version and checksum
+- Fail-fast semantics: any invariant violation causes immediate test failure
+- No degradation, no warnings ignored, no partial success
+
+#### Advanced Verification Phases 7-12
+- **Phase 7: Verification Pipeline** - Verify all configured phases executed
+- **Phase 8: Continuous Learning** - Validate learner state consistency
+- **Phase 9: Distributed Consensus** - Verify 2/3 Byzantine quorum
+- **Phase 10: Time-Travel Debugging** - Validate snapshot integrity
+- **Phase 11: Performance Prophet** - Verify prediction self-checks
+- **Phase 12: Quality Dashboard** - Verify dashboard consistency
+- Complete end-to-end verification from contract definition to quality metrics
+
+#### Sector-Grade Reference Stacks (`sector_stacks`)
+- **Academic Publishing Workflow** (`sector_stacks::academic`): Complete paper review lifecycle
+  - 6 workflow stages: Submission → Desk Review → Reviewer Assignment → Review Collection → Decision → Notification
+  - Deterministic decision algorithm (3.5+ avg review score = Accept)
+  - All-or-nothing decision logic (any rejection → Rejected)
+  - 5+ knowledge hooks per major operation
+  - 3 theorems mapped to property-based tests
+- **Enterprise Claims Processing** (`sector_stacks::claims`): Insurance claims workflow
+  - 6 workflow stages: Validation → Fraud Detection → Entitlements → Settlement → Payment → Receipt
+  - 7 knowledge hooks per operation
+  - 5 guard types: Legality, Budget, Chronology, Causality, Recursion
+  - 100+ synthetic test claims configuration
+  - Deterministic fraud detection and settlement calculation
+- **OperationReceipt**: Generic receipt structure with cryptographic merkle roots
+- **SectorOperation Trait**: Extensible trait for sector-specific operations
+- Property-based tests proving determinism and reproducibility
+
+#### RDF Integration (`sector_stacks::rdf`)
+- **SectorOntology**: Core RDF ontology data structures
+- **WorkflowStage**: RDF-driven workflow stage definitions
+- **RdfOperationValidator**: Runtime validation against RDF ontologies
+- RDF ontologies as single source of truth for workflow definitions
+- Oxigraph integration moved to playground (optional tooling, not core dependency)
+- 13 new RDF tests (6 ontology + 7 validation)
+
+#### Core Ontology & Operator Registry
+- **Operator Registry**: Global singleton for pattern registration
+- **Guard System**: 5 guard types with property tracking
+- **12 YAWL Patterns**: Registered patterns with guard definitions
+- **ggen Templates**: Rust code and LaTeX documentation generation
+- Complete class hierarchy with comprehensive properties
+- Single source of truth for workflow patterns
+
+#### Spec Harness (`spec-harness`)
+- **Theorem Registry**: Executable theorem-to-test mapping
+- **Receipt Generation**: Merkle-rooted proofs for theorem conformance
+- **23 Passing Tests**: 100% theorem coverage (17/17 theorems)
+- Machine-checkable specification with cryptographic receipts
+
+#### Paper as Self-Hosting RDF Instance
+- **Auto-Regeneration**: LaTeX documentation generated from RDF
+- **CI Pipeline**: Automated paper regeneration and verification
+- **RDF Instance**: Paper represented as RDF for semantic querying
+- Complete auditability and reproducibility
+
+#### Swarm Protocol (`swarm`)
+- **Distributed Multi-Sector Coordination**: Agent-driven task coordination
+- **Task Receipt System**: Cryptographic task receipts
+- **Knowledge Hooks**: Composition for multi-sector orchestration
+- **Public Task Ledger**: Transparent task tracking
+
+#### Snapshot Testing Improvements (`testing::snapshot`)
+- **Enhanced Test Fixtures**: Reusable test data structures
+- **Improved Test Organization**: Better AAA pattern alignment
+- **Complex Structure Support**: Better handling of nested JSON, enums, and maps
+- **Sensitive Data Redaction**: Enhanced redaction capabilities for testing
+
+### Added - Documentation & Examples
+- **Phase Summaries**: Comprehensive documentation for Phases 1-4
+- **RDF Integration Guide**: Complete guide for RDF-driven validation
+- **Sector Stack Examples**: Production-grade workflow implementations
+- **Cookbook Updates**: Enhanced patterns and troubleshooting guides
+- **Application Guide**: Complete mdbook-based application guide
+
+### Changed
+- **RDF Architecture**: Oxigraph moved to playground, core library remains lightweight
+- **Module Organization**: Sector stacks integrated into main library
+- **Test Organization**: Enhanced snapshot testing with better fixtures
+- **Documentation Structure**: Improved organization with phase-based summaries
+
+### Performance
+- **Sector Operations**: Deterministic execution with <1ms overhead per operation
+- **Receipt Generation**: ~100 μs per receipt (SHA-256 signing)
+- **RDF Validation**: Minimal overhead for runtime validation
+- **Fail-Fast Pipeline**: <1% overhead for typical test suites
+
+### Migration
+- All changes are backward compatible
+- Existing tests continue working without modification
+- Sector stacks are opt-in (use `sector_stacks` module)
+- RDF integration is optional (use `rdf` feature or playground)
+
+### See Also
+- [Phase 1 Summary](../../PHASE_1_SUMMARY.md)
+- [Phase 2 Summary](../../PHASE_2_SUMMARY.md)
+- [Phase 3 Summary](../../PHASE_3_SUMMARY.md)
+- [Phase 4 Summary](../../PHASE_4_SUMMARY.md)
+- [RDF Integration Summary](../../RDF_INTEGRATION_SUMMARY.md)
+- [Release Notes](RELEASE_NOTES_v1.4.0.md)
+
 ## [1.3.0] - 2025-11-16
 
 ### Added - Hyper-Advanced μ-Kernel Verification Substrate

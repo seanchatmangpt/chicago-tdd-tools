@@ -64,6 +64,7 @@ pub struct SectorOntology {
 
 impl SectorOntology {
     /// Create a new empty ontology
+    #[must_use]
     pub fn new(sector: String) -> Self {
         Self {
             sector,
@@ -90,26 +91,31 @@ impl SectorOntology {
     }
 
     /// Get stage by ID
+    #[must_use]
     pub fn get_stage(&self, id: &str) -> Option<&WorkflowStage> {
         self.stages.get(id)
     }
 
     /// Get all deterministic stages
+    #[must_use]
     pub fn deterministic_stages(&self) -> Vec<&WorkflowStage> {
         self.stages.values().filter(|s| s.is_deterministic).collect()
     }
 
     /// Count total stages
+    #[must_use]
     pub fn stage_count(&self) -> usize {
         self.stages.len()
     }
 
     /// Count total guards
+    #[must_use]
     pub fn guard_count(&self) -> usize {
         self.guards.len()
     }
 
     /// Count total hooks
+    #[must_use]
     pub fn hook_count(&self) -> usize {
         self.hooks.len()
     }

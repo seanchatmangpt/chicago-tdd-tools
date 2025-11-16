@@ -8,7 +8,7 @@
 //! - Suggest preventive tests
 
 use crate::core::contract::TestContract;
-use crate::core::receipt::{TestReceipt, TestOutcome};
+use crate::core::receipt::{TestOutcome, TestReceipt};
 use std::collections::HashMap;
 
 /// Test execution history entry
@@ -91,12 +91,7 @@ impl ContinuousLearner {
     /// Create a new continuous learner
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            history: Vec::new(),
-            patterns: HashMap::new(),
-            timestamp: 0,
-            min_observations: 5,
-        }
+        Self { history: Vec::new(), patterns: HashMap::new(), timestamp: 0, min_observations: 5 }
     }
 
     /// Record a test execution
@@ -107,7 +102,7 @@ impl ContinuousLearner {
             contract_name: receipt.contract_name.clone(),
             modules: receipt.invariants_checked.clone(),
             ticks: receipt.timing.total_ticks,
-            outcome: receipt.result.clone(),
+            outcome: receipt.result,
             timestamp: self.timestamp,
         };
 
@@ -132,11 +127,18 @@ impl ContinuousLearner {
             }
 
             let total_tau: u64 = entries.iter().map(|e| e.ticks).sum();
+            // Precision loss acceptable for statistical calculations (f64 mantissa sufficient for practical ranges)
+            #[allow(clippy::cast_precision_loss)]
             let average_tau = total_tau as f64 / entries.len() as f64;
 
-            let failures = entries.iter().filter(|e| matches!(e.outcome, TestOutcome::Fail)).count();
+            let failures =
+                entries.iter().filter(|e| matches!(e.outcome, TestOutcome::Fail)).count();
+            // Precision loss acceptable for statistical rate calculations
+            #[allow(clippy::cast_precision_loss)]
             let failure_rate = failures as f64 / entries.len() as f64;
 
+            // Precision loss acceptable for confidence calculation (bounded 0.0-1.0)
+            #[allow(clippy::cast_precision_loss)]
             let confidence = (entries.len() as f64 / (entries.len() + 10) as f64).min(1.0);
 
             let modules: Vec<String> = key.split(',').map(String::from).collect();
@@ -161,36 +163,40 @@ impl ContinuousLearner {
         let module_key = contract.coverage.join(",");
 
         // Look for matching pattern
-        if let Some(pattern) = self.patterns.get(&module_key) {
-            let recommendation = if pattern.failure_rate > 0.3 {
-                Recommendation::RunImmediately
-            } else if pattern.failure_rate > 0.1 {
-                Recommendation::RunWithPriority
-            } else if pattern.failure_rate > 0.01 {
-                Recommendation::RunNormally
-            } else if pattern.failure_rate > 0.001 {
-                Recommendation::CanDefer
-            } else {
-                Recommendation::CanSkip
-            };
+        self.patterns.get(&module_key).map_or_else(
+            || {
+                // No pattern found - recommend normal execution
+                TestPrediction {
+                    contract_name: contract.name.to_string(),
+                    failure_probability: 0.5, // Unknown
+                    predicted_tau: 100,       // Conservative estimate
+                    confidence: 0.0,
+                    recommendation: Recommendation::RunNormally,
+                }
+            },
+            |pattern| {
+                let recommendation = if pattern.failure_rate > 0.3 {
+                    Recommendation::RunImmediately
+                } else if pattern.failure_rate > 0.1 {
+                    Recommendation::RunWithPriority
+                } else if pattern.failure_rate > 0.01 {
+                    Recommendation::RunNormally
+                } else if pattern.failure_rate > 0.001 {
+                    Recommendation::CanDefer
+                } else {
+                    Recommendation::CanSkip
+                };
 
-            TestPrediction {
-                contract_name: contract.name.to_string(),
-                failure_probability: pattern.failure_rate,
-                predicted_tau: pattern.average_tau as u64,
-                confidence: pattern.confidence,
-                recommendation,
-            }
-        } else {
-            // No pattern found - recommend normal execution
-            TestPrediction {
-                contract_name: contract.name.to_string(),
-                failure_probability: 0.5, // Unknown
-                predicted_tau: 100, // Conservative estimate
-                confidence: 0.0,
-                recommendation: Recommendation::RunNormally,
-            }
-        }
+                TestPrediction {
+                    contract_name: contract.name.to_string(),
+                    failure_probability: pattern.failure_rate,
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                    predicted_tau: pattern.average_tau as u64,
+                    confidence: pattern.confidence,
+                    recommendation,
+                }
+            },
+        )
     }
 
     /// Get optimal test execution order
@@ -198,16 +204,15 @@ impl ContinuousLearner {
     /// Orders tests by predicted failure probability (highest first)
     #[must_use]
     pub fn optimize_execution_order(&self, contracts: &[TestContract]) -> Vec<String> {
-        let mut predictions: Vec<_> = contracts
-            .iter()
-            .map(|c| (c.name, self.predict(c)))
-            .collect();
+        let mut predictions: Vec<_> = contracts.iter().map(|c| (c.name, self.predict(c))).collect();
 
         // Sort by failure probability (descending) then by predicted tau (ascending)
+        // Note: partial_cmp can return None for NaN, but failure_probability should never be NaN
+        // in practice. We use unwrap_or to handle the edge case safely.
         predictions.sort_by(|a, b| {
             b.1.failure_probability
                 .partial_cmp(&a.1.failure_probability)
-                .unwrap()
+                .unwrap_or(std::cmp::Ordering::Equal)
                 .then(a.1.predicted_tau.cmp(&b.1.predicted_tau))
         });
 
@@ -221,9 +226,8 @@ impl ContinuousLearner {
 
         for pattern in self.patterns.values() {
             // Check if any changed module is in this pattern
-            let has_changed_module = pattern.modules.iter().any(|m| {
-                changed_modules.iter().any(|cm| m.contains(cm))
-            });
+            let has_changed_module =
+                pattern.modules.iter().any(|m| changed_modules.iter().any(|cm| m.contains(cm)));
 
             if has_changed_module && pattern.failure_rate > 0.05 {
                 suggested.push(pattern.id.clone());
@@ -235,6 +239,7 @@ impl ContinuousLearner {
 
     /// Get learned patterns
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn patterns(&self) -> &HashMap<String, LearnedPattern> {
         &self.patterns
     }
@@ -273,30 +278,27 @@ pub struct AdaptiveTestSelector {
 impl AdaptiveTestSelector {
     /// Create a new adaptive test selector
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn new(learner: ContinuousLearner) -> Self {
-        Self {
-            learner,
-            max_tests: 100,
-            min_failure_prob: 0.01,
-        }
+        Self { learner, max_tests: 100, min_failure_prob: 0.01 }
     }
 
     /// Select optimal test subset
     #[must_use]
     pub fn select_tests(&self, contracts: &[TestContract]) -> Vec<String> {
-        let mut predictions: Vec<_> = contracts
-            .iter()
-            .map(|c| (c.name, self.learner.predict(c)))
-            .collect();
+        let mut predictions: Vec<_> =
+            contracts.iter().map(|c| (c.name, self.learner.predict(c))).collect();
 
         // Filter by minimum failure probability
         predictions.retain(|(_, pred)| pred.failure_probability >= self.min_failure_prob);
 
         // Sort by failure probability and predicted tau
+        // Note: partial_cmp can return None for NaN, but failure_probability should never be NaN
+        // in practice. We use unwrap_or to handle the edge case safely.
         predictions.sort_by(|a, b| {
             b.1.failure_probability
                 .partial_cmp(&a.1.failure_probability)
-                .unwrap()
+                .unwrap_or(std::cmp::Ordering::Equal)
                 .then(a.1.predicted_tau.cmp(&b.1.predicted_tau))
         });
 
@@ -309,12 +311,16 @@ impl AdaptiveTestSelector {
     }
 
     /// Set maximum number of tests
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn with_max_tests(mut self, max_tests: usize) -> Self {
         self.max_tests = max_tests;
         self
     }
 
     /// Set minimum failure probability
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn with_min_failure_prob(mut self, min_failure_prob: f64) -> Self {
         self.min_failure_prob = min_failure_prob;
         self

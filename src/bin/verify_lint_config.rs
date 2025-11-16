@@ -16,7 +16,7 @@ fn main() {
 fn verify_lint_config() -> Result<(), String> {
     let makefile_path = "Makefile.toml";
     let contents = fs::read_to_string(makefile_path)
-        .map_err(|e| format!("Failed to read {}: {}", makefile_path, e))?;
+        .map_err(|e| format!("Failed to read {makefile_path}: {e}"))?;
 
     // Extract args array specifically to check only args, not comments
     let args_section = extract_args_array(&contents);

@@ -24,11 +24,11 @@ pub enum TaskStatus {
 impl std::fmt::Display for TaskStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TaskStatus::Queued => write!(f, "Queued"),
-            TaskStatus::Executing => write!(f, "Executing"),
-            TaskStatus::Completed => write!(f, "Completed"),
-            TaskStatus::Failed => write!(f, "Failed"),
-            TaskStatus::Cancelled => write!(f, "Cancelled"),
+            Self::Queued => write!(f, "Queued"),
+            Self::Executing => write!(f, "Executing"),
+            Self::Completed => write!(f, "Completed"),
+            Self::Failed => write!(f, "Failed"),
+            Self::Cancelled => write!(f, "Cancelled"),
         }
     }
 }
@@ -52,6 +52,7 @@ pub struct TaskRequest {
 
 impl TaskRequest {
     /// Create a new task request
+    #[must_use]
     pub fn new(id: String, sector: String, operation: String, input: String) -> Self {
         Self {
             id,
@@ -64,12 +65,14 @@ impl TaskRequest {
     }
 
     /// Set priority for this task
-    pub fn with_priority(mut self, priority: u32) -> Self {
+    #[must_use]
+    pub const fn with_priority(mut self, priority: u32) -> Self {
         self.priority = priority;
         self
     }
 
     /// Add a sector to execute in
+    #[must_use]
     pub fn add_sector(mut self, sector: String) -> Self {
         if !self.sectors.contains(&sector) {
             self.sectors.push(sector);
@@ -103,6 +106,7 @@ pub struct TaskReceipt {
 
 impl TaskReceipt {
     /// Create a new task receipt
+    #[must_use]
     pub fn new(
         task_id: String,
         agent_id: String,
@@ -124,24 +128,28 @@ impl TaskReceipt {
     }
 
     /// Set execution time
-    pub fn with_execution_time(mut self, ms: u64) -> Self {
+    #[must_use]
+    pub const fn with_execution_time(mut self, ms: u64) -> Self {
         self.execution_time_ms = ms;
         self
     }
 
     /// Set merkle root of result
+    #[must_use]
     pub fn with_merkle(mut self, merkle: String) -> Self {
         self.result_merkle = merkle;
         self
     }
 
     /// Add metadata
+    #[must_use]
     pub fn add_metadata(mut self, key: String, value: String) -> Self {
         self.metadata.insert(key, value);
         self
     }
 
     /// Check if receipt indicates success
+    #[must_use]
     pub fn is_success(&self) -> bool {
         self.status == TaskStatus::Completed
     }
@@ -158,7 +166,8 @@ pub struct TaskQueue {
 
 impl TaskQueue {
     /// Create a new task queue
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { tasks: Vec::new(), receipts: Vec::new() }
     }
 
@@ -184,16 +193,19 @@ impl TaskQueue {
     }
 
     /// Get task count
-    pub fn task_count(&self) -> usize {
+    #[must_use]
+    pub const fn task_count(&self) -> usize {
         self.tasks.len()
     }
 
     /// Get receipt count
-    pub fn receipt_count(&self) -> usize {
+    #[must_use]
+    pub const fn receipt_count(&self) -> usize {
         self.receipts.len()
     }
 
     /// Get all receipts
+    #[must_use]
     pub fn receipts(&self) -> &[TaskReceipt] {
         &self.receipts
     }

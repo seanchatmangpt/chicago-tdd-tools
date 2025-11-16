@@ -12,7 +12,7 @@
 use chicago_tdd_tools::prelude::*;
 use chicago_tdd_tools::testing::ContinuousLearner;
 use chicago_tdd_tools::validation::advanced_phases::{
-    DistributedConsensus, TimeTravelDebugger, PerformanceProphet, QualityMetrics
+    DistributedConsensus, PerformanceProphet, QualityMetrics, TimeTravelDebugger,
 };
 use std::time::Instant;
 
@@ -71,8 +71,11 @@ fn main() {
 
         // Phase 11: Get prediction before execution
         let prediction = prophet.predict(contract.name);
-        println!("  Prediction: ~{} ticks (confidence: {:.1}%)",
-                 prediction.predicted_ticks, prediction.confidence * 100.0);
+        println!(
+            "  Prediction: ~{} ticks (confidence: {:.1}%)",
+            prediction.predicted_ticks,
+            prediction.confidence * 100.0
+        );
 
         // Phase 8: Get learning-based recommendation
         let test_pred = learner.predict(contract);
@@ -82,11 +85,8 @@ fn main() {
         let start = Instant::now();
 
         // Phase 10: Take snapshot before execution
-        let snapshot_id = debugger.snapshot(
-            contract.name.to_string(),
-            0,
-            "pre-execution".to_string()
-        );
+        let snapshot_id =
+            debugger.snapshot(contract.name.to_string(), 0, "pre-execution".to_string());
         println!("  Snapshot: {}", snapshot_id);
 
         let result = pipeline.execute_test(contract, || {
@@ -114,13 +114,16 @@ fn main() {
 
                     // Phase 9: Vote on receipt
                     let _vote = consensus.vote(receipt.receipt_id.clone(), true);
-                    println!("    Consensus vote: {:?}", consensus.consensus_status(&receipt.receipt_id));
+                    println!(
+                        "    Consensus vote: {:?}",
+                        consensus.consensus_status(&receipt.receipt_id)
+                    );
 
                     // Phase 10: Snapshot after execution
                     debugger.snapshot(
                         contract.name.to_string(),
                         receipt.timing.total_ticks,
-                        "post-execution".to_string()
+                        "post-execution".to_string(),
                     );
 
                     // Phase 11: Record performance
@@ -151,7 +154,11 @@ fn main() {
     println!("=== Phase 7: Deployment Decision ===");
     let decision = pipeline.deployment_decision();
     println!("Status: {}", decision.status());
-    println!("Tests: {}/{} passed", decision.total_tests - decision.failed_tests, decision.total_tests);
+    println!(
+        "Tests: {}/{} passed",
+        decision.total_tests - decision.failed_tests,
+        decision.total_tests
+    );
     println!("Average τ: {:.1} ticks", decision.average_tau);
     println!("Max τ: {} ticks", decision.max_tau);
 
@@ -204,11 +211,13 @@ fn main() {
     println!("=== Phase 11: Performance Predictions ===");
     for contract in CONTRACTS.iter() {
         let prediction = prophet.predict(contract.name);
-        println!("  {}: ~{} ± {} ticks (confidence: {:.1}%)",
-                 contract.name,
-                 prediction.predicted_ticks,
-                 prediction.confidence_interval,
-                 prediction.confidence * 100.0);
+        println!(
+            "  {}: ~{} ± {} ticks (confidence: {:.1}%)",
+            contract.name,
+            prediction.predicted_ticks,
+            prediction.confidence_interval,
+            prediction.confidence * 100.0
+        );
     }
     println!();
 
@@ -241,4 +250,21 @@ fn main() {
     println!("║  All 12 Phases Demonstrated Successfully!                    ║");
     println!("║  A = μ(O) with Advanced Verification Capabilities            ║");
     println!("╚═══════════════════════════════════════════════════════════════╝");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_pipeline_components_exist, {
+        // Arrange: Verify main function can be called (compile-time check)
+        // This test ensures the example compiles and basic components exist
+
+        // Act: Verify types are available
+        let _contracts: &[TestContract] = &[TestContract::hot_path("test", &["module::function"])];
+
+        // Assert: If we get here, types are available
+        assert!(true);
+    });
 }

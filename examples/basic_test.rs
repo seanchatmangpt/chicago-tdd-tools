@@ -228,3 +228,33 @@ async fn main() {
 
     chicago_tdd_tools::alert_success!("All examples completed successfully!");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_fixture_creation, {
+        // Arrange & Act
+        let result = example_fixture_creation();
+
+        // Assert
+        assert!(result.is_ok(), "Fixture creation should succeed");
+    });
+
+    test!(test_data_building, {
+        // Arrange & Act
+        let result = example_data_building();
+
+        // Assert
+        assert!(result.is_ok(), "Data building should succeed");
+    });
+
+    test!(test_error_handling_runs, {
+        // Arrange & Act: Just verify the function runs without panicking
+        example_error_handling();
+
+        // Assert: If we get here, function executed successfully
+        assert!(true);
+    });
+}

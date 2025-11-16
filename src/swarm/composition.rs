@@ -26,11 +26,15 @@ pub struct CompositionStep {
 
 impl CompositionStep {
     /// Create a new composition step
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const: uses String::new()
     pub fn new(id: String, sector: String, operation: String, input: String) -> Self {
         Self { id, sector, operation, input, output: String::new(), order: 0 }
     }
 
     /// Set execution order
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const: mutates self
     pub fn with_order(mut self, order: u32) -> Self {
         self.order = order;
         self
@@ -56,6 +60,8 @@ pub struct OperationChain {
 
 impl OperationChain {
     /// Create a new operation chain
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const: uses Vec::new()
     pub fn new(id: String, name: String) -> Self {
         Self {
             id,
@@ -75,6 +81,7 @@ impl OperationChain {
     }
 
     /// Get current step
+    #[must_use]
     pub fn current(&self) -> Option<&CompositionStep> {
         self.steps.get(self.current_step)
     }
@@ -85,6 +92,7 @@ impl OperationChain {
     }
 
     /// Move to next step
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const: mutates self
     pub fn advance(&mut self) -> bool {
         if self.current_step < self.steps.len() - 1 {
             self.current_step += 1;
@@ -96,26 +104,31 @@ impl OperationChain {
     }
 
     /// Get all steps
+    #[must_use]
     pub fn steps(&self) -> &[CompositionStep] {
         &self.steps
     }
 
     /// Check if chain is complete
-    pub fn is_completed(&self) -> bool {
+    #[must_use]
+    pub const fn is_completed(&self) -> bool {
         self.is_completed
     }
 
     /// Check if chain is deterministic
-    pub fn is_deterministic(&self) -> bool {
+    #[must_use]
+    pub const fn is_deterministic(&self) -> bool {
         self.is_deterministic
     }
 
     /// Get step count
-    pub fn step_count(&self) -> usize {
+    #[must_use]
+    pub const fn step_count(&self) -> usize {
         self.steps.len()
     }
 
     /// Get sectors involved
+    #[must_use]
     pub fn sectors(&self) -> Vec<String> {
         let mut sectors = self.steps.iter().map(|s| s.sector.clone()).collect::<Vec<_>>();
         sectors.sort();
@@ -143,6 +156,7 @@ pub struct ComposedOperation {
 
 impl ComposedOperation {
     /// Create a new composed operation
+    #[must_use]
     pub fn new(id: String, chain: OperationChain) -> Self {
         Self {
             id,
@@ -170,12 +184,14 @@ impl ComposedOperation {
     }
 
     /// Set total execution time
+    #[allow(clippy::missing_const_for_fn)] // Mutating function cannot be const
     pub fn set_total_time(&mut self, ms: u64) {
         self.total_time_ms = ms;
     }
 
     /// Check if composition succeeded
-    pub fn is_success(&self) -> bool {
+    #[must_use]
+    pub const fn is_success(&self) -> bool {
         self.chain.is_completed && !self.result.is_empty()
     }
 }

@@ -248,3 +248,10 @@
 - [ ] Add consensus vote verification (signatures, identity)
 - [ ] Implement dashboard consistency validator
 - [ ] Add integration tests verifying fail-fast for each mode
+
+## See Also
+
+- [Fail-Fast Verification Guide](../../examples/fail_fast_verification.md)
+- [Core Fail-Fast Module](../../src/core/fail_fast.rs)
+- [Architecture Guide](ARCHITECTURE.md)
+- [API Reference](API_REFERENCE.md)

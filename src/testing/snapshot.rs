@@ -336,28 +336,178 @@ impl SnapshotAssert {
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
+
+    // ========================================================================
+    // TEST FIXTURES - Reusable test data (Chicago TDD: Arrange helpers)
+    // ========================================================================
+
+    /// Test fixtures for snapshot testing
+    mod fixtures {
+        use super::*;
+
+        /// Create a simple test vector
+        pub fn test_vector() -> Vec<i32> {
+            vec![1, 2, 3]
+        }
+
+        /// Create a simple test string
+        pub fn test_string() -> &'static str {
+            "test_value"
+        }
+
+        /// Create a simple JSON object
+        pub fn simple_json() -> serde_json::Value {
+            serde_json::json!({
+                "name": "test",
+                "value": 42
+            })
+        }
+
+        /// Create a nested JSON structure
+        pub fn nested_json() -> serde_json::Value {
+            serde_json::json!({
+                "users": [
+                    {
+                        "id": 1,
+                        "name": "Alice",
+                        "tags": ["admin", "user"]
+                    },
+                    {
+                        "id": 2,
+                        "name": "Bob",
+                        "tags": ["user"]
+                    }
+                ],
+                "metadata": {
+                    "count": 2,
+                    "version": "1.0.0"
+                }
+            })
+        }
+
+        /// Create a test struct for inline snapshots
+        #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used for Debug output
+        pub struct TestStruct {
+            pub name: String,
+            pub value: i32,
+            pub tags: Vec<String>,
+        }
+
+        impl TestStruct {
+            pub fn new() -> Self {
+                Self {
+                    name: "test".to_string(),
+                    value: 42,
+                    tags: vec!["tag1".to_string(), "tag2".to_string()],
+                }
+            }
+        }
+
+        /// Create a test enum with variants
+        #[derive(Debug)]
+        #[allow(dead_code)] // Test enum - fields used for Debug output
+        pub enum TestEnum {
+            Variant1,
+            Variant2(String),
+            Variant3 { field: i32 },
+        }
+
+        pub fn test_enum_variants() -> Vec<TestEnum> {
+            vec![
+                TestEnum::Variant1,
+                TestEnum::Variant2("test".to_string()),
+                TestEnum::Variant3 { field: 42 },
+            ]
+        }
+
+        /// Create nested structs for testing
+        #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used for Debug output
+        pub struct Inner {
+            pub value: i32,
+            pub name: String,
+        }
+
+        #[derive(Debug)]
+        #[allow(dead_code)] // Test struct - fields used for Debug output
+        pub struct Outer {
+            pub inner: Inner,
+            pub count: usize,
+        }
+
+        impl Outer {
+            pub fn new() -> Self {
+                Self { inner: Inner { value: 42, name: "test".to_string() }, count: 10 }
+            }
+        }
+
+        /// Create a BTreeMap for deterministic ordering
+        pub fn test_map() -> BTreeMap<String, String> {
+            let mut map = BTreeMap::new();
+            map.insert("key1".to_string(), "value1".to_string());
+            map.insert("key2".to_string(), "value2".to_string());
+            map.insert("key3".to_string(), "value3".to_string());
+            map
+        }
+
+        /// Create JSON data with sensitive fields for redaction testing
+        pub fn sensitive_json() -> serde_json::Value {
+            serde_json::json!({
+                "id": "uuid-12345",
+                "timestamp": "2024-01-01T00:00:00Z",
+                "token": "secret-token-abc",
+                "message": "test"
+            })
+        }
+
+        /// Create nested JSON with sensitive fields
+        pub fn nested_sensitive_json() -> serde_json::Value {
+            serde_json::json!({
+                "user": {
+                    "id": "uuid-user-123",
+                    "email": "test@example.com"
+                },
+                "session": {
+                    "token": "secret-session-token",
+                    "created_at": "2024-01-01T00:00:00Z"
+                }
+            })
+        }
+    }
+
+    // ========================================================================
+    // CORE ASSERTION TESTS - Basic snapshot functionality
+    // ========================================================================
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_assert_matches() {
-        let data = "test_value";
+        // Arrange: Create test data
+        let data = fixtures::test_string();
+
+        // Act & Assert: Verify snapshot matches
         SnapshotAssert::assert_matches(&data, "test_snapshot_assert");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_assert_debug_matches() {
-        let data = vec![1, 2, 3];
+        // Arrange: Create test data
+        let data = fixtures::test_vector();
+
+        // Act & Assert: Verify debug snapshot matches
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_debug");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_assert_json_matches() {
-        let data = serde_json::json!({
-            "name": "test",
-            "value": 42
-        });
+        // Arrange: Create test data
+        let data = fixtures::simple_json();
+
+        // Act & Assert: Verify JSON snapshot matches
         SnapshotAssert::assert_json_matches(&data, "test_snapshot_json");
     }
 
@@ -368,57 +518,77 @@ mod tests {
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_json_serialization_fallback() {
-        // Test that JSON serialization fallback works correctly
+        // Arrange: Create null JSON value to test fallback path
         // This tests the unwrap_or_else in assert_json_matches
         // Note: serde_json::Value should always serialize successfully,
         // but we verify the fallback string format is correct
         let data = serde_json::json!(null);
+
+        // Act & Assert: Verify snapshot handles null JSON correctly
         SnapshotAssert::assert_json_matches(&data, "test_snapshot_json_null");
     }
 
     // ========================================================================
-    // BOUNDARY CONDITIONS - Test edge cases
+    // BOUNDARY CONDITIONS - Test edge cases (empty, single, max, zero, negative)
     // ========================================================================
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_empty_string() {
+        // Arrange: Empty string boundary condition
         let data = "";
+
+        // Act & Assert: Verify empty string snapshot
         SnapshotAssert::assert_matches(&data, "test_snapshot_empty_string");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_empty_collection() {
+        // Arrange: Empty collection boundary condition
         let data: Vec<i32> = vec![];
+
+        // Act & Assert: Verify empty collection snapshot
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_empty_collection");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_single_item_collection() {
+        // Arrange: Single item collection boundary condition
         let data = vec![42];
+
+        // Act & Assert: Verify single item collection snapshot
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_single_item");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_unicode_string() {
+        // Arrange: Unicode string with special characters
         let data = "Hello 世界 🌍";
+
+        // Act & Assert: Verify unicode string snapshot
         SnapshotAssert::assert_matches(&data, "test_snapshot_unicode");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_special_characters() {
+        // Arrange: String with control characters
         let data = "Line 1\nLine 2\tTabbed\r\nWindows";
+
+        // Act & Assert: Verify special characters snapshot
         SnapshotAssert::assert_matches(&data, "test_snapshot_special_chars");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_long_string() {
+        // Arrange: Long string boundary condition
         let data = "x".repeat(1000);
+
+        // Act & Assert: Verify long string snapshot
         SnapshotAssert::assert_matches(&data, "test_snapshot_long_string");
     }
 
@@ -429,96 +599,67 @@ mod tests {
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_nested_json() {
-        let data = serde_json::json!({
-            "users": [
-                {
-                    "id": 1,
-                    "name": "Alice",
-                    "tags": ["admin", "user"]
-                },
-                {
-                    "id": 2,
-                    "name": "Bob",
-                    "tags": ["user"]
-                }
-            ],
-            "metadata": {
-                "count": 2,
-                "version": "1.0.0"
-            }
-        });
+        // Arrange: Create nested JSON structure
+        let data = fixtures::nested_json();
+
+        // Act & Assert: Verify nested JSON snapshot
         SnapshotAssert::assert_json_matches(&data, "test_snapshot_nested_json");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_hashmap() {
-        use std::collections::BTreeMap;
-        // Use BTreeMap for deterministic ordering
-        let mut map = BTreeMap::new();
-        map.insert("key1".to_string(), "value1".to_string());
-        map.insert("key2".to_string(), "value2".to_string());
-        map.insert("key3".to_string(), "value3".to_string());
+        // Arrange: Create BTreeMap for deterministic ordering
+        let map = fixtures::test_map();
+
+        // Act & Assert: Verify map snapshot
         SnapshotAssert::assert_debug_matches(&map, "test_snapshot_hashmap");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_enum_variants() {
-        #[derive(Debug)]
-        #[allow(dead_code)] // Test enum - fields used for Debug output
-        enum TestEnum {
-            Variant1,
-            Variant2(String),
-            Variant3 { field: i32 },
-        }
-        let variants = vec![
-            TestEnum::Variant1,
-            TestEnum::Variant2("test".to_string()),
-            TestEnum::Variant3 { field: 42 },
-        ];
+        // Arrange: Create enum variants
+        let variants = fixtures::test_enum_variants();
+
+        // Act & Assert: Verify enum variants snapshot
         SnapshotAssert::assert_debug_matches(&variants, "test_snapshot_enum_variants");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_nested_struct() {
-        #[derive(Debug)]
-        #[allow(dead_code)] // Test struct - fields used for Debug output
-        struct Inner {
-            value: i32,
-            name: String,
-        }
-        #[derive(Debug)]
-        #[allow(dead_code)] // Test struct - fields used for Debug output
-        struct Outer {
-            inner: Inner,
-            count: usize,
-        }
-        let data = Outer { inner: Inner { value: 42, name: "test".to_string() }, count: 10 };
+        // Arrange: Create nested struct
+        let data = fixtures::Outer::new();
+
+        // Act & Assert: Verify nested struct snapshot
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_nested_struct");
     }
 
     // ========================================================================
-    // DISPLAY VS DEBUG - Test format differences
+    // FORMAT DIFFERENCES - Test Display vs Debug formatting
     // ========================================================================
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_display_vs_debug() {
-        // Test that Display and Debug produce different outputs
+        // Arrange: Create test data
         let data = 42;
+
+        // Act & Assert: Verify Display and Debug produce different outputs
         SnapshotAssert::assert_matches(&data, "test_snapshot_display_number");
         SnapshotAssert::assert_debug_matches(&data, "test_snapshot_debug_number");
     }
 
     // ========================================================================
-    // WITH_SETTINGS - Test custom settings
+    // CUSTOM SETTINGS - Test with_settings configuration
     // ========================================================================
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_with_custom_path() {
+        // Arrange: Configure custom snapshot path
+        // Act & Assert: Verify snapshot works with custom path
         SnapshotAssert::with_settings(
             |settings| {
                 settings.set_snapshot_path("custom_snapshots");
@@ -531,68 +672,118 @@ mod tests {
     }
 
     // ========================================================================
-    // V1.3.0 FEATURES - Inline, Redaction, Profiles
+    // V1.3.0 FEATURES - Inline Snapshots
     // ========================================================================
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_inline_simple() {
+        // Arrange: Create simple test data
         let data = "inline_test_value";
+
+        // Act & Assert: Verify inline snapshot
         SnapshotAssert::assert_inline(&data);
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_inline_debug() {
-        let data = vec![1, 2, 3];
+        // Arrange: Create test vector
+        let data = fixtures::test_vector();
+
+        // Act & Assert: Verify inline debug snapshot
         SnapshotAssert::assert_inline_debug(&data);
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_inline_json() {
+        // Arrange: Create JSON data
         let data = serde_json::json!({"key": "value", "number": 42});
+
+        // Act & Assert: Verify inline JSON snapshot
         SnapshotAssert::assert_inline_json(&data);
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_inline_complex_struct() {
+        // Arrange: Create complex struct
+        let data = fixtures::TestStruct::new();
+
+        // Act & Assert: Verify debug snapshot for complex struct (file-based to avoid name conflict)
+        SnapshotAssert::assert_debug_matches(&data, "test_snapshot_inline_complex_struct");
+    }
+
+    // ========================================================================
+    // V1.3.0 FEATURES - Redaction Testing
+    // ========================================================================
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_redaction_basic() {
+        // Arrange: Create JSON with sensitive data and single redaction
         let data = serde_json::json!({
             "id": "uuid-12345",
             "message": "test message"
         });
-
         let mut redactions = HashMap::new();
         redactions.insert(".id".to_string(), "[UUID]".to_string());
 
+        // Act & Assert: Verify redaction works correctly
         SnapshotAssert::assert_with_redaction(&data, "test_redaction_basic", &redactions);
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_redaction_multiple() {
-        let data = serde_json::json!({
-            "id": "uuid-12345",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "token": "secret-token-abc",
-            "message": "test"
-        });
-
+        // Arrange: Create JSON with multiple sensitive fields
+        let data = fixtures::sensitive_json();
         let mut redactions = HashMap::new();
         redactions.insert(".id".to_string(), "[UUID]".to_string());
         redactions.insert(".timestamp".to_string(), "[TIMESTAMP]".to_string());
         redactions.insert(".token".to_string(), "[TOKEN]".to_string());
 
+        // Act & Assert: Verify multiple redactions work correctly
         SnapshotAssert::assert_with_redaction(&data, "test_redaction_multiple", &redactions);
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
-    fn test_snapshot_common_redactions() {
+    fn test_snapshot_redaction_nested() {
+        // Arrange: Create nested JSON with sensitive fields
+        let data = fixtures::nested_sensitive_json();
+        let mut redactions = HashMap::new();
+        redactions.insert(".user.id".to_string(), "[USER_ID]".to_string());
+        redactions.insert(".session.token".to_string(), "[SESSION_TOKEN]".to_string());
+        redactions.insert(".session.created_at".to_string(), "[TIMESTAMP]".to_string());
+
+        // Act & Assert: Verify nested redactions work correctly
+        SnapshotAssert::assert_with_redaction(&data, "test_redaction_nested", &redactions);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_redaction_with_common() {
+        // Arrange: Create JSON with sensitive fields and use common redactions
+        let data = serde_json::json!({
+            "id": "uuid-12345",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "message": "test message"
+        });
         let redactions = SnapshotAssert::common_redactions();
 
-        // Assert: Verify common redactions exist
+        // Act & Assert: Verify common redactions work correctly
+        SnapshotAssert::assert_with_redaction(&data, "test_common_redaction", &redactions);
+    }
+
+    #[test]
+    #[cfg(feature = "snapshot-testing")]
+    fn test_snapshot_common_redactions() {
+        // Arrange: Get common redactions
+        let redactions = SnapshotAssert::common_redactions();
+
+        // Act & Assert: Verify common redactions contain expected keys and values
         assert!(redactions.contains_key(".id"));
         assert!(redactions.contains_key(".uuid"));
         assert!(redactions.contains_key(".timestamp"));
@@ -601,72 +792,27 @@ mod tests {
         assert_eq!(redactions.get(".id"), Some(&"[UUID]".to_string()));
     }
 
+    // ========================================================================
+    // V1.3.0 FEATURES - Profile Testing
+    // ========================================================================
+
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_profile_ci() {
+        // Arrange: Create test data
         let data = "ci_profile_test";
+
+        // Act & Assert: Verify CI profile snapshot
         SnapshotAssert::assert_with_profile(&data, "test_profile_ci", "ci");
     }
 
     #[test]
     #[cfg(feature = "snapshot-testing")]
     fn test_snapshot_profile_dev() {
+        // Arrange: Create test data
         let data = "dev_profile_test";
+
+        // Act & Assert: Verify dev profile snapshot
         SnapshotAssert::assert_with_profile(&data, "test_profile_dev", "dev");
-    }
-
-    #[test]
-    #[cfg(feature = "snapshot-testing")]
-    fn test_snapshot_redaction_with_common() {
-        let data = serde_json::json!({
-            "id": "uuid-12345",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "message": "test message"
-        });
-
-        let redactions = SnapshotAssert::common_redactions();
-        SnapshotAssert::assert_with_redaction(&data, "test_common_redaction", &redactions);
-    }
-
-    #[test]
-    #[cfg(feature = "snapshot-testing")]
-    fn test_snapshot_inline_complex_struct() {
-        #[derive(Debug)]
-        #[allow(dead_code)] // Test struct - fields used in Debug output
-        struct TestStruct {
-            name: String,
-            value: i32,
-            tags: Vec<String>,
-        }
-
-        let data = TestStruct {
-            name: "test".to_string(),
-            value: 42,
-            tags: vec!["tag1".to_string(), "tag2".to_string()],
-        };
-
-        SnapshotAssert::assert_inline_debug(&data);
-    }
-
-    #[test]
-    #[cfg(feature = "snapshot-testing")]
-    fn test_snapshot_redaction_nested() {
-        let data = serde_json::json!({
-            "user": {
-                "id": "uuid-user-123",
-                "email": "test@example.com"
-            },
-            "session": {
-                "token": "secret-session-token",
-                "created_at": "2024-01-01T00:00:00Z"
-            }
-        });
-
-        let mut redactions = HashMap::new();
-        redactions.insert(".user.id".to_string(), "[USER_ID]".to_string());
-        redactions.insert(".session.token".to_string(), "[SESSION_TOKEN]".to_string());
-        redactions.insert(".session.created_at".to_string(), "[TIMESTAMP]".to_string());
-
-        SnapshotAssert::assert_with_redaction(&data, "test_redaction_nested", &redactions);
     }
 }

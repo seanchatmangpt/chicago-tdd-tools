@@ -49,7 +49,7 @@ pub struct Review {
 }
 
 /// Reviewer recommendation
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReviewRecommendation {
     /// Accept paper
     Accept,
@@ -62,7 +62,7 @@ pub enum ReviewRecommendation {
 }
 
 /// Editorial decision
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Decision {
     /// Paper accepted
     Accepted,
@@ -76,11 +76,13 @@ pub enum Decision {
 
 impl Decision {
     /// Determine decision from reviews
+    #[must_use]
     pub fn from_reviews(reviews: &[Review]) -> Self {
         if reviews.is_empty() {
-            return Decision::Rejected;
+            return Self::Rejected;
         }
 
+        #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for average calculation
         let avg_score = reviews.iter().map(|r| r.score).sum::<f64>() / reviews.len() as f64;
         let reject_count = reviews
             .iter()
@@ -89,13 +91,13 @@ impl Decision {
 
         // Deterministic decision algorithm
         if reject_count > 0 {
-            Decision::Rejected
+            Self::Rejected
         } else if avg_score >= 3.5 {
-            Decision::Accepted
+            Self::Accepted
         } else if avg_score >= 2.5 {
-            Decision::MinorRevisions
+            Self::MinorRevisions
         } else {
-            Decision::MajorRevisions
+            Self::MajorRevisions
         }
     }
 }
@@ -109,12 +111,20 @@ pub struct AcademicOperation {
 
 impl AcademicOperation {
     /// Create new academic operation
+    #[must_use]
     pub fn new(paper: PaperSubmission, reviews: Vec<Review>) -> Self {
         let decision = Decision::from_reviews(&reviews);
         Self { paper, reviews, decision }
     }
 
+    /// Get decision
+    #[must_use]
+    pub const fn decision(&self) -> Decision {
+        self.decision
+    }
+
     /// Generate reviewer assignment (deterministic)
+    #[must_use]
     pub fn assign_reviewers(&self) -> ReviewerAssignment {
         // Deterministic assignment based on paper ID hash
         let mut hasher = Sha256::new();
@@ -136,8 +146,9 @@ impl AcademicOperation {
     }
 
     /// Generate decision receipt
+    #[must_use]
     pub fn generate_decision_receipt(&self) -> OperationReceipt {
-        let decision_str = match self.decision {
+        let decision_str = match self.decision() {
             Decision::Accepted => "Accepted",
             Decision::MinorRevisions => "Minor Revisions",
             Decision::MajorRevisions => "Major Revisions",
@@ -157,11 +168,13 @@ impl AcademicOperation {
             sector: "Academic".to_string(),
             operation: "Decision".to_string(),
             status: OperationStatus::Success,
-            result: format!(
-                "Decision: {} (Avg Score: {:.1})",
-                decision_str,
-                self.reviews.iter().map(|r| r.score).sum::<f64>() / self.reviews.len() as f64
-            ),
+            result: {
+                #[allow(clippy::cast_precision_loss)]
+                // Precision loss acceptable for average calculation
+                let avg =
+                    self.reviews.iter().map(|r| r.score).sum::<f64>() / self.reviews.len() as f64;
+                format!("Decision: {decision_str} (Avg Score: {avg:.1})")
+            },
             merkle_root: hex::encode(hash),
             timestamp: "2025-11-16T00:00:00Z".to_string(),
         }
@@ -169,11 +182,11 @@ impl AcademicOperation {
 }
 
 impl SectorOperation for AcademicOperation {
-    fn sector_name(&self) -> &str {
+    fn sector_name(&self) -> &'static str {
         "Academic Publishing"
     }
 
-    fn description(&self) -> &str {
+    fn description(&self) -> &'static str {
         "Paper review and publication workflow"
     }
 

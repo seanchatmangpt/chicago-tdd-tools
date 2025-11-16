@@ -16,6 +16,7 @@ This example demonstrates snapshot testing using `insta` for Chicago TDD. Snapsh
 - JSON snapshot testing
 - Debug representation snapshots
 - Snapshot review workflow
+- **v1.4.0 Enhancements**: Enhanced fixtures, complex structures, improved organization, sensitive data redaction
 
 ---
 
@@ -397,6 +398,94 @@ project/
 
 ---
 
+## v1.4.0 Enhancements
+
+### Enhanced Test Fixtures
+
+v1.4.0 encourages reusable test fixtures for snapshot testing. Create fixture functions that return consistent test data:
+
+```rust
+fn nested_json_fixture() -> serde_json::Value {
+    serde_json::json!({
+        "users": [{"id": 1, "name": "Alice"}],
+        "metadata": {"count": 1}
+    })
+}
+
+let data = nested_json_fixture();
+SnapshotAssert::assert_json_matches(&data, "nested_data");
+```
+
+**Benefits:**
+- Reusable test data across tests
+- Consistent test data structures
+- Better maintainability
+
+### Complex Structure Support
+
+v1.4.0 improves support for complex data structures:
+
+```rust
+#[derive(Debug)]
+struct Inner { value: i32, name: String }
+#[derive(Debug)]
+struct Outer { inner: Inner, count: usize }
+
+let complex = Outer {
+    inner: Inner { value: 42, name: "test".to_string() },
+    count: 10,
+};
+
+SnapshotAssert::assert_debug_matches(&complex, "complex_struct");
+```
+
+**Supported Types:**
+- Nested structs
+- Enums with variants
+- Maps (BTreeMap, HashMap)
+- Arrays and vectors
+
+### Improved Test Organization
+
+v1.4.0 improves test organization with better AAA pattern alignment:
+
+```rust
+#[test]
+fn test_well_organized() {
+    // Arrange: Use fixtures for consistent data
+    let data = nested_json_fixture();
+
+    // Act: Execute operation
+    let result = process_data(&data);
+
+    // Assert: Verify with snapshot
+    SnapshotAssert::assert_json_matches(&result, "processed_data");
+}
+```
+
+**Improvements:**
+- Clear AAA pattern sections
+- Better comments and documentation
+- Consistent fixture usage
+
+### Enhanced Sensitive Data Redaction
+
+v1.4.0 enhances sensitive data redaction with common redaction patterns:
+
+```rust
+let sensitive = json!({"id": "uuid-123", "token": "secret"});
+let redactions = SnapshotAssert::common_redactions();
+SnapshotAssert::assert_with_redaction(&sensitive, "redacted", &redactions);
+```
+
+**Common Redactions:**
+- `.id` → `[UUID]`
+- `.timestamp` → `[TIMESTAMP]`
+- `.token` → `[TOKEN]`
+- `.password` → `[PASSWORD]`
+
+---
+
 **Quality is the default. Prevention beats detection.**
 
-*Example: snapshot_testing.rs | Version: 1.2.0 | Updated: 2025-11-15*
+*Example: snapshot_testing.rs | Version: 1.4.0 | Updated: 2025-01-XX*

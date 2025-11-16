@@ -3,11 +3,8 @@ source: src/testing/snapshot.rs
 assertion_line: 159
 expression: value
 ---
-TestStruct {
-    name: "test",
-    value: 42,
-    tags: [
-        "tag1",
-        "tag2",
-    ],
-}
+[
+    1,
+    2,
+    3,
+]

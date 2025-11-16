@@ -43,6 +43,7 @@ pub struct OperatorDescriptor {
 
 /// The four properties of the Chatman Equation
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[allow(clippy::struct_excessive_bools)] // Four bools represent the four Chatman properties (intentional design)
 pub struct OperatorProperties {
     /// Identical inputs always produce identical outputs
     pub deterministic: bool,
@@ -79,17 +80,18 @@ pub enum GuardType {
 impl std::fmt::Display for GuardType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GuardType::Legality => write!(f, "Legality"),
-            GuardType::Budget => write!(f, "Budget"),
-            GuardType::Chronology => write!(f, "Chronology"),
-            GuardType::Causality => write!(f, "Causality"),
-            GuardType::Recursion => write!(f, "Recursion"),
+            Self::Legality => write!(f, "Legality"),
+            Self::Budget => write!(f, "Budget"),
+            Self::Chronology => write!(f, "Chronology"),
+            Self::Causality => write!(f, "Causality"),
+            Self::Recursion => write!(f, "Recursion"),
         }
     }
 }
 
 impl OperatorDescriptor {
     /// Create a new operator descriptor
+    #[must_use]
     pub fn new(
         hook_id: &str,
         pattern_number: u32,
@@ -112,7 +114,8 @@ impl OperatorDescriptor {
     }
 
     /// Check if operator satisfies all Chatman properties
-    pub fn satisfies_all_properties(&self) -> bool {
+    #[must_use]
+    pub const fn satisfies_all_properties(&self) -> bool {
         self.properties.deterministic
             && self.properties.idempotent
             && self.properties.type_preserving
@@ -120,26 +123,33 @@ impl OperatorDescriptor {
     }
 
     /// Check if operator is bounded
-    pub fn is_bounded(&self) -> bool {
+    #[must_use]
+    pub const fn is_bounded(&self) -> bool {
         self.properties.bounded && self.max_latency_ns > 0
     }
 
     /// Get maximum latency in milliseconds (for display)
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for display purposes
     pub fn max_latency_ms(&self) -> f64 {
         self.max_latency_ns as f64 / 1_000_000.0
     }
 
     /// Get maximum latency in seconds (for display)
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for display purposes
     pub fn max_latency_s(&self) -> f64 {
         self.max_latency_ns as f64 / 1_000_000_000.0
     }
 
     /// Check if operator requires a specific guard
+    #[must_use]
     pub fn requires_guard(&self, guard: GuardType) -> bool {
         self.required_guards.contains(&guard)
     }
 
     /// Add a service level objective
+    #[must_use]
     pub fn with_slo(mut self, slo: &str) -> Self {
         self.slo = Some(slo.to_string());
         self
@@ -153,6 +163,8 @@ pub struct OperatorRegistry {
 
 impl OperatorRegistry {
     /// Create a new operator registry with all 43 YAWL patterns
+    #[must_use]
+    #[allow(clippy::too_many_lines)] // Registry initialization requires many pattern definitions
     pub fn new() -> Self {
         let mut operators = HashMap::new();
 
@@ -427,11 +439,13 @@ impl OperatorRegistry {
     }
 
     /// Look up an operator by hook ID
+    #[must_use]
     pub fn get_operator(&self, hook_id: &str) -> Option<&OperatorDescriptor> {
         self.operators.get(hook_id)
     }
 
     /// Get all operators
+    #[must_use]
     pub fn all_operators(&self) -> Vec<&OperatorDescriptor> {
         let mut ops: Vec<_> = self.operators.values().collect();
         ops.sort_by_key(|op| op.pattern_number);
@@ -439,6 +453,7 @@ impl OperatorRegistry {
     }
 
     /// Count operators by category
+    #[must_use]
     pub fn count_by_category(&self) -> HashMap<String, usize> {
         let mut counts = HashMap::new();
         for op in self.operators.values() {
@@ -448,26 +463,31 @@ impl OperatorRegistry {
     }
 
     /// Count operators with each property
+    #[must_use]
     pub fn count_deterministic(&self) -> usize {
         self.operators.values().filter(|op| op.properties.deterministic).count()
     }
 
     /// Count operators with idempotence property
+    #[must_use]
     pub fn count_idempotent(&self) -> usize {
         self.operators.values().filter(|op| op.properties.idempotent).count()
     }
 
     /// Count operators with type preservation property
+    #[must_use]
     pub fn count_type_preserving(&self) -> usize {
         self.operators.values().filter(|op| op.properties.type_preserving).count()
     }
 
     /// Count operators with boundedness property
+    #[must_use]
     pub fn count_bounded(&self) -> usize {
         self.operators.values().filter(|op| op.properties.bounded).count()
     }
 
     /// Get operators requiring a specific guard
+    #[must_use]
     pub fn operators_with_guard(&self, guard: GuardType) -> Vec<&OperatorDescriptor> {
         self.operators
             .values()
@@ -476,6 +496,7 @@ impl OperatorRegistry {
     }
 
     /// Get operators satisfying all four properties
+    #[must_use]
     pub fn operators_fully_deterministic(&self) -> Vec<&OperatorDescriptor> {
         self.operators.values().filter(|op| op.satisfies_all_properties()).collect()
     }

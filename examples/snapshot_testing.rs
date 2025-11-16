@@ -234,4 +234,294 @@ mod tests {
             },
         );
     }
+
+    // ========================================================================
+    // v1.4.0 ENHANCEMENTS - Enhanced Fixtures, Complex Structures, Better Organization
+    // ========================================================================
+
+    // Example: Using enhanced test fixtures (v1.4.0)
+    //
+    // ## How-to: Use Test Fixtures
+    //
+    // v1.4.0 encourages reusable test fixtures for snapshot testing. Fixtures follow
+    // Chicago TDD Arrange-Act-Assert pattern and provide consistent test data.
+    // Create your own fixtures for reusable test data structures.
+    //
+    // ## Reference
+    //
+    // - **Pattern**: Create fixture functions that return consistent test data
+    // - **Benefits**: Reusable, maintainable, consistent test data
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // fn nested_json_fixture() -> serde_json::Value {
+    //     serde_json::json!({
+    //         "users": [{"id": 1, "name": "Alice"}],
+    //         "metadata": {"count": 1}
+    //     })
+    // }
+    //
+    // let data = nested_json_fixture();
+    // SnapshotAssert::assert_json_matches(&data, "nested_data");
+    // ```
+    #[test]
+    fn test_snapshot_with_fixtures() {
+        // Arrange: Create reusable fixtures (v1.4.0 pattern)
+        fn nested_json_fixture() -> serde_json::Value {
+            serde_json::json!({
+                "users": [
+                    {"id": 1, "name": "Alice", "tags": ["admin", "user"]},
+                    {"id": 2, "name": "Bob", "tags": ["user"]}
+                ],
+                "metadata": {"count": 2, "version": "1.0.0"}
+            })
+        }
+
+        fn simple_json_fixture() -> serde_json::Value {
+            serde_json::json!({
+                "name": "test",
+                "value": 42
+            })
+        }
+
+        let nested_data = nested_json_fixture();
+        let simple_data = simple_json_fixture();
+
+        // Act & Assert: Verify snapshots with fixture data
+        SnapshotAssert::assert_json_matches(&nested_data, "test_fixture_nested_json");
+        SnapshotAssert::assert_json_matches(&simple_data, "test_fixture_simple_json");
+    }
+
+    // Example: Testing complex structures (v1.4.0)
+    //
+    // ## How-to: Complex Structures
+    //
+    // v1.4.0 improves support for complex data structures including nested JSON,
+    // enums, maps, and custom structs. Better handling of edge cases and formatting.
+    //
+    // ## Reference
+    //
+    // - **Complex Types**: Nested structs, enums with variants, maps, arrays
+    // - **Better Formatting**: Improved debug representation for complex types
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // #[derive(Debug)]
+    // struct Inner { value: i32, name: String }
+    // #[derive(Debug)]
+    // struct Outer { inner: Inner, count: usize }
+    //
+    // let complex = Outer { inner: Inner { value: 42, name: "test".to_string() }, count: 10 };
+    // SnapshotAssert::assert_debug_matches(&complex, "complex_struct");
+    // ```
+    #[test]
+    fn test_snapshot_complex_struct() {
+        // Arrange: Create complex nested structure (v1.4.0)
+        #[derive(Debug)]
+        struct Inner {
+            value: i32,
+            name: String,
+        }
+
+        #[derive(Debug)]
+        struct Outer {
+            inner: Inner,
+            count: usize,
+        }
+
+        #[derive(Debug)]
+        enum TestEnum {
+            Variant1,
+            Variant2(String),
+            Variant3 { field: i32 },
+        }
+
+        use std::collections::BTreeMap;
+
+        let complex_struct =
+            Outer { inner: Inner { value: 42, name: "test".to_string() }, count: 10 };
+
+        let enum_variants = vec![
+            TestEnum::Variant1,
+            TestEnum::Variant2("test".to_string()),
+            TestEnum::Variant3 { field: 42 },
+        ];
+
+        let mut map_data = BTreeMap::new();
+        map_data.insert("key1".to_string(), "value1".to_string());
+        map_data.insert("key2".to_string(), "value2".to_string());
+        map_data.insert("key3".to_string(), "value3".to_string());
+
+        // Act & Assert: Verify complex structures
+        SnapshotAssert::assert_debug_matches(&complex_struct, "test_complex_nested_struct");
+        SnapshotAssert::assert_debug_matches(&enum_variants, "test_enum_variants");
+        SnapshotAssert::assert_debug_matches(&map_data, "test_map_structure");
+    }
+
+    // Example: Improved test organization (v1.4.0)
+    //
+    // ## How-to: Better Organization
+    //
+    // v1.4.0 improves test organization with better AAA pattern alignment.
+    // Tests are clearer and more maintainable with enhanced fixtures.
+    //
+    // ## Reference
+    //
+    // - **AAA Pattern**: Clear Arrange-Act-Assert sections
+    // - **Fixture Reuse**: Consistent test data across tests
+    // - **Better Comments**: Enhanced documentation in test code
+    //
+    // # Examples
+    //
+    // ```rust
+    // #[test]
+    // fn test_well_organized() {
+    //     // Arrange: Use fixtures for consistent data
+    //     let data = nested_json_fixture();
+    //
+    //     // Act: Execute operation
+    //     let result = process_data(&data);
+    //
+    //     // Assert: Verify with snapshot
+    //     SnapshotAssert::assert_json_matches(&result, "processed_data");
+    // }
+    // ```
+    #[test]
+    fn test_snapshot_improved_organization() {
+        // Arrange: Use fixtures for consistent test data (v1.4.0)
+        fn input_fixture() -> serde_json::Value {
+            serde_json::json!({
+                "users": [{"id": 1, "name": "Alice"}],
+                "metadata": {"count": 1}
+            })
+        }
+
+        let input_data = input_fixture();
+
+        // Act: Simulate processing (in real test, would call actual function)
+        // For example: let processed = process_json(&input_data);
+        let processed_data = input_data.clone(); // Simplified for example
+
+        // Assert: Verify processed data with snapshot
+        SnapshotAssert::assert_json_matches(&processed_data, "test_organized_processing");
+    }
+
+    // Example: Sensitive data redaction (v1.4.0)
+    //
+    // ## How-to: Redact Sensitive Data
+    //
+    // v1.4.0 enhances sensitive data redaction capabilities. Use fixtures
+    // with sensitive data and apply redactions before snapshotting.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::assert_with_redaction()`
+    // - **Helper**: `SnapshotAssert::common_redactions()`
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    // use std::collections::HashMap;
+    //
+    // let sensitive = json!({"id": "uuid-123", "token": "secret"});
+    // let redactions = SnapshotAssert::common_redactions();
+    // SnapshotAssert::assert_with_redaction(&sensitive, "redacted", &redactions);
+    // ```
+    #[test]
+    fn test_snapshot_sensitive_redaction() {
+        // Arrange: Create sensitive data (v1.4.0)
+        use std::collections::HashMap;
+
+        let sensitive_data = serde_json::json!({
+            "id": "uuid-12345",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "token": "secret-token-abc",
+            "message": "test"
+        });
+
+        let nested_sensitive = serde_json::json!({
+            "user": {
+                "id": "uuid-user-123",
+                "email": "test@example.com"
+            },
+            "session": {
+                "token": "secret-session-token",
+                "created_at": "2024-01-01T00:00:00Z"
+            }
+        });
+
+        // Get common redactions (v1.4.0)
+        let mut redactions = SnapshotAssert::common_redactions();
+        redactions.insert(".user.id".to_string(), "[USER_ID]".to_string());
+        redactions.insert(".session.token".to_string(), "[SESSION_TOKEN]".to_string());
+
+        // Act & Assert: Verify redacted snapshots
+        SnapshotAssert::assert_with_redaction(
+            &sensitive_data,
+            "test_redacted_sensitive",
+            &redactions,
+        );
+        SnapshotAssert::assert_with_redaction(
+            &nested_sensitive,
+            "test_redacted_nested",
+            &redactions,
+        );
+    }
+
+    // Example: Inline snapshots for complex structures (v1.4.0)
+    //
+    // ## How-to: Inline Snapshots
+    //
+    // v1.4.0 supports inline snapshots for complex structures. Snapshots are
+    // stored directly in test source code for quick review.
+    //
+    // ## Reference
+    //
+    // - **Function**: `SnapshotAssert::assert_inline_debug()`
+    // - **Function**: `SnapshotAssert::assert_inline_json()`
+    //
+    // # Examples
+    //
+    // ```rust
+    // use chicago_tdd_tools::snapshot::SnapshotAssert;
+    //
+    // #[derive(Debug)]
+    // struct Complex { inner: Inner, count: usize }
+    // let data = Complex { inner: Inner { value: 42 }, count: 10 };
+    // SnapshotAssert::assert_inline_debug(&data);
+    // ```
+    #[test]
+    fn test_snapshot_inline_complex_struct() {
+        // Arrange: Create complex structure (v1.4.0)
+        #[derive(Debug)]
+        struct Inner {
+            value: i32,
+            name: String,
+        }
+
+        #[derive(Debug)]
+        struct Complex {
+            inner: Inner,
+            count: usize,
+        }
+
+        let complex = Complex { inner: Inner { value: 42, name: "test".to_string() }, count: 10 };
+
+        let json_data = serde_json::json!({
+            "users": [{"id": 1, "name": "Alice"}],
+            "metadata": {"count": 1}
+        });
+
+        // Act & Assert: Verify inline snapshots
+        // Note: On first run, insta will write snapshot inline
+        SnapshotAssert::assert_inline_debug(&complex);
+        SnapshotAssert::assert_inline_json(&json_data);
+    }
 }

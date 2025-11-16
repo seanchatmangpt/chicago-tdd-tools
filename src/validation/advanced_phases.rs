@@ -6,7 +6,7 @@
 //! - Phase 11: Performance Prophet
 //! - Phase 12: Quality Metrics Dashboard
 
-use crate::core::receipt::{TestReceipt, TestOutcome};
+use crate::core::receipt::{TestOutcome, TestReceipt};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -81,11 +81,18 @@ impl DistributedConsensus {
     #[must_use]
     pub fn has_consensus(&self, receipt_id: &str) -> Option<bool> {
         let votes = self.votes.get(receipt_id)?;
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss
+        )]
         if votes.len() < (self.total_nodes as f64 * self.threshold).ceil() as usize {
             return None; // Not enough votes yet
         }
 
         let approvals = votes.iter().filter(|v| v.approved).count();
+        // Precision loss acceptable for ratio calculation (bounded 0.0-1.0)
+        #[allow(clippy::cast_precision_loss)]
         let approval_ratio = approvals as f64 / votes.len() as f64;
 
         Some(approval_ratio >= self.threshold)
@@ -99,6 +106,11 @@ impl DistributedConsensus {
             Some(false) => ConsensusStatus::Rejected,
             None => {
                 let votes = self.votes.get(receipt_id).map_or(0, Vec::len);
+                #[allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_precision_loss
+                )]
                 let needed = (self.total_nodes as f64 * self.threshold).ceil() as usize;
                 ConsensusStatus::Pending { votes, needed }
             }
@@ -118,7 +130,7 @@ pub enum ConsensusStatus {
         /// Number of votes received
         votes: usize,
         /// Number of votes needed for consensus
-        needed: usize
+        needed: usize,
     },
 }
 
@@ -154,20 +166,19 @@ pub struct TimeTravelDebugger {
 impl TimeTravelDebugger {
     /// Create a new time-travel debugger
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn new() -> Self {
-        Self {
-            snapshots: Vec::new(),
-            current_index: 0,
-            recording: true,
-        }
+        Self { snapshots: Vec::new(), current_index: 0, recording: true }
     }
 
     /// Start recording snapshots
+    #[allow(clippy::missing_const_for_fn)]
     pub fn start_recording(&mut self) {
         self.recording = true;
     }
 
     /// Stop recording snapshots
+    #[allow(clippy::missing_const_for_fn)]
     pub fn stop_recording(&mut self) {
         self.recording = false;
     }
@@ -178,7 +189,7 @@ impl TimeTravelDebugger {
             return String::new();
         }
 
-        let id = format!("snapshot_{}_{}", contract_name, self.snapshots.len());
+        let id = format!("snapshot_{contract_name}_{}", self.snapshots.len());
         let snapshot = ExecutionSnapshot {
             id: id.clone(),
             contract_name,
@@ -268,11 +279,9 @@ pub struct PerformanceProphet {
 impl PerformanceProphet {
     /// Create a new performance prophet
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Vec initialization is not const
     pub fn new() -> Self {
-        Self {
-            history: Vec::new(),
-            window_size: 10,
-        }
+        Self { history: Vec::new(), window_size: 10 }
     }
 
     /// Record a performance measurement
@@ -302,28 +311,28 @@ impl PerformanceProphet {
         }
 
         // Use moving average of recent executions
-        let recent: Vec<u64> = contract_history
-            .iter()
-            .rev()
-            .take(self.window_size)
-            .copied()
-            .collect();
+        let recent: Vec<u64> =
+            contract_history.iter().rev().take(self.window_size).copied().collect();
 
         let sum: u64 = recent.iter().sum();
         let avg = sum / recent.len() as u64;
 
         // Calculate standard deviation for confidence interval
+        #[allow(clippy::cast_precision_loss)]
         let variance: f64 = recent
             .iter()
             .map(|x| {
+                #[allow(clippy::cast_precision_loss)]
                 let diff = (*x as f64) - (avg as f64);
                 diff * diff
             })
             .sum::<f64>()
             / recent.len() as f64;
 
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let std_dev = variance.sqrt().ceil() as u64; // Round up to be conservative
 
+        #[allow(clippy::cast_precision_loss)]
         let confidence = (recent.len() as f64 / (recent.len() + 5) as f64).min(1.0);
 
         PerformancePrediction {
@@ -383,30 +392,31 @@ impl QualityMetrics {
     /// Create new quality metrics
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            min_tau: u64::MAX,
-            ..Default::default()
-        }
+        Self { min_tau: u64::MAX, ..Default::default() }
     }
 
     /// Update metrics with a test receipt
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for statistical calculations
     pub fn update(&mut self, receipt: &TestReceipt, execution_time: Duration) {
         self.total_tests += 1;
         self.execution_time += execution_time;
 
         match receipt.result {
             TestOutcome::Pass => self.tests_passed += 1,
-            TestOutcome::Fail => self.tests_failed += 1,
+            TestOutcome::Fail | TestOutcome::Error => self.tests_failed += 1,
             TestOutcome::Skip => {}
-            TestOutcome::Error => self.tests_failed += 1,
         }
 
         let ticks = receipt.timing.total_ticks;
         self.max_tau = self.max_tau.max(ticks);
         self.min_tau = self.min_tau.min(ticks);
 
+        // Precision loss acceptable for running average calculation
+        #[allow(clippy::cast_precision_loss)]
         let total_tau = self.average_tau * (self.total_tests - 1) as f64;
-        self.average_tau = (total_tau + ticks as f64) / self.total_tests as f64;
+        #[allow(clippy::cast_precision_loss)]
+        let new_avg = (total_tau + ticks as f64) / self.total_tests as f64;
+        self.average_tau = new_avg;
 
         if !receipt.timing.budget_met {
             self.tau_violations += 1;
@@ -415,6 +425,7 @@ impl QualityMetrics {
 
     /// Get pass rate
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for rate calculations
     pub fn pass_rate(&self) -> f64 {
         if self.total_tests == 0 {
             0.0
@@ -425,6 +436,7 @@ impl QualityMetrics {
 
     /// Get failure rate
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for rate calculations
     pub fn failure_rate(&self) -> f64 {
         if self.total_tests == 0 {
             0.0
@@ -435,6 +447,7 @@ impl QualityMetrics {
 
     /// Get τ violation rate
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for rate calculations
     pub fn tau_violation_rate(&self) -> f64 {
         if self.total_tests == 0 {
             0.0
@@ -485,7 +498,10 @@ mod tests {
 
         consensus.vote(receipt_id.clone(), true);
         // Byzantine FT threshold is 0.67, so for 3 nodes: ceil(3 * 0.67) = 3 votes needed
-        assert_eq!(consensus.consensus_status(&receipt_id), ConsensusStatus::Pending { votes: 1, needed: 3 });
+        assert_eq!(
+            consensus.consensus_status(&receipt_id),
+            ConsensusStatus::Pending { votes: 1, needed: 3 }
+        );
 
         let vote2 = ConsensusVote {
             node_id: "node2".to_string(),
@@ -497,7 +513,10 @@ mod tests {
         consensus.record_vote(vote2);
 
         // Still pending with 2/3 votes
-        assert_eq!(consensus.consensus_status(&receipt_id), ConsensusStatus::Pending { votes: 2, needed: 3 });
+        assert_eq!(
+            consensus.consensus_status(&receipt_id),
+            ConsensusStatus::Pending { votes: 2, needed: 3 }
+        );
 
         // Add third vote to reach consensus
         let vote3 = ConsensusVote {

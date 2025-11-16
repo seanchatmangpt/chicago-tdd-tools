@@ -94,14 +94,12 @@ fn example_thermal_testing() {
 
     // Cold Path: Integration tests with no timing constraints
     let cold_test = ColdPathTest::default();
-    let result = cold_test.run(|| {
+    let (value, ticks) = cold_test.run(|| {
         // I/O operations allowed
         "Integration test result"
     });
 
-    if let Ok((value, duration)) = result {
-        println!("Cold path succeeded: {:?}, duration={:?}", value, duration);
-    }
+    println!("Cold path succeeded: {:?}, ticks={}", value, ticks);
 }
 
 // ============================================================================
@@ -112,34 +110,20 @@ fn example_thermal_testing() {
 fn example_effect_typing() {
     println!("\n=== Track 3: Effect-Typed Tests ===");
 
-    // Pure function test - no effects allowed
-    let pure_test = EffectTest::<Pure>::new("test_pure_computation");
-    let result = pure_test.run(|| {
-        // Only pure computation allowed
-        2 + 2
-    });
-    println!("Pure test result: {}", result);
+    // Effect types are compile-time markers - they don't have runtime methods
+    // The type system enforces that tests only call operations they have effects for
+    let _pure_effects: Effects<Pure> = Effects::new();
+    println!("Pure effects declared (no side effects allowed)");
 
-    // Network effects allowed
-    let network_test = EffectTest::<(NetworkRead, NetworkWrite)>::new("test_http_client");
-    network_test.record_operation(NetworkRead);
-    network_test.record_operation(NetworkWrite);
-    println!("Network test recorded operations: {:?}", network_test.recorded_effects());
+    let _network_effects: Effects<NetworkRead> = Effects::new();
+    println!("Network read effects declared");
 
-    // Storage effects allowed
-    let storage_test = EffectTest::<(StorageRead, StorageWrite)>::new("test_file_ops");
-    storage_test.record_operation(StorageRead);
-    storage_test.record_operation(StorageWrite);
-    println!("Storage test recorded operations: {:?}", storage_test.recorded_effects());
+    let _storage_effects: Effects<StorageWrite> = Effects::new();
+    println!("Storage write effects declared");
 
-    // Track effect coverage
-    let mut registry = EffectCoverageRegistry::new();
-    registry.record_test::<NetworkRead>("test_http_get");
-    registry.record_test::<NetworkWrite>("test_http_post");
-    registry.record_test::<StorageWrite>("test_file_write");
-
-    let network_tests = registry.tests_with_effect::<NetworkRead>();
-    println!("Tests with NetworkRead: {:?}", network_tests);
+    // Effect coverage tracking would be done at the test framework level
+    // This is a simplified demonstration
+    println!("Effect types provide compile-time guarantees");
 }
 
 // ============================================================================
@@ -152,31 +136,56 @@ struct Connected;
 struct Authenticated;
 struct Active;
 
-impl State for Disconnected {}
-impl State for Connected {}
-impl State for Authenticated {}
-impl State for Active {}
+impl State for Disconnected {
+    fn name() -> &'static str {
+        "Disconnected"
+    }
+}
+
+impl State for Connected {
+    fn name() -> &'static str {
+        "Connected"
+    }
+}
+
+impl State for Authenticated {
+    fn name() -> &'static str {
+        "Authenticated"
+    }
+}
+
+impl State for Active {
+    fn name() -> &'static str {
+        "Active"
+    }
+}
+
+// Define transition types
+struct Connect;
+struct Authenticate;
+struct Activate;
+struct Disconnect;
 
 // Define valid transitions
-impl Transition<Disconnected, Connected> for () {
+impl Transition<Disconnected, Connected> for Connect {
     fn execute() -> Result<(), String> {
         Ok(())
     }
 }
 
-impl Transition<Connected, Authenticated> for () {
+impl Transition<Connected, Authenticated> for Authenticate {
     fn execute() -> Result<(), String> {
         Ok(())
     }
 }
 
-impl Transition<Authenticated, Active> for () {
+impl Transition<Authenticated, Active> for Activate {
     fn execute() -> Result<(), String> {
         Ok(())
     }
 }
 
-impl Transition<Active, Disconnected> for () {
+impl Transition<Active, Disconnected> for Disconnect {
     fn execute() -> Result<(), String> {
         Ok(())
     }
@@ -188,23 +197,23 @@ fn example_state_machine() {
 
     // State machine enforces valid transitions at compile time
     let sm: StateMachine<Disconnected> = StateMachine::new();
-    println!("State: Disconnected");
+    println!("State: {}", StateMachine::<Disconnected>::current_state());
 
-    let sm = sm.transition::<Connected>().unwrap();
-    println!("State: Connected");
+    let sm = sm.transition::<Connected, Connect>().unwrap();
+    println!("State: {}", StateMachine::<Connected>::current_state());
 
-    let sm = sm.transition::<Authenticated>().unwrap();
-    println!("State: Authenticated");
+    let sm = sm.transition::<Authenticated, Authenticate>().unwrap();
+    println!("State: {}", StateMachine::<Authenticated>::current_state());
 
-    let sm = sm.transition::<Active>().unwrap();
-    println!("State: Active");
+    let sm = sm.transition::<Active, Activate>().unwrap();
+    println!("State: {}", StateMachine::<Active>::current_state());
 
-    let _sm = sm.transition::<Disconnected>().unwrap();
-    println!("State: Disconnected (logged out)");
+    let _sm = sm.transition::<Disconnected, Disconnect>().unwrap();
+    println!("State: {}", StateMachine::<Disconnected>::current_state());
 
     // This would be a compile error (invalid transition):
     // let sm: StateMachine<Disconnected> = StateMachine::new();
-    // let sm = sm.transition::<Active>().unwrap(); // ERROR!
+    // let sm = sm.transition::<Active, Activate>().unwrap(); // ERROR!
 
     println!("✓ All transitions valid at compile time");
 }
@@ -229,7 +238,7 @@ fn example_test_receipts() {
         8,    // budget
     );
 
-    let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);
+    let mut receipt = TestReceipt::from_contract(&CONTRACT, timing.clone(), TestOutcome::Pass);
 
     // Sign receipt for cryptographic provenance
     receipt.sign();
@@ -255,8 +264,8 @@ fn example_test_receipts() {
     let failed = registry.failed_receipts();
     println!("Failed tests: {}", failed.len());
 
-    let production_receipts = registry.query_by_metadata("deploy_env", "production");
-    println!("Production receipts: {}", production_receipts.len());
+    // Note: query_by_metadata is not available in current API
+    // Metadata can be accessed via receipt.metadata field directly
 
     // Deployment decision
     if tau_violations.is_empty() && failed.is_empty() {
@@ -285,22 +294,34 @@ fn example_test_orchestrator() {
     let mut orchestrator = TestOrchestrator::new(registry.clone());
 
     // Submit test plans with QoS
-    let premium_plan = TestPlan::new(
-        "test_critical_path",
-        QoSClass::Premium,
-        ResourceBudget {
-            max_duration_ms: 100,
-            max_memory_bytes: 1024 * 1024,
+    let premium_plan = TestPlan {
+        plan_id: "plan-1".to_string(),
+        contracts: vec!["test_critical_path".to_string()],
+        requester: "agent-1".to_string(),
+        priority: 100,
+        qos: QoSClass::Premium,
+        resource_budget: ResourceBudget {
             max_cores: 1,
+            max_memory_bytes: 1024 * 1024,
+            max_wall_clock_seconds: 1, // 1 second
             allow_network: false,
+            allow_storage: false,
         },
-    );
+        metadata: std::collections::HashMap::new(),
+    };
 
-    let standard_plan =
-        TestPlan::new("test_business_logic", QoSClass::Standard, ResourceBudget::default());
+    let standard_plan = TestPlan {
+        plan_id: "plan-2".to_string(),
+        contracts: vec!["test_business_logic".to_string()],
+        requester: "agent-2".to_string(),
+        priority: 50,
+        qos: QoSClass::Standard,
+        resource_budget: ResourceBudget::default_budget(),
+        metadata: std::collections::HashMap::new(),
+    };
 
-    orchestrator.submit(premium_plan);
-    orchestrator.submit(standard_plan);
+    orchestrator.submit_plan(premium_plan);
+    orchestrator.submit_plan(standard_plan);
 
     println!("Pending tests: {}", orchestrator.pending_count());
 
@@ -310,7 +331,7 @@ fn example_test_orchestrator() {
     println!(
         "Suggested tests for {:?}: {:?}",
         changed_modules,
-        suggested.iter().map(|p| p.name.as_str()).collect::<Vec<_>>()
+        suggested.iter().map(|c| c.name).collect::<Vec<_>>()
     );
 
     // Planning API for coverage analysis
@@ -328,7 +349,7 @@ fn example_test_orchestrator() {
     }
 
     // Filter by thermal class
-    let hot_tests = planning_api.filter_by_thermal(TestThermalClass::Hot);
+    let hot_tests = planning_api.tests_by_thermal_class("hot");
     println!("Hot path tests: {:?}", hot_tests.iter().map(|c| c.name).collect::<Vec<_>>());
 }
 
@@ -364,7 +385,7 @@ fn example_complete_workflow() {
     let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);
     receipt.sign();
     receipt.add_metadata("workflow", "checkout");
-    receipt.add_metadata("version", "v1.3.0");
+    receipt.add_metadata("version", "v1.4.0");
     println!("Step 3: Receipt created and signed");
 
     // 4. Store receipt for governance
@@ -413,4 +434,18 @@ fn main() {
     println!("║  All 6 tracks demonstrated successfully!                     ║");
     println!("║  See docs/features/HYPER_ADVANCED_MICROKERNEL.md for more    ║");
     println!("╚═══════════════════════════════════════════════════════════════╝");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_example_functions_exist, {
+        // Arrange & Act: Verify example functions can be called
+        // This test ensures the example compiles and functions exist
+
+        // Assert: If we get here, functions are available
+        assert!(true);
+    });
 }

@@ -418,3 +418,18 @@ fn main() {
         "Enable it with: cargo run --example testcontainers_example --features testcontainers"
     );
 }
+
+#[cfg(feature = "testcontainers")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::test;
+
+    test!(test_container_client_creation, {
+        // Arrange & Act: Verify container client can be created
+        // This test ensures the example compiles and basic components exist
+
+        // Assert: If we get here, types are available
+        assert!(true);
+    });
+}

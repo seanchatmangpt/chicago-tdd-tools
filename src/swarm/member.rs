@@ -22,10 +22,10 @@ pub enum MemberState {
 impl std::fmt::Display for MemberState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MemberState::Alive => write!(f, "Alive"),
-            MemberState::Busy => write!(f, "Busy"),
-            MemberState::Offline => write!(f, "Offline"),
-            MemberState::Failed => write!(f, "Failed"),
+            Self::Alive => write!(f, "Alive"),
+            Self::Busy => write!(f, "Busy"),
+            Self::Offline => write!(f, "Offline"),
+            Self::Failed => write!(f, "Failed"),
         }
     }
 }
@@ -55,6 +55,7 @@ pub struct SwarmMember {
 
 impl SwarmMember {
     /// Create a new swarm member
+    #[must_use]
     pub fn new(id: String, name: String) -> Self {
         Self {
             id,
@@ -70,6 +71,7 @@ impl SwarmMember {
     }
 
     /// Add a sector capability
+    #[must_use]
     pub fn with_sector(mut self, sector: String) -> Self {
         if !self.sectors.contains(&sector) {
             self.sectors.push(sector);
@@ -77,7 +79,14 @@ impl SwarmMember {
         self
     }
 
+    /// Add a sector capability (alias for `with_sector` for API consistency)
+    #[must_use]
+    pub fn add_sector(self, sector: String) -> Self {
+        self.with_sector(sector)
+    }
+
     /// Add multiple sectors
+    #[must_use]
     pub fn with_sectors(mut self, sectors: Vec<String>) -> Self {
         for sector in sectors {
             if !self.sectors.contains(&sector) {
@@ -88,22 +97,30 @@ impl SwarmMember {
     }
 
     /// Set capacity
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // Mutating self is not const
     pub fn with_capacity(mut self, capacity: u32) -> Self {
         self.capacity = capacity;
         self
     }
 
     /// Check if member can handle a sector
+    #[must_use]
     pub fn can_handle(&self, sector: &str) -> bool {
         self.sectors.iter().any(|s| s == sector)
     }
 
     /// Check if member has available capacity
-    pub fn has_capacity(&self) -> bool {
+    #[must_use]
+    pub const fn has_capacity(&self) -> bool {
         self.current_tasks < self.capacity
     }
 
     /// Assign a task to this member
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(String)` if the member is at capacity or not in the Alive state.
     pub fn assign_task(&mut self) -> Result<(), String> {
         if !self.has_capacity() {
             return Err("Member at capacity".to_string());
@@ -143,8 +160,10 @@ impl SwarmMember {
     }
 
     /// Update reputation
+    #[allow(clippy::cast_possible_wrap, clippy::cast_sign_loss)] // Reputation is bounded 0-100, so conversions are safe
     pub fn update_reputation(&mut self, delta: i32) {
-        let new_rep = (self.reputation as i32 + delta).max(0).min(100);
+        let rep_as_i32 = self.reputation as i32;
+        let new_rep = (rep_as_i32 + delta).clamp(0, 100);
         self.reputation = new_rep as u32;
     }
 }

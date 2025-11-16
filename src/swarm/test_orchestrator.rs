@@ -45,7 +45,7 @@ pub struct TestPlan {
     /// Priority (0-100, higher = more urgent)
     pub priority: u8,
 
-    /// QoS class (Best Effort, Standard, Premium)
+    /// `QoS` class (Best Effort, Standard, Premium)
     pub qos: QoSClass,
 
     /// Resource constraints
@@ -55,7 +55,7 @@ pub struct TestPlan {
     pub metadata: HashMap<String, String>,
 }
 
-/// QoS class for test execution
+/// `QoS` class for test execution
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum QoSClass {
     /// Best effort (lowest priority)
@@ -98,7 +98,7 @@ impl ResourceBudget {
         }
     }
 
-    /// Create an unlimited budget (for premium QoS)
+    /// Create an unlimited budget (for premium `QoS`)
     #[must_use]
     pub const fn unlimited() -> Self {
         Self {
@@ -161,13 +161,13 @@ impl ExecutionSummary {
     }
 
     /// Add a receipt to the summary
+    #[allow(clippy::missing_const_for_fn)]
     pub fn add_receipt(&mut self, receipt: &TestReceipt) {
         self.total_tests += 1;
         match receipt.result {
             TestOutcome::Pass => self.passed += 1,
-            TestOutcome::Fail => self.failed += 1,
+            TestOutcome::Fail | TestOutcome::Error => self.failed += 1,
             TestOutcome::Skip => self.skipped += 1,
-            TestOutcome::Error => self.failed += 1,
         }
         self.total_wall_clock_ms += receipt.timing.wall_clock_ms;
         self.total_ticks += receipt.timing.total_ticks;
@@ -201,6 +201,7 @@ pub struct TestOrchestrator {
 impl TestOrchestrator {
     /// Create a new test orchestrator
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn new(registry: TestContractRegistry) -> Self {
         Self { registry, pending: VecDeque::new(), executed: Vec::new() }
     }
@@ -309,6 +310,7 @@ impl TestOrchestrator {
 
     /// Get executed plan count
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn executed_count(&self) -> usize {
         self.executed.len()
     }
@@ -334,6 +336,7 @@ impl TestPlanningAPI {
 
     /// Get all available tests
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn available_tests(&self) -> &[TestContract] {
         self.registry.all()
     }
@@ -380,9 +383,10 @@ pub struct CoverageGap<'a> {
     pub uncovered_invariants: Vec<&'a str>,
 }
 
-impl<'a> CoverageGap<'a> {
+impl CoverageGap<'_> {
     /// Check if there are any gaps
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn has_gaps(&self) -> bool {
         !self.uncovered_modules.is_empty() || !self.uncovered_invariants.is_empty()
     }

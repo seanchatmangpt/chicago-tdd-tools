@@ -511,8 +511,274 @@ async_test!(test_async_fixture, {
 
 **Linux**: Works out of box. RDTSC on x86_64. Docker for testcontainers. **macOS**: Works out of box. RDTSC on x86_64 (Intel). ARM uses `std::time::Instant` fallback. Docker Desktop for testcontainers. **Windows**: Works out of box. RDTSC on x86_64. Docker Desktop for testcontainers.
 
+## Hyper-Advanced μ-Kernel Verification (v1.3+)
+
+Chicago TDD Tools v1.3+ includes a **hyper-advanced μ-kernel verification substrate** that transforms the framework into a canonical verification substrate for **A = μ(O)** (Artifacts equal micro-operator of Observations).
+
+### Quick Start: Hyper-Advanced Features
+
+**All hyper-advanced features are core (no feature flags required).**
+
+#### Track 1: Test Contracts as First-Class Types
+
+Define compile-time test contracts with coverage analysis:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Define contract at compile time
+const CONTRACT: TestContract = TestContract::hot_path(
+    "test_critical_path",
+    &["payments::process", "payments::validate"],
+);
+
+// Registry provides gap analysis
+let registry = TestContractRegistry::new(&[CONTRACT]);
+let uncovered = registry.uncovered_modules(&["payments::process", "payments::refund"]);
+assert_eq!(uncovered, vec!["payments::refund"]);
+```
+
+#### Track 2: τ-Aware Thermal Testing
+
+Enforce Chatman Constant (τ ≤ 8 ticks) for hot paths:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Hot Path: Critical operations must complete within τ ≤ 8 ticks
+// For test environment, use relaxed config to account for measurement overhead
+let relaxed_config = HotPathConfig {
+    max_ticks: 1000,
+    enforce_no_alloc: false,
+    enforce_no_syscall: false,
+};
+let hot_test = HotPathTest::new(relaxed_config);
+
+let result = hot_test.run(|| {
+    // Critical business logic
+    let mut sum = 0u64;
+    for i in 1..=10 {
+        sum += i;
+    }
+    sum
+});
+
+match result {
+    Ok((value, ticks)) => {
+        println!("Hot path succeeded: value={}, ticks={}", value, ticks);
+        // In production, this would enforce τ ≤ 8
+        assert!(ticks <= 1000);
+    }
+    Err(e) => panic!("Hot path failed: {:?}", e),
+}
+```
+
+**Production Note**: Use `HotPathTest::default()` for strict τ ≤ 8 enforcement in production code.
+
+#### Track 3: Effect-Typed Tests
+
+Type-level effect constraints (network, storage, privileged, pure):
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Pure function: no effects
+let _pure_effects: Effects<Pure> = Effects::new();
+
+// Network effects allowed
+let _network_effects: Effects<NetworkRead> = Effects::new();
+
+// Storage effects allowed
+let _storage_effects: Effects<StorageWrite> = Effects::new();
+```
+
+#### Track 4: Type-Directed State Machine Testing
+
+Compile-time valid transition enforcement:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Define states
+struct Disconnected;
+struct Connected;
+struct Authenticated;
+
+impl State for Disconnected {}
+impl State for Connected {}
+impl State for Authenticated {}
+
+// Define valid transitions
+struct Connect;
+struct Authenticate;
+
+impl Transition<Disconnected, Connected> for Connect {
+    fn execute() -> Result<(), String> {
+        Ok(())
+    }
+}
+
+impl Transition<Connected, Authenticated> for Authenticate {
+    fn execute() -> Result<(), String> {
+        Ok(())
+    }
+}
+
+// State machine enforces valid transitions at compile time
+let sm: StateMachine<Disconnected> = StateMachine::new();
+let sm = sm.transition::<Connected, Connect>().unwrap();
+let sm = sm.transition::<Authenticated, Authenticate>().unwrap();
+// let sm = sm.transition::<InvalidState>(); // Compile error!
+```
+
+#### Track 5: Proof-Carrying Test Receipts
+
+Cryptographic provenance for test execution:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Create test receipt from contract
+const CONTRACT: TestContract = TestContract::hot_path(
+    "test_payment_processing",
+    &["payments::process"],
+);
+
+let timing = TimingMeasurement::new(6, 1, "hot".to_string(), true, 8);
+let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);
+
+// Sign receipt for cryptographic provenance
+receipt.sign();
+assert!(receipt.signature.is_some());
+
+// Add metadata for governance
+receipt.add_metadata("deploy_env", "production");
+receipt.add_metadata("ticket_id", "JIRA-1234");
+
+// Store in registry for governance queries
+let mut registry = TestReceiptRegistry::new();
+registry.add_receipt(receipt);
+
+// Governance queries
+let tau_violations = registry.tau_violations();
+let failed = registry.failed_receipts();
+
+if tau_violations.is_empty() && failed.is_empty() {
+    println!("✓ Deployment APPROVED: All constraints satisfied");
+}
+```
+
+#### Track 6: Swarm-Native Test Orchestrator
+
+Agent-driven test scheduling with priority/QoS:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// Define contracts for orchestration
+const CONTRACTS: &[TestContract] = &[
+    TestContract::hot_path("test_critical_path", &["core::critical"]),
+    TestContract::warm_path("test_business_logic", &["core::business"], &["no_panics"]),
+];
+
+let registry = TestContractRegistry::new(CONTRACTS);
+let mut orchestrator = TestOrchestrator::new(registry.clone());
+
+// Submit test plans with QoS
+let plan = TestPlan {
+    plan_id: "plan-1".to_string(),
+    contracts: vec!["test_critical_path".to_string()],
+    requester: "agent-1".to_string(),
+    priority: 100,
+    qos: QoSClass::Premium,
+    resource_budget: ResourceBudget {
+        max_cores: 1,
+        max_memory_bytes: 1024 * 1024,
+        max_wall_clock_seconds: 1,
+        allow_network: false,
+        allow_storage: false,
+    },
+    metadata: std::collections::HashMap::new(),
+};
+
+orchestrator.submit_plan(plan);
+
+// Agent suggests tests for code changes
+let suggested = orchestrator.suggest_tests_for_change(&["core::critical"]);
+assert_eq!(suggested.len(), 1);
+```
+
+### Complete Hyper-Advanced Workflow
+
+End-to-end workflow: Contract → Test → Receipt → Orchestration → Governance:
+
+```rust
+use chicago_tdd_tools::prelude::*;
+
+// 1. Define test contract
+const CONTRACT: TestContract = TestContract::hot_path(
+    "test_production_workflow",
+    &["workflow::checkout", "workflow::payment"],
+);
+
+// 2. Execute τ-aware test
+let relaxed_config = HotPathConfig {
+    max_ticks: 1000,
+    enforce_no_alloc: false,
+    enforce_no_syscall: false,
+};
+let hot_test = HotPathTest::new(relaxed_config);
+
+let (value, ticks) = hot_test.run(|| 42).expect("Test should succeed");
+
+// 3. Create proof-carrying receipt
+let timing = TimingMeasurement::new(ticks, 1, "hot".to_string(), true, 8);
+let mut receipt = TestReceipt::from_contract(&CONTRACT, timing, TestOutcome::Pass);
+receipt.sign();
+receipt.add_metadata("workflow", "checkout");
+
+// 4. Store receipt for governance
+let mut receipt_registry = TestReceiptRegistry::new();
+receipt_registry.add_receipt(receipt);
+
+// 5. Orchestrator suggests tests for changes
+let contract_registry = TestContractRegistry::new(&[CONTRACT]);
+let orchestrator = TestOrchestrator::new(contract_registry);
+let suggested = orchestrator.suggest_tests_for_change(&["workflow::checkout"]);
+
+// 6. Governance decision
+let tau_violations = receipt_registry.tau_violations();
+let all_passed = receipt_registry.failed_receipts().is_empty();
+
+if tau_violations.is_empty() && all_passed {
+    println!("✓ DEPLOYMENT APPROVED");
+    println!("  - τ constraints satisfied");
+    println!("  - All tests passed");
+    println!("  - Cryptographic proof provided");
+}
+```
+
+### Theory: A = μ(O)
+
+**Canonical Equation:** A = μ(O)
+- **A**: Artifacts (test receipts, contracts, proofs)
+- **μ**: Micro-operator (μ-kernel verification substrate)
+- **O**: Observations (timing, effects, state transitions)
+
+The μ-kernel substrate transforms raw observations into cryptographically-signed artifacts that provide:
+1. **Compile-time correctness**: Types prevent invalid states
+2. **Runtime verification**: τ constraints enforce timing discipline
+3. **Cryptographic provenance**: Receipts provide audit trail
+4. **Agent-driven optimization**: Orchestrator suggests minimal test sets
+
+### Next Steps: Hyper-Advanced
+
+- **[Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md)** - Complete documentation for all 6 tracks
+- **[Hyper-Advanced Example](../../examples/hyper_advanced_microkernel.rs)** - Runnable demonstration
+- **[Integration Tests](../../tests/hyper_advanced_integration.rs)** - Comprehensive test coverage
+
 ## Summary
 
-**Key Associations**: Installation = Dependency + Verify. First Test = AAA Pattern = Success. Common Patterns = Macros + Builders + Assertions. Optional Features = Feature Flags = Docker.
+**Key Associations**: Installation = Dependency + Verify. First Test = AAA Pattern = Success. Common Patterns = Macros + Builders + Assertions. Optional Features = Feature Flags = Docker. **Hyper-Advanced** = μ-Kernel Verification = A = μ(O).
 
-**Pattern**: Add dependency → Create test → Run test → Verify success → Explore features. All tests follow AAA pattern. Use macros for all tests. Verify observable outputs.
+**Pattern**: Add dependency → Create test → Run test → Verify success → Explore features → Adopt hyper-advanced μ-kernel substrate. All tests follow AAA pattern. Use macros for all tests. Verify observable outputs. Hyper-advanced features provide compile-time contracts, τ-aware testing, effect typing, state machines, receipts, and orchestration.

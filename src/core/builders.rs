@@ -1000,7 +1000,7 @@ mod tests {
         // Arrange: Create builder with large dataset
         let mut builder = TestDataBuilder::new();
         for i in 0..100 {
-            builder = builder.with_var(format!("key{}", i), format!("value{}", i));
+            builder = builder.with_var(format!("key{i}"), format!("value{i}"));
         }
 
         // Act: Build data

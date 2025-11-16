@@ -12,8 +12,8 @@
 
 #[cfg(test)]
 mod properties {
-    use crate::core::invariants::*;
     use crate::core::fail_fast::*;
+    use crate::core::invariants::*;
     use proptest::prelude::*;
 
     // ========================================================================
@@ -344,7 +344,7 @@ mod properties {
 
 /// Public helpers for invariant validation
 pub mod helpers {
-    use crate::core::invariants::*;
+    use crate::core::invariants::{EffectValidator, InvariantResult, ThermalValidator};
 
     /// Batch-validate a collection of thermal measurements for monotonicity.
     ///
@@ -354,6 +354,10 @@ pub mod helpers {
     ///
     /// # Returns
     /// `Ok(())` if all measurements are monotonic and within threshold, or an error.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any τ measurement violates monotonicity or exceeds the threshold.
     pub fn validate_thermal_sequence(taus: &[u64], threshold: u64) -> InvariantResult<()> {
         let mut validator = ThermalValidator::new(threshold);
         for &tau in taus {
@@ -372,9 +376,13 @@ pub mod helpers {
     ///
     /// # Returns
     /// `Ok(())` if observed ⊆ declared, or an error.
-    pub fn validate_all_effects(declared: Vec<String>, observed: Vec<String>) -> InvariantResult<()> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any observed effect is not in the declared set.
+    pub fn validate_all_effects(declared: Vec<String>, observed: &[String]) -> InvariantResult<()> {
         let validator = EffectValidator::new(declared)?;
-        validator.validate_observed(&observed)?;
+        validator.validate_observed(observed)?;
         Ok(())
     }
 }
@@ -401,7 +409,7 @@ mod integration_tests {
     fn test_effects_helper() {
         let declared = vec!["A".to_string(), "B".to_string(), "C".to_string()];
         let observed = vec!["A".to_string(), "B".to_string()];
-        let result = validate_all_effects(declared, observed);
+        let result = validate_all_effects(declared, &observed);
         assert!(result.is_ok());
     }
 }

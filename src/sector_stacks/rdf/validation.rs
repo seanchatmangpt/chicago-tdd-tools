@@ -48,19 +48,19 @@ pub enum RdfValidationError {
 impl std::fmt::Display for RdfValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RdfValidationError::OperationNotDefined { operation, sector } => {
-                write!(f, "Operation '{}' not defined in {} ontology", operation, sector)
+            Self::OperationNotDefined { operation, sector } => {
+                write!(f, "Operation '{operation}' not defined in {sector} ontology")
             }
-            RdfValidationError::GuardViolation { guard, operation } => {
-                write!(f, "Guard '{}' violated by operation '{}'", guard, operation)
+            Self::GuardViolation { guard, operation } => {
+                write!(f, "Guard '{guard}' violated by operation '{operation}'")
             }
-            RdfValidationError::InvalidStageTransition { from, to } => {
-                write!(f, "Invalid stage transition from {} to {}", from, to)
+            Self::InvalidStageTransition { from, to } => {
+                write!(f, "Invalid stage transition from {from} to {to}")
             }
-            RdfValidationError::LatencyBudgetExceeded { stage, actual, budgeted } => {
-                write!(f, "Stage '{}' latency {} exceeds budget {}", stage, actual, budgeted)
+            Self::LatencyBudgetExceeded { stage, actual, budgeted } => {
+                write!(f, "Stage '{stage}' latency {actual} exceeds budget {budgeted}")
             }
-            RdfValidationError::OntologyNotLoaded => {
+            Self::OntologyNotLoaded => {
                 write!(f, "Ontology not loaded")
             }
         }
@@ -76,17 +76,23 @@ pub struct RdfOperationValidator {
 
 impl RdfOperationValidator {
     /// Create a new validator
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { ontology: None }
     }
 
     /// Set the ontology for validation
+    #[must_use]
     pub fn with_ontology(mut self, ontology: SectorOntology) -> Self {
         self.ontology = Some(ontology);
         self
     }
 
     /// Validate that an operation is defined in the ontology
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ontology is not loaded or the operation is not defined.
     pub fn validate_operation_defined(&self, operation: &str) -> RdfValidationResult {
         let ontology = self.ontology.as_ref().ok_or(RdfValidationError::OntologyNotLoaded)?;
 
@@ -102,6 +108,10 @@ impl RdfOperationValidator {
     }
 
     /// Validate a stage transition
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ontology is not loaded, stages are not found, or transition is invalid.
     pub fn validate_stage_transition(
         &self,
         from_stage: &str,
@@ -109,15 +119,18 @@ impl RdfOperationValidator {
     ) -> RdfValidationResult {
         let ontology = self.ontology.as_ref().ok_or(RdfValidationError::OntologyNotLoaded)?;
 
-        let from =
-            ontology.get_stage(from_stage).ok_or(RdfValidationError::OperationNotDefined {
+        let from = ontology.get_stage(from_stage).ok_or_else(|| {
+            RdfValidationError::OperationNotDefined {
                 operation: from_stage.to_string(),
                 sector: ontology.sector.clone(),
-            })?;
+            }
+        })?;
 
-        let to = ontology.get_stage(to_stage).ok_or(RdfValidationError::OperationNotDefined {
-            operation: to_stage.to_string(),
-            sector: ontology.sector.clone(),
+        let to = ontology.get_stage(to_stage).ok_or_else(|| {
+            RdfValidationError::OperationNotDefined {
+                operation: to_stage.to_string(),
+                sector: ontology.sector.clone(),
+            }
         })?;
 
         // Validate stage progression (must be forward or same)
@@ -132,14 +145,20 @@ impl RdfOperationValidator {
     }
 
     /// Validate operation latency against budget
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ontology is not loaded, stage is not found, or latency exceeds budget.
     pub fn validate_latency_budget(&self, stage: &str, latency_ms: u32) -> RdfValidationResult {
         let ontology = self.ontology.as_ref().ok_or(RdfValidationError::OntologyNotLoaded)?;
 
         let stage_def =
-            ontology.get_stage(stage).ok_or(RdfValidationError::OperationNotDefined {
-                operation: stage.to_string(),
-                sector: ontology.sector.clone(),
-            })?;
+            ontology
+                .get_stage(stage)
+                .ok_or_else(|| RdfValidationError::OperationNotDefined {
+                    operation: stage.to_string(),
+                    sector: ontology.sector.clone(),
+                })?;
 
         if latency_ms <= stage_def.max_latency_seconds * 1000 {
             Ok(())
@@ -153,6 +172,10 @@ impl RdfOperationValidator {
     }
 
     /// Get all guard constraints for validation
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ontology is not loaded.
     pub fn get_guards(&self) -> Result<Vec<GuardConstraint>, RdfValidationError> {
         let ontology = self.ontology.as_ref().ok_or(RdfValidationError::OntologyNotLoaded)?;
 
@@ -160,6 +183,10 @@ impl RdfOperationValidator {
     }
 
     /// Check if all stages are deterministic
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ontology is not loaded.
     pub fn all_stages_deterministic(&self) -> Result<bool, RdfValidationError> {
         let ontology = self.ontology.as_ref().ok_or(RdfValidationError::OntologyNotLoaded)?;
 

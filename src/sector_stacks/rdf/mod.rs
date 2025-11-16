@@ -6,11 +6,11 @@
 //! ## Structures
 //!
 //! The RDF module provides:
-//! - **SectorOntology**: Container for workflow definitions
-//! - **WorkflowStage**: Individual workflow stages
-//! - **GuardConstraint**: Safety constraints (Budget, Chronology, etc.)
-//! - **KnowledgeHook**: Operations within workflows
-//! - **RdfOperationValidator**: Runtime validation against ontology
+//! - **`SectorOntology`**: Container for workflow definitions
+//! - **`WorkflowStage`**: Individual workflow stages
+//! - **`GuardConstraint`**: Safety constraints (Budget, Chronology, etc.)
+//! - **`KnowledgeHook`**: Operations within workflows
+//! - **`RdfOperationValidator`**: Runtime validation against ontology
 
 pub mod ontology;
 pub mod validation;

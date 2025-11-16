@@ -7,8 +7,8 @@
 
 use crate::core::contract::{TestContract, TestContractRegistry};
 use crate::core::receipt::{TestOutcome, TestReceipt, TestReceiptRegistry, TimingMeasurement};
-use crate::swarm::test_orchestrator::{TestOrchestrator, TestPlan, QoSClass, ResourceBudget};
-use crate::validation::thermal::{HotPathTest, HotPathConfig, ThermalTestError};
+use crate::swarm::test_orchestrator::{QoSClass, ResourceBudget, TestOrchestrator, TestPlan};
+use crate::validation::thermal::{HotPathConfig, HotPathTest, ThermalTestError};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -97,7 +97,7 @@ impl Default for PipelineConfig {
 impl PipelineConfig {
     /// Create relaxed configuration for test environments
     #[must_use]
-    pub fn relaxed() -> Self {
+    pub const fn relaxed() -> Self {
         Self {
             thermal_config: HotPathConfig {
                 max_ticks: 1000,
@@ -150,7 +150,7 @@ impl VerificationPipeline {
     #[must_use]
     pub fn new(contracts: &'static [TestContract], config: PipelineConfig) -> Self {
         let contract_registry = TestContractRegistry::new(contracts);
-        let orchestrator = TestOrchestrator::new(contract_registry.clone());
+        let orchestrator = TestOrchestrator::new(contract_registry);
 
         Self {
             config,
@@ -166,6 +166,7 @@ impl VerificationPipeline {
     /// # Errors
     ///
     /// Returns error if any pipeline phase fails according to configuration
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for statistical calculations
     pub fn execute_test<F, T>(
         &mut self,
         contract: &TestContract,
@@ -181,7 +182,7 @@ impl VerificationPipeline {
         self.metrics.contracts_validated += 1;
 
         // Phase 2: Thermal Testing
-        let hot_test = HotPathTest::new(self.config.thermal_config.clone());
+        let hot_test = HotPathTest::new(self.config.thermal_config);
         let thermal_result = hot_test.run(test_fn);
 
         self.metrics.thermal_tests_executed += 1;
@@ -190,18 +191,19 @@ impl VerificationPipeline {
             Ok(result) => result,
             Err(ThermalTestError::TickBudgetExceeded { actual, budget }) => {
                 if self.config.fail_on_tau_violation {
-                    return Err(format!("τ violation: {} > {}", actual, budget));
+                    return Err(format!("τ violation: {actual} > {budget}"));
                 }
                 // Continue with actual ticks in relaxed mode (value lost due to error)
                 (T::default(), actual)
             }
-            Err(e) => return Err(format!("Thermal test failed: {:?}", e)),
+            Err(e) => return Err(format!("Thermal test failed: {e:?}")),
         };
 
         // Update metrics
         self.metrics.max_tau = self.metrics.max_tau.max(ticks);
         let total_tau = self.metrics.average_tau * (self.metrics.thermal_tests_executed - 1) as f64;
-        self.metrics.average_tau = (total_tau + ticks as f64) / self.metrics.thermal_tests_executed as f64;
+        self.metrics.average_tau =
+            (total_tau + ticks as f64) / self.metrics.thermal_tests_executed as f64;
 
         // Phase 5: Receipt Generation
         let meets_tau = ticks <= self.config.thermal_config.max_ticks;
@@ -252,7 +254,7 @@ impl VerificationPipeline {
     /// Returns error if pipeline execution fails
     pub fn execute_batch(
         &mut self,
-        tests: Vec<(TestContract, Box<dyn FnOnce() -> ()>)>,
+        tests: Vec<(TestContract, Box<dyn FnOnce()>)>,
     ) -> Result<Vec<PipelineResult>, String> {
         let mut results = Vec::new();
 
@@ -282,27 +284,31 @@ impl VerificationPipeline {
         let contracts = self.orchestrator.suggest_tests_for_change(changed_modules);
 
         // Convert contracts to test plans
-        contracts.iter().map(|contract| {
-            TestPlan {
-                plan_id: format!("auto_{}", contract.name),
-                contracts: vec![contract.name.to_string()],
-                requester: "pipeline".to_string(),
-                priority: 50,
-                qos: QoSClass::Standard,
-                resource_budget: ResourceBudget {
-                    max_cores: 1,
-                    max_memory_bytes: 1024 * 1024 * 1024, // 1GB
-                    max_wall_clock_seconds: 60,
-                    allow_network: true,
-                    allow_storage: true,
-                },
-                metadata: HashMap::new(),
-            }
-        }).collect()
+        contracts
+            .iter()
+            .map(|contract| {
+                TestPlan {
+                    plan_id: format!("auto_{}", contract.name),
+                    contracts: vec![contract.name.to_string()],
+                    requester: "pipeline".to_string(),
+                    priority: 50,
+                    qos: QoSClass::Standard,
+                    resource_budget: ResourceBudget {
+                        max_cores: 1,
+                        max_memory_bytes: 1024 * 1024 * 1024, // 1GB
+                        max_wall_clock_seconds: 60,
+                        allow_network: true,
+                        allow_storage: true,
+                    },
+                    metadata: HashMap::new(),
+                }
+            })
+            .collect()
     }
 
     /// Get governance decision for deployment
     #[must_use]
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for ratio calculation
     pub fn deployment_decision(&self) -> DeploymentDecision {
         let tau_violations = self.receipt_registry.tau_violations();
         let failed_tests = self.receipt_registry.failed_receipts();
@@ -364,7 +370,7 @@ pub struct DeploymentDecision {
 impl DeploymentDecision {
     /// Get human-readable status
     #[must_use]
-    pub fn status(&self) -> &str {
+    pub const fn status(&self) -> &str {
         if self.approved {
             "APPROVED"
         } else {
@@ -405,9 +411,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
         let mut pipeline = VerificationPipeline::new(CONTRACTS, config);
 
-        let result = pipeline.execute_test(&CONTRACT, || {
-            42
-        });
+        let result = pipeline.execute_test(&CONTRACT, || 42);
 
         assert!(result.is_ok());
         let result = result.unwrap();
@@ -439,10 +443,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
         let pipeline = VerificationPipeline::new(CONTRACTS, config);
 
-        let (uncovered_modules, _) = pipeline.coverage_gaps(
-            &["module1", "module2"],
-            &["τ ≤ 8"],
-        );
+        let (uncovered_modules, _) = pipeline.coverage_gaps(&["module1", "module2"], &["τ ≤ 8"]);
 
         assert_eq!(uncovered_modules, vec!["module2"]);
     }

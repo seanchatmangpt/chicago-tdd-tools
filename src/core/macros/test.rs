@@ -701,7 +701,7 @@ mod tests {
         assert_that_with_msg(
             &(unit_process_timeout > unit_test_timeout * 5),
             |v| *v,
-            &format!("Process timeout ({}) should be much larger than per-test timeout ({}) for parallel execution", unit_process_timeout, unit_test_timeout)
+            &format!("Process timeout ({unit_process_timeout}) should be much larger than per-test timeout ({unit_test_timeout}) for parallel execution")
         );
 
         // Verify integration test timeout is sufficient

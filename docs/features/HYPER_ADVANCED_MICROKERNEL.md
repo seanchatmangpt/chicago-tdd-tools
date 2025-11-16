@@ -471,7 +471,7 @@ fn test_http_client() {
 }
 ```
 
-## References
+## See Also
 
 - [Chatman Constant Derivation](../../research/chatman_constant.md) (if exists)
 - [μ-Kernel Architecture](../../reference/ARCHITECTURE.md)

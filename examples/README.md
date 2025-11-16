@@ -1,6 +1,6 @@
 # Chicago TDD Tools - Examples
 
-**Version:** 1.2.0 | **Updated:** 2025-11-15
+**Version:** 1.4.0 | **Updated:** 2025-01-XX
 
 This directory contains comprehensive examples demonstrating Chicago TDD Tools usage, organized using the [Diátaxis framework](https://diataxis.fr/) for technical documentation.
 
@@ -10,10 +10,10 @@ This directory contains comprehensive examples demonstrating Chicago TDD Tools u
 
 | Category | Description | Examples |
 |----------|-------------|----------|
-| **[Tutorials](#tutorials)** | Step-by-step learning | Basic Test, Macro Examples |
-| **[How-To Guides](#how-to-guides)** | Task-oriented solutions | Property Testing, Snapshot Testing, Mutation Testing, Concurrency Testing, CLI Testing, Testcontainers, OTEL/Weaver Testing |
+| **[Tutorials](#tutorials)** | Step-by-step learning | Basic Test, Macro Examples, Sector Stacks Workflows |
+| **[How-To Guides](#how-to-guides)** | Task-oriented solutions | Property Testing, Snapshot Testing, Mutation Testing, Concurrency Testing, CLI Testing, Testcontainers, OTEL/Weaver Testing, Fail-Fast Verification, RDF Validation, Swarm Coordination |
 | **[Explanation](#explanation)** | Concepts and philosophy | Go the Extra Mile, Advanced Features |
-| **[Reference](#reference)** | API documentation | All examples include reference sections |
+| **[Reference](#reference)** | API documentation | All examples include reference sections, Operator Registry |
 
 ---
 
@@ -83,11 +83,60 @@ cargo test --example macro_examples
 
 ---
 
+### 3. Sector Stacks Workflows (`sector_stacks_workflows.rs`) - **NEW in v1.4.0**
+
+**Production-grade sector implementations demonstrating the Chatman Equation.**
+
+Learn complete workflows for Academic Publishing and Enterprise Claims Processing:
+- Deterministic algorithms (same inputs → same outputs)
+- Multi-stage workflows (6 stages each)
+- Cryptographic receipt generation (SHA-256 merkle roots)
+- Knowledge hooks and guard constraints
+
+**Run:**
+```bash
+cargo run --example sector_stacks_workflows
+```
+
+**📖 Full Documentation:** [sector_stacks_workflows.md](sector_stacks_workflows.md)
+
+**What you'll learn:**
+- Academic workflow: Submission → Desk Review → Reviewer Assignment → Review Collection → Decision → Notification
+- Claims workflow: Validation → Fraud Detection → Entitlements → Settlement → Payment → Receipt
+- Deterministic decision algorithms
+- Receipt reproducibility
+
+---
+
 ## How-To Guides
 
 How-to guides are task-oriented and show you how to solve specific problems. They assume you understand the basics.
 
-### 3. Property-Based Testing (`property_testing.rs`)
+### 4. Fail-Fast Verification (`fail_fast_verification.rs`) - **NEW in v1.4.0**
+
+**12-phase fail-fast verification pipeline with zero-tolerance invariant checking.**
+
+Demonstrates the complete verification pipeline from contract definition to quality metrics:
+- All 12 phases: Contract Definition → Thermal Testing → Effects Tracking → State Machine → Receipt Generation → Swarm Orchestration → Verification Pipeline → Continuous Learning → Distributed Consensus → Time-Travel Debugging → Performance Prophet → Quality Dashboard
+- Fail-fast semantics: violations cause immediate failure
+- Invariant violation examples
+
+**Run:**
+```bash
+cargo run --example fail_fast_verification
+```
+
+**📖 Full Documentation:** [fail_fast_verification.md](fail_fast_verification.md)
+
+**What you'll learn:**
+- Creating strict execution contexts
+- Executing all 12 phases
+- Handling violations (fail-fast semantics)
+- Finalizing execution contexts
+
+---
+
+### 5. Property-Based Testing (`property_testing.rs`)
 
 How to use property-based testing to verify properties hold for all inputs.
 
@@ -111,7 +160,7 @@ cargo run --example property_testing --features property-testing
 
 ---
 
-### 4. Snapshot Testing (`snapshot_testing.rs`)
+### 6. Snapshot Testing (`snapshot_testing.rs`) - **Enhanced in v1.4.0**
 
 How to use snapshot testing for complex data structures and output stability.
 
@@ -134,6 +183,7 @@ cargo test --features snapshot-testing --example snapshot_testing
 - Debug representation snapshots
 - Custom snapshot settings
 - Snapshot review workflow
+- **v1.4.0**: Enhanced fixtures, complex structures, improved organization, sensitive data redaction
 
 **Workflow:**
 ```bash
@@ -145,7 +195,7 @@ cargo insta reject            # Reject changes
 
 ---
 
-### 5. Mutation Testing (`mutation_testing.rs`)
+### 7. Mutation Testing (`mutation_testing.rs`)
 
 How to validate test quality by introducing mutations to code.
 
@@ -170,7 +220,7 @@ cargo run --example mutation_testing
 
 ---
 
-### 6. Concurrency Testing (`concurrency_testing.rs`)
+### 8. Concurrency Testing (`concurrency_testing.rs`)
 
 How to test concurrent code with model checking using loom.
 
@@ -194,7 +244,7 @@ cargo test --features concurrency-testing --example concurrency_testing
 
 ---
 
-### 7. CLI Testing (`cli_testing.rs`)
+### 9. CLI Testing (`cli_testing.rs`)
 
 How to test command-line interfaces using golden files.
 
@@ -218,7 +268,7 @@ cargo test --features cli-testing --example cli_testing
 
 ---
 
-### 8. Testcontainers (`testcontainers_example.rs`)
+### 10. Testcontainers (`testcontainers_example.rs`)
 
 How to use Docker containers in integration tests with automatic lifecycle management.
 
@@ -250,7 +300,32 @@ cargo run --example testcontainers_example --features testcontainers
 
 ---
 
-### 9. OTEL/Weaver Testing (`otel_weaver_testing.rs`)
+### 11. RDF Validation (`rdf_validation.rs`) - **NEW in v1.4.0**
+
+**RDF-driven validation with ontologies as single source of truth.**
+
+Demonstrates runtime validation of operations against RDF ontology definitions:
+- Creating sector ontologies with stages, guards, and hooks
+- Validating operations against ontology definitions
+- Checking stage transitions and latency budgets
+- Using guard constraints for safety validation
+
+**Run:**
+```bash
+cargo run --example rdf_validation
+```
+
+**📖 Full Documentation:** [rdf_validation.md](rdf_validation.md)
+
+**What you'll learn:**
+- RDF as single source of truth
+- Workflow stage definitions
+- Guard constraint validation
+- Operation validation patterns
+
+---
+
+### 12. OTEL/Weaver Testing (`otel_weaver_testing.rs`)
 
 How to validate observability telemetry with OpenTelemetry and Weaver.
 
@@ -276,11 +351,37 @@ cargo test --features otel,weaver --example otel_weaver_testing
 
 ---
 
+### 13. Swarm Coordination (`swarm_coordination.rs`) - **NEW in v1.4.0**
+
+**Distributed multi-sector coordination with task receipts.**
+
+Demonstrates the swarm protocol for coordinating operations across sectors:
+- Creating and managing swarm coordinators
+- Registering swarm members with sector capabilities
+- Submitting and distributing tasks
+- Generating cryptographic task receipts
+- Multi-sector coordination patterns
+
+**Run:**
+```bash
+cargo run --example swarm_coordination
+```
+
+**📖 Full Documentation:** [swarm_coordination.md](swarm_coordination.md)
+
+**What you'll learn:**
+- Swarm protocol architecture
+- Task distribution and assignment
+- Task receipt generation
+- Consensus checking
+
+---
+
 ## Explanation
 
 Explanation guides help you understand concepts, background, and design decisions.
 
-### 10. Go the Extra Mile (`go_extra_mile.rs`)
+### 14. Go the Extra Mile (`go_extra_mile.rs`)
 
 **Philosophy:** 1st/2nd/3rd Idea Progression
 
@@ -310,7 +411,7 @@ cargo run --example go_extra_mile --features otel,weaver
 
 ---
 
-### 11. Advanced Features (`advanced_features.rs`)
+### 15. Advanced Features (`advanced_features.rs`)
 
 **Concepts:** Advanced Rust features for zero-cost abstractions
 
@@ -346,19 +447,47 @@ All examples include comprehensive reference sections documenting:
 - Error conditions
 - Usage examples
 
+### 16. Operator Registry (`operator_registry.rs`) - **NEW in v1.4.0**
+
+**Global operator registry with guard system and pattern registration.**
+
+Demonstrates the operator registry as single source of truth for workflow patterns:
+- Accessing the global operator registry
+- Querying patterns by guard type, category, or properties
+- Understanding the 5 guard types (Legality, Budget, Chronology, Causality, Recursion)
+- Checking Chatman Equation properties (determinism, idempotence, type preservation, boundedness)
+
+**Run:**
+```bash
+cargo run --example operator_registry
+```
+
+**📖 Full Documentation:** [operator_registry.md](operator_registry.md)
+
+**What you'll learn:**
+- Operator registry architecture
+- Guard system design
+- Pattern properties
+- Querying patterns
+
 **Quick Reference:**
 
 | Feature | Example | Command |
 |---------|---------|---------|
 | Basic Testing | `basic_test.rs` | `cargo run --example basic_test` |
 | Macros | `macro_examples.rs` | `cargo test --example macro_examples` |
+| Sector Stacks (v1.4.0) | `sector_stacks_workflows.rs` | `cargo run --example sector_stacks_workflows` |
+| Fail-Fast Verification (v1.4.0) | `fail_fast_verification.rs` | `cargo run --example fail_fast_verification` |
 | Property Testing | `property_testing.rs` | `cargo run --example property_testing --features property-testing` |
-| Snapshot Testing | `snapshot_testing.rs` | `cargo test --features snapshot-testing --example snapshot_testing` |
+| Snapshot Testing (v1.4.0) | `snapshot_testing.rs` | `cargo test --features snapshot-testing --example snapshot_testing` |
 | Mutation Testing | `mutation_testing.rs` | `cargo run --example mutation_testing` |
 | Concurrency Testing | `concurrency_testing.rs` | `cargo test --features concurrency-testing --example concurrency_testing` |
 | CLI Testing | `cli_testing.rs` | `cargo test --features cli-testing --example cli_testing` |
 | Testcontainers | `testcontainers_example.rs` | `cargo run --example testcontainers_example --features testcontainers` |
+| RDF Validation (v1.4.0) | `rdf_validation.rs` | `cargo run --example rdf_validation` |
 | OTEL/Weaver | `otel_weaver_testing.rs` | `cargo test --features otel,weaver --example otel_weaver_testing` |
+| Swarm Coordination (v1.4.0) | `swarm_coordination.rs` | `cargo run --example swarm_coordination` |
+| Operator Registry (v1.4.0) | `operator_registry.rs` | `cargo run --example operator_registry` |
 | Go Extra Mile | `go_extra_mile.rs` | `cargo run --example go_extra_mile --features otel,weaver` |
 | Advanced Features | `advanced_features.rs` | `cargo run --example advanced_features` |
 
@@ -411,7 +540,7 @@ Examples require different feature flags:
 
 | Feature | Examples | Description |
 |---------|----------|-------------|
-| None | `basic_test`, `advanced_features`, `macro_examples`, `mutation_testing` | Core functionality |
+| None | `basic_test`, `advanced_features`, `macro_examples`, `mutation_testing`, `sector_stacks_workflows`, `fail_fast_verification`, `rdf_validation`, `swarm_coordination`, `operator_registry` | Core functionality |
 | `property-testing` | `property_testing` | Property-based testing with proptest |
 | `snapshot-testing` | `snapshot_testing` | Snapshot testing with insta |
 | `concurrency-testing` | `concurrency_testing` | Concurrency testing with loom |
@@ -447,6 +576,8 @@ Examples require different feature flags:
 **Integration Testing:**
 1. `testcontainers_example.rs` - Docker containers
 2. `otel_weaver_testing.rs` - Observability validation
+3. `sector_stacks_workflows.rs` - Production-grade workflows (v1.4.0)
+4. `swarm_coordination.rs` - Distributed coordination (v1.4.0)
 
 **Advanced Testing:**
 1. `mutation_testing.rs` - Test quality validation
@@ -459,6 +590,14 @@ Examples require different feature flags:
 **Philosophy and Concepts:**
 1. `go_extra_mile.rs` - Progressive enhancement
 2. `advanced_features.rs` - Advanced Rust features
+
+**v1.4.0 New Features:**
+1. `fail_fast_verification.rs` - 12-phase fail-fast verification pipeline
+2. `sector_stacks_workflows.rs` - Production-grade sector implementations
+3. `rdf_validation.rs` - RDF-driven validation
+4. `operator_registry.rs` - Pattern registration and guard system
+5. `swarm_coordination.rs` - Distributed multi-sector coordination
+6. `snapshot_testing.rs` - Enhanced with fixtures and complex structures
 
 ---
 
@@ -635,4 +774,4 @@ Found an issue or have a suggestion? Please [open an issue](https://github.com/s
 
 **Quality is the default. Prevention beats detection.**
 
-*Version 1.2.0 | Updated 2025-11-15 | Team KNHK | License MIT*
+*Version 1.4.0 | Updated 2025-01-XX | Team KNHK | License MIT*

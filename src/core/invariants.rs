@@ -7,8 +7,8 @@
 //! This module defines all 47 invariant violation types across the 12 phases
 //! of the testing framework, plus validators for each phase.
 
-use std::fmt::{self, Display};
 use std::error::Error;
+use std::fmt::{self, Display};
 
 /// The single enum for all internal framework invariant violations.
 /// If any of these occurs, the framework cannot certify correctness;
@@ -163,80 +163,88 @@ pub enum UnrecoverableInvariantViolation {
 impl Display for UnrecoverableInvariantViolation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ContractMalformed(msg) => write!(f, "Contract malformed: {}", msg),
-            Self::DuplicateContractId(id) => write!(f, "Duplicate contract ID: {}", id),
-            Self::InvalidPhaseSequence(msg) => write!(f, "Invalid phase sequence: {}", msg),
-            Self::ContractEscapedValidation(msg) => write!(f, "Contract escaped validation: {}", msg),
-            Self::MalformedMetadata(msg) => write!(f, "Malformed metadata: {}", msg),
+            Self::ContractMalformed(msg) => write!(f, "Contract malformed: {msg}"),
+            Self::DuplicateContractId(id) => write!(f, "Duplicate contract ID: {id}"),
+            Self::InvalidPhaseSequence(msg) => write!(f, "Invalid phase sequence: {msg}"),
+            Self::ContractEscapedValidation(msg) => write!(f, "Contract escaped validation: {msg}"),
+            Self::MalformedMetadata(msg) => write!(f, "Malformed metadata: {msg}"),
 
             Self::ClockBackward { prev, current } => {
-                write!(f, "Clock went backward: {} -> {}", prev, current)
+                write!(f, "Clock went backward: {prev} -> {current}")
             }
             Self::ClockMonsterJump { prev, current, threshold } => {
-                write!(f, "Clock monster jump: {} -> {} (threshold: {})", prev, current, threshold)
+                write!(f, "Clock monster jump: {prev} -> {current} (threshold: {threshold})")
             }
-            Self::ThermalCannotMeasure(msg) => write!(f, "Cannot measure thermal: {}", msg),
-            Self::ThermalComputationCorrupted(msg) => write!(f, "Thermal computation corrupted: {}", msg),
+            Self::ThermalCannotMeasure(msg) => write!(f, "Cannot measure thermal: {msg}"),
+            Self::ThermalComputationCorrupted(msg) => {
+                write!(f, "Thermal computation corrupted: {msg}")
+            }
 
-            Self::UnobservedEffect(msg) => write!(f, "Unobserved effect: {}", msg),
-            Self::EffectLost(msg) => write!(f, "Effect lost: {}", msg),
-            Self::EffectCompositionError(msg) => write!(f, "Effect composition error: {}", msg),
-            Self::EffectAlgebraViolation(msg) => write!(f, "Effect algebra violation: {}", msg),
+            Self::UnobservedEffect(msg) => write!(f, "Unobserved effect: {msg}"),
+            Self::EffectLost(msg) => write!(f, "Effect lost: {msg}"),
+            Self::EffectCompositionError(msg) => write!(f, "Effect composition error: {msg}"),
+            Self::EffectAlgebraViolation(msg) => write!(f, "Effect algebra violation: {msg}"),
 
             Self::UnhandledStateEvent { state, event } => {
-                write!(f, "Unhandled state event: {} in state '{}'", event, state)
+                write!(f, "Unhandled state event: {event} in state '{state}'")
             }
-            Self::DeadState(state) => write!(f, "Dead state (unreachable): {}", state),
-            Self::InvalidStateTransition(msg) => write!(f, "Invalid state transition: {}", msg),
-            Self::StateCorruption(msg) => write!(f, "State corruption: {}", msg),
-            Self::CyclicPathViolation(msg) => write!(f, "Cyclic path violation: {}", msg),
+            Self::DeadState(state) => write!(f, "Dead state (unreachable): {state}"),
+            Self::InvalidStateTransition(msg) => write!(f, "Invalid state transition: {msg}"),
+            Self::StateCorruption(msg) => write!(f, "State corruption: {msg}"),
+            Self::CyclicPathViolation(msg) => write!(f, "Cyclic path violation: {msg}"),
 
-            Self::MissingReceipt(msg) => write!(f, "Missing receipt: {}", msg),
-            Self::CorruptedReceipt(msg) => write!(f, "Corrupted receipt: {}", msg),
-            Self::PartialReceipt(msg) => write!(f, "Partial receipt: {}", msg),
+            Self::MissingReceipt(msg) => write!(f, "Missing receipt: {msg}"),
+            Self::CorruptedReceipt(msg) => write!(f, "Corrupted receipt: {msg}"),
+            Self::PartialReceipt(msg) => write!(f, "Partial receipt: {msg}"),
             Self::ReceiptVersionMismatch { expected, found } => {
-                write!(f, "Receipt version mismatch: expected {}, found {}", expected, found)
+                write!(f, "Receipt version mismatch: expected {expected}, found {found}")
             }
-            Self::ReceiptPersistenceFailure(msg) => write!(f, "Receipt persistence failure: {}", msg),
+            Self::ReceiptPersistenceFailure(msg) => write!(f, "Receipt persistence failure: {msg}"),
 
-            Self::AbandonedTest(msg) => write!(f, "Abandoned test: {}", msg),
-            Self::DuplicateExecution(msg) => write!(f, "Duplicate execution: {}", msg),
-            Self::OrchestrationQueueCorruption(msg) => write!(f, "Queue corruption: {}", msg),
+            Self::AbandonedTest(msg) => write!(f, "Abandoned test: {msg}"),
+            Self::DuplicateExecution(msg) => write!(f, "Duplicate execution: {msg}"),
+            Self::OrchestrationQueueCorruption(msg) => write!(f, "Queue corruption: {msg}"),
 
-            Self::PartialPipelineSuccess(msg) => write!(f, "Partial pipeline success: {}", msg),
-            Self::PipelineConfigInvalid(msg) => write!(f, "Pipeline config invalid: {}", msg),
-            Self::PipelinePhaseSkipped(msg) => write!(f, "Pipeline phase skipped: {}", msg),
-            Self::PipelineInternalStateCorruption(msg) => write!(f, "Pipeline state corruption: {}", msg),
+            Self::PartialPipelineSuccess(msg) => write!(f, "Partial pipeline success: {msg}"),
+            Self::PipelineConfigInvalid(msg) => write!(f, "Pipeline config invalid: {msg}"),
+            Self::PipelinePhaseSkipped(msg) => write!(f, "Pipeline phase skipped: {msg}"),
+            Self::PipelineInternalStateCorruption(msg) => {
+                write!(f, "Pipeline state corruption: {msg}")
+            }
 
-            Self::LearnerMathCorrupted(msg) => write!(f, "Learner math corrupted: {}", msg),
-            Self::LearnerLockout(msg) => write!(f, "Learner lockout: {}", msg),
-            Self::BadPredictionOrdering(msg) => write!(f, "Bad prediction ordering: {}", msg),
+            Self::LearnerMathCorrupted(msg) => write!(f, "Learner math corrupted: {msg}"),
+            Self::LearnerLockout(msg) => write!(f, "Learner lockout: {msg}"),
+            Self::BadPredictionOrdering(msg) => write!(f, "Bad prediction ordering: {msg}"),
 
-            Self::InvalidConsensusVote(msg) => write!(f, "Invalid consensus vote: {}", msg),
-            Self::VoteIdentityCorruption(msg) => write!(f, "Vote identity corruption: {}", msg),
-            Self::UnauthorizedVoter(msg) => write!(f, "Unauthorized voter: {}", msg),
-            Self::ConsensusDeadlock(msg) => write!(f, "Consensus deadlock: {}", msg),
+            Self::InvalidConsensusVote(msg) => write!(f, "Invalid consensus vote: {msg}"),
+            Self::VoteIdentityCorruption(msg) => write!(f, "Vote identity corruption: {msg}"),
+            Self::UnauthorizedVoter(msg) => write!(f, "Unauthorized voter: {msg}"),
+            Self::ConsensusDeadlock(msg) => write!(f, "Consensus deadlock: {msg}"),
 
             Self::SnapshotSchemaVersionMismatch { expected, found } => {
-                write!(f, "Snapshot schema version mismatch: expected {}, found {}", expected, found)
+                write!(f, "Snapshot schema version mismatch: expected {expected}, found {found}")
             }
-            Self::ReplayDiverges(msg) => write!(f, "Replay diverges: {}", msg),
-            Self::SnapshotLost(msg) => write!(f, "Snapshot lost: {}", msg),
-            Self::SnapshotCorrupted(msg) => write!(f, "Snapshot corrupted: {}", msg),
-            Self::NonDeterministicReplay(msg) => write!(f, "Non-deterministic replay: {}", msg),
+            Self::ReplayDiverges(msg) => write!(f, "Replay diverges: {msg}"),
+            Self::SnapshotLost(msg) => write!(f, "Snapshot lost: {msg}"),
+            Self::SnapshotCorrupted(msg) => write!(f, "Snapshot corrupted: {msg}"),
+            Self::NonDeterministicReplay(msg) => write!(f, "Non-deterministic replay: {msg}"),
 
-            Self::ProphetSelfCheckFailed(msg) => write!(f, "Prophet self-check failed: {}", msg),
-            Self::PredictionOverridesActual(msg) => write!(f, "Prediction overrides actual: {}", msg),
-            Self::PredictionMathOverflow(msg) => write!(f, "Prediction math overflow: {}", msg),
-            Self::ProphetTrainingDataInvalid(msg) => write!(f, "Prophet training data invalid: {}", msg),
+            Self::ProphetSelfCheckFailed(msg) => write!(f, "Prophet self-check failed: {msg}"),
+            Self::PredictionOverridesActual(msg) => write!(f, "Prediction overrides actual: {msg}"),
+            Self::PredictionMathOverflow(msg) => write!(f, "Prediction math overflow: {msg}"),
+            Self::ProphetTrainingDataInvalid(msg) => {
+                write!(f, "Prophet training data invalid: {msg}")
+            }
 
-            Self::DashboardInconsistency(msg) => write!(f, "Dashboard inconsistency: {}", msg),
-            Self::ApproximateMetrics(msg) => write!(f, "Approximate metrics: {}", msg),
-            Self::DashboardRenderFailure(msg) => write!(f, "Dashboard render failure: {}", msg),
-            Self::MissingReceiptDataInDashboard(msg) => write!(f, "Missing receipt data in dashboard: {}", msg),
-            Self::CorruptedAggregations(msg) => write!(f, "Corrupted aggregations: {}", msg),
+            Self::DashboardInconsistency(msg) => write!(f, "Dashboard inconsistency: {msg}"),
+            Self::ApproximateMetrics(msg) => write!(f, "Approximate metrics: {msg}"),
+            Self::DashboardRenderFailure(msg) => write!(f, "Dashboard render failure: {msg}"),
+            Self::MissingReceiptDataInDashboard(msg) => {
+                write!(f, "Missing receipt data in dashboard: {msg}")
+            }
+            Self::CorruptedAggregations(msg) => write!(f, "Corrupted aggregations: {msg}"),
 
-            Self::Other(msg) => write!(f, "Invariant violation: {}", msg),
+            Self::Other(msg) => write!(f, "Invariant violation: {msg}"),
         }
     }
 }
@@ -253,6 +261,10 @@ pub trait InvariantCheck: Sized {
     /// Verify this type maintains all internal invariants.
     /// Returns `Ok(())` if invariants hold, `Err(...)` otherwise.
     /// Must not panic; violations are reported via Result.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any invariant is violated.
     fn check_invariants(&self) -> InvariantResult<()>;
 }
 
@@ -271,7 +283,7 @@ macro_rules! ensure_invariant {
     };
 }
 
-/// Helper macro to convert a custom error into an InvariantViolation.
+/// Helper macro to convert a custom error into an `InvariantViolation`.
 /// Ensures no unwrap/expect escape in invariant-critical paths.
 #[macro_export]
 macro_rules! invariant_context {
@@ -292,12 +304,20 @@ pub struct ContractValidator;
 
 impl ContractValidator {
     /// Verify contract is completely specified and valid.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the contract ID is empty or phase count is zero.
     pub fn validate(contract_id: &str, phase_count: usize) -> InvariantResult<()> {
-        ensure_invariant!(!contract_id.is_empty(),
-            UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string()));
+        ensure_invariant!(
+            !contract_id.is_empty(),
+            UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string())
+        );
 
-        ensure_invariant!(phase_count > 0,
-            UnrecoverableInvariantViolation::InvalidPhaseSequence("no phases defined".to_string()));
+        ensure_invariant!(
+            phase_count > 0,
+            UnrecoverableInvariantViolation::InvalidPhaseSequence("no phases defined".to_string())
+        );
 
         Ok(())
     }
@@ -311,22 +331,22 @@ pub struct ThermalValidator {
 
 impl ThermalValidator {
     /// Create a new thermal validator with configured jump threshold.
-    pub fn new(max_jump_threshold: u64) -> Self {
-        Self {
-            last_tau: None,
-            max_jump_threshold,
-        }
+    #[must_use]
+    pub const fn new(max_jump_threshold: u64) -> Self {
+        Self { last_tau: None, max_jump_threshold }
     }
 
     /// Validate new τ measurement for monotonicity and bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the clock goes backward or jumps exceed the threshold.
+    #[allow(clippy::missing_const_for_fn)] // Cannot be const: mutates self
     pub fn validate_tau(&mut self, current_tau: u64) -> InvariantResult<()> {
         if let Some(prev) = self.last_tau {
             ensure_invariant!(
                 current_tau >= prev,
-                UnrecoverableInvariantViolation::ClockBackward {
-                    prev,
-                    current: current_tau,
-                }
+                UnrecoverableInvariantViolation::ClockBackward { prev, current: current_tau }
             );
 
             let jump = current_tau.saturating_sub(prev);
@@ -352,23 +372,33 @@ pub struct EffectValidator {
 
 impl EffectValidator {
     /// Create a new effect validator with declared effect set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the declared effect set is empty.
     pub fn new(declared: Vec<String>) -> InvariantResult<Self> {
-        ensure_invariant!(!declared.is_empty(),
-            UnrecoverableInvariantViolation::EffectCompositionError("no effects declared".to_string()));
+        ensure_invariant!(
+            !declared.is_empty(),
+            UnrecoverableInvariantViolation::EffectCompositionError(
+                "no effects declared".to_string()
+            )
+        );
 
-        Ok(Self {
-            declared_effects: declared.into_iter().collect(),
-        })
+        Ok(Self { declared_effects: declared.into_iter().collect() })
     }
 
     /// Verify observed effects are a subset of declared effects.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any observed effect is not in the declared set.
     pub fn validate_observed(&self, observed: &[String]) -> InvariantResult<()> {
         for effect in observed {
             ensure_invariant!(
                 self.declared_effects.contains(effect),
-                UnrecoverableInvariantViolation::UnobservedEffect(
-                    format!("effect '{}' not declared", effect)
-                )
+                UnrecoverableInvariantViolation::UnobservedEffect(format!(
+                    "effect '{effect}' not declared"
+                ))
             );
         }
         Ok(())
@@ -383,9 +413,17 @@ pub struct StateValidator {
 
 impl StateValidator {
     /// Create a new state validator with initial state and complete state set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the initial state is empty or not in the state set.
     pub fn new(initial_state: String, all_states: Vec<String>) -> InvariantResult<Self> {
-        ensure_invariant!(!initial_state.is_empty(),
-            UnrecoverableInvariantViolation::InvalidStateTransition("empty initial state".to_string()));
+        ensure_invariant!(
+            !initial_state.is_empty(),
+            UnrecoverableInvariantViolation::InvalidStateTransition(
+                "empty initial state".to_string()
+            )
+        );
 
         let all_set: std::collections::BTreeSet<_> = all_states.into_iter().collect();
         ensure_invariant!(
@@ -402,9 +440,15 @@ impl StateValidator {
     }
 
     /// Verify transition to next state is valid.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the next state is empty.
     pub fn validate_transition(&mut self, next_state: &str) -> InvariantResult<()> {
-        ensure_invariant!(!next_state.is_empty(),
-            UnrecoverableInvariantViolation::InvalidStateTransition("empty next state".to_string()));
+        ensure_invariant!(
+            !next_state.is_empty(),
+            UnrecoverableInvariantViolation::InvalidStateTransition("empty next state".to_string())
+        );
 
         self.current_state = next_state.to_string();
         self.reachable_states.insert(next_state.to_string());
@@ -419,14 +463,22 @@ pub struct ReceiptValidator {
 
 impl ReceiptValidator {
     /// Create a new receipt validator expecting a specific schema version.
-    pub fn new(version: u32) -> Self {
-        Self {
-            expected_version: version,
-        }
+    #[must_use]
+    pub const fn new(version: u32) -> Self {
+        Self { expected_version: version }
     }
 
     /// Verify receipt has all required fields and valid version.
-    pub fn validate_receipt(&self, version: u32, checksum: u32, computed: u32) -> InvariantResult<()> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the version doesn't match or checksums don't match.
+    pub fn validate_receipt(
+        &self,
+        version: u32,
+        checksum: u32,
+        computed: u32,
+    ) -> InvariantResult<()> {
         ensure_invariant!(
             version == self.expected_version,
             UnrecoverableInvariantViolation::ReceiptVersionMismatch {
@@ -437,9 +489,9 @@ impl ReceiptValidator {
 
         ensure_invariant!(
             checksum == computed,
-            UnrecoverableInvariantViolation::CorruptedReceipt(
-                format!("checksum mismatch: {} vs {}", checksum, computed)
-            )
+            UnrecoverableInvariantViolation::CorruptedReceipt(format!(
+                "checksum mismatch: {checksum} vs {computed}"
+            ))
         );
 
         Ok(())
@@ -477,7 +529,8 @@ mod tests {
         let mut sv = StateValidator::new(
             "Init".to_string(),
             vec!["Init".to_string(), "Running".to_string(), "Done".to_string()],
-        ).unwrap();
+        )
+        .unwrap();
         assert!(sv.validate_transition("Running").is_ok());
         assert!(sv.validate_transition("Done").is_ok());
     }

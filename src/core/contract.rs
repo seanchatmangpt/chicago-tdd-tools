@@ -168,9 +168,9 @@ impl fmt::Display for TestThermalClass {
 pub struct TestContract {
     /// Test name (function name)
     pub name: &'static str,
-    /// Covered modules/capabilities (e.g., "core::fixture", "validation::guards")
+    /// Covered modules/capabilities (e.g., `"core::fixture"`, `"validation::guards"`)
     pub coverage: &'static [&'static str],
-    /// Invariants checked by this test (e.g., "τ ≤ 8", "no_panics", "no_allocations")
+    /// Invariants checked by this test (e.g., `"τ ≤ 8"`, `"no_panics"`, `"no_allocations"`)
     pub invariants: &'static [&'static str],
     /// Resource envelope
     pub resources: ResourceEnvelope,
@@ -272,13 +272,13 @@ impl TestContract {
     /// Check if this test verifies a specific invariant (runtime)
     #[must_use]
     pub fn verifies_invariant(&self, invariant: &str) -> bool {
-        self.invariants.iter().any(|&inv| inv == invariant)
+        self.invariants.contains(&invariant)
     }
 
     /// Check if this test covers a specific module (runtime)
     #[must_use]
     pub fn covers_module_runtime(&self, module: &str) -> bool {
-        self.coverage.iter().any(|&cov| cov == module)
+        self.coverage.contains(&module)
     }
 }
 
@@ -339,10 +339,7 @@ impl TestContractRegistry {
     /// Get all tests that require a specific environment
     #[must_use]
     pub fn tests_requiring_environment(&self, env: &str) -> Vec<&'static TestContract> {
-        self.contracts
-            .iter()
-            .filter(|c| c.environment.iter().any(|&e| e == env))
-            .collect()
+        self.contracts.iter().filter(|c| c.environment.contains(&env)).collect()
     }
 
     /// Check coverage: do we have at least one test for each invariant?

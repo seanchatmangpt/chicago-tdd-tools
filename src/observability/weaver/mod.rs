@@ -257,7 +257,7 @@ impl WeaverValidator {
     /// Get OTLP endpoint for sending telemetry
     #[must_use]
     pub fn otlp_endpoint(&self) -> String {
-        format!("http://{}:{}", LOCALHOST, self.otlp_grpc_port)
+        format!("http://{LOCALHOST}:{}", self.otlp_grpc_port)
     }
 
     /// Check if Weaver process is running
