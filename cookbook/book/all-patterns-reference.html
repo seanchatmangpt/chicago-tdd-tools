@@ -1,0 +1,367 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>All Patterns: Quick Reference - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="all-patterns-quick-reference-card"><a class="header" href="#all-patterns-quick-reference-card">All Patterns: Quick Reference Card</a></h1>
+<blockquote>
+<p>📚 <strong>REFERENCE</strong> | All 20 patterns at a glance</p>
+</blockquote>
+<p>Quick lookup for all patterns. Use this to find a pattern and jump to its full description.</p>
+<hr />
+<h2 id="testing-patterns-5"><a class="header" href="#testing-patterns-5">Testing Patterns (5)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>1</td><td><strong>AAA Pattern</strong></td><td>Tests are unreadable</td><td>Structure into Arrange-Act-Assert</td><td><a href="testing-patterns/aaa-pattern.html">→</a></td></tr>
+<tr><td>2</td><td><strong>Error Path Testing</strong></td><td>Failures aren't tested</td><td>Test both success AND error paths</td><td><a href="testing-patterns/error-path-testing.html">→</a></td></tr>
+<tr><td>3</td><td><strong>Boundary Conditions</strong></td><td>Edge cases are missed</td><td>Systematically test limits</td><td><a href="testing-patterns/boundary-conditions.html">→</a></td></tr>
+<tr><td>4</td><td><strong>Resource Cleanup</strong></td><td>Tests leak resources</td><td>Automatic fixture cleanup</td><td><a href="testing-patterns/resource-cleanup.html">→</a></td></tr>
+<tr><td>5</td><td><strong>Real Collaborators</strong></td><td>Mocks hide bugs</td><td>Test with real implementations</td><td><a href="testing-patterns/real-collaborators.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 5 patterns are the <strong>foundation</strong>. Use them in every test.</p>
+<hr />
+<h2 id="architecture-patterns-5"><a class="header" href="#architecture-patterns-5">Architecture Patterns (5)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>6</td><td><strong>Generic Base Layer</strong></td><td>Code duplication</td><td>Extract generic abstractions</td><td><a href="architecture-patterns/generic-base.html">→</a></td></tr>
+<tr><td>7</td><td><strong>Extension Layer</strong></td><td>Can't extend without modifying</td><td>Add layers for safe extension</td><td><a href="architecture-patterns/extension-layer.html">→</a></td></tr>
+<tr><td>8</td><td><strong>Composition Over Duplication</strong></td><td>DRY violations</td><td>Compose instead of copying</td><td><a href="architecture-patterns/composition-over-duplication.html">→</a></td></tr>
+<tr><td>9</td><td><strong>Single Source of Truth</strong></td><td>Data inconsistencies</td><td>One canonical source</td><td><a href="architecture-patterns/single-source-of-truth.html">→</a></td></tr>
+<tr><td>10</td><td><strong>Capability Grouping</strong></td><td>Monolithic modules</td><td>Organize by capability</td><td><a href="architecture-patterns/capability-groups.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 5 patterns organize code structure. Use during architecture phase.</p>
+<hr />
+<h2 id="design-patterns-10"><a class="header" href="#design-patterns-10">Design Patterns (10)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Solution</th><th>Learn More</th></tr></thead><tbody>
+<tr><td>11</td><td><strong>Zero-Cost Abstractions</strong></td><td>Abstractions are slow</td><td>Use generics, compile away overhead</td><td><a href="design-patterns/zero-cost-abstractions.html">→</a></td></tr>
+<tr><td>12</td><td><strong>Type Safety with GATs</strong></td><td>Type errors at runtime</td><td>Generic Associated Types</td><td><a href="design-patterns/type-safety-patterns.html">→</a></td></tr>
+<tr><td>13</td><td><strong>Sealed Traits</strong></td><td>API is too easy to misuse</td><td>Seal traits to prevent misuse</td><td><a href="design-patterns/sealed-traits.html">→</a></td></tr>
+<tr><td>14</td><td><strong>Compile-Time Validation</strong></td><td>Errors caught at runtime</td><td>Validate during compilation</td><td><a href="design-patterns/compile-time-validation.html">→</a></td></tr>
+<tr><td>15</td><td><strong>Type State Enforcement</strong></td><td>State machines are error-prone</td><td>Encode states in the type system</td><td><a href="design-patterns/type-state-pattern.html">→</a></td></tr>
+<tr><td>16</td><td><strong>Fixture Lifecycle</strong></td><td>Complex test setup</td><td>Manage with sealed traits</td><td><a href="design-patterns/fixture-lifecycle.html">→</a></td></tr>
+<tr><td>17</td><td><strong>Builder-Driven Test Data</strong></td><td>Building test data is tedious</td><td>Fluent builders for data</td><td><a href="design-patterns/builder-test-data.html">→</a></td></tr>
+<tr><td>18</td><td><strong>Timeout Defense</strong></td><td>Tests hang indefinitely</td><td>Timeout defense in depth</td><td><a href="design-patterns/timeout-defense.html">→</a></td></tr>
+<tr><td>19</td><td><strong>Feature Gate Slices</strong></td><td>Feature flags are unreliable</td><td>Slice-based feature gating</td><td><a href="design-patterns/feature-gating.html">→</a></td></tr>
+<tr><td>20</td><td><strong>Macro Pattern Enforcement</strong></td><td>Patterns are easy to violate</td><td>Use macros to enforce</td><td><a href="design-patterns/macro-enforcement.html">→</a></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key</strong>: These 10 patterns provide safety, performance, and design tools. Use during implementation.</p>
+<hr />
+<h2 id="pattern-organization"><a class="header" href="#pattern-organization">Pattern Organization</a></h2>
+<h3 id="by-complexity-learning-path"><a class="header" href="#by-complexity-learning-path">By Complexity (Learning Path)</a></h3>
+<p><strong>Phase 1 - Foundation (Read First)</strong></p>
+<ol>
+<li>Pattern 1: AAA Pattern</li>
+<li>Pattern 2: Error Path Testing</li>
+<li>Pattern 3: Boundary Conditions</li>
+</ol>
+<p><strong>Phase 2 - Production Ready (Read Next)</strong>
+4. Pattern 4: Resource Cleanup
+5. Pattern 5: Real Collaborators
+6. Pattern 17: Builder-Driven Test Data</p>
+<p><strong>Phase 3 - Architecture (Advanced)</strong>
+6. Pattern 8: Composition Over Duplication
+7. Pattern 10: Capability Grouping
+8. Pattern 9: Single Source of Truth</p>
+<p><strong>Phase 4 - Advanced Design (Mastery)</strong>
+11. Pattern 11: Zero-Cost Abstractions
+12. Pattern 13: Sealed Traits
+13. Pattern 15: Type State Enforcement
+14. Pattern 20: Macro Pattern Enforcement</p>
+<hr />
+<h3 id="by-category-type-system"><a class="header" href="#by-category-type-system">By Category (Type System)</a></h3>
+<p><strong>Testing Patterns</strong>: Patterns 1-5
+<strong>Architecture Patterns</strong>: Patterns 6-10
+<strong>Design Patterns</strong>: Patterns 11-20</p>
+<hr />
+<h3 id="by-problem-domain"><a class="header" href="#by-problem-domain">By Problem Domain</a></h3>
+<p><strong>Testing Problems</strong>: Patterns 1-5, 17
+<strong>Code Organization</strong>: Patterns 6-10
+<strong>Type Safety</strong>: Patterns 12, 14, 15
+<strong>API Design</strong>: Patterns 13, 20
+<strong>Performance</strong>: Pattern 11
+<strong>Robustness</strong>: Pattern 18
+<strong>Reliability</strong>: Pattern 19</p>
+<hr />
+<h2 id="how-to-use-this-card"><a class="header" href="#how-to-use-this-card">How to Use This Card</a></h2>
+<ol>
+<li><strong>Find your problem</strong> in the Problem column</li>
+<li><strong>See the solution</strong> in the Solution column</li>
+<li><strong>Click Learn More</strong> to read the full pattern</li>
+<li><strong>Bookmark</strong> the pattern for future reference</li>
+</ol>
+<hr />
+<h2 id="quick-links"><a class="header" href="#quick-links">Quick Links</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Want to...</th><th>Go to...</th></tr></thead><tbody>
+<tr><td>Choose a pattern</td><td><a href="choosing-your-pattern.html">Choosing Your Pattern</a></td></tr>
+<tr><td>Learn testing</td><td><a href="tutorials/learning-testing-patterns.html">Testing Learning Sequence</a></td></tr>
+<tr><td>Learn architecture</td><td><a href="tutorials/learning-architecture-patterns.html">Architecture Learning Sequence</a></td></tr>
+<tr><td>Learn design</td><td><a href="tutorials/learning-design-patterns.html">Design Learning Sequence</a></td></tr>
+<tr><td>All 20 patterns</td><td>This page (you are here)</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="pattern-dependencies"><a class="header" href="#pattern-dependencies">Pattern Dependencies</a></h2>
+<p>Some patterns build on others. Recommended learning order:</p>
+<pre><code>Pattern 1 (AAA)
+  ├─→ Pattern 2 (Error Paths)
+  ├─→ Pattern 3 (Boundaries)
+  ├─→ Pattern 4 (Resource Cleanup)
+  └─→ Pattern 5 (Real Collaborators)
+       └─→ Pattern 17 (Builder Test Data)
+
+Pattern 6 (Generic Base)
+  └─→ Pattern 8 (Composition)
+       └─→ Pattern 10 (Capability Groups)
+
+Pattern 14 (Compile-Time)
+  └─→ Pattern 15 (Type State)
+
+Pattern 13 (Sealed Traits)
+  └─→ Pattern 20 (Macro Enforcement)
+</code></pre>
+<hr />
+<h2 id="statistics"><a class="header" href="#statistics">Statistics</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+<tr><td>Total Patterns</td><td>20</td></tr>
+<tr><td>Testing Patterns</td><td>5</td></tr>
+<tr><td>Architecture Patterns</td><td>5</td></tr>
+<tr><td>Design Patterns</td><td>10</td></tr>
+<tr><td>Difficulty Range</td><td>Beginner → Advanced</td></tr>
+<tr><td>Total Learning Time</td><td>~10 hours</td></tr>
+<tr><td>Estimated Implementation</td><td>2-3 weeks</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="pro-tips"><a class="header" href="#pro-tips">Pro Tips</a></h2>
+<p>💡 <strong>Tip 1</strong>: You don't need to learn all 20 patterns at once. Start with Testing (1-5), then add what you need.</p>
+<p>💡 <strong>Tip 2</strong>: Patterns often appear in combinations. When you use Pattern 5 (Real Collaborators), you'll probably also use Pattern 17 (Builder Test Data).</p>
+<p>💡 <strong>Tip 3</strong>: Look for patterns in the codebase you're reading. The more you see patterns, the better you'll understand them.</p>
+<p>💡 <strong>Tip 4</strong>: Bookmark the <a href="choosing-your-pattern.html">Decision Guide</a>. You'll return to it when solving problems.</p>
+<hr />
+<p><strong>Next</strong>: Choose your learning path or jump to a pattern you need right now!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="choosing-your-pattern.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="tutorials/learning-testing-patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="choosing-your-pattern.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="tutorials/learning-testing-patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

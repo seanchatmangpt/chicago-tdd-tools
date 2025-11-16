@@ -176,6 +176,20 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-1-aaa-pattern"><a class="header" href="#pattern-1-aaa-pattern">Pattern 1: AAA Pattern</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | Structure every test with Arrange-Act-Assert clarity</p>
+</blockquote>
+<h2 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem Solved</strong></td><td>Tests that intermingle setup, behavior, and assertions become hard to read and debug</td></tr>
+<tr><td><strong>Core Solution</strong></td><td>Divide test into three explicit phases: Arrange, Act, Assert</td></tr>
+<tr><td><strong>When to Use</strong></td><td>✅ All unit tests, ✅ Integration tests, ✅ Even simple assertions</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>❌ Property-based tests (different structure), ❌ Complex multi-stage workflows (use fixtures)</td></tr>
+<tr><td><strong>Difficulty</strong></td><td>Low - Easy to learn and apply immediately</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Slight verbosity for clarity</td></tr>
+<tr><td><strong>Related Patterns</strong></td><td>Error Path Testing, Real Collaborators, Fixture Lifecycle</td></tr>
+</tbody></table>
+</div>
 <h2 id="context"><a class="header" href="#context">Context</a></h2>
 <p>You are writing or reviewing a test in Chicago TDD Tools. You want the test to communicate intent instantly and fail with a precise message when behavior regresses.</p>
 <h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
@@ -189,45 +203,200 @@
 <li>Behavior proof vs. implementation detail: assertions must verify observable outcomes</li>
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="basic-example-simple-calculation"><a class="header" href="#basic-example-simple-calculation">Basic Example: Simple Calculation</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
 
 test!(test_scaling_multiplier, {
-    // Arrange
+    // Arrange: Set up test data
     let multiplier = 3;
     let input = 7;
 
-    // Act
+    // Act: Execute the behavior
     let result = multiplier * input;
 
-    // Assert
+    // Assert: Verify the result
     assert_eq!(result, 21, "multiplier should scale the input");
 });
 <span class="boring">}</span></code></pre></pre>
-<p>Async tests follow the same skeleton:</p>
+<h3 id="async-example-fetching-data"><a class="header" href="#async-example-fetching-data">Async Example: Fetching Data</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
 
 async_test!(test_fetch_customer, {
-    // Arrange
+    // Arrange: Set up dependencies
     let client = FakeCrmClient::connected();
 
-    // Act
+    // Act: Perform async operation
     let customer = client.fetch("cust-123").await?;
 
-    // Assert
+    // Assert: Verify outcome
     assert_eq!(customer.id, "cust-123");
     Ok(())
 });
 <span class="boring">}</span></code></pre></pre>
+<h3 id="with-fixtures-complex-setup"><a class="header" href="#with-fixtures-complex-setup">With Fixtures: Complex Setup</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::fixture::*;
+
+fixture_test!(test_user_creation, fixture, {
+    // Arrange: Create fixture and prepare state
+    fixture.set_metadata("user_type", "admin");
+    let db = fixture.database();
+
+    // Act: Execute business logic
+    let user = db.create_user("alice", "admin")?;
+
+    // Assert: Verify the result
+    assert_eq!(user.name, "alice");
+    assert_eq!(user.role, "admin");
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Arrange phase</strong> clearly sets up all necessary test data</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Act phase</strong> calls the function or method exactly once</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Assert phase</strong> verifies the result with specific assertions</li>
+<li><input disabled="" type="checkbox"/>
+Comments label each phase (even if obvious)</li>
+<li><input disabled="" type="checkbox"/>
+Test name describes what is being tested</li>
+<li><input disabled="" type="checkbox"/>
+Each test tests one behavior</li>
+<li><input disabled="" type="checkbox"/>
+No logic in assertions (e.g., no <code>if</code> statements)</li>
+</ul>
+<h2 id="common-mistakes--how-to-avoid-them"><a class="header" href="#common-mistakes--how-to-avoid-them">Common Mistakes &amp; How to Avoid Them</a></h2>
+<h3 id="-mistake-1-mixing-arrange-and-act"><a class="header" href="#-mistake-1-mixing-arrange-and-act">❌ Mistake 1: Mixing Arrange and Act</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: Hidden state between phases
+test!(test_bad_mixing, {
+    let result = setup_and_call();  // Mixes arrange + act
+    assert_eq!(result, 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: Clear separation
+test!(test_good_mixing, {
+    // Arrange
+    let input = 42;
+
+    // Act
+    let result = calculate(input);
+
+    // Assert
+    assert_eq!(result, 42);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-mistake-2-multiple-assertions-without-context"><a class="header" href="#-mistake-2-multiple-assertions-without-context">❌ Mistake 2: Multiple Assertions Without Context</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: No comment explaining what each asserts
+test!(test_bad_assertions, {
+    // ... arrange and act ...
+    assert_eq!(user.id, 1);
+    assert_eq!(user.name, "Alice");
+    assert!(user.is_active);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: Clear what each assertion verifies
+test!(test_good_assertions, {
+    // ... arrange and act ...
+
+    // Assert: User created with correct ID
+    assert_eq!(user.id, 1);
+
+    // Assert: User name matches input
+    assert_eq!(user.name, "Alice");
+
+    // Assert: User is active by default
+    assert!(user.is_active);
+});
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-mistake-3-act-phase-doing-multiple-things"><a class="header" href="#-mistake-3-act-phase-doing-multiple-things">❌ Mistake 3: Act Phase Doing Multiple Things</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DON'T: Multiple behaviors in Act
+test!(test_bad_act, {
+    let user = db.create_user("alice");
+    user.send_welcome_email();  // Second behavior!
+    assert!(user.email_sent);
+});
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DO: One behavior per test
+test!(test_user_creation, {
+    let user = db.create_user("alice");
+    assert_eq!(user.name, "alice");
+});
+
+test!(test_welcome_email, {
+    let user = db.create_user("alice");
+    user.send_welcome_email();
+    assert!(user.email_sent);
+});
+<span class="boring">}</span></code></pre></pre>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<p>The AAA pattern is foundational to Chicago TDD Tools. Every example test follows this structure, found throughout:</p>
+<ul>
+<li><code>examples/basic_test.rs</code> - Simple unit tests</li>
+<li><code>tests/common.rs</code> - Shared test utilities</li>
+<li>Test suites in the source code</li>
+</ul>
+<h2 id="advanced-multiple-assertions-in-assert-phase"><a class="header" href="#advanced-multiple-assertions-in-assert-phase">Advanced: Multiple Assertions in Assert Phase</a></h2>
+<p>✅ <strong>Allowed</strong>: Multiple assertions that verify the same behavior:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>test!(test_user_properties, {
+    // Arrange
+    let user_data = vec!["alice", "25", "alice@example.com"];
+
+    // Act
+    let user = parse_user_csv(&amp;user_data)?;
+
+    // Assert: All properties of the user
+    assert_eq!(user.name, "alice");
+    assert_eq!(user.age, 25);
+    assert_eq!(user.email, "alice@example.com");
+    assert!(user.is_valid());
+});
+<span class="boring">}</span></code></pre></pre>
+<p>This is acceptable because all assertions verify related properties of the same object.</p>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 2: Error Path Testing</li>
-<li>Pattern 5: Real Collaborators</li>
-<li>Pattern 11: Zero-Cost Abstractions</li>
+<li><strong>Pattern 2: Error Path Testing</strong> - Same AAA structure for error cases</li>
+<li><strong>Pattern 3: Boundary Conditions</strong> - AAA structure for edge cases</li>
+<li><strong>Pattern 5: Real Collaborators</strong> - AAA with actual dependencies</li>
+<li><strong>Pattern 16: Fixture Lifecycle Management</strong> - AAA with fixtures for complex setup</li>
+<li><strong>Pattern 17: Builder-Driven Test Data</strong> - AAA with fluent builders for Arrange phase</li>
 </ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Learn these related patterns to master test structure:</p>
+<ol>
+<li><strong>Next</strong>: <a href="error-path-testing.html">Pattern 2: Error Path Testing</a> - How to test failure cases</li>
+<li><strong>Then</strong>: <a href="real-collaborators.html">Pattern 5: Real Collaborators</a> - Testing with actual dependencies</li>
+<li><strong>Advanced</strong>: <a href="../design-patterns/fixture-lifecycle.html">Pattern 16: Fixture Lifecycle</a> - Complex multi-phase tests</li>
+</ol>
+<hr />
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>The AAA pattern is the foundation of readable, maintainable tests. By consistently separating <strong>Arrange</strong>, <strong>Act</strong>, and <strong>Assert</strong>, you create tests that:</p>
+<p>✅ Are easy to read and understand
+✅ Fail with clear messages about what went wrong
+✅ Scale from simple to complex tests
+✅ Can be easily maintained by teammates</p>
+<p><strong>Pro tip</strong>: Use comments to label each phase, even in simple tests. It takes one line and makes the intent crystal clear.</p>
 
                     </main>
 

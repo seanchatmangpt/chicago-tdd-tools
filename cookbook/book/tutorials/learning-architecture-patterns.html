@@ -1,0 +1,662 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Learning Architecture Patterns (60 min) - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="learning-architecture-patterns-60-minute-mastery"><a class="header" href="#learning-architecture-patterns-60-minute-mastery">Learning Architecture Patterns: 60-Minute Mastery</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Master the 5 fundamental architecture patterns</p>
+</blockquote>
+<p>This tutorial guides you through the 5 architecture patterns that organize your codebase.</p>
+<p><strong>Time</strong>: ~60 minutes | <strong>Difficulty</strong>: Intermediate | <strong>Prerequisites</strong>: <a href="learning-testing-patterns.html">Testing Patterns</a></p>
+<hr />
+<h2 id="module-overview"><a class="header" href="#module-overview">Module Overview</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Time</th><th>Focus</th></tr></thead><tbody>
+<tr><td>Pattern 6: Generic Base Layer</td><td>15 min</td><td>Eliminating duplication with abstractions</td></tr>
+<tr><td>Pattern 7: Extension Layer</td><td>12 min</td><td>Safe extensibility without modification</td></tr>
+<tr><td>Pattern 8: Composition Over Duplication</td><td>12 min</td><td>DRY principle in action</td></tr>
+<tr><td>Pattern 9: Single Source of Truth</td><td>12 min</td><td>Keeping data consistent</td></tr>
+<tr><td>Pattern 10: Capability Grouping</td><td>9 min</td><td>Organizing large modules</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="part-1-generic-base-layer-15-minutes"><a class="header" href="#part-1-generic-base-layer-15-minutes">Part 1: Generic Base Layer (15 minutes)</a></h2>
+<p><strong>Goal</strong>: Eliminate code duplication through generic abstractions</p>
+<h3 id="the-problem-code-duplication"><a class="header" href="#the-problem-code-duplication">The Problem: Code Duplication</a></h3>
+<p>Imagine you have multiple types that behave similarly:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Duplicate code everywhere
+struct FileStorage {
+    path: String,
+}
+
+impl FileStorage {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt; { ... }
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt; { ... }
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt; { ... }
+}
+
+struct DatabaseStorage {
+    connection: Connection,
+}
+
+impl DatabaseStorage {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt; { ... }
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt; { ... }
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt; { ... }
+}
+
+// Duplicated 9 times!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-generic-abstraction"><a class="header" href="#the-solution-generic-abstraction">The Solution: Generic Abstraction</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Define generic behavior once
+pub trait KeyValueStore {
+    fn get(&amp;self, key: &amp;str) -&gt; Result&lt;String&gt;;
+    fn set(&amp;self, key: &amp;str, value: String) -&gt; Result&lt;()&gt;;
+    fn delete(&amp;self, key: &amp;str) -&gt; Result&lt;()&gt;;
+}
+
+// Both implement the same trait
+struct FileStorage { ... }
+impl KeyValueStore for FileStorage { ... }
+
+struct DatabaseStorage { ... }
+impl KeyValueStore for DatabaseStorage { ... }
+
+// Code that works with BOTH
+fn backup_all_data(store: &amp;dyn KeyValueStore) {
+    // Works with file, database, or any implementation!
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-use-this-pattern"><a class="header" href="#when-to-use-this-pattern">When to Use This Pattern</a></h3>
+<p>✅ <strong>Use when</strong>: You have similar code in multiple places
+✅ <strong>Use when</strong>: You want to swap implementations
+✅ <strong>Use when</strong>: You want to test with fakes/stubs</p>
+<h3 id="checkpoint-question"><a class="header" href="#checkpoint-question">Checkpoint Question</a></h3>
+<p>You have <code>RedisCache</code> and <code>MemoryCache</code> with nearly identical code.</p>
+<p><strong>What should you do?</strong></p>
+<p>Answer: Extract a <code>Cache</code> trait and implement it for both.</p>
+<hr />
+<h2 id="part-2-extension-layer-12-minutes"><a class="header" href="#part-2-extension-layer-12-minutes">Part 2: Extension Layer (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Allow safe extensions without modifying existing code</p>
+<h3 id="the-problem-modifying-core-code"><a class="header" href="#the-problem-modifying-core-code">The Problem: Modifying Core Code</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Original code
+pub struct HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        // Handle request
+    }
+}
+
+// ❌ To add logging, you modify the core:
+impl HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);  // Logging added
+        // Handle request
+    }
+}
+
+// ❌ To add authentication, you modify again:
+impl HttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);  // Still here
+        // Check auth
+        // Handle request
+    }
+}
+
+// ❌ Code gets messy fast!
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-extension-layer"><a class="header" href="#the-solution-extension-layer">The Solution: Extension Layer</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Core code - never changes
+pub struct HttpServer { ... }
+
+// Extension layer - add features here
+pub struct LoggingHttpServer {
+    inner: HttpServer,
+}
+
+impl LoggingHttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        println!("Request: {:?}", req);
+        self.inner.handle_request(req);
+    }
+}
+
+// Another extension layer
+pub struct AuthHttpServer {
+    inner: LoggingHttpServer,
+}
+
+impl AuthHttpServer {
+    fn handle_request(&amp;self, req: Request) {
+        if !req.is_authenticated() {
+            return Err(Unauthorized);
+        }
+        self.inner.handle_request(req);
+    }
+}
+
+// Usage: Stack them!
+let server = HttpServer::new();
+let logged = LoggingHttpServer::new(server);
+let secured = AuthHttpServer::new(logged);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="why-this-matters"><a class="header" href="#why-this-matters">Why This Matters</a></h3>
+<ul>
+<li><strong>Original code never changes</strong> → No bugs introduced</li>
+<li><strong>Easy to test</strong> → Test each layer separately</li>
+<li><strong>Composable</strong> → Mix and match features</li>
+<li><strong>Reversible</strong> → Remove a layer anytime</li>
+</ul>
+<h3 id="checkpoint-question-1"><a class="header" href="#checkpoint-question-1">Checkpoint Question</a></h3>
+<p>You need to add timeout handling to a database connection.</p>
+<p><strong>Using the Extension Layer pattern, how would you do it?</strong></p>
+<p>Answer: Create a <code>TimeoutConnection</code> wrapper that wraps the original <code>Connection</code>.</p>
+<hr />
+<h2 id="part-3-composition-over-duplication-12-minutes"><a class="header" href="#part-3-composition-over-duplication-12-minutes">Part 3: Composition Over Duplication (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Use composition instead of copying code</p>
+<h3 id="the-problem-copy-paste-duplication"><a class="header" href="#the-problem-copy-paste-duplication">The Problem: Copy-Paste Duplication</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Copy-pasting code
+struct Logger {
+    buffer: Vec&lt;String&gt;,
+}
+
+impl Logger {
+    fn log(&amp;mut self, msg: &amp;str) {
+        self.buffer.push(msg.to_string());
+    }
+}
+
+struct FileWriter {
+    buffer: Vec&lt;String&gt;,  // DUPLICATE: Same buffer
+    path: String,
+}
+
+impl FileWriter {
+    fn write(&amp;mut self, data: &amp;str) {
+        self.buffer.push(data.to_string());  // DUPLICATE: Same logic
+    }
+}
+
+// Now you need to fix a bug in the buffer logic...
+// You have to fix it in TWO places! 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-composition"><a class="header" href="#the-solution-composition">The Solution: Composition</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Create a shared component
+pub struct StringBuffer {
+    data: Vec&lt;String&gt;,
+}
+
+impl StringBuffer {
+    fn append(&amp;mut self, s: &amp;str) {
+        self.data.push(s.to_string());
+    }
+}
+
+// Compose it into both
+struct Logger {
+    buffer: StringBuffer,
+}
+
+struct FileWriter {
+    buffer: StringBuffer,  // Same component
+    path: String,
+}
+
+// Now: Fix bug in StringBuffer once, both are fixed! ✅
+<span class="boring">}</span></code></pre></pre>
+<h3 id="composition-vs-inheritance"><a class="header" href="#composition-vs-inheritance">Composition vs. Inheritance</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Composition</th><th>Inheritance</th></tr></thead><tbody>
+<tr><td><strong>Reusability</strong></td><td>✅ Mix and match</td><td>❌ Rigid hierarchy</td></tr>
+<tr><td><strong>Maintainability</strong></td><td>✅ Changes in one place</td><td>❌ Changes everywhere</td></tr>
+<tr><td><strong>Flexibility</strong></td><td>✅ Swap parts easily</td><td>❌ Can't swap</td></tr>
+<tr><td><strong>Testability</strong></td><td>✅ Test component alone</td><td>❌ Test whole tree</td></tr>
+</tbody></table>
+</div>
+<p><strong>Rule of thumb</strong>: If you're copy-pasting code, use composition instead.</p>
+<h3 id="checkpoint-question-2"><a class="header" href="#checkpoint-question-2">Checkpoint Question</a></h3>
+<p>You have <code>JsonParser</code> and <code>XmlParser</code> with 50 lines of duplicate validation code.</p>
+<p><strong>What should you do?</strong></p>
+<p>Answer: Extract a <code>Validator</code> component and use it in both.</p>
+<hr />
+<h2 id="part-4-single-source-of-truth-12-minutes"><a class="header" href="#part-4-single-source-of-truth-12-minutes">Part 4: Single Source of Truth (12 minutes)</a></h2>
+<p><strong>Goal</strong>: Keep data consistent by having one canonical source</p>
+<h3 id="the-problem-data-inconsistency"><a class="header" href="#the-problem-data-inconsistency">The Problem: Data Inconsistency</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Multiple copies of the same data
+struct UserCache {
+    users: HashMap&lt;u32, User&gt;,  // Copy of database
+}
+
+struct UserService {
+    cache: UserCache,
+    database: Database,  // Original
+}
+
+// Update database
+service.database.update_user(123, new_data)?;
+
+// Oops! Cache is now stale
+// service.cache.users[&amp;123] is out of date!
+
+// Different code paths get different data 😞
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-solution-one-source-of-truth"><a class="header" href="#the-solution-one-source-of-truth">The Solution: One Source of Truth</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Truth in one place
+struct UserService {
+    database: Database,  // Only source of truth
+}
+
+// Cache is derived from database
+fn get_user(&amp;self, id: u32) -&gt; Result&lt;User&gt; {
+    // Get from database (single source)
+    self.database.fetch(id)
+}
+
+// Update
+fn update_user(&amp;mut self, id: u32, data: UserUpdate) -&gt; Result&lt;()&gt; {
+    // Update only the source
+    self.database.update(id, data)
+}
+
+// Always consistent! ✅
+<span class="boring">}</span></code></pre></pre>
+<h3 id="when-to-apply"><a class="header" href="#when-to-apply">When to Apply</a></h3>
+<p>✅ <strong>Apply when</strong>: Data appears in multiple places
+✅ <strong>Apply when</strong>: Synchronization is complex
+✅ <strong>Apply when</strong>: Consistency matters (payment systems, authorization, etc.)</p>
+<h3 id="examples"><a class="header" href="#examples">Examples</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Domain</th><th>Truth</th><th>Derived</th></tr></thead><tbody>
+<tr><td><strong>E-commerce</strong></td><td>Database (orders)</td><td>Cache, indices, reports</td></tr>
+<tr><td><strong>Auth</strong></td><td>Database (permissions)</td><td>Session tokens, caches</td></tr>
+<tr><td><strong>Analytics</strong></td><td>Raw events</td><td>Aggregations, reports</td></tr>
+</tbody></table>
+</div>
+<h3 id="checkpoint-question-3"><a class="header" href="#checkpoint-question-3">Checkpoint Question</a></h3>
+<p>You have user data in both database and cache.</p>
+<p><strong>Which is the single source of truth?</strong></p>
+<p>Answer: Database. Cache is derived/cached from it. Update database first, invalidate cache.</p>
+<hr />
+<h2 id="part-5-capability-grouping-9-minutes"><a class="header" href="#part-5-capability-grouping-9-minutes">Part 5: Capability Grouping (9 minutes)</a></h2>
+<p><strong>Goal</strong>: Organize large modules by capability, not by type</p>
+<h3 id="the-problem-type-based-organization"><a class="header" href="#the-problem-type-based-organization">The Problem: Type-Based Organization</a></h3>
+<pre><code>project/
+├── models/          # All data types
+│   ├── user.rs
+│   ├── order.rs
+│   └── payment.rs
+├── handlers/        # All HTTP handlers
+│   ├── user_handler.rs
+│   ├── order_handler.rs
+│   └── payment_handler.rs
+├── persistence/     # All database code
+│   ├── user_repo.rs
+│   ├── order_repo.rs
+│   └── payment_repo.rs
+
+// ❌ To understand "user" feature, you jump between 4 files!
+// ❌ Each file is small but scattered
+// ❌ Hard to find related code
+</code></pre>
+<h3 id="the-solution-capability-based-organization"><a class="header" href="#the-solution-capability-based-organization">The Solution: Capability-Based Organization</a></h3>
+<pre><code>project/
+├── users/               # Everything for users
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+├── orders/              # Everything for orders
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+├── payments/            # Everything for payments
+│   ├── model.rs
+│   ├── handler.rs
+│   ├── repository.rs
+│   └── tests.rs
+
+// ✅ To understand "users", all code is in `users/`!
+// ✅ Related code is together
+// ✅ Easy to find dependencies
+</code></pre>
+<h3 id="benefits"><a class="header" href="#benefits">Benefits</a></h3>
+<ul>
+<li><strong>Cohesion</strong>: Related code together</li>
+<li><strong>Discoverability</strong>: Find code easily</li>
+<li><strong>Modularity</strong>: Move features together</li>
+<li><strong>Testability</strong>: Test capability in one place</li>
+</ul>
+<h3 id="checkpoint-question-4"><a class="header" href="#checkpoint-question-4">Checkpoint Question</a></h3>
+<p>Your project has <code>models/</code>, <code>handlers/</code>, and <code>db/</code> directories.</p>
+<p><strong>How would you reorganize for better capability grouping?</strong></p>
+<p>Answer: Create <code>users/</code>, <code>orders/</code>, <code>products/</code> directories, each containing models, handlers, and db code.</p>
+<hr />
+<h2 id="putting-it-together-complete-exercise-15-minutes"><a class="header" href="#putting-it-together-complete-exercise-15-minutes">Putting It Together: Complete Exercise (15 minutes)</a></h2>
+<h3 id="exercise-building-an-order-processing-system"><a class="header" href="#exercise-building-an-order-processing-system">Exercise: Building an Order Processing System</a></h3>
+<p>You're building an order system with these requirements:</p>
+<ol>
+<li>Accept orders</li>
+<li>Store them in database</li>
+<li>Can switch between PostgreSQL and SQLite</li>
+<li>Add logging without modifying core code</li>
+<li>Keep inventory count accurate</li>
+<li>Organize code clearly</li>
+</ol>
+<h3 id="design-using-all-5-patterns"><a class="header" href="#design-using-all-5-patterns">Design Using All 5 Patterns</a></h3>
+<p><strong>Pattern 6 (Generic Base)</strong>: Create <code>Storage</code> trait</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait OrderStorage {
+    fn save(&amp;mut self, order: &amp;Order) -&gt; Result&lt;()&gt;;
+    fn get(&amp;self, id: u32) -&gt; Result&lt;Order&gt;;
+}
+
+// Both implementations
+struct PostgresStorage { ... }
+struct SqliteStorage { ... }
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 7 (Extension Layer)</strong>: Add logging</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct LoggingStorage {
+    inner: Box&lt;dyn OrderStorage&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 8 (Composition)</strong>: Shared validation</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct OrderValidator { ... }
+struct Order Service {
+    storage: Box&lt;dyn OrderStorage&gt;,
+    validator: OrderValidator,  // Composed
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 9 (Single Source)</strong>: Inventory truth</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct InventoryService {
+    database: Database,  // Single source
+    // NOT: inventory_cache
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Pattern 10 (Capability)</strong>: Organize by feature</p>
+<pre><code>order_service/
+├── model.rs
+├── handler.rs
+├── storage.rs
+├── validator.rs
+└── tests.rs
+</code></pre>
+<hr />
+<h2 id="summary-the-5-architecture-patterns"><a class="header" href="#summary-the-5-architecture-patterns">Summary: The 5 Architecture Patterns</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Problem</th><th>Solution</th></tr></thead><tbody>
+<tr><td><strong>6: Generic Base</strong></td><td>Duplication</td><td>Traits and abstraction</td></tr>
+<tr><td><strong>7: Extension Layer</strong></td><td>Modification</td><td>Wrapping instead of changing</td></tr>
+<tr><td><strong>8: Composition</strong></td><td>Copy-paste</td><td>Share components</td></tr>
+<tr><td><strong>9: Single Source</strong></td><td>Inconsistency</td><td>One source of truth</td></tr>
+<tr><td><strong>10: Capability</strong></td><td>Disorganization</td><td>Group by feature</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h3 id="apply-these-patterns"><a class="header" href="#apply-these-patterns">Apply These Patterns</a></h3>
+<p>Choose one pattern and apply it to your current project this week.</p>
+<h3 id="learn-design-patterns"><a class="header" href="#learn-design-patterns">Learn Design Patterns</a></h3>
+<p>Once you master architecture, learn <a href="learning-design-patterns.html">Design Patterns</a> for type safety and optimization.</p>
+<hr />
+<h2 id="checkpoint-do-you-know"><a class="header" href="#checkpoint-do-you-know">Checkpoint: Do You Know...?</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+How to use traits to eliminate duplication?</li>
+<li><input disabled="" type="checkbox"/>
+How to extend code without modifying it?</li>
+<li><input disabled="" type="checkbox"/>
+When to use composition over inheritance?</li>
+<li><input disabled="" type="checkbox"/>
+How to keep data consistent?</li>
+<li><input disabled="" type="checkbox"/>
+How to organize code by capability?</li>
+</ul>
+<p>If yes to all, you've mastered Architecture Patterns! 🎉</p>
+<hr />
+<p><strong>Congratulations!</strong> You now understand how to organize production code. Next, master type safety and design with Design Patterns.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/learning-testing-patterns.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tutorials/learning-design-patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/learning-testing-patterns.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tutorials/learning-design-patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

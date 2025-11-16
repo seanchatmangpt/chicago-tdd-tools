@@ -2,6 +2,20 @@
 
 - [Cookbook Overview](README.md)
 - [Introduction](introduction.md)
+
+# Navigation & Learning
+
+- [Choosing Your Pattern](choosing-your-pattern.md)
+- [All Patterns: Quick Reference](all-patterns-reference.md)
+
+# Learning Sequences (Tutorials)
+
+- [Learning Testing Patterns (90 min)](tutorials/learning-testing-patterns.md)
+- [Learning Architecture Patterns (60 min)](tutorials/learning-architecture-patterns.md)
+- [Learning Design Patterns (120 min)](tutorials/learning-design-patterns.md)
+
+# Pattern Reference
+
 - [Testing Patterns](testing-patterns/README.md)
   - [Pattern 1: AAA Pattern](testing-patterns/aaa-pattern.md)
   - [Pattern 2: Error Path Testing](testing-patterns/error-path-testing.md)
