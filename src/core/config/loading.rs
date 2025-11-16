@@ -1238,24 +1238,60 @@ max_batch_size = 0
     }
 
     /// **Gemba Fix**: Test that config defaults match hardcoded constants
+    ///
+    /// **Root Cause Fix**: This test verifies that the local constants in this module
+    /// match the constants exported from the macros module. This ensures consistency
+    /// across the codebase.
+    ///
+    /// **Isolation**: This test compares constants directly, not runtime function calls,
+    /// to avoid flakiness from config file state or other tests.
     #[test]
     fn test_config_defaults_match_constants() {
-        // This test verifies that config defaults match the hardcoded constants
-        // used in macros and other parts of the codebase
+        // Arrange: Import constants from both modules
         use crate::core::macros::test::{
-            DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS, DEFAULT_UNIT_TEST_TIMEOUT_SECONDS,
+            DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS as MACRO_INTEGRATION_TIMEOUT,
+            DEFAULT_UNIT_TEST_TIMEOUT_SECONDS as MACRO_UNIT_TIMEOUT,
         };
 
-        // Verify defaults match macro constants
+        // Act & Assert: Verify local constants match macro constants
+        // This is a compile-time check that ensures consistency
+        assert_eq!(
+            DEFAULT_UNIT_TEST_TIMEOUT_SECONDS, MACRO_UNIT_TIMEOUT,
+            "Local DEFAULT_UNIT_TEST_TIMEOUT_SECONDS ({}) should match macro constant ({})",
+            DEFAULT_UNIT_TEST_TIMEOUT_SECONDS, MACRO_UNIT_TIMEOUT
+        );
+        assert_eq!(
+            DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS, MACRO_INTEGRATION_TIMEOUT,
+            "Local DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS ({}) should match macro constant ({})",
+            DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS, MACRO_INTEGRATION_TIMEOUT
+        );
+    }
+
+    /// **Gemba Fix**: Test that config functions return defaults when no config file exists
+    ///
+    /// **Isolation**: This test ensures the functions work correctly in isolation by
+    /// temporarily removing CARGO_MANIFEST_DIR to simulate no config file scenario.
+    #[test]
+    fn test_config_functions_use_defaults_when_no_config() {
+        // Arrange: Temporarily remove CARGO_MANIFEST_DIR to simulate no config file
+        let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
+        std::env::remove_var("CARGO_MANIFEST_DIR");
+
+        // Act & Assert: Verify functions return default constants when no config exists
         assert_eq!(
             unit_test_timeout_seconds(),
             DEFAULT_UNIT_TEST_TIMEOUT_SECONDS,
-            "Config default should match macro constant"
+            "unit_test_timeout_seconds() should return DEFAULT_UNIT_TEST_TIMEOUT_SECONDS when no config file exists"
         );
         assert_eq!(
             integration_test_timeout_seconds(),
             DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS,
-            "Config default should match macro constant"
+            "integration_test_timeout_seconds() should return DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS when no config file exists"
         );
+
+        // Cleanup: Restore original CARGO_MANIFEST_DIR
+        if let Some(dir) = original_manifest_dir {
+            std::env::set_var("CARGO_MANIFEST_DIR", dir);
+        }
     }
 }
