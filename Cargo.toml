@@ -29,10 +29,6 @@ chrono = "^0.4"
 sha2 = "^0.10"
 hex = "^0.4"
 
-# RDF and Semantic Web (oxigraph ecosystem for RDF ontology loading/querying)
-oxigraph = { version = "^0.4", optional = true }
-oxrdf = { version = "^0.2", optional = true }
-
 # Error handling
 thiserror = "^2.0"
 
@@ -183,12 +179,6 @@ cli-testing = ["dep:trycmd"]
 # When to use: Installing Rust-based git hooks, version-controlled hooks
 # Enables: git_hook_installer binary, git2 dependency for repository operations
 git-hooks = ["dep:git2"]
-
-# RDF semantic web support (optional, rdf feature)
-# When to use: Loading/querying RDF ontologies, RDF-driven validation
-# Enables: sector_stacks::rdf module, RDF ontology loading and SPARQL querying
-# Dependency: Oxigraph ecosystem for RDF processing
-rdf = ["dep:oxigraph", "dep:oxrdf"]
 
 # Observability features
 # OTEL validation: OpenTelemetry span/metric validation

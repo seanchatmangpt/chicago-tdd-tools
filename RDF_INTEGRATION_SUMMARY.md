@@ -1,13 +1,16 @@
-# RDF Integration: Closing the Loops with Oxigraph
+# RDF Integration: Core Data Structures for Semantic Workflows
 
-**Status**: ✅ COMPLETE
+**Status**: ✅ COMPLETE (Main Library)
 **Date**: 2025-11-16
 **Tests Added**: 13 new RDF tests (6 ontology + 7 validation)
 **Total Tests**: 321/321 passing
+**Oxigraph**: Moved to playground project (optional tooling, not core dependency)
 
 ## Executive Summary
 
-This integration closes the feedback loop between RDF semantic web definitions and Rust runtime implementations using the Oxigraph RDF ecosystem. The sector ontologies (academic-lifecycle.ttl and claims-processing.ttl) now drive and validate Rust operations at runtime.
+This integration provides core RDF ontology data structures as part of the main library. Ontology loading via Oxigraph is handled separately in the playground project, keeping the main library lightweight while enabling advanced RDF features as optional tooling.
+
+**Key Design**: The main library defines the ontology data structures (`SectorOntology`, `WorkflowStage`, etc.) and validation logic. The playground project brings in Oxigraph for TTL file parsing and SPARQL querying.
 
 ## The Problem: Disconnected Systems
 
@@ -279,28 +282,44 @@ audit_log.record(AuditEntry {
 
 **Test Results**: 321/321 passing (13 new RDF tests)
 
-## Feature Flag
+## Main Library vs Playground
 
-The RDF integration is optional and feature-gated:
+### Main Library (`chicago-tdd-tools`)
+**Zero external RDF dependencies** - Just Rust!
 
 ```toml
 [dependencies]
-chicago-tdd-tools = { version = "1.3.0", features = ["rdf"] }
+chicago-tdd-tools = "1.3.0"
 ```
 
-**Without feature**: RDF module is available but disabled (stub implementation)
-**With feature**: Full Oxigraph integration enabled
+Provides:
+- `SectorOntology` - Container for workflow definitions
+- `WorkflowStage` - Workflow stages
+- `GuardConstraint` - Safety constraints
+- `KnowledgeHook` - Operations
+- `RdfOperationValidator` - Runtime validation
 
-```bash
-# Build with RDF support
-cargo build --features rdf
+All fully dependency-free. Use these data structures to validate operations at runtime without requiring Oxigraph.
 
-# Run tests with RDF support
-cargo test --features rdf
+### Playground Project (`playground/`)
+**Optional Oxigraph integration** for advanced use cases
 
-# Full build with all features
-cargo build --all-features
+```toml
+[dependencies]
+chicago-tdd-tools = "1.3.0"
+oxigraph = "0.4"
+oxrdf = "0.2"
 ```
+
+Extends main library with:
+- `OntologyLoader` - Load TTL files using Oxigraph
+- SPARQL query execution
+- RDF-to-Rust mapping
+- TTL file parsing
+
+**Use the playground project if you need**: TTL file loading, SPARQL queries, advanced RDF tooling
+
+**Use main library if you need**: Fast, lightweight ontology validation without external dependencies
 
 ## Closing the Loop: Bidirectional Sync
 
@@ -391,19 +410,40 @@ match validator.validate_stage_transition(...) {
 3. **Ontology Size**: No optimization for very large ontologies (>10MB)
 4. **Schema Evolution**: No built-in migration support
 
+## Design Philosophy: Separation of Concerns
+
+**Main Library**: Focused, lightweight, zero external RDF dependencies
+- Core data structures for workflow ontologies
+- Runtime validation logic
+- Used by sector stacks to validate operations
+
+**Playground Project**: Advanced features, optional Oxigraph integration
+- TTL file loading and parsing
+- SPARQL querying capabilities
+- RDF-to-Rust mapping tools
+- Experimentation and prototyping
+
+**Benefits**:
+- Main library stays lean (no heavy Oxigraph dependency)
+- Users who don't need Oxigraph don't pay the cost
+- Playground project can evolve independently
+- Ontology data structures available everywhere
+
 ## Conclusion
 
-The Oxigraph integration closes the loop between RDF semantic definitions and Rust implementations, creating:
-- **A bidirectional feedback mechanism** where RDF drives Rust behavior and Rust metrics inform RDF
+The RDF integration provides semantic workflow validation:
+- **Core Library**: Lightweight ontology data structures and validation engine
+- **Playground**: Optional Oxigraph tooling for advanced RDF features
 - **Complete auditability** through validation chains
 - **A single source of truth** for workflow definitions
 - **Runtime flexibility** to change constraints without recompiling
 
-This completes Phase 4's sector stack implementations by adding the semantic layer that ties everything together. The sector ontologies are no longer static documentation—they're active participants in the runtime validation of operations.
+This completes Phase 4's sector stack implementations by adding the semantic layer. Sector ontologies are now active participants in runtime validation of operations, powered by lightweight, zero-dependency data structures in the main library.
 
 ---
 
-**Commit**: Feature integration with oxigraph ecosystem
+**Architecture**: Main library + optional playground integration
 **Tests**: 321/321 passing
 **Documentation**: 100% (all public APIs documented)
+**Dependencies**: ✅ REMOVED from main library (optional in playground)
 **Status**: ✅ READY FOR PRODUCTION

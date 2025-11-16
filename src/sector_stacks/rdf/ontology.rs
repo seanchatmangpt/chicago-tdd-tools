@@ -1,10 +1,10 @@
-//! RDF Ontology Loader and Query Interface
+//! RDF Ontology Data Structures
 //!
-//! Provides RDF ontology loading from TTL files and SPARQL querying for
-//! workflow definitions, guards, and semantic constraints.
+//! Defines core data structures for workflow ontologies, guards, and hooks.
+//! This module is dependency-free; ontology loading is handled in the playground project
+//! using the oxigraph ecosystem.
 
 use std::collections::HashMap;
-use std::path::Path;
 
 /// Represents a workflow stage in the ontology
 #[derive(Debug, Clone)]
@@ -115,192 +115,6 @@ impl SectorOntology {
     }
 }
 
-/// Loads and parses RDF ontologies
-pub struct OntologyLoader {
-    #[cfg(feature = "rdf")]
-    store: Option<oxigraph::store::Store>,
-}
-
-impl OntologyLoader {
-    /// Create a new ontology loader
-    pub fn new() -> Self {
-        Self {
-            #[cfg(feature = "rdf")]
-            store: None,
-        }
-    }
-
-    /// Load ontology from a TTL file
-    #[cfg(feature = "rdf")]
-    pub fn load_from_file<P: AsRef<Path>>(&mut self, path: P) -> Result<SectorOntology, String> {
-        use std::fs;
-        use oxigraph::store::Store;
-        use oxigraph::io::RdfFormat;
-
-        // Read file
-        let content = fs::read_to_string(path).map_err(|e| format!("Failed to read file: {}", e))?;
-
-        // Create store
-        let store = Store::new().map_err(|e| format!("Failed to create RDF store: {}", e))?;
-
-        // Load RDF
-        store
-            .load_read(content.as_bytes(), RdfFormat::Turtle, None)
-            .map_err(|e| format!("Failed to load RDF: {}", e))?;
-
-        self.store = Some(store);
-
-        // Extract ontology information
-        self.extract_ontology()
-    }
-
-    /// Extract ontology from store
-    #[cfg(feature = "rdf")]
-    fn extract_ontology(&self) -> Result<SectorOntology, String> {
-        use oxigraph::sparql::QueryResults;
-
-        let store = self.store.as_ref().ok_or("Store not initialized")?;
-
-        // Determine sector from RDF
-        let sector_query = r#"
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            SELECT ?sector WHERE {
-                ?x rdf:type ?sector .
-                FILTER(CONTAINS(STR(?sector), "Stack"))
-            }
-            LIMIT 1
-        "#;
-
-        let mut sector_name = "Unknown".to_string();
-
-        if let Ok(QueryResults::Solutions(solutions)) =
-            store.query(sector_query).map_err(|e| format!("Query failed: {}", e))
-        {
-            for solution in solutions {
-                if let Ok(solution) = solution {
-                    if let Some(sector_var) = solution.get("sector") {
-                        sector_name = sector_var.to_string();
-                    }
-                }
-            }
-        }
-
-        let mut ontology = SectorOntology::new(sector_name);
-
-        // Extract stages
-        let stages_query = r#"
-            PREFIX ac: <http://chatman-equation.org/academic/>
-            PREFIX cp: <http://chatman-equation.org/claims/>
-            SELECT ?id ?name ?stage_num WHERE {
-                {
-                    ?id ac:stageName ?name .
-                    ?id ac:stageNumber ?stage_num .
-                } UNION {
-                    ?id cp:stageName ?name .
-                    ?id cp:stageNumber ?stage_num .
-                }
-            }
-        "#;
-
-        if let Ok(QueryResults::Solutions(solutions)) =
-            store.query(stages_query).map_err(|e| format!("Query failed: {}", e))
-        {
-            for solution in solutions {
-                if let Ok(solution) = solution {
-                    if let (Some(id), Some(name)) = (solution.get("id"), solution.get("name")) {
-                        let stage_num = solution.get("stage_num").and_then(|v| {
-                            let s = v.to_string();
-                            s.parse::<u32>().ok()
-                        });
-
-                        let stage = WorkflowStage {
-                            id: id.to_string(),
-                            name: name.to_string(),
-                            stage_number: stage_num.unwrap_or(0),
-                            is_deterministic: true,
-                            max_latency_seconds: 60,
-                        };
-
-                        ontology.add_stage(stage);
-                    }
-                }
-            }
-        }
-
-        Ok(ontology)
-    }
-
-    /// Load ontology (stub when rdf feature disabled)
-    #[cfg(not(feature = "rdf"))]
-    pub fn load_from_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<SectorOntology, String> {
-        Err("RDF feature not enabled. Use --features rdf to enable ontology loading".to_string())
-    }
-
-    /// Load ontology from TTL string
-    #[cfg(feature = "rdf")]
-    pub fn load_from_ttl(&mut self, ttl_content: &str) -> Result<SectorOntology, String> {
-        use oxigraph::store::Store;
-        use oxigraph::io::RdfFormat;
-
-        // Create store
-        let store = Store::new().map_err(|e| format!("Failed to create RDF store: {}", e))?;
-
-        // Load RDF
-        store
-            .load_read(ttl_content.as_bytes(), RdfFormat::Turtle, None)
-            .map_err(|e| format!("Failed to load RDF: {}", e))?;
-
-        self.store = Some(store);
-
-        // Extract ontology
-        self.extract_ontology()
-    }
-
-    /// Load ontology from TTL string (stub)
-    #[cfg(not(feature = "rdf"))]
-    pub fn load_from_ttl(&mut self, _content: &str) -> Result<SectorOntology, String> {
-        Err("RDF feature not enabled. Use --features rdf to enable ontology loading".to_string())
-    }
-
-    /// Query ontology using SPARQL
-    #[cfg(feature = "rdf")]
-    pub fn query(&self, sparql: &str) -> Result<Vec<Vec<(String, String)>>, String> {
-        use oxigraph::sparql::QueryResults;
-
-        let store = self.store.as_ref().ok_or("Store not initialized")?;
-
-        let mut results = Vec::new();
-
-        if let Ok(QueryResults::Solutions(solutions)) =
-            store.query(sparql).map_err(|e| format!("Query failed: {}", e))
-        {
-            for solution in solutions {
-                if let Ok(solution) = solution {
-                    let mut row = Vec::new();
-                    for (var, val) in solution.iter() {
-                        row.push((var.to_string(), val.to_string()));
-                    }
-                    results.push(row);
-                }
-            }
-        }
-
-        Ok(results)
-    }
-
-    /// Query ontology (stub)
-    #[cfg(not(feature = "rdf"))]
-    pub fn query(&self, _sparql: &str) -> Result<Vec<Vec<(String, String)>>, String> {
-        Err("RDF feature not enabled".to_string())
-    }
-}
-
-impl Default for OntologyLoader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -368,8 +182,18 @@ mod tests {
     }
 
     #[test]
-    fn test_loader_creation() {
-        let loader = OntologyLoader::new();
-        assert!(loader.query("SELECT * WHERE { ?s ?p ?o }").is_err());
+    fn test_add_hook() {
+        let mut ontology = SectorOntology::new("Academic".to_string());
+
+        let hook = KnowledgeHook {
+            id: "desk_review".to_string(),
+            name: "Desk Review".to_string(),
+            description: "Initial desk review of paper".to_string(),
+            input_type: "PaperSubmission".to_string(),
+            output_type: "ReviewResult".to_string(),
+        };
+
+        ontology.add_hook(hook);
+        assert_eq!(ontology.hook_count(), 1);
     }
 }
