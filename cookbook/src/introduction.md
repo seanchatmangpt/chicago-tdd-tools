@@ -20,8 +20,11 @@ Combine these ingredients to build resilient Rust systems aligned with Chicago T
 
 | Your Situation | Go To | Time |
 |---|---|---|
-| **I need to solve a problem** | [Choosing Your Pattern](choosing-your-pattern.md) | 5 min |
-| **I want a quick overview** | [All Patterns Reference](all-patterns-reference.md) | 10 min |
+| **I'm in a hurry** | [Quick Reference Card](quick-reference.md) - One-page lookup | 2 min |
+| **I want to avoid common mistakes** | [Common Mistakes](common-mistakes.md) - Learn from gotchas | 10 min |
+| **I need to solve a problem** | [Choosing Your Pattern](choosing-your-pattern.md) - Decision guide | 5 min |
+| **I want to see patterns in action** | [Real-World Scenarios](real-world-scenarios.md) - 5 examples | 15 min |
+| **I want a quick overview** | [All Patterns Reference](all-patterns-reference.md) - All 20 at a glance | 10 min |
 | **I want to learn systematically** | Choose a learning sequence below | 60-120 min |
 | **I want a specific pattern** | Jump to pattern reference below | Varies |
 
@@ -43,8 +46,16 @@ Learn patterns progressively through structured tutorials:
 
 ## Quick Links
 
+**Quick Start (Fastest paths)**:
+- **[Quick Reference Card](quick-reference.md)** - One-page lookup table, 2 min
+- **[Common Mistakes](common-mistakes.md)** - Avoid the gotchas, 10 min
+- **[Real-World Scenarios](real-world-scenarios.md)** - See patterns in action, 15 min
+
+**Navigation & Discovery**:
 - **[Choosing Your Pattern](choosing-your-pattern.md)** - Decision matrices to find the right pattern
 - **[All Patterns Reference](all-patterns-reference.md)** - All 20 patterns at a glance
+
+**Deep Learning**:
 - **[Testing Patterns](testing-patterns/)** - Learn to write great tests
 - **[Architecture Patterns](architecture-patterns/)** - Learn to organize code
 - **[Design Patterns](design-patterns/)** - Learn advanced safety and design

@@ -3,6 +3,12 @@
 - [Cookbook Overview](README.md)
 - [Introduction](introduction.md)
 
+# Quick Start
+
+- [Quick Reference Card](quick-reference.md) - One-page lookup for all 20 patterns
+- [Common Mistakes](common-mistakes.md) - "The Gotcha" from each pattern, aggregated
+- [Real-World Scenarios](real-world-scenarios.md) - How patterns combine to solve actual problems
+
 # Navigation & Learning
 
 - [Choosing Your Pattern](choosing-your-pattern.md)
