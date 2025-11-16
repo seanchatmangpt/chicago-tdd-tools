@@ -1,5 +1,22 @@
 # Introduction: Chicago TDD Philosophy
 
+> 📖 **EXPLANATION** | Learn the philosophy and principles
+
+## Quick Navigation: What's Your Goal?
+
+Choose your path based on what you're trying to do:
+
+| Your Goal | Read This | Time |
+|-----------|-----------|------|
+| **I want to learn the basics** | [Core Testing Patterns](core/README.md) → [Getting Started with Fixtures](core/fixtures.md) | 30 min |
+| **I need to solve a specific problem** | Find your problem in [How-to Guides](guides/best-practices.md#common-tasks) | 10-20 min |
+| **I need to find an API** | Go to [Reference Documentation](#reference-section) below | 2-5 min |
+| **I want to understand Chicago TDD** | Read this introduction + [Go the Extra Mile](guides/extra-mile.md) | 45 min |
+| **I want to build a real project** | [Real-World Applications](guides/real-world.md) | 1-2 hours |
+| **I'm migrating from traditional testing** | [Best Practices & Migration](guides/best-practices.md) | 1 hour |
+
+---
+
 ## What is Chicago-Style TDD?
 
 Chicago-style TDD (also called "Classicist" TDD) is a testing approach that emphasizes:

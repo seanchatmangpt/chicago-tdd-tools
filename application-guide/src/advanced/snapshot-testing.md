@@ -1,5 +1,7 @@
 # Snapshot Testing
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Detect unintended changes with golden file comparisons
+
 Snapshot testing captures output on the first run and compares it on subsequent runs to detect unintended changes.
 
 ## Why Snapshot Testing?

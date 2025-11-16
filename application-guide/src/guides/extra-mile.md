@@ -1,5 +1,7 @@
 # The "Go the Extra Mile" Pattern
 
+> 📖 **EXPLANATION** | Learn the three-idea framework for design decisions
+
 The "Go the Extra Mile" pattern demonstrates progressive enhancement from simple solutions to maximum-value solutions.
 
 ## The Three Ideas Framework

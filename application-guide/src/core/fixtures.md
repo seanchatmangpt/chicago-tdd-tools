@@ -1,5 +1,7 @@
 # Getting Started with Fixtures
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Learn to use fixtures for test isolation
+
 Fixtures are isolated test environments that provide controlled setup and automatic cleanup.
 
 ## What is a Fixture?
@@ -85,6 +87,17 @@ test!(test_fixture_features, {
     assert!(!snapshots.is_empty());
 });
 ```
+
+## Quick Reference: TestFixture API
+
+| Method | Parameters | Returns | Purpose |
+|--------|-----------|---------|---------|
+| `new()` | none | `Result<TestFixture, FixtureError>` | Create new isolated fixture |
+| `set_metadata()` | `key: String`, `value: String` | `()` | Store test state |
+| `get_metadata()` | `key: &str` | `Option<&String>` | Retrieve stored state |
+| `capture_snapshot()` | `state: HashMap<String, String>` | `()` | Save test state snapshot |
+| `snapshots()` | none | `&[HashMap<String, String>]` | Get all snapshots |
+| `latest_snapshot()` | none | `Option<&HashMap<...>>` | Get most recent snapshot |
 
 ## Fixture Lifecycle
 

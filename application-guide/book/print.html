@@ -308,6 +308,21 @@ test!(my_test, {
 <hr />
 <p><strong>Chicago TDD Tools</strong> - Testing with confidence, errors prevented at compile time.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-chicago-tdd-philosophy"><a class="header" href="#introduction-chicago-tdd-philosophy">Introduction: Chicago TDD Philosophy</a></h1>
+<blockquote>
+<p>📖 <strong>EXPLANATION</strong> | Learn the philosophy and principles</p>
+</blockquote>
+<h2 id="quick-navigation-whats-your-goal"><a class="header" href="#quick-navigation-whats-your-goal">Quick Navigation: What's Your Goal?</a></h2>
+<p>Choose your path based on what you're trying to do:</p>
+<div class="table-wrapper"><table><thead><tr><th>Your Goal</th><th>Read This</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong>I want to learn the basics</strong></td><td><a href="core/README.html">Core Testing Patterns</a> → <a href="core/fixtures.html">Getting Started with Fixtures</a></td><td>30 min</td></tr>
+<tr><td><strong>I need to solve a specific problem</strong></td><td>Find your problem in <a href="guides/best-practices.html#common-tasks">How-to Guides</a></td><td>10-20 min</td></tr>
+<tr><td><strong>I need to find an API</strong></td><td>Go to <a href="introduction.html#reference-section">Reference Documentation</a> below</td><td>2-5 min</td></tr>
+<tr><td><strong>I want to understand Chicago TDD</strong></td><td>Read this introduction + <a href="guides/extra-mile.html">Go the Extra Mile</a></td><td>45 min</td></tr>
+<tr><td><strong>I want to build a real project</strong></td><td><a href="guides/real-world.html">Real-World Applications</a></td><td>1-2 hours</td></tr>
+<tr><td><strong>I'm migrating from traditional testing</strong></td><td><a href="guides/best-practices.html">Best Practices &amp; Migration</a></td><td>1 hour</td></tr>
+</tbody></table>
+</div>
+<hr />
 <h2 id="what-is-chicago-style-tdd"><a class="header" href="#what-is-chicago-style-tdd">What is Chicago-Style TDD?</a></h2>
 <p>Chicago-style TDD (also called "Classicist" TDD) is a testing approach that emphasizes:</p>
 <ol>
@@ -654,6 +669,9 @@ assert_eq!(value, expected);   // Equality check
 <li><a href="core/error-paths.html">Error Paths</a> - Test failures</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started-with-fixtures"><a class="header" href="#getting-started-with-fixtures">Getting Started with Fixtures</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to use fixtures for test isolation</p>
+</blockquote>
 <p>Fixtures are isolated test environments that provide controlled setup and automatic cleanup.</p>
 <h2 id="what-is-a-fixture"><a class="header" href="#what-is-a-fixture">What is a Fixture?</a></h2>
 <p>A fixture is a test object that:</p>
@@ -732,6 +750,16 @@ test!(test_with_fixture, {
     assert!(!snapshots.is_empty());
 });
 <span class="boring">}</span></code></pre></pre>
+<h2 id="quick-reference-testfixture-api"><a class="header" href="#quick-reference-testfixture-api">Quick Reference: TestFixture API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>none</td><td><code>Result&lt;TestFixture, FixtureError&gt;</code></td><td>Create new isolated fixture</td></tr>
+<tr><td><code>set_metadata()</code></td><td><code>key: String</code>, <code>value: String</code></td><td><code>()</code></td><td>Store test state</td></tr>
+<tr><td><code>get_metadata()</code></td><td><code>key: &amp;str</code></td><td><code>Option&lt;&amp;String&gt;</code></td><td>Retrieve stored state</td></tr>
+<tr><td><code>capture_snapshot()</code></td><td><code>state: HashMap&lt;String, String&gt;</code></td><td><code>()</code></td><td>Save test state snapshot</td></tr>
+<tr><td><code>snapshots()</code></td><td>none</td><td><code>&amp;[HashMap&lt;String, String&gt;]</code></td><td>Get all snapshots</td></tr>
+<tr><td><code>latest_snapshot()</code></td><td>none</td><td><code>Option&lt;&amp;HashMap&lt;...&gt;&gt;</code></td><td>Get most recent snapshot</td></tr>
+</tbody></table>
+</div>
 <h2 id="fixture-lifecycle"><a class="header" href="#fixture-lifecycle">Fixture Lifecycle</a></h2>
 <h3 id="setup-phase"><a class="header" href="#setup-phase">Setup Phase</a></h3>
 <p>Setup happens when <code>TestFixture::new()</code> is called:</p>
@@ -889,6 +917,9 @@ test!(test_with_helper, {
 <tr><td><strong>Error Handling</strong></td><td>Use <code>?</code> operator or <code>match</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="building-test-data-with-data-builders"><a class="header" href="#building-test-data-with-data-builders">Building Test Data with Data Builders</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to construct test data efficiently</p>
+</blockquote>
 <p>Data builders provide a fluent API for constructing complex test data structures.</p>
 <h2 id="why-data-builders"><a class="header" href="#why-data-builders">Why Data Builders?</a></h2>
 <p>Raw test data is hard to read and maintain:</p>
@@ -949,6 +980,16 @@ test!(test_data_builder, {
     .build_json()?;
 <span class="boring">}</span></code></pre></pre>
 <p>Each method returns <code>Self</code>, allowing unlimited chaining.</p>
+<h2 id="quick-reference-testdatabuilder-api"><a class="header" href="#quick-reference-testdatabuilder-api">Quick Reference: TestDataBuilder API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>none</td><td><code>TestDataBuilder</code></td><td>Create new builder</td></tr>
+<tr><td><code>with_var()</code></td><td><code>key: &amp;str</code>, <code>value: &amp;str</code></td><td><code>Self</code></td><td>Add string variable</td></tr>
+<tr><td><code>with_order_data()</code></td><td><code>id: &amp;str</code>, <code>amount: &amp;str</code></td><td><code>Self</code></td><td>Add order info</td></tr>
+<tr><td><code>build_json()</code></td><td>none</td><td><code>Result&lt;Value, Error&gt;</code></td><td>Build as JSON</td></tr>
+<tr><td><code>build()</code></td><td>none</td><td><code>HashMap&lt;String, String&gt;</code></td><td>Build as HashMap</td></tr>
+<tr><td><code>build_with_otel()</code></td><td><code>span_name: &amp;str</code></td><td><code>(HashMap, Span)</code></td><td>Build with OTEL span</td></tr>
+</tbody></table>
+</div>
 <h2 id="builder-methods"><a class="header" href="#builder-methods">Builder Methods</a></h2>
 <h3 id="basic-variables"><a class="header" href="#basic-variables">Basic Variables</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1183,6 +1224,9 @@ let builder2 = builder1.with_var("key2", "value2");
 <tr><td><strong>Reusability</strong></td><td>Extract to helper functions</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="assertions--verification"><a class="header" href="#assertions--verification">Assertions &amp; Verification</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Write clear, effective assertions</p>
+</blockquote>
 <p>Assertions verify that code behaves correctly. Chicago TDD Tools provides helpers for clear, readable assertions.</p>
 <h2 id="basic-assertions"><a class="header" href="#basic-assertions">Basic Assertions</a></h2>
 <h3 id="standard-assertions"><a class="header" href="#standard-assertions">Standard Assertions</a></h3>
@@ -1476,6 +1520,9 @@ assert_eq!(user.email, "alice@example.com");
 <li>Behavior verification, not implementation details</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="error-path-testing"><a class="header" href="#error-path-testing">Error Path Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | Learn to test failure scenarios thoroughly</p>
+</blockquote>
 <p>Error paths are where 80% of bugs hide. Chicago TDD emphasizes comprehensive error testing.</p>
 <h2 id="why-error-paths-matter"><a class="header" href="#why-error-paths-matter">Why Error Paths Matter</a></h2>
 <p>Most code focuses on the "happy path" (success). Bugs hide in error cases:</p>
@@ -1994,6 +2041,9 @@ chicago-tdd-tools = { version = "1.3", features = [
 <h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
 <p>👉 <strong>Start with <a href="advanced/property-testing.html">Property-Based Testing</a></strong></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="property-based-testing-1"><a class="header" href="#property-based-testing-1">Property-Based Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Generate random test data to verify properties</p>
+</blockquote>
 <p>Property-based testing generates random test data and verifies that properties hold for all inputs.</p>
 <h2 id="what-is-a-property"><a class="header" href="#what-is-a-property">What is a Property?</a></h2>
 <p>A <strong>property</strong> is a logical assertion that should hold for all valid inputs:</p>
@@ -2264,7 +2314,24 @@ let data = generator.generate_test_data();
 </ul>
 <p>Use with fixtures and data builders for comprehensive testing.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mutation-testing-1"><a class="header" href="#mutation-testing-1">Mutation Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Validate test quality by introducing mutations</p>
+</blockquote>
 <p>Mutation testing validates test quality by introducing mutations (changes) to code and verifying tests catch them.</p>
+<h2 id="quick-reference-mutation-testing-api"><a class="header" href="#quick-reference-mutation-testing-api">Quick Reference: Mutation Testing API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Purpose</th><th>Key Methods</th></tr></thead><tbody>
+<tr><td><code>MutationTester::new()</code></td><td>Create a tester for data</td><td><code>apply_mutation()</code>, <code>test_mutation_detection()</code></td></tr>
+<tr><td><code>MutationOperator::RemoveKey()</code></td><td>Remove data key</td><td>Parameter: key to remove</td></tr>
+<tr><td><code>MutationOperator::AddKey()</code></td><td>Add new key-value</td><td>Parameters: key, value</td></tr>
+<tr><td><code>MutationOperator::ChangeValue()</code></td><td>Change existing value</td><td>Parameters: key, new_value</td></tr>
+<tr><td><code>MutationOperator::SwapValues()</code></td><td>Swap two values</td><td>Parameters: key1, key2</td></tr>
+<tr><td><code>MutationOperator::ToggleBoolean()</code></td><td>Flip bool true↔false</td><td>Parameter: key</td></tr>
+<tr><td><code>MutationOperator::NumericDelta()</code></td><td>Adjust numeric by delta</td><td>Parameters: key, delta_value</td></tr>
+<tr><td><code>MutationOperator::StringCase()</code></td><td>Change string case</td><td>Parameters: key, CaseMode</td></tr>
+<tr><td><code>MutationScore::calculate()</code></td><td>Compute score</td><td>Parameters: caught, total</td></tr>
+<tr><td><code>SpanStatus</code> enum</td><td>Mutation test results</td><td>Variants: Ok, Error, Unknown</td></tr>
+</tbody></table>
+</div>
 <h2 id="why-mutation-testing"><a class="header" href="#why-mutation-testing">Why Mutation Testing?</a></h2>
 <p>High code coverage doesn't guarantee good tests:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2604,6 +2671,9 @@ tester.apply_mutation(MutationOperator::ChangeValue(...));
 </ul>
 <p>Use for critical code to ensure maximum quality.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="snapshot-testing-1"><a class="header" href="#snapshot-testing-1">Snapshot Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Detect unintended changes with golden file comparisons</p>
+</blockquote>
 <p>Snapshot testing captures output on the first run and compares it on subsequent runs to detect unintended changes.</p>
 <h2 id="why-snapshot-testing"><a class="header" href="#why-snapshot-testing">Why Snapshot Testing?</a></h2>
 <p>Perfect for testing output that's complex but stable:</p>
@@ -2885,6 +2955,9 @@ assert_matches!(output, "output");
 </ul>
 <p>Perfect for generated output and API responses.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cli-testing-1"><a class="header" href="#cli-testing-1">CLI Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test command-line interfaces with golden files</p>
+</blockquote>
 <p>Test command-line interfaces using golden files (<code>.trycmd</code>) to verify commands work correctly.</p>
 <h2 id="why-cli-testing"><a class="header" href="#why-cli-testing">Why CLI Testing?</a></h2>
 <p>CLIs are complex because they involve:</p>
@@ -3196,6 +3269,9 @@ assert!(normalized.contains("Started on [DATE]"));
 </ul>
 <p>Perfect for CLI applications and scripts.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="concurrency-testing-1"><a class="header" href="#concurrency-testing-1">Concurrency Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test thread safety with deterministic thread ordering</p>
+</blockquote>
 <p>Test thread-safe code with deterministic thread ordering using loom.</p>
 <h2 id="why-concurrency-testing"><a class="header" href="#why-concurrency-testing">Why Concurrency Testing?</a></h2>
 <p>Normal tests run threads in random order - race conditions may not appear:</p>
@@ -3560,6 +3636,9 @@ fn test_with_timeout() {
 </ul>
 <p>Use for critical concurrent code to ensure thread safety.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="the-go-the-extra-mile-pattern"><a class="header" href="#the-go-the-extra-mile-pattern">The "Go the Extra Mile" Pattern</a></h1>
+<blockquote>
+<p>📖 <strong>EXPLANATION</strong> | Learn the three-idea framework for design decisions</p>
+</blockquote>
 <p>The "Go the Extra Mile" pattern demonstrates progressive enhancement from simple solutions to maximum-value solutions.</p>
 <h2 id="the-three-ideas-framework"><a class="header" href="#the-three-ideas-framework">The Three Ideas Framework</a></h2>
 <h3 id="1st-idea-solve-the-problem"><a class="header" href="#1st-idea-solve-the-problem">1st Idea: Solve the Problem</a></h3>
@@ -3906,7 +3985,24 @@ impl ValidatedUserResponse {
 <strong>3rd Idea</strong>: Maximum value, significant effort (for critical paths)</p>
 <p>Use this framework to make intentional design decisions.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="observability--quality"><a class="header" href="#observability--quality">Observability &amp; Quality</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add observability and measure quality</p>
+</blockquote>
 <p>Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.</p>
+<h2 id="quick-reference-observability-api"><a class="header" href="#quick-reference-observability-api">Quick Reference: Observability API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Purpose</th><th>Key Methods/Fields</th></tr></thead><tbody>
+<tr><td><code>Span::new_active()</code></td><td>Create an OTEL span</td><td>Parameters: context, name, start_time, attributes, events, status</td></tr>
+<tr><td><code>Span.attributes</code></td><td>Store span metadata</td><td><code>.insert(key, value)</code></td></tr>
+<tr><td><code>Span.complete()</code></td><td>Finish span timing</td><td>Parameter: end_time</td></tr>
+<tr><td><code>Span.status</code></td><td>Set result status</td><td>Variants: Ok, Error, Unknown</td></tr>
+<tr><td><code>Span.validate()</code></td><td>Verify span correctness</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>Metric</code> struct</td><td>Track measurements</td><td>Fields: name, value, timestamp_ms, attributes</td></tr>
+<tr><td><code>MetricValue</code> enum</td><td>Metric types</td><td>Variants: Counter, Gauge, Histogram</td></tr>
+<tr><td><code>MetricValidator::new()</code></td><td>Validate metrics</td><td><code>.validate(&amp;metric)</code></td></tr>
+<tr><td><code>WeaverValidator::check_weaver_available()</code></td><td>Check Weaver CLI</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>SpanValidator::new()</code></td><td>Validate span format</td><td><code>.validate(&amp;span)</code></td></tr>
+</tbody></table>
+</div>
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>Observability helps you understand what your code is doing:</p>
 <ul>
@@ -4169,6 +4265,9 @@ Boundary conditions tested</li>
 </ul>
 <p>Combined with testing for complete confidence.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="otel-instrumentation"><a class="header" href="#otel-instrumentation">OTEL Instrumentation</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add OpenTelemetry observability to code</p>
+</blockquote>
 <p>OpenTelemetry instrumentation provides observability into your operations.</p>
 <h2 id="creating-spans"><a class="header" href="#creating-spans">Creating Spans</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -4268,7 +4367,24 @@ span.status = SpanStatus::Unset;
 <li>Create excessive spans</li>
 <li>Forget timing information</li>
 </ul>
+<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="guides/weaver.html">Weaver Validation</a> - Validate telemetry against semantic conventions</li>
+<li><a href="guides/observability.html">Observability &amp; Quality</a> - Full observability framework</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - Observability patterns</li>
+</ul>
+<p><strong>Ready to instrument?</strong></p>
+<ul>
+<li>Add spans to your critical code paths</li>
+<li>Include meaningful attributes for debugging</li>
+<li>Validate spans with <code>SpanValidator</code></li>
+<li>Combine with Weaver for compliance checking</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="weaver-live-check-validation"><a class="header" href="#weaver-live-check-validation">Weaver Live-Check Validation</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Validate telemetry against semantic conventions</p>
+</blockquote>
 <p>Weaver validates telemetry against semantic conventions.</p>
 <h2 id="what-is-weaver"><a class="header" href="#what-is-weaver">What is Weaver?</a></h2>
 <p>Weaver ensures your OTEL telemetry complies with OpenTelemetry semantic conventions - the industry standard for attribute names and structure.</p>
@@ -4344,9 +4460,12 @@ span.attributes.insert("endpoint".to_string(), "/api/users".to_string());
 <pre><code class="language-bash"># See Weaver registry
 cargo make weaver-smoke
 </code></pre>
-<h2 id="next-steps-14"><a class="header" href="#next-steps-14">Next Steps</a></h2>
+<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
 <p>Combine observability with testing: <a href="guides/observability.html">Observability &amp; Quality</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="coverage--performance"><a class="header" href="#coverage--performance">Coverage &amp; Performance</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Measure test coverage and performance</p>
+</blockquote>
 <p>Measure test coverage and performance metrics.</p>
 <h2 id="test-coverage"><a class="header" href="#test-coverage">Test Coverage</a></h2>
 <p>Coverage shows which code is executed by tests:</p>
@@ -4467,7 +4586,24 @@ cargo flamegraph --test performance_tests
 <li>Assume fast</li>
 <li>Measure on dev machine only</li>
 </ul>
+<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="guides/../advanced/mutation-testing.html">Mutation Testing</a> - Validate test quality beyond coverage</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - Quality assurance patterns</li>
+<li><a href="guides/observability.html">Observability</a> - Track real-world metrics</li>
+</ul>
+<p><strong>Ready to measure?</strong></p>
+<ul>
+<li>Run <code>cargo make coverage</code> to see current coverage</li>
+<li>Identify uncovered error paths</li>
+<li>Add tests for critical code paths</li>
+<li>Set performance baselines with <code>cargo make test-timings</code></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="real-world-applications"><a class="header" href="#real-world-applications">Real-World Applications</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | See complete examples of Chicago TDD Tools in action</p>
+</blockquote>
 <p>See complete examples of Chicago TDD Tools in action.</p>
 <h2 id="cli-application-example"><a class="header" href="#cli-application-example">CLI Application Example</a></h2>
 <p>The playground includes a complete CLI tool with multiple commands.</p>
@@ -4676,7 +4812,7 @@ cargo make release-validate
 <li>CLI testing patterns</li>
 <li>Quality metrics</li>
 </ul>
-<h2 id="next-steps-15"><a class="header" href="#next-steps-15">Next Steps</a></h2>
+<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
 <p>Apply what you've learned:</p>
 <ol>
 <li>Start with <a href="guides/../core/README.html">Core Patterns</a></li>
@@ -4685,6 +4821,9 @@ cargo make release-validate
 <li>Follow <a href="guides/best-practices.html">Best Practices</a></li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-cli-application"><a class="header" href="#building-a-cli-application">Building a CLI Application</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a CLI application</p>
+</blockquote>
 <p>Complete example of testing a CLI application with Chicago TDD Tools.</p>
 <h2 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h2>
 <pre><code>myapp/
@@ -4750,7 +4889,23 @@ cargo make release-validate
 <li>Test external tools</li>
 </ul>
 <p>See: <a href="guides/../advanced/cli-testing.html">CLI Testing</a></p>
+<h2 id="next-steps-18"><a class="header" href="#next-steps-18">Next Steps</a></h2>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="guides/../advanced/cli-testing.html">CLI Testing Guide</a> - Deep dive into trycmd patterns</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - CLI testing best practices</li>
+<li><a href="guides/web-service.html">Web Service Testing</a> - Compare with testing web services</li>
+</ul>
+<p><strong>Ready to test?</strong></p>
+<ul>
+<li>Set up a new project with Chicago TDD Tools</li>
+<li>Start with a simple command</li>
+<li>Add tests as you build features</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testing-a-web-service"><a class="header" href="#testing-a-web-service">Testing a Web Service</a></h1>
+<blockquote>
+<p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a web service</p>
+</blockquote>
 <p>Complete example of testing a web service with Chicago TDD Tools.</p>
 <h2 id="project-structure-1"><a class="header" href="#project-structure-1">Project Structure</a></h2>
 <pre><code>myservice/
@@ -4877,7 +5032,24 @@ cargo make test-integration
 cargo make ci-local
 </code></pre>
 <p>See: <a href="guides/../advanced/README.html">Advanced Techniques</a></p>
+<h2 id="next-steps-19"><a class="header" href="#next-steps-19">Next Steps</a></h2>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="guides/integration-docker.html">Integration Testing with Docker</a> - Test with real services</li>
+<li><a href="guides/best-practices.html">Best Practices</a> - Web service testing patterns</li>
+<li><a href="guides/cli-application.html">CLI Application Testing</a> - Compare with CLI testing</li>
+<li><a href="guides/observability.html">Observability</a> - Add OTEL instrumentation</li>
+</ul>
+<p><strong>Ready to build?</strong></p>
+<ul>
+<li>Create a simple REST API</li>
+<li>Test each endpoint (GET, POST, PUT, DELETE)</li>
+<li>Test error cases and authentication</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="integration-testing-with-docker"><a class="header" href="#integration-testing-with-docker">Integration Testing with Docker</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test with real services using Docker</p>
+</blockquote>
 <p>Test with real services using Docker containers.</p>
 <h2 id="why-docker-for-testing"><a class="header" href="#why-docker-for-testing">Why Docker for Testing?</a></h2>
 <p>Docker provides:</p>
@@ -5076,9 +5248,12 @@ docker stop &lt;container&gt;
 <p>Increase timeout:</p>
 <pre><code class="language-bash">cargo test --lib -- --test-threads=1  # Sequential
 </code></pre>
-<h2 id="next-steps-16"><a class="header" href="#next-steps-16">Next Steps</a></h2>
+<h2 id="next-steps-20"><a class="header" href="#next-steps-20">Next Steps</a></h2>
 <p>See: <a href="guides/best-practices.html">Best Practices</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="best-practices--migration"><a class="header" href="#best-practices--migration">Best Practices &amp; Migration</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Proven patterns and migration strategies</p>
+</blockquote>
 <p>Proven patterns and migration strategies for Chicago TDD.</p>
 <h2 id="testing-best-practices"><a class="header" href="#testing-best-practices">Testing Best Practices</a></h2>
 <h3 id="1-write-tests-first-tdd"><a class="header" href="#1-write-tests-first-tdd">1. Write Tests First (TDD)</a></h3>
@@ -5371,7 +5546,7 @@ Expert
 <li><a href="guides/../../cookbook/README.html">Pattern Cookbook</a></li>
 <li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a></li>
 </ul>
-<h2 id="next-steps-17"><a class="header" href="#next-steps-17">Next Steps</a></h2>
+<h2 id="next-steps-21"><a class="header" href="#next-steps-21">Next Steps</a></h2>
 <ol>
 <li>Pick a project to refactor</li>
 <li>Start with core patterns</li>

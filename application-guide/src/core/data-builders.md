@@ -1,5 +1,7 @@
 # Building Test Data with Data Builders
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Learn to construct test data efficiently
+
 Data builders provide a fluent API for constructing complex test data structures.
 
 ## Why Data Builders?
@@ -71,6 +73,17 @@ let data = TestDataBuilder::new()
 ```
 
 Each method returns `Self`, allowing unlimited chaining.
+
+## Quick Reference: TestDataBuilder API
+
+| Method | Parameters | Returns | Purpose |
+|--------|-----------|---------|---------|
+| `new()` | none | `TestDataBuilder` | Create new builder |
+| `with_var()` | `key: &str`, `value: &str` | `Self` | Add string variable |
+| `with_order_data()` | `id: &str`, `amount: &str` | `Self` | Add order info |
+| `build_json()` | none | `Result<Value, Error>` | Build as JSON |
+| `build()` | none | `HashMap<String, String>` | Build as HashMap |
+| `build_with_otel()` | `span_name: &str` | `(HashMap, Span)` | Build with OTEL span |
 
 ## Builder Methods
 

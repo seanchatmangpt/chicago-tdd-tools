@@ -1,5 +1,7 @@
 # OTEL Instrumentation
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Add OpenTelemetry observability to code
+
 OpenTelemetry instrumentation provides observability into your operations.
 
 ## Creating Spans
@@ -104,3 +106,15 @@ test!(test_span_validation, {
 - Create excessive spans
 - Forget timing information
 
+## Next Steps
+
+**Learn more:**
+- [Weaver Validation](weaver.md) - Validate telemetry against semantic conventions
+- [Observability & Quality](observability.md) - Full observability framework
+- [Best Practices](best-practices.md) - Observability patterns
+
+**Ready to instrument?**
+- Add spans to your critical code paths
+- Include meaningful attributes for debugging
+- Validate spans with `SpanValidator`
+- Combine with Weaver for compliance checking

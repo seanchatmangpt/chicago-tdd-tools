@@ -176,7 +176,24 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="mutation-testing"><a class="header" href="#mutation-testing">Mutation Testing</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Validate test quality by introducing mutations</p>
+</blockquote>
 <p>Mutation testing validates test quality by introducing mutations (changes) to code and verifying tests catch them.</p>
+<h2 id="quick-reference-mutation-testing-api"><a class="header" href="#quick-reference-mutation-testing-api">Quick Reference: Mutation Testing API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Purpose</th><th>Key Methods</th></tr></thead><tbody>
+<tr><td><code>MutationTester::new()</code></td><td>Create a tester for data</td><td><code>apply_mutation()</code>, <code>test_mutation_detection()</code></td></tr>
+<tr><td><code>MutationOperator::RemoveKey()</code></td><td>Remove data key</td><td>Parameter: key to remove</td></tr>
+<tr><td><code>MutationOperator::AddKey()</code></td><td>Add new key-value</td><td>Parameters: key, value</td></tr>
+<tr><td><code>MutationOperator::ChangeValue()</code></td><td>Change existing value</td><td>Parameters: key, new_value</td></tr>
+<tr><td><code>MutationOperator::SwapValues()</code></td><td>Swap two values</td><td>Parameters: key1, key2</td></tr>
+<tr><td><code>MutationOperator::ToggleBoolean()</code></td><td>Flip bool true↔false</td><td>Parameter: key</td></tr>
+<tr><td><code>MutationOperator::NumericDelta()</code></td><td>Adjust numeric by delta</td><td>Parameters: key, delta_value</td></tr>
+<tr><td><code>MutationOperator::StringCase()</code></td><td>Change string case</td><td>Parameters: key, CaseMode</td></tr>
+<tr><td><code>MutationScore::calculate()</code></td><td>Compute score</td><td>Parameters: caught, total</td></tr>
+<tr><td><code>SpanStatus</code> enum</td><td>Mutation test results</td><td>Variants: Ok, Error, Unknown</td></tr>
+</tbody></table>
+</div>
 <h2 id="why-mutation-testing"><a class="header" href="#why-mutation-testing">Why Mutation Testing?</a></h2>
 <p>High code coverage doesn't guarantee good tests:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

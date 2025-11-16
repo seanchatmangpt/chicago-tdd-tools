@@ -1,6 +1,23 @@
 # Mutation Testing
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Validate test quality by introducing mutations
+
 Mutation testing validates test quality by introducing mutations (changes) to code and verifying tests catch them.
+
+## Quick Reference: Mutation Testing API
+
+| Component | Purpose | Key Methods |
+|-----------|---------|-------------|
+| `MutationTester::new()` | Create a tester for data | `apply_mutation()`, `test_mutation_detection()` |
+| `MutationOperator::RemoveKey()` | Remove data key | Parameter: key to remove |
+| `MutationOperator::AddKey()` | Add new key-value | Parameters: key, value |
+| `MutationOperator::ChangeValue()` | Change existing value | Parameters: key, new_value |
+| `MutationOperator::SwapValues()` | Swap two values | Parameters: key1, key2 |
+| `MutationOperator::ToggleBoolean()` | Flip bool true↔false | Parameter: key |
+| `MutationOperator::NumericDelta()` | Adjust numeric by delta | Parameters: key, delta_value |
+| `MutationOperator::StringCase()` | Change string case | Parameters: key, CaseMode |
+| `MutationScore::calculate()` | Compute score | Parameters: caught, total |
+| `SpanStatus` enum | Mutation test results | Variants: Ok, Error, Unknown |
 
 ## Why Mutation Testing?
 

@@ -176,6 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="otel-instrumentation"><a class="header" href="#otel-instrumentation">OTEL Instrumentation</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add OpenTelemetry observability to code</p>
+</blockquote>
 <p>OpenTelemetry instrumentation provides observability into your operations.</p>
 <h2 id="creating-spans"><a class="header" href="#creating-spans">Creating Spans</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -274,6 +277,20 @@ span.status = SpanStatus::Unset;
 <li>Include sensitive data in attributes</li>
 <li>Create excessive spans</li>
 <li>Forget timing information</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p><strong>Learn more:</strong></p>
+<ul>
+<li><a href="weaver.html">Weaver Validation</a> - Validate telemetry against semantic conventions</li>
+<li><a href="observability.html">Observability &amp; Quality</a> - Full observability framework</li>
+<li><a href="best-practices.html">Best Practices</a> - Observability patterns</li>
+</ul>
+<p><strong>Ready to instrument?</strong></p>
+<ul>
+<li>Add spans to your critical code paths</li>
+<li>Include meaningful attributes for debugging</li>
+<li>Validate spans with <code>SpanValidator</code></li>
+<li>Combine with Weaver for compliance checking</li>
 </ul>
 
                     </main>

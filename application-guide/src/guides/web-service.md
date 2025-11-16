@@ -1,5 +1,7 @@
 # Testing a Web Service
 
+> 🎓 **TUTORIAL** | Complete example of testing a web service
+
 Complete example of testing a web service with Chicago TDD Tools.
 
 ## Project Structure
@@ -139,3 +141,16 @@ cargo make ci-local
 ```
 
 See: [Advanced Techniques](../advanced/README.md)
+
+## Next Steps
+
+**Learn more:**
+- [Integration Testing with Docker](integration-docker.md) - Test with real services
+- [Best Practices](best-practices.md) - Web service testing patterns
+- [CLI Application Testing](cli-application.md) - Compare with CLI testing
+- [Observability](observability.md) - Add OTEL instrumentation
+
+**Ready to build?**
+- Create a simple REST API
+- Test each endpoint (GET, POST, PUT, DELETE)
+- Test error cases and authentication

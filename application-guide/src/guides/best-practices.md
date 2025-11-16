@@ -1,5 +1,7 @@
 # Best Practices & Migration
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Proven patterns and migration strategies
+
 Proven patterns and migration strategies for Chicago TDD.
 
 ## Testing Best Practices

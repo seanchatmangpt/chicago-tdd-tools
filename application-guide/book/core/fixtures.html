@@ -176,6 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="getting-started-with-fixtures"><a class="header" href="#getting-started-with-fixtures">Getting Started with Fixtures</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to use fixtures for test isolation</p>
+</blockquote>
 <p>Fixtures are isolated test environments that provide controlled setup and automatic cleanup.</p>
 <h2 id="what-is-a-fixture"><a class="header" href="#what-is-a-fixture">What is a Fixture?</a></h2>
 <p>A fixture is a test object that:</p>
@@ -254,6 +257,16 @@ test!(test_with_fixture, {
     assert!(!snapshots.is_empty());
 });
 <span class="boring">}</span></code></pre></pre>
+<h2 id="quick-reference-testfixture-api"><a class="header" href="#quick-reference-testfixture-api">Quick Reference: TestFixture API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>none</td><td><code>Result&lt;TestFixture, FixtureError&gt;</code></td><td>Create new isolated fixture</td></tr>
+<tr><td><code>set_metadata()</code></td><td><code>key: String</code>, <code>value: String</code></td><td><code>()</code></td><td>Store test state</td></tr>
+<tr><td><code>get_metadata()</code></td><td><code>key: &amp;str</code></td><td><code>Option&lt;&amp;String&gt;</code></td><td>Retrieve stored state</td></tr>
+<tr><td><code>capture_snapshot()</code></td><td><code>state: HashMap&lt;String, String&gt;</code></td><td><code>()</code></td><td>Save test state snapshot</td></tr>
+<tr><td><code>snapshots()</code></td><td>none</td><td><code>&amp;[HashMap&lt;String, String&gt;]</code></td><td>Get all snapshots</td></tr>
+<tr><td><code>latest_snapshot()</code></td><td>none</td><td><code>Option&lt;&amp;HashMap&lt;...&gt;&gt;</code></td><td>Get most recent snapshot</td></tr>
+</tbody></table>
+</div>
 <h2 id="fixture-lifecycle"><a class="header" href="#fixture-lifecycle">Fixture Lifecycle</a></h2>
 <h3 id="setup-phase"><a class="header" href="#setup-phase">Setup Phase</a></h3>
 <p>Setup happens when <code>TestFixture::new()</code> is called:</p>

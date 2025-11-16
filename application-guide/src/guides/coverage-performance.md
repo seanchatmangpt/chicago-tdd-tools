@@ -1,5 +1,7 @@
 # Coverage & Performance
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Measure test coverage and performance
+
 Measure test coverage and performance metrics.
 
 ## Test Coverage
@@ -132,3 +134,16 @@ test!(comprehensive_test, {
 - Ignore benchmarks
 - Assume fast
 - Measure on dev machine only
+
+## Next Steps
+
+**Learn more:**
+- [Mutation Testing](../advanced/mutation-testing.md) - Validate test quality beyond coverage
+- [Best Practices](best-practices.md) - Quality assurance patterns
+- [Observability](observability.md) - Track real-world metrics
+
+**Ready to measure?**
+- Run `cargo make coverage` to see current coverage
+- Identify uncovered error paths
+- Add tests for critical code paths
+- Set performance baselines with `cargo make test-timings`

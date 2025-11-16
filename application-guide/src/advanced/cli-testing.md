@@ -1,5 +1,7 @@
 # CLI Testing
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Test command-line interfaces with golden files
+
 Test command-line interfaces using golden files (`.trycmd`) to verify commands work correctly.
 
 ## Why CLI Testing?

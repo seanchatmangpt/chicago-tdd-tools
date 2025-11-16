@@ -1,5 +1,7 @@
 # Building a CLI Application
 
+> 🎓 **TUTORIAL** | Complete example of testing a CLI application
+
 Complete example of testing a CLI application with Chicago TDD Tools.
 
 ## Project Structure
@@ -72,3 +74,15 @@ test!(test_invalid_command, {
 - Test external tools
 
 See: [CLI Testing](../advanced/cli-testing.md)
+
+## Next Steps
+
+**Learn more:**
+- [CLI Testing Guide](../advanced/cli-testing.md) - Deep dive into trycmd patterns
+- [Best Practices](best-practices.md) - CLI testing best practices
+- [Web Service Testing](web-service.md) - Compare with testing web services
+
+**Ready to test?**
+- Set up a new project with Chicago TDD Tools
+- Start with a simple command
+- Add tests as you build features

@@ -176,6 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="building-test-data-with-data-builders"><a class="header" href="#building-test-data-with-data-builders">Building Test Data with Data Builders</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to construct test data efficiently</p>
+</blockquote>
 <p>Data builders provide a fluent API for constructing complex test data structures.</p>
 <h2 id="why-data-builders"><a class="header" href="#why-data-builders">Why Data Builders?</a></h2>
 <p>Raw test data is hard to read and maintain:</p>
@@ -236,6 +239,16 @@ test!(test_data_builder, {
     .build_json()?;
 <span class="boring">}</span></code></pre></pre>
 <p>Each method returns <code>Self</code>, allowing unlimited chaining.</p>
+<h2 id="quick-reference-testdatabuilder-api"><a class="header" href="#quick-reference-testdatabuilder-api">Quick Reference: TestDataBuilder API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>new()</code></td><td>none</td><td><code>TestDataBuilder</code></td><td>Create new builder</td></tr>
+<tr><td><code>with_var()</code></td><td><code>key: &amp;str</code>, <code>value: &amp;str</code></td><td><code>Self</code></td><td>Add string variable</td></tr>
+<tr><td><code>with_order_data()</code></td><td><code>id: &amp;str</code>, <code>amount: &amp;str</code></td><td><code>Self</code></td><td>Add order info</td></tr>
+<tr><td><code>build_json()</code></td><td>none</td><td><code>Result&lt;Value, Error&gt;</code></td><td>Build as JSON</td></tr>
+<tr><td><code>build()</code></td><td>none</td><td><code>HashMap&lt;String, String&gt;</code></td><td>Build as HashMap</td></tr>
+<tr><td><code>build_with_otel()</code></td><td><code>span_name: &amp;str</code></td><td><code>(HashMap, Span)</code></td><td>Build with OTEL span</td></tr>
+</tbody></table>
+</div>
 <h2 id="builder-methods"><a class="header" href="#builder-methods">Builder Methods</a></h2>
 <h3 id="basic-variables"><a class="header" href="#basic-variables">Basic Variables</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

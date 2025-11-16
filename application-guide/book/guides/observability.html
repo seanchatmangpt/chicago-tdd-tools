@@ -176,7 +176,24 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="observability--quality"><a class="header" href="#observability--quality">Observability &amp; Quality</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add observability and measure quality</p>
+</blockquote>
 <p>Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.</p>
+<h2 id="quick-reference-observability-api"><a class="header" href="#quick-reference-observability-api">Quick Reference: Observability API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Purpose</th><th>Key Methods/Fields</th></tr></thead><tbody>
+<tr><td><code>Span::new_active()</code></td><td>Create an OTEL span</td><td>Parameters: context, name, start_time, attributes, events, status</td></tr>
+<tr><td><code>Span.attributes</code></td><td>Store span metadata</td><td><code>.insert(key, value)</code></td></tr>
+<tr><td><code>Span.complete()</code></td><td>Finish span timing</td><td>Parameter: end_time</td></tr>
+<tr><td><code>Span.status</code></td><td>Set result status</td><td>Variants: Ok, Error, Unknown</td></tr>
+<tr><td><code>Span.validate()</code></td><td>Verify span correctness</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>Metric</code> struct</td><td>Track measurements</td><td>Fields: name, value, timestamp_ms, attributes</td></tr>
+<tr><td><code>MetricValue</code> enum</td><td>Metric types</td><td>Variants: Counter, Gauge, Histogram</td></tr>
+<tr><td><code>MetricValidator::new()</code></td><td>Validate metrics</td><td><code>.validate(&amp;metric)</code></td></tr>
+<tr><td><code>WeaverValidator::check_weaver_available()</code></td><td>Check Weaver CLI</td><td>Returns: <code>Result&lt;(), Error&gt;</code></td></tr>
+<tr><td><code>SpanValidator::new()</code></td><td>Validate span format</td><td><code>.validate(&amp;span)</code></td></tr>
+</tbody></table>
+</div>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Observability helps you understand what your code is doing:</p>
 <ul>

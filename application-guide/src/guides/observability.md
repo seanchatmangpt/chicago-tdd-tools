@@ -1,6 +1,23 @@
 # Observability & Quality
 
+> 🔧 **HOW-TO** | 📚 **REFERENCE** | Add observability and measure quality
+
 Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.
+
+## Quick Reference: Observability API
+
+| Component | Purpose | Key Methods/Fields |
+|-----------|---------|-------------------|
+| `Span::new_active()` | Create an OTEL span | Parameters: context, name, start_time, attributes, events, status |
+| `Span.attributes` | Store span metadata | `.insert(key, value)` |
+| `Span.complete()` | Finish span timing | Parameter: end_time |
+| `Span.status` | Set result status | Variants: Ok, Error, Unknown |
+| `Span.validate()` | Verify span correctness | Returns: `Result<(), Error>` |
+| `Metric` struct | Track measurements | Fields: name, value, timestamp_ms, attributes |
+| `MetricValue` enum | Metric types | Variants: Counter, Gauge, Histogram |
+| `MetricValidator::new()` | Validate metrics | `.validate(&metric)` |
+| `WeaverValidator::check_weaver_available()` | Check Weaver CLI | Returns: `Result<(), Error>` |
+| `SpanValidator::new()` | Validate span format | `.validate(&span)` |
 
 ## Overview
 
