@@ -8,17 +8,22 @@
 pub mod cli;
 #[cfg(feature = "concurrency-testing")]
 pub mod concurrency;
+pub mod continuous_learning;
+pub mod effects;
 pub mod generator;
 pub mod mutation;
 pub mod property;
 #[cfg(feature = "snapshot-testing")]
 pub mod snapshot;
+pub mod state_machine;
 
 // Re-export commonly used items
 #[cfg(feature = "cli-testing")]
 pub use cli::*;
 #[cfg(feature = "concurrency-testing")]
 pub use concurrency::*;
+pub use continuous_learning::*;
+pub use effects::*;
 pub use generator::*;
 #[cfg(feature = "mutation-testing")]
 pub use mutation::*;
@@ -26,3 +31,4 @@ pub use mutation::*;
 pub use property::*;
 #[cfg(feature = "snapshot-testing")]
 pub use snapshot::*;
+pub use state_machine::*;

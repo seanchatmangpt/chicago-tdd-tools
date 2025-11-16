@@ -158,11 +158,11 @@ pub use chicago_tdd_tools_proc_macros::TestBuilder;
 pub mod core;
 pub mod integration;
 pub mod observability;
-pub mod testing;
-pub mod validation;
 pub mod operator_registry;
 pub mod sector_stacks;
 pub mod swarm;
+pub mod testing;
+pub mod validation;
 
 // Macros are exported via core::macros module
 // src/macros.rs re-exports from core::macros for backward compatibility
@@ -172,12 +172,17 @@ pub mod macros;
 // Re-export new "go the extra mile" types
 pub use core::assertions::{AssertionBuilder, ValidatedAssertion};
 pub use core::builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
+pub use operator_registry::{
+    global_registry, GuardType, OperatorDescriptor, OperatorProperties, OperatorRegistry,
+};
+pub use sector_stacks::{academic, claims, OperationReceipt, OperationStatus, SectorOperation};
+pub use swarm::{
+    ComposedOperation, OperationChain, SwarmCoordinator, SwarmMember, TaskReceipt, TaskRequest,
+    TaskStatus,
+};
 pub use validation::coverage::{CoveragePercentage, CoveredCount, TotalCount};
 pub use validation::jtbd::ScenarioIndex;
 pub use validation::performance::ValidatedTickBudget;
-pub use operator_registry::{OperatorRegistry, OperatorDescriptor, OperatorProperties, GuardType, global_registry};
-pub use sector_stacks::{OperationReceipt, OperationStatus, SectorOperation, academic, claims};
-pub use swarm::{SwarmCoordinator, SwarmMember, TaskReceipt, TaskRequest, TaskStatus, OperationChain, ComposedOperation};
 
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
@@ -255,4 +260,15 @@ pub mod prelude {
 
     #[cfg(feature = "testcontainers")]
     pub use crate::integration::testcontainers::*;
+
+    // Hyper-advanced μ-kernel verification substrate (Track 1-6)
+    // Track 1: Test Contracts as First-Class Types (already in core::*)
+    // Track 2: τ-Aware Test Harness (already in validation::*)
+    // Track 3: Effect-Typed Tests
+    pub use crate::testing::effects::*;
+    // Track 4: Type-Directed State Machine Testing
+    pub use crate::testing::state_machine::*;
+    // Track 5: Proof-Carrying Test Receipts (already in core::*)
+    // Track 6: Swarm-Native Test Orchestrator
+    pub use crate::swarm::test_orchestrator::*;
 }

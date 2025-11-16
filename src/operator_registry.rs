@@ -449,34 +449,22 @@ impl OperatorRegistry {
 
     /// Count operators with each property
     pub fn count_deterministic(&self) -> usize {
-        self.operators
-            .values()
-            .filter(|op| op.properties.deterministic)
-            .count()
+        self.operators.values().filter(|op| op.properties.deterministic).count()
     }
 
     /// Count operators with idempotence property
     pub fn count_idempotent(&self) -> usize {
-        self.operators
-            .values()
-            .filter(|op| op.properties.idempotent)
-            .count()
+        self.operators.values().filter(|op| op.properties.idempotent).count()
     }
 
     /// Count operators with type preservation property
     pub fn count_type_preserving(&self) -> usize {
-        self.operators
-            .values()
-            .filter(|op| op.properties.type_preserving)
-            .count()
+        self.operators.values().filter(|op| op.properties.type_preserving).count()
     }
 
     /// Count operators with boundedness property
     pub fn count_bounded(&self) -> usize {
-        self.operators
-            .values()
-            .filter(|op| op.properties.bounded)
-            .count()
+        self.operators.values().filter(|op| op.properties.bounded).count()
     }
 
     /// Get operators requiring a specific guard
@@ -489,10 +477,7 @@ impl OperatorRegistry {
 
     /// Get operators satisfying all four properties
     pub fn operators_fully_deterministic(&self) -> Vec<&OperatorDescriptor> {
-        self.operators
-            .values()
-            .filter(|op| op.satisfies_all_properties())
-            .collect()
+        self.operators.values().filter(|op| op.satisfies_all_properties()).collect()
     }
 }
 
@@ -590,9 +575,6 @@ mod tests {
         let reg2 = global_registry();
 
         // Should be same instance
-        assert_eq!(
-            reg1.all_operators().len(),
-            reg2.all_operators().len()
-        );
+        assert_eq!(reg1.all_operators().len(), reg2.all_operators().len());
     }
 }

@@ -8,9 +8,9 @@
 //! guard effectiveness, and audit trail completeness.
 
 use crate::sector_stacks::{OperationReceipt, OperationStatus, SectorOperation};
+use hex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use hex;
 
 /// Claim submission
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,11 +54,7 @@ impl FraudScore {
         // Any fraud indicator triggers fraud flag
         let is_fraudulent = !indicators.is_empty();
 
-        Self {
-            score,
-            indicators,
-            is_fraudulent,
-        }
+        Self { score, indicators, is_fraudulent }
     }
 }
 
@@ -89,12 +85,7 @@ impl Settlement {
     pub fn calculate(claim_amount: f64, deductible: f64, policy_limit: f64) -> Self {
         let final_amount = ((claim_amount - deductible).max(0.0)).min(policy_limit);
 
-        Self {
-            amount: claim_amount,
-            deductible,
-            policy_limit,
-            final_amount,
-        }
+        Self { amount: claim_amount, deductible, policy_limit, final_amount }
     }
 }
 
@@ -140,13 +131,7 @@ impl ClaimsOperation {
         // Settlement (deterministic)
         let settlement = Settlement::calculate(claim.claim_amount, 500.0, 50_000.0);
 
-        Self {
-            claim,
-            validation,
-            fraud_score,
-            entitlements,
-            settlement,
-        }
+        Self { claim, validation, fraud_score, entitlements, settlement }
     }
 
     /// Check if claim should be approved
@@ -159,11 +144,8 @@ impl ClaimsOperation {
 
     /// Generate settlement receipt
     pub fn generate_settlement_receipt(&self) -> OperationReceipt {
-        let status = if self.should_approve() {
-            OperationStatus::Success
-        } else {
-            OperationStatus::Failed
-        };
+        let status =
+            if self.should_approve() { OperationStatus::Success } else { OperationStatus::Failed };
 
         let mut hasher = Sha256::new();
         hasher.update(self.claim.claim_id.as_bytes());

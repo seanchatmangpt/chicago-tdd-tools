@@ -10,12 +10,15 @@ pub mod async_fixture;
 pub mod builders;
 pub mod config;
 pub mod const_assert;
+pub mod contract;
 pub mod fixture;
 pub mod macros;
 pub mod poka_yoke;
+pub mod receipt;
 pub mod state;
 pub mod test_utils;
 pub mod type_level;
+pub mod verification_pipeline;
 
 // Re-export commonly used items
 pub use alert::*;
@@ -24,8 +27,11 @@ pub use assertions::*;
 pub use async_fixture::*;
 pub use builders::*;
 pub use const_assert::*;
+pub use contract::*;
 pub use fixture::*;
 pub use poka_yoke::*;
+pub use receipt::*;
 pub use state::*;
 pub use test_utils::*;
 pub use type_level::*;
+pub use verification_pipeline::*;

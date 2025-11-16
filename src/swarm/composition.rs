@@ -27,14 +27,7 @@ pub struct CompositionStep {
 impl CompositionStep {
     /// Create a new composition step
     pub fn new(id: String, sector: String, operation: String, input: String) -> Self {
-        Self {
-            id,
-            sector,
-            operation,
-            input,
-            output: String::new(),
-            order: 0,
-        }
+        Self { id, sector, operation, input, output: String::new(), order: 0 }
     }
 
     /// Set execution order
