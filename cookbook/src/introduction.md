@@ -22,6 +22,7 @@ Combine these ingredients to build resilient Rust systems aligned with Chicago T
 |---|---|---|
 | **I'm in a hurry** | [Quick Reference Card](quick-reference.md) - One-page lookup | 2 min |
 | **I want to avoid common mistakes** | [Common Mistakes](common-mistakes.md) - Learn from gotchas | 10 min |
+| **I need a learning order** | [Pattern Dependencies](pattern-dependencies.md) - Foundations first, then build | 5 min |
 | **I need to solve a problem** | [Choosing Your Pattern](choosing-your-pattern.md) - Decision guide | 5 min |
 | **I want to see patterns in action** | [Real-World Scenarios](real-world-scenarios.md) - 5 examples | 15 min |
 | **I want a quick overview** | [All Patterns Reference](all-patterns-reference.md) - All 20 at a glance | 10 min |
@@ -52,6 +53,7 @@ Learn patterns progressively through structured tutorials:
 - **[Real-World Scenarios](real-world-scenarios.md)** - See patterns in action, 15 min
 
 **Navigation & Discovery**:
+- **[Pattern Dependencies & Learning Order](pattern-dependencies.md)** - Learning paths and foundations first, 5 min
 - **[Choosing Your Pattern](choosing-your-pattern.md)** - Decision matrices to find the right pattern
 - **[All Patterns Reference](all-patterns-reference.md)** - All 20 patterns at a glance
 

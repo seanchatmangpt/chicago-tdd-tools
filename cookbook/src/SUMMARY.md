@@ -12,6 +12,7 @@
 # Navigation & Learning
 
 - [Choosing Your Pattern](choosing-your-pattern.md)
+- [Pattern Dependencies & Learning Order](pattern-dependencies.md)
 - [All Patterns: Quick Reference](all-patterns-reference.md)
 
 # Learning Sequences (Tutorials)
