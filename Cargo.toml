@@ -124,6 +124,7 @@ ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
 trybuild = "^1.0"        # Compile-fail tests (compile-time test validation)
 criterion = { version = "^0.5", features = ["html_reports"] }  # Performance benchmarking
 tempfile = "^3.0"        # Temporary directories for tests (config module tests)
+proptest = "^1.5"        # Property-based testing for invariant validation
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
 
 [features]

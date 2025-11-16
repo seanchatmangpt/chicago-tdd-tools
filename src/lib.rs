@@ -186,7 +186,7 @@ pub use validation::performance::ValidatedTickBudget;
 
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
-pub use core::{alert, assertions, builders, const_assert, fixture, state};
+pub use core::{alert, assertions, builders, const_assert, fail_fast, fixture, invariants, state};
 // Note: async_fixture is separate because it's feature-gated (requires `async` feature)
 #[cfg(feature = "async")]
 pub use core::async_fixture;
