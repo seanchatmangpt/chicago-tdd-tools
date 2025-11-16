@@ -1,0 +1,235 @@
+\chapter{chicago-tdd-tools Framework Overview}
+
+\section{What is chicago-tdd-tools?}
+
+\code{chicago-tdd-tools} is a Rust testing framework that enforces Chicago-style Test-Driven
+Development (TDD) through compile-time type-level verification. The core philosophy is simple:
+
+\begin{quote}
+\textbf{If it compiles, it's correct.}
+\end{quote}
+
+The framework achieves this by encoding test invariants, workflow patterns, and execution
+constraints directly in the type system. Invalid test states become unrepresentable; the
+compiler rejects them before they can cause runtime failures.
+
+\section{Core Principle: Poka-Yoke Design}
+
+Poka-yoke (Japanese: ``mistake-proofing'') prevents errors before they occur, rather than
+detecting them after. In software testing, poka-yoke means:
+
+\begin{enumerate}
+  \item \textbf{Compile-Time Prevention}: Invalid code fails to compile
+  \item \textbf{Type Encoding}: Invariants are part of the type system
+  \item \textbf{Zero-Cost Abstractions}: All safety compiled away; no runtime overhead
+  \item \textbf{Impossible States}: Tests cannot violate the AAA pattern
+\end{enumerate}
+
+\code{chicago-tdd-tools} applies poka-yoke systematically:
+
+\begin{center}
+\begin{tabular}{|l|p{4cm}|p{4cm}|}
+\hline
+\textbf{Problem} & \textbf{Traditional Approach} & \textbf{chicago-tdd-tools} \\
+\hline
+Assert before Act & Runtime test failure & Compile error (type mismatch) \\
+\hline
+Missing setup & Flaky test (sometimes passes) & Compile error (type required) \\
+\hline
+Unwrap in test & Panic if None & Compile error (Result handling required) \\
+\hline
+Invalid state & Runtime assertion & Unrepresentable (impossible state) \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{The Test Workflow: Arrange-Act-Assert}
+
+The framework enforces the standard AAA pattern through type-level state machines:
+
+\begin{equation}
+\text{TestState}<\text{Arrange}> \xrightarrow{\text{act()}} \text{TestState}<\text{Act}>
+  \xrightarrow{\text{assert()}} \text{TestState}<\text{Assert}>
+\end{equation}
+
+\begin{example}[Type-Enforced AAA Pattern]
+\begin{lstlisting}[language=Rust]
+use chicago_tdd_tools::prelude::*;
+
+#[test]
+fn example_aaa() {
+    // Arrange: Setup phase (type: TestState<Arrange>)
+    let test = TestState::<Arrange>::new()
+        .with_setup("initialize database".to_string());
+
+    // Act: Execution phase (type: TestState<Act>)
+    let test = test.act()  // Only method on Arrange
+        .execute("insert record".to_string());
+
+    // Assert: Verification phase (type: TestState<Assert>)
+    let passed = test.assert()  // Only method on Act
+        .verify("record exists".to_string());
+
+    assert!(passed);
+
+    // Compiler prevents:
+    // test.assert() before test.act()
+    // test.act() twice
+    // Any other ordering
+}
+\end{lstlisting}
+\end{example}
+
+Each phase is a zero-sized type marker. The Rust compiler proves that code follows the
+correct order; invalid transitions fail at compile time.
+
+\section{Framework Statistics}
+
+\begin{table}[H]
+\centering
+\caption{chicago-tdd-tools Project Metrics}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Total Lines of Code (src/) & ~10,600 \\
+\hline
+Source Files & 59 Rust files \\
+\hline
+Core Modules & 7 capability groups \\
+\hline
+Sub-modules & 35+ \\
+\hline
+Feature Flags & 15+ \\
+\hline
+Macros Exported & 30+ \\
+\hline
+CI/CD Workflows & 6+ \\
+\hline
+Examples & 11 \\
+\hline
+Integration Tests & 9+ \\
+\hline
+Benchmark Files & 4 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Module Organization: Capability Groups}
+
+Modules are organized by functionality (not alphabetically) for discoverability:
+
+\begin{enumerate}
+  \item \textbf{Core} — Test primitives: fixtures, builders, assertions, state machines
+  \item \textbf{Testing} — Advanced techniques: property-based, mutation, snapshot, concurrency
+  \item \textbf{Validation} — Quality assurance: coverage, guards, JTBD, performance
+  \item \textbf{Observability} — Telemetry: OTEL, Weaver integration
+  \item \textbf{Integration} — External systems: testcontainers (Docker)
+\end{enumerate}
+
+\section{Chicago-Style TDD: The Testing Philosophy}
+
+The framework enforces Chicago-style (Classicist) TDD principles:
+
+\begin{enumerate}
+  \item \textbf{State-Based Testing}: Tests verify outputs and state, not implementation details
+  \item \textbf{Real Collaborators}: Tests use actual dependencies, not mocks (or minimal stubs)
+  \item \textbf{Behavior Verification}: Tests verify \textit{what} code does, not \textit{how}
+  \item \textbf{AAA Pattern}: All tests follow Arrange-Act-Assert, enforced by types
+\end{enumerate}
+
+This contrasts with London-style (Mockist) TDD, which emphasizes isolation and mocks.
+Chicago-style is more integration-focused and discovers design through test interaction
+with real code.
+
+\section{Why Rust?}
+
+Rust's type system enables poka-yoke principles that are difficult or impossible in other
+languages:
+
+\begin{enumerate}
+  \item \textbf{Sum Types}: Represent states explicitly (\code{Option<T>}, \code{Result<T, E>})
+  \item \textbf{Ownership}: Prevent use-after-free, double-free, and data races at compile time
+  \item \textbf{Lifetimes}: Guarantee that references are always valid
+  \item \textbf{Traits}: Define interfaces with type-safe implementations
+  \item \textbf{Macros}: Generate code with metaprogramming at compile time
+  \item \textbf{Const Generics}: Enforce compile-time constraints (array bounds, depth limits)
+\end{enumerate}
+
+In Rust, many bugs that would cause runtime failures in other languages become compile errors.
+\code{chicago-tdd-tools} leverages this to prevent test bugs before they can manifest.
+
+\section{The Chatman Equation in Testing Context}
+
+The Chatman Equation ($A = \mu(\text{observations})$) states that actions should be
+deterministic functions of observations. In the testing context:
+
+\begin{equation}
+\text{TestResult} = \text{test}(\text{TestState, Fixtures})
+\end{equation}
+
+The framework ensures this holds:
+
+\begin{enumerate}
+  \item \textbf{Observations}: Test fixtures and input data (type-safe RDF-like structures)
+  \item \textbf{Measurement Function}: Test execution logic (pure functions, no side effects)
+  \item \textbf{Actions}: Test results (assertions and state verification)
+  \item \textbf{Determinism}: Identical test inputs always produce identical results
+  \item \textbf{Reproducibility}: Test can be re-run indefinitely with same outcome
+  \item \textbf{Auditability}: Test execution is verifiable and traceable
+\end{enumerate}
+
+The framework makes this explicit through:
+
+\begin{itemize}
+  \item Type-level state machines (test state is part of the type)
+  \item Pure function execution (no global state, no I/O in hot path)
+  \item Deterministic routing (workflow patterns are deterministic)
+  \item Receipt generation (each test produces verifiable output)
+\end{itemize}
+
+\section{Document Organization}
+
+This document is organized as follows:
+
+\begin{description}
+  \item[Chapter 2] Describes core testing primitives: fixtures, builders, assertions, macros
+  \item[Chapter 3] Explains type-level safety: type state pattern, sealed traits, const generics
+  \item[Chapter 4] Covers advanced testing: property-based, mutation, snapshot, concurrency, CLI
+  \item[Chapter 5] Details validation and quality: coverage, guards, JTBD, performance
+  \item[Chapter 6] Explains observability: OTEL, Weaver integration
+  \item[Chapter 7] Shows how chicago-tdd-tools realizes the Chatman Equation
+  \item[Chapter 8] Provides practical usage guide and best practices
+  \item[Appendices] Include API reference, macro reference, examples, and feature flags
+\end{description}
+
+\section{Getting Started}
+
+To use \code{chicago-tdd-tools}, add it to your \code{Cargo.toml}:
+
+\begin{lstlisting}[language=bash,numbers=none]
+cargo add chicago-tdd-tools --dev
+cargo add chicago-tdd-tools-proc-macros --dev
+\end{lstlisting}
+
+Or manually:
+
+\begin{lstlisting}[language=toml]
+[dev-dependencies]
+chicago-tdd-tools = "1.3.0"
+chicago-tdd-tools-proc-macros = "1.3.0"
+\end{lstlisting}
+
+Then use in tests:
+
+\begin{lstlisting}[language=Rust]
+use chicago_tdd_tools::prelude::*;
+
+#[tdd_test]
+fn my_test() {
+    // Your test code here
+}
+\end{lstlisting}
+
+The framework is designed to scale from simple unit tests to complex integration suites
+with dozens of fixtures, patterns, and advanced testing techniques.

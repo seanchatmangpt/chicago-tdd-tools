@@ -1,0 +1,278 @@
+\chapter{Core Testing Primitives}
+
+\section{Overview}
+
+The \code{core} module provides foundational testing building blocks:
+
+\begin{enumerate}
+  \item \textbf{Fixtures}: Reusable test context with automatic cleanup
+  \item \textbf{Builders}: Fluent APIs for test data construction
+  \item \textbf{Assertions}: Rich assertion helpers with custom messages
+  \item \textbf{Macros}: Test definition and assertion macros
+  \item \textbf{State Machines}: Type-level AAA pattern enforcement
+\end{enumerate}
+
+\section{TestFixture: Reusable Test Context}
+
+A \code{TestFixture} provides setup and teardown with automatic RAII cleanup:
+
+\begin{definition}[Test Fixture]
+A test fixture is a reusable, isolated test environment that:
+\begin{enumerate}
+  \item Initializes test data and dependencies
+  \item Provides a typed interface (\code{TestFixture<T>})
+  \item Guarantees cleanup via Rust's Drop trait
+  \item Supports async setup/teardown
+  \item Maintains test isolation (no state leakage)
+\end{enumerate}
+\end{definition}
+
+\begin{example}[Database Fixture]
+\begin{lstlisting}[language=Rust]
+pub struct DatabaseFixture {
+    connection: Option<Connection>,
+    test_id: String,
+}
+
+impl TestFixture for DatabaseFixture {
+    type Error = DatabaseError;
+
+    fn new() -> Result<Self, Self::Error> {
+        let test_id = unique_test_id();
+        let connection = Connection::open(format!(
+            "test_{}.db", test_id
+        ))?;
+        connection.initialize_schema()?;
+        Ok(DatabaseFixture {
+            connection: Some(connection),
+            test_id,
+        })
+    }
+}
+
+impl Drop for DatabaseFixture {
+    fn drop(&mut self) {
+        if let Some(conn) = self.connection.take() {
+            drop(conn);
+            std::fs::remove_file(
+                format!("test_{}.db", self.test_id)
+            ).ok();
+        }
+    }
+}
+\end{lstlisting}
+\end{example}
+
+Key properties:
+
+\begin{itemize}
+  \item \textbf{Zero-Cost}: Fixture overhead is minimal; Drop trait is optimized away
+  \item \textbf{Type-Safe}: Generic over fixture type; compiler ensures compatibility
+  \item \textbf{Automatic Cleanup}: RAII pattern prevents resource leaks
+  \item \textbf{Composable}: Fixtures can be nested and combined
+\end{itemize}
+
+\section{Builders: Fluent Test Data Construction}
+
+Builders provide a fluent API for constructing complex test data:
+
+\begin{definition}[Test Data Builder]
+A builder provides a method-chaining interface to construct test objects:
+\begin{equation}
+\text{Builder} \to \text{with\_field}(value) \to \text{with\_field}(value) \to \text{build}()
+\end{equation}
+\end{definition}
+
+\begin{example}[Order Builder]
+\begin{lstlisting}[language=Rust]
+#[derive(TestBuilder)]
+pub struct Order {
+    pub id: u64,
+    pub customer_id: u64,
+    pub amount: f64,
+    pub status: OrderStatus,
+}
+
+// Generated builder:
+let order = OrderBuilder::new()
+    .id(12345)
+    .customer_id(99)
+    .amount(299.99)
+    .status(OrderStatus::Pending)
+    .build()?;
+\end{lstlisting}
+\end{example}
+
+Benefits:
+
+\begin{enumerate}
+  \item \textbf{Readability}: Clear intent (what fields are being set)
+  \item \textbf{Flexibility}: Only set required fields; use defaults for others
+  \item \textbf{Type Safety}: Compiler ensures all required fields are present
+  \item \textbf{Macro-Generated}: No boilerplate; \code{\#[derive(TestBuilder)]} generates implementation
+\end{enumerate}
+
+\section{Assertions: Rich Assertion Helpers}
+
+Chicago-tdd-tools provides assertion macros that improve on standard \code{assert!}:
+
+\begin{table}[H]
+\centering
+\caption{Assertion Macros}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Macro} & \textbf{Purpose} \\
+\hline
+\code{assert\_ok!(result)} & Assert \code{Result<T, E>} is \code{Ok} \\
+\hline
+\code{assert\_err!(result)} & Assert \code{Result<T, E>} is \code{Err} \\
+\hline
+\code{assert\_in\_range!(val, lo, hi)} & Assert value is within range \\
+\hline
+\code{assert\_eq\_msg!(a, b, msg)} & Assert equality with custom message \\
+\hline
+\code{assert\_guard\_constraint!(val)} & Assert value satisfies constraint \\
+\hline
+\code{assert\_within\_tick\_budget!(ticks)} & Assert operation stayed within budget \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{example}[Using Assertion Macros]
+\begin{lstlisting}[language=Rust]
+#[test]
+fn test_with_custom_assertions() {
+    let result = divide(10, 2);
+    assert_ok!(result);
+
+    let value = result.unwrap();
+    assert_in_range!(value, 4.9, 5.1);
+
+    assert_eq_msg!(
+        value, 5.0,
+        "Division result should be exactly 5.0"
+    );
+}
+\end{lstlisting}
+\end{example}
+
+\section{Test Macros: Zero-Boilerplate Test Definition}
+
+The framework provides declarative test macros:
+
+\begin{table}[H]
+\centering
+\caption{Test Definition Macros}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Macro} & \textbf{Generates} \\
+\hline
+\code{test!(name, \{ ... \})} & Sync test function \\
+\hline
+\code{async\_test!(name, \{ ... \})} & Async test function \\
+\hline
+\code{fixture\_test!(name, fixture, \{ ... \})} & Async test with fixture \\
+\hline
+\code{performance\_test!(name, \{ ... \})} & Test with tick budget \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{example}[Test Macros]
+\begin{lstlisting}[language=Rust]
+// Sync test
+test!(test_simple, {
+    assert_eq!(2 + 2, 4);
+});
+
+// Async test
+async_test!(test_async_operation, {
+    let result = async_operation().await;
+    assert_ok!(result);
+});
+
+// Fixture test
+fixture_test!(test_with_db, db_fixture, {
+    db_fixture.insert_data(test_data)?;
+    let result = db_fixture.query("SELECT * FROM users")?;
+    assert!(!result.is_empty());
+});
+
+// Performance test
+performance_test!(test_within_budget, {
+    // Must execute within tick budget
+    let result = compute_expensive_operation();
+    assert_ok!(result);
+});
+\end{lstlisting}
+\end{example}
+
+\section{Alert Macros: Structured Logging}
+
+Alert macros ensure structured, severity-aware logging:
+
+\begin{lstlisting}[language=Rust]
+alert_critical!("Database connection failed: {}", error);
+alert_warning!("Retry attempt {} failed", attempt);
+alert_info!("Processing {} items", count);
+alert_success!("Completed in {}ms", elapsed);
+alert_debug!("Internal state: {:?}", state);
+\end{lstlisting}
+
+Each alert macro maps to a \code{log} crate level and color codes in terminal output.
+
+\section{Configuration Loading with Validation}
+
+The \code{config} submodule provides validated configuration loading:
+
+\begin{definition}[Validated Configuration]
+Configuration is loaded from files and validated against constraints:
+\begin{enumerate}
+  \item Type-safe deserialization (JSON, TOML, YAML)
+  \item Automatic validation via guard constraints
+  \item Error context and detailed error messages
+  \item Support for environment variable overrides
+\end{enumerate}
+\end{definition}
+
+\begin{example}[Validated Config]
+\begin{lstlisting}[language=Rust]
+#[derive(Deserialize, Validate)]
+pub struct AppConfig {
+    #[validate(min_length = 1)]
+    pub database_url: String,
+
+    #[validate(range(min = 1, max = 10000))]
+    pub port: u16,
+
+    #[validate(email)]
+    pub admin_email: String,
+}
+
+impl AppConfig {
+    pub fn load_from_file(path: &str)
+        -> Result<Self, ConfigError>
+    {
+        let content = std::fs::read_to_string(path)?;
+        let config: AppConfig = serde_json::from_str(&content)?;
+        config.validate()?;  // Compile-time errors!
+        Ok(config)
+    }
+}
+\end{lstlisting}
+\end{example}
+
+\section{Summary: Building Blocks**
+
+The core module provides the foundation for writing robust, readable tests:
+
+\begin{itemize}
+  \item \textbf{Fixtures} provide isolated, reusable test contexts
+  \item \textbf{Builders} enable fluent, type-safe test data construction
+  \item \textbf{Assertions} give detailed, customizable verification
+  \item \textbf{Macros} reduce boilerplate and provide clarity
+  \item \textbf{Configuration} ensures valid test inputs
+  \item \textbf{Logging} provides observable test execution
+\end{itemize}
+
+Together, these primitives form the foundation upon which advanced testing techniques are built.

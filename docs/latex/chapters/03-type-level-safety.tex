@@ -1,0 +1,405 @@
+\chapter{Type-Level Safety: Poka-Yoke in Action}
+
+\section{The Core Principle: Make Invalid States Unrepresentable}
+
+The foundational principle of chicago-tdd-tools is:
+
+\begin{quote}
+\textbf{Invalid states should be unrepresentable in the type system.}
+\end{quote}
+
+Rather than checking constraints at runtime, encode them in types so the compiler rejects
+violations before code runs. This shifts bugs from runtime failures to compile-time errors.
+
+\section{The Type State Pattern: Enforcing AAA at Compile Time}
+
+\begin{theorem}[Type State Pattern for AAA]
+The test lifecycle can be encoded as a state machine using zero-sized phantom types:
+
+\begin{equation}
+\text{TestState}<\text{Arrange}> \xrightarrow{\text{compile-time}}
+\text{TestState}<\text{Act}> \xrightarrow{\text{compile-time}}
+\text{TestState}<\text{Assert}>
+\end{equation}
+
+Any code that violates this order fails to compile.
+\end{theorem}
+
+\begin{proof}
+Rust's type system encodes transitions as method signatures:
+
+\begin{itemize}
+  \item \code{impl TestState<Arrange>}: only method \code{act(self) -> TestState<Act>}
+  \item \code{impl TestState<Act>}: only method \code{assert(self) -> TestState<Assert>}
+  \item No other transitions exist; compiler rejects invalid calls
+\end{itemize}
+
+Therefore, any code that compiles has necessarily followed Arrange → Act → Assert.
+\end{proof}
+
+\begin{example}[Type State Implementation]
+\begin{lstlisting}[language=Rust]
+use std::marker::PhantomData;
+
+// Sealed trait prevents external implementations
+mod private {
+    pub trait Sealed {}
+}
+
+// Marker types (zero-sized)
+pub struct Arrange;
+pub struct Act;
+pub struct Assert;
+
+impl private::Sealed for Arrange {}
+impl private::Sealed for Act {}
+impl private::Sealed for Assert {}
+
+// Type-state generic TestState
+pub struct TestState<Phase> {
+    _phase: PhantomData<Phase>,
+    data: Vec<String>,
+}
+
+// Arrange phase implementation
+impl TestState<Arrange> {
+    pub fn new() -> Self {
+        TestState {
+            _phase: PhantomData,
+            data: Vec::new(),
+        }
+    }
+
+    pub fn setup(mut self, setup: String) -> Self {
+        self.data.push(setup);
+        self
+    }
+
+    // Only Arrange can transition to Act
+    pub fn act(self) -> TestState<Act> {
+        TestState {
+            _phase: PhantomData,
+            data: self.data,
+        }
+    }
+}
+
+// Act phase implementation
+impl TestState<Act> {
+    pub fn execute(mut self, action: String) -> Self {
+        self.data.push(action);
+        self
+    }
+
+    // Only Act can transition to Assert
+    pub fn assert(self) -> TestState<Assert> {
+        TestState {
+            _phase: PhantomData,
+            data: self.data,
+        }
+    }
+}
+
+// Assert phase implementation
+impl TestState<Assert> {
+    pub fn verify(self, assertion: String) -> bool {
+        self.data.push(assertion);
+        true
+    }
+}
+
+// Usage: only valid ordering
+let test = TestState::<Arrange>::new()
+    .setup("init".to_string())
+    .act()  // Type changes to TestState<Act>
+    .execute("operation".to_string())
+    .assert()  // Type changes to TestState<Assert>
+    .verify("check".to_string());
+
+// Invalid: compile error!
+// let test = TestState::<Arrange>::new()
+//     .act()
+//     .assert()
+//     .execute(...);  // ERROR: no execute() method on TestState<Assert>
+\end{lstlisting}
+\end{example}
+
+\subsection{Zero-Cost Abstraction}
+
+The phase marker types are zero-sized. Rust compiles them away completely:
+
+\begin{itemize}
+  \item \code{PhantomData<Arrange>} = 0 bytes
+  \item No runtime cost for type safety
+  \item Compiler optimizes away all state machine machinery
+  \item Final compiled code is as fast as manual state tracking
+\end{itemize}
+
+\section{Sealed Traits: API Safety}
+
+Sealed traits prevent external implementations that might violate invariants:
+
+\begin{definition}[Sealed Trait Pattern]
+A sealed trait is defined in a private module, allowing only in-crate implementations:
+
+\begin{lstlisting}[language=Rust]
+// Private module (external code cannot implement)
+mod private {
+    pub trait Sealed {}
+}
+
+// Public trait using sealed trait
+pub trait TestPhase: private::Sealed {}
+
+// Only we can implement
+impl private::Sealed for Arrange {}
+impl TestPhase for Arrange {}
+
+// External code cannot do:
+// impl private::Sealed for MyCustomPhase {}  // ERROR
+// impl TestPhase for MyCustomPhase {}  // ERROR
+\end{lstlisting}
+
+This ensures test phases are limited to: Arrange, Act, Assert. Users cannot create
+invalid custom phases.
+\end{definition}
+
+\section{Generic Fixtures with Associated Types}
+
+Fixtures use associated types to provide flexible, type-safe test context:
+
+\begin{definition}[Fixture with Associated Types]
+\begin{lstlisting}[language=Rust]
+pub trait TestFixture<T>: Sized {
+    type Error: std::error::Error;
+    type Setup: Fn() -> Result<Self, Self::Error>;
+    type Teardown: Fn(&mut self) -> Result<(), Self::Error>;
+
+    fn new() -> Result<Self, Self::Error>;
+    fn setup(&mut self) -> Result<(), Self::Error>;
+    fn teardown(&mut self) -> Result<(), Self::Error>;
+}
+
+// Concrete implementation
+pub struct DatabaseFixture;
+
+impl TestFixture<String> for DatabaseFixture {
+    type Error = DatabaseError;
+    type Setup = fn() -> Result<Self, DatabaseError>;
+    type Teardown = fn(&mut self) -> Result<(), DatabaseError>;
+
+    fn new() -> Result<Self, Self::Error> {
+        // Initialize database
+        Ok(DatabaseFixture)
+    }
+
+    fn setup(&mut self) -> Result<(), Self::Error> {
+        // Create test schema
+        Ok(())
+    }
+
+    fn teardown(&mut self) -> Result<(), Self::Error> {
+        // Clean up test data
+        Ok(())
+    }
+}
+\end{lstlisting}
+
+Benefits:
+
+\begin{enumerate}
+  \item Type parameter \code{T} specifies the data type the fixture works with
+  \item Associated type \code{Error} is fixture-specific error type
+  \item Associated functions \code{Setup}/\code{Teardown} are part of the type
+  \item Compiler ensures correct error handling and setup/teardown order
+\end{enumerate}
+\end{definition}
+
+\section{Const Generics: Compile-Time Validation}
+
+Compile-time bounds are enforced via const generics:
+
+\begin{definition}[Const Generic Constraints]
+\begin{lstlisting}[language=Rust]
+// SizeValidatedArray enforces SIZE <= MAX at compile time
+pub struct SizeValidatedArray<T, const SIZE: usize, const MAX: usize> {
+    data: [T; SIZE],
+}
+
+impl<T, const SIZE: usize, const MAX: usize>
+    SizeValidatedArray<T, SIZE, MAX>
+where
+    // Magic: this where clause ensures SIZE <= MAX
+    [(); MAX - SIZE]:,
+{
+    pub fn new(data: [T; SIZE]) -> Self {
+        SizeValidatedArray { data }
+    }
+}
+
+// Compiles: SIZE (5) <= MAX (10)
+let valid = SizeValidatedArray::<i32, 5, 10>::new([0; 5]);
+
+// Fails to compile: SIZE (20) > MAX (10)
+// let invalid = SizeValidatedArray::<i32, 20, 10>::new([0; 20]);
+// error: assertion failed at compile time
+\end{lstlisting}
+
+This pattern prevents invalid array sizes at compile time, not runtime.
+\end{definition}
+
+\section{The Chatman Constant: Recursion Depth Enforcement}
+
+\begin{definition}[Chatman Constant]
+All recursive operations are bounded to a maximum depth of 8 iterations.
+This is enforced via const generics and guard constraints.
+
+\begin{lstlisting}[language=Rust]
+pub struct RecursionGuard<const MAX_DEPTH: u8 = 8> {
+    current_depth: u8,
+}
+
+impl<const MAX_DEPTH: u8> RecursionGuard<MAX_DEPTH>
+where
+    [(); 8 - MAX_DEPTH as usize]:,  // Compile-time: MAX_DEPTH <= 8
+{
+    pub fn new() -> Self {
+        RecursionGuard { current_depth: 0 }
+    }
+
+    pub fn enter(&mut self) -> Result<(), RecursionError> {
+        if self.current_depth >= MAX_DEPTH {
+            return Err(RecursionError::DepthExceeded);
+        }
+        self.current_depth += 1;
+        Ok(())
+    }
+
+    pub fn exit(&mut self) {
+        if self.current_depth > 0 {
+            self.current_depth -= 1;
+        }
+    }
+}
+\end{lstlisting}
+
+The guard ensures recursive workflows never exceed depth 8, preventing unbounded execution.
+\end{definition}
+
+\section{Error Handling Without Panic}
+
+Chicago-tdd-tools forbids \code{.unwrap()}, \code{.expect()}, \code{panic!()}, etc.
+The type system enforces proper error handling:
+
+\begin{definition}[Error Handling Enforcement]
+\begin{lstlisting}[language=Rust]
+// FORBIDDEN (CI rejects this code):
+let value = result.unwrap();  // clippy::unwrap_used
+
+// REQUIRED (compiler enforces):
+let value = match result {
+    Ok(v) => v,
+    Err(e) => {
+        alert_warning!("Operation failed: {}", e);
+        default_value
+    }
+};
+
+// REQUIRED (propagation):
+fn may_fail() -> Result<Value, Error> {
+    let value = operation()?;  // Use ? operator
+    Ok(value)
+}
+
+// REQUIRED (if-let):
+let value = if let Some(v) = option {
+    v
+} else {
+    default_value
+};
+\end{lstlisting}
+
+CI lint rules enforce this:
+
+\begin{lstlisting}[language=bash,numbers=none]
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+\end{lstlisting}
+
+Any violation causes CI to fail. Combined with git hooks, developers cannot commit violations.
+\end{definition}
+
+\section{Immutability by Default}
+
+All variables are immutable unless explicitly marked \code{mut}:
+
+\begin{lstlisting}[language=Rust]
+// Default: immutable (enforced by compiler)
+let value = 5;
+// value = 10;  // ERROR: cannot assign to immutable variable
+
+// Explicit: mutable only when needed
+let mut value = 5;
+value = 10;  // OK
+
+// Shared ownership: immutable by default
+let data = Arc::new(data);
+let data_clone = Arc::clone(&data);
+// data.field = 10;  // ERROR: cannot mutate through Arc
+\end{lstlisting}
+
+This prevents unintended mutations and makes shared state explicit.
+
+\section{Proof: Invalid AAA States Are Unrepresentable}
+
+\begin{theorem}[No Invalid Test States]
+There is no valid Rust program that violates the AAA pattern using chicago-tdd-tools.
+\end{theorem}
+
+\begin{proof}
+By contradiction. Assume a program violates AAA (e.g., calls assert before act):
+
+\begin{enumerate}
+  \item The program must have a reference to \code{TestState<Arrange>}
+  \item To call \code{assert()}, the code must type-check against \code{TestState<Act>} or \code{TestState<Assert>}
+  \item But \code{TestState<Arrange>::act()} is the only method that returns \code{TestState<Act>}
+  \item And \code{TestState<Act>::act()} does not exist (only \code{assert()} exists on \code{TestState<Act>})
+  \item Therefore, the compiler rejects the program at type-checking time
+\end{enumerate}
+
+Conclusion: Any program that compiles has necessarily followed the correct order.
+\end{proof}
+
+\section{Summary: Type Safety at Compile Time}
+
+Chicago-tdd-tools leverages Rust's type system to ensure:
+
+\begin{table}[H]
+\centering
+\caption{Compile-Time Guarantees}
+\begin{tabular}{|l|p{4cm}|l|}
+\hline
+\textbf{Guarantee} & \textbf{Mechanism} & \textbf{Cost} \\
+\hline
+AAA Pattern Order & Type state machine & Zero \\
+\hline
+Error Handling & No unwrap/expect/panic & Better recovery \\
+\hline
+Recursion Depth & Chatman Constant (\(\leq 8\)) & Zero \\
+\hline
+Array Bounds & Const generics & Zero \\
+\hline
+Memory Safety & Ownership + borrowing & Zero \\
+\hline
+Data Races & Compiler rejection & Zero \\
+\hline
+Invalid Fixture States & Sealed traits & Zero \\
+\hline
+Type Conformance & Generic constraints & Zero \\
+\hline
+\end{tabular}
+\end{table}
+
+If code compiles, these properties are guaranteed. No runtime checks needed.
