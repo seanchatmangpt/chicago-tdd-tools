@@ -9,9 +9,16 @@
 //! - Guard-based safety constraints
 //! - Cryptographic receipt generation
 //! - Multi-stage workflow validation
+//!
+//! ## RDF Integration
+//!
+//! The `rdf` module provides semantic web integration for loading and validating
+//! sector ontologies defined in TTL format. Use with `--features rdf` to enable
+//! RDF-driven operation validation.
 
 pub mod academic;
 pub mod claims;
+pub mod rdf;
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
