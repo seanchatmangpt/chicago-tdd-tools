@@ -160,6 +160,7 @@ pub mod integration;
 pub mod observability;
 pub mod testing;
 pub mod validation;
+pub mod operator_registry;
 
 // Macros are exported via core::macros module
 // src/macros.rs re-exports from core::macros for backward compatibility
@@ -172,6 +173,7 @@ pub use core::builders::{GenericTestDataBuilder, ValidatedTestDataBuilder};
 pub use validation::coverage::{CoveragePercentage, CoveredCount, TotalCount};
 pub use validation::jtbd::ScenarioIndex;
 pub use validation::performance::ValidatedTickBudget;
+pub use operator_registry::{OperatorRegistry, OperatorDescriptor, OperatorProperties, GuardType, global_registry};
 
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
