@@ -12,13 +12,13 @@ Some patterns require optional features. Add them to your `Cargo.toml`:
 
 ```toml
 # Minimal testing (most common)
-chicago-tdd-tools = { version = "1.1.0", features = ["testing-extras"] }
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-extras"] }
 
 # Real collaborators (requires Docker)
-chicago-tdd-tools = { version = "1.1.0", features = ["testing-full"] }
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-full"] }
 
 # Observability patterns
-chicago-tdd-tools = { version = "1.1.0", features = ["observability-full"] }
+chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
 ```
 
 **Pattern → Feature mapping:**
