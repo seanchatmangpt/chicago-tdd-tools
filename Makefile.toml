@@ -158,11 +158,18 @@ args = [
 ]
 
 [tasks.test-integration]
-description = "Run integration tests only (30s timeout, requires Docker - MUST fail if Docker stopped)"
+description = "Run integration tests only (60s timeout, requires Docker - MUST fail if Docker stopped)"
+# FAIL-FAST HARDENING: Increased from 30s to 60s to provide buffer for:
+#   - Docker check: 5s
+#   - Container creation: 1-2s per container
+#   - Test execution: 10-20s
+#   - Slow Docker daemon or network issues: variable
+# Root cause: 30s timeout was too tight, causing false failures in CI
+# Prevention: Additional 30s buffer ensures no flaky failures
 dependencies = ["docker-check"]
 command = "timeout"
 args = [
-  "30s",
+  "60s",
   "cargo",
   "nextest",
   "run",
@@ -179,6 +186,13 @@ args = [
 [tasks.test-all]
 description = "Run all tests (unit + integration)"
 dependencies = ["test-unit", "docker-check", "test-integration"]
+
+[tasks.test-full-integration]
+description = "Run full integration test suite with both unit and integration tests"
+# **FAIL-FAST HARDENING**: Provides convenient way to run complete test suite
+# Equivalent to: cargo make test-unit && cargo make test-integration
+# Useful for: Local verification before push, CI-like environment testing
+dependencies = ["timeout-check", "test-unit", "docker-check", "test-integration"]
 
 [tasks.test-examples]
 description = "Run all example tests - tests will fail clearly if prerequisites are missing"

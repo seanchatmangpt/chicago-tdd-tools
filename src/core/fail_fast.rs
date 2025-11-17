@@ -423,7 +423,12 @@ impl StrictExecutionContext {
         for required in &required_phases {
             if !self.phases_completed.contains(required) {
                 return Err(UnrecoverableInvariantViolation::PartialPipelineSuccess(format!(
+<<<<<<< HEAD
                     "Required phase {required:?} not completed"
+=======
+                    "Required phase {:?} not completed",
+                    required
+>>>>>>> origin/claude/dmaic-workflow-011RCFXSUHNfW7CeZxXwNxv5
                 )));
             }
         }
@@ -480,8 +485,11 @@ mod tests {
         let r1 = ctx.phase_2_thermal_testing(100, 10_000);
         assert!(r1.is_ok());
 
-        let r2 = ctx.phase_2_thermal_testing(50, 10_000);
-        assert!(r2.is_err()); // Clock went backward
+        let r2 = ctx.phase_2_thermal_testing(100, 10_000);
+        assert!(r2.is_ok());
+
+        let r3 = ctx.phase_2_thermal_testing(50, 10_000);
+        assert!(r3.is_err()); // Clock went backward
     }
 
     #[test]
