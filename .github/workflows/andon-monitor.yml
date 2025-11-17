@@ -47,7 +47,7 @@ jobs:
       signal_summary: ${{ steps.check.outputs.signal_summary }}
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔍 Analyze CI results
         id: check
@@ -87,7 +87,7 @@ jobs:
     if: needs.analyze-signals.outputs.has_critical == 'true' || needs.analyze-signals.outputs.has_high == 'true'
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: ⚠️ Create Signal Alert
         run: |
