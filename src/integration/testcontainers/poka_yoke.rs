@@ -75,6 +75,10 @@ impl Container<state::Stopped> {
     ///
     /// **Poka-yoke**: Returns `Container<Stopped>` - cannot exec until started.
     ///
+    /// # Errors
+    ///
+    /// This placeholder always returns `Ok` in the design demonstration.
+    ///
     /// # Note
     ///
     /// This is a placeholder for poka-yoke design demonstration.
@@ -94,6 +98,10 @@ impl Container<state::Stopped> {
     ///
     /// **Poka-yoke**: Changes type from `Container<Stopped>` to `Container<Running>`.
     /// After this call, container can execute commands.
+    ///
+    /// # Errors
+    ///
+    /// This placeholder always returns `Ok` in the design demonstration.
     ///
     /// # Note
     ///
@@ -159,6 +167,10 @@ impl Container<state::Running> {
     ///
     /// **Poka-yoke**: Changes type from `Container<Running>` to `Container<Stopped>`.
     /// After this call, container cannot execute commands.
+    ///
+    /// # Errors
+    ///
+    /// This placeholder always returns `Ok` in the design demonstration.
     ///
     /// # Note
     ///

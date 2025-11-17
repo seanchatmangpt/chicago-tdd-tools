@@ -203,18 +203,20 @@ impl WeaverLiveCheck {
     /// }
     /// ```
     pub fn check_registry_available() -> Result<(), String> {
+        const MAX_CHECK_TIME_MS: u128 = 5000; // 5 second timeout
+
         use std::fs;
         use std::path::PathBuf;
         use std::time::Instant;
 
         let registry_path = PathBuf::from("registry");
         let start_time = Instant::now();
-        const MAX_CHECK_TIME_MS: u128 = 5000; // 5 second timeout
 
         // Check 1: Path exists
         if !registry_path.exists() {
             return Err(format!(
-                "🚨 Registry path does not exist: {registry_path:?}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap"
+                "🚨 Registry path does not exist: {}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap",
+                registry_path.display()
             ));
         }
 
@@ -228,19 +230,22 @@ impl WeaverLiveCheck {
             Ok(metadata) => {
                 if !metadata.is_dir() {
                     return Err(format!(
-                        "🚨 Registry path is not a directory: {registry_path:?}"
+                        "🚨 Registry path is not a directory: {}",
+                        registry_path.display()
                     ));
                 }
                 // Check if we can read the directory
                 if metadata.permissions().readonly() && cfg!(unix) {
                     return Err(format!(
-                        "⚠️  Registry path is not readable (permission denied): {registry_path:?}"
+                        "⚠️  Registry path is not readable (permission denied): {}",
+                        registry_path.display()
                     ));
                 }
             }
             Err(e) => {
                 return Err(format!(
-                    "⚠️  Cannot read registry metadata: {registry_path:?} - {e}"
+                    "⚠️  Cannot read registry metadata: {} - {e}",
+                    registry_path.display()
                 ))
             }
         }
@@ -275,13 +280,15 @@ impl WeaverLiveCheck {
 
                 if !has_content {
                     return Err(format!(
-                        "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {registry_path:?}"
+                        "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {}",
+                        registry_path.display()
                     ));
                 }
             }
             Err(e) => {
                 return Err(format!(
-                    "⚠️  Cannot read registry directory: {registry_path:?} - {e}"
+                    "⚠️  Cannot read registry directory: {} - {e}",
+                    registry_path.display()
                 ))
             }
         }

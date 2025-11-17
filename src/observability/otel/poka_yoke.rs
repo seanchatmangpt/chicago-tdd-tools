@@ -233,6 +233,10 @@ impl Span<state::Active> {
     /// # Note
     ///
     /// This is a placeholder for poka-yoke design demonstration.
+    ///
+    /// # Errors
+    ///
+    /// This always returns `Ok(())` in the placeholder implementation.
     #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
     pub fn add_attribute(&self, _attr: ValidAttribute) -> Result<(), String> {
         // Add attribute logic here - only works on active spans
@@ -247,6 +251,10 @@ impl Span<state::Active> {
     /// # Note
     ///
     /// This is a placeholder for poka-yoke design demonstration.
+    ///
+    /// # Errors
+    ///
+    /// This always returns `Ok` in the placeholder implementation.
     #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn complete(self) -> Result<Span<state::Completed>, String> {
         // Complete span logic here
