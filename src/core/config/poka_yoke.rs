@@ -683,6 +683,7 @@ impl ValidatedConfig {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)] // Test code: unwrap is acceptable
 mod tests {
     use super::*;
 
