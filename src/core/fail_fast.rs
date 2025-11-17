@@ -466,15 +466,17 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_1_contract_definition() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
         let result = ctx.phase_1_contract_definition(12);
         assert!(result.is_ok());
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_2_thermal_monotonic() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
         let _ = ctx.phase_1_contract_definition(12);
 
         let r1 = ctx.phase_2_thermal_testing(100, 10_000);
@@ -488,8 +490,9 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_5_receipt_generation() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
         let _ = ctx.phase_1_contract_definition(12);
 
         let result = ctx.phase_5_receipt_generation(1, 0x1234, 0x1234);
@@ -497,8 +500,9 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_9_consensus_requires_quorum() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
 
         // With 9 voters, need 7 approvals for 2/3 quorum
         let result = ctx.phase_9_distributed_consensus(6, 9);
@@ -506,16 +510,18 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_11_prophet_rejects_invalid_confidence() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
 
         let result = ctx.phase_11_performance_prophet(1000, 1.5); // Confidence > 1.0
         assert!(result.is_err());
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_phase_12_dashboard_consistency() {
-        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
 
         // Totals don't match
         let result = ctx.phase_12_quality_dashboard(10, 5, 3);
@@ -523,8 +529,9 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_finalize_requires_core_phases() {
-        let ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap();
+        let ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
 
         // No phases completed
         let result = ctx.finalize();
