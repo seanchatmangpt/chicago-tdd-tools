@@ -1,6 +1,6 @@
 # Chicago TDD Tools - Examples
 
-**Version:** 1.4.0 | **Updated:** 2025-01-XX
+**Version:** 1.4.0 | **Updated:** 2025-01-16
 
 This directory contains comprehensive examples demonstrating Chicago TDD Tools usage, organized using the [Diátaxis framework](https://diataxis.fr/) for technical documentation.
 
@@ -774,4 +774,4 @@ Found an issue or have a suggestion? Please [open an issue](https://github.com/s
 
 **Quality is the default. Prevention beats detection.**
 
-*Version 1.4.0 | Updated 2025-01-XX | Team KNHK | License MIT*
+*Version 1.4.0 | Updated 2025-01-16 | Team KNHK | License MIT*

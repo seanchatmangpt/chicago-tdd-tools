@@ -42,6 +42,8 @@ pub use unified::{ObservabilityError, ObservabilityResult, ObservabilityTest, Te
 // Users can access these types directly for advanced use cases
 #[cfg(feature = "otel")]
 pub mod otel;
+
+// Poka-yoke types are re-exported through otel::poka_yoke module
 #[cfg(feature = "weaver")]
 pub mod weaver;
 

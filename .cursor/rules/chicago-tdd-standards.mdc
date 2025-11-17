@@ -294,6 +294,17 @@ See [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting) for
 
 **CRITICAL**: Always use `cargo make` commands, never direct `cargo` commands. The build system handles proc-macro crates correctly, includes timeouts to prevent hanging, and ensures consistency.
 
+## Test Timeout Configuration
+
+**Configuration Precedence**: `.config/nextest.toml` takes precedence over `nextest.toml` in workspace root. When updating timeouts, update `.config/nextest.toml`, not `nextest.toml`.
+
+**Timeout SLAs**:
+- Unit tests: 5s per test (default profile)
+- Integration tests: 30s per test (integration profile)
+- Weaver integration tests: 120s per test (override in default profile)
+
+**Verification**: Run `cargo nextest run --test <test_name>` to verify timeout configuration is applied. Tests should complete within configured timeout, not timeout at default 5s.
+
 ```bash
 cargo make test      # Run all tests
 cargo make check     # Check compilation

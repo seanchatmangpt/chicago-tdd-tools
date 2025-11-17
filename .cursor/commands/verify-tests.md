@@ -7,7 +7,7 @@ This command guides agents through the complete workflow of running tests, ident
 ## Workflow Overview
 
 ```
-Step 1: Run Tests → Step 2: Analyze Results → Step 3: Fix Failures → Step 4: Re-Run Tests → Step 5: Verify Completion
+Step 1: Run Tests (with Measurement) → Step 2: Analyze Results → Step 3: Fix Failures → Step 4: Re-Run Tests → Step 5: Verify Completion (with Measurement & Control)
 ```
 
 ## Step-by-Step Instructions
@@ -34,6 +34,52 @@ cargo make test
 **If this step succeeds**: Skip to Step 5 (Verify Completion)
 
 **Note**: Always use `cargo make test`, never `cargo test` directly. See [Build System Practices](../rules/build-system-practices.mdc).
+
+#### 1.1: Collect Baseline Data (DMAIC Measurement)
+
+**Action**: Measure current test state to establish baseline.
+
+**Data to collect**:
+- **Test count**: How many tests exist?
+- **Failure count**: How many tests fail?
+- **Failure rate**: What percentage of tests fail?
+- **Failure types**: What types of failures (compilation, test, panic, timeout)?
+
+**Action**: Collect baseline data
+
+```bash
+# Count total tests
+cargo make test 2>&1 | grep -c "test.*\.\.\."
+# Output: 150 tests total
+
+# Count failures
+cargo make test 2>&1 | grep -c "FAILED"
+# Output: 5 failures
+
+# Calculate failure rate
+# 5 failures / 150 tests = 3.3% failure rate
+
+# Categorize failures
+# Compilation errors: 2
+# Test failures: 2
+# Panics: 1
+# Timeouts: 0
+```
+
+**Example baseline data**:
+```markdown
+## Baseline Data
+
+**Total Tests**: 150
+**Failures**: 5
+**Failure Rate**: 3.3% (5/150)
+
+**By Type**:
+- Compilation errors: 2 (40%)
+- Test failures: 2 (40%)
+- Panics: 1 (20%)
+- Timeouts: 0 (0%)
+```
 
 ---
 
@@ -270,15 +316,131 @@ cargo make check
 
 **Expected**: No pending test fixes remain
 
-#### 5.4: Mark Work Complete
+#### 5.4: Measure Improvement (DMAIC Measurement)
+
+**Action**: Measure improvement against baseline data.
+
+**Measurement**:
+- Re-count failures after fixes
+- Compare to baseline
+- Calculate improvement percentage
+- Verify success criteria met
+
+**Action**: Measure improvement
+
+```bash
+# Re-count failures after fixes
+cargo make test 2>&1 | grep -c "FAILED"
+# Output: 0 failures (down from 5)
+
+# Calculate improvement
+# Baseline: 5 failures (3.3% failure rate)
+# After fixes: 0 failures (0% failure rate)
+# Improvement: 100% (5/5 failures fixed)
+```
+
+**Example improvement measurement**:
+```markdown
+## Improvement Measurement
+
+**Baseline**: 5 failures (3.3% failure rate)
+**After Fixes**: 0 failures (0% failure rate)
+**Improvement**: 100% (5/5 failures fixed)
+
+**By Type**:
+- Compilation errors: 2 → 0 (100% improvement)
+- Test failures: 2 → 0 (100% improvement)
+- Panics: 1 → 0 (100% improvement)
+
+**Success Criteria Met**: ✅
+- All tests pass: 150/150 (100%) ✅
+- No compilation errors ✅
+- No test failures ✅
+```
+
+#### 5.5: Mark Work Complete
 
 **Only when**:
 - ✅ All tests pass (`cargo make test` exits with code 0)
 - ✅ No compilation errors (`cargo make check` succeeds)
 - ✅ No test failures
 - ✅ No pending test fixes in todo list
+- ✅ Improvement measured and verified
 
 **Then**: Mark work as complete
+
+#### 5.6: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to prevent test failures from returning.
+
+**Controls**:
+- **CI/CD**: Run tests automatically on every commit
+- **Pre-commit hooks**: Run tests before commits
+- **Monitoring**: Track test failure rate over time
+- **Alerts**: Set up alerts if failure rate increases
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Test Verification Control Todos (10+ items)
+
+**CI/CD Controls**:
+- [ ] Add CI check: Run all tests on every commit
+- [ ] Configure CI to fail if tests fail
+- [ ] Add test failure rate tracking to CI
+- [ ] Verify CI checks work correctly
+
+**Pre-commit Controls**:
+- [ ] Add pre-commit hook: Run tests before commit
+- [ ] Configure hook to prevent commit if tests fail
+- [ ] Verify pre-commit hooks work correctly
+- [ ] Document hook usage
+
+**Monitoring Controls**:
+- [ ] Set up test failure rate tracking dashboard
+- [ ] Configure alerts if failure rate > 1%
+- [ ] Review test failure trends weekly
+- [ ] Document failure patterns
+
+**Standards Controls**:
+- [ ] Add standard: All tests must pass before commit
+- [ ] Add standard: Test failure rate must be < 1%
+- [ ] Update team documentation with standards
+- [ ] Verify standards are followed
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to prevent test failures, don't just document them. Todos track progress, controls prevent recurrence.
+
+#### 5.7: Monitor (DMAIC Control)
+
+**Action**: Monitor to ensure test failures don't return.
+
+**Monitoring**:
+- Track test failure rate over time
+- Set up alerts for regression
+- Review trends periodically
+- Adjust controls if needed
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor test failure rate
+# Run daily: cargo make test 2>&1 | grep -c "FAILED"
+# Alert if failure rate > 1%
+
+# Track trends
+# Week 1: 5 failures (3.3% failure rate - baseline)
+# Week 2: 0 failures (0% failure rate - after fixes)
+# Week 3: 0 failures (0% failure rate - controls working)
+# Week 4: 0 failures (0% failure rate - sustained)
+```
 
 ---
 
@@ -471,6 +633,7 @@ cargo make test   # All tests pass
 - **[Build System Practices](../rules/build-system-practices.mdc)** - Build commands
 - **[Chicago TDD Standards](../rules/chicago-tdd-standards.mdc)** - Testing standards
 - **[Expert Testing Patterns](./expert-testing-patterns.md)** - Expert patterns
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 - **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start
 - **[User Guide](../../docs/USER_GUIDE.md)** - Complete guide
 - **[API Reference](../../docs/API_REFERENCE.md)** - API documentation

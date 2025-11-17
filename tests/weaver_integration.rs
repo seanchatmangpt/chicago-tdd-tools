@@ -24,44 +24,41 @@ mod weaver_integration_tests {
     use std::fs;
     use std::path::PathBuf;
 
-    fn allow_weaver_skip() -> bool {
-        matches!(
-            std::env::var("WEAVER_ALLOW_SKIP"),
-            Ok(value) if matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES")
-        )
-    }
-
-    fn ensure_weaver_prerequisites() -> bool {
+    /// Ensure Weaver prerequisites are available, or fail with clear error message
+    ///
+    /// **Refactored**: This function now always fails clearly if prerequisites are missing,
+    /// rather than silently skipping. This ensures we detect when Weaver system is not working.
+    ///
+    /// # Panics
+    ///
+    /// Panics with clear error message if:
+    /// - Registry path does not exist
+    /// - Weaver binary is not available
+    ///
+    /// # Returns
+    ///
+    /// Returns `()` if all prerequisites are met (never returns `false` anymore).
+    fn ensure_weaver_prerequisites() {
         let registry_path = PathBuf::from("registry");
         if !registry_path.exists() {
-            if allow_weaver_skip() {
-                eprintln!("⏭️  Skipping Weaver test: Registry path missing (run cargo make weaver-bootstrap)");
-                return false;
-            }
             panic!(
                 "🚨 Registry path does not exist: {:?}\n\
                  ⚠️  STOP: Cannot proceed with Weaver integration test\n\
                  💡 FIX: Run cargo make weaver-bootstrap\n\
-                 💡 ALT: Set WEAVER_ALLOW_SKIP=1 to bypass intentionally",
+                 📋 This test verifies Weaver system is working - registry must be available",
                 registry_path
             );
         }
 
         use chicago_tdd_tools::observability::weaver::types::WeaverLiveCheck;
         if WeaverLiveCheck::check_weaver_available().is_err() {
-            if allow_weaver_skip() {
-                eprintln!("⏭️  Skipping Weaver test: Weaver binary not available (run cargo make weaver-bootstrap)");
-                return false;
-            }
             panic!(
                 "🚨 Weaver binary not available\n\
                  ⚠️  STOP: Cannot proceed with Weaver integration test\n\
                  💡 FIX: Run cargo make weaver-bootstrap\n\
-                 💡 ALT: Set WEAVER_ALLOW_SKIP=1 to bypass intentionally"
+                 📋 This test verifies Weaver system is working - binary must be available"
             );
         }
-
-        true
     }
 
     /// Utility: ensure weaver reports output directory exists before tests run
@@ -90,9 +87,9 @@ mod weaver_integration_tests {
     /// to avoid async/blocking conflicts.
     #[tokio::test]
     async fn test_unified_api_weaver_integration() {
-        if !ensure_weaver_prerequisites() {
-            return;
-        }
+        // **Refactored**: Test now fails clearly if prerequisites are missing, rather than silently skipping.
+        // This ensures we detect when Weaver system is not working.
+        ensure_weaver_prerequisites();
         ensure_weaver_reports_dir();
 
         // Arrange: Create WeaverTestFixture (handles Weaver lifecycle automatically)
@@ -113,13 +110,17 @@ mod weaver_integration_tests {
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
-        // Wait for telemetry to be processed
-        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        // Wait for telemetry to be processed and exported to Weaver
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
         // Act: Finish fixture (flushes telemetry, stops weaver, parses results)
         // **TRIZ Solution**: Use finish_async() which handles async/blocking context switching internally
         // This eliminates the need for manual thread spawning (Principle #13: The Other Way Round)
         drop(tracer); // Drop tracer before finishing fixture
+
+        // Give Weaver additional time to process telemetry and generate reports
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+
         let results = fixture
             .finish_async()
             .await
@@ -138,9 +139,8 @@ mod weaver_integration_tests {
     /// 3. Automatic cleanup via blocking thread pattern (working capability)
     #[tokio::test]
     async fn test_weaver_fixture_happy_path() {
-        if !ensure_weaver_prerequisites() {
-            return;
-        }
+        // **Refactored**: Test now fails clearly if prerequisites are missing, rather than silently skipping.
+        ensure_weaver_prerequisites();
         ensure_weaver_reports_dir();
 
         // Arrange: Create WeaverTestFixture with default config
@@ -161,12 +161,16 @@ mod weaver_integration_tests {
             .force_flush()
             .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
-        // Wait for telemetry to be processed
-        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        // Wait for telemetry to be processed and exported to Weaver
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
         // Act: Finish fixture using async-aware method
         // **TRIZ Solution**: finish_async() handles async/blocking context switching internally
         drop(tracer); // Drop tracer before finishing fixture
+
+        // Give Weaver additional time to process telemetry and generate reports
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+
         let results = fixture
             .finish_async()
             .await
@@ -184,13 +188,12 @@ mod weaver_integration_tests {
     /// 2. Reports can be parsed and validated (working capability)
     /// 3. Validation results are accessible (working capability)
     ///
-    /// **Pattern**: Use blocking sleep and clone output_dir before moving fixture
-    /// to avoid borrow-after-move errors.
-    #[test]
-    fn test_weaver_fixture_reports_rendered() {
-        if !ensure_weaver_prerequisites() {
-            return;
-        }
+    /// **Pattern**: Use async test with finish_async() to handle HTTP exporter requirements
+    /// (HTTP exporter requires Tokio runtime for async operations)
+    #[tokio::test]
+    async fn test_weaver_fixture_reports_rendered() {
+        // **Refactored**: Test now fails clearly if prerequisites are missing, rather than silently skipping.
+        ensure_weaver_prerequisites();
         ensure_weaver_reports_dir();
 
         // Arrange: Create WeaverTestFixture
@@ -206,32 +209,26 @@ mod weaver_integration_tests {
         span.set_attribute(KeyValue::new("test.case", "weaver_fixture_reports_rendered"));
         span.end();
 
-        // Flush telemetry (requires tokio runtime, but we're in blocking test)
-        // **Working Capability Pattern**: Use tokio::runtime::Runtime for blocking context
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            tracer
-                .force_flush()
-                .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
-            tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-        });
+        // Flush telemetry (requires tokio runtime for HTTP exporter)
+        tracer
+            .force_flush()
+            .unwrap_or_else(|err| panic!("Failed to flush tracer: {err}"));
 
-        // Wait for telemetry to be processed (blocking sleep for non-async test)
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        // Wait for telemetry to be processed and exported to Weaver
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
-        // Act: Finish fixture and get results (uses blocking operations, move to blocking thread)
-        drop(tracer); // Drop tracer before moving fixture
-                      // **Poka-yoke**: Clone output_dir path before moving fixture (prevent borrow-after-move)
+        // Give Weaver additional time to process telemetry and generate reports
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+
+        // **Poka-yoke**: Clone output_dir path before moving fixture (prevent borrow-after-move)
         let output_dir = fixture.output_dir().to_path_buf();
-        let results = {
-            let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || {
-                let result = fixture.finish();
-                tx.send(result).unwrap();
-            });
-            rx.recv().unwrap()
-        }
-        .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
+
+        // Act: Finish fixture using async-aware method
+        drop(tracer); // Drop tracer before finishing fixture
+        let results = fixture
+            .finish_async()
+            .await
+            .unwrap_or_else(|err| panic!("Failed to finalise Weaver fixture: {err}"));
 
         // Assert: Verify reports were generated and can be validated (working capability)
         assert_telemetry_valid(&results)

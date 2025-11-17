@@ -107,8 +107,11 @@ fn main() {
 #[cfg(feature = "otel")]
 #[cfg(test)]
 mod otel_tests {
+    use chicago_tdd_tools::assert_err;
+    use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
     use chicago_tdd_tools::otel::types::{SpanContext, SpanId, SpanStatus, TraceId};
+    use chicago_tdd_tools::test;
     use std::collections::BTreeMap;
 
     // Example: Basic OTEL span validation
@@ -316,10 +319,10 @@ mod otel_tests {
                         "Span with zero trace ID should fail validation"
                     );
                 }
-                Err(e) => {
+                Err(_e) => {
                     // If span creation failed (expected for invalid trace ID), that's correct behavior
                     // **Best Practice**: Handle error case properly - demonstrates error handling pattern
-                    chicago_tdd_tools::alert_info!("Expected error for invalid trace ID: {e}");
+                    chicago_tdd_tools::alert_info!("Expected error for invalid trace ID");
                 }
             }
         }
@@ -353,7 +356,9 @@ mod otel_tests {
 #[cfg(feature = "weaver")]
 #[cfg(test)]
 mod weaver_tests {
+    use chicago_tdd_tools::assert_ok;
     use chicago_tdd_tools::observability::{ObservabilityTest, TestConfig};
+    use chicago_tdd_tools::test;
     use std::path::PathBuf;
 
     // Example: Basic Weaver validator creation

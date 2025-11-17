@@ -9,8 +9,9 @@
 //! - Phase 11: Performance Prophet (predictive analysis)
 //! - Phase 12: Quality Metrics Dashboard
 
-use chicago_tdd_tools::prelude::*;
-use chicago_tdd_tools::testing::ContinuousLearner;
+use chicago_tdd_tools::core::contract::TestContract;
+use chicago_tdd_tools::core::verification_pipeline::{PipelineConfig, VerificationPipeline};
+use chicago_tdd_tools::testing::continuous_learning::ContinuousLearner;
 use chicago_tdd_tools::validation::advanced_phases::{
     DistributedConsensus, PerformanceProphet, QualityMetrics, TimeTravelDebugger,
 };
@@ -254,7 +255,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::core::contract::TestContract;
+    use chicago_tdd_tools::core::verification_pipeline::{PipelineConfig, VerificationPipeline};
     use chicago_tdd_tools::test;
 
     test!(test_pipeline_components_exist, {
@@ -262,9 +264,12 @@ mod tests {
         // This test ensures the example compiles and basic components exist
 
         // Act: Verify types are available
-        let _contracts: &[TestContract] = &[TestContract::hot_path("test", &["module::function"])];
+        const CONTRACT: TestContract = TestContract::hot_path("test", &["module::function"]);
+        const CONTRACTS: &[TestContract] = &[CONTRACT];
+        let _config = PipelineConfig::relaxed();
+        let _pipeline = VerificationPipeline::new(CONTRACTS, _config);
 
-        // Assert: If we get here, types are available
+        // Assert: If we get here, types are available and pipeline can be created
         assert!(true);
     });
 }

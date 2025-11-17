@@ -45,7 +45,8 @@
 //! - `TestDataBuilder::new() -> TestDataBuilder`
 //! - `TestDataBuilder::build_json() -> Result<Value, String>`
 
-use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::core::builders::TestDataBuilder;
+use chicago_tdd_tools::core::fixture::TestFixture;
 
 /// Example: Creating and using a test fixture
 ///
@@ -231,7 +232,8 @@ async fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::core::builders::TestDataBuilder;
+    use chicago_tdd_tools::core::fixture::TestFixture;
     use chicago_tdd_tools::test;
 
     test!(test_fixture_creation, {

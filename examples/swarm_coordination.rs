@@ -439,7 +439,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::swarm::*;
+    use chicago_tdd_tools::test;
 
     test!(test_coordinator_creation, {
         // Arrange & Act

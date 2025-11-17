@@ -451,5 +451,5 @@ ctx.finalize()?;
 
 **Quality is the default. Prevention beats detection.**
 
-*Version 1.4.0 | Updated 2025-01-XX | Team KNHK | License MIT*
+*Version 1.4.0 | Updated 2025-01-16 | Team KNHK | License MIT*
 

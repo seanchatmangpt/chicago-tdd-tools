@@ -7,7 +7,7 @@ This command guides agents to "go to the source" (Gemba) - work directly with ac
 ## Workflow Overview
 
 ```
-Step 1: Go to Gemba → Step 2: Observe Actual Behavior → Step 3: Verify Claims → Step 4: Create Todo List for Fixing Discrepancies → Step 5: Fix at Source
+Step 1: Go to Gemba → Step 2: Observe Actual Behavior (with Measurement) → Step 3: Verify Claims → Step 4: Create Todo List for Fixing Discrepancies → Step 5: Fix at Source (with Measurement & Control)
 ```
 
 ## Step-by-Step Instructions
@@ -98,6 +98,57 @@ cargo make check > check_output.txt 2>&1
 # Examine actual outputs
 cat test_output.txt
 cat check_output.txt
+```
+
+#### 2.4: Collect Baseline Data (DMAIC Measurement)
+
+**Action**: Measure current state to establish baseline for discrepancies.
+
+**Data to collect**:
+- **Discrepancy count**: How many discrepancies exist?
+- **Discrepancy types**: What types of discrepancies (docs vs code, comments vs behavior, etc.)?
+- **Discrepancy locations**: Where do discrepancies occur?
+- **Impact**: What is the impact of each discrepancy?
+
+**Action**: Collect baseline data
+
+```bash
+# Count discrepancies by type
+grep -r "TODO.*discrepancy" . | wc -l
+# Output: 15 discrepancies found
+
+# Categorize discrepancies
+# Documentation vs code: 5
+# Comments vs behavior: 4
+# Test names vs behavior: 3
+# Assumptions vs reality: 3
+
+# Measure impact
+# - Documentation mismatches: High (confuses users)
+# - Comment mismatches: Medium (confuses developers)
+# - Test name mismatches: Low (confuses test readers)
+```
+
+**Example baseline data**:
+```markdown
+## Baseline Data
+
+**Total Discrepancies**: 15
+**By Type**:
+- Documentation vs code: 5 (33%)
+- Comments vs behavior: 4 (27%)
+- Test names vs behavior: 3 (20%)
+- Assumptions vs reality: 3 (20%)
+
+**By Impact**:
+- High impact: 5 (documentation mismatches)
+- Medium impact: 4 (comment mismatches)
+- Low impact: 6 (test name, assumption mismatches)
+
+**By Location**:
+- `src/`: 8 discrepancies
+- `tests/`: 4 discrepancies
+- `docs/`: 3 discrepancies
 ```
 
 ---
@@ -279,6 +330,123 @@ cargo make test
 - ✅ All tests pass: `cargo make test`
 - ✅ Code compiles: `cargo make check`
 
+#### 5.4: Measure Improvement (DMAIC Measurement)
+
+**Action**: Measure improvement against baseline data.
+
+**Measurement**:
+- Count remaining discrepancies
+- Compare to baseline
+- Calculate improvement percentage
+- Verify success criteria met
+
+**Action**: Measure improvement
+
+```bash
+# Re-count discrepancies after fixes
+grep -r "TODO.*discrepancy" . | wc -l
+# Output: 0 discrepancies (down from 15)
+
+# Calculate improvement
+# Baseline: 15 discrepancies
+# After fixes: 0 discrepancies
+# Improvement: 100% (15/15 fixed)
+```
+
+**Example improvement measurement**:
+```markdown
+## Improvement Measurement
+
+**Baseline**: 15 discrepancies
+**After Fixes**: 0 discrepancies
+**Improvement**: 100% (15/15 fixed)
+
+**By Type**:
+- Documentation vs code: 5 → 0 (100% improvement)
+- Comments vs behavior: 4 → 0 (100% improvement)
+- Test names vs behavior: 3 → 0 (100% improvement)
+- Assumptions vs reality: 3 → 0 (100% improvement)
+
+**Success Criteria Met**: ✅
+- All discrepancies fixed
+- Code matches documentation
+- Comments match behavior
+- Tests verify actual behavior
+```
+
+#### 5.5: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to prevent discrepancies from returning.
+
+**Controls**:
+- **Code review**: Check for documentation/code mismatches
+- **Automated checks**: Verify documentation matches code
+- **Monitoring**: Track discrepancy rate over time
+- **Standards**: Document pattern to prevent discrepancies
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Gemba Control Todos (10+ items)
+
+**Code Review Controls**:
+- [ ] Add checklist item: Documentation matches code implementation
+- [ ] Add checklist item: Comments match actual behavior
+- [ ] Add checklist item: Test names match test behavior
+- [ ] Update code review process to include discrepancy checks
+
+**Automated Checks**:
+- [ ] Add CI check: Verify documentation examples compile
+- [ ] Add CI check: Verify test names match test behavior
+- [ ] Add lint rule: Flag outdated comments
+- [ ] Verify automated checks work correctly
+
+**Monitoring Controls**:
+- [ ] Set up discrepancy tracking dashboard
+- [ ] Configure alerts if discrepancy rate > 0
+- [ ] Review discrepancy trends weekly
+- [ ] Document discrepancy patterns
+
+**Standards Controls**:
+- [ ] Add standard: Documentation must match code
+- [ ] Add standard: Comments must match behavior
+- [ ] Add standard: Test names must match test behavior
+- [ ] Update team documentation with standards
+- [ ] Verify standards are followed in code reviews
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to prevent discrepancies, don't just document them. Todos track progress, controls prevent recurrence.
+
+#### 5.6: Monitor (DMAIC Control)
+
+**Action**: Monitor to ensure discrepancies don't return.
+
+**Monitoring**:
+- Track discrepancy count over time
+- Set up alerts for new discrepancies
+- Review trends periodically
+- Adjust controls if needed
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor discrepancy count
+# Run weekly: grep -r "TODO.*discrepancy" . | wc -l
+# Alert if count > 0
+
+# Track trends
+# Week 1: 15 discrepancies
+# Week 2: 0 discrepancies (after fixes)
+# Week 3: 0 discrepancies (controls working)
+```
+
 ---
 
 ## Complete Workflow Example
@@ -310,7 +478,7 @@ cargo make test
 ## Integration with Other Commands
 
 - **[Root Cause Analysis](./root-cause-analysis.md)** - Use 5 Whys to understand why discrepancies exist
-- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC to systematically fix discrepancies
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 - **[Eliminate Muda](./eliminate-muda.md)** - Remove waste from outdated documentation/comments
 - **[Poka-Yoke Design](./poka-yoke-design.md)** - Use type system to prevent discrepancies
 

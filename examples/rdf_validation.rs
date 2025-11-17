@@ -551,7 +551,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::sector_stacks::rdf::*;
+    use chicago_tdd_tools::test;
 
     test!(test_ontology_creation, {
         // Arrange & Act

@@ -38,7 +38,8 @@ while IFS= read -r file; do
   # Allow planned version docs (v1.2.0-coverage-strategy.md)
   # Allow release notes files that match current version (RELEASE_NOTES_v1.2.0.md when version is 1.2.0)
   # Allow release announcement files (ANNOUNCEMENT_v1.4.0.md, GITHUB_RELEASE_v1.4.0.md)
-  if [[ "$file" == *"v${CURRENT_VERSION}"* ]] && [[ "$file" != *"coverage-strategy"* ]] && [[ "$file" != *"RELEASE_NOTES"* ]] && [[ "$file" != *"ANNOUNCEMENT"* ]] && [[ "$file" != *"GITHUB_RELEASE"* ]] && [[ "$file" != *"DARK_MATTER"* ]]; then
+  # Allow release documentation files (DOCUMENTATION_PREP_SUMMARY_v1.4.0.md, RELEASE_CHECKLIST_v1.4.0.md, V1.4.0_VERIFICATION_REPORT.md)
+  if [[ "$file" == *"v${CURRENT_VERSION}"* ]] && [[ "$file" != *"coverage-strategy"* ]] && [[ "$file" != *"RELEASE_NOTES"* ]] && [[ "$file" != *"ANNOUNCEMENT"* ]] && [[ "$file" != *"GITHUB_RELEASE"* ]] && [[ "$file" != *"DARK_MATTER"* ]] && [[ "$file" != *"DOCUMENTATION_PREP_SUMMARY"* ]] && [[ "$file" != *"RELEASE_CHECKLIST"* ]] && [[ "$file" != *"VERIFICATION_REPORT"* ]]; then
     error "Version mismatch in $file: references ${CURRENT_VERSION}, current is $CURRENT_VERSION"
     VERSION_ERRORS=$((VERSION_ERRORS + 1))
   fi

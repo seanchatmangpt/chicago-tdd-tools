@@ -3,8 +3,9 @@
 //! Comprehensive integration tests demonstrating all v1.3.0 features working together
 //! in realistic Fortune 500 enterprise scenarios.
 
+use chicago_tdd_tools::core::builders::TestDataBuilder;
+use chicago_tdd_tools::core::fixture::TestFixture;
 use chicago_tdd_tools::core::{RetryConfig, TempDir, TestData, TestTimer};
-use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "cli-testing")]
 use chicago_tdd_tools::testing::cli::{CliAssertions, CliEnvironment};
 use chicago_tdd_tools::testing::mutation::{

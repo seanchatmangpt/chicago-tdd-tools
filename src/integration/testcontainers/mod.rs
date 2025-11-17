@@ -11,6 +11,7 @@
 //! - **Command Execution**: Execute commands inside containers and get stdout/stderr/exit code
 //! - **Wait Conditions**: Wait for containers to be ready (e.g., HTTP health checks)
 //! - **Automatic Cleanup**: Containers cleaned up automatically on Drop
+//! - **Poka-Yoke Design**: Type-level state machine prevents invalid operations (see `poka_yoke` module)
 //!
 //! ## Chicago TDD Alignment
 //!
@@ -161,6 +162,12 @@ pub type TestcontainersResult<T> = Result<T, TestcontainersError>;
 // Re-export exec and wait functionality
 pub mod exec;
 pub mod wait;
+
+/// Poka-yoke types for testcontainers (compile-time error prevention)
+///
+/// **Poka-yoke**: Type-level state machine prevents invalid container operations.
+/// See module documentation for examples.
+pub mod poka_yoke;
 pub use exec::ExecResult;
 
 #[cfg(feature = "testcontainers")]

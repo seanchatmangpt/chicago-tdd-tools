@@ -135,7 +135,7 @@ mod tests {
 
     test!(test_property_test_generator_creation, {
         // Arrange & Act
-        let generator = PropertyTestGenerator::<10, 5>::new();
+        let _generator = PropertyTestGenerator::<10, 5>::new();
 
         // Assert: Generator created successfully
         assert!(true); // If we get here, creation succeeded
@@ -143,7 +143,7 @@ mod tests {
 
     test!(test_property_test_generator_with_seed, {
         // Arrange & Act
-        let generator = PropertyTestGenerator::<10, 5>::new().with_seed(42);
+        let _generator = PropertyTestGenerator::<10, 5>::new().with_seed(42);
 
         // Assert: Generator created with seed
         assert!(true); // If we get here, creation succeeded

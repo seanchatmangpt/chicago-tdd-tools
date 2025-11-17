@@ -488,4 +488,4 @@ SnapshotAssert::assert_with_redaction(&sensitive, "redacted", &redactions);
 
 **Quality is the default. Prevention beats detection.**
 
-*Example: snapshot_testing.rs | Version: 1.4.0 | Updated: 2025-01-XX*
+*Example: snapshot_testing.rs | Version: 1.4.0 | Updated: 2025-01-16*

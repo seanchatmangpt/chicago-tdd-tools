@@ -7,7 +7,7 @@ This command guides agents through root cause analysis using the 5 Whys techniqu
 ## Workflow Overview
 
 ```
-Step 1: Define the Problem → Step 2: Ask Why #1 → Step 3: Ask Why #2-5 → Step 4: Verify Root Cause → Step 5: Fix Root Cause
+Step 1: Define the Problem (with Measurement) → Step 2: Ask Why #1 → Step 3: Ask Why #2-5 → Step 4: Verify Root Cause → Step 5: Fix Root Cause (with Measurement & Control)
 ```
 
 ## Step-by-Step Instructions
@@ -33,6 +33,55 @@ Step 1: Define the Problem → Step 2: Ask Why #1 → Step 3: Ask Why #2-5 → S
 ```
 
 **Principle**: Start with the observable symptom, not assumptions about cause.
+
+#### 1.1: Collect Baseline Data (DMAIC Measurement)
+
+**Action**: Measure current state to establish baseline before root cause analysis.
+
+**Data to collect**:
+- **Failure rate**: How often does the problem occur?
+- **Failure frequency**: When does it occur?
+- **Failure patterns**: What patterns exist?
+- **Impact metrics**: Quantify the impact
+
+**Action**: Collect baseline data
+
+```bash
+# Measure failure rate
+for i in {1..100}; do
+    cargo make test test_concurrent_increment 2>&1 | grep -q "FAILED" && echo "FAILED" || echo "PASSED"
+done | sort | uniq -c
+# Output: 30 FAILED, 70 PASSED (30% failure rate)
+
+# Measure failure frequency
+# CI runs: 40% failure rate
+# Local runs: 20% failure rate
+# Pattern: More frequent in CI
+
+# Capture error messages
+cargo make test test_concurrent_increment 2>&1 | tee error_log.txt
+```
+
+**Example baseline data**:
+```markdown
+## Baseline Data
+
+**Failure Rate**: 30% (30 out of 100 runs)
+**Failure Frequency**:
+- CI runs: 40% failure rate
+- Local runs: 20% failure rate
+- Pattern: More frequent in CI
+
+**Failure Patterns**:
+- Always fails with "expected 1000, got 999"
+- More frequent with multiple test threads
+- More frequent when system is under load
+
+**Impact Metrics**:
+- Blocks CI/CD pipeline: 30% of runs
+- Wastes developer time: ~5 minutes per failure
+- Causes false negatives: 30% of test runs
+```
 
 ---
 
@@ -224,7 +273,50 @@ cargo make test
 # Expected: All tests pass
 ```
 
-#### 5.4: Create Todo List for Prevention
+#### 5.4: Measure Improvement (DMAIC Measurement)
+
+**Action**: Measure improvement against baseline data.
+
+**Measurement**:
+- Re-measure failure rate after fix
+- Compare to baseline
+- Calculate improvement percentage
+- Verify success criteria met
+
+**Action**: Measure improvement
+
+```bash
+# Re-measure failure rate after fix
+for i in {1..100}; do
+    cargo make test test_concurrent_increment 2>&1 | grep -q "FAILED" && echo "FAILED" || echo "PASSED"
+done | sort | uniq -c
+# Output: 0 FAILED, 100 PASSED (0% failure rate)
+
+# Calculate improvement
+# Baseline: 30% failure rate
+# After fix: 0% failure rate
+# Improvement: 100% (30% → 0%)
+```
+
+**Example improvement measurement**:
+```markdown
+## Improvement Measurement
+
+**Baseline**: 30% failure rate (30 out of 100 runs)
+**After Fix**: 0% failure rate (0 out of 100 runs)
+**Improvement**: 100% (30% → 0%)
+
+**By Environment**:
+- CI runs: 40% → 0% (100% improvement)
+- Local runs: 20% → 0% (100% improvement)
+
+**Success Criteria Met**: ✅
+- Failure rate: 0% (target: < 1%)
+- No regressions: All tests pass
+- Root cause addressed: Lock scope correct
+```
+
+#### 5.5: Create Todo List for Prevention
 
 **CRITICAL**: Do NOT just document prevention. Create todos and implement prevention measures.
 
@@ -296,6 +388,79 @@ fn increment_counter(counter: &Mutex<u32>) {
 
 **Principle**: Implement prevention measures, don't document them separately. Todos track progress, prevention measures prevent recurrence.
 
+#### 5.6: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to prevent root cause from returning.
+
+**Controls**:
+- **Monitoring**: Track problem occurrence over time
+- **Alerts**: Set up alerts if problem returns
+- **Review**: Periodic review of controls effectiveness
+- **Adjustment**: Adjust controls if needed
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Root Cause Control Todos (10+ items)
+
+**Monitoring Controls**:
+- [ ] Set up failure rate tracking dashboard
+- [ ] Configure alerts if failure rate > 1%
+- [ ] Review failure rate trends weekly
+- [ ] Document failure patterns
+
+**Test Strategy Controls**:
+- [ ] Add flaky test detection to CI pipeline
+- [ ] Configure alert if failure rate > 1%
+- [ ] Verify alerts work correctly
+- [ ] Review test strategy monthly
+
+**Code Review Controls**:
+- [ ] Add checklist item: Lock scope covers entire critical section
+- [ ] Add checklist item: No operations between lock acquire and release
+- [ ] Update code review process to include checklist
+- [ ] Verify checklist is used in reviews
+
+**Standards Controls**:
+- [ ] Add standard to coding guidelines: "Lock scope must cover entire operation"
+- [ ] Update team documentation with standard
+- [ ] Verify standard is followed in code reviews
+- [ ] Review standards quarterly
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to prevent root cause recurrence, don't just document them. Todos track progress, controls prevent recurrence.
+
+#### 5.7: Monitor (DMAIC Control)
+
+**Action**: Monitor to ensure root cause doesn't return.
+
+**Monitoring**:
+- Track failure rate over time
+- Set up alerts for regression
+- Review periodically
+- Adjust controls if needed
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor failure rate
+# Run daily: for i in {1..100}; do cargo make test test_concurrent_increment; done
+# Alert if failure rate > 1%
+
+# Track trends
+# Week 1: 30% failure rate (baseline)
+# Week 2: 0% failure rate (after fix)
+# Week 3: 0% failure rate (controls working)
+# Week 4: 0% failure rate (sustained)
+```
+
 ---
 
 ## Complete Workflow Example
@@ -340,7 +505,7 @@ Prevent: Add test to catch pattern
 
 ## Integration with Other Commands
 
-- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use 5 Whys in Analyze step
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 - **[Gemba Walk](./gemba-walk.md)** - Go to source to verify root cause
 - **[Andon Signals](./andon-signals.md)** - Use 5 Whys when signals appear
 - **[Poka-Yoke Design](./poka-yoke-design.md)** - Use type system to prevent root cause

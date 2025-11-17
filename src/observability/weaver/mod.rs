@@ -13,6 +13,148 @@ use thiserror::Error;
 pub mod poka_yoke;
 pub mod types;
 
+/// Poka-yoke types for Weaver process lifecycle
+///
+/// **Poka-yoke**: Type-level state machine prevents invalid operations.
+/// A Weaver validator is either `Stopped` or `Running` - cannot be both.
+#[cfg(feature = "weaver")]
+pub mod lifecycle {
+    use std::marker::PhantomData;
+    use std::path::PathBuf;
+    use std::process::Child;
+
+    /// Weaver validator state marker types
+    pub mod state {
+        /// Validator is stopped (initial state)
+        pub struct Stopped;
+
+        /// Validator is running (can validate telemetry)
+        pub struct Running;
+    }
+
+    /// Weaver validator with type-level state
+    ///
+    /// **Poka-yoke**: Type parameter `S` prevents invalid operations.
+    /// - `WeaverValidator<Stopped>`: Can only start, cannot validate
+    /// - `WeaverValidator<Running>`: Can validate, can stop
+    pub struct WeaverValidator<S> {
+        /// Registry path (validated)
+        _registry_path: PathBuf,
+        /// OTLP gRPC port
+        otlp_grpc_port: u16,
+        /// Admin port
+        _admin_port: u16,
+        /// Process handle (only Some when Running)
+        _process: Option<Child>,
+        /// State marker (compile-time guarantee)
+        _state: PhantomData<S>,
+    }
+
+    impl WeaverValidator<state::Stopped> {
+        /// Create a new stopped Weaver validator
+        ///
+        /// **Poka-yoke**: Returns `WeaverValidator<Stopped>` - cannot validate until started.
+        ///
+        /// # Errors
+        ///
+        /// Returns error if registry path is invalid or Weaver binary not found.
+        pub fn new(
+            registry_path: PathBuf,
+        ) -> crate::observability::weaver::WeaverValidationResult<Self> {
+            use crate::observability::weaver::WeaverValidationError;
+
+            // Check Weaver binary availability
+            crate::observability::weaver::WeaverValidator::check_weaver_available()?;
+
+            // Validate registry path exists
+            if !registry_path.exists() {
+                return Err(WeaverValidationError::RegistryNotFound(
+                    registry_path.display().to_string(),
+                ));
+            }
+
+            Ok(Self {
+                _registry_path: registry_path,
+                otlp_grpc_port: crate::observability::weaver::DEFAULT_OTLP_GRPC_PORT,
+                _admin_port: crate::observability::weaver::DEFAULT_ADMIN_PORT,
+                _process: None,
+                _state: PhantomData,
+            })
+        }
+
+        /// Start the Weaver validator
+        ///
+        /// **Poka-yoke**: Changes type from `WeaverValidator<Stopped>` to `WeaverValidator<Running>`.
+        /// After this call, validator can validate telemetry.
+        ///
+        /// # Errors
+        ///
+        /// Returns error if Weaver start fails.
+        pub fn start(
+            self,
+        ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Running>>
+        {
+            use crate::observability::weaver::WeaverValidationError;
+
+            // Check Docker if testcontainers feature enabled
+            #[cfg(feature = "testcontainers")]
+            {
+                use crate::testcontainers::check_docker_available;
+                check_docker_available().map_err(|e| {
+                    WeaverValidationError::DockerUnavailable(format!(
+                        "Docker daemon is not running. Error: {e}"
+                    ))
+                })?;
+            }
+
+            // Start Weaver process (placeholder - actual implementation would start process)
+            // For now, return error indicating this is a design placeholder
+            Err(WeaverValidationError::ProcessStartFailed(
+                "Poka-yoke design placeholder - actual implementation required".to_string(),
+            ))
+        }
+    }
+
+    impl WeaverValidator<state::Running> {
+        /// Get OTLP endpoint for sending telemetry
+        ///
+        /// **Poka-yoke**: Only available on `WeaverValidator<Running>`.
+        #[must_use]
+        pub fn otlp_endpoint(&self) -> String {
+            format!("http://{}:{}", crate::observability::weaver::LOCALHOST, self.otlp_grpc_port)
+        }
+
+        /// Check if Weaver process is running
+        ///
+        /// **Poka-yoke**: Always returns true for `WeaverValidator<Running>`.
+        #[must_use]
+        pub const fn is_running(&self) -> bool {
+            true // Type-level guarantee: Running state means process is running
+        }
+
+        /// Stop the Weaver validator
+        ///
+        /// **Poka-yoke**: Changes type from `WeaverValidator<Running>` to `WeaverValidator<Stopped>`.
+        /// After this call, validator cannot validate telemetry.
+        ///
+        /// # Errors
+        ///
+        /// Returns error if Weaver stop fails.
+        pub fn stop(
+            self,
+        ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Stopped>>
+        {
+            use crate::observability::weaver::WeaverValidationError;
+
+            // Stop Weaver process (placeholder - actual implementation would stop process)
+            // For now, return error indicating this is a design placeholder
+            Err(WeaverValidationError::ProcessStopFailed(
+                "Poka-yoke design placeholder - actual implementation required".to_string(),
+            ))
+        }
+    }
+}
+
 /// Weaver validation error
 ///
 /// Errors that can occur during Weaver validation operations.
@@ -601,40 +743,56 @@ mod tests {
     fn test_weaver_validator_registry_path_validation() {
         use crate::assert_err;
 
-        // FMEA Fix: Skip integration test by default (requires weaver binary + registry)
-        // Integration tests require weaver binary which is not reliably available across environments
-        // Set WEAVER_REQUIRE_TEST=1 to run this integration test (requires weaver binary)
-        let skip_test = std::env::var("WEAVER_REQUIRE_TEST")
-            .map(|v| !matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-            .unwrap_or(true); // Skip by default
-
-        if skip_test {
-            eprintln!("⏭️  Skipping weaver integration test (requires weaver binary)");
-            eprintln!("   To run: WEAVER_REQUIRE_TEST=1 cargo test");
-            return;
-        }
+        // **Refactored**: Test now runs unconditionally and fails clearly if prerequisites are missing.
+        // This ensures we detect when Weaver system is not working, rather than silently skipping.
+        //
+        // **Test Requirements**:
+        // - Weaver binary must be available (checked by WeaverValidator::new())
+        // - Registry path validation is tested with invalid path
+        //
+        // **Behavior**: Test will fail with clear error message if Weaver binary is not available,
+        // allowing us to detect system failures rather than hiding them.
 
         // Test registry path validation (error path - 80% of bugs)
         let invalid_path = PathBuf::from("/nonexistent/registry/path");
 
+        // Check Weaver binary availability before creating validator
+        if WeaverValidator::check_weaver_available().is_err() {
+            panic!(
+                "🚨 Weaver binary not available\n\
+                 ⚠️  STOP: Cannot proceed with Weaver validation test\n\
+                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 📋 This test verifies Weaver system is working - binary must be available"
+            );
+        }
+
         // Test start with invalid registry path
+        // Note: WeaverValidator::new() is a simple constructor, doesn't check binary
+        // We check binary availability above before creating validator
         let mut validator = WeaverValidator::new(invalid_path);
+
         let start_result = validator.start();
 
         // Should fail (either BinaryNotFound if Weaver not installed, or RegistryNotFound if binary is available)
         assert_err!(&start_result, "Start should fail with invalid registry path");
         match start_result {
             Err(WeaverValidationError::RegistryNotFound(_)) => {
-                // Expected error variant (when Weaver binary is available)
+                // Expected error variant (when Weaver binary is available and registry path is invalid)
+                // This confirms the system is working - it correctly detects invalid registry path
             }
             Err(WeaverValidationError::BinaryNotFound) => {
-                // Also acceptable if Weaver binary is not installed in test environment
+                panic!(
+                    "🚨 Weaver binary not available during start()\n\
+                     ⚠️  STOP: Weaver system is not working\n\
+                     💡 FIX: Run cargo make weaver-bootstrap\n\
+                     📋 This indicates Weaver binary became unavailable between new() and start()"
+                );
             }
             Err(e) => {
                 panic!("Expected RegistryNotFound or BinaryNotFound, got: {:?}", e);
             }
             Ok(_) => {
-                panic!("Expected error, got success");
+                panic!("Expected error for invalid registry path, got success");
             }
         }
     }
@@ -642,21 +800,41 @@ mod tests {
     #[cfg(feature = "weaver")]
     #[test]
     fn test_weaver_validator_is_running() {
-        // FMEA Fix: Skip integration test by default (requires weaver binary + registry)
-        // Integration tests require weaver binary which is not reliably available across environments
-        // Set WEAVER_REQUIRE_TEST=1 to run this integration test (requires weaver binary)
-        let skip_test = std::env::var("WEAVER_REQUIRE_TEST")
-            .map(|v| !matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-            .unwrap_or(true); // Skip by default
-
-        if skip_test {
-            eprintln!("⏭️  Skipping weaver integration test (requires weaver binary)");
-            eprintln!("   To run: WEAVER_REQUIRE_TEST=1 cargo test");
-            return;
-        }
+        // **Refactored**: Test now runs unconditionally and fails clearly if prerequisites are missing.
+        // This ensures we detect when Weaver system is not working, rather than silently skipping.
+        //
+        // **Test Requirements**:
+        // - Registry path must exist (checked by test)
+        // - Weaver binary availability is checked implicitly
+        //
+        // **Behavior**: Test will fail with clear error message if registry path is missing,
+        // allowing us to detect system failures rather than hiding them.
 
         // Test is_running() method (important - used frequently)
         let registry_path = PathBuf::from("registry/");
+
+        // Verify registry path exists - fail clearly if missing
+        if !registry_path.exists() {
+            panic!(
+                "🚨 Registry path does not exist: {:?}\n\
+                 ⚠️  STOP: Cannot proceed with Weaver validator test\n\
+                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 📋 This test verifies Weaver system is working - registry must be available",
+                registry_path
+            );
+        }
+
+        // Check Weaver binary availability before creating validator
+        if WeaverValidator::check_weaver_available().is_err() {
+            panic!(
+                "🚨 Weaver binary not available\n\
+                 ⚠️  STOP: Cannot proceed with Weaver validator test\n\
+                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 📋 This test verifies Weaver system is working - binary must be available"
+            );
+        }
+
+        // Create validator (WeaverValidator::new() doesn't return Result, it's a simple constructor)
         let validator = WeaverValidator::new(registry_path);
 
         // Initially not running

@@ -1,5 +1,8 @@
 # Cargo Nextest Configuration
 # Fast unit tests (5s timeout with framework overhead) and slow integration tests (30s timeout)
+#
+# **Configuration Precedence**: This file (`.config/nextest.toml`) takes precedence over `nextest.toml` in workspace root
+# When updating timeouts, update THIS file, not `nextest.toml` in root directory
 
 [profile.default]
 # Fast profile for unit tests (5s timeout for SLA compliance with test framework overhead)
@@ -10,9 +13,10 @@
 # Tests were timing out at 1.1-1.2s with aggressive 1s limit (RPN: 36)
 slow-timeout = { period = "5s", terminate-after = 1 }
 
-# Global timeout: 60 seconds for entire test suite
-# (allows for parallel execution: 12 tests × 5s = ~60s max)
-global-timeout = "60s"
+# Global timeout: 180 seconds for entire test suite
+# Increased to accommodate weaver integration tests that need time to process telemetry
+# (allows for parallel execution: 12 tests × 5s = ~60s max, plus weaver tests up to 120s each)
+global-timeout = "180s"
 
 # Retry configuration (disabled for deterministic results)
 retries = 0
@@ -30,6 +34,14 @@ failure-output = "immediate"
 # Exclude testcontainers integration tests from default profile
 # These are slow and require Docker - use integration profile instead
 # Note: Exclusion is done via command-line --skip flag in Makefile.toml
+
+# **Root Cause Fix**: Add timeout override for weaver_integration tests
+# Weaver integration tests need more time to process telemetry and generate reports
+# Configuration precedence: `.config/nextest.toml` takes precedence over `nextest.toml` in root
+[[profile.default.overrides]]
+# Match all tests in weaver_integration test file
+filter = 'test(weaver_integration)'
+slow-timeout = { period = "120s", terminate-after = 1 }
 
 [profile.integration]
 # Slow profile for integration tests (30s timeout)

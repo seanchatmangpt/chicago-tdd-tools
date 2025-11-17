@@ -71,8 +71,7 @@ use chicago_tdd_tools::otel::types::{
 };
 #[cfg(feature = "otel")]
 use chicago_tdd_tools::otel::{MetricValidator, SpanValidator};
-#[cfg(feature = "weaver")]
-use chicago_tdd_tools::prelude::*;
+// Note: prelude not needed for this example
 #[cfg(feature = "otel")]
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -533,8 +532,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chicago_tdd_tools::alert_info!("  - OTLP endpoint configured");
                 chicago_tdd_tools::alert_info!("  - Telemetry sent to endpoint");
             }
-            Err(e) => {
-                chicago_tdd_tools::alert_info!("⚠ Weaver not available: {e}");
+            Err(_e) => {
+                chicago_tdd_tools::alert_info!("⚠ Weaver not available");
                 chicago_tdd_tools::alert_info!("  Bootstrap with: cargo make weaver-bootstrap");
             }
         }

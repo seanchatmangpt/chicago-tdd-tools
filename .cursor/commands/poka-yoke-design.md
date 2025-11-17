@@ -7,7 +7,7 @@ This command guides agents to design code that prevents errors at compile time t
 ## Workflow Overview
 
 ```
-Step 1: Identify Error Modes → Step 2: Design Type-Level Prevention → Step 3: Add Compile-Time Checks → Step 4: Verify Prevention → Step 5: Document Invariants
+Step 1: Identify Error Modes → Step 2: Design Type-Level Prevention → Step 3: Add Compile-Time Checks → Step 4: Verify Prevention (with Measurement) → Step 5: Document Invariants (with Control)
 ```
 
 ## Step-by-Step Instructions
@@ -296,6 +296,52 @@ cargo make test
 # Tests should pass - type system prevents errors
 ```
 
+#### 4.4: Measure Error Prevention (DMAIC Measurement)
+
+**Action**: Measure error prevention effectiveness against baseline.
+
+**Measurement**:
+- Count errors prevented by type system
+- Compare to baseline (errors that would occur without types)
+- Calculate prevention percentage
+- Verify success criteria met
+
+**Action**: Measure error prevention
+
+```bash
+# Count compile-time errors caught (prevented runtime errors)
+cargo make check 2>&1 | grep -c "error\["
+# Output: 5 compile-time errors (prevented 5 runtime errors)
+
+# Count runtime errors (should be 0 with type prevention)
+cargo make test 2>&1 | grep -c "panicked"
+# Output: 0 panics (type system prevented errors)
+
+# Calculate prevention
+# Baseline: 5 potential runtime errors
+# After type prevention: 0 runtime errors (caught at compile time)
+# Prevention: 100% (5/5 errors prevented)
+```
+
+**Example error prevention measurement**:
+```markdown
+## Error Prevention Measurement
+
+**Baseline**: 5 potential runtime errors (without type prevention)
+**After Type Prevention**: 0 runtime errors (caught at compile time)
+**Prevention**: 100% (5/5 errors prevented)
+
+**By Error Type**:
+- Invalid state errors: 2 → 0 (100% prevented)
+- Invalid input errors: 2 → 0 (100% prevented)
+- Invalid operation errors: 1 → 0 (100% prevented)
+
+**Success Criteria Met**: ✅
+- All errors caught at compile time ✅
+- No runtime errors ✅
+- Type system prevents invalid states ✅
+```
+
 ---
 
 ### Step 5: Document Invariants
@@ -359,6 +405,79 @@ enum ParserState {
 /// ```
 ```
 
+#### 5.4: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to ensure error prevention is sustained.
+
+**Controls**:
+- **Code review**: Check for type safety in reviews
+- **Automated checks**: Lint rules to flag unsafe patterns
+- **Monitoring**: Track error prevention effectiveness over time
+- **Standards**: Document type safety patterns in coding standards
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Poka-Yoke Control Todos (10+ items)
+
+**Code Review Controls**:
+- [ ] Add checklist item: Use type system to prevent errors
+- [ ] Add checklist item: No runtime error handling for invalid states
+- [ ] Update code review process to include type safety checks
+- [ ] Verify checklist is used in reviews
+
+**Automated Checks**:
+- [ ] Add lint rule: Flag unsafe patterns
+- [ ] Add lint rule: Flag missing type safety
+- [ ] Configure CI check: Verify type safety
+- [ ] Review lint rules monthly
+
+**Monitoring Controls**:
+- [ ] Set up error prevention tracking dashboard
+- [ ] Configure alerts if runtime errors increase
+- [ ] Review error prevention trends weekly
+- [ ] Document error prevention patterns
+
+**Standards Controls**:
+- [ ] Add standard: Use type system to prevent errors
+- [ ] Add standard: Make invalid states unrepresentable
+- [ ] Update team documentation with standards
+- [ ] Verify standards are followed in code reviews
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to sustain error prevention, don't just document them. Todos track progress, controls prevent regression.
+
+#### 5.5: Monitor (DMAIC Control)
+
+**Action**: Monitor to ensure error prevention is sustained.
+
+**Monitoring**:
+- Track runtime error count over time
+- Set up alerts for regression
+- Review trends periodically
+- Adjust controls if needed
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor runtime errors
+# Run weekly: cargo make test 2>&1 | grep -c "panicked"
+# Alert if error count > 0
+
+# Track trends
+# Week 1: 5 potential errors (baseline - without type prevention)
+# Week 2: 0 errors (after type prevention)
+# Week 3: 0 errors (controls working)
+# Week 4: 0 errors (sustained)
+```
+
 ---
 
 ## Complete Workflow Example
@@ -395,7 +514,7 @@ cargo make check
 
 - **[Gemba Walk](./gemba-walk.md)** - Verify actual type behavior matches design
 - **[Root Cause Analysis](./root-cause-analysis.md)** - Understand why errors occur, then prevent with types
-- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC to systematically add type-level prevention
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 - **[Eliminate Muda](./eliminate-muda.md)** - Remove error-prone patterns, replace with type-safe designs
 
 ## Expert Insights

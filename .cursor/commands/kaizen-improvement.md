@@ -7,7 +7,7 @@ This command guides agents to make small, incremental improvements rather than b
 ## Workflow Overview
 
 ```
-Step 1: Identify Opportunity → Step 2: Plan Change → Step 3: Do (Implement) → Step 4: Check (Verify) → Step 5: Act (Standardize)
+Step 1: Identify Opportunity → Step 2: Plan Change (with Success Criteria & Measurement) → Step 3: Do (Implement) → Step 4: Check (Verify with Measurement) → Step 5: Act (Standardize with Control)
 ```
 
 ## Step-by-Step Instructions
@@ -90,7 +90,70 @@ Step 1: Identify Opportunity → Step 2: Plan Change → Step 3: Do (Implement) 
 **Risk**: Low - simple refactoring, no logic change
 ```
 
-#### 2.2: Verify Safety
+#### 2.2: Define Success Criteria (DMAIC Measurement)
+
+**Action**: Define measurable success criteria for the improvement.
+
+**Success criteria format**:
+- **Measurable**: Can be quantified
+- **Achievable**: Realistic to achieve
+- **Specific**: Clear what success looks like
+
+**Example success criteria**:
+```markdown
+## Success Criteria
+
+**Primary**:
+- Code readability improved: Magic number replaced with named constant
+- Maintainability improved: Constant can be changed in one place
+- Self-documenting: Constant name explains what the value represents
+
+**Measurable**:
+- Magic number count: 1 → 0 (100% reduction)
+- Named constants: 0 → 1 (added)
+- Code clarity: Improved (subjective, but verifiable through review)
+
+**Verification**:
+- Code compiles: `cargo make check`
+- Tests pass: `cargo make test`
+- Code review: Improvement approved
+```
+
+#### 2.3: Collect Baseline Data (DMAIC Measurement)
+
+**Action**: Measure current state before improvement.
+
+**Data to collect**:
+- **Current state**: What is the current state?
+- **Metrics**: Quantify current state
+- **Patterns**: What patterns exist?
+
+**Action**: Collect baseline data
+
+```bash
+# Count magic numbers
+grep -r "\b42\b" src/ | wc -l
+# Output: 1 magic number found
+
+# Check if constant exists
+grep -r "DEFAULT_TIMEOUT" src/
+# Output: No constant found
+
+# Measure code clarity (subjective)
+# Current: Magic number `42` is unclear
+```
+
+**Example baseline data**:
+```markdown
+## Baseline Data
+
+**Magic Number Count**: 1
+**Named Constants**: 0
+**Code Clarity**: Low (magic number unclear)
+**Maintainability**: Low (value hardcoded in multiple places)
+```
+
+#### 2.4: Verify Safety
 
 **Action**: Ensure change is safe.
 
@@ -190,7 +253,49 @@ cargo make test
 // ✅ Functionality preserved: Tests pass
 ```
 
-#### 4.3: Check for Regressions
+#### 4.3: Measure Improvement (DMAIC Measurement)
+
+**Action**: Measure improvement against baseline data and success criteria.
+
+**Measurement**:
+- Re-measure metrics after improvement
+- Compare to baseline
+- Calculate improvement percentage
+- Verify success criteria met
+
+**Action**: Measure improvement
+
+```bash
+# Re-count magic numbers after improvement
+grep -r "\b42\b" src/ | wc -l
+# Output: 0 magic numbers (down from 1)
+
+# Check if constant exists
+grep -r "DEFAULT_TIMEOUT" src/
+# Output: const DEFAULT_TIMEOUT_SECONDS: u64 = 42; (constant added)
+
+# Calculate improvement
+# Baseline: 1 magic number, 0 constants
+# After improvement: 0 magic numbers, 1 constant
+# Improvement: 100% (1/1 magic number eliminated)
+```
+
+**Example improvement measurement**:
+```markdown
+## Improvement Measurement
+
+**Baseline**: 1 magic number, 0 named constants
+**After Improvement**: 0 magic numbers, 1 named constant
+**Improvement**: 100% (1/1 magic number eliminated)
+
+**Success Criteria Met**: ✅
+- Magic number count: 1 → 0 (100% reduction) ✅
+- Named constants: 0 → 1 (added) ✅
+- Code clarity: Improved (subjective, verified through review) ✅
+- Maintainability: Improved (constant can be changed in one place) ✅
+```
+
+#### 4.4: Check for Regressions
 
 **Action**: Ensure no regressions introduced.
 
@@ -272,6 +377,79 @@ const DEFAULT_TIMEOUT_SECONDS: u64 = 42;
 **When**: For configuration values, repeated literals, values that may change
 ```
 
+#### 5.4: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to ensure improvement is sustained.
+
+**Controls**:
+- **Code review**: Check for magic numbers in reviews
+- **Automated checks**: Lint rules to flag magic numbers
+- **Monitoring**: Track magic number count over time
+- **Standards**: Document pattern in coding standards
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Kaizen Control Todos (10+ items)
+
+**Code Review Controls**:
+- [ ] Add checklist item: No magic numbers in new code
+- [ ] Add checklist item: Use named constants for configuration values
+- [ ] Update code review process to include checklist
+- [ ] Verify checklist is used in reviews
+
+**Automated Checks**:
+- [ ] Add lint rule: Flag magic numbers
+- [ ] Configure CI check: Fail if magic numbers found
+- [ ] Verify automated checks work correctly
+- [ ] Review lint rules monthly
+
+**Monitoring Controls**:
+- [ ] Set up magic number tracking dashboard
+- [ ] Configure alerts if magic number count increases
+- [ ] Review magic number trends weekly
+- [ ] Document magic number patterns
+
+**Standards Controls**:
+- [ ] Add standard to coding guidelines: "Use named constants instead of magic numbers"
+- [ ] Update team documentation with standard
+- [ ] Verify standard is followed in code reviews
+- [ ] Review standards quarterly
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to sustain improvement, don't just document them. Todos track progress, controls prevent regression.
+
+#### 5.5: Monitor (DMAIC Control)
+
+**Action**: Monitor to ensure improvement is sustained.
+
+**Monitoring**:
+- Track magic number count over time
+- Set up alerts for regression
+- Review trends periodically
+- Adjust controls if needed
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor magic number count
+# Run weekly: grep -r "\b42\b" src/ | wc -l
+# Alert if count > 0
+
+# Track trends
+# Week 1: 1 magic number (baseline)
+# Week 2: 0 magic numbers (after improvement)
+# Week 3: 0 magic numbers (controls working)
+# Week 4: 0 magic numbers (sustained)
+```
+
 ---
 
 ## Complete Workflow Example
@@ -319,7 +497,7 @@ cargo make test   # Tests pass ✅
 - **[Eliminate Muda](./eliminate-muda.md)** - Use Kaizen to eliminate waste incrementally
 - **[Mura Elimination](./eliminate-mura.md)** - Use Kaizen to standardize patterns
 - **[Poka-Yoke Design](./poka-yoke-design.md)** - Use Kaizen to add type safety incrementally
-- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use Kaizen for small improvements within DMAIC
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 
 ## Expert Insights
 

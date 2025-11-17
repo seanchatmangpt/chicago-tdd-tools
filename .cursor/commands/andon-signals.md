@@ -7,7 +7,7 @@ This command guides agents to treat compiler errors, test failures, and warnings
 ## Workflow Overview
 
 ```
-Step 1: Monitor Andon Signals → Step 2: Stop When Signal Appears → Step 3: Investigate Root Cause → Step 4: Fix Root Cause → Step 5: Verify Signal Cleared
+Step 1: Monitor Andon Signals (with Measurement) → Step 2: Stop When Signal Appears → Step 3: Investigate Root Cause → Step 4: Fix Root Cause → Step 5: Verify Signal Cleared (with Measurement & Control)
 ```
 
 ## Step-by-Step Instructions
@@ -55,6 +55,53 @@ cargo make lint
 ```
 
 **Principle**: "Andon signals are visual management" - Make problems immediately visible, don't hide them.
+
+#### 1.1: Collect Baseline Data (DMAIC Measurement)
+
+**Action**: Measure current signal frequency to establish baseline.
+
+**Data to collect**:
+- **Signal count**: How many signals exist?
+- **Signal frequency**: How often do signals appear?
+- **Signal types**: What types of signals (errors, warnings, failures)?
+- **Signal severity**: What is the severity distribution?
+
+**Action**: Collect baseline data
+
+```bash
+# Count compiler errors
+cargo make check 2>&1 | grep -c "error\["
+# Output: 3 errors
+
+# Count compiler warnings
+cargo make check 2>&1 | grep -c "warning:"
+# Output: 5 warnings
+
+# Count test failures
+cargo make test 2>&1 | grep -c "FAILED"
+# Output: 2 failures
+
+# Count linting errors
+cargo make lint 2>&1 | grep -c "error:"
+# Output: 1 linting error
+```
+
+**Example baseline data**:
+```markdown
+## Baseline Data
+
+**Total Signals**: 11
+**By Type**:
+- Compiler errors: 3 (27%)
+- Compiler warnings: 5 (45%)
+- Test failures: 2 (18%)
+- Linting errors: 1 (9%)
+
+**By Severity**:
+- CRITICAL: 5 (errors + failures)
+- HIGH: 6 (warnings + linting)
+- MEDIUM: 0
+```
 
 ---
 
@@ -270,14 +317,126 @@ chicago_test!(test_function_exists, {
 });
 ```
 
-#### 5.3: Monitor for New Signals
+#### 5.3: Measure Improvement (DMAIC Measurement)
 
-**Action**: Continue monitoring for new signals.
+**Action**: Measure improvement against baseline data.
+
+**Measurement**:
+- Re-count signals after fixes
+- Compare to baseline
+- Calculate improvement percentage
+- Verify success criteria met
+
+**Action**: Measure improvement
+
+```bash
+# Re-count signals after fixes
+cargo make check 2>&1 | grep -c "error\["
+# Output: 0 errors (down from 3)
+
+cargo make test 2>&1 | grep -c "FAILED"
+# Output: 0 failures (down from 2)
+
+# Calculate improvement
+# Baseline: 11 signals total
+# After fixes: 0 signals
+# Improvement: 100% (11/11 signals cleared)
+```
+
+**Example improvement measurement**:
+```markdown
+## Improvement Measurement
+
+**Baseline**: 11 signals total
+**After Fixes**: 0 signals
+**Improvement**: 100% (11/11 signals cleared)
+
+**By Type**:
+- Compiler errors: 3 → 0 (100% improvement)
+- Compiler warnings: 5 → 0 (100% improvement)
+- Test failures: 2 → 0 (100% improvement)
+- Linting errors: 1 → 0 (100% improvement)
+
+**Success Criteria Met**: ✅
+- All signals cleared ✅
+- No new signals appeared ✅
+```
+
+#### 5.4: Establish Controls (DMAIC Control)
+
+**Action**: Set up controls to prevent signals from returning.
+
+**Controls**:
+- **Automated checks**: Run checks automatically in CI
+- **Pre-commit hooks**: Run checks before commits
+- **Monitoring**: Track signal frequency over time
+- **Alerts**: Set up alerts if signals appear
+
+**Action**: Create todo list for controls (10+ items)
+
+```markdown
+## Andon Signal Control Todos (10+ items)
+
+**Automated Checks**:
+- [ ] Add CI check: Run `cargo make check` on every commit
+- [ ] Add CI check: Run `cargo make test` on every commit
+- [ ] Add CI check: Run `cargo make lint` on every commit
+- [ ] Configure CI to fail if signals appear
+
+**Pre-commit Controls**:
+- [ ] Add pre-commit hook: Run checks before commit
+- [ ] Configure hook to prevent commit if signals appear
+- [ ] Verify pre-commit hooks work correctly
+- [ ] Document hook usage
+
+**Monitoring Controls**:
+- [ ] Set up signal frequency tracking dashboard
+- [ ] Configure alerts if signal count > 0
+- [ ] Review signal trends weekly
+- [ ] Document signal patterns
+
+**Standards Controls**:
+- [ ] Add standard: No signals allowed before commit
+- [ ] Add standard: Fix signals immediately when they appear
+- [ ] Update team documentation with standards
+- [ ] Verify standards are followed
+```
+
+**Execution**:
+1. Create todos using `todo_write` tool (10+ items minimum)
+2. Execute todos one by one (implement controls)
+3. Mark todos as completed as controls are implemented
+4. Verify each control works before moving to next
+5. Continue until all controls implemented
+
+**Principle**: Implement controls to prevent signals, don't just document them. Todos track progress, controls prevent recurrence.
+
+#### 5.5: Monitor for New Signals (DMAIC Control)
+
+**Action**: Continue monitoring for new signals with systematic tracking.
 
 **Monitoring**:
 - Run checks regularly
 - Don't ignore warnings
 - Fix signals immediately
+- Track signal frequency over time
+- Set up alerts for regression
+
+**Action**: Set up monitoring
+
+```bash
+# Monitor signal frequency
+# Run daily: 
+#   cargo make check 2>&1 | grep -c "error\["
+#   cargo make test 2>&1 | grep -c "FAILED"
+# Alert if signal count > 0
+
+# Track trends
+# Week 1: 11 signals (baseline)
+# Week 2: 0 signals (after fixes)
+# Week 3: 0 signals (controls working)
+# Week 4: 0 signals (sustained)
+```
 
 ---
 
@@ -318,7 +477,7 @@ cargo make test   # All tests pass ✅
 ## Integration with Other Commands
 
 - **[Root Cause Analysis](./root-cause-analysis.md)** - Use 5 Whys in Step 3 to find root cause
-- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC to systematically fix signals
+- **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
 - **[Gemba Walk](./gemba-walk.md)** - Go to source in Step 3 to investigate
 - **[Poka-Yoke Design](./poka-yoke-design.md)** - Use type system in Step 4 to prevent signals
 

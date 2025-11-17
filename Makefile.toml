@@ -120,9 +120,11 @@ alias = "lint"
 # Integration tests require Docker and MUST fail if Docker is stopped
 
 [tasks.test]
-description = "Run unit tests only (fast iteration, excludes integration tests)"
+description = "Run all tests (unit + integration) - tests will fail clearly if prerequisites are missing"
 # **Timeout**: 300s (5min) for CI cold-start compilation + test execution
 # Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
+# **Refactored**: Removed --skip flags - tests now run and fail clearly if prerequisites are missing
+# This ensures we detect system failures rather than hiding them
 command = "timeout"
 args = [
   "300s",
@@ -131,11 +133,6 @@ args = [
   "run",
   "--lib",
   "--all-features",
-  "--",
-  "--skip",
-  "testcontainers",
-  "--skip",
-  "weaver_integration",
 ]
 
 [tasks.docker-check]
@@ -145,10 +142,12 @@ args = ["5s", "docker", "info"]
 ignore_errors = false
 
 [tasks.test-unit]
-description = "Unit tests only (excludes integration tests)"
+description = "Unit tests only (excludes integration tests via test organization)"
 # **Timeout**: 300s (5min) for CI cold-start compilation + test execution
 # Local: ~5s, CI cold: ~2-3min compilation + ~30s tests
 # Uses cargo test instead of nextest due to panic test timeout issues with nextest
+# **Refactored**: Integration tests are in separate test files (tests/testcontainers/, tests/weaver_integration.rs)
+# Unit tests in src/ are automatically excluded from integration test runs
 command = "timeout"
 args = [
   "300s",
@@ -156,11 +155,6 @@ args = [
   "test",
   "--lib",
   "--all-features",
-  "--",
-  "--skip",
-  "testcontainers",
-  "--skip",
-  "weaver_integration",
 ]
 
 [tasks.test-integration]
@@ -187,7 +181,10 @@ description = "Run all tests (unit + integration)"
 dependencies = ["test-unit", "docker-check", "test-integration"]
 
 [tasks.test-examples]
-description = "Run example tests using cargo-nextest (excludes integration examples)"
+description = "Run all example tests - tests will fail clearly if prerequisites are missing"
+# **Refactored**: Removed --skip flags - tests now run and fail clearly if prerequisites are missing
+# **Root Cause Prevention**: Verify examples compile before running tests
+dependencies = ["check-examples"]
 command = "timeout"
 args = [
   "10s",
@@ -196,9 +193,17 @@ args = [
   "run",
   "--examples",
   "--all-features",
-  "--",
-  "--skip",
-  "testcontainers",
+]
+
+[tasks.check-examples]
+description = "Verify all examples compile (root cause prevention - catch compilation errors early)"
+command = "timeout"
+args = [
+  "30s",
+  "cargo",
+  "check",
+  "--examples",
+  "--all-features",
 ]
 
 [tasks.test-property]

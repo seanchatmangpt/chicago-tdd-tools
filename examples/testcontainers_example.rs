@@ -144,9 +144,11 @@ fn example_container_with_ports(
     client: &ContainerClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
     chicago_tdd_tools::alert_info!("\n2. Creating container with exposed ports...");
+    chicago_tdd_tools::alert_info!("   Note: Using nginx image which exposes port 80");
+    // Use nginx image which actually exposes port 80 (alpine doesn't have a service on port 80)
     let container_with_ports = GenericContainer::with_ports(
         client.client(),
-        "alpine",
+        "nginx",
         "latest",
         &[DEFAULT_HTTP_PORT, 443],
     )?;
@@ -277,9 +279,9 @@ fn example_command_execution(client: &ContainerClient) -> Result<(), Box<dyn std
                 );
             }
         }
-        Err(e) => {
+        Err(_e) => {
             // Command execution failed (e.g., command not found)
-            chicago_tdd_tools::alert_info!("   ✓ Error handling demonstrated - exec failed: {e}");
+            chicago_tdd_tools::alert_info!("   ✓ Error handling demonstrated - exec failed");
             // **Best Practice**: In production code, handle errors appropriately
         }
     }

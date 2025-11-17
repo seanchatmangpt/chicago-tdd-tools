@@ -67,15 +67,16 @@ cargo make test
 ### 2️⃣ Just Want Examples? → Examples Directory
 
 ```bash
-# Browse working examples (8 included)
+# Browse working examples (18 included, all tested)
 ls examples/
-# Output: basic_test.rs, property_testing.rs, mutation_testing.rs,
-#         snapshot_testing.rs, concurrency_testing.rs, otel_weaver_testing.rs,
-#         testcontainers_example.rs, cli_testing.rs
 
 # Run a specific example
-cargo make example-basic-test
+cargo run --example basic_test
+cargo run --example fail_fast_verification
+cargo run --example sector_stacks_workflows
 ```
+
+**📖 Complete examples guide**: See [examples/README.md](examples/README.md) for all 18 examples organized by category.
 
 ---
 
@@ -199,7 +200,147 @@ test!(test_result_assertions, {
 
 ---
 
-### 3. Property-Based Testing
+### 3. Fail-Fast Verification (v1.4.0)
+
+Zero-tolerance execution context with 12-phase verification pipeline:
+
+```rust
+use chicago_tdd_tools::core::fail_fast::*;
+
+test!(test_fail_fast_verification, {
+    // Arrange: Create strict execution context
+    let mut ctx = StrictExecutionContext::new("contract-123")?;
+
+    // Act: Execute phases with fail-fast semantics
+    ctx.phase_1_contract_definition(12)?;
+    ctx.phase_2_thermal_testing(5, 8)?; // τ ≤ 8 enforced
+    
+    // Any violation causes immediate failure
+    match ctx.phase_2_thermal_testing(10, 8) {
+        Ok(PhaseResult::Violation(v)) => {
+            panic!("Thermal bound exceeded: {}", v);
+        }
+        _ => {}
+    }
+});
+```
+
+**Key features**:
+- 47 invariant violations covering all failure modes
+- 12 distinct phases from Contract Definition to Quality Dashboard
+- Self-validating receipts with version and checksum
+- No degradation, no warnings ignored, no partial success
+
+**📖 Example**: See `examples/fail_fast_verification.rs`
+
+---
+
+### 4. Sector-Grade Reference Stacks (v1.4.0)
+
+Production-grade implementations demonstrating the Chatman Equation in real-world workflows:
+
+```rust
+use chicago_tdd_tools::sector_stacks::academic::*;
+
+test!(test_academic_workflow, {
+    // Arrange: Create paper submission
+    let paper = PaperSubmission {
+        paper_id: "paper-001".to_string(),
+        title: "Advanced Testing".to_string(),
+        authors: vec!["Dr. Smith".to_string()],
+        abstract_text: "Abstract...".to_string(),
+        file_size_bytes: 500_000,
+    };
+
+    // Act: Process through workflow
+    let operation = AcademicOperation::new(paper.clone(), vec![]);
+    let assignment = operation.assign_reviewers();
+    
+    // Collect reviews
+    let reviews = vec![/* ... */];
+    let operation = AcademicOperation::new(paper, reviews);
+    
+    // Assert: Generate receipt
+    let receipt = operation.generate_receipt(OperationStatus::Success);
+    assert_eq!(receipt.sector, "Academic");
+});
+```
+
+**Available sectors**:
+- **Academic Publishing**: Paper review lifecycle with deterministic decision algorithms
+- **Enterprise Claims**: Insurance claims processing with fraud detection and settlement
+
+**📖 Example**: See `examples/sector_stacks_workflows.rs`
+
+---
+
+### 5. RDF-Driven Validation (v1.4.0)
+
+Ontologies as single source of truth for workflow validation:
+
+```rust
+use chicago_tdd_tools::sector_stacks::rdf::*;
+
+test!(test_rdf_validation, {
+    // Arrange: Create ontology
+    let mut ontology = SectorOntology::new("Academic".to_string());
+    ontology.add_stage(WorkflowStage {
+        id: "submission".to_string(),
+        name: "Submission".to_string(),
+        stage_number: 1,
+        is_deterministic: true,
+        max_latency_seconds: 60,
+    });
+
+    // Act: Validate operations
+    let validator = RdfOperationValidator::new().with_ontology(ontology);
+    let result = validator.validate_operation_defined("submission");
+
+    // Assert
+    assert!(result.is_ok());
+});
+```
+
+**📖 Example**: See `examples/rdf_validation.rs`
+
+---
+
+### 6. Swarm Coordination (v1.4.0)
+
+Distributed multi-sector coordination with task receipts:
+
+```rust
+use chicago_tdd_tools::swarm::*;
+
+test!(test_swarm_coordination, {
+    // Arrange: Create coordinator
+    let mut coordinator = SwarmCoordinator::new();
+    coordinator.register_member(
+        SwarmMember::new("agent-1".to_string(), "Agent 1".to_string())
+            .with_sector("Academic".to_string())
+            .with_capacity(10),
+    );
+
+    // Act: Submit and distribute task
+    coordinator.submit_task(TaskRequest::new(
+        "task-001".to_string(),
+        "Academic".to_string(),
+        "desk-review".to_string(),
+        "paper-123".to_string(),
+    ));
+    
+    let (task_id, member_id) = coordinator.distribute_next_task()?;
+
+    // Assert
+    assert_eq!(task_id, "task-001");
+});
+```
+
+**📖 Example**: See `examples/swarm_coordination.rs`
+
+---
+
+### 7. Property-Based Testing
 
 Generate random test data and verify properties hold **for all inputs**:
 
@@ -243,7 +384,7 @@ test!(test_distributivity_with_proptest, {
 
 ---
 
-### 4. Mutation Testing
+### 8. Mutation Testing
 
 Verify test quality by **intentionally breaking code** and checking tests catch it:
 
@@ -276,7 +417,7 @@ test!(test_mutation_detection, {
 
 ---
 
-### 5. Snapshot Testing
+### 9. Snapshot Testing
 
 Verify complex outputs (JSON, HTML, serialized data) don't change unexpectedly:
 
@@ -308,7 +449,7 @@ cargo make snapshot-reject    # Reject and revert
 
 ---
 
-### 6. Concurrency Testing
+### 10. Concurrency Testing
 
 Detect race conditions with deterministic thread-safe testing:
 
@@ -335,7 +476,7 @@ test!(test_concurrent_safety, {
 
 ---
 
-### 7. CLI Testing
+### 11. CLI Testing
 
 Test command-line interfaces like they're black boxes:
 
@@ -658,28 +799,50 @@ chicago-tdd-tools = {
 
 ## Examples
 
-8 complete, runnable examples are included. Browse them:
+**18 complete, runnable examples** are included, all with tests. Browse them:
 
 ```bash
 # List examples
 ls examples/
 
 # Run an example
-cargo make example-property-testing
-cargo make example-mutation-testing
-cargo make example-snapshot-testing
-# ...
+cargo run --example basic_test
+cargo run --example fail_fast_verification
+cargo run --example sector_stacks_workflows
+cargo run --example rdf_validation
+cargo run --example swarm_coordination
+cargo run --example operator_registry
 ```
 
-**Example files**:
+**📖 Complete examples guide**: See [examples/README.md](examples/README.md) for full documentation.
+
+**Example categories**:
+
+**Tutorials** (Learning-oriented):
 - `basic_test.rs` - Fixtures, builders, assertions
+- `macro_examples.rs` - Test/assertion macros
+- `sector_stacks_workflows.rs` - Production-grade workflows (v1.4.0)
+
+**How-To Guides** (Task-oriented):
 - `property_testing.rs` - Random test generation, properties
 - `mutation_testing.rs` - Test quality validation
-- `snapshot_testing.rs` - Output comparison
+- `snapshot_testing.rs` - Output comparison (enhanced in v1.4.0)
 - `concurrency_testing.rs` - Thread safety with loom
-- `otel_weaver_testing.rs` - Observability testing
-- `testcontainers_example.rs` - Docker integration
 - `cli_testing.rs` - Command-line testing
+- `testcontainers_example.rs` - Docker integration
+- `otel_weaver_testing.rs` - Observability testing
+- `fail_fast_verification.rs` - 12-phase verification pipeline (v1.4.0)
+- `rdf_validation.rs` - RDF-driven validation (v1.4.0)
+- `swarm_coordination.rs` - Distributed coordination (v1.4.0)
+
+**Explanation** (Understanding-oriented):
+- `go_extra_mile.rs` - 1st/2nd/3rd idea progression, 80/20 thinking
+- `advanced_features.rs` - Type-level guarantees, zero-cost abstractions
+
+**Reference**:
+- `operator_registry.rs` - Pattern registration and guard system (v1.4.0)
+- `all_phases_pipeline.rs` - Complete 12-phase pipeline demonstration
+- `hyper_advanced_microkernel.rs` - Hyper-advanced μ-kernel features
 
 ---
 
@@ -742,6 +905,28 @@ cargo make check           # Compilation check
 cargo make build           # Debug binary
 cargo make build-release   # Optimized binary
 ```
+
+---
+
+## What's New in v1.4.0
+
+**Production-Grade Verification Infrastructure**:
+
+- 🛡️ **Fail-Fast Hardening** - 47 invariant violations, zero-tolerance execution
+- 📊 **12-Phase Verification Pipeline** - Complete end-to-end verification
+- 🏭 **Sector-Grade Reference Stacks** - Academic publishing & claims processing workflows
+- 🔗 **RDF Integration** - Ontologies as single source of truth
+- 📋 **Operator Registry** - Global pattern registration with guard system
+- 🐝 **Swarm Protocol** - Distributed multi-sector coordination
+- 📸 **Enhanced Snapshot Testing** - Better fixtures and organization
+
+**100% backward compatible** with v1.3.0. Upgrade with confidence.
+
+**📖 Documentation**:
+- [Release Notes](docs/releases/RELEASE_NOTES_v1.4.0.md) - Complete feature documentation
+- [GitHub Release](docs/releases/GITHUB_RELEASE_v1.4.0.md) - GitHub release notes
+- [Changelog](docs/releases/CHANGELOG.md) - Full change history
+- [Release Checklist](docs/releases/RELEASE_CHECKLIST_v1.4.0.md) - Pre-release verification
 
 ---
 

@@ -81,7 +81,9 @@ fn main() {
 #[cfg(feature = "concurrency-testing")]
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::concurrency::ConcurrencyTest;
+    use loom::thread;
+    use std::sync::{Arc, Mutex};
 
     // Example: Concurrent counter test
     //

@@ -16,6 +16,8 @@
 
 #[cfg(feature = "testcontainers")]
 pub mod testcontainers;
+
+// Poka-yoke types are re-exported through testcontainers::poka_yoke module
 #[cfg(not(feature = "testcontainers"))]
 /// Testcontainers module - requires `testcontainers` feature
 ///

@@ -83,7 +83,7 @@ fn main() {
 #[cfg(feature = "snapshot-testing")]
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::snapshot::SnapshotAssert;
 
     // Example: String snapshot testing
     //

@@ -26,6 +26,9 @@ pub mod invariant_properties;
 pub mod invariants;
 pub mod macros;
 pub mod poka_yoke;
+
+// Note: poka_yoke is NOT re-exported via glob to avoid conflicts with
+// poka_yoke modules in otel and testcontainers features
 pub mod receipt;
 pub mod state;
 pub mod test_utils;
@@ -44,7 +47,7 @@ pub use fail_fast::*;
 pub use fixture::*;
 pub use invariant_properties::helpers;
 pub use invariants::*;
-pub use poka_yoke::*;
+// poka_yoke types are accessed via core::poka_yoke::* to avoid glob conflicts
 pub use receipt::*;
 pub use state::*;
 pub use test_utils::*;

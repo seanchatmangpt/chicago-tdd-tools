@@ -8,7 +8,18 @@
 //! 5. Proof-Carrying Test Receipts
 //! 6. Swarm-Native Test Orchestrator
 
-use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::core::contract::{TestContract, TestContractRegistry};
+use chicago_tdd_tools::core::receipt::{
+    TestOutcome, TestReceipt, TestReceiptRegistry, TimingMeasurement,
+};
+use chicago_tdd_tools::swarm::test_orchestrator::{
+    QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
+};
+use chicago_tdd_tools::testing::effects::{Effects, NetworkRead, Pure, StorageWrite};
+use chicago_tdd_tools::testing::state_machine::{State, StateMachine, Transition};
+use chicago_tdd_tools::validation::thermal::{
+    ColdPathTest, HotPathConfig, HotPathTest, WarmPathTest,
+};
 
 // ============================================================================
 // Track 1: Test Contracts as First-Class Types

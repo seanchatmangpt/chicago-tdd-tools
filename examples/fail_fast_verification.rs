@@ -55,7 +55,7 @@
 //! - `phase_2_thermal_testing(&mut self, tau: u64, max_tau_bound: u64) -> InvariantResult<PhaseResult>`
 //! - `finalize(&self) -> InvariantResult<()>`
 
-use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::core::fail_fast::{PhaseLabel, PhaseResult, StrictExecutionContext};
 
 /// Example: Creating a strict execution context
 ///
@@ -387,7 +387,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::core::fail_fast::{PhaseLabel, StrictExecutionContext};
+    use chicago_tdd_tools::test;
 
     test!(test_create_context, {
         // Arrange & Act

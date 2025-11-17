@@ -489,7 +489,12 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chicago_tdd_tools::sector_stacks::{
+        academic::{AcademicOperation, PaperSubmission, Review, ReviewRecommendation},
+        claims::{ClaimSubmission, ClaimsOperation},
+        OperationStatus, SectorOperation,
+    };
+    use chicago_tdd_tools::test;
 
     test!(test_academic_workflow_complete, {
         // Arrange

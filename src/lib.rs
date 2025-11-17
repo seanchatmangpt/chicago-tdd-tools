@@ -192,8 +192,10 @@ pub use core::{alert, assertions, builders, const_assert, fail_fast, fixture, in
 pub use core::async_fixture;
 #[cfg(feature = "testcontainers")]
 pub use integration::testcontainers;
+// Note: testcontainers::poka_yoke is NOT re-exported via glob to avoid conflicts with otel::poka_yoke
 #[cfg(feature = "otel")]
 pub use observability::otel;
+// Note: otel::poka_yoke is NOT re-exported via glob to avoid conflicts with testcontainers::poka_yoke
 #[cfg(feature = "weaver")]
 pub use observability::weaver::types::WeaverLiveCheck;
 #[cfg(feature = "weaver")]
@@ -226,7 +228,12 @@ pub use validation::{coverage, guards, jtbd, performance};
 /// - All validation modules (coverage, guards, jtbd, performance)
 /// - Feature-gated modules (when features enabled): property, mutation, snapshot, concurrency, cli
 pub mod prelude {
-    pub use crate::core::*;
+    // Re-export core modules explicitly to avoid poka_yoke conflicts
+    pub use crate::core::{
+        alert, assertions, async_fixture, builders, const_assert, contract, fail_fast, fixture,
+        invariants, receipt, state, test_utils, type_level, verification_pipeline,
+    };
+    // poka_yoke is accessed via core::poka_yoke::* to avoid conflicts with otel/testcontainers poka_yoke
     pub use crate::validation::*;
 
     // Macros are automatically exported via #[macro_export] in macro definitions
@@ -249,7 +256,10 @@ pub mod prelude {
     pub use crate::testing::cli::*;
 
     #[cfg(feature = "otel")]
-    pub use crate::observability::otel::*;
+    pub use crate::observability::otel::{
+        MetricValidator, OtelValidationError, OtelValidationResult, SpanValidator,
+    };
+    // Note: otel::poka_yoke is NOT re-exported via glob to avoid conflicts with testcontainers::poka_yoke
 
     #[cfg(feature = "weaver")]
     pub use crate::observability::weaver::{WeaverValidationError, WeaverValidationResult};
@@ -259,7 +269,10 @@ pub mod prelude {
     pub use crate::observability::{ObservabilityError, ObservabilityResult, ObservabilityTest};
 
     #[cfg(feature = "testcontainers")]
-    pub use crate::integration::testcontainers::*;
+    pub use crate::integration::testcontainers::{
+        ContainerClient, ExecResult, GenericContainer, TestcontainersError, TestcontainersResult,
+    };
+    // Note: testcontainers::poka_yoke is NOT re-exported via glob to avoid conflicts
 
     // Hyper-advanced μ-kernel verification substrate (Track 1-6)
     // Track 1: Test Contracts as First-Class Types (already in core::*)

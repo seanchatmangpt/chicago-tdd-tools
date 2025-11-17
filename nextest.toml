@@ -4,6 +4,7 @@
 [profile.default]
 # Default timeout for tests in seconds
 # Panic tests need extra time to unwind properly
-timeout = "60s"
+# Increased for weaver integration tests that need time to process telemetry
+timeout = "120s"
 # Number of test threads
 test-threads = 4

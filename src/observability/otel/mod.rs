@@ -9,6 +9,12 @@ use thiserror::Error;
 
 pub mod types;
 
+/// Poka-yoke types for OTEL (compile-time error prevention)
+///
+/// **Poka-yoke**: Type-level state machine prevents invalid span operations.
+/// See module documentation for examples.
+pub mod poka_yoke;
+
 /// OTEL validation error
 #[derive(Error, Debug)]
 pub enum OtelValidationError {
