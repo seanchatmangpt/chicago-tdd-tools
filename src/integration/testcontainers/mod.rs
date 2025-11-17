@@ -184,6 +184,7 @@ pub mod implementation {
     /// **Kaizen improvement**: Extracted magic number `100` to named constant.
     /// This delay allows Docker CLI-created containers to be ready before exec operations.
     /// Pattern: Use named constants for timing values that may need adjustment.
+    #[allow(dead_code)]
     const CONTAINER_STARTUP_DELAY_MS: u64 = 100;
 
     /// Initial delay for container startup retry in milliseconds (100ms)
@@ -194,6 +195,7 @@ pub mod implementation {
 
     /// Maximum total wait time for container startup (sum of all retries with backoff)
     /// Initial: 100ms, Retry 1: 200ms, Retry 2: 400ms = 700ms total
+    #[allow(dead_code)]
     const CONTAINER_STARTUP_MAX_WAIT_MS: u64 = 700;
     use testcontainers::core::ContainerPort;
     use testcontainers::runners::SyncRunner;
@@ -355,8 +357,10 @@ pub mod implementation {
     /// # Arguments
     /// * `container_id` - Docker container ID to check
     ///
-    /// # Returns
-    /// Ok if container is running, Err otherwise (after retries exhausted)
+    /// # Note
+    ///
+    /// Always returns Ok - this is best-effort checking. Container may become ready after return.
+    #[allow(clippy::unnecessary_wraps)] // Returns Result for consistency with error-prone operations
     fn wait_for_container_ready(container_id: &str) -> TestcontainersResult<()> {
         use std::thread;
         use std::time::Duration;
@@ -367,18 +371,14 @@ pub mod implementation {
                 .args(["ps", "--filter", &format!("id={container_id}"), "--format", "{{.State}}"])
                 .output();
 
-            match output {
-                Ok(out) => {
-                    let state = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                    // Container is running if docker ps finds it in any non-empty state
-                    if !state.is_empty() && state == "running" {
-                        return Ok(());
-                    }
-                }
-                Err(_) => {
-                    // docker command failed, but try again with backoff
+            if let Ok(out) = output {
+                let state = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                // Container is running if docker ps finds it in any non-empty state
+                if !state.is_empty() && state == "running" {
+                    return Ok(());
                 }
             }
+            // docker command failed or container not ready yet, retry with backoff
 
             // Not ready yet - retry with exponential backoff if not last attempt
             if attempt < CONTAINER_STARTUP_MAX_RETRIES {
@@ -585,11 +585,10 @@ pub mod implementation {
 
             let image = GenericImage::new(image, tag);
             // Build container request with all env vars
-            // Move env_vars into the request (no need to clone since we consume the HashMap)
-            let mut request: testcontainers::core::ContainerRequest<GenericImage> = image.into();
-            for (key, value) in env_vars {
-                request = request.with_env_var(key, value);
-            }
+            let request: testcontainers::core::ContainerRequest<GenericImage> =
+                env_vars.into_iter().fold(image.into(), |req, (key, value)| {
+                    req.with_env_var(key, value)
+                });
             let container = request.start().map_err(|e| {
                 let error_msg = format!("{e}");
                 if is_docker_unavailable_error(&error_msg) {

@@ -90,6 +90,7 @@ pub mod lifecycle {
         /// # Errors
         ///
         /// Returns error if Weaver start fails.
+        #[allow(clippy::unused_self)]
         pub fn start(
             self,
         ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Running>>
@@ -128,7 +129,7 @@ pub mod lifecycle {
         ///
         /// **Poka-yoke**: Always returns true for `WeaverValidator<Running>`.
         #[must_use]
-        pub const fn is_running(&self) -> bool {
+        pub const fn is_running() -> bool {
             true // Type-level guarantee: Running state means process is running
         }
 
@@ -140,6 +141,7 @@ pub mod lifecycle {
         /// # Errors
         ///
         /// Returns error if Weaver stop fails.
+        #[allow(clippy::unused_self)]
         pub fn stop(
             self,
         ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Stopped>>
@@ -267,7 +269,8 @@ impl WeaverValidator {
     ///
     /// Returns an error if Weaver binary is not found.
     pub fn check_weaver_available() -> WeaverValidationResult<()> {
-        WeaverLiveCheck::check_weaver_available().map_err(|_| WeaverValidationError::BinaryNotFound)
+        WeaverLiveCheck::check_weaver_available()
+            .map_err(|e| WeaverValidationError::ValidationFailed(format!("{e}")))
     }
 
     /// Clone OpenTelemetry semantic conventions registry at runtime if missing

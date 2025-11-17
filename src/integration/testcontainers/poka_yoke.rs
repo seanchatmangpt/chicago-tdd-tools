@@ -75,9 +75,10 @@ impl Container<state::Stopped> {
     ///
     /// **Poka-yoke**: Returns `Container<Stopped>` - cannot exec until started.
     ///
-    /// # Errors
+    /// # Note
     ///
-    /// Returns error if Docker is unavailable or container creation fails.
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn new(
         client: crate::testcontainers::ContainerClient,
         image: &str,
@@ -94,9 +95,10 @@ impl Container<state::Stopped> {
     /// **Poka-yoke**: Changes type from `Container<Stopped>` to `Container<Running>`.
     /// After this call, container can execute commands.
     ///
-    /// # Errors
+    /// # Note
     ///
-    /// Returns error if container start fails.
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn start(self) -> crate::testcontainers::TestcontainersResult<Container<state::Running>> {
         // Start container logic here
         Ok(Container { id: self.id, client: self.client, _state: PhantomData })
@@ -113,6 +115,11 @@ impl Container<state::Running> {
     /// # Errors
     ///
     /// Returns error if command execution fails or container stops unexpectedly.
+    ///
+    /// # Note
+    ///
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
     pub fn exec(
         &self,
         _command: &str,
@@ -133,6 +140,11 @@ impl Container<state::Running> {
     /// # Errors
     ///
     /// Returns error if port mapping fails.
+    ///
+    /// # Note
+    ///
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
     pub fn get_host_port(
         &self,
         _container_port: u16,
@@ -148,9 +160,10 @@ impl Container<state::Running> {
     /// **Poka-yoke**: Changes type from `Container<Running>` to `Container<Stopped>`.
     /// After this call, container cannot execute commands.
     ///
-    /// # Errors
+    /// # Note
     ///
-    /// Returns error if container stop fails.
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn stop(self) -> crate::testcontainers::TestcontainersResult<Container<state::Stopped>> {
         // Stop container logic here
         Ok(Container { id: self.id, client: self.client, _state: PhantomData })

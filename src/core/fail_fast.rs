@@ -423,12 +423,7 @@ impl StrictExecutionContext {
         for required in &required_phases {
             if !self.phases_completed.contains(required) {
                 return Err(UnrecoverableInvariantViolation::PartialPipelineSuccess(format!(
-<<<<<<< HEAD
                     "Required phase {required:?} not completed"
-=======
-                    "Required phase {:?} not completed",
-                    required
->>>>>>> origin/claude/dmaic-workflow-011RCFXSUHNfW7CeZxXwNxv5
                 )));
             }
         }

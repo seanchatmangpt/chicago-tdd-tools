@@ -133,7 +133,7 @@ impl WeaverLiveCheck {
     /// # Errors
     ///
     /// Returns an error if Weaver binary is not found.
-    pub fn check_weaver_available() -> Result<(), String> {
+    pub fn check_weaver_available() -> Result<(), WeaverValidationError> {
         use std::process::Command;
 
         // Try to find weaver binary
@@ -145,28 +145,32 @@ impl WeaverLiveCheck {
                         // ✅ Weaver binary is available and working
                         Ok(())
                     } else {
-                        Err("🚨 Weaver binary found but --version failed. Binary may be corrupted."
-                            .to_string())
+                        Err(WeaverValidationError::BinaryNotFound(
+                            "Weaver binary found but --version failed. Binary may be corrupted."
+                                .to_string(),
+                        ))
                     }
                 }
-                Err(e) => Err(format!("🚨 Failed to execute weaver binary: {e}")),
+                Err(e) => Err(WeaverValidationError::BinaryNotFound(format!(
+                    "Failed to execute weaver binary: {e}"
+                ))),
             }
         } else {
             // Try runtime download if not found (only if weaver feature is enabled)
             #[cfg(feature = "weaver")]
             {
                 if let Err(e) = Self::download_weaver_runtime() {
-                    return Err(format!(
+                    return Err(WeaverValidationError::BinaryNotFound(format!(
                         "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases ({e})."
-                    ));
+                    )));
                 }
                 // Retry after download
                 Self::check_weaver_available()
             }
             #[cfg(not(feature = "weaver"))]
             {
-                Err(format!(
-                    "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases"
+                Err(WeaverValidationError::BinaryNotFound(
+                    "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases".to_string()
                 ))
             }
         }
@@ -187,6 +191,10 @@ impl WeaverLiveCheck {
     /// # Returns
     /// Ok if registry is available and accessible, Err with clear message otherwise
     ///
+    /// # Errors
+    ///
+    /// Returns error if registry path does not exist, is not readable, or appears empty.
+    ///
     /// # Example
     /// ```ignore
     /// if WeaverLiveCheck::check_registry_available().is_err() {
@@ -206,8 +214,7 @@ impl WeaverLiveCheck {
         // Check 1: Path exists
         if !registry_path.exists() {
             return Err(format!(
-                "🚨 Registry path does not exist: {:?}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap",
-                registry_path
+                "🚨 Registry path does not exist: {registry_path:?}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap"
             ));
         }
 
@@ -221,22 +228,19 @@ impl WeaverLiveCheck {
             Ok(metadata) => {
                 if !metadata.is_dir() {
                     return Err(format!(
-                        "🚨 Registry path is not a directory: {:?}",
-                        registry_path
+                        "🚨 Registry path is not a directory: {registry_path:?}"
                     ));
                 }
                 // Check if we can read the directory
                 if metadata.permissions().readonly() && cfg!(unix) {
                     return Err(format!(
-                        "⚠️  Registry path is not readable (permission denied): {:?}",
-                        registry_path
+                        "⚠️  Registry path is not readable (permission denied): {registry_path:?}"
                     ));
                 }
             }
             Err(e) => {
                 return Err(format!(
-                    "⚠️  Cannot read registry metadata: {:?} - {}",
-                    registry_path, e
+                    "⚠️  Cannot read registry metadata: {registry_path:?} - {e}"
                 ))
             }
         }
@@ -271,15 +275,13 @@ impl WeaverLiveCheck {
 
                 if !has_content {
                     return Err(format!(
-                        "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {:?}",
-                        registry_path
+                        "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {registry_path:?}"
                     ));
                 }
             }
             Err(e) => {
                 return Err(format!(
-                    "⚠️  Cannot read registry directory: {:?} - {}",
-                    registry_path, e
+                    "⚠️  Cannot read registry directory: {registry_path:?} - {e}"
                 ))
             }
         }
@@ -455,7 +457,7 @@ impl WeaverLiveCheck {
         use std::process::Command;
 
         // Check Weaver binary availability first (may trigger runtime download)
-        Self::check_weaver_available()?;
+        Self::check_weaver_available().map_err(|e| format!("{e}"))?;
 
         // Find weaver binary path
         let weaver_binary = Self::find_weaver_binary()

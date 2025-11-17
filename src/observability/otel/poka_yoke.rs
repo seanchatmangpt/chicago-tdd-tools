@@ -167,13 +167,13 @@ impl ValidAttribute {
 
     /// Get the attribute name
     #[must_use]
-    pub fn name(&self) -> &ValidAttributeName {
+    pub const fn name(&self) -> &ValidAttributeName {
         &self.name
     }
 
     /// Get the attribute value
     #[must_use]
-    pub fn value(&self) -> &ValidAttributeValue {
+    pub const fn value(&self) -> &ValidAttributeValue {
         &self.value
     }
 }
@@ -230,10 +230,11 @@ impl Span<state::Active> {
     /// **Poka-yoke**: Only available on `Span<Active>`.
     /// Compiler prevents calling this on completed spans.
     ///
-    /// # Errors
+    /// # Note
     ///
-    /// Returns error if attribute addition fails.
-    pub fn add_attribute(&mut self, _attr: ValidAttribute) -> Result<(), String> {
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
+    pub fn add_attribute(&self, _attr: ValidAttribute) -> Result<(), String> {
         // Add attribute logic here - only works on active spans
         Ok(())
     }
@@ -243,9 +244,10 @@ impl Span<state::Active> {
     /// **Poka-yoke**: Changes type from `Span<Active>` to `Span<Completed>`.
     /// After this call, span cannot be modified.
     ///
-    /// # Errors
+    /// # Note
     ///
-    /// Returns error if span completion fails.
+    /// This is a placeholder for poka-yoke design demonstration.
+    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn complete(self) -> Result<Span<state::Completed>, String> {
         // Complete span logic here
         Ok(Span { name: self.name, _state: PhantomData })
@@ -317,7 +319,7 @@ mod tests {
     #[test]
     fn test_span_lifecycle() {
         // Create active span
-        let mut span = Span::<state::Active>::new("test").expect("test span");
+        let span = Span::<state::Active>::new("test").expect("test span");
 
         // Add attribute (only works on active span)
         let attr =
