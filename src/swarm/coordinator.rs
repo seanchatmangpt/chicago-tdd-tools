@@ -308,7 +308,7 @@ mod tests {
         let result = coordinator.distribute_next_task();
         assert!(result.is_ok());
 
-        let (task_id, member_id) = result.unwrap();
+        let (task_id, member_id) = result.unwrap(); // Test code: unwrap is acceptable
         assert_eq!(task_id, "task-1");
         assert_eq!(member_id, "agent-1");
     }

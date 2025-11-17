@@ -208,13 +208,14 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_member_state_transitions() {
         let mut member =
             SwarmMember::new("agent-1".to_string(), "Agent".to_string()).with_capacity(1);
 
         assert_eq!(member.state, MemberState::Alive);
 
-        member.assign_task().unwrap();
+        member.assign_task().unwrap(); // Test code: unwrap is acceptable
         assert_eq!(member.state, MemberState::Busy);
 
         member.complete_task();

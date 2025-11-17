@@ -300,7 +300,7 @@ mod tests {
         );
 
         // Higher priority should be dequeued first
-        let task = queue.dequeue().unwrap();
+        let task = queue.dequeue().unwrap(); // Test code: unwrap is acceptable
         assert_eq!(task.id, "t2");
     }
 
