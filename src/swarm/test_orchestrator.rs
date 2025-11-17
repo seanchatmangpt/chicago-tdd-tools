@@ -422,6 +422,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unwrap_used)] // Test code: unwrap is acceptable
     fn test_orchestrator_submission() {
         const CONTRACTS: &[TestContract] = &[
             TestContract::hot_path("test1", &["module1"]),

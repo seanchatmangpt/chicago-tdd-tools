@@ -11,6 +11,7 @@
 //! - And 43 more failure modes across all 12 phases
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)] // Test code: unwrap is acceptable
 mod properties {
     use crate::core::fail_fast::*;
     use crate::core::invariants::*;
