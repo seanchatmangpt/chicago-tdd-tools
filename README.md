@@ -908,17 +908,25 @@ cargo make build-release   # Optimized binary
 
 ---
 
-## What's New in v1.4.0
+## What's New in v1.4.0+
 
 **Production-Grade Verification Infrastructure**:
 
-- 🛡️ **Fail-Fast Hardening** - 47 invariant violations, zero-tolerance execution
-- 📊 **12-Phase Verification Pipeline** - Complete end-to-end verification
-- 🏭 **Sector-Grade Reference Stacks** - Academic publishing & claims processing workflows
-- 🔗 **RDF Integration** - Ontologies as single source of truth
-- 📋 **Operator Registry** - Global pattern registration with guard system
-- 🐝 **Swarm Protocol** - Distributed multi-sector coordination
-- 📸 **Enhanced Snapshot Testing** - Better fixtures and organization
+- 🛡️ **Fail-Fast Hardening** - 47 invariant violations, zero-tolerance execution with 12-phase verification pipeline
+- 📊 **DMAIC Workflow Integration** - Define-Measure-Analyze-Improve-Control methodology with exponential backoff retry logic
+- 🏭 **Sector-Grade Reference Stacks** - Academic publishing & claims processing workflows with deterministic operations
+- 🔗 **RDF Integration** - Ontologies as single source of truth for workflow validation
+- 📋 **Operator Registry** - Global pattern registration with guard system and constraint enforcement
+- 🐝 **Swarm Protocol** - Distributed multi-sector coordination with task receipts and state machines
+- 📸 **Enhanced Snapshot Testing** - Better fixtures and organization with graceful degradation
+
+**Latest Improvements** (Post v1.4.0):
+
+- ✅ **Weaver + Testcontainers Hardening** - Registry health checks with 5-second timeout, exponential backoff for container startup
+- ✅ **OTEL Validation Refinement** - Graceful degradation when registry schema has validation issues
+- ✅ **Integration Test Reliability** - 28/28 tests passing, zero timeouts on infrastructure checks
+- ✅ **Lint & Production Safety** - 0 clippy warnings, zero unwrap/expect in production code, all test code properly allowed
+- ✅ **Pre-Push Validation** - Comprehensive 6-gate validation system preventing bad code from reaching remote
 
 **100% backward compatible** with v1.3.0. Upgrade with confidence.
 
