@@ -69,6 +69,7 @@
 //! - **Environment Isolation**: Automatic environment restoration
 
 #[cfg(feature = "cli-testing")]
+#[allow(unused_imports)] // Example code - shown for documentation purposes
 use chicago_tdd_tools::cli::CliTest;
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
