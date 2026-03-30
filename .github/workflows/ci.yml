@@ -67,7 +67,7 @@ jobs:
         rust: [stable, beta]
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
@@ -109,7 +109,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -152,7 +152,7 @@ jobs:
         rust: [stable, beta]
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
@@ -177,7 +177,7 @@ jobs:
       - name: 🎯 Run unit tests (critical signal)
         # FMEA Fix: Retry logic for flaky tests (RPN: 120 → 24)
         # Tests are retried up to 3 times on failure to handle transient issues
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -205,7 +205,7 @@ jobs:
     needs: [test] # Run after unit tests pass
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -254,7 +254,7 @@ jobs:
 
       - name: 📤 Upload test results on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: integration-test-failures
           path: |
@@ -275,7 +275,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Need full history for checking all files
 
@@ -352,7 +352,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: 📋 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔧 Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -407,7 +407,7 @@ jobs:
         continue-on-error: false  # Coverage is now a hard requirement
 
       - name: 📤 Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: lcov.info
           fail_ci_if_error: false
