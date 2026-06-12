@@ -776,7 +776,7 @@ mod tests {
 
         let start_result = validator.start();
 
-        // Should fail (either BinaryNotFound if Weaver not installed, or RegistryNotFound if binary is available)
+        // Should fail (either BinaryNotFound, RegistryNotFound, or DockerUnavailable)
         assert_err!(&start_result, "Start should fail with invalid registry path");
         match start_result {
             Err(WeaverValidationError::RegistryNotFound(_)) => {
@@ -795,7 +795,14 @@ mod tests {
                 // Expected when starting with invalid path fails at process spawn
             }
             Err(WeaverValidationError::DockerUnavailable(_)) => {
-                // Expected when Docker is not running in the test environment
+                // **Test Isolation Fix**: Docker not being available is acceptable for unit tests
+                // Docker is only required for full integration tests, not for basic validation
+                // This test can still verify Weaver error handling without Docker
+                log::info!(
+                    "ℹ️  Docker unavailable - skipping Docker-dependent validation\n\
+                     📋 This is acceptable for unit tests\n\
+                     📋 Full integration tests require Docker (cargo make test-integration)"
+                );
             }
             Err(e) => {
                 panic!(

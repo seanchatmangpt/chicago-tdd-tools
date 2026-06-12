@@ -1300,11 +1300,73 @@ max_batch_size = 0
     ///
     /// **Isolation**: This test ensures the functions work correctly in isolation by
     /// temporarily removing CARGO_MANIFEST_DIR to simulate no config file scenario.
+    ///
+    /// **Test Isolation Fix**: Uses RAII guard patterns to ensure environment and file system
+    /// are always restored, even if test panics. This prevents test interdependencies.
+    ///
+    /// **Note**: This test verifies behavior when config file doesn't exist, so it temporarily
+    /// renames any existing config file to simulate that scenario.
     #[test]
     fn test_config_functions_use_defaults_when_no_config() {
         let _lock = get_lock();
-        // Arrange: Temporarily remove CARGO_MANIFEST_DIR to simulate no config file
-        let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
+        // **Poka-Yoke Fix**: Use guard patterns to ensure cleanup happens even if test panics
+        struct EnvVarGuard {
+            key: &'static str,
+            original_value: Option<String>,
+        }
+
+        impl Drop for EnvVarGuard {
+            fn drop(&mut self) {
+                // Restore original value or remove if it didn't exist
+                match &self.original_value {
+                    Some(value) => std::env::set_var(self.key, value),
+                    None => std::env::remove_var(self.key),
+                }
+            }
+        }
+
+        struct ConfigFileGuard {
+            config_path: PathBuf,
+            backup_path: PathBuf,
+            had_config: bool,
+        }
+
+        impl Drop for ConfigFileGuard {
+            fn drop(&mut self) {
+                // Restore config file if it existed
+                if self.had_config {
+                    if let Err(e) = fs::rename(&self.backup_path, &self.config_path) {
+                        // Log error but don't panic in Drop
+                        log::warn!("Failed to restore config file: {}", e);
+                    }
+                }
+            }
+        }
+
+        // Arrange: Create guards that will restore state on drop
+        let _env_guard = EnvVarGuard {
+            key: "CARGO_MANIFEST_DIR",
+            original_value: std::env::var("CARGO_MANIFEST_DIR").ok(),
+        };
+
+        // Temporarily move config file if it exists
+        let config_path = PathBuf::from("chicago-tdd-tools.toml");
+        let backup_path = PathBuf::from("chicago-tdd-tools.toml.test-backup");
+        let had_config = config_path.exists();
+
+        let _file_guard = ConfigFileGuard {
+            config_path: config_path.clone(),
+            backup_path: backup_path.clone(),
+            had_config,
+        };
+
+        if had_config {
+            if let Err(e) = fs::rename(&config_path, &backup_path) {
+                panic!("Failed to backup config file: {}", e);
+            }
+        }
+
+        // Remove CARGO_MANIFEST_DIR to prevent fallback to manifest dir
         std::env::remove_var("CARGO_MANIFEST_DIR");
 
         // Act & Assert: Verify functions return default constants when no config exists
@@ -1319,9 +1381,6 @@ max_batch_size = 0
             "integration_test_timeout_seconds() should return DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS when no config file exists"
         );
 
-        // Cleanup: Restore original CARGO_MANIFEST_DIR
-        if let Some(dir) = original_manifest_dir {
-            std::env::set_var("CARGO_MANIFEST_DIR", dir);
-        }
+        // Cleanup: Guards' Drop implementations automatically restore state
     }
 }
