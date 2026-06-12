@@ -123,12 +123,32 @@
 //! - `alert!`: Emit custom alert with user-defined severity
 
 #![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
+#![deny(clippy::panic)]
+#![deny(clippy::todo)]
+#![deny(clippy::unimplemented)]
 #![deny(warnings)] // Poka-Yoke: Prevent warnings at compile time - compiler enforces correctness
+#![allow(clippy::multiple_crate_versions)]
+#![allow(clippy::map_unwrap_or)]
+#![allow(clippy::unnecessary_sort_by)]
 #![warn(missing_docs)]
 // Poka-Yoke: pub use is necessary for procedural macro re-exports
 #![allow(clippy::pub_use, reason = "Procedural macros must be re-exported via pub use")]
-// Test code - panic is appropriate for test failures
-#![cfg_attr(test, allow(clippy::panic))]
+#![cfg_attr(
+    test,
+    allow(
+        warnings,
+        clippy::all,
+        clippy::pedantic,
+        clippy::nursery,
+        clippy::cargo,
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::todo,
+        clippy::unimplemented
+    )
+)]
 
 // Note: When using the `logging` feature (enabled by default), users should initialize
 // the AlertLogger at the start of their application:
@@ -232,6 +252,17 @@ pub mod prelude {
     pub use crate::core::{
         alert, assertions, async_fixture, builders, const_assert, contract, fail_fast, fixture,
         invariants, receipt, state, test_utils, type_level, verification_pipeline,
+    };
+    // Re-export core struct contents for backward compatibility and sub-crate compilation
+    pub use crate::core::assertions::*;
+    pub use crate::core::builders::*;
+    pub use crate::core::fixture::*;
+    pub use crate::core::state::*;
+    // Re-export macros in prelude for use without manual root import
+    pub use crate::{
+        alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_eq_msg,
+        assert_err, assert_fail, assert_guard_constraint, assert_in_range, assert_ok,
+        assert_within_tick_budget, async_test, fixture_test, performance_test, test,
     };
     // poka_yoke is accessed via core::poka_yoke::* to avoid conflicts with otel/testcontainers poka_yoke
     pub use crate::validation::*;

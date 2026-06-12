@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Basic Test Example - Comprehensive Guide
 //!
 //! Demonstrates basic usage of Chicago TDD tools with fixtures, data builders, and assertion helpers.
@@ -232,8 +244,7 @@ async fn main() {
 
 #[cfg(test)]
 mod tests {
-    use chicago_tdd_tools::core::builders::TestDataBuilder;
-    use chicago_tdd_tools::core::fixture::TestFixture;
+    use super::*;
     use chicago_tdd_tools::test;
 
     test!(test_fixture_creation, {

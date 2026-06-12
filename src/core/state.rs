@@ -114,7 +114,8 @@ impl TestState<Act> {
     where
         F: FnOnce(Option<Vec<u8>>) -> Vec<u8>,
     {
-        let result = f(self.data.arrange_data.take());
+        let input = self.data.act_result.take().or_else(|| self.data.arrange_data.take());
+        let result = f(input);
         self.data.act_result = Some(result);
         self
     }

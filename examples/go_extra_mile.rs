@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Go the Extra Mile: 1st/2nd/3rd Idea Progression - Comprehensive Guide
 //!
 //! Demonstrates the "go the extra mile" paradigm with progressive enhancement:

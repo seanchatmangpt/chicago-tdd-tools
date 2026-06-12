@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! v1.3.0 Enhanced Ergonomics Integration Tests
 //!
 //! Comprehensive integration tests demonstrating all v1.3.0 features working together
@@ -483,6 +495,7 @@ fn test_fortune_500_complete_integration() {
             Ok(())
         })
         .with_var("created_at", &TestData::timestamp())
+        .with_var("authenticated", "true")
         .try_build()
         .expect("User validation failed");
 
@@ -510,6 +523,7 @@ fn test_fortune_500_complete_integration() {
         data.contains_key("email")
             && data.contains_key("role")
             && data.get("role") == Some(&"admin".to_string())
+            && data.get("authenticated") == Some(&"true".to_string())
     });
 
     assert!(quality_score, "Enterprise tests must catch all mutations");
@@ -523,7 +537,10 @@ fn test_fortune_500_complete_integration() {
         }
     });
 
-    let redactions = SnapshotAssert::common_redactions();
+    let mut redactions = SnapshotAssert::common_redactions();
+    redactions.insert(".session.created_at".to_string(), "[TIMESTAMP]".to_string());
+    redactions.insert(".user.created_at".to_string(), "[TIMESTAMP]".to_string());
+    redactions.insert(".user.user_id".to_string(), "[UUID]".to_string());
     SnapshotAssert::assert_with_redaction(&api_response, "enterprise_session", &redactions);
 
     // ========== PHASE 5: CLI Testing with Environment ==========

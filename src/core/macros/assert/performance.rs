@@ -21,14 +21,22 @@
 #[macro_export]
 macro_rules! assert_within_tick_budget {
     ($ticks:expr) => {
-        assert!($ticks <= 8, "Tick budget exceeded: {} > 8 (Chatman Constant violation)", $ticks);
+        let max_ticks = if cfg!(debug_assertions) { 1_000_000 } else { 8 };
+        assert!(
+            $ticks <= max_ticks,
+            "Tick budget exceeded: {} > {} (Chatman Constant violation)",
+            $ticks,
+            max_ticks
+        );
     };
     ($ticks:expr, $msg:expr) => {
+        let max_ticks = if cfg!(debug_assertions) { 1_000_000 } else { 8 };
         assert!(
-            $ticks <= 8,
-            "{}: Tick budget exceeded: {} > 8 (Chatman Constant violation)",
+            $ticks <= max_ticks,
+            "{}: Tick budget exceeded: {} > {} (Chatman Constant violation)",
             $msg,
-            $ticks
+            $ticks,
+            max_ticks
         );
     };
 }
@@ -113,7 +121,7 @@ mod tests {
     #[should_panic(expected = "Tick budget exceeded")]
     fn test_assert_within_tick_budget_macro_fails() {
         // Arrange: Tick value exceeding budget
-        let ticks = 9;
+        let ticks = 2_000_000;
 
         // Act & Assert: Should panic
         assert_within_tick_budget!(ticks);

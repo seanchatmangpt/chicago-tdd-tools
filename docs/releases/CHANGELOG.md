@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.6.11] - 2026-06-11
+
+### Changed
+- Bumped crate version of chicago-tdd-tools, chicago-tdd-tools-proc-macros, and chatman-spec-harness to `26.6.11`.
+- Aligned `git2` dependency version in `spec-harness` to `^0.20` to match root `Cargo.toml`.
+- Modified dependency on `chicago-tdd-tools` in `playground/Cargo.toml` to add `path = ".."` referencing the local copy.
+
+### Removed
+- Removed the non-existent `spec_conformance` test target in `spec-harness/Cargo.toml` to avoid target discovery errors.
+
 ## [1.4.0] - 2025-01-16
 
 ### Added - Production-Grade Verification Infrastructure

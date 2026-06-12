@@ -931,8 +931,8 @@ cargo make build-release   # Optimized binary
 **100% backward compatible** with v1.3.0. Upgrade with confidence.
 
 **📖 Documentation**:
-- [Release Notes](docs/releases/RELEASE_NOTES_v1.4.0.md) - Complete feature documentation
-- [GitHub Release](docs/releases/GITHUB_RELEASE_v1.4.0.md) - GitHub release notes
+- [Release Notes](docs/releases/RELEASE_NOTES_v26.6.11.md) - Complete feature documentation
+- [GitHub Release](docs/releases/GITHUB_RELEASE_v26.6.11.md) - GitHub release notes
 - [Changelog](docs/releases/CHANGELOG.md) - Full change history
 - [Release Checklist](docs/releases/RELEASE_CHECKLIST_v1.4.0.md) - Pre-release verification
 

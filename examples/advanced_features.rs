@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Advanced Rust Features Examples - Comprehensive Guide
 //!
 //! Demonstrates hyper-advanced Rust features used in Chicago TDD Tools:

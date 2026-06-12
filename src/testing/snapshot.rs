@@ -149,23 +149,53 @@ impl SnapshotAssert {
     /// // On first run, insta will write the snapshot inline
     /// ```
     pub fn assert_inline<T: std::fmt::Display>(value: &T) {
-        assert_snapshot!(format!("{value}"));
+        let thread = std::thread::current();
+        let name = thread.name().unwrap_or("default");
+        let sanitized: String = name
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+            .collect();
+        let mut settings = Settings::clone_current();
+        settings.set_snapshot_suffix(sanitized);
+        settings.bind(|| {
+            assert_snapshot!(format!("{value}"));
+        });
     }
 
     /// Assert inline debug snapshot (v1.3.0)
     ///
     /// Like `assert_inline` but uses Debug formatting.
     pub fn assert_inline_debug<T: std::fmt::Debug>(value: &T) {
-        assert_debug_snapshot!(value);
+        let thread = std::thread::current();
+        let name = thread.name().unwrap_or("default");
+        let sanitized: String = name
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+            .collect();
+        let mut settings = Settings::clone_current();
+        settings.set_snapshot_suffix(sanitized);
+        settings.bind(|| {
+            assert_debug_snapshot!(value);
+        });
     }
 
     /// Assert inline JSON snapshot (v1.3.0)
     ///
     /// Like `assert_inline` but for JSON values.
     pub fn assert_inline_json(value: &serde_json::Value) {
-        assert_snapshot!(
-            serde_json::to_string_pretty(value).unwrap_or_else(|_| "invalid json".to_string())
-        );
+        let thread = std::thread::current();
+        let name = thread.name().unwrap_or("default");
+        let sanitized: String = name
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+            .collect();
+        let mut settings = Settings::clone_current();
+        settings.set_snapshot_suffix(sanitized);
+        settings.bind(|| {
+            assert_snapshot!(
+                serde_json::to_string_pretty(value).unwrap_or_else(|_| "invalid json".to_string())
+            );
+        });
     }
 
     /// Assert with redaction (v1.3.0)
@@ -498,7 +528,7 @@ mod tests {
         let data = fixtures::test_vector();
 
         // Act & Assert: Verify debug snapshot matches
-        SnapshotAssert::assert_debug_matches(&data, "test_snapshot_debug");
+        SnapshotAssert::assert_debug_matches(&data, "lib_test_snapshot_debug");
     }
 
     #[test]
@@ -508,7 +538,7 @@ mod tests {
         let data = fixtures::simple_json();
 
         // Act & Assert: Verify JSON snapshot matches
-        SnapshotAssert::assert_json_matches(&data, "test_snapshot_json");
+        SnapshotAssert::assert_json_matches(&data, "lib_test_snapshot_json");
     }
 
     // ========================================================================
@@ -666,7 +696,7 @@ mod tests {
             },
             || {
                 let data = "custom_path_test";
-                SnapshotAssert::assert_matches(&data, "test_custom_path");
+                SnapshotAssert::assert_matches(&data, "lib_test_custom_path");
             },
         );
     }

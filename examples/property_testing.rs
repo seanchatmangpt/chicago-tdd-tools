@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Property-Based Testing Example - Comprehensive Guide
 //!
 //! Demonstrates property-based testing with Chicago TDD tools. Shows both the original

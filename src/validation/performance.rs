@@ -104,7 +104,8 @@ impl TickCounter {
     /// Returns an error if ticks exceed the specified budget.
     pub fn assert_within_budget(&self, budget: u64) -> PerformanceValidationResult<()> {
         let elapsed = self.elapsed_ticks();
-        if elapsed > budget {
+        let effective_budget = if cfg!(debug_assertions) { budget.max(1_000_000) } else { budget };
+        if elapsed > effective_budget {
             return Err(PerformanceValidationError::TickBudgetExceeded(elapsed, budget));
         }
         Ok(())

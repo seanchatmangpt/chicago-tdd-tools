@@ -72,6 +72,24 @@ impl<T> Validated<T> {
     }
 }
 
+/// Compile-time validation helper
+///
+/// Validates a condition at compile time using const assertions.
+#[allow(clippy::panic, clippy::manual_assert, clippy::missing_panics_doc)]
+pub const fn const_assert(condition: bool) {
+    if !condition {
+        panic!("Compile-time assertion failed");
+    }
+}
+
+/// Compile-time validation helper with message
+#[allow(clippy::panic, clippy::manual_assert, clippy::missing_panics_doc)]
+pub const fn const_assert_msg(condition: bool, _msg: &'static str) {
+    if !condition {
+        panic!("Compile-time assertion failed");
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {

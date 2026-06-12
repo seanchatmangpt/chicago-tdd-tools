@@ -885,11 +885,27 @@ pub fn weaver_telemetry_processing_wait_milliseconds() -> u64 {
 mod tests {
     use super::*;
     use std::fs;
+    use std::sync::{Mutex, OnceLock};
     use tempfile::TempDir;
+
+    static TEST_MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
+
+    /// Returns a mutex guard to serialize test execution.
+    ///
+    /// # Warning
+    /// Always acquire this mutex guard (`let _lock = get_lock();`) when writing new tests
+    /// that access shared config state to prevent race conditions and test interference.
+    fn get_lock() -> std::sync::MutexGuard<'static, ()> {
+        match TEST_MUTEX.get_or_init(|| Mutex::new(())).lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        }
+    }
 
     /// **Gemba Fix**: Test that config file is actually read
     #[test]
     fn test_config_file_is_read() {
+        let _lock = get_lock();
         // Arrange: Create temporary config file
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
@@ -961,6 +977,7 @@ max_batch_size = 2000
     /// **Gemba Fix**: Test that nested sections like [observability.weaver] work
     #[test]
     fn test_nested_sections_work() {
+        let _lock = get_lock();
         // Arrange: Create config file with nested section
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
@@ -1013,6 +1030,7 @@ otlp_grpc_port = 9999
     /// **Gemba Fix**: Test that defaults are used when config file doesn't exist
     #[test]
     fn test_defaults_used_when_no_config() {
+        let _lock = get_lock();
         // Arrange: Temporarily remove CARGO_MANIFEST_DIR to simulate no config file
         let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
         std::env::remove_var("CARGO_MANIFEST_DIR");
@@ -1036,6 +1054,7 @@ otlp_grpc_port = 9999
     /// **Gemba Fix**: Test that invalid values fall back to defaults
     #[test]
     fn test_invalid_values_fallback_to_defaults() {
+        let _lock = get_lock();
         // Arrange: Create config file with invalid values
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
@@ -1085,6 +1104,7 @@ integration_timeout_seconds = 30
     /// **Poka-Yoke Fix**: Test that invalid zero values are rejected and fall back to defaults
     #[test]
     fn test_invalid_zero_values_rejected() {
+        let _lock = get_lock();
         // Arrange: Create config file with invalid zero values
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
@@ -1147,6 +1167,7 @@ max_batch_size = 0
     /// aren't being read by the code.
     #[test]
     fn test_config_options_match_implementation() {
+        let _lock = get_lock();
         // Arrange: Read actual config file
         let config_path = find_config_file();
         if config_path.is_none() {
@@ -1254,6 +1275,7 @@ max_batch_size = 0
     /// to avoid flakiness from config file state or other tests.
     #[test]
     fn test_config_defaults_match_constants() {
+        let _lock = get_lock();
         // Arrange: Import constants from both modules
         use crate::core::macros::test::{
             DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS as MACRO_INTEGRATION_TIMEOUT,
@@ -1280,6 +1302,7 @@ max_batch_size = 0
     /// temporarily removing CARGO_MANIFEST_DIR to simulate no config file scenario.
     #[test]
     fn test_config_functions_use_defaults_when_no_config() {
+        let _lock = get_lock();
         // Arrange: Temporarily remove CARGO_MANIFEST_DIR to simulate no config file
         let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
         std::env::remove_var("CARGO_MANIFEST_DIR");

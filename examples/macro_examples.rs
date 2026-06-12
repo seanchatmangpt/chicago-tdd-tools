@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Macro Examples for Chicago TDD Tools - Comprehensive Guide
 //!
 //! Demonstrates usage of macros provided by chicago-tdd-tools for test writing.

@@ -1,6 +1,17 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 // Performance benchmarks for test data builder functionality
 // Tests the performance of data structure creation and building
-
 #![allow(missing_docs)]
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};

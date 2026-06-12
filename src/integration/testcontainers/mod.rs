@@ -585,10 +585,9 @@ pub mod implementation {
 
             let image = GenericImage::new(image, tag);
             // Build container request with all env vars
-            let request: testcontainers::core::ContainerRequest<GenericImage> =
-                env_vars.into_iter().fold(image.into(), |req, (key, value)| {
-                    req.with_env_var(key, value)
-                });
+            let request: testcontainers::core::ContainerRequest<GenericImage> = env_vars
+                .into_iter()
+                .fold(image.into(), |req, (key, value)| req.with_env_var(key, value));
             let container = request.start().map_err(|e| {
                 let error_msg = format!("{e}");
                 if is_docker_unavailable_error(&error_msg) {

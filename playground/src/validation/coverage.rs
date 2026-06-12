@@ -18,7 +18,7 @@ pub fn example_coverage_basic() {
     // Assert: Verify coverage calculated
     assert_eq!(report.total.get(), 3);
     assert_eq!(report.covered.get(), 2);
-    assert_eq!(report.percentage.get(), 66.67);
+    assert!((report.percentage.get() - 66.67).abs() < 0.01);
 }
 
 /// Example: Coverage with newtypes

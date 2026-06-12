@@ -103,7 +103,7 @@ impl WeaverTestFixture {
         self.capture.flush()?;
         #[cfg(feature = "weaver")]
         {
-            self.observability.stop_weaver_process()?;
+            self.observability.stop_weaver_process();
         }
 
         ValidationResults::from_report_dir(self.output_dir())
@@ -121,27 +121,15 @@ impl WeaverTestFixture {
     ///
     /// # Errors
     ///
+    /// For blocking contexts, use `finish()` instead.
+    ///
+    /// # Errors
+    ///
     /// Returns an error if telemetry capture fails, Weaver processing fails,
     /// or validation results cannot be parsed.
-    ///
-    /// # Panics
-    ///
-    /// Panics if called outside a tokio runtime context.
     pub async fn finish_async(&mut self) -> ObservabilityResult<ValidationResults> {
-        // Flush telemetry first (can be done in async context)
         self.capture.flush()?;
 
-        // Move blocking operations to blocking thread pool
-        // This resolves the async/blocking contradiction by handling context switching internally
-        let output_dir = self.output_dir().to_path_buf();
-
-        // Use tokio::task::spawn_blocking to handle the blocking stop_weaver_process call
-        // We wrap observability in Arc<Mutex<>> to share it between async and blocking contexts
-        // **Kaizen improvement**: Clarify why dummy ObservabilityTest is needed
-        // Note: We need a temporary value to replace self.observability because we can't move
-        // it directly into the async closure. The dummy is immediately replaced after the
-        // blocking operation completes. In practice, the fixture is typically dropped after
-        // finish_async(), so this temporary value is safe.
         let observability = Arc::new(Mutex::new(std::mem::replace(
             &mut self.observability,
             ObservabilityTest::with_config(TestConfig::default()).map_err(|e| {
@@ -153,20 +141,16 @@ impl WeaverTestFixture {
 
         let observability_clone = Arc::clone(&observability);
         let stop_result = tokio::task::spawn_blocking(move || {
-            // **Kaizen improvement**: Use map_err instead of unwrap for better error messages
-            let mut obs = observability_clone.lock().map_err(|e| {
-                ObservabilityError::ValidationFailed(format!(
-                    "Failed to acquire lock on ObservabilityTest: {e}"
-                ))
-            })?;
             #[cfg(feature = "weaver")]
             {
-                obs.stop_weaver_process()
+                let mut obs = observability_clone.lock().map_err(|e| {
+                    ObservabilityError::ValidationFailed(format!(
+                        "Failed to acquire lock on ObservabilityTest: {e}"
+                    ))
+                })?;
+                obs.stop_weaver_process();
             }
-            #[cfg(not(feature = "weaver"))]
-            {
-                Ok(())
-            }
+            Ok(())
         })
         .await
         .map_err(|e| {
@@ -194,7 +178,7 @@ impl WeaverTestFixture {
             })?;
 
         // Parse validation results (this is also blocking, but lightweight)
-        ValidationResults::from_report_dir(&output_dir)
+        ValidationResults::from_report_dir(self.output_dir())
     }
 }
 

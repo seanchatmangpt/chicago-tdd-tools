@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Fail-Fast Verification Example - Comprehensive Guide
 //!
 //! Demonstrates the 12-phase fail-fast verification pipeline with zero-tolerance
@@ -387,12 +399,12 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use chicago_tdd_tools::core::fail_fast::{PhaseLabel, StrictExecutionContext};
+    use chicago_tdd_tools::core::fail_fast::{PhaseLabel, PhaseResult, StrictExecutionContext};
     use chicago_tdd_tools::test;
 
     test!(test_create_context, {
         // Arrange & Act
-        let ctx = StrictExecutionContext::new("test-contract".to_string())?;
+        let ctx = StrictExecutionContext::new("test-contract".to_string());
 
         // Assert
         assert!(ctx.is_ok());
@@ -406,6 +418,13 @@ mod tests {
         ctx.phase_1_contract_definition(12)?;
         ctx.phase_2_thermal_testing(5, 8)?;
         ctx.phase_5_receipt_generation(1, 0x1234, 0x1234)?;
+
+        let expected_phases = vec![
+            PhaseLabel::ContractDefinition,
+            PhaseLabel::ThermalTesting,
+            PhaseLabel::ReceiptGeneration,
+        ];
+        ctx.phase_7_verification_pipeline(&expected_phases)?;
 
         // Assert: Finalize succeeds
         ctx.finalize()?;

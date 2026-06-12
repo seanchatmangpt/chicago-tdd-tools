@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools-playground"
-version = "0.1.0"
+version = "26.6.11"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 # Chicago TDD Tools with ALL features enabled
-chicago-tdd-tools = { version = "1.4.0", features = [
+chicago-tdd-tools = { path = "..", version = "26.6.11", features = [
     # Feature groups (convenience bundles)
     "testing-full",       # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
     "observability-full", # Complete observability: otel, weaver
@@ -65,19 +65,20 @@ predicates = "^3.0"
 trycmd = { version = "^0.15", features = ["color-auto"] }
 
 [lints.rust]
-warnings = "warn"
+warnings = "deny"
 unsafe_code = "deny"
-missing_docs = "warn"
+missing_docs = "allow"
+unexpected_cfgs = "allow"
 
 [lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-nursery = { level = "warn", priority = -1 }
-cargo = { level = "warn", priority = -1 }
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+cargo = { level = "deny", priority = -1 }
 
-# Deny critical lints
-unwrap_used = "deny"
-expect_used = "deny"
-panic = "deny"
-todo = "deny"
-unimplemented = "deny"
+# Allow critical lints in playground for experimentation
+unwrap_used = "allow"
+expect_used = "allow"
+panic = "allow"
+todo = "allow"
+unimplemented = "allow"

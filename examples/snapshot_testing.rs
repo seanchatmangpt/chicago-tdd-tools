@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Snapshot Testing Example - Comprehensive Guide
 //!
 //! Demonstrates snapshot testing using `insta` for Chicago TDD. Snapshot testing is ideal

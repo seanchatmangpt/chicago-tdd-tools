@@ -58,7 +58,6 @@ pub fn theorems() -> Vec<TheoremMetadata> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     /// Theorem 2.1: Determinism
     ///
@@ -111,7 +110,7 @@ mod tests {
     #[test]
     fn test_idempotence() {
         // Fixture setup (immutable)
-        let fixture = vec![1, 2, 3, 4, 5];
+        let fixture = [1, 2, 3, 4, 5];
 
         // First observation: compute sum
         let sum1 = fixture.iter().sum::<i32>();
@@ -173,23 +172,24 @@ mod tests {
     fn test_boundedness() {
         use std::time::Instant;
 
-        // Measure execution time
+        // Bounded operation: simple arithmetic loop wrapped in black_box
+        // to prevent compiler from optimizing the work away.
+        let limit = std::hint::black_box(10_000);
+        let mut result = std::hint::black_box(0i32);
+
         let start = Instant::now();
-
-        // Bounded operation: simple arithmetic loop
-        let mut result = 0i32;
-        for i in 0..1000 {
-            result = result.saturating_add(i);
+        for i in 0..limit {
+            result = std::hint::black_box(result.saturating_add(std::hint::black_box(i)));
         }
-
+        let result = std::hint::black_box(result);
         let elapsed = start.elapsed();
 
         // Verify operation completed and time is measurable
         assert!(elapsed.as_millis() < 1000, "Operation should complete in < 1 second");
-        assert_eq!(result, 499500, "Operation should produce correct result");
+        assert_eq!(result, 49995000, "Operation should produce correct result");
 
-        // Time should be positive (measurable)
-        assert!(elapsed.as_millis() >= 0, "Elapsed time must be measurable");
+        // Time should be non-negative (measurable)
+        assert!(elapsed >= std::time::Duration::ZERO, "Elapsed time must be non-negative");
     }
 
     /// Theorem 2.5: Fixture Invariant Preservation
@@ -240,10 +240,10 @@ mod tests {
         }
 
         // Step 1: Create initial builder (phantom type)
-        let builder = Builder1;
+        let _builder = Builder1;
 
         // Step 2: Transform to next builder (compiler ensures correct sequence)
-        let builder2 = Builder2;
+        let _builder2 = Builder2;
 
         // Step 3: Build final result
         let result = FinalData {

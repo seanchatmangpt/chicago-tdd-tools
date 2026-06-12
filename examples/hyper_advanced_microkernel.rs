@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! Hyper-Advanced μ-Kernel Verification Substrate Example
 //!
 //! Demonstrates all 6 tracks of the hyper-advanced features:
@@ -449,7 +461,6 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chicago_tdd_tools::test;
 
     test!(test_example_functions_exist, {

@@ -8,6 +8,7 @@
 //! Use `TotalCount`, `CoveredCount`, and `CoveragePercentage` instead of raw `usize`/`f64`.
 
 use std::collections::HashMap;
+use std::fmt::Write;
 
 // ============================================================================
 // Poka-Yoke: Type-Level Validation
@@ -344,12 +345,20 @@ impl CoverageReport {
     /// Generate markdown report
     #[must_use]
     pub fn generate_markdown(&self) -> String {
-        format!(
+        let mut markdown = format!(
             "# Coverage Report\n\n**Coverage**: {:.2}% ({} / {})\n\n## Details\n\n",
             self.percentage.get(),
             self.covered.get(),
             self.total.get()
-        )
+        );
+        let mut keys: Vec<&String> = self.details.keys().collect();
+        keys.sort();
+        for name in keys {
+            let covered = self.details.get(name).unwrap_or(&false);
+            let status = if *covered { "[x] covered" } else { "[ ] uncovered" };
+            let _ = writeln!(markdown, "- {name}: {status}");
+        }
+        markdown
     }
 }
 

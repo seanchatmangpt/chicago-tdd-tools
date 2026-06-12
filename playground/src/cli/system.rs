@@ -51,10 +51,7 @@ fn config() -> Result<ConfigInfo> {
         output_format: std::env::var("PLAYG_OUTPUT_FORMAT").unwrap_or_else(|_| "json".to_string()),
         verbose: std::env::var("PLAYG_VERBOSE").is_ok(),
         continue_on_error: std::env::var("PLAYG_CONTINUE_ON_ERROR").is_ok(),
-        timeout: std::env::var("PLAYG_TIMEOUT")
-            .ok()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(30),
+        timeout: std::env::var("PLAYG_TIMEOUT").ok().and_then(|s| s.parse().ok()).unwrap_or(30),
     };
 
     Ok(info)
@@ -166,7 +163,8 @@ _playg_completions() {
 }
 
 complete -F _playg_completions playg
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_zsh_completions() -> String {
@@ -195,7 +193,8 @@ _playg() {
 }
 
 _playg "$@"
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_fish_completions() -> String {
@@ -216,7 +215,8 @@ complete -c playg -n '__fish_use_subcommand' -a 'obs' -d 'Observability features
 complete -c playg -n '__fish_use_subcommand' -a 'integ' -d 'Integration features'
 complete -c playg -n '__fish_use_subcommand' -a 'release' -d 'Release management'
 complete -c playg -n '__fish_use_subcommand' -a 'system' -d 'System commands'
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_powershell_completions() -> String {
@@ -235,7 +235,8 @@ Register-ArgumentCompleter -Native -CommandName playg -ScriptBlock {
         [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
     }
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 fn generate_elvish_completions() -> String {
@@ -266,5 +267,6 @@ edit:completion:arg-completer[playg] = [@words]{
 
     keys $completions | each [c]{ cand $c $completions[$c] }
 }
-"#.to_string()
+"#
+    .to_string()
 }

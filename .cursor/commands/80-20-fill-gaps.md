@@ -40,18 +40,18 @@ Step 1: 80/20 Scan → Step 2: Identify Incomplete Capabilities → Step 3: Fini
 **Action**: Use full context window to scan codebase efficiently.
 
 **Scan targets**:
-- **Source files** (`src/**/*.rs`) - Look for incomplete implementations
-- **Test files** (`tests/**/*.rs`) - Look for missing test coverage
+- **Source files** (`rust/**/*.rs`, `src/**/*.rs`) - Look for incomplete implementations
+- **Test files** (`tests/**/*.rs`, `rust/**/tests/**/*.rs`) - Look for missing test coverage
 - **Examples** (`examples/**/*.rs`) - Look for incomplete examples
-- **Configuration** (`Cargo.toml`, `Makefile.toml`) - Look for incomplete features
+- **Configuration** (`Cargo.toml`, `Makefile`) - Look for incomplete features
 
 **Action**: Scan systematically
 
 ```bash
 # Quick scan for incomplete capabilities
-grep -r "TODO\|FIXME\|unimplemented\|incomplete\|partial" src/ --include="*.rs"
-grep -r "mod tests" src/ | wc -l  # Count modules with tests
-find src -name "*.rs" | wc -l     # Count total modules
+grep -r "TODO\|FIXME\|unimplemented\|incomplete\|partial" rust/ --include="*.rs"
+grep -r "mod tests" rust/ | wc -l  # Count modules with tests
+find rust -name "*.rs" | wc -l     # Count total modules
 ```
 
 **Tool usage**: Use `grep`, `codebase_search`, `read_file` to quickly identify incomplete capabilities.
@@ -199,9 +199,9 @@ pub fn build_json(self) -> Result<Value, serde_json::Error> {
 - [ ] Type safety complete
 - [ ] Validation complete
 - [ ] Tests complete
-- [ ] All tests pass: `cargo make test`
-- [ ] Code compiles: `cargo make check`
-- [ ] Linting passes: `cargo make lint`
+- [ ] All tests pass: `make test-rust`
+- [ ] Code compiles: `make check`
+- [ ] Linting passes: `make lint-rust`
 
 #### 3.3: Batch Completion
 
@@ -232,24 +232,23 @@ pub fn build_json(self) -> Result<Value, serde_json::Error> {
 **Action**: Ensure capabilities work as intended.
 
 **Validation steps**:
-1. **Compile** - `cargo make check`
-2. **Test** - `cargo make test`
-3. **Lint** - `cargo make lint`
-4. **Format** - `cargo make fmt`
+1. **Compile** - `make check`
+2. **Test** - `make test-rust`
+3. **Lint** - `make lint-rust`
+4. **Format** - `make fmt`
 5. **Integration** - Run integration tests if applicable
 
 **Action**: Run validation
 
 ```bash
 # Full validation
-cargo make check
-cargo make test
-cargo make lint
-cargo make fmt
+make check
+make test-rust
+make lint-rust
+make fmt
 
 # Verify specific capabilities
-cargo test --lib builders::tests::test_build_json_error
-cargo test --lib guards::tests::test_validated_run_compile_error
+make test-rust  # Run specific tests via test filters if needed
 ```
 
 #### 4.2: Capability Validation

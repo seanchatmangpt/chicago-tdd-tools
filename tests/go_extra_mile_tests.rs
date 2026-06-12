@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! Unit tests for "Go the Extra Mile" implementations with OTEL/Weaver validation
 //!
 //! **Poka-yoke**: These are UNIT tests, not integration tests. They test types,
@@ -14,11 +26,12 @@ mod tests {
     use chicago_tdd_tools::assert_eq_msg;
     use chicago_tdd_tools::core::builders::TestDataBuilder;
     use chicago_tdd_tools::test;
-    // **Root Cause Fix**: assert_ok! is exported with #[macro_export], so it's available at crate root
-    // without import. Importing it causes "unused import" error. Use assert_ok!() directly.
     use chicago_tdd_tools::{AssertionBuilder, GenericTestDataBuilder, ValidatedTestDataBuilder};
 
     // **Poka-yoke**: Import validators only where used (conditionally compiled)
+    #[cfg(feature = "otel")]
+    use chicago_tdd_tools::assert_ok;
+
     #[cfg(feature = "otel")]
     use chicago_tdd_tools::observability::otel::{MetricValidator, OtelTestHelper, SpanValidator};
 

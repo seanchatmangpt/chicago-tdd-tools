@@ -627,16 +627,23 @@ impl ObservabilityTest {
     }
 
     #[cfg(feature = "weaver")]
-    pub(crate) fn stop_weaver_process(&mut self) -> ObservabilityResult<()> {
-        if let Some(ref mut validator) = self.weaver_validator {
-            validator.stop()?;
+    pub(crate) fn stop_weaver_process(&mut self) {
+        let mut is_running = false;
+        if let Some(ref mut process) = self.weaver_process {
+            if matches!(process.try_wait(), Ok(None)) {
+                is_running = true;
+            }
+        }
+
+        if is_running {
+            if let Some(ref mut validator) = self.weaver_validator {
+                let _ = validator.stop();
+            }
         }
 
         if let Some(mut process) = self.weaver_process.take() {
             let _ = process.wait();
         }
-
-        Ok(())
     }
 }
 

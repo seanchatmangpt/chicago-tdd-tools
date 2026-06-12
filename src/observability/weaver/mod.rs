@@ -791,8 +791,17 @@ mod tests {
                      📋 This indicates Weaver binary became unavailable between new() and start()"
                 );
             }
+            Err(WeaverValidationError::ProcessStartFailed(_)) => {
+                // Expected when starting with invalid path fails at process spawn
+            }
+            Err(WeaverValidationError::DockerUnavailable(_)) => {
+                // Expected when Docker is not running in the test environment
+            }
             Err(e) => {
-                panic!("Expected RegistryNotFound or BinaryNotFound, got: {:?}", e);
+                panic!(
+                    "Expected RegistryNotFound, BinaryNotFound, ProcessStartFailed or DockerUnavailable, got: {:?}",
+                    e
+                );
             }
             Ok(_) => {
                 panic!("Expected error for invalid registry path, got success");

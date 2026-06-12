@@ -59,7 +59,6 @@ pub fn theorems() -> Vec<TheoremMetadata> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     /// Theorem 3.1: Type State Pattern for AAA Enforcement
     ///
@@ -108,6 +107,7 @@ mod tests {
                 }
             }
 
+            #[allow(dead_code)]
             fn result(&self) -> i32 {
                 self.data
             }
@@ -171,6 +171,7 @@ mod tests {
     fn test_const_generics() {
         // Array with const generic length
         struct ValidatedArray<const N: usize> {
+            #[allow(dead_code)]
             data: [i32; 4], // Fixed size for this test
         }
 
@@ -199,6 +200,7 @@ mod tests {
         where
             [(); N]: Sized, // Require N is const
         {
+            #[allow(dead_code)]
             data: Vec<i32>,
         }
 
@@ -227,7 +229,9 @@ mod tests {
     fn test_invalid_states_unrepresentable() {
         // Valid test state with invariants encoded in type
         struct ValidTestState {
+            #[allow(dead_code)]
             fixture_count: usize,
+            #[allow(dead_code)]
             test_data_count: usize,
             // Invariant: fixture_count > 0 && test_data_count > 0
         }
@@ -330,7 +334,7 @@ mod tests {
                 }
 
                 // Simulate recursive call (depth increased)
-                let mut guard = RecursionGuard {
+                let guard = RecursionGuard {
                     depth: self.depth + 1,
                 };
 

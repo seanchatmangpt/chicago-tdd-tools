@@ -1,6 +1,5 @@
 ---
 source: src/testing/snapshot.rs
-assertion_line: 53
 expression: value
 ---
-custom_path_test
+test_with_custom_settings

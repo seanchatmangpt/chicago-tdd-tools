@@ -505,30 +505,60 @@ impl WeaverLiveCheck {
     /// Returns an error if stopping the process fails.
     #[cfg(feature = "weaver")]
     pub fn stop(&self) -> Result<(), String> {
-        use reqwest::blocking::Client;
+        use std::io::{Read, Write};
+        use std::net::{TcpStream, ToSocketAddrs};
         use std::time::Duration;
 
-        let client = Client::builder()
-            .timeout(Duration::from_secs(5))
-            .build()
-            .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+        let ip_addr =
+            if self.otlp_grpc_address == "0.0.0.0" { "127.0.0.1" } else { &self.otlp_grpc_address };
+        let addr_str = format!("{ip_addr}:{}", self.admin_port);
+        let socket_addr = addr_str
+            .to_socket_addrs()
+            .map_err(|e| format!("Failed to resolve address {addr_str}: {e}"))?
+            .next()
+            .ok_or_else(|| format!("No addresses resolved for {addr_str}"))?;
 
-        // Weaver CLI uses /stop endpoint (not /shutdown)
-        let stop_url = format!("http://{}:{}/stop", self.otlp_grpc_address, self.admin_port);
+        let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(5))
+            .map_err(|e| format!("Failed to connect to Weaver admin at {addr_str}: {e}"))?;
 
-        match client.post(&stop_url).send() {
-            Ok(response) => {
-                if response.status().is_success() {
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .map_err(|e| format!("Failed to set read timeout: {e}"))?;
+        stream
+            .set_write_timeout(Some(Duration::from_secs(5)))
+            .map_err(|e| format!("Failed to set write timeout: {e}"))?;
+
+        let request = format!(
+            "POST /stop HTTP/1.1\r\n\
+             Host: {addr_str}\r\n\
+             Connection: close\r\n\
+             Content-Length: 0\r\n\r\n"
+        );
+
+        stream
+            .write_all(request.as_bytes())
+            .map_err(|e| format!("Failed to send stop request: {e}"))?;
+
+        let mut response = String::new();
+        match stream.read_to_string(&mut response) {
+            Ok(_) => {
+                if response.is_empty()
+                    || response.contains("HTTP/1.1 2")
+                    || response.contains("HTTP/1.0 2")
+                {
                     Ok(())
                 } else {
                     Err(format!(
-                        "Weaver stop request returned status {}: {}",
-                        response.status(),
-                        response.text().unwrap_or_default()
+                        "Weaver stop request returned unexpected response: {}",
+                        response.lines().next().unwrap_or("")
                     ))
                 }
             }
-            Err(e) => Err(format!("Failed to send stop request to {stop_url}: {e}")),
+            Err(_) => {
+                // If it failed to read because the server shut down and closed the connection,
+                // that is expected.
+                Ok(())
+            }
         }
     }
 

@@ -1,6 +1,17 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 // Performance benchmarks for validation functionality
 // Tests the performance of validation guards and coverage tracking
-
 #![allow(missing_docs)]
 
 use chicago_tdd_tools::validation::guards::{GuardValidator, ValidatedBatch, ValidatedRun};

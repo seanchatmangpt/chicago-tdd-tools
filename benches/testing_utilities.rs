@@ -1,6 +1,17 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 // Performance benchmarks for mutation testing functionality
 // Tests the performance of mutation operators and detection
-
 #![allow(missing_docs)]
 
 use chicago_tdd_tools::testing::mutation::{MutationOperator, MutationTester};

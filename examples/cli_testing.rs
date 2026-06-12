@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # CLI Testing Example - Comprehensive Guide
 //!
 //! Demonstrates CLI testing using `trycmd` for Chicago TDD. CLI testing uses golden files
@@ -68,8 +80,6 @@
 //! - **Output Verification**: Assertions for command output
 //! - **Environment Isolation**: Automatic environment restoration
 
-#[cfg(feature = "cli-testing")]
-use chicago_tdd_tools::cli::CliTest;
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
 

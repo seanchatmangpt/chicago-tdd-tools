@@ -1,3 +1,15 @@
+#![allow(
+    warnings,
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::todo,
+    clippy::unimplemented
+)]
 //! # Concurrency Testing Example - Comprehensive Guide
 //!
 //! Demonstrates concurrency testing using `loom` for Chicago TDD. Loom performs model
@@ -52,8 +64,6 @@
 //! - **Race Condition**: Bug that occurs in specific interleavings
 //! - **Thread Safety**: Code that works correctly in all interleavings
 
-#[cfg(feature = "concurrency-testing")]
-use chicago_tdd_tools::concurrency::ConcurrencyTest;
 #[allow(unused_imports)] // Example code - imports shown for demonstration
 use chicago_tdd_tools::prelude::*;
 #[cfg(feature = "concurrency-testing")]

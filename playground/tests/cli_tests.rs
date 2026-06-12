@@ -580,7 +580,9 @@ test!(test_system_completions_bash_returns_script, {
     let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
 
     // Should contain bash completion markers
-    assert!(stdout.contains("bash") || stdout.contains("completion") || stdout.contains("COMPREPLY"));
+    assert!(
+        stdout.contains("bash") || stdout.contains("completion") || stdout.contains("COMPREPLY")
+    );
 });
 
 test!(test_system_completions_invalid_shell_returns_error, {
@@ -745,7 +747,10 @@ test!(test_jtbd_workflow_validation_check_execution, {
     assert!(output.status.success());
     let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
-    assert!(json["features"].as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+    assert!(json["features"]
+        .as_array()
+        .expect("Not an array")
+        .contains(&Value::String("jtbd".to_string())));
 
     // Act & Assert: Step 2 - List available checks
     let mut cmd = get_playg_binary();
@@ -754,7 +759,10 @@ test!(test_jtbd_workflow_validation_check_execution, {
     assert!(output.status.success());
     let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
-    assert!(json.as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+    assert!(json
+        .as_array()
+        .expect("Not an array")
+        .contains(&Value::String("jtbd".to_string())));
 
     // Act & Assert: Step 3 - Execute JTBD validation check
     let mut cmd = get_playg_binary();
@@ -764,17 +772,17 @@ test!(test_jtbd_workflow_validation_check_execution, {
     let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("Invalid JSON");
     assert!(json.get("executed").is_some());
-    assert!(json["executed"].as_array().expect("Not an array").contains(&Value::String("jtbd".to_string())));
+    assert!(json["executed"]
+        .as_array()
+        .expect("Not an array")
+        .contains(&Value::String("jtbd".to_string())));
 });
 
 test!(test_jtbd_workflow_complete_feature_demo, {
     // Arrange: Simulate complete feature demonstration workflow
     // This tests the workflow: discover -> list -> execute
 
-    let feature_tests = vec![
-        ("core", "fixtures"),
-        ("test", "gen"),
-    ];
+    let feature_tests = vec![("core", "fixtures"), ("test", "gen")];
 
     for (noun, example) in feature_tests {
         // Step 1: Discover features
