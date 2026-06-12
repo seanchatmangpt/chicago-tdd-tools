@@ -122,11 +122,11 @@ This release extends the μ-kernel verification substrate with production-grade 
 - RDF integration is optional (use `rdf` feature or playground)
 
 ### See Also
-- [Phase 1 Summary](../../PHASE_1_SUMMARY.md)
-- [Phase 2 Summary](../../PHASE_2_SUMMARY.md)
-- [Phase 3 Summary](../../PHASE_3_SUMMARY.md)
-- [Phase 4 Summary](../../PHASE_4_SUMMARY.md)
-- [RDF Integration Summary](../../RDF_INTEGRATION_SUMMARY.md)
+- [Phase 1 Summary](../archive/PHASE_1_SUMMARY.md)
+- [Phase 2 Summary](../archive/PHASE_2_SUMMARY.md)
+- [Phase 3 Summary](../archive/PHASE_3_SUMMARY.md)
+- [Phase 4 Summary](../archive/PHASE_4_SUMMARY.md)
+- [RDF Integration Summary](../process/RDF_INTEGRATION_SUMMARY.md)
 - [Release Notes](RELEASE_NOTES_v1.4.0.md)
 
 ## [1.3.0] - 2025-11-16
@@ -231,7 +231,7 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - Relaxed configs available for test environments while maintaining strict production enforcement
 
 ### See Also
-- [Feature Documentation](../docs/features/HYPER_ADVANCED_MICROKERNEL.md)
+- [Feature Documentation](../features/HYPER_ADVANCED_MICROKERNEL.md)
 - [Integration Tests](../../tests/hyper_advanced_integration.rs)
 - [Example Program](../../examples/hyper_advanced_microkernel.rs)
 - [Release Notes](RELEASE_NOTES_v1.3.0.md)

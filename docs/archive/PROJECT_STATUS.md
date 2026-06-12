@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Chatman Equation Project - Current Status
 
 **Date:** November 16, 2025

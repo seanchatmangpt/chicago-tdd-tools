@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Assertion Helpers
 //!
 //! Provides assertion utilities following Chicago TDD principles.
@@ -99,13 +101,28 @@ where
 // 2nd IDEA: Go bigger (80/20) - Generic assertion builder
 // ============================================================================
 
-/// Generic assertion builder for composable assertions
+/// > 📚 Reference
+///
+/// Generic assertion builder for composable assertions.
 ///
 /// **2nd Idea**: Generic builder that works with any type and allows composing multiple assertions.
 /// This provides 80% more value (works for all types, composable) with minimal effort.
 ///
 /// **Telemetry**: Basic OTEL spans (if otel feature enabled)
 /// **Validation**: OTEL span validation
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::assertions::AssertionBuilder;
+///
+/// let value = 42;
+/// let builder = AssertionBuilder::new(value)
+///     .assert_eq(&42)
+///     .assert_that(|v| *v > 0);
+///
+/// assert_eq!(builder.into_value(), 42);
+/// ```
 pub struct AssertionBuilder<T> {
     value: T,
     #[cfg(feature = "otel")]
@@ -235,13 +252,26 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
 // 3rd IDEA: Maximum value - Compile-time validated assertions + OTEL + Weaver
 // ============================================================================
 
-/// Compile-time validated assertion with OTEL/Weaver validation
+/// > 📚 Reference
+///
+/// Compile-time validated assertion with OTEL/Weaver validation.
 ///
 /// **3rd Idea**: Type-level validated assertion that prevents invalid states at compile time.
 /// Maximum value: Type-safe, validated, prevents entire class of errors.
 ///
 /// **Telemetry**: Full OTEL spans and metrics
 /// **Validation**: OTEL span validation + Weaver live-check schema validation
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use chicago_tdd_tools::assertions::ValidatedAssertion;
+///
+/// // Create a validated assertion (requires "otel" feature for methods)
+/// let assertion = ValidatedAssertion::new(42, "validate_port");
+/// let assertion = assertion.assert_that(|v| *v > 0);
+/// assert_eq!(assertion.into_value(), 42);
+/// ```
 pub struct ValidatedAssertion<T> {
     // Poka-Yoke: Value is accessed via into_value() - not dead code
     #[allow(dead_code, reason = "Value is accessed via into_value() method")]

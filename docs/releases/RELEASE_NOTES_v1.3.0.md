@@ -459,7 +459,7 @@ Developed by the KNHK team with contributions from the Rust testing community.
 
 ## See Also
 
-- [Feature Documentation](../docs/features/HYPER_ADVANCED_MICROKERNEL.md)
+- [Feature Documentation](../features/HYPER_ADVANCED_MICROKERNEL.md)
 - [Integration Tests](../../tests/hyper_advanced_integration.rs)
 - [Example Program](../../examples/hyper_advanced_microkernel.rs)
 - [Changelog](CHANGELOG.md#130---2025-11-16)

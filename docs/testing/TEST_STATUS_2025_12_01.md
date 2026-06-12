@@ -138,7 +138,7 @@ cargo make release-validate
 
 ## Documentation References
 
-- **Detailed Analysis:** [TEST_VERIFICATION_RESULTS.md](../../TEST_VERIFICATION_RESULTS.md)
+- **Detailed Analysis:** [TEST_VERIFICATION_RESULTS.md](./TEST_VERIFICATION_RESULTS.md)
 - **Getting Started:** [GETTING_STARTED.md](../getting-started/GETTING_STARTED.md)
 - **Test Guide:** [USER_GUIDE.md](../getting-started/USER_GUIDE.md)
 - **CI/CD Process:** [FMEA_TESTS_BUILD_ACTIONS.md](../process/FMEA_TESTS_BUILD_ACTIONS.md)

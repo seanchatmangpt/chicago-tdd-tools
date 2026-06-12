@@ -1,16 +1,18 @@
 # Pattern 11: Zero-Cost Abstractions
 
-> 🔧 **HOW-TO** | Use generics and macros instead of runtime polymorphism
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Runtime polymorphism slows hot paths; duplicating code sacrifices readability |
-| **Core Solution** | Use generics, const generics, and macros; compile to identical machine code as bespoke implementations |
-| **When to Use** | ✅ Performance-critical code, ✅ Type-level abstractions, ✅ Macro-driven APIs |
-| **When NOT to Use** | ❌ Infrequently called code (use simple trait objects), ❌ Heterogeneous collections (use trait objects) |
-| **Difficulty** | Medium - Requires understanding generics and const generics |
+| **Problem** | Runtime polymorphism slows hot paths; duplicating code sacrifices readability |
+| **Solution** | Use generics, const generics, and macros to specializing code at compile time |
+| **When to Use** | Performance-critical code, type-level abstractions, macro-driven APIs |
+| **When NOT to Use** | Infrequently called code (use simple trait objects), heterogeneous collections (use trait objects) |
+| **Trade-offs** | Increases compile time and binary size (monomorphization bloat) but maximizes performance |
+| **Complexity** | Medium |
+| **Real-World Example** | [src/validation/performance.rs](file:///Users/sac/chicago-tdd-tools/src/validation/performance.rs) |
 
 ## The Problem
 
@@ -64,10 +66,10 @@ pub fn process<T, H: Handler<T>>(item: &H) {
 
 **Why**: Generics compile to specialized code per type. Trait objects require runtime dispatch.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/validation/performance/mod.rs`
-Purpose: Shows generic `measure_ticks` that specializes per operation
+- **Code location**: [src/validation/performance.rs](file:///Users/sac/chicago-tdd-tools/src/validation/performance.rs)
+- **Explanation**: Employs generic specialization in `measure_ticks` to capture execution cycles without runtime vtable lookups.
 
 ## Related Patterns
 

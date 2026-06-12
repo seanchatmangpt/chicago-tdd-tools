@@ -1,6 +1,6 @@
 # Getting Started: 25-Minute Tutorial
 
-> 🎓 **TUTORIAL** | Learn the basics of Chicago TDD in 25 minutes
+> 🎓 Tutorial | Learn the basics of Chicago TDD in 25 minutes
 
 This tutorial teaches you everything you need to write your first test with Chicago TDD Tools. No prior knowledge required.
 
@@ -20,7 +20,9 @@ Chicago TDD uses the `test!` macro for declaring tests:
 use chicago_tdd_tools::prelude::*;
 
 test!(my_first_test, {
-    // Test code goes here
+    let a = 2;
+    let b = 3;
+    assert_eq!(a + b, 5);
 });
 ```
 
@@ -142,12 +144,13 @@ You can save snapshots of your test data:
 test!(test_with_snapshots, {
     let fixture = TestFixture::new()?;
 
-    // ... do some work ...
+    // Perform a calculation
+    let total_items = 2 + 3;
 
     // Capture the current state
     let state = HashMap::from([
         ("step".to_string(), "completed".to_string()),
-        ("items_processed".to_string(), "5".to_string()),
+        ("items_processed".to_string(), total_items.to_string()),
     ]);
     fixture.capture_snapshot(state);
 
@@ -213,7 +216,9 @@ test!(test_fluent_style, {
         .with_var("third", "!")
         .build_json()?;
 
-    // Clean, readable syntax
+    assert_eq!(data["first"], "hello");
+    assert_eq!(data["second"], "world");
+    assert_eq!(data["third"], "!");
 });
 ```
 
@@ -281,7 +286,9 @@ test!(complete_example, {
 
 ```rust
 // Basic test
-test!(test_name, { /* code */ });
+test!(test_name, {
+    assert_eq!(1, 1);
+});
 
 // Fixtures
 let fixture = TestFixture::new()?;

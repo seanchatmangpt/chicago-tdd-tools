@@ -1,16 +1,18 @@
 # Pattern 9: Single Source of Truth
 
-> 🔧 **HOW-TO** | Centralize constants to prevent drift
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Duplicate constants drift; teams change one copy and forget others; inconsistent behavior |
-| **Core Solution** | Centralize constants in owning module; re-export when needed |
-| **When to Use** | ✅ Timeouts, ✅ Limits, ✅ Feature lists, ✅ Configuration matrices |
-| **When NOT to Use** | ❌ Runtime configuration (use builders), ❌ Per-test overrides (parameterize instead) |
-| **Difficulty** | Low - Simple organization pattern |
+| **Problem** | Duplicate constants drift; teams change one copy and forget others; inconsistent behavior |
+| **Solution** | Centralize constants in owning module; re-export when needed |
+| **When to Use** | Timeouts, limits, feature lists, configuration matrices |
+| **When NOT to Use** | Runtime configuration (use builders), per-test overrides (parameterize instead) |
+| **Trade-offs** | Cross-module dependencies are explicit, but guarantees consistency across all components |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs) |
 
 ## The Problem
 
@@ -68,10 +70,10 @@ use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
 
 **Why**: "Same value" isn't the same source. Accidental changes to one copy create bugs in unexpected places.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/macros/test.rs`
-Purpose: Single source for all test timeout constants
+- **Code location**: [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs)
+- **Explanation**: Defines the default test timeouts in one file, which are then re-exported at the crate root and imported across modules.
 
 ## Related Patterns
 

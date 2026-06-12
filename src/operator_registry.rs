@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Operator Registry - Chatman Equation YAWL Patterns
 //!
 //! Registry of all 43 YAWL workflow control patterns, each characterized by
@@ -13,7 +15,33 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Operator Descriptor - complete specification of a workflow operator
+/// > 📚 Reference
+///
+/// Operator Descriptor - complete specification of a workflow operator.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::operator_registry::{OperatorDescriptor, OperatorProperties, GuardType};
+///
+/// let descriptor = OperatorDescriptor::new(
+///     "sequence_op",
+///     1,
+///     "Sequence",
+///     "Basic Control Flow",
+///     OperatorProperties {
+///         deterministic: true,
+///         idempotent: false,
+///         type_preserving: true,
+///         bounded: true,
+///     },
+///     1_000_000_000,
+///     vec![GuardType::Chronology],
+/// );
+///
+/// assert_eq!(descriptor.hook_id, "sequence_op");
+/// assert_eq!(descriptor.satisfies_all_properties(), false); // idempotent is false
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OperatorDescriptor {
     /// Unique hook ID (used in tests)
@@ -41,7 +69,30 @@ pub struct OperatorDescriptor {
     pub slo: Option<String>,
 }
 
-/// The four properties of the Chatman Equation
+/// > 📚 Reference
+///
+/// The four properties of the Chatman Equation.
+///
+/// Characterizes workflow operator behavior under:
+/// - Determinism
+/// - Idempotence
+/// - Type Preservation
+/// - Boundedness
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::operator_registry::OperatorProperties;
+///
+/// let properties = OperatorProperties {
+///     deterministic: true,
+///     idempotent: true,
+///     type_preserving: true,
+///     bounded: true,
+/// };
+///
+/// assert!(properties.deterministic);
+/// ```
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[allow(clippy::struct_excessive_bools)] // Four bools represent the four Chatman properties (intentional design)
 pub struct OperatorProperties {
@@ -58,7 +109,18 @@ pub struct OperatorProperties {
     pub bounded: bool,
 }
 
-/// Types of guards that can be applied to operators
+/// > 📚 Reference
+///
+/// Types of guards that can be applied to operators.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::operator_registry::GuardType;
+///
+/// let guard = GuardType::Legality;
+/// assert_eq!(format!("{}", guard), "Legality");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GuardType {
     /// Prevents invalid state transitions
@@ -156,7 +218,19 @@ impl OperatorDescriptor {
     }
 }
 
-/// Global operator registry containing all YAWL patterns
+/// > 📚 Reference
+///
+/// Global operator registry containing all YAWL patterns.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::operator_registry::OperatorRegistry;
+///
+/// let registry = OperatorRegistry::new();
+/// let op = registry.get_operator("sequence_op");
+/// assert!(op.is_some());
+/// ```
 pub struct OperatorRegistry {
     operators: HashMap<String, OperatorDescriptor>,
 }
@@ -513,7 +587,19 @@ use std::sync::OnceLock;
 
 static REGISTRY: OnceLock<OperatorRegistry> = OnceLock::new();
 
-/// Get the global operator registry
+/// > 📚 Reference
+///
+/// Get the global operator registry singleton.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::operator_registry::global_registry;
+///
+/// let registry = global_registry();
+/// let op = registry.get_operator("sequence_op");
+/// assert!(op.is_some());
+/// ```
 pub fn global_registry() -> &'static OperatorRegistry {
     REGISTRY.get_or_init(OperatorRegistry::new)
 }

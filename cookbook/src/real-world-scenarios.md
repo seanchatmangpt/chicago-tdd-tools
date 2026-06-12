@@ -1,5 +1,7 @@
 # Real-World Scenarios: Patterns in Action
 
+> 🔧 How-to | Real-world scenarios combining multiple patterns
+
 This guide shows how patterns combine to solve actual problems you'll encounter.
 
 > **Want to learn patterns in order?** See [Pattern Dependencies & Learning Order](pattern-dependencies.md) for recommended learning paths.

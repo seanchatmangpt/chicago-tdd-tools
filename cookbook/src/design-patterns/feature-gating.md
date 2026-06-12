@@ -1,16 +1,18 @@
 # Pattern 19: Feature Gate Slices
 
-> 🔧 **HOW-TO** | Group features into curated slices to reduce bloat and build time
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Enabling all features bloats build time and dependencies; accidental disables break tests silently |
-| **Core Solution** | Group related features into named slices (testing-extras, observability-full); cfg-gate APIs |
-| **When to Use** | ✅ Optional capabilities, ✅ Heavy dependencies, ✅ Multi-feature combinations |
-| **When NOT to Use** | ❌ Essential features (put in base), ❌ Too many slices (> 5, becomes confusing) |
-| **Difficulty** | Low - Pure configuration |
+| **Problem** | Enabling all features bloats build times and dependencies; accidental disables break tests silently |
+| **Solution** | Group related features into named slices and conditionally compile APIs using cfg attributes |
+| **When to Use** | Optional capabilities, heavy dependencies, multi-feature combinations |
+| **When NOT to Use** | Essential features (put in base), too many slices (keep under 5) |
+| **Trade-offs** | Adds configuration overhead, but keeps compilations fast and dependencies lightweight |
+| **Complexity** | Low |
+| **Real-World Example** | [Cargo.toml](file:///Users/sac/chicago-tdd-tools/Cargo.toml) |
 
 ## The Problem
 
@@ -79,10 +81,10 @@ observability-full = ["otel", "weaver"]
 
 **Why**: Too many choices is paralyzing. Curated slices guide users to sensible combinations.
 
-## Codebase Example
+## Real-World Example
 
-File: `Cargo.toml`
-Purpose: Defines feature slices and their contents
+- **Code location**: [Cargo.toml](file:///Users/sac/chicago-tdd-tools/Cargo.toml)
+- **Explanation**: Groups fine-grained features under convenient slices such as `testing-extras` and `integration-full`.
 
 ## Related Patterns
 

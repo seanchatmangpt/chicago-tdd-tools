@@ -4,7 +4,7 @@
 
 Chicago TDD Tools: Generic testing framework base layer. Extensible for domain-specific needs. Reusable across projects. Maintains consistency, avoids duplication.
 
-> See the [Pattern Cookbook](../cookbook/src/README.md) for Alexander-style documentation of the architectural and design patterns summarized here.
+> See the [Pattern Cookbook](../../cookbook/src/README.md) for Alexander-style documentation of the architectural and design patterns summarized here.
 
 ## Architecture
 

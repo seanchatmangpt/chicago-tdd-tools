@@ -1,5 +1,7 @@
 # Chicago TDD Tools - Application Guide
 
+> 💡 Explanation | Overview of the Chicago TDD application guide
+
 Welcome to the practical application guide for Chicago TDD Tools! This guide focuses on **real-world usage patterns** and practical techniques for testing Rust applications.
 
 ## What You'll Learn
@@ -30,7 +32,7 @@ This guide covers:
 
 ## Quick Links
 
-- [Pattern Cookbook](../cookbook/README.md) - Alexander-style patterns reference
+- [Pattern Cookbook](../../cookbook/src/README.md) - Alexander-style patterns reference
 - [API Reference](https://docs.rs/chicago-tdd-tools/) - Complete API documentation
 - [GitHub Repository](https://github.com/seanchatmangpt/chicago-tdd-tools)
 

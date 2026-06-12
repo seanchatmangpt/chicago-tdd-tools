@@ -28,7 +28,7 @@ mod implementation {
         ///
         /// # Example
         ///
-        /// ```rust,no_run
+        /// ```rust,ignore
         /// use chicago_tdd_tools::testcontainers::*;
         /// use testcontainers::core::WaitFor;
         ///

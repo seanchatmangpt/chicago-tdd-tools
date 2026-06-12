@@ -177,9 +177,20 @@
                     <main>
                         <h1 id="otel-instrumentation"><a class="header" href="#otel-instrumentation">OTEL Instrumentation</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add OpenTelemetry observability to code</p>
+<p>🔧 How-to | Instrument and verify OpenTelemetry spans and metrics</p>
 </blockquote>
 <p>OpenTelemetry instrumentation provides observability into your operations.</p>
+<h2 id="quick-reference-otel-api"><a class="header" href="#quick-reference-otel-api">Quick Reference: OTEL API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Method / Field</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>Span</code></td><td><code>new_active()</code></td><td><code>context, name, start_time, attributes, events, status</code></td><td><code>Span</code></td><td>Create an active span</td></tr>
+<tr><td><code>Span</code></td><td><code>complete()</code></td><td><code>end_time</code></td><td><code>Result&lt;(), Error&gt;</code></td><td>Complete the span</td></tr>
+<tr><td><code>Span</code></td><td><code>status</code></td><td><code>SpanStatus</code> value</td><td>N/A</td><td>Status of the span</td></tr>
+<tr><td><code>Metric</code></td><td><code>name</code></td><td><code>String</code></td><td>N/A</td><td>Name of the metric</td></tr>
+<tr><td><code>Metric</code></td><td><code>value</code></td><td><code>MetricValue</code> value</td><td>N/A</td><td>Value of the metric</td></tr>
+<tr><td><code>SpanValidator</code></td><td><code>new()</code></td><td>None</td><td><code>SpanValidator</code></td><td>Create a new validator</td></tr>
+<tr><td><code>SpanValidator</code></td><td><code>validate()</code></td><td><code>&amp;Span</code></td><td><code>Result&lt;(), ValidationError&gt;</code></td><td>Validate span attributes</td></tr>
+</tbody></table>
+</div>
 <h2 id="creating-spans"><a class="header" href="#creating-spans">Creating Spans</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

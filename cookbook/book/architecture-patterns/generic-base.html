@@ -176,35 +176,97 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-6-generic-base-layer"><a class="header" href="#pattern-6-generic-base-layer">Pattern 6: Generic Base Layer</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You want a reusable testing foundation that can support multiple domains without pulling in their dependencies.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>If the base includes domain code, every consumer drags in unused dependencies, slowing builds and introducing coupling. Conversely, a minimal base risks missing essential primitives.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Keep the core crate focused on generic capabilities – fixtures, builders, assertions, macros, state tracking. Expose them through capability modules (<code>core</code>, <code>testing</code>, <code>validation</code>, <code>observability</code>, <code>integration</code>). Ensure modules depend only on the standard library and optional features. Domain-specific abstractions live in downstream crates that compose the base.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Reuse vs. specialization: core must be broadly useful without dictating domain models</li>
-<li>Build time vs. flexibility: optional features load only when needed</li>
-<li>Stability vs. growth: base APIs should be stable; extensions add behavior</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Base layer bloats with domain code; consumers pull unused dependencies and bloat builds</td></tr>
+<tr><td><strong>Solution</strong></td><td>Core = generic only (fixtures, builders, assertions); domain logic in extensions</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Reusable testing libraries, multi-team frameworks, open-source crates</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Single domain (use domain layer directly), monorepos (use capability grouping)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires discipline to separate generic code from domain, but keeps build times fast and dependencies clean</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Medium</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/lib.rs">src/lib.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>If the base layer includes domain code, every consumer pulls unused dependencies, slowing builds and creating tight coupling. If the base is too minimal, each consumer must reinvent the wheel.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Keep the base layer focused on generic testing primitives: fixtures, builders, assertions, macros, state machines. Organize by capability (core, testing, validation, observability, integration). Domain-specific helpers live in extension crates that compose the base layer.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// src/lib.rs
-pub mod core;
-pub mod testing;
-pub mod validation;
-pub mod observability;
-pub mod integration;
+</span>// src/lib.rs - Generic base (no domain)
+pub mod core;          // fixtures, builders, assertions
+pub mod testing;       // property, mutation, snapshots
+pub mod validation;    // guards, coverage
+pub mod observability; // telemetry
+pub mod integration;   // containers
 
 pub use core::{fixture, builders, assertions};
+
+// Note: NO domain code here. Extensions add domain-specific fixtures.
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Base layer has no domain-specific types or constants</li>
+<li><input disabled="" type="checkbox"/>
+All modules depend only on stdlib and optional features</li>
+<li><input disabled="" type="checkbox"/>
+Features are optional (not required for base functionality)</li>
+<li><input disabled="" type="checkbox"/>
+Re-export high-level APIs at the crate root</li>
+<li><input disabled="" type="checkbox"/>
+Extensions compose the base, not copy it</li>
+<li><input disabled="" type="checkbox"/>
+Capability groups are stable (rarely reorganized)</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Adding domain logic to the base layer to save one dependency:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Domain code in base
+pub mod customers {
+    pub struct CustomerFixture { /* ... */ }
+}
+pub mod orders {
+    pub struct OrderFixture { /* ... */ }
+}
+// Now every user of base pulls in customer and order logic
+
+// ✅ RIGHT: Base is generic; domain extensions compose it
+pub mod core { /* fixtures, builders, assertions */ }
+// users create: customers-extension, orders-extension crates
+// that depend on chicago-tdd-tools::core
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Domain logic couples the base to specific use cases. Generic primitives stay stable and reusable.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/lib.rs">src/lib.rs</a></li>
+<li><strong>Explanation</strong>: Re-exports only generic modules (<code>core</code>, <code>testing</code>, <code>validation</code>, <code>observability</code>, <code>integration</code>) with no domain concepts or structures.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 7: Extension Layer</li>
-<li>Pattern 8: Composition Over Duplication</li>
-<li>Pattern 10: Capability Grouping</li>
+<li><strong>Before this</strong>: <a href="composition-over-duplication.html">Pattern 8: Composition</a> (how to compose the base)</li>
+<li><strong>Next</strong>: <a href="extension-layer.html">Pattern 7: Extension Layer</a> (build domain extensions on top)</li>
+<li><strong>Use with</strong>: <a href="capability-groups.html">Pattern 10: Capability Grouping</a> (organize modules)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Generic primitives stay small and reusable. Domain-specific logic lives where it belongs—in extension crates.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Base crate compiles without domain features</li>
+<li><input disabled="" type="checkbox"/>
+No domain-specific builder methods</li>
+<li><input disabled="" type="checkbox"/>
+Extensions are optional imports</li>
+<li><input disabled="" type="checkbox"/>
+Build time is acceptable with/without features</li>
+<li><input disabled="" type="checkbox"/>
+Documentation doesn't mention domain concepts</li>
 </ul>
 
                     </main>

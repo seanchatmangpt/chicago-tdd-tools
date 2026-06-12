@@ -1,3 +1,4 @@
+> 💡 Explanation
 # GitHub Actions Improvements Summary
 
 This document summarizes the comprehensive GitHub Actions improvements made to the chicago-tdd-tools repository.

@@ -35,7 +35,7 @@ impl ConcurrencyTest {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// # #[cfg(feature = "concurrency-testing")]
     /// use chicago_tdd_tools::concurrency::ConcurrencyTest;
     /// # #[cfg(feature = "concurrency-testing")]

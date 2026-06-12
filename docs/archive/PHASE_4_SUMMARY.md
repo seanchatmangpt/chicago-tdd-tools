@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Phase 4: Sector-Grade Reference Stacks
 
 **Status**: ✅ COMPLETE

@@ -1,6 +1,6 @@
 # Error Path Testing
 
-> 🔧 **HOW-TO** | Learn to test failure scenarios thoroughly
+> 🔧 How-to | Test failure scenarios thoroughly
 
 Error paths are where 80% of bugs hide. Chicago TDD emphasizes comprehensive error testing.
 

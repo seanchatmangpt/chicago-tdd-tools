@@ -6,7 +6,7 @@
 //! - Theorem 2.3: Type Preservation (types maintained through lifecycle)
 //! - Theorem 2.4: Boundedness (execution time is measurable and bounded)
 
-use crate::{TheoremMetadata, TestResultType};
+use crate::{TestResultType, TheoremMetadata};
 
 /// Get the complete list of theorems for Chapter 2
 pub fn theorems() -> Vec<TheoremMetadata> {
@@ -138,11 +138,7 @@ mod tests {
             values: Vec<f64>,
         }
 
-        let data = TestData {
-            number: 42,
-            text: "test".to_string(),
-            values: vec![1.0, 2.5, 3.7],
-        };
+        let data = TestData { number: 42, text: "test".to_string(), values: vec![1.0, 2.5, 3.7] };
 
         // Type checks at compile time ensure these accesses return correct types
         let n: i32 = data.number;
@@ -157,8 +153,16 @@ mod tests {
 
         // Verify type metadata
         assert_eq!(std::mem::size_of::<i32>(), 4, "i32 has correct size");
-        assert_eq!(std::mem::size_of::<String>(), std::mem::size_of::<String>(), "String type matches");
-        assert_eq!(std::mem::size_of::<Vec<f64>>(), std::mem::size_of::<Vec<f64>>(), "Vec type matches");
+        assert_eq!(
+            std::mem::size_of::<String>(),
+            std::mem::size_of::<String>(),
+            "String type matches"
+        );
+        assert_eq!(
+            std::mem::size_of::<Vec<f64>>(),
+            std::mem::size_of::<Vec<f64>>(),
+            "Vec type matches"
+        );
     }
 
     /// Theorem 2.4: Boundedness
@@ -208,11 +212,7 @@ mod tests {
         }
 
         // Valid fixture respecting invariant
-        let fixture = BoundedFixture {
-            min: 0,
-            max: 100,
-            value: 50,
-        };
+        let fixture = BoundedFixture { min: 0, max: 100, value: 50 };
 
         // Invariant check: min <= value <= max
         let invariant_holds = fixture.min <= fixture.value && fixture.value <= fixture.max;
@@ -246,10 +246,7 @@ mod tests {
         let _builder2 = Builder2;
 
         // Step 3: Build final result
-        let result = FinalData {
-            name: "Alice".to_string(),
-            age: 30,
-        };
+        let result = FinalData { name: "Alice".to_string(), age: 30 };
 
         // Verify final result is correct type
         assert_eq!(result.name, "Alice");

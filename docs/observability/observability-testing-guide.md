@@ -13,8 +13,8 @@ Observability testing validates that your application:
 | Topic | Guide |
 |-------|-------|
 | **OTEL Basics** | [OTEL & Weaver Guide](./otel-weaver-guide.md) |
-| **Architecture** | [OTEL Integration Patterns](../architecture/otel-integration.md) |
-| **CI/CD** | [OTEL Testing in CI](../ci-cd/otel-testing.md) |
+| **Architecture** | [OTEL Integration Patterns](../../application-guide/src/guides/otel.md) |
+| **CI/CD** | [OTEL Testing in CI](../process/GITHUB_ACTIONS_SUMMARY.md) |
 
 ## Features
 
@@ -148,7 +148,7 @@ fn test_http_request_span() {
 }
 ```
 
-**Learn more**: [HTTP Instrumentation Pattern](./patterns/http-instrumentation.md)
+**Learn more**: [HTTP Instrumentation Pattern](../../cookbook/src/observability-instrumentation.md#pattern-integration-weaver-live-validation)
 
 ### Pattern: Validate Database Call
 
@@ -162,7 +162,7 @@ fn test_database_query_span() {
 }
 ```
 
-**Learn more**: [Database Instrumentation Pattern](./patterns/database-instrumentation.md)
+**Learn more**: [Database Instrumentation Pattern](../../cookbook/src/observability-instrumentation.md#pattern-integration-weaver-live-validation)
 
 ### Pattern: Validate Error Recording
 
@@ -176,7 +176,7 @@ fn test_error_span_with_context() {
 }
 ```
 
-**Learn more**: [Error Instrumentation Pattern](./patterns/error-instrumentation.md)
+**Learn more**: [Error Instrumentation Pattern](../../cookbook/src/observability-instrumentation.md#pattern-integration-weaver-live-validation)
 
 ### Pattern: Distributed Tracing
 
@@ -190,7 +190,7 @@ fn test_trace_correlation() {
 }
 ```
 
-**Learn more**: [Distributed Tracing Pattern](./patterns/distributed-tracing.md)
+**Learn more**: [Distributed Tracing Pattern](../../cookbook/src/observability-instrumentation.md#pattern-integration-otel-validation-no-weaver)
 
 ## Configuration
 
@@ -409,7 +409,7 @@ mod observability_tests {
 
 ### Documentation
 - [OTEL & Weaver Guide](./otel-weaver-guide.md) - Detailed reference
-- [Testing Patterns](./patterns/) - Common patterns
+- [Testing Patterns](../../cookbook/src/observability-instrumentation.md) - Common patterns
 - [API Reference](#) - Full API documentation
 
 ### External
@@ -446,5 +446,5 @@ See [OTEL & Weaver Guide](./otel-weaver-guide.md) for latest patterns.
 
 **Next Steps**:
 1. Read [OTEL & Weaver Guide](./otel-weaver-guide.md)
-2. Try [OTEL Integration Example](../examples/otel_integration.rs)
+2. Try [OTEL Integration Example](../../examples/otel_weaver_testing.rs)
 3. Run integration tests: `cargo make test`

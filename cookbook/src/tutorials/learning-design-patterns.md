@@ -1,6 +1,6 @@
 # Learning Design Patterns: 120-Minute Mastery
 
-> 🎓 **TUTORIAL** | Master the 10 advanced design patterns
+> 🎓 Tutorial
 
 This tutorial guides you through the 10 design patterns that create safe, fast, maintainable systems.
 

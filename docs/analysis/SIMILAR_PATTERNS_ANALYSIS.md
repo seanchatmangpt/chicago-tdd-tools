@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Similar Patterns Analysis - After Macro Import Standardization
 
 ## Summary

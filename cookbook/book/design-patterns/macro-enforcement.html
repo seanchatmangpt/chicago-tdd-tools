@@ -176,43 +176,136 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-20-macro-pattern-enforcement"><a class="header" href="#pattern-20-macro-pattern-enforcement">Pattern 20: Macro Pattern Enforcement</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You need consistent test structure and timeouts without repeating boilerplate or relying on discipline alone.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Developers forget to add timeouts, skip AAA comments, or mix direct <code>#[test]</code> usage with framework macros, leading to drift and inconsistent behavior.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Embed enforcement inside macros. <code>test!</code> injects the AAA skeleton, <code>async_test!</code> and <code>fixture_test!</code> wrap bodies with <code>tokio::time::timeout</code>, and <code>weaver_test!</code> requires the <code>weaver</code> feature. Each macro centralizes best practices so using it guarantees compliance.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Consistency vs. flexibility: macros enforce conventions while allowing custom logic inside</li>
-<li>Zero cost vs. tooling: expansions must stay small and compile quickly</li>
-<li>Guidance vs. noise: failures should point to the missing convention explicitly</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Developers skip timeouts, forget AAA comments, or mix raw test macros; no enforcement mechanism</td></tr>
+<tr><td><strong>Solution</strong></td><td>Embed best practices in macros; using macros guarantees compliance</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Enforcing conventions, centralizing boilerplate, feature requirements</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Optional patterns (don't force), complex macros with large code expansions</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Restricts test flexibility, but guarantees compliance across the entire team without code reviews</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Hard</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs">src/core/macros/test.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Developers forget to add timeouts, skip AAA comments, or use raw <code>#[test]</code> instead of framework macros. Consistency depends on discipline, which fails at scale. No enforcement mechanism.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Embed best practices inside macros. Using the macro guarantees compliance. For example, <code>test!</code> injects AAA comments, <code>async_test!</code> wraps with timeouts, and feature-gated macros require specific features.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[macro_export]
-macro_rules! async_test {
+</span>// Macro that enforces timeouts + AAA structure
+#[macro_export]
+macro_rules! test {
     ($name:ident, $body:block) =&gt; {
-        $crate::async_test_with_timeout!($name, 1, $body);
+        #[test]
+        fn $name() {
+            // Injected: AAA structure  comment
+            // Arrange - Set up test data
+            // Act - Execute the one behavior
+            // Assert - Verify the result
+            $body
+        }
     };
 }
-<span class="boring">}</span></code></pre></pre>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[cfg(not(feature = "otel"))]
+
+// Macro that enforces async + timeout
+#[macro_export]
+macro_rules! async_test {
+    ($name:ident, $body:block) =&gt; {
+        #[tokio::test]
+        async fn $name() {
+            let _guard = tokio::time::timeout(
+                std::time::Duration::from_secs(1),
+                async { $body },
+            ).await;
+        }
+    };
+}
+
+// Macro that enforces feature requirement
+#[cfg(feature = "otel")]
+#[macro_export]
+macro_rules! otel_test {
+    ($name:ident, $body:block) =&gt; {
+        #[test]
+        fn $name() { $body }
+    };
+}
+
+#[cfg(not(feature = "otel"))]
 #[macro_export]
 macro_rules! otel_test {
     ($($tt:tt)*) =&gt; {
-        compile_error!("OTEL testing requires the 'otel' feature. Enable with: --features otel");
+        compile_error!("OTEL tests require --features otel");
     };
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Macros embed best practices (timeouts, AAA structure, feature checks)</li>
+<li><input disabled="" type="checkbox"/>
+Using macro guarantees compliance</li>
+<li><input disabled="" type="checkbox"/>
+Compile errors guide users if feature missing</li>
+<li><input disabled="" type="checkbox"/>
+Macro expansion stays small (&lt; 10 lines)</li>
+<li><input disabled="" type="checkbox"/>
+Macro names clearly indicate purpose (async_test, fixture_test, etc.)</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains what the macro enforces</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Over-engineered macros that try to enforce too much or macros with complex expansions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Macro tries to enforce code structure (impossible)
+macro_rules! test_with_structure {
+    ($name:ident, $arrange:block, $act:block, $assert:block) =&gt; {
+        // Syntax is awkward; users won't use it
+    }
+}
+
+// ✅ RIGHT: Macro enforces framework requirements, not code structure
+macro_rules! async_test {
+    ($name:ident, $body:block) =&gt; {
+        #[tokio::test]
+        async fn $name() {
+            tokio::time::timeout(Duration::from_secs(1), async { $body }).await
+        }
+    };
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Macros are best for enforcing framework requirements (timeouts, features), not code structure.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs">src/core/macros/test.rs</a></li>
+<li><strong>Explanation</strong>: Restricts test definitions to custom macros like <code>test!</code> and <code>fixture_test!</code> that automatically inject timeouts and AAA structure.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 1: AAA Pattern</li>
-<li>Pattern 18: Timeout Defense in Depth</li>
-<li>Pattern 19: Feature Gate Slices</li>
+<li><strong>Before this</strong>: <a href="../testing-patterns/aaa-pattern.html">Pattern 1: AAA Pattern</a> (what to enforce)</li>
+<li><strong>Use with</strong>: <a href="timeout-defense.html">Pattern 18: Timeout Defense</a> (macros enforce timeouts)</li>
+<li><strong>Use with</strong>: <a href="feature-gating.html">Pattern 19: Feature Gates</a> (macros enforce features)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Code using the macro automatically gets best practices. No discipline required.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Core testing macros (test!, async_test!, fixture_test!) enforce timeouts</li>
+<li><input disabled="" type="checkbox"/>
+Feature-gated macros require appropriate features</li>
+<li><input disabled="" type="checkbox"/>
+Macro expansions are small and fast</li>
+<li><input disabled="" type="checkbox"/>
+Error messages guide users to solutions</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains each macro's enforcement</li>
 </ul>
 
                     </main>

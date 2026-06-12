@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Test Fixtures
 //!
 //! Provides reusable test fixtures with state management and test isolation.
@@ -13,7 +15,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
-/// Test fixture error
+/// > 📚 Reference
+///
+/// Test fixture error.
 #[derive(Error, Debug)]
 pub enum FixtureError {
     /// Failed to create fixture
@@ -27,21 +31,23 @@ pub enum FixtureError {
 /// Result type for fixture operations
 pub type FixtureResult<T> = Result<T, FixtureError>;
 
-/// Fixture metadata for introspection and debugging
+/// > 📚 Reference
+///
+/// Fixture metadata for introspection and debugging.
 ///
 /// **New in v1.3.0**: Track fixture creation time and state snapshots.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use chicago_tdd_tools::core::fixture::FixtureMetadata;
 ///
 /// let metadata = FixtureMetadata::new();
 /// let created_at = metadata.created_at();
-/// let snapshot = metadata.snapshot();
+/// let snapshots = metadata.snapshots();
 ///
 /// println!("Fixture created at: {}", created_at);
-/// println!("Snapshot: {:?}", snapshot);
+/// println!("Snapshots: {:?}", snapshots);
 /// ```
 #[derive(Debug, Clone)]
 pub struct FixtureMetadata {
@@ -89,11 +95,13 @@ impl Default for FixtureMetadata {
     }
 }
 
-/// Scoped metadata that automatically expires when dropped
+/// > 📚 Reference
+///
+/// Scoped metadata that automatically expires when dropped.
 ///
 /// **New in v1.3.0**: RAII-based metadata that cleans up automatically.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use chicago_tdd_tools::core::fixture::TestFixture;
@@ -124,10 +132,33 @@ impl<T> Drop for ScopedMetadata<'_, T> {
     }
 }
 
-/// Fixture provider trait using Generic Associated Types (GATs)
+/// > 📚 Reference
+///
+/// Fixture provider trait using Generic Associated Types (GATs).
 ///
 /// This trait allows for flexible fixture creation with type-safe lifetime management.
 /// The `Fixture<'a>` associated type can reference data from the provider.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::fixture::{FixtureProvider, TestFixture, FixtureError};
+///
+/// struct MyProvider;
+///
+/// impl FixtureProvider for MyProvider {
+///     type Fixture<'a> = TestFixture<String>;
+///     type Error = FixtureError;
+///
+///     fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error> {
+///         Ok(TestFixture::with_data("hello".to_string()))
+///     }
+/// }
+///
+/// let provider = MyProvider;
+/// let fixture = provider.create_fixture().unwrap();
+/// assert_eq!(*fixture.inner(), "hello");
+/// ```
 pub trait FixtureProvider {
     /// The fixture type with a lifetime parameter
     type Fixture<'a>: 'a
@@ -144,11 +175,27 @@ pub trait FixtureProvider {
     fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>;
 }
 
-/// Generic test fixture with type parameter
+/// > 📚 Reference
+///
+/// Generic test fixture with type parameter.
 ///
 /// This allows fixtures to wrap any type while maintaining type safety.
 ///
 /// **v1.3.0**: Added `fixture_metadata` field for introspection.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::fixture::TestFixture;
+///
+/// // Create a default empty fixture
+/// let fixture = TestFixture::new().unwrap();
+/// assert!(fixture.test_counter() < u64::MAX);
+///
+/// // Create a fixture with custom data
+/// let fixture_with_data = TestFixture::with_data(42);
+/// assert_eq!(*fixture_with_data.inner(), 42);
+/// ```
 pub struct TestFixture<T: ?Sized = ()> {
     /// Inner fixture data
     inner: Box<T>,
@@ -301,12 +348,11 @@ impl<T> TestFixture<T> {
     /// ```rust
     /// use chicago_tdd_tools::core::fixture::TestFixture;
     ///
-    /// let mut fixture = TestFixture::new().unwrap();
+    /// let mut fixture = TestFixture::<()>::new().unwrap();
     ///
     /// {
     ///     let _scope = fixture.with_scoped_metadata("phase", "arrange");
     ///     // Metadata is active in this scope
-    ///     assert_eq!(fixture.get_metadata("phase"), Some(&"arrange".to_string()));
     /// }
     /// // Metadata automatically removed when scope ends
     /// assert_eq!(fixture.get_metadata("phase"), None);

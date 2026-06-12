@@ -1,6 +1,6 @@
 # Choosing Your Pattern
 
-> 🗺️ **NAVIGATION** | Find the right pattern for your testing problem
+> 💡 Explanation
 
 This guide helps you choose the right pattern(s) based on your testing situation.
 

@@ -288,7 +288,7 @@ cargo make test
 ```
 
 **See Also**:
-- [Quick Guide](QUICK_GUIDE.md) - More patterns
+- [Quick Guide](../getting-started/QUICK_GUIDE.md) - More patterns
 - [API Reference](../reference/API_REFERENCE.md) - Complete API
 ```
 

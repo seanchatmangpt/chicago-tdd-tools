@@ -176,44 +176,106 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-18-timeout-defense-in-depth"><a class="header" href="#pattern-18-timeout-defense-in-depth">Pattern 18: Timeout Defense in Depth</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>Async tests interact with containers, networks, or external services. A hung future or stalled process could freeze the suite.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Single-layer timeouts fail silently when they reside in the wrong place. For example, process-level timeouts kill the entire run without explaining which test stalled.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Layer timeouts at three levels:</p>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Hung tests freeze the suite; single-layer timeouts fail silently; unclear which test stalled</td></tr>
+<tr><td><strong>Solution</strong></td><td>Layer timeouts at test level (macro), runner level (nextest), and process level (Makefile)</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Async tests, integration tests, container interactions, network calls</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Inherently fast operations (overhead not worth it), intentionally long operations</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires configuration across multiple layers, but prevents test suites from hanging indefinitely</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/nextest.toml">nextest.toml</a> and <a href="file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs">src/core/macros/test.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Async tests interact with containers, networks, or external services. A hung future could freeze the entire suite. Single-layer timeouts (like process-level) kill the run without explaining which test stalled. No diagnostic information available.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Layer timeouts at three levels, each catching failures the lower level misses:</p>
 <ol>
-<li><strong>Test-level</strong> (<code>tokio::time::timeout</code> inside macros) – fails the specific test with a clear message.</li>
-<li><strong>Runner-level</strong> (<code>cargo-nextest</code> profiles) – applies SLA-based timeouts per profile.</li>
-<li><strong>Process-level</strong> (<code>timeout</code> wrapper in <code>Makefile.toml</code>) – stops catastrophic hangs.</li>
+<li><strong>Test-level</strong> - tokio::time::timeout inside macros; clear error message on failure</li>
+<li><strong>Runner-level</strong> - cargo-nextest profiles with SLA timeouts per profile</li>
+<li><strong>Process-level</strong> - timeout wrapper in Makefile; emergency stop if lower levels fail</li>
 </ol>
-<p>Expose constants for standard timeouts (<code>DEFAULT_UNIT_TEST_TIMEOUT_SECONDS = 1</code>, <code>DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS = 30</code>) and use <code>*_with_timeout!</code> macros for slow scenarios.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Resilience vs. noise: timeouts must be strict enough to catch hangs but lenient for expected latency</li>
-<li>Diagnostics vs. overhead: detailed error messages help triage without cluttering success paths</li>
-<li>Configurability vs. consistency: shared constants keep expectations aligned</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
-<pre><code class="language-toml"># .config/nextest.toml
-[profile.default]
-slow-timeout = { period = "1s", terminate-after = 1 }
-
-[profile.integration]
-slow-timeout = { period = "30s", terminate-after = 1 }
-</code></pre>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>fixture_test_with_timeout!(test_container_warmup, fixture, DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS, {
-    // slow operation
+</span>use chicago_tdd_tools::prelude::*;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
+
+// Test-level timeout (clearest diagnostics)
+fixture_test_with_timeout!(test_container_query, fixture, 30, {
+    let container = fixture.postgres_container().await?;
+    let result = container.query("SELECT 1").await?;
+    assert_eq!(result, 1);
     Ok(())
 });
+
+// Runner-level (from nextest.toml)
+// [profile.integration]
+// slow-timeout = { period = "30s", terminate-after = 1 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Test-level timeouts with *_with_timeout! macros</li>
+<li><input disabled="" type="checkbox"/>
+Timeout constants defined in one place (Pattern 9)</li>
+<li><input disabled="" type="checkbox"/>
+Runner profiles configured in nextest.toml</li>
+<li><input disabled="" type="checkbox"/>
+Process-level timeout in Makefile.toml as safety net</li>
+<li><input disabled="" type="checkbox"/>
+Timeout constants match runner configuration</li>
+<li><input disabled="" type="checkbox"/>
+Error messages identify which test timed out</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Using only one layer of timeout or using loose timeouts everywhere:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: No test-level timeout, only process-level (unclear which test fails)
+async fn test_slow_op() { /* ... */ }
+
+// ❌ WRONG: Loose timeouts hide real problems
+fixture_test_with_timeout!(test, fixture, 300, { /* should be 30 */ })
+
+// ✅ RIGHT: Layered timeouts, each appropriately tight
+fixture_test_with_timeout!(test, fixture, 30, {  // Test-level: clear error
+    let result = container.query().await?;
+    Ok(())
+});
+// Plus runner-level: 30s per test, 300s total timeout
+// Plus process-level: 600s emergency stop
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Layered timeouts provide defense in depth. If one layer fails, another catches it.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/nextest.toml">nextest.toml</a> and <a href="file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs">src/core/macros/test.rs</a></li>
+<li><strong>Explanation</strong>: Combines Tokios time limit in macros with Nextest profiles to enforce layered timeouts.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 4: Resource Cleanup</li>
-<li>Pattern 9: Single Source of Truth</li>
-<li>Pattern 20: Macro Pattern Enforcement</li>
+<li><strong>Before this</strong>: <a href="../architecture-patterns/single-source-of-truth.html">Pattern 9: Single Source</a> (timeout constants)</li>
+<li><strong>Use with</strong>: <a href="../testing-patterns/resource-cleanup.html">Pattern 4: Resource Cleanup</a> (cleanup after timeout)</li>
+<li><strong>Next</strong>: <a href="macro-enforcement.html">Pattern 20: Macro Enforcement</a> (enforces via macros)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Multiple timeout layers catch hangs at different points. Each layer provides better diagnostics than the one below.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Test-level timeouts use *_with_timeout! macros</li>
+<li><input disabled="" type="checkbox"/>
+Runner-level timeouts match test-level expectations</li>
+<li><input disabled="" type="checkbox"/>
+Process-level timeout is generous (2x runner timeout)</li>
+<li><input disabled="" type="checkbox"/>
+Timeout error messages identify the test</li>
+<li><input disabled="" type="checkbox"/>
+Timeout constants are centralized (no duplication)</li>
 </ul>
 
                     </main>

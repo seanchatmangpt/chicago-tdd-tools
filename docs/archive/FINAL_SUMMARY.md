@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Chatman Equation: From Theory to Executable Multi-Sector Spec
 
 ## What Was Built (Today)

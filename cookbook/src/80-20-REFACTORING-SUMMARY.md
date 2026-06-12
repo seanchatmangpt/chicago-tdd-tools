@@ -1,5 +1,7 @@
 # 80/20 Pattern Refactoring: Core Team Approach
 
+> 💡 Explanation | Core team's 80/20 refactoring approach and principles
+
 **Apply Chicago TDD philosophy to patterns**: Practical, action-oriented, immediately valuable.
 
 ---

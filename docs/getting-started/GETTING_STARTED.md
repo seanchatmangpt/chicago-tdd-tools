@@ -319,7 +319,7 @@ chicago-tdd-tools = {
 }
 ```
 
-**See**: [README Features](../README.md#features) for complete feature documentation.
+**See**: [README Features](../README.md#core-features) for complete feature documentation.
 
 ## Procedural Macros
 
@@ -428,7 +428,7 @@ async_test!(test_async_fixture, {
 - **[API Reference](../reference/API_REFERENCE.md)** - Complete API documentation
 - **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
 - **[Pattern Cookbook](../../cookbook/src/README.md)** - Alexander-style patterns for testing, architecture, and design
-- **[Examples](../examples/)** - Working code examples (`cargo make test-examples`)
+- **[Examples](../../examples/)** - Working code examples (`cargo make test-examples`)
 
 ## Troubleshooting
 

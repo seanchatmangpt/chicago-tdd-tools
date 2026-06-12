@@ -147,7 +147,7 @@ ignore_errors = false
 - **Integration tests**: 30s per test
 - **Long operations**: 60s
 
-See: [Root Cause Analysis - Docker Check Freeze](../analysis/ROOT_CAUSE_ANALYSIS_DOCKER_CHECK_FREEZE.md) for details on the timeout fix.
+See: [Root Cause Analysis - Docker Check Freeze](../process/FMEA_TESTS_BUILD_ACTIONS.md) for details on the timeout fix.
 
 ## Fallback
 

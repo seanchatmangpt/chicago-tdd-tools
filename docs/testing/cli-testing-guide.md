@@ -396,8 +396,8 @@ cargo make test test_name -- --test-generate
 ## See Also
 
 - [Trycmd Documentation](https://crates.io/crates/trycmd)
-- [Testing Guide](../testing-guide.md)
-- [CLI Patterns Cookbook](../cookbook/cli-patterns.md)
+- [Testing Guide](../getting-started/GETTING_STARTED.md)
+- [CLI Testing Guide](../../application-guide/src/advanced/cli-testing.md)
 
 ## Questions?
 

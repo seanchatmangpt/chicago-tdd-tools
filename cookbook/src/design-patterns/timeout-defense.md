@@ -1,16 +1,18 @@
 # Pattern 18: Timeout Defense in Depth
 
-> 🔧 **HOW-TO** | Layer timeouts at test, runner, and process levels
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Hung tests freeze the suite; single-layer timeouts fail silently; unclear which test stalled |
-| **Core Solution** | Layer timeouts: test-level (clear error), runner-level (SLA), process-level (emergency stop) |
-| **When to Use** | ✅ All async tests, ✅ Integration tests, ✅ Container interactions, ✅ Network calls |
-| **When NOT to Use** | ❌ Inherently fast operations (overhead not worth it), ❌ Intentionally long operations (set generous timeouts) |
-| **Difficulty** | Low - Mostly configuration |
+| **Problem** | Hung tests freeze the suite; single-layer timeouts fail silently; unclear which test stalled |
+| **Solution** | Layer timeouts at test level (macro), runner level (nextest), and process level (Makefile) |
+| **When to Use** | Async tests, integration tests, container interactions, network calls |
+| **When NOT to Use** | Inherently fast operations (overhead not worth it), intentionally long operations |
+| **Trade-offs** | Requires configuration across multiple layers, but prevents test suites from hanging indefinitely |
+| **Complexity** | Low |
+| **Real-World Example** | [nextest.toml](file:///Users/sac/chicago-tdd-tools/nextest.toml) and [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs) |
 
 ## The Problem
 
@@ -73,10 +75,10 @@ fixture_test_with_timeout!(test, fixture, 30, {  // Test-level: clear error
 
 **Why**: Layered timeouts provide defense in depth. If one layer fails, another catches it.
 
-## Codebase Example
+## Real-World Example
 
-File: `Makefile.toml`, `src/core/macros/test.rs`, `.config/nextest.toml`
-Purpose: Shows timeout configuration at all three levels
+- **Code location**: [nextest.toml](file:///Users/sac/chicago-tdd-tools/nextest.toml) and [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs)
+- **Explanation**: Combines Tokios time limit in macros with Nextest profiles to enforce layered timeouts.
 
 ## Related Patterns
 

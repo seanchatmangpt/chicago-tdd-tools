@@ -1,16 +1,18 @@
 # Pattern 12: Type Safety with GATs
 
-> 🔧 **HOW-TO** | Use Generic Associated Types to bind lifetimes to fixtures
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | References escape fixture scope; dangling pointers and logic bugs |
-| **Core Solution** | Generic Associated Types (GATs) bind returned data to fixture lifetime |
-| **When to Use** | ✅ Fixtures with references, ✅ Async providers, ✅ Lifetime-bound APIs |
-| **When NOT to Use** | ❌ Owned values only (no lifetime constraints needed), ❌ Static data (use associated consts) |
-| **Difficulty** | Hard - Requires understanding GATs and lifetimes |
+| **Problem** | References escape fixture scope; dangling pointers and logic bugs |
+| **Solution** | Use Generic Associated Types (GATs) to tie returned data's lifetimes to the fixture provider |
+| **When to Use** | Fixtures returning references, async resource providers, lifetime-bound APIs |
+| **When NOT to Use** | Owned values only (no lifetime constraints needed), static data (use associated consts) |
+| **Trade-offs** | Lifetime constraints make API signatures more complex, but prevent references from escaping scope at compile time |
+| **Complexity** | Hard |
+| **Real-World Example** | [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs) |
 
 ## The Problem
 
@@ -64,10 +66,10 @@ type Fixture<'a> where Self: 'a;  // 'a cannot exceed self's lifetime
 
 **Why**: Without the `where Self: 'a` bound, the lifetime parameter is unconstrained. References can escape.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/fixture.rs`
-Purpose: Defines AsyncFixtureProvider with GATs binding lifetimes
+- **Code location**: [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs)
+- **Explanation**: Tie the lifetimes of temporary directories or mock services to the fixture provider to ensure they cannot outlive the test execution context.
 
 ## Related Patterns
 

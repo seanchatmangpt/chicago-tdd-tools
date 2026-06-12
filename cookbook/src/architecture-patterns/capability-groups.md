@@ -1,16 +1,18 @@
 # Pattern 10: Capability Grouping
 
-> 🔧 **HOW-TO** | Organize modules by capability, not alphabetically
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Features surface randomly; consumers struggle to find capabilities; structure is unmaintainable |
-| **Core Solution** | Group modules by capability (core, testing, validation, observability, integration) |
-| **When to Use** | ✅ Multi-module crates, ✅ Public APIs, ✅ Feature-gated functionality |
-| **When NOT to Use** | ❌ Single-module crates, ❌ Internal organization only (use folders), ❌ Organizational structure (use teams) |
-| **Difficulty** | Low - Pure organization pattern |
+| **Problem** | Features surface randomly; consumers struggle to find capabilities; structure is unmaintainable |
+| **Solution** | Group modules by capability (core, testing, validation, observability, integration) |
+| **When to Use** | Multi-module crates, public APIs, feature-gated functionality |
+| **When NOT to Use** | Single-module crates, internal organization only (use folders), organizational structure (use teams) |
+| **Trade-offs** | Requires strict categorization of new modules, but makes module discovery predictable for consumers |
+| **Complexity** | Low |
+| **Real-World Example** | [src/lib.rs](file:///Users/sac/chicago-tdd-tools/src/lib.rs) |
 
 ## The Problem
 
@@ -70,10 +72,10 @@ pub mod observability; // Telemetry, observability
 
 **Why**: Users care about capabilities, not implementation. Capability grouping helps them find what they need.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/lib.rs`
-Purpose: Shows the five stable capability groups and their purpose
+- **Code location**: [src/lib.rs](file:///Users/sac/chicago-tdd-tools/src/lib.rs)
+- **Explanation**: Organizes the codebase into 5 capability-focused modules, making features easily discoverable.
 
 ## Related Patterns
 

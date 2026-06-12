@@ -177,6 +177,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="chicago-tdd-tools---application-guide"><a class="header" href="#chicago-tdd-tools---application-guide">Chicago TDD Tools - Application Guide</a></h1>
+<blockquote>
+<p>💡 Explanation | Overview of the Chicago TDD application guide</p>
+</blockquote>
 <p>Welcome to the practical application guide for Chicago TDD Tools! This guide focuses on <strong>real-world usage patterns</strong> and practical techniques for testing Rust applications.</p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You'll Learn</a></h2>
 <p>This guide covers:</p>
@@ -205,7 +208,7 @@
 </ol>
 <h2 id="quick-links"><a class="header" href="#quick-links">Quick Links</a></h2>
 <ul>
-<li><a href="../cookbook/README.html">Pattern Cookbook</a> - Alexander-style patterns reference</li>
+<li><a href="../../cookbook/src/README.html">Pattern Cookbook</a> - Alexander-style patterns reference</li>
 <li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a> - Complete API documentation</li>
 <li><a href="https://github.com/seanchatmangpt/chicago-tdd-tools">GitHub Repository</a></li>
 </ul>
@@ -309,20 +312,17 @@ test!(my_test, {
 <p><strong>Chicago TDD Tools</strong> - Testing with confidence, errors prevented at compile time.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-chicago-tdd-philosophy"><a class="header" href="#introduction-chicago-tdd-philosophy">Introduction: Chicago TDD Philosophy</a></h1>
 <blockquote>
-<p>📖 <strong>EXPLANATION</strong> | Learn the philosophy and principles</p>
+<p>💡 Explanation | Learn the philosophy and principles of Chicago-style TDD</p>
 </blockquote>
-<h2 id="quick-navigation-whats-your-goal"><a class="header" href="#quick-navigation-whats-your-goal">Quick Navigation: What's Your Goal?</a></h2>
-<p><strong>Not sure where to start?</strong> See <a href="choosing-your-path.html">Choosing Your Learning Path</a> for a complete navigation guide with decision matrices.</p>
-<p>Choose your path based on what you're trying to do:</p>
-<div class="table-wrapper"><table><thead><tr><th>Your Goal</th><th>Read This</th><th>Time</th></tr></thead><tbody>
-<tr><td><strong>I'm just getting started</strong></td><td><a href="tutorials/getting-started.html">Quick Start Tutorial</a> → <a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a></td><td>40 min</td></tr>
-<tr><td><strong>I want to build a CLI app</strong></td><td><a href="tutorials/cli-app-tutorial.html">CLI Application Tutorial</a></td><td>45 min</td></tr>
-<tr><td><strong>I want to build a web service</strong></td><td><a href="tutorials/web-service-tutorial.html">REST Web Service Tutorial</a></td><td>50 min</td></tr>
-<tr><td><strong>I need to find an API</strong></td><td>Go to <a href="reference/fixtures-api.html">API Reference</a></td><td>2-5 min</td></tr>
-<tr><td><strong>I want to understand Chicago TDD</strong></td><td>Read this introduction + <a href="guides/extra-mile.html">Go the Extra Mile</a></td><td>45 min</td></tr>
-<tr><td><strong>I'm migrating from traditional testing</strong></td><td><a href="guides/best-practices.html">Best Practices &amp; Migration</a></td><td>1 hour</td></tr>
-</tbody></table>
-</div>
+<h2 id="what-do-you-want-to-do"><a class="header" href="#what-do-you-want-to-do">What Do You Want to Do?</a></h2>
+<p><strong>I want to learn the basics</strong>
+→ Go to: <a href="tutorials/getting-started.html">Getting Started (tutorial)</a></p>
+<p><strong>I need to solve a specific problem</strong>
+→ Go to: <a href="core/README.html">How-to Guides (by problem)</a></p>
+<p><strong>I need to find an API</strong>
+→ Go to: <a href="reference/fixtures-api.html">Reference Documentation</a></p>
+<p><strong>I want to understand the philosophy</strong>
+→ Go to: <a href="introduction.html">Explanation &amp; Design</a></p>
 <hr />
 <h2 id="what-is-chicago-style-tdd"><a class="header" href="#what-is-chicago-style-tdd">What is Chicago-Style TDD?</a></h2>
 <p>Chicago-style TDD (also called "Classicist" TDD) is a testing approach that emphasizes:</p>
@@ -528,7 +528,7 @@ let result = actual_function(&amp;fixture)?;  // Real code
 <p><strong>Next</strong>: <a href="core/README.html">Core Testing Patterns</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="choosing-your-learning-path"><a class="header" href="#choosing-your-learning-path">Choosing Your Learning Path</a></h1>
 <blockquote>
-<p>🗺️ <strong>NAVIGATION</strong> | Find the right resources for your goals</p>
+<p>💡 Explanation | Find the right resources for your goals</p>
 </blockquote>
 <p>This page helps you navigate the documentation based on what you want to accomplish.</p>
 <hr />
@@ -779,7 +779,7 @@ A: No, but experience helps. Chicago TDD teaches a specific approach.</p>
 <p><strong>Tip</strong>: Bookmark this page and return when you need guidance on what to learn next.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started-25-minute-tutorial"><a class="header" href="#getting-started-25-minute-tutorial">Getting Started: 25-Minute Tutorial</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Learn the basics of Chicago TDD in 25 minutes</p>
+<p>🎓 Tutorial | Learn the basics of Chicago TDD in 25 minutes</p>
 </blockquote>
 <p>This tutorial teaches you everything you need to write your first test with Chicago TDD Tools. No prior knowledge required.</p>
 <p><strong>Time</strong>: ~25 minutes
@@ -794,7 +794,9 @@ A: No, but experience helps. Chicago TDD teaches a specific approach.</p>
 </span>use chicago_tdd_tools::prelude::*;
 
 test!(my_first_test, {
-    // Test code goes here
+    let a = 2;
+    let b = 3;
+    assert_eq!(a + b, 5);
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="step-2-add-test-logic-arrange-act-assert"><a class="header" href="#step-2-add-test-logic-arrange-act-assert">Step 2: Add test logic (Arrange-Act-Assert)</a></h3>
@@ -898,12 +900,13 @@ test!(test_with_fixture, {
 </span>test!(test_with_snapshots, {
     let fixture = TestFixture::new()?;
 
-    // ... do some work ...
+    // Perform a calculation
+    let total_items = 2 + 3;
 
     // Capture the current state
     let state = HashMap::from([
         ("step".to_string(), "completed".to_string()),
-        ("items_processed".to_string(), "5".to_string()),
+        ("items_processed".to_string(), total_items.to_string()),
     ]);
     fixture.capture_snapshot(state);
 
@@ -960,7 +963,9 @@ test!(test_with_builder, {
         .with_var("third", "!")
         .build_json()?;
 
-    // Clean, readable syntax
+    assert_eq!(data["first"], "hello");
+    assert_eq!(data["second"], "world");
+    assert_eq!(data["third"], "!");
 });
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -1019,7 +1024,9 @@ test!(complete_example, {
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Basic test
-test!(test_name, { /* code */ });
+test!(test_name, {
+    assert_eq!(1, 1);
+});
 
 // Fixtures
 let fixture = TestFixture::new()?;
@@ -1040,7 +1047,7 @@ assert!(condition);           // Condition is true
 <p><strong>Congratulations!</strong> You can now write tests with Chicago TDD Tools. The rest is practice and learning specific patterns for your use case.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="fixtures-deep-dive-15-minute-tutorial"><a class="header" href="#fixtures-deep-dive-15-minute-tutorial">Fixtures Deep Dive: 15-Minute Tutorial</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Master test isolation with fixtures</p>
+<p>🎓 Tutorial | Master test isolation with fixtures</p>
 </blockquote>
 <p>Fixtures are the foundation of isolated testing. This tutorial builds on the basics and shows you how to use fixtures for real-world scenarios.</p>
 <p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>
@@ -1057,6 +1064,7 @@ assert!(condition);           // Condition is true
 
     // Changes here don't affect other tests
     fixture.set_metadata("value", "100");
+    assert_eq!(fixture.get_metadata("value"), Some("100"));
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="why-fixtures-matter"><a class="header" href="#why-fixtures-matter">Why Fixtures Matter</a></h3>
@@ -1092,6 +1100,15 @@ assert!(condition);           // Condition is true
 </span>test!(test_user_creation, {
     let fixture = TestFixture::new()?;
 
+    // Define helper structs and functions locally
+    struct User { id: u32, name: String }
+    let create_user = |name: &amp;str, _email: &amp;str| -&gt; Result&lt;User, &amp;'static str&gt; {
+        Ok(User { id: 42, name: name.to_string() })
+    };
+    let get_user = |_id: u32| -&gt; Result&lt;User, &amp;'static str&gt; {
+        Ok(User { id: 42, name: "alice".to_string() })
+    };
+
     // Setup: Create a user
     let user = create_user("alice", "alice@example.com")?;
     fixture.set_metadata("user_id", &amp;user.id.to_string());
@@ -1099,7 +1116,7 @@ assert!(condition);           // Condition is true
 
     // Test: Can we retrieve the user?
     let stored_id = fixture.get_metadata("user_id").unwrap();
-    let retrieved = get_user(stored_id.parse()?)?;
+    let retrieved = get_user(stored_id.parse().map_err(|_| "parse error")?)?;
     assert_eq!(retrieved.name, "alice");
 });
 <span class="boring">}</span></code></pre></pre>
@@ -1124,11 +1141,14 @@ test!(test_with_snapshots, {
     ]);
     fixture.capture_snapshot(state);
 
-    // ... more operations ...
+    // Perform additional operations to process elements
+    let mut data = data;
+    data.push(4);
+    data.push(5);
 
     let state2 = HashMap::from([
         ("step".to_string(), "processed".to_string()),
-        ("count".to_string(), "5".to_string()),
+        ("count".to_string(), data.len().to_string()),
     ]);
     fixture.capture_snapshot(state2);
 
@@ -1138,7 +1158,7 @@ test!(test_with_snapshots, {
 
     // Access latest snapshot
     let latest = fixture.latest_snapshot();
-    assert_eq!(latest.get("step"), Some(&amp;"processed".to_string()));
+    assert_eq!(latest.unwrap().get("step"), Some(&amp;"processed".to_string()));
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="real-world-example-multi-step-workflow"><a class="header" href="#real-world-example-multi-step-workflow">Real-World Example: Multi-Step Workflow</a></h3>
@@ -1146,6 +1166,13 @@ test!(test_with_snapshots, {
 </span><span class="boring">fn main() {
 </span>test!(test_order_workflow, {
     let fixture = TestFixture::new()?;
+
+    struct Order { id: u32 }
+    let create_order = |_user: &amp;str, _amount: f64| -&gt; Result&lt;Order, &amp;'static str&gt; {
+        Ok(Order { id: 987 })
+    };
+    let process_payment = |_order: &amp;Order| -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let ship_order = |_order: &amp;Order| -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
 
     // Step 1: Create order
     let order = create_order("alice", 100.0)?;
@@ -1206,6 +1233,10 @@ test!(test_with_snapshots, {
     // Create fixture might fail
     let fixture = TestFixture::new()?;
 
+    let risky_operation = || -&gt; Result&lt;(), &amp;'static str&gt; {
+        Err("operation failed")
+    };
+
     // Operations might fail
     if let Err(e) = risky_operation() {
         // Record the error
@@ -1224,10 +1255,12 @@ test!(test_with_snapshots, {
 <p>For repeated setup, create a helper function:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>fn setup_user_fixture() -&gt; Result&lt;(TestFixture, User), Box&lt;dyn std::error::Error&gt;&gt; {
+</span>struct User { id: u32, name: String, email: String }
+
+fn setup_user_fixture() -&gt; Result&lt;(TestFixture, User), Box&lt;dyn std::error::Error&gt;&gt; {
     let fixture = TestFixture::new()?;
 
-    let user = create_user("test_user", "test@example.com")?;
+    let user = User { id: 101, name: "test_user".to_string(), email: "test@example.com".to_string() };
     fixture.set_metadata("user_id", &amp;user.id.to_string());
     fixture.set_metadata("username", &amp;user.name);
 
@@ -1239,8 +1272,7 @@ test!(test_using_setup, {
 
     // Test can now use pre-initialized fixture
     assert_eq!(user.name, "test_user");
-
-    // ... rest of test ...
+    assert_eq!(user.email, "test@example.com");
 });
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -1251,8 +1283,14 @@ test!(test_using_setup, {
 <p><strong>Create one fixture per test</strong></p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>test!(test1, { let f = TestFixture::new()?; /* ... */ });
-test!(test2, { let f = TestFixture::new()?; /* ... */ }); // Separate!
+</span>test!(test1, {
+    let f = TestFixture::new()?;
+    assert!(f.get_metadata("id").is_none());
+});
+test!(test2, {
+    let f = TestFixture::new()?;
+    assert!(f.get_metadata("id").is_none());
+}); // Separate!
 <span class="boring">}</span></code></pre></pre>
 </li>
 <li>
@@ -1285,9 +1323,8 @@ test!(test2, { let f = TestFixture::new()?; /* ... */ }); // Separate!
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// WRONG - fixture is shared!
-let shared_fixture = TestFixture::new();
-test!(test1, { /* use shared_fixture */ });
-test!(test2, { /* use shared_fixture */ });
+// let shared_fixture = TestFixture::new();
+// test!(test1, { /* use shared_fixture */ });
 <span class="boring">}</span></code></pre></pre>
 </li>
 <li>
@@ -1295,15 +1332,15 @@ test!(test2, { /* use shared_fixture */ });
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// WRONG - global state affects test isolation
-static FIXTURE: Lazy&lt;TestFixture&gt; = Lazy::new(|| TestFixture::new().unwrap());
+// static FIXTURE: Lazy&lt;TestFixture&gt; = Lazy::new(|| TestFixture::new().unwrap());
 <span class="boring">}</span></code></pre></pre>
 </li>
 <li>
 <p><strong>Forget to handle errors</strong></p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// WRONG - TestFixture::new() can fail
-let fixture = TestFixture::new().unwrap();  // Better: ?
+</span>// WRONG - TestFixture::new() can fail without handling
+// let fixture = TestFixture::new().unwrap();
 <span class="boring">}</span></code></pre></pre>
 </li>
 </ol>
@@ -1314,6 +1351,10 @@ let fixture = TestFixture::new().unwrap();  // Better: ?
 </span><span class="boring">fn main() {
 </span>test!(test_setup_teardown, {
     let fixture = TestFixture::new()?;
+
+    let setup_database = |_f: &amp;TestFixture| -&gt; Result&lt;(), &amp;'static str&gt; {
+        Ok(())
+    };
 
     // Setup
     setup_database(&amp;fixture)?;
@@ -1331,8 +1372,12 @@ let fixture = TestFixture::new().unwrap();  // Better: ?
 </span>test!(test_state_validation, {
     let fixture = TestFixture::new()?;
 
+    let do_work = || -&gt; Result&lt;(), &amp;'static str&gt; {
+        Ok(())
+    };
+
     // Perform operations
-    let result = do_work()?;
+    let _result = do_work()?;
 
     // Capture and validate state
     let state = HashMap::from([
@@ -1351,6 +1396,10 @@ let fixture = TestFixture::new().unwrap();  // Better: ?
 </span><span class="boring">fn main() {
 </span>test!(test_progressive, {
     let fixture = TestFixture::new()?;
+
+    let operation1 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let operation2 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let operation3 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
 
     // Phase 1
     let result1 = operation1()?;
@@ -1410,7 +1459,7 @@ let latest = fixture.latest_snapshot();
 <p><strong>Congratulations!</strong> You've mastered fixtures. You can now write tests with proper isolation and state tracking.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-real-cli-application-complete-tutorial"><a class="header" href="#building-a-real-cli-application-complete-tutorial">Building a Real CLI Application: Complete Tutorial</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Build a complete CLI application using Chicago TDD</p>
+<p>🎓 Tutorial | Build a complete CLI application using Chicago TDD</p>
 </blockquote>
 <p>This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.</p>
 <p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>, <a href="tutorials/fixtures-tutorial.html">Fixtures Deep Dive</a>
@@ -1714,6 +1763,108 @@ mod tests {
     });
 }
 <span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/done.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: done &lt;id&gt;".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.mark_done(id) {
+        Ok(format!("Marked todo #{} as done", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_done_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert!(store.list()[0].completed);
+    });
+
+    test!(test_done_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/delete.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: delete &lt;id&gt;".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.delete(id) {
+        Ok(format!("Deleted todo #{}", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_delete_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert_eq!(store.list().len(), 0);
+    });
+
+    test!(test_delete_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/mod.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod add;
+pub mod list;
+pub mod done;
+pub mod delete;
+<span class="boring">}</span></code></pre></pre>
 <hr />
 <h2 id="step-5-main-entry-point-5-minutes"><a class="header" href="#step-5-main-entry-point-5-minutes">Step 5: Main Entry Point (5 minutes)</a></h2>
 <p>Create <code>src/main.rs</code>:</p>
@@ -1909,9 +2060,9 @@ test result: ok. X passed; 0 failed; 0 ignored; X measured
 <p><strong>Congratulations!</strong> You've built and tested a real CLI application using Chicago TDD. You're now ready to build production applications!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-rest-web-service-complete-tutorial"><a class="header" href="#building-a-rest-web-service-complete-tutorial">Building a REST Web Service: Complete Tutorial</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Build a production-ready REST API with Chicago TDD</p>
+<p>🎓 Tutorial | Build a production-ready REST API with Chicago TDD</p>
 </blockquote>
-<p>This tutorial guides you through building a real REST web service with comprehensive tests, using Rust and common web frameworks.</p>
+<p>This tutorial guides you through building a real REST web service with comprehensive tests, using Rust.</p>
 <p><strong>Prerequisites</strong>: <a href="tutorials/getting-started.html">Getting Started</a>, <a href="tutorials/cli-app-tutorial.html">CLI Application Tutorial</a>
 <strong>Time</strong>: ~50 minutes
 <strong>What you'll build</strong>: A working <code>user-api</code> with CRUD operations</p>
@@ -2285,9 +2436,8 @@ test!(complete_api_workflow, {
 <p>Create <code>src/handlers/users.rs</code>:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use crate::models::CreateUserRequest;
+</span>use crate::models::{CreateUserRequest, UpdateUserRequest};
 use crate::store::UserStore;
-use serde_json::json;
 
 pub fn get_users(store: &amp;UserStore) -&gt; String {
     let users = store.list();
@@ -2305,6 +2455,22 @@ pub fn create_user(store: &amp;mut UserStore, body: &amp;str) -&gt; Result&lt;St
 
     let user = store.create(req)?;
     serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+pub fn update_user(store: &amp;mut UserStore, id: u32, body: &amp;str) -&gt; Result&lt;String, String&gt; {
+    let req: UpdateUserRequest = serde_json::from_str(body)
+        .map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    let user = store.update(id, req)?;
+    serde_json::to_string(&amp;user).map_err(|e| e.to_string())
+}
+
+pub fn delete_user(store: &amp;mut UserStore, id: u32) -&gt; Result&lt;String, String&gt; {
+    if store.delete(id) {
+        Ok(r#"{"status":"success"}"#.to_string())
+    } else {
+        Err("User not found".to_string())
+    }
 }
 
 #[cfg(test)]
@@ -2339,7 +2505,39 @@ mod tests {
 
         assert_err!(&amp;result);
     });
+
+    test!(test_update_user_handler, {
+        let mut store = UserStore::new();
+        let created = store.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).unwrap();
+
+        let json = r#"{"name":"Alice Updated"}"#;
+        let result = update_user(&amp;mut store, created.id, json);
+
+        assert_ok!(&amp;result);
+        assert!(result.unwrap().contains("Alice Updated"));
+    });
+
+    test!(test_delete_user_handler, {
+        let mut store = UserStore::new();
+        let created = store.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).unwrap();
+
+        let result = delete_user(&amp;mut store, created.id);
+
+        assert_ok!(&amp;result);
+        assert_eq!(store.list().len(), 0);
+    });
 }
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/handlers/mod.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod users;
 <span class="boring">}</span></code></pre></pre>
 <hr />
 <h2 id="step-7-main-application-5-minutes"><a class="header" href="#step-7-main-application-5-minutes">Step 7: Main Application (5 minutes)</a></h2>
@@ -2348,27 +2546,124 @@ mod tests {
 mod handlers;
 mod store;
 
-use models::{User, CreateUserRequest};
+use models::CreateUserRequest;
 use store::UserStore;
+use std::net::TcpListener;
+use std::io::{prelude::*, BufReader};
+use std::sync::{Arc, Mutex};
 
-fn main() {
-    let mut store = UserStore::new();
-
-    // Sample data
-    store.create(CreateUserRequest {
-        name: "Alice".to_string(),
-        email: "alice@example.com".to_string(),
-    }).ok();
-
-    store.create(CreateUserRequest {
-        name: "Bob".to_string(),
-        email: "bob@example.com".to_string(),
-    }).ok();
-
-    // List users
-    for user in store.list() {
-        println!("User #{}: {} ({})", user.id, user.name, user.email);
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let store = Arc::new(Mutex::new(UserStore::new()));
+    
+    // Seed some initial data
+    {
+        let mut store_lock = store.lock().unwrap();
+        store_lock.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).ok();
+        store_lock.create(CreateUserRequest {
+            name: "Bob".to_string(),
+            email: "bob@example.com".to_string(),
+        }).ok();
     }
+
+    let listener = TcpListener::bind("127.0.0.1:8080")?;
+    println!("Web service running on http://127.0.0.1:8080");
+
+    for stream in listener.incoming() {
+        let mut stream = stream?;
+        let store = Arc::clone(&amp;store);
+        
+        std::thread::spawn(move || {
+            let mut buf_reader = BufReader::new(&amp;stream);
+            let mut request_line = String::new();
+            if buf_reader.read_line(&amp;mut request_line).is_err() {
+                return;
+            }
+            
+            // Read headers to retrieve content length for requests with body
+            let mut content_length = 0;
+            loop {
+                let mut line = String::new();
+                if buf_reader.read_line(&amp;mut line).is_err() || line.trim().is_empty() {
+                    break;
+                }
+                if line.to_lowercase().starts_with("content-length:") {
+                    if let Some(val) = line.split(':').nth(1) {
+                        content_length = val.trim().parse().unwrap_or(0);
+                    }
+                }
+            }
+            
+            let mut body = vec![0; content_length];
+            if content_length &gt; 0 {
+                let _ = buf_reader.read_exact(&amp;mut body);
+            }
+            let body_str = String::from_utf8_lossy(&amp;body);
+            
+            let parts: Vec&lt;&amp;str&gt; = request_line.split_whitespace().collect();
+            if parts.len() &lt; 2 {
+                return;
+            }
+            
+            let method = parts[0];
+            let path = parts[1];
+            
+            let mut store_lock = store.lock().unwrap();
+            let (status_line, response_body) = if method == "GET" &amp;&amp; path == "/api/users" {
+                ("HTTP/1.1 200 OK", handlers::users::get_users(&amp;store_lock))
+            } else if method == "GET" &amp;&amp; path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::&lt;u32&gt;() {
+                    match handlers::users::get_user(&amp;store_lock, id) {
+                        Ok(res) =&gt; ("HTTP/1.1 200 OK", res),
+                        Err(e) =&gt; ("HTTP/1.1 404 NOT FOUND", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else if method == "POST" &amp;&amp; path == "/api/users" {
+                match handlers::users::create_user(&amp;mut store_lock, &amp;body_str) {
+                    Ok(res) =&gt; ("HTTP/1.1 201 CREATED", res),
+                    Err(e) =&gt; ("HTTP/1.1 400 BAD REQUEST", format!(r#"{{"error":"{}"}}"#, e)),
+                }
+            } else if method == "PUT" &amp;&amp; path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::&lt;u32&gt;() {
+                    match handlers::users::update_user(&amp;mut store_lock, id, &amp;body_str) {
+                        Ok(res) =&gt; ("HTTP/1.1 200 OK", res),
+                        Err(e) =&gt; ("HTTP/1.1 400 BAD REQUEST", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else if method == "DELETE" &amp;&amp; path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::&lt;u32&gt;() {
+                    match handlers::users::delete_user(&amp;mut store_lock, id) {
+                        Ok(res) =&gt; ("HTTP/1.1 200 OK", res),
+                        Err(e) =&gt; ("HTTP/1.1 404 NOT FOUND", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else {
+                ("HTTP/1.1 404 NOT FOUND", r#"{"error":"Not Found"}"#.to_string())
+            };
+            
+            let response = format!(
+                "{}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+                status_line,
+                response_body.len(),
+                response_body
+            );
+            
+            let _ = stream.write_all(response.as_bytes());
+        });
+    }
+    
+    Ok(())
 }</code></pre></pre>
 <hr />
 <h2 id="step-8-running-tests-5-minutes"><a class="header" href="#step-8-running-tests-5-minutes">Step 8: Running Tests (5 minutes)</a></h2>
@@ -2444,7 +2739,7 @@ pub fn format_error(message: String) -&gt; String {
 <p><strong>Congratulations!</strong> You've built a production-ready REST API with comprehensive tests. You're ready to deploy real services!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testfixture-api-reference"><a class="header" href="#testfixture-api-reference">TestFixture API Reference</a></h1>
 <blockquote>
-<p>📚 <strong>REFERENCE</strong> | Complete API documentation for test fixtures</p>
+<p>📚 Reference | Complete API documentation for test fixtures</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p><code>TestFixture</code> provides isolated test environments with metadata storage and state snapshots.</p>
@@ -2627,7 +2922,8 @@ for (i, snapshot) in all.iter().enumerate() {
     assert_eq!(fixture.get_metadata("initialized"), Some("false"));
 
     // Initialization happens
-    // ...
+    let initialized = true;
+    assert!(initialized);
 
     // Verify state changed
     fixture.set_metadata("initialized", "true");
@@ -2640,15 +2936,20 @@ for (i, snapshot) in all.iter().enumerate() {
 </span>test!(multi_phase_pattern, {
     let fixture = TestFixture::new()?;
 
+    let do_phase_1 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let do_phase_2 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let state_at_phase1 = || HashMap::from([("progress".to_string(), "50%".to_string())]);
+    let state_at_phase2 = || HashMap::from([("progress".to_string(), "100%".to_string())]);
+
     // Phase 1
     fixture.set_metadata("phase", "1");
-    let result1 = do_phase_1()?;
+    let result1 = do_phase_1();
     fixture.capture_snapshot(state_at_phase1());
     assert_ok!(&amp;result1);
 
     // Phase 2
     fixture.set_metadata("phase", "2");
-    let result2 = do_phase_2()?;
+    let result2 = do_phase_2();
     fixture.capture_snapshot(state_at_phase2());
     assert_ok!(&amp;result2);
 
@@ -2668,7 +2969,8 @@ for (i, snapshot) in all.iter().enumerate() {
     fixture.set_metadata("test_version", "1.0");
     fixture.set_metadata("test_category", "integration");
 
-    // ... test code ...
+    // Verify metadata was stored
+    assert_eq!(fixture.get_metadata("test_name"), Some("my_test"));
 });
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -2750,6 +3052,11 @@ async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&g
     fixture.set_metadata("async", "true");
 
     // async operations
+    let async_result = tokio::time::timeout(
+        std::time::Duration::from_millis(10),
+        async { 42 }
+    ).await;
+    assert_ok!(&amp;async_result);
 
     Ok(())
 }
@@ -2792,6 +3099,10 @@ async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&g
 
     fixture.set_metadata("status", "starting");
 
+    let risky_operation = || -&gt; Result&lt;(), &amp;'static str&gt; {
+        Err("operation timed out")
+    };
+
     if let Err(e) = risky_operation() {
         fixture.set_metadata("status", "failed");
         fixture.set_metadata("error", &amp;e.to_string());
@@ -2815,6 +3126,9 @@ async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&g
 <li><a href="reference/../core/fixtures.html">Fixtures How-to</a> - Practical guide</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="core-testing-patterns"><a class="header" href="#core-testing-patterns">Core Testing Patterns</a></h1>
+<blockquote>
+<p>💡 Explanation | Overview of core testing patterns for Rust applications</p>
+</blockquote>
 <p>Welcome to the core testing patterns section! Here you'll learn the everyday patterns you'll use in almost every test.</p>
 <h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>Core patterns include:</p>
@@ -2959,7 +3273,7 @@ assert_eq!(value, expected);   // Equality check
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started-with-fixtures"><a class="header" href="#getting-started-with-fixtures">Getting Started with Fixtures</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to use fixtures for test isolation</p>
+<p>🔧 How-to | Use fixtures for test isolation</p>
 </blockquote>
 <p>Fixtures are isolated test environments that provide controlled setup and automatic cleanup.</p>
 <h2 id="what-is-a-fixture"><a class="header" href="#what-is-a-fixture">What is a Fixture?</a></h2>
@@ -3207,7 +3521,7 @@ test!(test_with_helper, {
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="building-test-data-with-data-builders"><a class="header" href="#building-test-data-with-data-builders">Building Test Data with Data Builders</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Learn to construct test data efficiently</p>
+<p>🔧 How-to | Construct complex test data using data builders</p>
 </blockquote>
 <p>Data builders provide a fluent API for constructing complex test data structures.</p>
 <h2 id="why-data-builders"><a class="header" href="#why-data-builders">Why Data Builders?</a></h2>
@@ -3514,7 +3828,7 @@ let builder2 = builder1.with_var("key2", "value2");
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="assertions--verification"><a class="header" href="#assertions--verification">Assertions &amp; Verification</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Write clear, effective assertions</p>
+<p>🔧 How-to | Write clear, effective assertions</p>
 </blockquote>
 <p>Assertions verify that code behaves correctly. Chicago TDD Tools provides helpers for clear, readable assertions.</p>
 <h2 id="basic-assertions"><a class="header" href="#basic-assertions">Basic Assertions</a></h2>
@@ -3810,7 +4124,7 @@ assert_eq!(user.email, "alice@example.com");
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="error-path-testing"><a class="header" href="#error-path-testing">Error Path Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | Learn to test failure scenarios thoroughly</p>
+<p>🔧 How-to | Test failure scenarios thoroughly</p>
 </blockquote>
 <p>Error paths are where 80% of bugs hide. Chicago TDD emphasizes comprehensive error testing.</p>
 <h2 id="why-error-paths-matter"><a class="header" href="#why-error-paths-matter">Why Error Paths Matter</a></h2>
@@ -4154,6 +4468,9 @@ Error recovery is possible</li>
 <li>✅ Recovery</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="advanced-testing-techniques"><a class="header" href="#advanced-testing-techniques">Advanced Testing Techniques</a></h1>
+<blockquote>
+<p>💡 Explanation | Overview of advanced testing techniques</p>
+</blockquote>
 <p>Welcome to advanced testing techniques! These specialized methods help you test complex scenarios effectively.</p>
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>Advanced techniques include:</p>
@@ -4331,7 +4648,7 @@ chicago-tdd-tools = { version = "1.3", features = [
 <p>👉 <strong>Start with <a href="advanced/property-testing.html">Property-Based Testing</a></strong></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="property-based-testing-1"><a class="header" href="#property-based-testing-1">Property-Based Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Generate random test data to verify properties</p>
+<p>🔧 How-to | Generate random test data to verify properties</p>
 </blockquote>
 <p>Property-based testing generates random test data and verifies that properties hold for all inputs.</p>
 <h2 id="what-is-a-property"><a class="header" href="#what-is-a-property">What is a Property?</a></h2>
@@ -4604,7 +4921,7 @@ let data = generator.generate_test_data();
 <p>Use with fixtures and data builders for comprehensive testing.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mutation-testing-1"><a class="header" href="#mutation-testing-1">Mutation Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Validate test quality by introducing mutations</p>
+<p>🔧 How-to | Run mutation testing to validate test suite quality</p>
 </blockquote>
 <p>Mutation testing validates test quality by introducing mutations (changes) to code and verifying tests catch them.</p>
 <h2 id="quick-reference-mutation-testing-api"><a class="header" href="#quick-reference-mutation-testing-api">Quick Reference: Mutation Testing API</a></h2>
@@ -4961,7 +5278,7 @@ tester.apply_mutation(MutationOperator::ChangeValue(...));
 <p>Use for critical code to ensure maximum quality.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="snapshot-testing-1"><a class="header" href="#snapshot-testing-1">Snapshot Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Detect unintended changes with golden file comparisons</p>
+<p>🔧 How-to | Detect unintended changes with golden file comparisons</p>
 </blockquote>
 <p>Snapshot testing captures output on the first run and compares it on subsequent runs to detect unintended changes.</p>
 <h2 id="why-snapshot-testing"><a class="header" href="#why-snapshot-testing">Why Snapshot Testing?</a></h2>
@@ -5245,7 +5562,7 @@ assert_matches!(output, "output");
 <p>Perfect for generated output and API responses.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cli-testing-1"><a class="header" href="#cli-testing-1">CLI Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test command-line interfaces with golden files</p>
+<p>🔧 How-to | Test command-line interfaces with golden files</p>
 </blockquote>
 <p>Test command-line interfaces using golden files (<code>.trycmd</code>) to verify commands work correctly.</p>
 <h2 id="why-cli-testing"><a class="header" href="#why-cli-testing">Why CLI Testing?</a></h2>
@@ -5559,7 +5876,7 @@ assert!(normalized.contains("Started on [DATE]"));
 <p>Perfect for CLI applications and scripts.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="concurrency-testing-1"><a class="header" href="#concurrency-testing-1">Concurrency Testing</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test thread safety with deterministic thread ordering</p>
+<p>🔧 How-to | Test thread safety with deterministic thread ordering</p>
 </blockquote>
 <p>Test thread-safe code with deterministic thread ordering using loom.</p>
 <h2 id="why-concurrency-testing"><a class="header" href="#why-concurrency-testing">Why Concurrency Testing?</a></h2>
@@ -5926,7 +6243,7 @@ fn test_with_timeout() {
 <p>Use for critical concurrent code to ensure thread safety.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="the-go-the-extra-mile-pattern"><a class="header" href="#the-go-the-extra-mile-pattern">The "Go the Extra Mile" Pattern</a></h1>
 <blockquote>
-<p>📖 <strong>EXPLANATION</strong> | Learn the three-idea framework for design decisions</p>
+<p>💡 Explanation | Learn the three-idea framework for design decisions</p>
 </blockquote>
 <p>The "Go the Extra Mile" pattern demonstrates progressive enhancement from simple solutions to maximum-value solutions.</p>
 <h2 id="the-three-ideas-framework"><a class="header" href="#the-three-ideas-framework">The Three Ideas Framework</a></h2>
@@ -6275,7 +6592,7 @@ impl ValidatedUserResponse {
 <p>Use this framework to make intentional design decisions.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="observability--quality"><a class="header" href="#observability--quality">Observability &amp; Quality</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add observability and measure quality</p>
+<p>💡 Explanation | Add observability and measure quality</p>
 </blockquote>
 <p>Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.</p>
 <h2 id="quick-reference-observability-api"><a class="header" href="#quick-reference-observability-api">Quick Reference: Observability API</a></h2>
@@ -6555,9 +6872,20 @@ Boundary conditions tested</li>
 <p>Combined with testing for complete confidence.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="otel-instrumentation"><a class="header" href="#otel-instrumentation">OTEL Instrumentation</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Add OpenTelemetry observability to code</p>
+<p>🔧 How-to | Instrument and verify OpenTelemetry spans and metrics</p>
 </blockquote>
 <p>OpenTelemetry instrumentation provides observability into your operations.</p>
+<h2 id="quick-reference-otel-api"><a class="header" href="#quick-reference-otel-api">Quick Reference: OTEL API</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Method / Field</th><th>Parameters</th><th>Returns</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>Span</code></td><td><code>new_active()</code></td><td><code>context, name, start_time, attributes, events, status</code></td><td><code>Span</code></td><td>Create an active span</td></tr>
+<tr><td><code>Span</code></td><td><code>complete()</code></td><td><code>end_time</code></td><td><code>Result&lt;(), Error&gt;</code></td><td>Complete the span</td></tr>
+<tr><td><code>Span</code></td><td><code>status</code></td><td><code>SpanStatus</code> value</td><td>N/A</td><td>Status of the span</td></tr>
+<tr><td><code>Metric</code></td><td><code>name</code></td><td><code>String</code></td><td>N/A</td><td>Name of the metric</td></tr>
+<tr><td><code>Metric</code></td><td><code>value</code></td><td><code>MetricValue</code> value</td><td>N/A</td><td>Value of the metric</td></tr>
+<tr><td><code>SpanValidator</code></td><td><code>new()</code></td><td>None</td><td><code>SpanValidator</code></td><td>Create a new validator</td></tr>
+<tr><td><code>SpanValidator</code></td><td><code>validate()</code></td><td><code>&amp;Span</code></td><td><code>Result&lt;(), ValidationError&gt;</code></td><td>Validate span attributes</td></tr>
+</tbody></table>
+</div>
 <h2 id="creating-spans"><a class="header" href="#creating-spans">Creating Spans</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -6672,7 +7000,7 @@ span.status = SpanStatus::Unset;
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="weaver-live-check-validation"><a class="header" href="#weaver-live-check-validation">Weaver Live-Check Validation</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Validate telemetry against semantic conventions</p>
+<p>🔧 How-to | Validate telemetry against semantic conventions</p>
 </blockquote>
 <p>Weaver validates telemetry against semantic conventions.</p>
 <h2 id="what-is-weaver"><a class="header" href="#what-is-weaver">What is Weaver?</a></h2>
@@ -6753,7 +7081,7 @@ cargo make weaver-smoke
 <p>Combine observability with testing: <a href="guides/observability.html">Observability &amp; Quality</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="coverage--performance"><a class="header" href="#coverage--performance">Coverage &amp; Performance</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Measure test coverage and performance</p>
+<p>🔧 How-to | Measure test coverage and performance</p>
 </blockquote>
 <p>Measure test coverage and performance metrics.</p>
 <h2 id="test-coverage"><a class="header" href="#test-coverage">Test Coverage</a></h2>
@@ -6891,7 +7219,7 @@ cargo flamegraph --test performance_tests
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="real-world-applications"><a class="header" href="#real-world-applications">Real-World Applications</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | See complete examples of Chicago TDD Tools in action</p>
+<p>💡 Explanation | See complete examples of Chicago TDD Tools in action</p>
 </blockquote>
 <p>See complete examples of Chicago TDD Tools in action.</p>
 <h2 id="cli-application-example"><a class="header" href="#cli-application-example">CLI Application Example</a></h2>
@@ -7111,7 +7439,7 @@ cargo make release-validate
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="building-a-cli-application"><a class="header" href="#building-a-cli-application">Building a CLI Application</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a CLI application</p>
+<p>🔧 How-to | Complete example of testing a CLI application</p>
 </blockquote>
 <p>Complete example of testing a CLI application with Chicago TDD Tools.</p>
 <h2 id="project-structure-2"><a class="header" href="#project-structure-2">Project Structure</a></h2>
@@ -7193,7 +7521,7 @@ cargo make release-validate
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="testing-a-web-service"><a class="header" href="#testing-a-web-service">Testing a Web Service</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Complete example of testing a web service</p>
+<p>🔧 How-to | Complete example of testing a web service</p>
 </blockquote>
 <p>Complete example of testing a web service with Chicago TDD Tools.</p>
 <h2 id="project-structure-3"><a class="header" href="#project-structure-3">Project Structure</a></h2>
@@ -7337,7 +7665,7 @@ cargo make ci-local
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="integration-testing-with-docker"><a class="header" href="#integration-testing-with-docker">Integration Testing with Docker</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Test with real services using Docker</p>
+<p>🔧 How-to | Test with real services using Docker</p>
 </blockquote>
 <p>Test with real services using Docker containers.</p>
 <h2 id="why-docker-for-testing"><a class="header" href="#why-docker-for-testing">Why Docker for Testing?</a></h2>
@@ -7541,7 +7869,7 @@ docker stop &lt;container&gt;
 <p>See: <a href="guides/best-practices.html">Best Practices</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="best-practices--migration"><a class="header" href="#best-practices--migration">Best Practices &amp; Migration</a></h1>
 <blockquote>
-<p>🔧 <strong>HOW-TO</strong> | 📚 <strong>REFERENCE</strong> | Proven patterns and migration strategies</p>
+<p>🔧 How-to | Proven patterns and migration strategies</p>
 </blockquote>
 <p>Proven patterns and migration strategies for Chicago TDD.</p>
 <h2 id="testing-best-practices"><a class="header" href="#testing-best-practices">Testing Best Practices</a></h2>
@@ -7832,7 +8160,7 @@ Expert
 <li><a href="guides/../core/README.html">Core Patterns</a></li>
 <li><a href="guides/../advanced/README.html">Advanced Techniques</a></li>
 <li><a href="guides/real-world.html">Real-World Examples</a></li>
-<li><a href="guides/../../cookbook/README.html">Pattern Cookbook</a></li>
+<li><a href="guides/../../../cookbook/src/README.html">Pattern Cookbook</a></li>
 <li><a href="https://docs.rs/chicago-tdd-tools/">API Reference</a></li>
 </ul>
 <h2 id="next-steps-25"><a class="header" href="#next-steps-25">Next Steps</a></h2>

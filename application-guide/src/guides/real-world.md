@@ -1,6 +1,6 @@
 # Real-World Applications
 
-> 🎓 **TUTORIAL** | See complete examples of Chicago TDD Tools in action
+> 💡 Explanation | See complete examples of Chicago TDD Tools in action
 
 See complete examples of Chicago TDD Tools in action.
 

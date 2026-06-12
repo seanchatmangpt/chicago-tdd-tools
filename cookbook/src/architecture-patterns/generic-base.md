@@ -1,16 +1,18 @@
 # Pattern 6: Generic Base Layer
 
-> 🔧 **HOW-TO** | Keep core lean: generic capabilities, no domain logic
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Base layer bloats with domain code; consumers pull unused dependencies and bloat builds |
-| **Core Solution** | Core = generic only (fixtures, builders, assertions); domain logic in extensions |
-| **When to Use** | ✅ Reusable testing libraries, ✅ Multi-team frameworks, ✅ Open-source crates |
-| **When NOT to Use** | ❌ Single domain (use domain layer directly), ❌ Monorepos (use capability grouping) |
-| **Difficulty** | Medium - Requires identifying generic vs. domain code |
+| **Problem** | Base layer bloats with domain code; consumers pull unused dependencies and bloat builds |
+| **Solution** | Core = generic only (fixtures, builders, assertions); domain logic in extensions |
+| **When to Use** | Reusable testing libraries, multi-team frameworks, open-source crates |
+| **When NOT to Use** | Single domain (use domain layer directly), monorepos (use capability grouping) |
+| **Trade-offs** | Requires discipline to separate generic code from domain, but keeps build times fast and dependencies clean |
+| **Complexity** | Medium |
+| **Real-World Example** | [src/lib.rs](file:///Users/sac/chicago-tdd-tools/src/lib.rs) |
 
 ## The Problem
 
@@ -66,10 +68,10 @@ pub mod core { /* fixtures, builders, assertions */ }
 
 **Why**: Domain logic couples the base to specific use cases. Generic primitives stay stable and reusable.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/lib.rs`
-Purpose: Shows generic module structure with no domain coupling
+- **Code location**: [src/lib.rs](file:///Users/sac/chicago-tdd-tools/src/lib.rs)
+- **Explanation**: Re-exports only generic modules (`core`, `testing`, `validation`, `observability`, `integration`) with no domain concepts or structures.
 
 ## Related Patterns
 

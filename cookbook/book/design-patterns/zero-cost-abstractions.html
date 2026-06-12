@@ -176,34 +176,95 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-11-zero-cost-abstractions"><a class="header" href="#pattern-11-zero-cost-abstractions">Pattern 11: Zero-Cost Abstractions</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You are designing APIs or extensions and need expressive abstractions without runtime overhead.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Runtime polymorphism or heap allocations can slow hot paths. Manual inlining or duplicated code sacrifices readability.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Lean on generics, const generics, and macros to express behavior that compiles down to the same machine code as bespoke implementations. Favor references over owned values and prefer stack allocation. When dynamic dispatch is required, isolate it behind narrow traits.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Expressiveness vs. performance: abstractions must be ergonomic without cost</li>
-<li>Safety vs. control: compile-time guarantees should not block optimization</li>
-<li>Maintainability vs. specialization: macros and generics prevent copy-paste</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Runtime polymorphism slows hot paths; duplicating code sacrifices readability</td></tr>
+<tr><td><strong>Solution</strong></td><td>Use generics, const generics, and macros to specializing code at compile time</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Performance-critical code, type-level abstractions, macro-driven APIs</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Infrequently called code (use simple trait objects), heterogeneous collections (use trait objects)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Increases compile time and binary size (monomorphization bloat) but maximizes performance</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Medium</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/validation/performance.rs">src/validation/performance.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Runtime polymorphism adds overhead via vtables and indirect calls. Duplicating code to avoid polymorphism sacrifices maintainability. Neither option is ideal for hot paths.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Use generics and const generics to specialize code at compile time. Each call site gets its own monomorphized version with identical performance to hand-written code. Use macros for DSLs that expand to specialized code. Prefer stack allocation and references over heap allocation.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub fn measure_ticks&lt;F, T&gt;(operation: F) -&gt; (T, u64)
+</span>use chicago_tdd_tools::validation::performance::measure_ticks;
+
+// Generic: compiled to specialized code per call site (zero-cost)
+pub fn measure_operation&lt;F, T&gt;(operation: F) -&gt; (T, u64)
 where
     F: FnOnce() -&gt; T,
 {
-    // Generic function specialized per call site; no dynamic dispatch
-    chicago_tdd_tools::validation::performance::measure_ticks(operation)
+    measure_ticks(operation)  // No vtable lookup, inlined at call site
+}
+
+// Called with concrete types - compiler monomorphizes
+let (result, ticks) = measure_operation(|| compute_value());
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Use generics instead of trait objects where performance matters</li>
+<li><input disabled="" type="checkbox"/>
+Use const generics for compile-time constants</li>
+<li><input disabled="" type="checkbox"/>
+Prefer <code>&amp;T</code> over <code>Box&lt;T&gt;</code> for parameters</li>
+<li><input disabled="" type="checkbox"/>
+Profile before optimizing (don't prematurely apply pattern)</li>
+<li><input disabled="" type="checkbox"/>
+Macros generate specialized code, not boilerplate</li>
+<li><input disabled="" type="checkbox"/>
+Document performance implications in comments</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Using trait objects or runtime dispatch when generics would work:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Runtime polymorphism in hot path
+pub fn process&lt;T&gt;(item: &amp;dyn Handler&lt;T&gt;) {  // vtable lookup every call
+    item.handle();
+}
+
+// ✅ RIGHT: Generic (monomorphized, zero-cost)
+pub fn process&lt;T, H: Handler&lt;T&gt;&gt;(item: &amp;H) {
+    item.handle();  // Inlined, no vtable
 }
 <span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Generics compile to specialized code per type. Trait objects require runtime dispatch.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/validation/performance.rs">src/validation/performance.rs</a></li>
+<li><strong>Explanation</strong>: Employs generic specialization in <code>measure_ticks</code> to capture execution cycles without runtime vtable lookups.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 12: Type Safety with GATs</li>
-<li>Pattern 14: Compile-Time Validation</li>
-<li>Pattern 20: Macro Pattern Enforcement</li>
+<li><strong>Before this</strong>: <a href="../architecture-patterns/capability-groups.html">Pattern 10: Capability Grouping</a> (organize APIs)</li>
+<li><strong>Next</strong>: <a href="type-safety-patterns.html">Pattern 12: Type Safety</a> (combine with type safety)</li>
+<li><strong>Use with</strong>: <a href="compile-time-validation.html">Pattern 14: Compile-Time</a> (validate at compile time)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Generics are monomorphized (specialized) at compile time. The resulting binary code is identical to hand-written specialized code.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Performance-critical paths use generics, not trait objects</li>
+<li><input disabled="" type="checkbox"/>
+No unnecessary heap allocations</li>
+<li><input disabled="" type="checkbox"/>
+Stack allocation preferred when sizes are known</li>
+<li><input disabled="" type="checkbox"/>
+Benchmarks confirm zero-cost abstraction claims</li>
+<li><input disabled="" type="checkbox"/>
+Binary size is monitored (monomorphization can bloat)</li>
 </ul>
 
                     </main>

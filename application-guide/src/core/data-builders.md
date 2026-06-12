@@ -1,6 +1,6 @@
 # Building Test Data with Data Builders
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Learn to construct test data efficiently
+> 🔧 How-to | Construct complex test data using data builders
 
 Data builders provide a fluent API for constructing complex test data structures.
 

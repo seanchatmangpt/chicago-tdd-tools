@@ -1,7 +1,7 @@
 //! Telemetry capture helpers for Weaver-integrated tests.
 //!
 //! These helpers spin up OTLP exporters that stream spans directly to the
-//! Weaver live-check endpoint used by the [`WeaverTestFixture`].  The exported
+//! Weaver live-check endpoint used by the [`super::WeaverTestFixture`].  The exported
 //! tracers automatically flush on drop to ensure telemetry reaches Weaver
 //! before validation runs.
 

@@ -176,22 +176,30 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-8-composition-over-duplication"><a class="header" href="#pattern-8-composition-over-duplication">Pattern 8: Composition Over Duplication</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You are adding a feature to an extension crate and need functionality already available in the base layer.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Copying helpers or macros breaks the single source of truth. Over time the copies diverge, and bug fixes must be applied in multiple places.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Compose existing primitives. Wrap fixtures inside domain fixtures, embed builders into higher-level builders, and use assertion macros rather than writing bespoke checks. When missing functionality is truly generic, add it to the base crate instead of forking it downstream.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Launch speed vs. long-term maintenance: composition keeps future upgrades cheap</li>
-<li>Ergonomics vs. explicitness: wrappers can augment APIs without obscuring the base</li>
-<li>Ownership vs. contribution: contribute upstream when the behavior benefits all users</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Duplicated helpers diverge; bug fixes in base don't reach copies; maintenance nightmare</td></tr>
+<tr><td><strong>Solution</strong></td><td>Wrap base primitives (don't copy); extend wrappers with domain methods</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Adding domain methods, reusing base builders, customizing base fixtures</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Missing base functionality (contribute to base instead), conflicting behavior (redesign pattern)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires delegating calls to inner base objects, but inherits all base improvements and bug fixes automatically</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/builders.rs">src/core/builders.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Copying helpers breaks the single source of truth. Bug fixes in the base don't reach copies. Over time, copies diverge and become unmaintainable. Teams waste time synchronizing copies instead of fixing actual bugs.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Wrap base primitives instead of copying them. Create domain builders that compose base builders. Create domain fixtures that wrap base fixtures. Extend wrappers with domain-specific methods, but keep the base behavior intact.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub struct OrderBuilder {
+</span>use chicago_tdd_tools::core::builders::TestDataBuilder;
+
+pub struct OrderBuilder {
     base: TestDataBuilder,
 }
 
@@ -200,6 +208,7 @@ impl OrderBuilder {
         Self { base: TestDataBuilder::new() }
     }
 
+    // Domain-specific method using base builder
     pub fn with_amount(mut self, amount: u64) -&gt; Self {
         self.base = self.base.with_var("amount", amount.to_string());
         self
@@ -210,11 +219,65 @@ impl OrderBuilder {
     }
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Wrap base primitives, don't copy methods</li>
+<li><input disabled="" type="checkbox"/>
+Add domain-specific methods to wrappers</li>
+<li><input disabled="" type="checkbox"/>
+Keep base behavior unchanged</li>
+<li><input disabled="" type="checkbox"/>
+Delegate to base for core logic</li>
+<li><input disabled="" type="checkbox"/>
+Tests verify base behavior is preserved</li>
+<li><input disabled="" type="checkbox"/>
+If base is missing functionality, contribute upstream first</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Copying and modifying base helpers to "save time":</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Copy leads to divergence
+pub fn setup_fixture() {
+    // Copied from base, but with custom logic added
+    let db = Database::new();  // What if base changes this?
+    // ...
+}
+
+// ✅ RIGHT: Compose, don't copy
+pub fn setup_fixture() -&gt; DomainFixture {
+    let base = BaseFixture::new();  // Inherit base behavior
+    let domain = DomainFixture::new(base);  // Wrap it
+    domain.with_custom_config()
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Copies diverge immediately. Composition keeps you in sync with the base.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/builders.rs">src/core/builders.rs</a></li>
+<li><strong>Explanation</strong>: Shows composition of generic builders into domain builders by wrapping <code>TestDataBuilder</code> to prevent duplicating fields or serialization logic.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 6: Generic Base Layer</li>
-<li>Pattern 7: Extension Layer</li>
-<li>Pattern 9: Single Source of Truth</li>
+<li><strong>Before this</strong>: <a href="extension-layer.html">Pattern 7: Extension Layer</a> (create extensions)</li>
+<li><strong>Use with</strong>: <a href="generic-base.html">Pattern 6: Generic Base</a> (base to compose from)</li>
+<li><strong>Next</strong>: <a href="single-source-of-truth.html">Pattern 9: Single Source</a> (maintain consistency)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Wrapped primitives inherit base improvements automatically. Domain logic stays in one place.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+No duplicated logic from base</li>
+<li><input disabled="" type="checkbox"/>
+Base updates don't break wrappers</li>
+<li><input disabled="" type="checkbox"/>
+Composition is transparent to callers</li>
+<li><input disabled="" type="checkbox"/>
+Wrapper methods are clearly domain-specific</li>
+<li><input disabled="" type="checkbox"/>
+Tests verify both base and domain behavior</li>
 </ul>
 
                     </main>

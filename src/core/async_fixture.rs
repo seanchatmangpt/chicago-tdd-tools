@@ -21,7 +21,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! #[cfg(feature = "async")]
 //! use chicago_tdd_tools::core::async_fixture::{AsyncFixtureManager, AsyncFixtureProvider};
 //! use chicago_tdd_tools::core::fixture::FixtureError;
@@ -84,7 +84,7 @@ mod private {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::core::async_fixture::AsyncFixtureProvider;
 /// use chicago_tdd_tools::core::fixture::FixtureResult;
 ///

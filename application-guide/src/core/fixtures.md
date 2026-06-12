@@ -1,6 +1,6 @@
 # Getting Started with Fixtures
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Learn to use fixtures for test isolation
+> 🔧 How-to | Use fixtures for test isolation
 
 Fixtures are isolated test environments that provide controlled setup and automatic cleanup.
 

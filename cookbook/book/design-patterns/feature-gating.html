@@ -176,34 +176,108 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-19-feature-gate-slices"><a class="header" href="#pattern-19-feature-gate-slices">Pattern 19: Feature Gate Slices</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>The framework offers advanced capabilities (property testing, mutation testing, testcontainers, OTEL) that not every project needs.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Enabling every feature increases compile times and pulls in heavy dependencies. Disabling a feature accidentally can break tests silently.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Group related features into named slices in <code>Cargo.toml</code> (e.g., <code>testing-extras</code>, <code>observability-full</code>). Document the slice and expose <code>cfg</code>-gated APIs accordingly. Tests and examples import the feature-specific modules only when the feature is active, keeping the base lean.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Modularity vs. convenience: slices reduce duplication but still allow fine-grained toggles</li>
-<li>Discoverability vs. complexity: a small number of curated slices keeps onboarding simple</li>
-<li>Compatibility vs. optionality: code must compile cleanly with features disabled</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
-<pre><code class="language-toml">[features]
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Enabling all features bloats build times and dependencies; accidental disables break tests silently</td></tr>
+<tr><td><strong>Solution</strong></td><td>Group related features into named slices and conditionally compile APIs using cfg attributes</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Optional capabilities, heavy dependencies, multi-feature combinations</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Essential features (put in base), too many slices (keep under 5)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Adds configuration overhead, but keeps compilations fast and dependencies lightweight</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/Cargo.toml">Cargo.toml</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>The framework offers advanced capabilities (property testing, containers, telemetry) that not every project needs. Enabling every feature increases compile times and pulls in heavy dependencies. Accidental feature disabling breaks tests silently.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Group related features into curated slices (e.g., testing-extras combines property-testing + snapshot-testing + fake-data). Expose APIs only when features are active via <code>#[cfg(feature = "...")]</code>. Keep the base lean; let users opt into advanced capabilities.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
+<pre><code class="language-toml"># Cargo.toml: Curated feature slices
+[features]
 default = ["logging"]
+
+# Base features
+logging = ["log"]
+
+# Convenience slices
 testing-extras = ["property-testing", "snapshot-testing", "fake-data"]
 observability-full = ["otel", "weaver"]
+integration-full = ["testcontainers", "docker"]
+
+# Fine-grained controls
+property-testing = ["proptest"]
+snapshot-testing = ["insta"]
+otel = ["opentelemetry"]
 </code></pre>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[cfg(feature = "weaver")]
-pub mod weaver;
+</span>// src/lib.rs: Gate APIs by feature
+#[cfg(feature = "property-testing")]
+pub mod property;
+
+#[cfg(feature = "observability-full")]
+pub mod observability;
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Related features grouped into slices</li>
+<li><input disabled="" type="checkbox"/>
+Slices have clear, descriptive names</li>
+<li><input disabled="" type="checkbox"/>
+APIs are <code>#[cfg(feature = "...")]</code> gated</li>
+<li><input disabled="" type="checkbox"/>
+Code compiles with features disabled</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains which features enable which APIs</li>
+<li><input disabled="" type="checkbox"/>
+No more than 5-7 named slices (avoid complexity)</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Too many fine-grained features or inconsistent feature gates:</p>
+<pre><code class="language-toml">// ❌ WRONG: Too many slices, hard to choose
+[features]
+foo = ["a"]
+bar = ["b"]
+baz = ["c", "d"]
+// User confusion: which one to enable?
+
+// ✅ RIGHT: Curated slices with clear purpose
+[features]
+testing-extras = ["property-testing", "snapshot-testing", "fake-data"]
+observability-full = ["otel", "weaver"]
+</code></pre>
+<p><strong>Why</strong>: Too many choices is paralyzing. Curated slices guide users to sensible combinations.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/Cargo.toml">Cargo.toml</a></li>
+<li><strong>Explanation</strong>: Groups fine-grained features under convenient slices such as <code>testing-extras</code> and <code>integration-full</code>.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 6: Generic Base Layer</li>
-<li>Pattern 10: Capability Grouping</li>
-<li>Pattern 20: Macro Pattern Enforcement</li>
+<li><strong>Before this</strong>: <a href="../architecture-patterns/capability-groups.html">Pattern 10: Capability Grouping</a> (organize modules)</li>
+<li><strong>Use with</strong>: <a href="../architecture-patterns/generic-base.html">Pattern 6: Generic Base</a> (keep base lean)</li>
+<li><strong>Next</strong>: <a href="macro-enforcement.html">Pattern 20: Macro Enforcement</a> (enforce feature requirements in macros)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Feature slices reduce choice paralysis. Curated combinations solve common needs.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Base crate compiles without optional features</li>
+<li><input disabled="" type="checkbox"/>
+Each feature slice is well-documented</li>
+<li><input disabled="" type="checkbox"/>
+Documentation shows which features enable which APIs</li>
+<li><input disabled="" type="checkbox"/>
+Tests cover both with/without features</li>
+<li><input disabled="" type="checkbox"/>
+No accidental feature requirements in base</li>
+<li><input disabled="" type="checkbox"/>
+CI tests multiple feature combinations</li>
 </ul>
 
                     </main>

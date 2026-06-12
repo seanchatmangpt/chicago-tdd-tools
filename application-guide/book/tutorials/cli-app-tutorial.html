@@ -177,7 +177,7 @@
                     <main>
                         <h1 id="building-a-real-cli-application-complete-tutorial"><a class="header" href="#building-a-real-cli-application-complete-tutorial">Building a Real CLI Application: Complete Tutorial</a></h1>
 <blockquote>
-<p>🎓 <strong>TUTORIAL</strong> | Build a complete CLI application using Chicago TDD</p>
+<p>🎓 Tutorial | Build a complete CLI application using Chicago TDD</p>
 </blockquote>
 <p>This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.</p>
 <p><strong>Prerequisites</strong>: <a href="getting-started.html">Getting Started</a>, <a href="fixtures-tutorial.html">Fixtures Deep Dive</a>
@@ -480,6 +480,108 @@ mod tests {
         assert!(output.contains("✓"));
     });
 }
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/done.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: done &lt;id&gt;".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.mark_done(id) {
+        Ok(format!("Marked todo #{} as done", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_done_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert!(store.list()[0].completed);
+    });
+
+    test!(test_done_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/delete.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::store::TodoStore;
+
+pub fn execute(store: &amp;mut TodoStore, args: &amp;[String]) -&gt; Result&lt;String, String&gt; {
+    if args.is_empty() {
+        return Err("Usage: delete &lt;id&gt;".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.delete(id) {
+        Ok(format!("Deleted todo #{}", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_delete_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_ok!(&amp;result);
+        assert_eq!(store.list().len(), 0);
+    });
+
+    test!(test_delete_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&amp;mut store, &amp;args);
+
+        assert_err!(&amp;result);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Create <code>src/commands/mod.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod add;
+pub mod list;
+pub mod done;
+pub mod delete;
 <span class="boring">}</span></code></pre></pre>
 <hr />
 <h2 id="step-5-main-entry-point-5-minutes"><a class="header" href="#step-5-main-entry-point-5-minutes">Step 5: Main Entry Point (5 minutes)</a></h2>

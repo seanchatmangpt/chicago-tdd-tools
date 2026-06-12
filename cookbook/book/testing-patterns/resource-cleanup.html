@@ -176,48 +176,106 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-4-resource-cleanup"><a class="header" href="#pattern-4-resource-cleanup">Pattern 4: Resource Cleanup</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>Your tests allocate resources – files, network ports, containers, telemetry backends – that must be released even when assertions fail.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Forgetting to release resources causes nondeterministic failures, leaking containers, or state pollution between tests. Manual cleanup logic scatters across tests and is easy to miss.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Use Chicago TDD Tools fixtures and the RAII guarantees they provide. Wrap resource management inside <code>fixture_test!</code> or <code>fixture_test_with_timeout!</code>, storing handles in the fixture. Allow Drop implementations and the framework cleanup to run automatically so every test returns to a known good state.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Determinism vs. speed: automated teardown must be reliable without slowing the hot path</li>
-<li>Simplicity vs. observability: cleanup should be invisible unless a failure occurs</li>
-<li>Isolation vs. reuse: fixtures create fresh state while sharing setup logic</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Leaked containers, orphaned connections, and state pollution between tests</td></tr>
+<tr><td><strong>Solution</strong></td><td>Use <code>fixture_test!</code>/<code>fixture_test_with_timeout!</code> with RAII to clean up automatically</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Database connections, Docker containers, file handles, network ports</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Simple data (no cleanup needed), stateless services (no state to clean)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires implementing <code>Drop</code> or wrapping in a fixture, but guarantees resource release</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Manual cleanup logic scattered across tests is easy to skip. If an assertion fails, cleanup never runs, leaking containers or connections. Tests fail intermittently due to port conflicts or database locks from previous test runs.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Use the fixture's RAII guarantees. Wrap resource allocation inside <code>fixture_test!</code> or <code>fixture_test_with_timeout!</code>. The framework automatically calls Drop on resources when the test ends, even on assertion failure.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::prelude::*;
-use testcontainers::clients::Cli as DockerCli;
 
-struct DockerFixture {
-    docker: DockerCli,
-}
+fixture_test!(test_database_roundtrip, fixture, {
+    // Arrange: Fixture allocates database connection
+    let db = fixture.get_database()?;
 
-fixture_test!(test_exec_container_command, fixture, {
-    // Arrange
-    let docker = DockerCli::default();
-    let container = docker.run("alpine:3.19");
+    // Act: Execute query
+    let result = db.query("SELECT COUNT(*) FROM users")?;
 
-    // Act
-    let result = container.exec("echo", &amp;["ok"])?;
+    // Assert: Verify result
+    assert_eq!(result, 0);
 
-    // Assert
-    assert_eq!(result.stdout, "ok\n");
-
-    Ok::&lt;(), testcontainers::Error&gt;(())
+    // Cleanup: Automatic when fixture drops (even if assertion fails)
+    Ok(())
 });
 <span class="boring">}</span></code></pre></pre>
-<p>The fixture ensures containers stop even if the assertion fails.</p>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Use <code>fixture_test!</code> or <code>fixture_test_with_timeout!</code> for resource allocation</li>
+<li><input disabled="" type="checkbox"/>
+Store resource handles in the fixture, not local variables</li>
+<li><input disabled="" type="checkbox"/>
+Resource Drop implementations are called when test ends</li>
+<li><input disabled="" type="checkbox"/>
+Resources are released even if assertions fail</li>
+<li><input disabled="" type="checkbox"/>
+Tests run in isolation (no state leakage between runs)</li>
+<li><input disabled="" type="checkbox"/>
+Cleanup behavior is tested (run tests in sequence to detect leaks)</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Allocating resources outside the fixture scope, so they don't get cleaned up:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Cleanup doesn't run if assertion fails
+test!(test_bad_cleanup, {
+    let container = docker.run("postgres:16");  // Allocated outside fixture
+    let result = container.query("SELECT 1");
+    assert_ok!(&amp;result);
+    drop(container);  // May not run if assertion above fails
+});
+
+// ✅ RIGHT: Fixture guarantees cleanup via Drop
+fixture_test!(test_good_cleanup, fixture, {
+    let container = fixture.postgres_container()?;  // In fixture scope
+    let result = container.query("SELECT 1");
+    assert_ok!(&amp;result);  // If this fails, drop still runs
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: If the assertion fails before cleanup, resources leak. RAII guarantees cleanup happens via Drop, not explicit code.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></li>
+<li><strong>Explanation</strong>: Defines the <code>TestFixture</code> Drop implementation that ensures all allocated resources (directories, connections) are released when the test ends.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 5: Real Collaborators</li>
-<li>Pattern 16: Fixture Lifecycle Management</li>
-<li>Pattern 18: Timeout Defense in Depth</li>
+<li><strong>Before this</strong>: <a href="real-collaborators.html">Pattern 5: Real Collaborators</a> (uses fixtures for resources)</li>
+<li><strong>Next</strong>: <a href="../design-patterns/fixture-lifecycle.html">Pattern 16: Fixture Lifecycle</a> (advanced fixture management)</li>
+<li><strong>Combine</strong>: <a href="../design-patterns/timeout-defense.html">Pattern 18: Timeout Defense</a> (prevent hanging cleanups)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Drop is guaranteed to run when the value goes out of scope, even on panic/early return. This provides automatic, reliable cleanup.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All resource-allocating tests use fixtures</li>
+<li><input disabled="" type="checkbox"/>
+No manual cleanup code (let Drop handle it)</li>
+<li><input disabled="" type="checkbox"/>
+Tests run in any order without state leakage</li>
+<li><input disabled="" type="checkbox"/>
+Docker containers exit successfully after test</li>
+<li><input disabled="" type="checkbox"/>
+Database connections are returned to pools</li>
+<li><input disabled="" type="checkbox"/>
+File handles are closed</li>
 </ul>
 
                     </main>

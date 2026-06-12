@@ -252,11 +252,11 @@ Future releases will focus on:
 ## Documentation
 
 ### New Guides
-- [Phase 1 Summary](../../PHASE_1_SUMMARY.md) - Spec Harness implementation
-- [Phase 2 Summary](../../PHASE_2_SUMMARY.md) - Core Ontology & Operator Registry
-- [Phase 3 Summary](../../PHASE_3_SUMMARY.md) - Paper as Self-Hosting RDF Instance
-- [Phase 4 Summary](../../PHASE_4_SUMMARY.md) - Sector-Grade Reference Stacks
-- [RDF Integration Summary](../../RDF_INTEGRATION_SUMMARY.md) - RDF integration details
+- [Phase 1 Summary](../archive/PHASE_1_SUMMARY.md) - Spec Harness implementation
+- [Phase 2 Summary](../archive/PHASE_2_SUMMARY.md) - Core Ontology & Operator Registry
+- [Phase 3 Summary](../archive/PHASE_3_SUMMARY.md) - Paper as Self-Hosting RDF Instance
+- [Phase 4 Summary](../archive/PHASE_4_SUMMARY.md) - Sector-Grade Reference Stacks
+- [RDF Integration Summary](../process/RDF_INTEGRATION_SUMMARY.md) - RDF integration details
 
 ### Updated Guides
 - [Release Notes](RELEASE_NOTES_v1.4.0.md) - Complete feature documentation

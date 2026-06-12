@@ -1,3 +1,4 @@
+> 💡 Explanation
 # LaTeX Formalization of the Chatman Equation: Complete Summary
 
 ## What Was Created

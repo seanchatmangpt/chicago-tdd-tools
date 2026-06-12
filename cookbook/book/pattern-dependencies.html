@@ -1,0 +1,677 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Pattern Dependencies &amp; Learning Order - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="pattern-dependencies--learning-order"><a class="header" href="#pattern-dependencies--learning-order">Pattern Dependencies &amp; Learning Order</a></h1>
+<blockquote>
+<p>🎓 Tutorial | Learning paths and dependencies between patterns</p>
+</blockquote>
+<p>This guide shows which patterns depend on which others, helping you build a foundation before moving to advanced patterns.</p>
+<blockquote>
+<p><strong>Core Team Philosophy:</strong> Every pattern reduces a known failure mode (FMEA). Patterns aren't optional—they prevent production failures. See <a href="introduction.html#core-team-philosophy">Introduction: Core Team Philosophy</a> for how each pattern embodies <strong>Poka-Yoke</strong> (compile-time prevention), <strong>FMEA</strong> (quantified risk reduction), <strong>Production Safety</strong> (no unwrap/panic), and <strong>80/20 thinking</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="feature-requirements"><a class="header" href="#feature-requirements">Feature Requirements</a></h2>
+<p>Some patterns require optional features. Add them to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml"># Minimal testing (most common)
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-extras"] }
+
+# Real collaborators (requires Docker)
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-full"] }
+
+# Observability patterns
+chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
+</code></pre>
+<p><strong>Pattern → Feature mapping:</strong></p>
+<ul>
+<li><strong>Pattern 5 (Real Collaborators)</strong>: <code>testcontainers</code> feature → Docker required</li>
+<li><strong>Pattern 19 (Feature Gates)</strong>: All features (crate-level feature slices)</li>
+<li><strong>Observability patterns</strong>: <code>weaver</code> feature + OpenTelemetry support</li>
+</ul>
+<hr />
+<h2 id="core-team-process-documents"><a class="header" href="#core-team-process-documents">Core Team Process Documents</a></h2>
+<p>These patterns are part of the core team's larger system. Understand the context:</p>
+<div class="table-wrapper"><table><thead><tr><th>Process</th><th>What It Covers</th><th>Relevant Patterns</th></tr></thead><tbody>
+<tr><td><strong><a href="../../docs/process/SPR_GUIDE.html">SPR_GUIDE.md</a></strong></td><td>Error handling rules, Clippy standards, no unwrap/panic</td><td>2, 5, 16, 20</td></tr>
+<tr><td><strong><a href="../../docs/process/FMEA_TESTS_BUILD_ACTIONS.html">FMEA_TESTS_BUILD_ACTIONS.md</a></strong></td><td>Failure modes each pattern prevents, RPN reductions</td><td>All patterns</td></tr>
+<tr><td><strong><a href="../../docs/process/POKA_YOKE_WEAVER_REGISTRY.html">POKA_YOKE_WEAVER_REGISTRY.md</a></strong></td><td>Type-level error prevention examples</td><td>13, 14, 15</td></tr>
+<tr><td><strong><a href="../../docs/process/DOG_FOODING.html">DOG_FOODING.md</a></strong></td><td>Framework dogfoods its own patterns</td><td>All patterns</td></tr>
+<tr><td><strong><a href="../../docs/process/CODE_REVIEW_CHECKLIST.html">CODE_REVIEW_CHECKLIST.md</a></strong></td><td>Shipping checklist: no unwrap, FMEA compliance</td><td>All patterns</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="quick-answer-minimum-viable-pattern-sets"><a class="header" href="#quick-answer-minimum-viable-pattern-sets">Quick Answer: Minimum Viable Pattern Sets</a></h2>
+<p><strong>Just starting?</strong> Choose your path:</p>
+<div class="table-wrapper"><table><thead><tr><th>Your Goal</th><th>Minimum Patterns</th><th>Time</th><th>Patterns</th></tr></thead><tbody>
+<tr><td><strong>Write better tests</strong></td><td>3 patterns</td><td>30 min</td><td>1, 2, 5</td></tr>
+<tr><td><strong>Organize your code</strong></td><td>2 patterns</td><td>20 min</td><td>6, 10</td></tr>
+<tr><td><strong>Add type safety</strong></td><td>2 patterns</td><td>40 min</td><td>14, 15</td></tr>
+<tr><td><strong>Production ready</strong></td><td>8 patterns</td><td>2 hours</td><td>1-3, 5-7, 10</td></tr>
+<tr><td><strong>Complete mastery</strong></td><td>All 20 patterns</td><td>4 hours</td><td>1-20 in order</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="dependency-graph-visual"><a class="header" href="#dependency-graph-visual">Dependency Graph: Visual</a></h2>
+<pre><code>FOUNDATIONAL LAYER
+├── Pattern 1: AAA ................. (No dependencies)
+│   ├── Pattern 2: Error Paths
+│   ├── Pattern 3: Boundaries
+│   ├── Pattern 4: Cleanup ......... Pattern 16 depends on this
+│   ├── Pattern 5: Real Collaborators
+│   ├── Pattern 17: Builder Test Data
+│   └── Pattern 18: Timeout Defense
+│
+└── Pattern 6: Generic Base ........ (No dependencies)
+    ├── Pattern 7: Extension Layer
+    ├── Pattern 8: Composition (also needs 7)
+    ├── Pattern 9: Single Source
+    ├── Pattern 10: Capability Groups
+    └── Pattern 19: Feature Gates
+
+INDEPENDENT PATTERNS (Apply to any of above)
+├── Pattern 11: Zero-Cost Abstractions
+├── Pattern 12: Type Safety (GATs)
+├── Pattern 13: Sealed Traits
+├── Pattern 14: Compile-Time Validation
+├── Pattern 15: Type State Enforcement
+└── Pattern 20: Macro Enforcement
+</code></pre>
+<hr />
+<h2 id="foundation-patterns-must-learn-first"><a class="header" href="#foundation-patterns-must-learn-first">Foundation Patterns (Must Learn First)</a></h2>
+<h3 id="pattern-1-aaa-pattern"><a class="header" href="#pattern-1-aaa-pattern"><a href="testing-patterns/aaa-pattern.html">Pattern 1: AAA Pattern</a></a></h3>
+<p><strong>What it is:</strong> Arrange-Act-Assert structure for tests
+<strong>Why first:</strong> All other testing patterns build on this foundation
+<strong>Prerequisite:</strong> None
+<strong>Time:</strong> 10 min</p>
+<p><strong>Unlocks:</strong> Patterns 2, 3, 4, 5, 16, 17, 18</p>
+<hr />
+<h3 id="pattern-6-generic-base-layer"><a class="header" href="#pattern-6-generic-base-layer"><a href="architecture-patterns/generic-base.html">Pattern 6: Generic Base Layer</a></a></h3>
+<p><strong>What it is:</strong> Keep core layer generic, domain logic in extensions
+<strong>Why first:</strong> All architecture patterns build on this structure
+<strong>Prerequisite:</strong> None
+<strong>Time:</strong> 10 min</p>
+<p><strong>Unlocks:</strong> Patterns 7, 8, 9, 10, 19</p>
+<hr />
+<h2 id="testing-patterns-depend-on-pattern-1"><a class="header" href="#testing-patterns-depend-on-pattern-1">Testing Patterns (Depend on Pattern 1)</a></h2>
+<p>Learn these in any order after mastering <a href="testing-patterns/aaa-pattern.html">Pattern 1</a>:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Builds On</th><th>Core Idea</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="testing-patterns/error-path-testing.html">2: Error Paths</a></strong></td><td>1: AAA</td><td>Test each error variant</td><td>15 min</td></tr>
+<tr><td><strong><a href="testing-patterns/boundary-conditions.html">3: Boundaries</a></strong></td><td>1: AAA</td><td>Test below/at/above limits</td><td>15 min</td></tr>
+<tr><td><strong><a href="testing-patterns/resource-cleanup.html">4: Cleanup</a></strong></td><td>1: AAA</td><td>RAII for resource release</td><td>10 min</td></tr>
+<tr><td><strong><a href="testing-patterns/real-collaborators.html">5: Real Collaborators</a></strong></td><td>1: AAA</td><td>Use actual services, not mocks</td><td>15 min</td></tr>
+</tbody></table>
+</div>
+<p><strong>Recommended order:</strong> 1 → 2 → 3 → 5 → 4</p>
+<p><strong>Why this order:</strong></p>
+<ol>
+<li>Learn AAA first (foundation)</li>
+<li>Add error paths (80% of bugs)</li>
+<li>Add boundary testing (off-by-one prevention)</li>
+<li>Use real collaborators (confidence boost)</li>
+<li>Add cleanup (resource safety)</li>
+</ol>
+<hr />
+<h2 id="architecture-patterns-depend-on-pattern-6"><a class="header" href="#architecture-patterns-depend-on-pattern-6">Architecture Patterns (Depend on Pattern 6)</a></h2>
+<h3 id="core-pattern-pattern-6-generic-base"><a class="header" href="#core-pattern-pattern-6-generic-base">Core Pattern: <a href="architecture-patterns/generic-base.html">Pattern 6 (Generic Base)</a></a></h3>
+<p>Learn this first. Builds foundation for all architecture patterns.</p>
+<h3 id="tier-1-depends-only-on-6"><a class="header" href="#tier-1-depends-only-on-6">Tier 1 (Depends only on 6)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>What It Adds</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="architecture-patterns/capability-groups.html">10: Capability Groups</a></strong></td><td>How to organize modules</td><td>10 min</td></tr>
+<tr><td><strong><a href="architecture-patterns/single-source-of-truth.html">9: Single Source of Truth</a></strong></td><td>Centralize constants</td><td>10 min</td></tr>
+</tbody></table>
+</div>
+<p><strong>Learn after 6:</strong> 6 → 10 OR 6 → 9 (either order)</p>
+<h3 id="tier-2-depends-on-6--tier-1"><a class="header" href="#tier-2-depends-on-6--tier-1">Tier 2 (Depends on 6 + Tier 1)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Depends On</th><th>What It Adds</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="architecture-patterns/extension-layer.html">7: Extension Layer</a></strong></td><td>6</td><td>Domain logic in extensions</td><td>10 min</td></tr>
+<tr><td><strong><a href="architecture-patterns/composition-over-duplication.html">8: Composition</a></strong></td><td>6, 7</td><td>Wrap don't copy</td><td>10 min</td></tr>
+</tbody></table>
+</div>
+<p><strong>Learn after Tier 1:</strong> 6 → 10 → 7 → 8 OR 6 → 7 → 8</p>
+<h3 id="pattern-19-feature-gates"><a class="header" href="#pattern-19-feature-gates"><a href="design-patterns/feature-gating.html">Pattern 19: Feature Gates</a></a></h3>
+<p><strong>Depends on:</strong> 6: Generic Base
+<strong>When to learn:</strong> After you have multiple features in your crate
+<strong>Time:</strong> 10 min</p>
+<hr />
+<h2 id="design-patterns-independent"><a class="header" href="#design-patterns-independent">Design Patterns (Independent)</a></h2>
+<p>These patterns don't depend on each other. Learn based on your needs:</p>
+<h3 id="for-zero-cost-performance"><a class="header" href="#for-zero-cost-performance">For Zero-Cost Performance</a></h3>
+<p><strong>Order:</strong> 11 → 12 → 13 → 14 → 15</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>Problem</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="design-patterns/zero-cost-abstractions.html">11</a></strong></td><td>Zero-Cost Abstractions</td><td>Trait objects slow hot paths</td><td>15 min</td></tr>
+<tr><td><strong><a href="design-patterns/compile-time-validation.html">14</a></strong></td><td>Compile-Time Validation</td><td>Validate at runtime vs compile time</td><td>15 min</td></tr>
+<tr><td><strong><a href="design-patterns/type-safety-patterns.html">12</a></strong></td><td>Type Safety (GATs)</td><td>Lifetimes escape scope</td><td>20 min</td></tr>
+<tr><td><strong><a href="design-patterns/type-state-pattern.html">15</a></strong></td><td>Type State Enforcement</td><td>Call order can be wrong</td><td>15 min</td></tr>
+<tr><td><strong><a href="design-patterns/sealed-traits.html">13</a></strong></td><td>Sealed Traits</td><td>Downstream breaks invariants</td><td>10 min</td></tr>
+</tbody></table>
+</div>
+<p><strong>Why this order:</strong> Build on each other's concepts for safety</p>
+<h3 id="for-extensibility--governance"><a class="header" href="#for-extensibility--governance">For Extensibility &amp; Governance</a></h3>
+<p><strong>Order:</strong> 13 → 20 → 19</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>What It Does</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="design-patterns/sealed-traits.html">13</a></strong></td><td>Sealed Traits</td><td>Prevent downstream implementations</td><td>10 min</td></tr>
+<tr><td><strong><a href="design-patterns/macro-enforcement.html">20</a></strong></td><td>Macro Enforcement</td><td>Embed best practices in macros</td><td>15 min</td></tr>
+<tr><td><strong><a href="design-patterns/feature-gating.html">19</a></strong></td><td>Feature Gates</td><td>Group features into slices</td><td>10 min</td></tr>
+</tbody></table>
+</div>
+<h3 id="for-reliability--correctness"><a class="header" href="#for-reliability--correctness">For Reliability &amp; Correctness</a></h3>
+<p><strong>Order:</strong> 16 → 17 → 18</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>Pattern</th><th>What It Does</th><th>Time</th></tr></thead><tbody>
+<tr><td><strong><a href="design-patterns/fixture-lifecycle.html">16</a></strong></td><td>Fixture Lifecycle</td><td>Automatic cleanup via Drop</td><td>10 min</td></tr>
+<tr><td><strong><a href="design-patterns/builder-test-data.html">17</a></strong></td><td>Builder Test Data</td><td>Fluent test data construction</td><td>10 min</td></tr>
+<tr><td><strong><a href="design-patterns/timeout-defense.html">18</a></strong></td><td>Timeout Defense</td><td>Layer timeouts for safety</td><td>10 min</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="dependency-matrix-full-reference"><a class="header" href="#dependency-matrix-full-reference">Dependency Matrix: Full Reference</a></h2>
+<h3 id="minimal-set-per-pattern"><a class="header" href="#minimal-set-per-pattern">Minimal Set Per Pattern</a></h3>
+<p>Shows the <strong>minimum</strong> other patterns you should master before this one:</p>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Must Know First</th><th>Should Know First</th><th>Optional Context</th></tr></thead><tbody>
+<tr><td><strong>1: AAA</strong></td><td>None</td><td>None</td><td>None</td></tr>
+<tr><td><strong>2: Error Paths</strong></td><td>1</td><td>None</td><td>None</td></tr>
+<tr><td><strong>3: Boundaries</strong></td><td>1</td><td>2</td><td>None</td></tr>
+<tr><td><strong>4: Cleanup</strong></td><td>1</td><td>None</td><td>None</td></tr>
+<tr><td><strong>5: Real Collaborators</strong></td><td>1</td><td>2, 3</td><td>None</td></tr>
+<tr><td><strong>6: Generic Base</strong></td><td>None</td><td>None</td><td>None</td></tr>
+<tr><td><strong>7: Extension Layer</strong></td><td>6</td><td>10</td><td>None</td></tr>
+<tr><td><strong>8: Composition</strong></td><td>6, 7</td><td>8</td><td>None</td></tr>
+<tr><td><strong>9: Single Source</strong></td><td>6</td><td>None</td><td>None</td></tr>
+<tr><td><strong>10: Capability Groups</strong></td><td>6</td><td>None</td><td>None</td></tr>
+<tr><td><strong>11: Zero-Cost</strong></td><td>None</td><td>None</td><td>6 (for context)</td></tr>
+<tr><td><strong>12: Type Safety (GATs)</strong></td><td>None</td><td>None</td><td>1 (for context)</td></tr>
+<tr><td><strong>13: Sealed Traits</strong></td><td>None</td><td>None</td><td>6 (for context)</td></tr>
+<tr><td><strong>14: Compile-Time</strong></td><td>None</td><td>None</td><td>1 (for context)</td></tr>
+<tr><td><strong>15: Type State</strong></td><td>None</td><td>None</td><td>1 (for context)</td></tr>
+<tr><td><strong>16: Fixture Lifecycle</strong></td><td>1, 4</td><td>None</td><td>None</td></tr>
+<tr><td><strong>17: Builder Test Data</strong></td><td>1</td><td>6 (for builders)</td><td>None</td></tr>
+<tr><td><strong>18: Timeout Defense</strong></td><td>1</td><td>None</td><td>None</td></tr>
+<tr><td><strong>19: Feature Gates</strong></td><td>6</td><td>None</td><td>None</td></tr>
+<tr><td><strong>20: Macro Enforcement</strong></td><td>None</td><td>None</td><td>1, 6 (for context)</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="recommended-learning-paths"><a class="header" href="#recommended-learning-paths">Recommended Learning Paths</a></h2>
+<h3 id="path-1-testing-excellence-90-minutes"><a class="header" href="#path-1-testing-excellence-90-minutes">Path 1: Testing Excellence (90 minutes)</a></h3>
+<p>For teams focused on test quality. Covers all testing patterns.</p>
+<pre><code>Week 1: Foundation (30 min)
+  → Pattern 1: AAA Pattern (10 min)
+  → Pattern 2: Error Paths (10 min)
+  → Pattern 3: Boundaries (10 min)
+
+Week 2: Depth (30 min)
+  → Pattern 5: Real Collaborators (15 min)
+  → Pattern 4: Cleanup (15 min)
+
+Week 3: Advanced Testing (30 min)
+  → Pattern 16: Fixture Lifecycle (10 min)
+  → Pattern 17: Builder Test Data (10 min)
+  → Pattern 18: Timeout Defense (10 min)
+</code></pre>
+<p><strong>Total:</strong> Patterns 1-5, 16-18 mastered (7 patterns)
+<strong>Time:</strong> 90 minutes
+<strong>Benefit:</strong> Write bulletproof tests, catch 80% of bugs</p>
+<hr />
+<h3 id="path-2-architecture--organization-60-minutes"><a class="header" href="#path-2-architecture--organization-60-minutes">Path 2: Architecture &amp; Organization (60 minutes)</a></h3>
+<p>For teams designing extensible systems.</p>
+<pre><code>Week 1: Foundation (20 min)
+  → Pattern 6: Generic Base Layer (10 min)
+  → Pattern 10: Capability Groups (10 min)
+
+Week 2: Extensions (20 min)
+  → Pattern 7: Extension Layer (10 min)
+  → Pattern 9: Single Source of Truth (10 min)
+
+Week 3: Composition (20 min)
+  → Pattern 8: Composition Over Duplication (10 min)
+  → Pattern 19: Feature Gates (10 min)
+</code></pre>
+<p><strong>Total:</strong> Patterns 6-10, 19 mastered (6 patterns)
+<strong>Time:</strong> 60 minutes
+<strong>Benefit:</strong> Organize code for reuse, reduce duplication, manage complexity</p>
+<hr />
+<h3 id="path-3-type-safety--performance-120-minutes"><a class="header" href="#path-3-type-safety--performance-120-minutes">Path 3: Type Safety &amp; Performance (120 minutes)</a></h3>
+<p>For teams needing compile-time guarantees and zero-cost abstractions.</p>
+<pre><code>Week 1: Zero-Cost (30 min)
+  → Pattern 11: Zero-Cost Abstractions (15 min)
+  → Pattern 14: Compile-Time Validation (15 min)
+
+Week 2: Type-Level Safety (30 min)
+  → Pattern 12: Type Safety (GATs) (20 min)
+  → Pattern 15: Type State Enforcement (10 min)
+
+Week 3: Advanced Safety (30 min)
+  → Pattern 13: Sealed Traits (10 min)
+  → Pattern 20: Macro Enforcement (15 min)
+  → Pattern 18: Timeout Defense (5 min - context)
+
+Week 4: Extensibility (30 min)
+  → Review Patterns 1, 6, 7 (15 min - context for how these interact)
+  → Pattern 13: Sealed Traits deep dive (15 min)
+</code></pre>
+<p><strong>Total:</strong> Patterns 11-15, 18, 20 mastered + context on 1, 6, 7 (8 patterns)
+<strong>Time:</strong> 120 minutes
+<strong>Benefit:</strong> Compile-time safety, zero-cost abstractions, type-level design</p>
+<hr />
+<h3 id="path-4-production-ready-180-minutes"><a class="header" href="#path-4-production-ready-180-minutes">Path 4: Production Ready (180+ minutes)</a></h3>
+<p>Complete mastery of all 20 patterns, recommended order.</p>
+<pre><code>PHASE 1: TESTING FOUNDATION (45 min)
+  Pattern 1: AAA Pattern (10 min)
+  Pattern 2: Error Paths (10 min)
+  Pattern 3: Boundaries (10 min)
+  Pattern 5: Real Collaborators (10 min)
+  Pattern 4: Cleanup (5 min)
+
+PHASE 2: ARCHITECTURE FOUNDATION (40 min)
+  Pattern 6: Generic Base Layer (10 min)
+  Pattern 10: Capability Groups (10 min)
+  Pattern 7: Extension Layer (10 min)
+  Pattern 8: Composition Over Duplication (10 min)
+
+PHASE 3: ADVANCED TESTING (40 min)
+  Pattern 16: Fixture Lifecycle (10 min)
+  Pattern 17: Builder Test Data (10 min)
+  Pattern 18: Timeout Defense (10 min)
+  Pattern 4: Cleanup (revisit) (10 min)
+
+PHASE 4: ADVANCED ARCHITECTURE (30 min)
+  Pattern 9: Single Source of Truth (10 min)
+  Pattern 19: Feature Gates (10 min)
+  Pattern 20: Macro Enforcement (10 min)
+
+PHASE 5: DESIGN PATTERNS (80 min)
+  Pattern 11: Zero-Cost Abstractions (15 min)
+  Pattern 14: Compile-Time Validation (15 min)
+  Pattern 12: Type Safety (GATs) (20 min)
+  Pattern 15: Type State Enforcement (15 min)
+  Pattern 13: Sealed Traits (15 min)
+</code></pre>
+<p><strong>Total:</strong> All 20 patterns (some with revisits)
+<strong>Time:</strong> 180+ minutes
+<strong>Benefit:</strong> Complete mastery, ready to design complex systems</p>
+<hr />
+<h2 id="decision-tree-which-patterns-do-i-need"><a class="header" href="#decision-tree-which-patterns-do-i-need">Decision Tree: Which Patterns Do I Need?</a></h2>
+<h3 id="question-1-whats-your-main-goal"><a class="header" href="#question-1-whats-your-main-goal">Question 1: What's your main goal?</a></h3>
+<p><strong>A) Better tests</strong> → <a href="#path-1-testing-excellence-90-minutes">Path 1 (Testing Excellence)</a>
+<strong>B) Better code organization</strong> → <a href="#path-2-architecture--organization-60-minutes">Path 2 (Architecture)</a>
+<strong>C) Type safety &amp; performance</strong> → <a href="#path-3-type-safety--performance-120-minutes">Path 3 (Type Safety)</a>
+<strong>D) Everything</strong> → <a href="#path-4-production-ready-180-minutes">Path 4 (Production Ready)</a></p>
+<h3 id="question-2-how-much-time-do-you-have"><a class="header" href="#question-2-how-much-time-do-you-have">Question 2: How much time do you have?</a></h3>
+<p><strong>&lt; 1 hour:</strong></p>
+<ul>
+<li>Pattern 1: AAA (10 min)</li>
+<li>Pattern 6: Generic Base (10 min)</li>
+<li>Quick Reference Card (5 min)</li>
+<li>Read: Common Mistakes (10 min)</li>
+<li>Read: Real-World Scenarios (15 min)</li>
+</ul>
+<p><strong>1-2 hours:</strong> Choose Path 1, 2, or 3</p>
+<p><strong>2+ hours:</strong> Choose Path 4</p>
+<h3 id="question-3-whats-your-biggest-pain-point-right-now"><a class="header" href="#question-3-whats-your-biggest-pain-point-right-now">Question 3: What's your biggest pain point right now?</a></h3>
+<p><strong>"Tests are hard to write"</strong> → Pattern 1, 2, 5 (30 min)
+<strong>"Code is becoming scattered"</strong> → Pattern 6, 10, 7 (30 min)
+<strong>"Need type safety"</strong> → Pattern 14, 15, 12 (50 min)
+<strong>"Tests are slow"</strong> → Pattern 11, 18 (25 min)
+<strong>"Resource management is messy"</strong> → Pattern 4, 16 (20 min)
+<strong>"Too many bugs in error handling"</strong> → Pattern 2, 3, 5 (40 min)</p>
+<hr />
+<h2 id="dependency-principles"><a class="header" href="#dependency-principles">Dependency Principles</a></h2>
+<h3 id="rule-1-learn-foundations-first"><a class="header" href="#rule-1-learn-foundations-first">Rule 1: Learn Foundations First</a></h3>
+<p>Always master foundational patterns before patterns that depend on them:</p>
+<ul>
+<li>Learn <strong>Pattern 1</strong> before 2, 3, 4, 5, 16, 17, 18</li>
+<li>Learn <strong>Pattern 6</strong> before 7, 8, 9, 10, 19</li>
+</ul>
+<h3 id="rule-2-you-can-skip-non-dependent-patterns"><a class="header" href="#rule-2-you-can-skip-non-dependent-patterns">Rule 2: You Can Skip Non-Dependent Patterns</a></h3>
+<p>Design patterns (11-15, 20) don't depend on each other. Skip if they don't solve your problem.</p>
+<p><strong>Example:</strong> If you don't care about performance, skip Pattern 11.
+<strong>Example:</strong> If you don't use trait objects, skip Pattern 13.</p>
+<h3 id="rule-3-learn-in-small-groups"><a class="header" href="#rule-3-learn-in-small-groups">Rule 3: Learn in Small Groups</a></h3>
+<p>Don't try to master all 20 at once. Pick a path (90 min, 120 min, or 180 min) and complete it.</p>
+<p><strong>Why:</strong> Patterns reinforce each other. Learning a path gives you working systems, not isolated ideas.</p>
+<h3 id="rule-4-revisit-patterns-in-context"><a class="header" href="#rule-4-revisit-patterns-in-context">Rule 4: Revisit Patterns in Context</a></h3>
+<p>Come back to patterns once you've hit the problem they solve.</p>
+<p><strong>Example:</strong> Pattern 19 (Feature Gates) is irrelevant until your crate has 3+ optional features.</p>
+<hr />
+<h2 id="anti-pattern-skipping-foundations"><a class="header" href="#anti-pattern-skipping-foundations">Anti-Pattern: Skipping Foundations</a></h2>
+<p><strong>❌ WRONG:</strong> Try to use Pattern 7 (Extension Layer) without Pattern 6 (Generic Base)</p>
+<ul>
+<li>Result: Confused about what goes in "base" vs "extension"</li>
+</ul>
+<p><strong>❌ WRONG:</strong> Try Pattern 12 (Type Safety) without Pattern 1 (AAA)</p>
+<ul>
+<li>Result: GATs seem like unnecessary complexity</li>
+</ul>
+<p><strong>❌ WRONG:</strong> Try Pattern 20 (Macro Enforcement) without knowing what you want to enforce</p>
+<ul>
+<li>Result: Over-engineered macros that nobody uses</li>
+</ul>
+<p><strong>✅ RIGHT:</strong> Learn foundations (1, 6) first, then specialized patterns</p>
+<ul>
+<li>Result: Each pattern solves real problems you've hit</li>
+</ul>
+<hr />
+<h2 id="quick-reference-what-each-pattern-enables"><a class="header" href="#quick-reference-what-each-pattern-enables">Quick Reference: What Each Pattern Enables</a></h2>
+<p>After mastering Pattern 1 (AAA), you unlock:</p>
+<ul>
+<li>✅ Pattern 2: Test more error cases (+ 15 min)</li>
+<li>✅ Pattern 3: Catch boundary bugs (+ 15 min)</li>
+<li>✅ Pattern 4: Clean up resources (+ 10 min)</li>
+<li>✅ Pattern 5: Integration testing (+ 15 min)</li>
+<li>✅ Pattern 16: Auto cleanup (+ 10 min)</li>
+<li>✅ Pattern 17: Builder test data (+ 10 min)</li>
+<li>✅ Pattern 18: Timeout safety (+ 10 min)</li>
+</ul>
+<p>After mastering Pattern 6 (Generic Base), you unlock:</p>
+<ul>
+<li>✅ Pattern 7: Extensible code (+ 10 min)</li>
+<li>✅ Pattern 8: No duplication (+ 10 min)</li>
+<li>✅ Pattern 9: Shared constants (+ 10 min)</li>
+<li>✅ Pattern 10: Clear organization (+ 10 min)</li>
+<li>✅ Pattern 19: Feature management (+ 10 min)</li>
+</ul>
+<p>Design patterns (11-15, 20) stand alone.</p>
+<hr />
+<h2 id="pro-tip-the-8020-minimum"><a class="header" href="#pro-tip-the-8020-minimum">Pro Tip: The 80/20 Minimum</a></h2>
+<p><strong>If you only have 45 minutes,</strong> master these 5 patterns:</p>
+<ol>
+<li><strong>Pattern 1: AAA</strong> (10 min) - Test structure</li>
+<li><strong>Pattern 2: Error Paths</strong> (10 min) - Real bug detection</li>
+<li><strong>Pattern 6: Generic Base</strong> (10 min) - Code organization</li>
+<li><strong>Pattern 10: Capability Groups</strong> (10 min) - Discoverability</li>
+<li><strong>Pattern 5: Real Collaborators</strong> (5 min) - Integration confidence</li>
+</ol>
+<p><strong>Result:</strong> You'll have 80% of the value with these 5 patterns. Everything else adds depth.</p>
+<hr />
+<h2 id="shipping-checklist-before-you-ship"><a class="header" href="#shipping-checklist-before-you-ship">Shipping Checklist: Before You Ship</a></h2>
+<p>Every pattern comes with a <strong>production guarantee</strong>. Use this checklist before shipping:</p>
+<p><strong>Error Handling (Pattern 2 + SPR_GUIDE):</strong></p>
+<ul>
+<li>✅ No <code>.unwrap()</code> in error paths (Clippy -D unwrap_used)</li>
+<li>✅ No <code>.expect()</code> in production code (Clippy -D expect_used)</li>
+<li>✅ All errors propagate via <code>?</code> operator or explicit match</li>
+<li>✅ Run: <code>cargo make lint</code> (catches all violations)</li>
+</ul>
+<p><strong>Test Isolation (Pattern 1 + Pattern 4):</strong></p>
+<ul>
+<li>✅ Tests use AAA pattern (Arrange-Act-Assert)</li>
+<li>✅ Tests clean up resources via Drop (no manual teardown)</li>
+<li>✅ Tests run in parallel without flakiness</li>
+<li>✅ Run: <code>cargo make test-unit &amp;&amp; cargo make test-all</code></li>
+</ul>
+<p><strong>Type Safety (Pattern 14 + Pattern 15):</strong></p>
+<ul>
+<li>✅ Invalid states impossible to construct</li>
+<li>✅ Wrong call order = compile error (not runtime bug)</li>
+<li>✅ Sealed traits prevent unsafe downstream code</li>
+<li>✅ Run: <code>cargo make check</code> (catches all violations)</li>
+</ul>
+<p><strong>Real Collaborators (Pattern 5):</strong></p>
+<ul>
+<li>✅ Integration tests use actual services (not mocks)</li>
+<li>✅ Docker container tests in CI (testcontainers feature)</li>
+<li>✅ Catching integration bugs before production</li>
+<li>✅ Run: <code>cargo make test-integration</code></li>
+</ul>
+<p><strong>Resource Safety (Pattern 4 + Pattern 16):</strong></p>
+<ul>
+<li>✅ Fixtures guarantee cleanup even on panic</li>
+<li>✅ No resource leaks detected</li>
+<li>✅ Timeout defense prevents hanging tests</li>
+<li>✅ Run: <code>cargo make test-all</code> with <code>RUST_BACKTRACE=1</code></li>
+</ul>
+<p><strong>Production Readiness (Full Pipeline):</strong></p>
+<ul>
+<li>✅ <code>cargo make pre-commit</code> passes (format + lint + unit tests)</li>
+<li>✅ <code>cargo make ci-local</code> passes (simulates GitHub Actions)</li>
+<li>✅ All clippy warnings fixed or justified with <code>#[allow(...)]</code></li>
+<li>✅ Code review checklist passed (see CODE_REVIEW_CHECKLIST.md)</li>
+</ul>
+<p><strong>If ANY check fails</strong>, your code is NOT ready to ship. Don't work around it—fix it.</p>
+<hr />
+<h2 id="related-guides"><a class="header" href="#related-guides">Related Guides</a></h2>
+<p><strong>Want quick lookup instead of learning paths?</strong></p>
+<ul>
+<li><a href="quick-reference.html">Quick Reference Card</a> - One-page pattern table (2 min)</li>
+<li><a href="common-mistakes.html">Common Mistakes</a> - Aggregated gotchas for all 20 patterns (10 min)</li>
+<li><a href="all-patterns-reference.html">All Patterns: Quick Reference</a> - All 20 patterns at a glance (10 min)</li>
+</ul>
+<p><strong>Need to find a pattern for your specific problem?</strong></p>
+<ul>
+<li><a href="choosing-your-pattern.html">Choosing Your Pattern</a> - Decision matrix by problem (5 min)</li>
+</ul>
+<p><strong>Ready to dive deep into a specific pattern?</strong></p>
+<ul>
+<li><a href="testing-patterns/">Testing Patterns</a> - Patterns 1-5</li>
+<li><a href="architecture-patterns/">Architecture Patterns</a> - Patterns 6-10</li>
+<li><a href="design-patterns/">Design Patterns</a> - Patterns 11-20</li>
+</ul>
+<p><strong>Want real-world examples?</strong></p>
+<ul>
+<li><a href="real-world-scenarios.html">Real-World Scenarios</a> - 5 scenarios showing patterns combined (15 min)</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="choosing-your-pattern.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="all-patterns-reference.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="choosing-your-pattern.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="all-patterns-reference.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,16 +1,18 @@
 # Pattern 5: Real Collaborators
 
-> 🔧 **HOW-TO** | Test with real dependencies to catch integration gaps before production
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Mock-heavy tests hide integration gaps; production fails when mocks don't match reality |
-| **Core Solution** | Use real collaborators (containers, services) in integration tests; separate from unit tests |
-| **When to Use** | ✅ Database interactions, ✅ External APIs, ✅ Message queues, ✅ Telemetry validation |
-| **When NOT to Use** | ❌ Unit tests (too slow), ❌ Unreliable external services (use fixtures), ❌ Network unavailable (skip gracefully) |
-| **Difficulty** | Medium - Requires Docker; slower tests |
+| **Problem** | Mock-heavy tests hide integration gaps; production fails when mocks don't match reality |
+| **Solution** | Use real collaborators (containers, services) in integration tests; separate from unit tests |
+| **When to Use** | Database interactions, external APIs, message queues, telemetry validation |
+| **When NOT to Use** | Unit tests (too slow), unreliable external services, offline environments |
+| **Trade-offs** | Slower test execution and requires external tools (Docker), but guarantees real-world behavior |
+| **Complexity** | Medium |
+| **Real-World Example** | [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs) |
 
 ## The Problem
 
@@ -73,10 +75,10 @@ let result = query_with_cache(&db, &cache)?;
 
 **Why**: When tests fail, you need to know if the issue is the code or the test infrastructure. Mixed real/mock makes debugging impossible.
 
-## Codebase Example
+## Real-World Example
 
-File: `tests/go_extra_mile_tests.rs`
-Purpose: Integration tests using real containers for database, telemetry, and service validation
+- **Code location**: [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs)
+- **Explanation**: Integration tests use real containers to validate database, telemetry, and service connections rather than mocks.
 
 ## Related Patterns
 

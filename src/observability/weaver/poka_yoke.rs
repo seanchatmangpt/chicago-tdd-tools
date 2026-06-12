@@ -20,6 +20,7 @@
 //!
 //! ```rust
 //! use chicago_tdd_tools::observability::weaver::poka_yoke::*;
+//! use std::path::Path;
 //!
 //! // Valid registry path creation
 //! let path = ValidRegistryPath::new("registry").expect("Valid path");

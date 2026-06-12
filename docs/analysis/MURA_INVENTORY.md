@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Mura (Unevenness) Inventory
 
 ## Summary

@@ -1,5 +1,7 @@
 # Example: Pattern 1 AAA - Refactored (80/20 Version)
 
+> 🔧 How-to | Refactored example of the AAA pattern
+
 This shows what Pattern 1 looks like when refactored using the core team's 80/20 approach.
 
 ---
@@ -93,8 +95,8 @@ Purpose: Demonstrates all three test macros using AAA structure
 ## Related Patterns
 
 - **Foundation**: Start here (prerequisite for all other patterns)
-- **Next**: [Pattern 2: Error Path Testing](error-path-testing.md) (test both success + failure)
-- **Use with**: [Pattern 5: Real Collaborators](real-collaborators.md) (test with real code)
+- **Next**: [Pattern 2: Error Path Testing](testing-patterns/error-path-testing.md) (test both success + failure)
+- **Use with**: [Pattern 5: Real Collaborators](testing-patterns/real-collaborators.md) (test with real code)
 
 ## Production Checklist
 

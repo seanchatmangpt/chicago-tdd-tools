@@ -6,7 +6,7 @@ This document describes the perfect implementation of Weaver live-check testing,
 
 ## Architecture
 
-![Architecture Diagram](weaver-perfect-architecture.puml)
+![Architecture Diagram](../diagrams/weaver-perfect-architecture.puml)
 
 The perfect Weaver live-check architecture consists of:
 
@@ -39,7 +39,7 @@ The perfect Weaver live-check architecture consists of:
 
 ## Perfect Startup Flow
 
-![Sequence Diagram](weaver-perfect-sequence.puml)
+![Sequence Diagram](../diagrams/weaver-perfect-sequence.puml)
 
 The perfect startup flow ensures Weaver is ready before proceeding:
 
@@ -93,7 +93,7 @@ The perfect startup flow ensures Weaver is ready before proceeding:
 
 ## Process State Machine
 
-![State Diagram](weaver-perfect-state.puml)
+![State Diagram](../diagrams/weaver-perfect-state.puml)
 
 The perfect implementation manages Weaver process through clear states:
 
@@ -118,7 +118,7 @@ The perfect implementation manages Weaver process through clear states:
 
 ## Readiness Check Flow
 
-![Readiness Flow Diagram](weaver-perfect-readiness-flow.puml)
+![Readiness Flow Diagram](../diagrams/weaver-perfect-readiness-flow.puml)
 
 The perfect readiness check ensures Weaver is actually ready:
 
@@ -142,7 +142,7 @@ The perfect readiness check ensures Weaver is actually ready:
 
 ## Error Handling
 
-![Error Handling Diagram](weaver-perfect-error-handling.puml)
+![Error Handling Diagram](../diagrams/weaver-perfect-error-handling.puml)
 
 Perfect error handling provides clear, actionable error messages:
 
@@ -190,7 +190,7 @@ Example:
 
 ## Component Interactions
 
-![Component Diagram](weaver-perfect-components.puml)
+![Component Diagram](../diagrams/weaver-perfect-components.puml)
 
 Perfect component interactions ensure clean separation of concerns:
 
@@ -211,7 +211,7 @@ Perfect component interactions ensure clean separation of concerns:
 
 ## Perfect Lifecycle
 
-![Lifecycle Diagram](weaver-perfect-lifecycle.puml)
+![Lifecycle Diagram](../diagrams/weaver-perfect-lifecycle.puml)
 
 The perfect lifecycle ensures reliable process management:
 
@@ -249,7 +249,7 @@ The perfect lifecycle ensures reliable process management:
 
 ## Type Safety
 
-![Type Diagram](weaver-perfect-types.puml)
+![Type Diagram](../diagrams/weaver-perfect-types.puml)
 
 Perfect type safety prevents entire classes of errors:
 
@@ -382,14 +382,14 @@ A perfect Weaver live-check implementation:
 
 All diagrams are available in PlantUML format:
 
-- [Architecture](weaver-perfect-architecture.puml)
-- [Sequence Flow](weaver-perfect-sequence.puml)
-- [State Machine](weaver-perfect-state.puml)
-- [Readiness Flow](weaver-perfect-readiness-flow.puml)
-- [Error Handling](weaver-perfect-error-handling.puml)
-- [Components](weaver-perfect-components.puml)
-- [Lifecycle](weaver-perfect-lifecycle.puml)
-- [Type Safety](weaver-perfect-types.puml)
+- [Architecture](../diagrams/weaver-perfect-architecture.puml)
+- [Sequence Flow](../diagrams/weaver-perfect-sequence.puml)
+- [State Machine](../diagrams/weaver-perfect-state.puml)
+- [Readiness Flow](../diagrams/weaver-perfect-readiness-flow.puml)
+- [Error Handling](../diagrams/weaver-perfect-error-handling.puml)
+- [Components](../diagrams/weaver-perfect-components.puml)
+- [Lifecycle](../diagrams/weaver-perfect-lifecycle.puml)
+- [Type Safety](../diagrams/weaver-perfect-types.puml)
 
 Render diagrams using PlantUML or view in compatible tools.
 

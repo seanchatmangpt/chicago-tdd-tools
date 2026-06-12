@@ -1,6 +1,6 @@
 # Property-Based Testing
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Generate random test data to verify properties
+> 🔧 How-to | Generate random test data to verify properties
 
 Property-based testing generates random test data and verifies that properties hold for all inputs.
 

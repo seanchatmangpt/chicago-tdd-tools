@@ -560,4 +560,4 @@ Re-exports commonly used items. Feature-gated exports.
 - **[User Guide](../getting-started/USER_GUIDE.md)** - Complete usage guide
 - **[Getting Started](../getting-started/GETTING_STARTED.md)** - Quick start guide
 - **[Architecture](ARCHITECTURE.md)** - Design principles and patterns
-- **[Examples](../examples/)** - Working code examples
+- **[Examples](../../examples/)** - Working code examples

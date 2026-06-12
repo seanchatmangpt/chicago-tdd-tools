@@ -176,34 +176,101 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-13-sealed-traits-for-api-safety"><a class="header" href="#pattern-13-sealed-traits-for-api-safety">Pattern 13: Sealed Traits for API Safety</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>A trait defines extension points (fixtures, validators) but external implementations could break invariants.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>If downstream crates implement the trait arbitrarily, the framework cannot guarantee lifecycle management or error semantics. Breaking changes become impossible.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Use the sealed trait pattern: define a <code>private</code> module with a <code>Sealed</code> trait implemented only within the crate, and require <code>Sealed</code> as a supertrait. Consumers can use the trait, but only framework-defined implementations exist.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Safety vs. openness: sealing protects invariants while letting users compose functionality</li>
-<li>Flexibility vs. versioning: internal changes become possible without breaking downstream code</li>
-<li>Testability vs. encapsulation: tests can still construct fixtures via provided builders</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Downstream crates implement trait arbitrarily, breaking invariants and blocking future updates</td></tr>
+<tr><td><strong>Solution</strong></td><td>Require a private <code>Sealed</code> supertrait to prevent external trait implementations</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Public traits with internal invariants, lifecycle-critical traits, API evolution paths</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Designed for extension (use extension traits), plugin systems (need openness)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Prevents downstream crates from implementing the trait, but ensures library safety and simplifies updates</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Public traits allow downstream crates to provide their own implementations. If those implementations break invariants (skipping cleanup, violating lifetimes), the framework can't guarantee correctness. Future breaking changes become impossible without hurting users.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Create an internal <code>Sealed</code> trait implemented only by the framework. Require it as a supertrait on public traits. Consumers can still use the trait, but only framework-provided implementations exist. This allows safe evolution without breaking users.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>mod private {
-    pub trait Sealed {}
+</span>// Internal module - not re-exported
+mod private {
+    pub trait Sealed {}  // Implementation restricted to crate
 }
 
+// Public trait using Sealed supertrait
 pub trait AsyncFixtureProvider: private::Sealed {
+    type Fixture&lt;'a&gt;: Send where Self: 'a;
+    type Error: std::error::Error + Send + Sync + 'static;
+
+    async fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; Result&lt;Self::Fixture&lt;'a&gt;, Self::Error&gt;;
+}
+
+// Only the framework can implement
+impl Sealed for DefaultFixture {}
+impl AsyncFixtureProvider for DefaultFixture { /* ... */ }
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Define <code>private::Sealed</code> trait (not re-exported)</li>
+<li><input disabled="" type="checkbox"/>
+Public trait requires <code>Sealed</code> as supertrait</li>
+<li><input disabled="" type="checkbox"/>
+Only framework types implement the trait</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains why the trait is sealed</li>
+<li><input disabled="" type="checkbox"/>
+Tests use provided builders, not direct trait implementations</li>
+<li><input disabled="" type="checkbox"/>
+Consider eventual unsealing if genuinely useful</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Forgetting to make Sealed private or accidentally unsealing it:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Sealed is public (defeats purpose)
+pub mod private { pub trait Sealed {} }  // Wrong!
+
+// ❌ WRONG: Trait doesn't require Sealed
+pub trait AsyncFixtureProvider {  // Anyone can implement
     // ...
 }
+
+// ✅ RIGHT: Sealed is truly private, trait requires it
+mod private { pub trait Sealed {} }
+pub trait AsyncFixtureProvider: private::Sealed { /* ... */ }
 <span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Sealed must be private to prevent downstream implementations. Otherwise the seal is useless.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></li>
+<li><strong>Explanation</strong>: The <code>AsyncFixtureProvider</code> and related traits inherit from a private <code>private::Sealed</code> trait so they can only be implemented internally.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 12: Type Safety with GATs</li>
-<li>Pattern 17: Builder-Driven Test Data</li>
-<li>Pattern 20: Macro Pattern Enforcement</li>
+<li><strong>Before this</strong>: <a href="type-safety-patterns.html">Pattern 12: Type Safety</a> (pair with GATs)</li>
+<li><strong>Use with</strong>: <a href="zero-cost-abstractions.html">Pattern 11: Zero-Cost</a> (seal generic APIs)</li>
+<li><strong>Next</strong>: <a href="macro-enforcement.html">Pattern 20: Macro Enforcement</a> (enforce at compile time)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Without access to the <code>Sealed</code> trait, downstream crates cannot implement the public trait. Only internal code can.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<code>Sealed</code> trait is in private module</li>
+<li><input disabled="" type="checkbox"/>
+No path to implement trait from outside crate</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains sealing rationale</li>
+<li><input disabled="" type="checkbox"/>
+Tests verify only framework types work</li>
+<li><input disabled="" type="checkbox"/>
+Consider unsealing if user demand is genuine</li>
 </ul>
 
                     </main>

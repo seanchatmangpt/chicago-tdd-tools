@@ -546,7 +546,7 @@ let suggested = orchestrator.suggest_tests_for_change(&["module::changed"]);
 - **[API Reference](../reference/API_REFERENCE.md)** - Full API documentation
 - **[Getting Started](GETTING_STARTED.md)** - Quick start guide
 - **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
-- **[Examples](../examples/)** - Working code examples
+- **[Examples](../../examples/)** - Working code examples
 - **[Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md)** - Complete μ-kernel verification substrate
 
 > **Short-term skip?** Export `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests explicitly. Without it, missing prerequisites cause a panic to enforce dogfooding.

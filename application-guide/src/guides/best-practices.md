@@ -1,6 +1,6 @@
 # Best Practices & Migration
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Proven patterns and migration strategies
+> 🔧 How-to | Proven patterns and migration strategies
 
 Proven patterns and migration strategies for Chicago TDD.
 
@@ -332,7 +332,7 @@ Expert
 - [Core Patterns](../core/README.md)
 - [Advanced Techniques](../advanced/README.md)
 - [Real-World Examples](real-world.md)
-- [Pattern Cookbook](../../cookbook/README.md)
+- [Pattern Cookbook](../../../cookbook/src/README.md)
 - [API Reference](https://docs.rs/chicago-tdd-tools/)
 
 ## Next Steps

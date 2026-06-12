@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Kaizen Improvement Plan
 
 ## Step 1: Identify Improvement Opportunity ✅

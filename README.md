@@ -776,6 +776,10 @@ chicago-tdd-tools = {
 - **[SPR Guide](docs/process/SPR_GUIDE.md)** - Elite Rust standards, best practices
 - **[Code Review Checklist](docs/process/CODE_REVIEW_CHECKLIST.md)** - What reviewers look for
 - **[FMEA: Tests, Build, Actions](docs/process/FMEA_TESTS_BUILD_ACTIONS.md)** - Risk analysis, improvements
+- **[FMEA Executive Summary](docs/analysis/FMEA_EXECUTIVE_SUMMARY.md)** - Unit test GitHub Actions FMEA & RCA
+- **[Kaizen Improvement Plan](docs/process/KAIZEN_IMPROVEMENT_PLAN.md)** - Error message consistency plans
+- **[Mura (Unevenness) Inventory](docs/analysis/MURA_INVENTORY.md)** - Code/doc standardization inventory
+- **[LaTeX Formalization Summary](docs/latex/LATEX_FORMALIZATION_SUMMARY.md)** - Mathematical formalization of the Chatman Equation
 - **[Test Isolation Guide](docs/process/TEST_ISOLATION_GUIDE.md)** - Preventing test interdependencies
 - **[Pattern Cookbook](cookbook/src/README.md)** - Alexander-style patterns (20 documented)
 

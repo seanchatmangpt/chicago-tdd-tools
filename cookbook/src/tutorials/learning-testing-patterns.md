@@ -1,6 +1,6 @@
 # Learning Testing Patterns: 90-Minute Mastery
 
-> 🎓 **TUTORIAL** | Master the 5 fundamental testing patterns
+> 🎓 Tutorial
 
 This tutorial guides you through the 5 testing patterns in a natural progression. Each builds on the previous one.
 

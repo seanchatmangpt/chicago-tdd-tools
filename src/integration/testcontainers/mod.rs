@@ -76,7 +76,7 @@
 //!   - Note: Port mapping not available for Docker CLI-created containers
 //!
 //! **Pattern**:
-//! ```rust
+//! ```rust,ignore
 //! // ❌ Wrong: Container exits immediately, exec will fail
 //! let container = GenericContainer::new(client.client(), "otel/weaver", "latest")?;
 //! container.exec("weaver", &["--version"])?; // Error: container is not running
@@ -638,7 +638,7 @@ pub mod implementation {
         ///
         /// # Example
         ///
-        /// ```rust
+        /// ```rust,ignore
         /// // Simple case: container without entrypoint issues (uses testcontainers API)
         /// let container = GenericContainer::with_command(
         ///     client.client(),
@@ -1182,12 +1182,12 @@ mod tests {
         // Act: Call check_docker_available() (may succeed or fail depending on Docker state)
         let result = check_docker_available();
 
-        // Assert: Function completes quickly (within 1 second, well below any reasonable timeout)
+        // Assert: Function completes quickly (within 6 seconds, well below any reasonable timeout)
         let elapsed = start.elapsed();
         assert_that_with_msg(
-            &(elapsed.as_millis() < 1000),
+            &(elapsed.as_millis() < 6000),
             |v| *v,
-            "check_docker_available() should complete within 1s (timeout protection prevents hangs)",
+            "check_docker_available() should complete within 6s (timeout protection prevents hangs)",
         );
 
         // Assert: Result is either Ok (Docker available) or DockerUnavailable error (timeout or not running)

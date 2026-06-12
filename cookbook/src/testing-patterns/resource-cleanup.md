@@ -1,16 +1,18 @@
 # Pattern 4: Resource Cleanup
 
-> 🔧 **HOW-TO** | Use fixtures to ensure resources are released, even when tests fail
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Leaked containers, orphaned connections, state pollution between tests |
-| **Core Solution** | Use `fixture_test!`/`fixture_test_with_timeout!` with RAII to cleanup automatically |
-| **When to Use** | ✅ Database connections, ✅ Docker containers, ✅ File handles, ✅ Network ports |
-| **When NOT to Use** | ❌ Simple data (no cleanup needed), ❌ Stateless services (no state to clean) |
-| **Difficulty** | Low - Framework handles most cleanup automatically |
+| **Problem** | Leaked containers, orphaned connections, and state pollution between tests |
+| **Solution** | Use `fixture_test!`/`fixture_test_with_timeout!` with RAII to clean up automatically |
+| **When to Use** | Database connections, Docker containers, file handles, network ports |
+| **When NOT to Use** | Simple data (no cleanup needed), stateless services (no state to clean) |
+| **Trade-offs** | Requires implementing `Drop` or wrapping in a fixture, but guarantees resource release |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs) |
 
 ## The Problem
 
@@ -73,10 +75,10 @@ fixture_test!(test_good_cleanup, fixture, {
 
 **Why**: If the assertion fails before cleanup, resources leak. RAII guarantees cleanup happens via Drop, not explicit code.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/fixture.rs`
-Purpose: Defines fixture Drop implementation that cleans up all allocated resources
+- **Code location**: [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs)
+- **Explanation**: Defines the `TestFixture` Drop implementation that ensures all allocated resources (directories, connections) are released when the test ends.
 
 ## Related Patterns
 

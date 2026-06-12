@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools-proc-macros"
-version = "26.6.11"
+version = "26.6.12"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"

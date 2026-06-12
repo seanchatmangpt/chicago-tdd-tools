@@ -1,16 +1,18 @@
 # Pattern 13: Sealed Traits for API Safety
 
-> 🔧 **HOW-TO** | Prevent downstream implementations from breaking invariants
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Downstream crates implement trait arbitrarily; framework cannot guarantee invariants; breaking changes are risky |
-| **Core Solution** | Require `Sealed` supertrait; implement only within framework; seal out external implementations |
-| **When to Use** | ✅ Public traits with invariants, ✅ Lifecycle-critical traits, ✅ Traits with internal evolution plans |
-| **When NOT to Use** | ❌ Designed for extension (use extension traits), ❌ Plugin systems (need openness) |
-| **Difficulty** | Low - Simple pattern |
+| **Problem** | Downstream crates implement trait arbitrarily, breaking invariants and blocking future updates |
+| **Solution** | Require a private `Sealed` supertrait to prevent external trait implementations |
+| **When to Use** | Public traits with internal invariants, lifecycle-critical traits, API evolution paths |
+| **When NOT to Use** | Designed for extension (use extension traits), plugin systems (need openness) |
+| **Trade-offs** | Prevents downstream crates from implementing the trait, but ensures library safety and simplifies updates |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs) |
 
 ## The Problem
 
@@ -70,10 +72,10 @@ pub trait AsyncFixtureProvider: private::Sealed { /* ... */ }
 
 **Why**: Sealed must be private to prevent downstream implementations. Otherwise the seal is useless.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/fixture.rs`
-Purpose: Defines Sealed trait and sealed public traits
+- **Code location**: [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs)
+- **Explanation**: The `AsyncFixtureProvider` and related traits inherit from a private `private::Sealed` trait so they can only be implemented internally.
 
 ## Related Patterns
 

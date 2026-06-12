@@ -1,0 +1,603 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Real-World Scenarios - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="real-world-scenarios-patterns-in-action"><a class="header" href="#real-world-scenarios-patterns-in-action">Real-World Scenarios: Patterns in Action</a></h1>
+<blockquote>
+<p>🔧 How-to | Real-world scenarios combining multiple patterns</p>
+</blockquote>
+<p>This guide shows how patterns combine to solve actual problems you'll encounter.</p>
+<blockquote>
+<p><strong>Want to learn patterns in order?</strong> See <a href="pattern-dependencies.html">Pattern Dependencies &amp; Learning Order</a> for recommended learning paths.</p>
+</blockquote>
+<hr />
+<h2 id="scenario-1-building-a-database-query-service"><a class="header" href="#scenario-1-building-a-database-query-service">Scenario 1: Building a Database Query Service</a></h2>
+<p><strong>The Problem:</strong> You're writing a database abstraction that needs to be:</p>
+<ul>
+<li>Easy to test with real and fake databases</li>
+<li>Type-safe (queries are validated at compile time)</li>
+<li>Performant (no runtime dispatch overhead)</li>
+<li>Extensible (teams add domain-specific queries)</li>
+</ul>
+<p><strong>Patterns Used:</strong></p>
+<ol>
+<li>
+<p><strong>Pattern 6: Generic Base Layer</strong></p>
+<ul>
+<li>Core: <code>TestFixture</code>, <code>TestDataBuilder</code>, assertion macros</li>
+<li>No database-specific code in base</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 7: Extension Layer</strong></p>
+<ul>
+<li>Create <code>database-testing</code> crate that depends on base</li>
+<li>Add <code>DatabaseFixture</code> wrapping <code>TestFixture</code></li>
+<li>Provide <code>QueryBuilder</code> for fluent query construction</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 5: Real Collaborators</strong></p>
+<ul>
+<li>Integration tests use actual database (Postgres in container)</li>
+<li>Unit tests use fake database</li>
+<li>Both follow same interface</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 11: Zero-Cost Abstractions</strong></p>
+<ul>
+<li>Query validation via generics, not trait objects</li>
+<li>Query builder uses const generics for compile-time table names</li>
+<li>No runtime cost for type safety</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 14: Compile-Time Validation</strong></p>
+<ul>
+<li>Invalid queries fail at compile time</li>
+<li>Column names checked against schema</li>
+<li>SQL injection prevented by construction</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 1: AAA Pattern</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fixture_test!(test_query, fixture, {
+    // Arrange: Set up database with known data
+    let db = fixture.postgres_database().await?;
+    db.insert_user("alice", 30).await?;
+
+    // Act: Execute the query
+    let user = db.find_user("alice").await?;
+
+    // Assert: Verify result
+    assert_eq!(user.name, "alice");
+    assert_eq!(user.age, 30);
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+</li>
+</ol>
+<p><strong>Result:</strong> Type-safe, fast database tests that catch bugs before production.</p>
+<hr />
+<h2 id="scenario-2-designing-an-event-system-with-extensibility"><a class="header" href="#scenario-2-designing-an-event-system-with-extensibility">Scenario 2: Designing an Event System with Extensibility</a></h2>
+<p><strong>The Problem:</strong> You're building an event system where:</p>
+<ul>
+<li>Multiple teams add custom event handlers</li>
+<li>Handlers must follow consistent patterns</li>
+<li>You can't let downstream code break invariants</li>
+<li>Code must be performant</li>
+</ul>
+<p><strong>Patterns Used:</strong></p>
+<ol>
+<li>
+<p><strong>Pattern 13: Sealed Traits</strong></p>
+<ul>
+<li>Public <code>EventHandler</code> trait is sealed</li>
+<li>Only framework can implement</li>
+<li>Safe to evolve without breaking users</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 12: Type Safety (GATs)</strong></p>
+<ul>
+<li>Handler lifetime is bound to registry lifetime</li>
+<li>Compiler prevents handlers outliving registry</li>
+<li>No use-after-free bugs possible</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 11: Zero-Cost Abstractions</strong></p>
+<ul>
+<li>Event routing uses generics, not dynamic dispatch</li>
+<li>Each event type gets specialized handler code</li>
+<li>No vtable lookup overhead</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 15: Type State Enforcement</strong></p>
+<ul>
+<li>Event lifecycle: Created → Dispatching → Done</li>
+<li>Can't call methods out of order</li>
+<li>Type system enforces flow</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 8: Composition Over Duplication</strong></p>
+<ul>
+<li>Teams create <code>domain-events</code> crate</li>
+<li>Wrap base <code>EventRegistry</code></li>
+<li>Add domain-specific event types</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 20: Macro Enforcement</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[event_handler]  // Macro enforces pattern compliance
+async fn on_user_created(event: UserCreated) -&gt; Result&lt;()&gt; {
+    // Macro ensures: timeout, error handling, logging
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+</li>
+</ol>
+<p><strong>Result:</strong> Extensible event system with compile-time safety and zero overhead.</p>
+<hr />
+<h2 id="scenario-3-testing-a-complex-business-flow"><a class="header" href="#scenario-3-testing-a-complex-business-flow">Scenario 3: Testing a Complex Business Flow</a></h2>
+<p><strong>The Problem:</strong> You're testing an order processing system with:</p>
+<ul>
+<li>Multiple error paths (payment fails, inventory out, shipping unavailable)</li>
+<li>Complex state transitions (pending → processing → shipped → delivered)</li>
+<li>Real external services (payment processor, shipping provider)</li>
+<li>Builders for complex test data</li>
+</ul>
+<p><strong>Patterns Used:</strong></p>
+<ol>
+<li>
+<p><strong>Pattern 1: AAA Pattern</strong></p>
+<ul>
+<li>Every test follows clear structure</li>
+<li>Easy to add new tests as requirements change</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 2: Error Path Testing</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>param_test! {
+    #[case(PaymentError::InvalidCard)]
+    #[case(PaymentError::InsufficientFunds)]
+    #[case(PaymentError::Timeout)]
+    fn test_payment_errors(error: PaymentError) {
+        // Each error has its own test
+        // Guaranteed all errors are tested
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Pattern 3: Boundary Conditions</strong></p>
+<ul>
+<li>Order total: below limit, at limit, above limit</li>
+<li>Quantity: 0, 1, max</li>
+<li>Test edge cases explicitly</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 5: Real Collaborators</strong></p>
+<ul>
+<li>Integration tests use testcontainers (real Postgres, Stripe sandbox)</li>
+<li>Unit tests use mocked services</li>
+<li>No surprises in production</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 17: Builder-Driven Test Data</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let order = OrderBuilder::new()
+    .with_customer_id("cust-123")
+    .with_amount("99.99")
+    .with_items(vec![
+        ItemBuilder::new().with_sku("BOOK").with_qty(2),
+        ItemBuilder::new().with_sku("PEN").with_qty(10),
+    ])
+    .build();
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Pattern 15: Type State Enforcement</strong></p>
+<ul>
+<li>Order state machine: New → Pending → Confirmed → Shipped → Delivered</li>
+<li>Can't call methods out of order</li>
+<li>Compiler enforces valid state transitions</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 16: Fixture Lifecycle</strong></p>
+<ul>
+<li>Fixtures auto-cleanup: database rolled back, containers stopped</li>
+<li>No manual cleanup code</li>
+<li>Works even if test fails</li>
+</ul>
+</li>
+</ol>
+<p><strong>Result:</strong> Comprehensive test suite that documents business logic and catches regressions.</p>
+<hr />
+<h2 id="scenario-4-open-sourcing-a-testing-framework"><a class="header" href="#scenario-4-open-sourcing-a-testing-framework">Scenario 4: Open-Sourcing a Testing Framework</a></h2>
+<p><strong>The Problem:</strong> You're open-sourcing a testing framework and need:</p>
+<ul>
+<li>Lean core (not every project needs every feature)</li>
+<li>Extensible (teams add domain-specific helpers)</li>
+<li>Fast builds (heavy dependencies optional)</li>
+<li>Type-safe APIs</li>
+</ul>
+<p><strong>Patterns Used:</strong></p>
+<ol>
+<li>
+<p><strong>Pattern 6: Generic Base Layer</strong></p>
+<ul>
+<li>Core: <code>test!</code>, <code>async_test!</code>, fixtures, assertions</li>
+<li>No domain logic, minimal dependencies</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 10: Capability Grouping</strong></p>
+<pre><code>core/          // fixtures, builders, assertions, macros
+testing/       // property, mutation, snapshot testing
+validation/    // guards, coverage, performance
+observability/ // telemetry (OTEL, Weaver)
+integration/   // containers (testcontainers)
+</code></pre>
+</li>
+<li>
+<p><strong>Pattern 19: Feature Gate Slices</strong></p>
+<pre><code class="language-toml">[features]
+default = ["logging"]
+testing-extras = ["property-testing", "snapshot-testing"]
+observability-full = ["otel", "weaver"]
+</code></pre>
+</li>
+<li>
+<p><strong>Pattern 20: Macro Enforcement</strong></p>
+<ul>
+<li><code>test!</code> injects AAA comments and timeouts</li>
+<li>Using macro guarantees compliance with patterns</li>
+<li><code>property_test!</code> requires <code>property-testing</code> feature</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 9: Single Source of Truth</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub const DEFAULT_UNIT_TEST_TIMEOUT_SECONDS: u64 = 1;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
+// Nextest.toml references these constants
+// CI ensures consistency
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Pattern 7: Extension Layer</strong></p>
+<ul>
+<li>Users create <code>myteam-testing</code> crate</li>
+<li>Depends on <code>chicago-tdd-tools</code></li>
+<li>Adds domain-specific builders and fixtures</li>
+</ul>
+</li>
+</ol>
+<p><strong>Result:</strong> Framework that scales from single team to community, staying lean and extensible.</p>
+<hr />
+<h2 id="scenario-5-refactoring-legacy-code-to-add-type-safety"><a class="header" href="#scenario-5-refactoring-legacy-code-to-add-type-safety">Scenario 5: Refactoring Legacy Code to Add Type Safety</a></h2>
+<p><strong>The Problem:</strong> You have legacy code that:</p>
+<ul>
+<li>Works but has hidden bugs</li>
+<li>Hard to refactor without breaking things</li>
+<li>Needs gradual type-safety improvements</li>
+</ul>
+<p><strong>Patterns Used:</strong></p>
+<ol>
+<li>
+<p><strong>Pattern 15: Type State Enforcement</strong></p>
+<ul>
+<li>Introduce phase types gradually</li>
+<li>Existing code continues to work</li>
+<li>New code is type-checked</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 14: Compile-Time Validation</strong></p>
+<ul>
+<li>Add const generics for numeric limits</li>
+<li>Migration: accept both old and new paths</li>
+<li>Gradually move to compile-time checks</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 13: Sealed Traits</strong></p>
+<ul>
+<li>Seal critical traits</li>
+<li>Prevents downstream code from breaking invariants</li>
+<li>Safe to refactor internal implementation</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 12: Type Safety (GATs)</strong></p>
+<ul>
+<li>New APIs use GATs for lifetime safety</li>
+<li>Old APIs continue working</li>
+<li>Gradual migration path</li>
+</ul>
+</li>
+<li>
+<p><strong>Pattern 9: Single Source of Truth</strong></p>
+<ul>
+<li>Extract constants from scattered code</li>
+<li>Centralize configuration</li>
+<li>Version it in git</li>
+</ul>
+</li>
+</ol>
+<p><strong>Result:</strong> Gradually add type safety to legacy systems without big-bang rewrites.</p>
+<hr />
+<h2 id="when-to-use-each-scenario"><a class="header" href="#when-to-use-each-scenario">When to Use Each Scenario</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Scenario</th><th>Situation</th><th>Key Takeaway</th></tr></thead><tbody>
+<tr><td>1: Database Service</td><td>Building domain-specific abstraction</td><td>Combine base + extension + real collaborators</td></tr>
+<tr><td>2: Event System</td><td>Need extensibility without breaking safety</td><td>Sealed traits + type state + generics</td></tr>
+<tr><td>3: Business Logic</td><td>Complex flows with multiple error paths</td><td>AAA + error paths + boundaries + builders</td></tr>
+<tr><td>4: Open-Source</td><td>Lean core that scales</td><td>Feature gates + capability groups + macros</td></tr>
+<tr><td>5: Legacy Refactor</td><td>Add type safety to existing code</td><td>Gradual migration using type state + const</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="the-pattern-combination-strategy"><a class="header" href="#the-pattern-combination-strategy">The Pattern Combination Strategy</a></h2>
+<p><strong>For testing:</strong></p>
+<ol>
+<li>Start with Pattern 1 (AAA)</li>
+<li>Add Pattern 2 (error paths)</li>
+<li>Add Pattern 5 (real collaborators)</li>
+<li>Add Pattern 17 (builders) as tests grow</li>
+</ol>
+<p><strong>For architecture:</strong></p>
+<ol>
+<li>Start with Pattern 10 (capability groups)</li>
+<li>Add Pattern 6 (generic base)</li>
+<li>Add Pattern 7 (extensions) when team grows</li>
+<li>Add Pattern 9 (single source) when constants multiply</li>
+</ol>
+<p><strong>For safety:</strong></p>
+<ol>
+<li>Use Pattern 14 (compile-time) for invariants</li>
+<li>Add Pattern 15 (type state) for workflows</li>
+<li>Add Pattern 13 (sealed traits) for APIs</li>
+<li>Add Pattern 12 (GATs) for lifetime safety</li>
+</ol>
+<p><strong>Pro tip:</strong> Don't use all patterns at once. Start with the ones that solve your current problem, then add others as complexity grows.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="common-mistakes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="adoption-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="common-mistakes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="adoption-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

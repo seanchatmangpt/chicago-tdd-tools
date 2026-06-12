@@ -1,16 +1,18 @@
 # Pattern 3: Boundary Conditions
 
-> 🔧 **HOW-TO** | Test limits to catch off-by-one errors and guardrail regressions
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Off-by-one errors, buffer overflows, missed guardrails silently fail in production |
-| **Core Solution** | Test three cases per boundary: below, at, and above the limit |
-| **When to Use** | ✅ Array sizes, ✅ Range checks, ✅ Min/max values, ✅ Exclusive boundaries |
-| **When NOT to Use** | ❌ Floating-point ranges (use tolerance instead), ❌ Estimated quantities (use ranges) |
-| **Difficulty** | Medium - Requires identifying all boundaries first |
+| **Problem** | Off-by-one errors, buffer overflows, and missed guardrails silently fail in production |
+| **Solution** | Test three cases per boundary: below, at, and above the limit |
+| **When to Use** | Array sizes, range checks, min/max values, exclusive boundaries |
+| **When NOT to Use** | Floating-point ranges (use tolerance instead), estimated quantities (use ranges) |
+| **Trade-offs** | Requires writing more test cases per boundary, but eliminates off-by-one bugs |
+| **Complexity** | Medium |
+| **Real-World Example** | [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs) |
 
 ## The Problem
 
@@ -79,10 +81,10 @@ param_test! {
 
 **Why**: Boundary bugs are common (off-by-one) and invisible in happy-path tests. Testing them explicitly prevents production outages.
 
-## Codebase Example
+## Real-World Example
 
-File: `tests/go_extra_mile_tests.rs`
-Purpose: Parametrized boundary tests for validation guards and constraints
+- **Code location**: [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs)
+- **Explanation**: Parametrized boundary tests verify validation guards and constraints under below, at, and above max scenarios.
 
 ## Related Patterns
 

@@ -1,5 +1,7 @@
 # Pattern Dependencies & Learning Order
 
+> 🎓 Tutorial | Learning paths and dependencies between patterns
+
 This guide shows which patterns depend on which others, helping you build a foundation before moving to advanced patterns.
 
 > **Core Team Philosophy:** Every pattern reduces a known failure mode (FMEA). Patterns aren't optional—they prevent production failures. See [Introduction: Core Team Philosophy](introduction.md#core-team-philosophy) for how each pattern embodies **Poka-Yoke** (compile-time prevention), **FMEA** (quantified risk reduction), **Production Safety** (no unwrap/panic), and **80/20 thinking**.
@@ -34,11 +36,11 @@ These patterns are part of the core team's larger system. Understand the context
 
 | Process | What It Covers | Relevant Patterns |
 |---------|------------|-------------------|
-| **[SPR_GUIDE.md](../process/SPR_GUIDE.md)** | Error handling rules, Clippy standards, no unwrap/panic | 2, 5, 16, 20 |
-| **[FMEA_TESTS_BUILD_ACTIONS.md](../process/FMEA_TESTS_BUILD_ACTIONS.md)** | Failure modes each pattern prevents, RPN reductions | All patterns |
-| **[POKA_YOKE_WEAVER_REGISTRY.md](../process/POKA_YOKE_WEAVER_REGISTRY.md)** | Type-level error prevention examples | 13, 14, 15 |
-| **[DOG_FOODING.md](../process/DOG_FOODING.md)** | Framework dogfoods its own patterns | All patterns |
-| **[CODE_REVIEW_CHECKLIST.md](../process/CODE_REVIEW_CHECKLIST.md)** | Shipping checklist: no unwrap, FMEA compliance | All patterns |
+| **[SPR_GUIDE.md](../../docs/process/SPR_GUIDE.md)** | Error handling rules, Clippy standards, no unwrap/panic | 2, 5, 16, 20 |
+| **[FMEA_TESTS_BUILD_ACTIONS.md](../../docs/process/FMEA_TESTS_BUILD_ACTIONS.md)** | Failure modes each pattern prevents, RPN reductions | All patterns |
+| **[POKA_YOKE_WEAVER_REGISTRY.md](../../docs/process/POKA_YOKE_WEAVER_REGISTRY.md)** | Type-level error prevention examples | 13, 14, 15 |
+| **[DOG_FOODING.md](../../docs/process/DOG_FOODING.md)** | Framework dogfoods its own patterns | All patterns |
+| **[CODE_REVIEW_CHECKLIST.md](../../docs/process/CODE_REVIEW_CHECKLIST.md)** | Shipping checklist: no unwrap, FMEA compliance | All patterns |
 
 ---
 

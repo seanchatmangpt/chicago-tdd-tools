@@ -473,10 +473,9 @@ fn test_http_client() {
 
 ## See Also
 
-- [Chatman Constant Derivation](../../research/chatman_constant.md) (if exists)
-- [μ-Kernel Architecture](../../reference/ARCHITECTURE.md)
+- [μ-Kernel Architecture](../reference/ARCHITECTURE.md)
 - [Integration Tests](../../tests/hyper_advanced_integration.rs)
-- [Performance Benchmarks](../../validation/performance/)
+- [Performance Benchmarks](../../src/validation/performance.rs)
 
 ## Version History
 

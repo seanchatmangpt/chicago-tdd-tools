@@ -177,7 +177,7 @@
                     <main>
                         <h1 id="testfixture-api-reference"><a class="header" href="#testfixture-api-reference">TestFixture API Reference</a></h1>
 <blockquote>
-<p>📚 <strong>REFERENCE</strong> | Complete API documentation for test fixtures</p>
+<p>📚 Reference | Complete API documentation for test fixtures</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p><code>TestFixture</code> provides isolated test environments with metadata storage and state snapshots.</p>
@@ -360,7 +360,8 @@ for (i, snapshot) in all.iter().enumerate() {
     assert_eq!(fixture.get_metadata("initialized"), Some("false"));
 
     // Initialization happens
-    // ...
+    let initialized = true;
+    assert!(initialized);
 
     // Verify state changed
     fixture.set_metadata("initialized", "true");
@@ -373,15 +374,20 @@ for (i, snapshot) in all.iter().enumerate() {
 </span>test!(multi_phase_pattern, {
     let fixture = TestFixture::new()?;
 
+    let do_phase_1 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let do_phase_2 = || -&gt; Result&lt;(), &amp;'static str&gt; { Ok(()) };
+    let state_at_phase1 = || HashMap::from([("progress".to_string(), "50%".to_string())]);
+    let state_at_phase2 = || HashMap::from([("progress".to_string(), "100%".to_string())]);
+
     // Phase 1
     fixture.set_metadata("phase", "1");
-    let result1 = do_phase_1()?;
+    let result1 = do_phase_1();
     fixture.capture_snapshot(state_at_phase1());
     assert_ok!(&amp;result1);
 
     // Phase 2
     fixture.set_metadata("phase", "2");
-    let result2 = do_phase_2()?;
+    let result2 = do_phase_2();
     fixture.capture_snapshot(state_at_phase2());
     assert_ok!(&amp;result2);
 
@@ -401,7 +407,8 @@ for (i, snapshot) in all.iter().enumerate() {
     fixture.set_metadata("test_version", "1.0");
     fixture.set_metadata("test_category", "integration");
 
-    // ... test code ...
+    // Verify metadata was stored
+    assert_eq!(fixture.get_metadata("test_name"), Some("my_test"));
 });
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -483,6 +490,11 @@ async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&g
     fixture.set_metadata("async", "true");
 
     // async operations
+    let async_result = tokio::time::timeout(
+        std::time::Duration::from_millis(10),
+        async { 42 }
+    ).await;
+    assert_ok!(&amp;async_result);
 
     Ok(())
 }
@@ -524,6 +536,10 @@ async fn async_with_fixture() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&g
     let fixture = TestFixture::new()?;
 
     fixture.set_metadata("status", "starting");
+
+    let risky_operation = || -&gt; Result&lt;(), &amp;'static str&gt; {
+        Err("operation timed out")
+    };
 
     if let Err(e) = risky_operation() {
         fixture.set_metadata("status", "failed");

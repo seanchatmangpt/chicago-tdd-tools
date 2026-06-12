@@ -36,12 +36,12 @@
 
 use serde::{Deserialize, Serialize};
 
-pub mod chapter02;  // Core Chatman Equation properties
-pub mod chapter03;  // Knowledge hooks and YAWL patterns
-pub mod chapter07;  // Chatman Equation realization
-pub mod receipt;     // Receipt generation and merkle proofs
+pub mod chapter02; // Core Chatman Equation properties
+pub mod chapter03; // Knowledge hooks and YAWL patterns
+pub mod chapter07; // Chatman Equation realization
+pub mod receipt; // Receipt generation and merkle proofs
 
-pub use receipt::{SpecConformanceReceipt, TheoremResult, MerkleProof};
+pub use receipt::{MerkleProof, SpecConformanceReceipt, TheoremResult};
 
 /// Specification version this harness validates against
 pub const SPEC_VERSION: &str = "ChatmanEquation-1.0";
@@ -57,14 +57,11 @@ pub const HARNESS_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn get_git_commit() -> Result<String, String> {
     use git2::Repository;
 
-    let repo = Repository::open(".")
-        .map_err(|e| format!("Failed to open git repo: {}", e))?;
+    let repo = Repository::open(".").map_err(|e| format!("Failed to open git repo: {}", e))?;
 
-    let head = repo.head()
-        .map_err(|e| format!("Failed to get HEAD: {}", e))?;
+    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
 
-    let oid = head.target()
-        .ok_or("HEAD does not point to a valid commit")?;
+    let oid = head.target().ok_or("HEAD does not point to a valid commit")?;
 
     Ok(format!("{}", oid))
 }
@@ -74,7 +71,10 @@ pub fn get_git_commit() -> Result<String, String> {
 pub fn get_git_commit() -> Result<String, String> {
     std::env::var("GITHUB_SHA")
         .or_else(|_| std::env::var("GIT_COMMIT"))
-        .map_err(|_| "Git commit unavailable (enable git-integration feature or set GITHUB_SHA/GIT_COMMIT)".to_string())
+        .map_err(|_| {
+            "Git commit unavailable (enable git-integration feature or set GITHUB_SHA/GIT_COMMIT)"
+                .to_string()
+        })
 }
 
 /// Theorem registry for tracking all theorems in the spec

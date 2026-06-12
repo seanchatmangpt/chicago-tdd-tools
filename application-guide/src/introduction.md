@@ -1,21 +1,20 @@
 # Introduction: Chicago TDD Philosophy
 
-> 📖 **EXPLANATION** | Learn the philosophy and principles
+> 💡 Explanation | Learn the philosophy and principles of Chicago-style TDD
 
-## Quick Navigation: What's Your Goal?
+## What Do You Want to Do?
 
-**Not sure where to start?** See [Choosing Your Learning Path](choosing-your-path.md) for a complete navigation guide with decision matrices.
+**I want to learn the basics**
+→ Go to: [Getting Started (tutorial)](tutorials/getting-started.md)
 
-Choose your path based on what you're trying to do:
+**I need to solve a specific problem**
+→ Go to: [How-to Guides (by problem)](core/README.md)
 
-| Your Goal | Read This | Time |
-|-----------|-----------|------|
-| **I'm just getting started** | [Quick Start Tutorial](tutorials/getting-started.md) → [Fixtures Deep Dive](tutorials/fixtures-tutorial.md) | 40 min |
-| **I want to build a CLI app** | [CLI Application Tutorial](tutorials/cli-app-tutorial.md) | 45 min |
-| **I want to build a web service** | [REST Web Service Tutorial](tutorials/web-service-tutorial.md) | 50 min |
-| **I need to find an API** | Go to [API Reference](reference/fixtures-api.md) | 2-5 min |
-| **I want to understand Chicago TDD** | Read this introduction + [Go the Extra Mile](guides/extra-mile.md) | 45 min |
-| **I'm migrating from traditional testing** | [Best Practices & Migration](guides/best-practices.md) | 1 hour |
+**I need to find an API**
+→ Go to: [Reference Documentation](reference/fixtures-api.md)
+
+**I want to understand the philosophy**
+→ Go to: [Explanation & Design](introduction.md)
 
 ---
 

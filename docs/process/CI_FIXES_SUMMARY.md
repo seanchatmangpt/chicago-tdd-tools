@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Summary: CI/Unit Test Fixes - Final Status
 
 **Date**: 2025-11-14
@@ -74,7 +75,7 @@ Status: ✅ CI PASSING
 
 **Secondary**: Integration tests in unit suite → Skip by default, opt-in with `WEAVER_REQUIRE_TEST=1`
 
-**See [UNIT_TEST_FAILURE_RCA.md](UNIT_TEST_FAILURE_RCA.md) for detailed analysis.**
+**See [UNIT_TEST_FAILURE_RCA.md](../analysis/UNIT_TEST_FAILURE_RCA.md) for detailed analysis.**
 
 ---
 

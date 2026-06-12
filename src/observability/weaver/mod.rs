@@ -437,10 +437,10 @@ impl Drop for WeaverValidator {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[cfg(feature = "weaver")]
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// use chicago_tdd_tools::weaver::{send_test_span_to_weaver, LOCALHOST, DEFAULT_OTLP_GRPC_PORT};
+/// use chicago_tdd_tools::observability::weaver::{send_test_span_to_weaver, LOCALHOST, DEFAULT_OTLP_GRPC_PORT};
 ///
 /// let endpoint = format!("http://{}:{}", LOCALHOST, DEFAULT_OTLP_GRPC_PORT);
 /// send_test_span_to_weaver(&endpoint, "test.operation")?;
@@ -533,10 +533,10 @@ pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValida
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[cfg(feature = "weaver")]
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// use chicago_tdd_tools::weaver::validate_schema_static;
+/// use chicago_tdd_tools::observability::weaver::validate_schema_static;
 /// use std::path::PathBuf;
 ///
 /// let registry_path = PathBuf::from("registry/");

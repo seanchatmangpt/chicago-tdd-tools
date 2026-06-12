@@ -1,16 +1,18 @@
 # Pattern 8: Composition Over Duplication
 
-> 🔧 **HOW-TO** | Wrap existing primitives instead of copying them
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Duplicated helpers diverge; bug fixes in base don't reach copies; maintenance nightmare |
-| **Core Solution** | Wrap base primitives (don't copy); extend wrappers with domain methods |
-| **When to Use** | ✅ Adding domain methods, ✅ Reusing base builders, ✅ Customizing base fixtures |
-| **When NOT to Use** | ❌ Missing base functionality (contribute to base instead), ❌ Conflicting behavior (redesign pattern) |
-| **Difficulty** | Low - Standard composition pattern |
+| **Problem** | Duplicated helpers diverge; bug fixes in base don't reach copies; maintenance nightmare |
+| **Solution** | Wrap base primitives (don't copy); extend wrappers with domain methods |
+| **When to Use** | Adding domain methods, reusing base builders, customizing base fixtures |
+| **When NOT to Use** | Missing base functionality (contribute to base instead), conflicting behavior (redesign pattern) |
+| **Trade-offs** | Requires delegating calls to inner base objects, but inherits all base improvements and bug fixes automatically |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/builders.rs](file:///Users/sac/chicago-tdd-tools/src/core/builders.rs) |
 
 ## The Problem
 
@@ -77,10 +79,10 @@ pub fn setup_fixture() -> DomainFixture {
 
 **Why**: Copies diverge immediately. Composition keeps you in sync with the base.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/builders.rs` and extension examples
-Purpose: Shows composition of generic builders into domain builders
+- **Code location**: [src/core/builders.rs](file:///Users/sac/chicago-tdd-tools/src/core/builders.rs)
+- **Explanation**: Shows composition of generic builders into domain builders by wrapping `TestDataBuilder` to prevent duplicating fields or serialization logic.
 
 ## Related Patterns
 

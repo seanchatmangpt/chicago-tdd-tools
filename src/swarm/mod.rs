@@ -6,7 +6,7 @@
 //!
 //! ## Architecture
 //!
-//! ```
+//! ```text
 //! Agent 1 (Academic)     Agent 2 (Claims)     Agent 3 (Multi-Sector)
 //!    ↓                        ↓                         ↓
 //! SwarmMember            SwarmMember             SwarmMember

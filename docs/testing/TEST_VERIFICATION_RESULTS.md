@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Test Verification Results - 2025-12-01
 
 ## Executive Summary

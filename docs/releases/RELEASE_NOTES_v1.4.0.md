@@ -364,10 +364,10 @@ let validator = RdfOperationValidator::new(&ontology);
 ## See Also
 
 - [CHANGELOG](CHANGELOG.md) - Complete change history
-- [Phase 1 Summary](../../PHASE_1_SUMMARY.md) - Spec Harness implementation
-- [Phase 2 Summary](../../PHASE_2_SUMMARY.md) - Core Ontology & Operator Registry
-- [Phase 3 Summary](../../PHASE_3_SUMMARY.md) - Paper as Self-Hosting RDF Instance
-- [Phase 4 Summary](../../PHASE_4_SUMMARY.md) - Sector-Grade Reference Stacks
-- [RDF Integration Summary](../../RDF_INTEGRATION_SUMMARY.md) - RDF integration details
+- [Phase 1 Summary](../archive/PHASE_1_SUMMARY.md) - Spec Harness implementation
+- [Phase 2 Summary](../archive/PHASE_2_SUMMARY.md) - Core Ontology & Operator Registry
+- [Phase 3 Summary](../archive/PHASE_3_SUMMARY.md) - Paper as Self-Hosting RDF Instance
+- [Phase 4 Summary](../archive/PHASE_4_SUMMARY.md) - Sector-Grade Reference Stacks
+- [RDF Integration Summary](../process/RDF_INTEGRATION_SUMMARY.md) - RDF integration details
 - [GitHub Release](GITHUB_RELEASE_v1.4.0.md) - GitHub release notes
 

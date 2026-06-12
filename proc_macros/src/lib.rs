@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Procedural Macros for Chicago TDD Tools
 //!
 //! Provides procedural macros for zero-boilerplate test generation,
@@ -7,13 +9,51 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 
-/// Procedural macro for TDD tests
+/// > 📚 Reference
+///
+/// Procedural macro for TDD tests.
 ///
 /// Automatically:
 /// - Detects AAA sections via AST analysis
 /// - Generates test metadata and tracing
 /// - Validates AAA pattern at compile time
 /// - Auto-generates test names from function names
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::tdd_test;
+///
+/// #[tdd_test]
+/// fn my_synchronous_test() {
+///     // Arrange
+///     let x = 42;
+///
+///     // Act
+///     let result = x + 1;
+///
+///     // Assert
+///     assert_eq!(result, 43);
+/// }
+/// ```
+///
+/// Or for asynchronous tests:
+///
+/// ```rust
+/// use chicago_tdd_tools::tdd_test;
+///
+/// #[tdd_test]
+/// async fn my_async_test() {
+///     // Arrange
+///     let x = 42;
+///
+///     // Act
+///     let result = x + 1;
+///
+///     // Assert
+///     assert_eq!(result, 43);
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -55,12 +95,28 @@ pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Procedural macro for TDD fixtures
+/// > 📚 Reference
+///
+/// Procedural macro for TDD fixtures.
 ///
 /// Automatically:
 /// - Generates fixture setup/teardown code
 /// - Provides type-safe fixture state management
 /// - Validates fixture lifecycle at compile time
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use chicago_tdd_tools::fixture;
+///
+/// #[fixture]
+/// fn my_test_with_fixture() {
+///     // The `fixture` variable is automatically introduced into scope
+///     // and initialized using `TestFixture::new()`.
+///     let counter = fixture.test_counter();
+///     assert!(counter >= 0);
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -114,9 +170,32 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Derive macro for TestBuilder
+/// > 📚 Reference
+///
+/// Derive macro for TestBuilder.
 ///
 /// Generates a fluent builder pattern for test data structures.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use chicago_tdd_tools::TestBuilder;
+///
+/// #[derive(TestBuilder)]
+/// pub struct User {
+///     id: u64,
+///     name: String,
+/// }
+///
+/// let user = UserBuilder::default()
+///     .with_id(1)
+///     .with_name("Alice".to_string())
+///     .build()
+///     .unwrap();
+///
+/// assert_eq!(user.id, 1);
+/// assert_eq!(user.name, "Alice");
+/// ```
 #[proc_macro_derive(TestBuilder)]
 #[allow(clippy::expect_used)] // Proc macro compile-time checks - ident is guaranteed to be Some for named fields
 pub fn test_builder_derive(input: TokenStream) -> TokenStream {
@@ -196,13 +275,17 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
     });
 
     let expanded = quote! {
-        /// Builder for #name
+        /// > 📚 Reference
+        ///
+        /// Builder for `#name`.
         pub struct #builder_name {
             #(#builder_fields)*
         }
 
         impl #builder_name {
-            /// Create a new builder
+            /// > 📚 Reference
+            ///
+            /// Create a new builder.
             pub fn new() -> Self {
                 Self {
                     #(#initializer_fields)*
@@ -211,7 +294,9 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
 
             #(#builder_methods)*
 
-            /// Build the struct, returning an error if required fields are missing
+            /// > 📚 Reference
+            ///
+            /// Build the struct, returning an error if required fields are missing.
             pub fn build(self) -> Result<#name, String> {
                 Ok(#name {
                     #(#build_fields)*

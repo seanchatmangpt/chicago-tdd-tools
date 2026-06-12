@@ -1,5 +1,7 @@
 # Pattern Refactoring: 80/20 Core Team Approach
 
+> 💡 Explanation | Refactoring guide for the 80/20 pattern approach
+
 **Goal**: Refactor all 20 patterns to be action-oriented, concise, and immediately valuable.
 
 ---

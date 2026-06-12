@@ -1,8 +1,8 @@
 # Building a REST Web Service: Complete Tutorial
 
-> 🎓 **TUTORIAL** | Build a production-ready REST API with Chicago TDD
+> 🎓 Tutorial | Build a production-ready REST API with Chicago TDD
 
-This tutorial guides you through building a real REST web service with comprehensive tests, using Rust and common web frameworks.
+This tutorial guides you through building a real REST web service with comprehensive tests, using Rust.
 
 **Prerequisites**: [Getting Started](getting-started.md), [CLI Application Tutorial](cli-app-tutorial.md)
 **Time**: ~50 minutes
@@ -408,9 +408,8 @@ test!(complete_api_workflow, {
 Create `src/handlers/users.rs`:
 
 ```rust
-use crate::models::CreateUserRequest;
+use crate::models::{CreateUserRequest, UpdateUserRequest};
 use crate::store::UserStore;
-use serde_json::json;
 
 pub fn get_users(store: &UserStore) -> String {
     let users = store.list();
@@ -428,6 +427,22 @@ pub fn create_user(store: &mut UserStore, body: &str) -> Result<String, String> 
 
     let user = store.create(req)?;
     serde_json::to_string(&user).map_err(|e| e.to_string())
+}
+
+pub fn update_user(store: &mut UserStore, id: u32, body: &str) -> Result<String, String> {
+    let req: UpdateUserRequest = serde_json::from_str(body)
+        .map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    let user = store.update(id, req)?;
+    serde_json::to_string(&user).map_err(|e| e.to_string())
+}
+
+pub fn delete_user(store: &mut UserStore, id: u32) -> Result<String, String> {
+    if store.delete(id) {
+        Ok(r#"{"status":"success"}"#.to_string())
+    } else {
+        Err("User not found".to_string())
+    }
 }
 
 #[cfg(test)]
@@ -462,7 +477,40 @@ mod tests {
 
         assert_err!(&result);
     });
+
+    test!(test_update_user_handler, {
+        let mut store = UserStore::new();
+        let created = store.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).unwrap();
+
+        let json = r#"{"name":"Alice Updated"}"#;
+        let result = update_user(&mut store, created.id, json);
+
+        assert_ok!(&result);
+        assert!(result.unwrap().contains("Alice Updated"));
+    });
+
+    test!(test_delete_user_handler, {
+        let mut store = UserStore::new();
+        let created = store.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).unwrap();
+
+        let result = delete_user(&mut store, created.id);
+
+        assert_ok!(&result);
+        assert_eq!(store.list().len(), 0);
+    });
 }
+```
+
+Create `src/handlers/mod.rs`:
+
+```rust
+pub mod users;
 ```
 
 ---
@@ -476,27 +524,124 @@ mod models;
 mod handlers;
 mod store;
 
-use models::{User, CreateUserRequest};
+use models::CreateUserRequest;
 use store::UserStore;
+use std::net::TcpListener;
+use std::io::{prelude::*, BufReader};
+use std::sync::{Arc, Mutex};
 
-fn main() {
-    let mut store = UserStore::new();
-
-    // Sample data
-    store.create(CreateUserRequest {
-        name: "Alice".to_string(),
-        email: "alice@example.com".to_string(),
-    }).ok();
-
-    store.create(CreateUserRequest {
-        name: "Bob".to_string(),
-        email: "bob@example.com".to_string(),
-    }).ok();
-
-    // List users
-    for user in store.list() {
-        println!("User #{}: {} ({})", user.id, user.name, user.email);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let store = Arc::new(Mutex::new(UserStore::new()));
+    
+    // Seed some initial data
+    {
+        let mut store_lock = store.lock().unwrap();
+        store_lock.create(CreateUserRequest {
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+        }).ok();
+        store_lock.create(CreateUserRequest {
+            name: "Bob".to_string(),
+            email: "bob@example.com".to_string(),
+        }).ok();
     }
+
+    let listener = TcpListener::bind("127.0.0.1:8080")?;
+    println!("Web service running on http://127.0.0.1:8080");
+
+    for stream in listener.incoming() {
+        let mut stream = stream?;
+        let store = Arc::clone(&store);
+        
+        std::thread::spawn(move || {
+            let mut buf_reader = BufReader::new(&stream);
+            let mut request_line = String::new();
+            if buf_reader.read_line(&mut request_line).is_err() {
+                return;
+            }
+            
+            // Read headers to retrieve content length for requests with body
+            let mut content_length = 0;
+            loop {
+                let mut line = String::new();
+                if buf_reader.read_line(&mut line).is_err() || line.trim().is_empty() {
+                    break;
+                }
+                if line.to_lowercase().starts_with("content-length:") {
+                    if let Some(val) = line.split(':').nth(1) {
+                        content_length = val.trim().parse().unwrap_or(0);
+                    }
+                }
+            }
+            
+            let mut body = vec![0; content_length];
+            if content_length > 0 {
+                let _ = buf_reader.read_exact(&mut body);
+            }
+            let body_str = String::from_utf8_lossy(&body);
+            
+            let parts: Vec<&str> = request_line.split_whitespace().collect();
+            if parts.len() < 2 {
+                return;
+            }
+            
+            let method = parts[0];
+            let path = parts[1];
+            
+            let mut store_lock = store.lock().unwrap();
+            let (status_line, response_body) = if method == "GET" && path == "/api/users" {
+                ("HTTP/1.1 200 OK", handlers::users::get_users(&store_lock))
+            } else if method == "GET" && path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::<u32>() {
+                    match handlers::users::get_user(&store_lock, id) {
+                        Ok(res) => ("HTTP/1.1 200 OK", res),
+                        Err(e) => ("HTTP/1.1 404 NOT FOUND", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else if method == "POST" && path == "/api/users" {
+                match handlers::users::create_user(&mut store_lock, &body_str) {
+                    Ok(res) => ("HTTP/1.1 201 CREATED", res),
+                    Err(e) => ("HTTP/1.1 400 BAD REQUEST", format!(r#"{{"error":"{}"}}"#, e)),
+                }
+            } else if method == "PUT" && path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::<u32>() {
+                    match handlers::users::update_user(&mut store_lock, id, &body_str) {
+                        Ok(res) => ("HTTP/1.1 200 OK", res),
+                        Err(e) => ("HTTP/1.1 400 BAD REQUEST", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else if method == "DELETE" && path.starts_with("/api/users/") {
+                let id_str = path.trim_start_matches("/api/users/");
+                if let Ok(id) = id_str.parse::<u32>() {
+                    match handlers::users::delete_user(&mut store_lock, id) {
+                        Ok(res) => ("HTTP/1.1 200 OK", res),
+                        Err(e) => ("HTTP/1.1 404 NOT FOUND", format!(r#"{{"error":"{}"}}"#, e)),
+                    }
+                } else {
+                    ("HTTP/1.1 400 BAD REQUEST", r#"{"error":"Invalid ID"}"#.to_string())
+                }
+            } else {
+                ("HTTP/1.1 404 NOT FOUND", r#"{"error":"Not Found"}"#.to_string())
+            };
+            
+            let response = format!(
+                "{}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+                status_line,
+                response_body.len(),
+                response_body
+            );
+            
+            let _ = stream.write_all(response.as_bytes());
+        });
+    }
+    
+    Ok(())
 }
 ```
 

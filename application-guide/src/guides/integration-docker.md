@@ -1,6 +1,6 @@
 # Integration Testing with Docker
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Test with real services using Docker
+> 🔧 How-to | Test with real services using Docker
 
 Test with real services using Docker containers.
 

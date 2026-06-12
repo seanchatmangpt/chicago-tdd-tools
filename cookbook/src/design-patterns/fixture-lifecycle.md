@@ -1,16 +1,18 @@
 # Pattern 16: Fixture Lifecycle Management
 
-> 🔧 **HOW-TO** | Manage complex test setup and teardown without manual coordination
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Manual lifecycle logic is error-prone; forgotten teardown cascades to other tests |
-| **Core Solution** | Wrap lifecycle in TestFixture or AsyncFixtureManager; Let Drop/teardown guarantee cleanup |
-| **When to Use** | ✅ Database connections, ✅ Containers, ✅ Async resource setup, ✅ Temporary directories |
-| **When NOT to Use** | ❌ Stateless data (no cleanup needed), ❌ Shared state between tests (use isolation) |
-| **Difficulty** | Medium - Requires understanding async lifecycle |
+| **Problem** | Manual lifecycle logic is error-prone; forgotten teardown cascades to other tests |
+| **Solution** | Wrap lifecycle in TestFixture or AsyncFixtureManager; Let Drop/teardown guarantee cleanup |
+| **When to Use** | Database connections, containers, async resource setup, temporary directories |
+| **When NOT to Use** | Stateless data (no cleanup needed), shared state between tests (use isolation) |
+| **Trade-offs** | Adds slight structure overhead, but ensures cleanup even on test failures or panics |
+| **Complexity** | Medium |
+| **Real-World Example** | [src/core/async_fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/async_fixture.rs) |
 
 ## The Problem
 
@@ -77,10 +79,10 @@ async_test!(test_good, fixture, {
 
 **Why**: Explicit cleanup is bypassed by early returns and panics. Fixtures guarantee cleanup via Drop.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/async_fixture.rs`
-Purpose: AsyncFixtureManager and AsyncFixtureProvider trait
+- **Code location**: [src/core/async_fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/async_fixture.rs)
+- **Explanation**: The `AsyncFixtureManager` orchestrates the setup and teardown lifecycle of asynchronous resources automatically.
 
 ## Related Patterns
 

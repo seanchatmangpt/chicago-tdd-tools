@@ -98,11 +98,11 @@ No migration needed. All existing code continues to work. New features are opt-i
 
 ## Documentation
 
-- [Quick Guide](docs/QUICK_GUIDE.md)
-- [Getting Started](docs/GETTING_STARTED.md)
-- [User Guide](docs/USER_GUIDE.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Dog Fooding](docs/DOG_FOODING.md)
+- [Quick Guide](../getting-started/QUICK_GUIDE.md)
+- [Getting Started](../getting-started/GETTING_STARTED.md)
+- [User Guide](../getting-started/USER_GUIDE.md)
+- [Architecture](../reference/ARCHITECTURE.md)
+- [Dog Fooding](../process/DOG_FOODING.md)
 
 ## Test Results
 

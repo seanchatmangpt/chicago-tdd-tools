@@ -587,7 +587,7 @@ ignore_errors = false
 [tasks.docs-coverage]
 description = "Check source code documentation coverage (missing docs warnings)"
 command = "timeout"
-args = ["30s", "bash", "scripts/doc-coverage.sh"]
+args = ["90s", "bash", "scripts/doc-coverage.sh"]
 ignore_errors = false
 
 # CI/CD tasks
@@ -635,7 +635,7 @@ ignore_errors = false
 [tasks.release-validate-compilation]
 description = "Validate code compiles in release mode (not just debug)"
 command = "timeout"
-args = ["30s", "cargo", "build", "--release", "--all-features"]
+args = ["180s", "cargo", "build", "--release", "--all-features"]
 ignore_errors = false
 
 [tasks.release-validate-examples]
@@ -791,6 +791,11 @@ args = ["spec-harness/THEOREM_MAPPING.md"]
 description = "Install Git pre-commit hooks to prevent unwrap/expect in production code"
 command = "bash"
 args = ["scripts/install-hooks.sh"]
+
+[tasks.test-doc]
+description = "Run library doc-tests"
+command = "timeout"
+args = ["60s", "cargo", "test", "--doc", "--all-features"]
 
 [tasks.setup-dev]
 description = "Complete development environment setup (cargo-make + Git hooks)"

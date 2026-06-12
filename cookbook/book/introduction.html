@@ -176,6 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<blockquote>
+<p>💡 Explanation | Introduction to the pattern language of Chicago TDD Tools</p>
+</blockquote>
 <p>Christopher Alexander famously observed that great environments share a pattern language – a network of proven responses to recurring forces. Chicago TDD Tools embodies the same philosophy for Rust testing. Instead of isolated utilities, the framework codifies high-leverage patterns that push teams toward dependable, behavior-focused tests and extendable architecture.</p>
 <p>This cookbook distills those patterns. Each entry is written in Alexander's form so you can quickly scan the context, recognize the tension, and apply the solution. Read the patterns sequentially to see how they reinforce each other, or jump to the problem you have today.</p>
 <p>The language is organized into three families:</p>
@@ -186,11 +189,52 @@
 </ol>
 <p>Combine these ingredients to build resilient Rust systems aligned with Chicago TDD principles: state-based testing, real collaborators, behavior verification, and the AAA pattern.</p>
 <hr />
-<h2 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h2>
+<h2 id="core-team-philosophy"><a class="header" href="#core-team-philosophy">Core Team Philosophy</a></h2>
+<p>Every pattern in this cookbook embodies <strong>four principles</strong> that the chicago-tdd-tools core team lives by:</p>
+<h3 id="-poka-yoke-prevent-errors-at-compile-time"><a class="header" href="#-poka-yoke-prevent-errors-at-compile-time">🚫 <strong>Poka-Yoke: Prevent Errors at Compile-Time</strong></a></h3>
+<p>Mistakes are prevented by the type system, not caught at runtime. <strong>If it compiles, correctness follows.</strong></p>
+<ul>
+<li>Pattern 1 (AAA) + Pattern 14 (Compile-Time Validation) → Wrong test structure = compiler error</li>
+<li>Pattern 15 (Type State) → Wrong call order = compiler error</li>
+<li>Pattern 13 (Sealed Traits) → Unsafe downstream code = compiler error</li>
+</ul>
+<p><strong>Core team rule:</strong> Use types to encode invariants. Never rely on documentation or runtime checks.</p>
+<h3 id="-fmea-quantify-risk-reduction"><a class="header" href="#-fmea-quantify-risk-reduction">🎯 <strong>FMEA: Quantify Risk Reduction</strong></a></h3>
+<p>Every pattern reduces Risk Priority Numbers (RPN). Patterns aren't optional—they prevent failures.</p>
+<ul>
+<li>Pattern 2 (Error Paths) → Production panics: RPN 180 → 36</li>
+<li>Pattern 4 (Resource Cleanup) → Resource leaks: RPN 112 → 22</li>
+<li>Pattern 18 (Timeout Defense) → Hanging tests: RPN 120 → 24</li>
+</ul>
+<p><strong>Core team rule:</strong> If a pattern doesn't reduce a known failure mode, don't use it.</p>
+<h3 id="-production-safety-no-unwrap-panic-or-println"><a class="header" href="#-production-safety-no-unwrap-panic-or-println">🔒 <strong>Production Safety: No Unwrap, Panic, or Println</strong></a></h3>
+<p>Production code must be bulletproof. Errors propagate, never crash.</p>
+<ul>
+<li>Pattern 2 (Error Paths) teaches <code>?</code> operator, never <code>.unwrap()</code></li>
+<li>Pattern 5 (Real Collaborators) catches integration issues before production</li>
+<li>Pattern 16 (Fixture Lifecycle) guarantees cleanup even on failure</li>
+</ul>
+<p><strong>Core team rule:</strong> Clippy denies <code>unwrap_used</code>, <code>expect_used</code>, <code>panic</code> in production code.</p>
+<h3 id="-8020-thinking-maximum-value-minimum-effort"><a class="header" href="#-8020-thinking-maximum-value-minimum-effort">⚡ <strong>80/20 Thinking: Maximum Value, Minimum Effort</strong></a></h3>
+<p>Learn 5 patterns first (45 min), get 80% of benefits. Everything else adds specialized depth.</p>
+<ul>
+<li>Foundation: Pattern 1 (AAA) + Pattern 6 (Generic Base)</li>
+<li>High-impact testing: Pattern 2 (Error Paths) + Pattern 5 (Real Collaborators)</li>
+<li>High-impact organization: Pattern 10 (Capability Groups)</li>
+</ul>
+<p><strong>Core team rule:</strong> Start with foundations, add patterns when you hit their problem.</p>
+<hr />
 <p><strong>Not sure where to start?</strong> Choose your path:</p>
 <div class="table-wrapper"><table><thead><tr><th>Your Situation</th><th>Go To</th><th>Time</th></tr></thead><tbody>
-<tr><td><strong>I need to solve a problem</strong></td><td><a href="choosing-your-pattern.html">Choosing Your Pattern</a></td><td>5 min</td></tr>
-<tr><td><strong>I want a quick overview</strong></td><td><a href="all-patterns-reference.html">All Patterns Reference</a></td><td>10 min</td></tr>
+<tr><td><strong>I'm in a hurry</strong></td><td><a href="quick-reference.html">Quick Reference Card</a> - One-page lookup</td><td>2 min</td></tr>
+<tr><td><strong>I want to avoid common mistakes</strong></td><td><a href="common-mistakes.html">Common Mistakes</a> - Learn from gotchas</td><td>10 min</td></tr>
+<tr><td><strong>I need a learning order</strong></td><td><a href="pattern-dependencies.html">Pattern Dependencies</a> - Foundations first, then build</td><td>5 min</td></tr>
+<tr><td><strong>I need to solve a problem</strong></td><td><a href="choosing-your-pattern.html">Choosing Your Pattern</a> - Decision guide</td><td>5 min</td></tr>
+<tr><td><strong>I want to see patterns in action</strong></td><td><a href="real-world-scenarios.html">Real-World Scenarios</a> - 5 examples</td><td>15 min</td></tr>
+<tr><td><strong>I want a quick overview</strong></td><td><a href="all-patterns-reference.html">All Patterns Reference</a> - All 20 at a glance</td><td>10 min</td></tr>
+<tr><td><strong>I'm adding patterns to existing project</strong></td><td><a href="adoption-guide.html">Adoption Guide</a> - Week-by-week implementation</td><td>20 min</td></tr>
+<tr><td><strong>Something isn't working</strong></td><td><a href="troubleshooting.html">Troubleshooting</a> - Fix 10 common issues</td><td>5 min</td></tr>
+<tr><td><strong>I want to instrument tests with telemetry</strong></td><td><a href="observability-instrumentation.html">Observability Guide</a> - Weaver &amp; OTEL</td><td>20 min</td></tr>
 <tr><td><strong>I want to learn systematically</strong></td><td>Choose a learning sequence below</td><td>60-120 min</td></tr>
 <tr><td><strong>I want a specific pattern</strong></td><td>Jump to pattern reference below</td><td>Varies</td></tr>
 </tbody></table>
@@ -207,9 +251,26 @@
 <p><strong>Recommended</strong>: Follow in order (Testing → Architecture → Design).</p>
 <hr />
 <h2 id="quick-links"><a class="header" href="#quick-links">Quick Links</a></h2>
+<p><strong>Quick Start (Fastest paths)</strong>:</p>
 <ul>
+<li><strong><a href="quick-reference.html">Quick Reference Card</a></strong> - One-page lookup table, 2 min</li>
+<li><strong><a href="common-mistakes.html">Common Mistakes</a></strong> - Avoid the gotchas, 10 min</li>
+<li><strong><a href="real-world-scenarios.html">Real-World Scenarios</a></strong> - See patterns in action, 15 min</li>
+</ul>
+<p><strong>Getting Started with Adoption</strong>:</p>
+<ul>
+<li><strong><a href="adoption-guide.html">Adoption Guide</a></strong> - 45 min over 3 weeks to get started, 20 min</li>
+<li><strong><a href="troubleshooting.html">Troubleshooting</a></strong> - Fix 10 common issues, 5 min</li>
+<li><strong><a href="observability-instrumentation.html">Observability Guide</a></strong> - Instrument with Weaver &amp; OTEL, 20 min</li>
+</ul>
+<p><strong>Navigation &amp; Discovery</strong>:</p>
+<ul>
+<li><strong><a href="pattern-dependencies.html">Pattern Dependencies &amp; Learning Order</a></strong> - Learning paths and foundations first, 5 min</li>
 <li><strong><a href="choosing-your-pattern.html">Choosing Your Pattern</a></strong> - Decision matrices to find the right pattern</li>
 <li><strong><a href="all-patterns-reference.html">All Patterns Reference</a></strong> - All 20 patterns at a glance</li>
+</ul>
+<p><strong>Deep Learning</strong>:</p>
+<ul>
 <li><strong><a href="testing-patterns/">Testing Patterns</a></strong> - Learn to write great tests</li>
 <li><strong><a href="architecture-patterns/">Architecture Patterns</a></strong> - Learn to organize code</li>
 <li><strong><a href="design-patterns/">Design Patterns</a></strong> - Learn advanced safety and design</li>
@@ -223,7 +284,7 @@
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="choosing-your-pattern.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="quick-reference.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -237,7 +298,7 @@
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="choosing-your-pattern.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="quick-reference.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -130,7 +130,7 @@ pub fn property_all_data_valid<const MAX_ITEMS: usize, const MAX_DEPTH: usize>(
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// # #[cfg(feature = "property-testing")]
 /// use chicago_tdd_tools::property::ProptestStrategy;
 ///

@@ -1,6 +1,6 @@
 # Fixtures Deep Dive: 15-Minute Tutorial
 
-> 🎓 **TUTORIAL** | Master test isolation with fixtures
+> 🎓 Tutorial | Master test isolation with fixtures
 
 Fixtures are the foundation of isolated testing. This tutorial builds on the basics and shows you how to use fixtures for real-world scenarios.
 
@@ -21,6 +21,7 @@ test!(test_isolation_example, {
 
     // Changes here don't affect other tests
     fixture.set_metadata("value", "100");
+    assert_eq!(fixture.get_metadata("value"), Some("100"));
 });
 ```
 
@@ -63,6 +64,15 @@ test!(test_storing_state, {
 test!(test_user_creation, {
     let fixture = TestFixture::new()?;
 
+    // Define helper structs and functions locally
+    struct User { id: u32, name: String }
+    let create_user = |name: &str, _email: &str| -> Result<User, &'static str> {
+        Ok(User { id: 42, name: name.to_string() })
+    };
+    let get_user = |_id: u32| -> Result<User, &'static str> {
+        Ok(User { id: 42, name: "alice".to_string() })
+    };
+
     // Setup: Create a user
     let user = create_user("alice", "alice@example.com")?;
     fixture.set_metadata("user_id", &user.id.to_string());
@@ -70,7 +80,7 @@ test!(test_user_creation, {
 
     // Test: Can we retrieve the user?
     let stored_id = fixture.get_metadata("user_id").unwrap();
-    let retrieved = get_user(stored_id.parse()?)?;
+    let retrieved = get_user(stored_id.parse().map_err(|_| "parse error")?)?;
     assert_eq!(retrieved.name, "alice");
 });
 ```
@@ -99,11 +109,14 @@ test!(test_with_snapshots, {
     ]);
     fixture.capture_snapshot(state);
 
-    // ... more operations ...
+    // Perform additional operations to process elements
+    let mut data = data;
+    data.push(4);
+    data.push(5);
 
     let state2 = HashMap::from([
         ("step".to_string(), "processed".to_string()),
-        ("count".to_string(), "5".to_string()),
+        ("count".to_string(), data.len().to_string()),
     ]);
     fixture.capture_snapshot(state2);
 
@@ -113,7 +126,7 @@ test!(test_with_snapshots, {
 
     // Access latest snapshot
     let latest = fixture.latest_snapshot();
-    assert_eq!(latest.get("step"), Some(&"processed".to_string()));
+    assert_eq!(latest.unwrap().get("step"), Some(&"processed".to_string()));
 });
 ```
 
@@ -122,6 +135,13 @@ test!(test_with_snapshots, {
 ```rust
 test!(test_order_workflow, {
     let fixture = TestFixture::new()?;
+
+    struct Order { id: u32 }
+    let create_order = |_user: &str, _amount: f64| -> Result<Order, &'static str> {
+        Ok(Order { id: 987 })
+    };
+    let process_payment = |_order: &Order| -> Result<(), &'static str> { Ok(()) };
+    let ship_order = |_order: &Order| -> Result<(), &'static str> { Ok(()) };
 
     // Step 1: Create order
     let order = create_order("alice", 100.0)?;
@@ -188,6 +208,10 @@ test!(test_fixture_error_handling, {
     // Create fixture might fail
     let fixture = TestFixture::new()?;
 
+    let risky_operation = || -> Result<(), &'static str> {
+        Err("operation failed")
+    };
+
     // Operations might fail
     if let Err(e) = risky_operation() {
         // Record the error
@@ -209,10 +233,12 @@ test!(test_fixture_error_handling, {
 For repeated setup, create a helper function:
 
 ```rust
+struct User { id: u32, name: String, email: String }
+
 fn setup_user_fixture() -> Result<(TestFixture, User), Box<dyn std::error::Error>> {
     let fixture = TestFixture::new()?;
 
-    let user = create_user("test_user", "test@example.com")?;
+    let user = User { id: 101, name: "test_user".to_string(), email: "test@example.com".to_string() };
     fixture.set_metadata("user_id", &user.id.to_string());
     fixture.set_metadata("username", &user.name);
 
@@ -224,8 +250,7 @@ test!(test_using_setup, {
 
     // Test can now use pre-initialized fixture
     assert_eq!(user.name, "test_user");
-
-    // ... rest of test ...
+    assert_eq!(user.email, "test@example.com");
 });
 ```
 
@@ -237,8 +262,14 @@ test!(test_using_setup, {
 
 1. **Create one fixture per test**
    ```rust
-   test!(test1, { let f = TestFixture::new()?; /* ... */ });
-   test!(test2, { let f = TestFixture::new()?; /* ... */ }); // Separate!
+   test!(test1, {
+       let f = TestFixture::new()?;
+       assert!(f.get_metadata("id").is_none());
+   });
+   test!(test2, {
+       let f = TestFixture::new()?;
+       assert!(f.get_metadata("id").is_none());
+   }); // Separate!
    ```
 
 2. **Use metadata for state tracking**
@@ -262,21 +293,20 @@ test!(test_using_setup, {
 1. **Share fixtures between tests**
    ```rust
    // WRONG - fixture is shared!
-   let shared_fixture = TestFixture::new();
-   test!(test1, { /* use shared_fixture */ });
-   test!(test2, { /* use shared_fixture */ });
+   // let shared_fixture = TestFixture::new();
+   // test!(test1, { /* use shared_fixture */ });
    ```
 
 2. **Use global state**
    ```rust
    // WRONG - global state affects test isolation
-   static FIXTURE: Lazy<TestFixture> = Lazy::new(|| TestFixture::new().unwrap());
+   // static FIXTURE: Lazy<TestFixture> = Lazy::new(|| TestFixture::new().unwrap());
    ```
 
 3. **Forget to handle errors**
    ```rust
-   // WRONG - TestFixture::new() can fail
-   let fixture = TestFixture::new().unwrap();  // Better: ?
+   // WRONG - TestFixture::new() can fail without handling
+   // let fixture = TestFixture::new().unwrap();
    ```
 
 ---
@@ -288,6 +318,10 @@ test!(test_using_setup, {
 ```rust
 test!(test_setup_teardown, {
     let fixture = TestFixture::new()?;
+
+    let setup_database = |_f: &TestFixture| -> Result<(), &'static str> {
+        Ok(())
+    };
 
     // Setup
     setup_database(&fixture)?;
@@ -306,8 +340,12 @@ test!(test_setup_teardown, {
 test!(test_state_validation, {
     let fixture = TestFixture::new()?;
 
+    let do_work = || -> Result<(), &'static str> {
+        Ok(())
+    };
+
     // Perform operations
-    let result = do_work()?;
+    let _result = do_work()?;
 
     // Capture and validate state
     let state = HashMap::from([
@@ -327,6 +365,10 @@ test!(test_state_validation, {
 ```rust
 test!(test_progressive, {
     let fixture = TestFixture::new()?;
+
+    let operation1 = || -> Result<(), &'static str> { Ok(()) };
+    let operation2 = || -> Result<(), &'static str> { Ok(()) };
+    let operation3 = || -> Result<(), &'static str> { Ok(()) };
 
     // Phase 1
     let result1 = operation1()?;

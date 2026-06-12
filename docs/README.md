@@ -41,6 +41,8 @@ Goal-focused guides to accomplish specific tasks:
 - **[CLI Testing](testing/cli-testing-guide.md)** - Command-line testing patterns
 - **[Observability Testing](observability/observability-testing-guide.md)** - Observability testing guide
 - **[OTEL Weaver Guide](observability/otel-weaver-guide.md)** - OpenTelemetry + Weaver integration
+- **[Test Verification Results](testing/TEST_VERIFICATION_RESULTS.md)** - Results and fixes for test runs
+- **[MdBook Verification Summary](testing/VERIFICATION_SUMMARY.md)** - Executable documentation checks
 
 ---
 
@@ -71,11 +73,38 @@ Background, context, and understanding of how/why things work:
 - **[Poka-Yoke Weaver Registry](process/POKA_YOKE_WEAVER_REGISTRY.md)** - Type-level error prevention
 - **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver
 - **[Dog Fooding](process/DOG_FOODING.md)** - Using Chicago TDD Tools to test itself
+- **[CI/Unit Test Fixes Summary](process/CI_FIXES_SUMMARY.md)** - Final status of CI/Unit test fixes
+- **[GitHub Actions Improvements Summary](process/GITHUB_ACTIONS_SUMMARY.md)** - Comprehensive CI/CD overhaul
+- **[Kaizen Improvement Plan](process/KAIZEN_IMPROVEMENT_PLAN.md)** - Plan for error message consistency
+- **[RDF Integration Summary](process/RDF_INTEGRATION_SUMMARY.md)** - Core data structures for semantic workflows
 
 ### Analysis & Research
+- **[FMEA Executive Summary](analysis/FMEA_EXECUTIVE_SUMMARY.md)** - Unit test GitHub Actions FMEA
+- **[FMEA: GitHub Actions](analysis/FMEA_GITHUB_ACTIONS.md)** - Workflow failure mode analysis
+- **[FMEA: Root Cause Analysis Report](analysis/FMEA_ROOT_CAUSE_ANALYSIS.md)** - Risk mitigation and prevention details
+- **[FMEA: Summary Table](analysis/FMEA_SUMMARY_TABLE.md)** - Matrix of failure modes and RPNs
+- **[Weaver Timeout RCA](analysis/ROOT_CAUSE_ANALYSIS_WEAVER_TIMEOUT.md)** - Root Cause Analysis for Weaver integration timeouts
+- **[Unit Test Failure RCA](analysis/UNIT_TEST_FAILURE_RCA.md)** - Root Cause Analysis for assertions module timeouts
+- **[Mura (Unevenness) Inventory](analysis/MURA_INVENTORY.md)** - Standardizing code/docs inconsistencies
+- **[Mura Inventory (Examples)](analysis/MURA_INVENTORY_EXAMPLES.md)** - Example folder inconsistencies analysis
+- **[Similar Patterns Analysis](analysis/SIMILAR_PATTERNS_ANALYSIS.md)** - Inconsistencies post-macro import standardization
 - **[Root Cause Analyses](analysis/)** - Clippy warnings, effectiveness, Weaver registry
 - **[Research](research/)** - Innovative testing tools, problems solved
 - **[Coverage Strategy](coverage/v1.2.0-coverage-strategy.md)** - Test coverage approach
+
+### LaTeX Specification
+- **[LaTeX Formalization Summary](latex/LATEX_FORMALIZATION_SUMMARY.md)** - Mathematical formalization of the Chatman Equation
+- **[LaTeX Rewrite Summary](latex/LATEX_REWRITE_SUMMARY.md)** - Framework-first documentation rewrite
+
+### Historical & Archives
+- **[Final Completion Summary](archive/FINAL_SUMMARY.md)** - Theory to executable multi-sector spec
+- **[Project Status](archive/PROJECT_STATUS.md)** - Progress and timeline overview
+- **[Progress Update](archive/PROGRESS_UPDATE.md)** - Phase 2 completion and next steps
+- **[PR Description](archive/PR_DESCRIPTION.md)** - PR overview of CI/CD pipeline overhaul
+- **[Phase 1 Summary](archive/PHASE_1_SUMMARY.md)** - Spec Harness & Literate Verification
+- **[Phase 2 Summary](archive/PHASE_2_SUMMARY.md)** - Core Ontology & Operator Registry
+- **[Phase 3 Summary](archive/PHASE_3_SUMMARY.md)** - Paper as Self-Hosting RDF Instance
+- **[Phase 4 Summary](archive/PHASE_4_SUMMARY.md)** - Sector-Grade Reference Stacks
 
 ---
 
@@ -108,6 +137,8 @@ docs/
 ├── process/             # Explanation (understand)
 ├── analysis/            # Explanation (understand)
 ├── research/            # Explanation (understand)
+├── latex/               # LaTeX formalization docs
+├── archive/             # Historical documents and milestones
 ├── releases/            # Release documentation
 └── diagrams/            # PlantUML diagrams
 ```

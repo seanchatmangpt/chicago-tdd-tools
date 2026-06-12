@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Fail-Fast Hardening Infrastructure
 //!
 //! Core type system for unrecoverable invariant violations.
@@ -10,9 +12,20 @@
 use std::error::Error;
 use std::fmt::{self, Display};
 
+/// > 📚 Reference
+///
 /// The single enum for all internal framework invariant violations.
 /// If any of these occurs, the framework cannot certify correctness;
 /// the test fails immediately.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::invariants::UnrecoverableInvariantViolation;
+///
+/// let violation = UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string());
+/// assert!(format!("{}", violation).contains("Contract malformed"));
+/// ```
 #[derive(Debug, Clone)]
 pub enum UnrecoverableInvariantViolation {
     /// Phase 1: Contract Definition is incomplete or malformed
@@ -299,7 +312,18 @@ macro_rules! invariant_context {
 // Phase-Specific Validators
 // ============================================================================
 
+/// > 📚 Reference
+///
 /// Validates contract construction invariants.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::core::invariants::ContractValidator;
+///
+/// assert!(ContractValidator::validate("my_contract", 3).is_ok());
+/// assert!(ContractValidator::validate("", 3).is_err());
+/// ```
 pub struct ContractValidator;
 
 impl ContractValidator {

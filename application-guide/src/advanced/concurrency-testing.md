@@ -1,6 +1,6 @@
 # Concurrency Testing
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Test thread safety with deterministic thread ordering
+> 🔧 How-to | Test thread safety with deterministic thread ordering
 
 Test thread-safe code with deterministic thread ordering using loom.
 

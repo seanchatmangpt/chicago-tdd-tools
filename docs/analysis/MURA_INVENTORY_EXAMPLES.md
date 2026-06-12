@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Mura Inventory - Examples Folder
 
 ## Step 1: Identify Mura (Unevenness)

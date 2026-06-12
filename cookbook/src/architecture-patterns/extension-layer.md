@@ -1,16 +1,18 @@
 # Pattern 7: Extension Layer
 
-> 🔧 **HOW-TO** | Compose base primitives into domain-specific helpers
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Domain code in base bloats all users; extensions need their own helpers but avoid copy-paste |
-| **Core Solution** | Create extension crate; compose base fixtures/builders; add domain-specific methods |
-| **When to Use** | ✅ Multi-team product, ✅ Independent evolution needed, ✅ Shared domain patterns |
-| **When NOT to Use** | ❌ Single crate (put helpers in local modules), ❌ Utility functions (put in base) |
-| **Difficulty** | Low - Standard wrapper pattern |
+| **Problem** | Domain code in base bloats all users; extensions need their own helpers but avoid copy-paste |
+| **Solution** | Create extension crate; compose base fixtures/builders; add domain-specific methods |
+| **When to Use** | Multi-team product, independent evolution needed, shared domain patterns |
+| **When NOT to Use** | Single crate (put helpers in local modules), utility functions (put in base) |
+| **Trade-offs** | Adds wrapper layers, but enables independent evolution of domain-specific helpers without bloating the core |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs) |
 
 ## The Problem
 
@@ -77,10 +79,10 @@ pub fn setup_domain() -> DomainFixture {
 
 **Why**: Duplicated code diverges. Bug fixes in the base don't reach copies. Wrappers stay in sync.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/fixture.rs` and composition examples
-Purpose: Shows how to wrap generic fixtures for domain use
+- **Code location**: [src/core/fixture.rs](file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs)
+- **Explanation**: The generic `TestFixture` serves as the base layer, which is extended and composed into specific domain test fixtures.
 
 ## Related Patterns
 

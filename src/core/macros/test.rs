@@ -410,6 +410,8 @@ macro_rules! performance_test {
 ///         assert_eq!(a + b, expected);
 ///     }
 /// }
+///
+/// fn main() {}
 /// ```
 #[macro_export]
 macro_rules! param_test {
@@ -417,8 +419,8 @@ macro_rules! param_test {
         $(#[$attr:meta])*
         fn $name:ident($($param:ident: $type:ty),* $(,)?) $body:block
     } => {
+        #[rstest::rstest($($param),*)]
         $(#[$attr])*
-        #[rstest::rstest]
         fn $name($($param: $type),*) $body
     };
 }

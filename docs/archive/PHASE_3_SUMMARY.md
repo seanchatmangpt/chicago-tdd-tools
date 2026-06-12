@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Phase 3 Completion Summary: Paper as Self-Hosting RDF Instance
 
 **Status:** ✅ **COMPLETE** | **Commit:** `pending` | **Date:** November 16, 2025

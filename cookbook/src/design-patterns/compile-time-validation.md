@@ -1,16 +1,18 @@
 # Pattern 14: Compile-Time Validation
 
-> 🔧 **HOW-TO** | Move invariant checks from runtime to compile time
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Runtime checks add overhead; missing invariants cause production bugs; validation can be bypassed |
-| **Core Solution** | Use const generics, type markers, and const_assert! to validate at compile time |
-| **When to Use** | ✅ Numeric limits, ✅ Feature combinations, ✅ Configuration constraints |
-| **When NOT to Use** | ❌ User input (must validate at runtime), ❌ Values only known at runtime |
-| **Difficulty** | Medium - Requires understanding const generics |
+| **Problem** | Runtime validation checks add overhead; missing invariants cause bugs; validation can be bypassed |
+| **Solution** | Use const generics, type markers, and compile-time assertions (const_assert!) to validate invariants |
+| **When to Use** | Numeric limits, feature combinations, configuration constraints |
+| **When NOT to Use** | User input (must validate at runtime), values only known at runtime |
+| **Trade-offs** | Moves checks to compile time (which increases compile times slightly) but guarantees zero-cost runtime enforcement |
+| **Complexity** | Medium |
+| **Real-World Example** | [src/core/const_assert.rs](file:///Users/sac/chicago-tdd-tools/src/core/const_assert.rs) |
 
 ## The Problem
 
@@ -76,10 +78,10 @@ pub fn process<T, const MAX: usize>(data: T) {
 
 **Why**: Compile-time validation is zero-cost and impossible to bypass.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/const_assert.rs`
-Purpose: Macro for compile-time invariant validation
+- **Code location**: [src/core/const_assert.rs](file:///Users/sac/chicago-tdd-tools/src/core/const_assert.rs)
+- **Explanation**: The `const_assert!` macro compiles if and only if the boolean expression evaluates to true, enforcing size or value limits at compile time.
 
 ## Related Patterns
 

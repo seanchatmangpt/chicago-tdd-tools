@@ -1,3 +1,4 @@
+> 💡 Explanation
 # LaTeX Documentation Rewrite: Framework-First Perspective
 
 ## Status: ✅ COMPLETED AND PUSHED

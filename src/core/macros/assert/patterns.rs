@@ -12,6 +12,7 @@
 /// ```rust
 /// use chicago_tdd_tools::assert_matches;
 ///
+/// #[derive(Debug)]
 /// enum Response {
 ///     Success(u32),
 ///     Error(String),

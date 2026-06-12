@@ -7,7 +7,7 @@
 //! - Theorem 3.4: Invalid test states are unrepresentable
 //! - Theorem 3.5: Error handling without unwrap/expect is enforced
 
-use crate::{TheoremMetadata, TestResultType};
+use crate::{TestResultType, TheoremMetadata};
 
 /// Get the complete list of theorems for Chapter 3
 pub fn theorems() -> Vec<TheoremMetadata> {
@@ -83,28 +83,19 @@ mod tests {
 
         impl TestState<Arrange> {
             fn new(data: i32) -> Self {
-                Self {
-                    _phase: PhantomData,
-                    data,
-                }
+                Self { _phase: PhantomData, data }
             }
 
             // Only valid from Arrange phase
             fn act(self) -> TestState<Act> {
-                TestState {
-                    _phase: PhantomData,
-                    data: self.data * 2,
-                }
+                TestState { _phase: PhantomData, data: self.data * 2 }
             }
         }
 
         impl TestState<Act> {
             // Only valid from Act phase
             fn assert(self) -> TestState<Assert> {
-                TestState {
-                    _phase: PhantomData,
-                    data: self.data + 1,
-                }
+                TestState { _phase: PhantomData, data: self.data + 1 }
             }
 
             #[allow(dead_code)]
@@ -122,7 +113,7 @@ mod tests {
         // Valid sequence: Arrange → Act → Assert
         let state = TestState::new(5)
             .act()           // Can only call act() on Arrange
-            .assert();       // Can only call assert() on Act
+            .assert(); // Can only call assert() on Act
 
         assert_eq!(state.result(), 11);
 
@@ -177,9 +168,7 @@ mod tests {
 
         impl<const N: usize> ValidatedArray<N> {
             fn new() -> Self {
-                Self {
-                    data: [1, 2, 3, 4],
-                }
+                Self { data: [1, 2, 3, 4] }
             }
 
             fn len(&self) -> usize {
@@ -240,10 +229,7 @@ mod tests {
             // Private constructor enforces invariant
             fn new(fixture_count: usize, test_data_count: usize) -> Option<Self> {
                 if fixture_count > 0 && test_data_count > 0 {
-                    Some(Self {
-                        fixture_count,
-                        test_data_count,
-                    })
+                    Some(Self { fixture_count, test_data_count })
                 } else {
                     None
                 }
@@ -334,9 +320,7 @@ mod tests {
                 }
 
                 // Simulate recursive call (depth increased)
-                let guard = RecursionGuard {
-                    depth: self.depth + 1,
-                };
+                let guard = RecursionGuard { depth: self.depth + 1 };
 
                 guard.recurse(n - 1)
             }

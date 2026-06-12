@@ -1,6 +1,6 @@
 # TestFixture API Reference
 
-> 📚 **REFERENCE** | Complete API documentation for test fixtures
+> 📚 Reference | Complete API documentation for test fixtures
 
 ## Overview
 
@@ -199,7 +199,8 @@ test!(verify_state_pattern, {
     assert_eq!(fixture.get_metadata("initialized"), Some("false"));
 
     // Initialization happens
-    // ...
+    let initialized = true;
+    assert!(initialized);
 
     // Verify state changed
     fixture.set_metadata("initialized", "true");
@@ -213,15 +214,20 @@ test!(verify_state_pattern, {
 test!(multi_phase_pattern, {
     let fixture = TestFixture::new()?;
 
+    let do_phase_1 = || -> Result<(), &'static str> { Ok(()) };
+    let do_phase_2 = || -> Result<(), &'static str> { Ok(()) };
+    let state_at_phase1 = || HashMap::from([("progress".to_string(), "50%".to_string())]);
+    let state_at_phase2 = || HashMap::from([("progress".to_string(), "100%".to_string())]);
+
     // Phase 1
     fixture.set_metadata("phase", "1");
-    let result1 = do_phase_1()?;
+    let result1 = do_phase_1();
     fixture.capture_snapshot(state_at_phase1());
     assert_ok!(&result1);
 
     // Phase 2
     fixture.set_metadata("phase", "2");
-    let result2 = do_phase_2()?;
+    let result2 = do_phase_2();
     fixture.capture_snapshot(state_at_phase2());
     assert_ok!(&result2);
 
@@ -242,7 +248,8 @@ test!(context_pattern, {
     fixture.set_metadata("test_version", "1.0");
     fixture.set_metadata("test_category", "integration");
 
-    // ... test code ...
+    // Verify metadata was stored
+    assert_eq!(fixture.get_metadata("test_name"), Some("my_test"));
 });
 ```
 
@@ -337,6 +344,11 @@ async fn async_with_fixture() -> Result<(), Box<dyn std::error::Error>> {
     fixture.set_metadata("async", "true");
 
     // async operations
+    let async_result = tokio::time::timeout(
+        std::time::Duration::from_millis(10),
+        async { 42 }
+    ).await;
+    assert_ok!(&async_result);
 
     Ok(())
 }
@@ -383,6 +395,10 @@ test!(error_recovery, {
     let fixture = TestFixture::new()?;
 
     fixture.set_metadata("status", "starting");
+
+    let risky_operation = || -> Result<(), &'static str> {
+        Err("operation timed out")
+    };
 
     if let Err(e) = risky_operation() {
         fixture.set_metadata("status", "failed");

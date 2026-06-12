@@ -176,33 +176,101 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-10-capability-grouping"><a class="header" href="#pattern-10-capability-grouping">Pattern 10: Capability Grouping</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You are browsing the Chicago TDD Tools codebase or designing a new module. You need to know where functionality belongs and how to expose it.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Without a consistent module taxonomy, features surface haphazardly. Consumers struggle to find capabilities, and maintainers duplicate structure.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Group modules by capability: <code>core</code> for foundational primitives, <code>testing</code> for advanced techniques, <code>validation</code> for guardrails, <code>observability</code> for telemetry, and <code>integration</code> for external systems. Re-export each group at the crate root to support both granular and high-level imports. New modules join one of these groups or motivate a new, clearly named capability.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Discoverability vs. granularity: capability groups provide short import paths while preserving modularity</li>
-<li>Stability vs. evolution: groups rarely change, making documentation and IDE tooling reliable</li>
-<li>Compilation vs. optionality: feature flags enable or disable entire capability slices</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Features surface randomly; consumers struggle to find capabilities; structure is unmaintainable</td></tr>
+<tr><td><strong>Solution</strong></td><td>Group modules by capability (core, testing, validation, observability, integration)</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Multi-module crates, public APIs, feature-gated functionality</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Single-module crates, internal organization only (use folders), organizational structure (use teams)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires strict categorization of new modules, but makes module discovery predictable for consumers</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/lib.rs">src/lib.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Without a consistent module taxonomy, new features end up in random places. Consumers can't find capabilities. Maintainers duplicate structure. Documentation becomes a treasure hunt to find the right module.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Organize modules into capability groups: <strong>core</strong> (fixtures, builders, assertions), <strong>testing</strong> (advanced techniques), <strong>validation</strong> (guardrails), <strong>observability</strong> (telemetry), <strong>integration</strong> (external systems). Each group is stable; new modules join existing groups or motivate a new group.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// src/lib.rs
+</span>// src/lib.rs - Organize by capability groups
 pub mod core;          // fixtures, builders, assertions, macros
-pub mod testing;       // property testing, mutation testing, snapshots
+pub mod testing;       // property, mutation, snapshot testing
 pub mod validation;    // guards, coverage, performance
-pub mod observability; // otel, weaver
-pub mod integration;   // testcontainers
+pub mod observability; // OTEL, Weaver telemetry
+pub mod integration;   // testcontainers, docker support
+
+// Re-export high-level APIs
+pub use core::{fixture, builders, assertions};
+pub use testing::property;
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Each module belongs to exactly one capability group</li>
+<li><input disabled="" type="checkbox"/>
+Group names are stable (rarely reorganized)</li>
+<li><input disabled="" type="checkbox"/>
+Each group is named after "what it does", not "where it is"</li>
+<li><input disabled="" type="checkbox"/>
+High-level APIs are re-exported at crate root</li>
+<li><input disabled="" type="checkbox"/>
+New modules fit an existing group or create a clear new one</li>
+<li><input disabled="" type="checkbox"/>
+Feature flags align with capability groups when optional</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Alphabetical organization or organization by implementation (utilities, helpers, core_utils):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Alphabetical (hard to find things)
+pub mod builders;
+pub mod core;
+pub mod fixtures;
+pub mod guards;
+pub mod observability;
+pub mod testing;
+
+// ❌ WRONG: Implementation-focused (confusing for users)
+pub mod internal;      // What's inside?
+pub mod utils;         // What utilities?
+pub mod helpers;       // Which helpers?
+
+// ✅ RIGHT: Capability-focused (users know where to look)
+pub mod core;          // Fixtures, builders, assertions
+pub mod validation;    // Guards, coverage, performance
+pub mod observability; // Telemetry, observability
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Users care about capabilities, not implementation. Capability grouping helps them find what they need.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/lib.rs">src/lib.rs</a></li>
+<li><strong>Explanation</strong>: Organizes the codebase into 5 capability-focused modules, making features easily discoverable.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 6: Generic Base Layer</li>
-<li>Pattern 9: Single Source of Truth</li>
-<li>Pattern 19: Feature Gate Slices</li>
+<li><strong>Before this</strong>: <a href="generic-base.html">Pattern 6: Generic Base</a> (what to include)</li>
+<li><strong>Use with</strong>: <a href="single-source-of-truth.html">Pattern 9: Single Source</a> (organize constants within groups)</li>
+<li><strong>Next</strong>: <a href="../design-patterns/feature-gating.html">Pattern 19: Feature Gates</a> (gate capability groups)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Capability grouping makes module organization predictable. Users can guess where features are, and maintainers have a framework for growth.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Module organization is documented in README</li>
+<li><input disabled="" type="checkbox"/>
+Each group has a clear purpose</li>
+<li><input disabled="" type="checkbox"/>
+No module belongs to multiple groups</li>
+<li><input disabled="" type="checkbox"/>
+Re-exports make common paths short</li>
+<li><input disabled="" type="checkbox"/>
+Feature flags align with groups</li>
 </ul>
 
                     </main>

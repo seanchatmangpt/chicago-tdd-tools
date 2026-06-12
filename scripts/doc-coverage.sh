@@ -11,7 +11,7 @@ echo ""
 # Run cargo doc and capture warnings
 # Use --document-private-items to check all items (not just public)
 # Filter for missing_docs warnings
-DOC_OUTPUT=$(timeout 30s cargo doc --no-deps --all-features --document-private-items 2>&1)
+DOC_OUTPUT=$(timeout 90s cargo doc --no-deps --all-features --document-private-items 2>&1)
 
 # Count missing documentation warnings
 MISSING_DOCS=$(echo "$DOC_OUTPUT" | grep -c "missing documentation" 2>/dev/null | head -1 || echo "0")

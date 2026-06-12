@@ -1,16 +1,18 @@
 # Pattern 20: Macro Pattern Enforcement
 
-> 🔧 **HOW-TO** | Embed best practices in macros to enforce them automatically
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Developers skip timeouts, forget AAA structure, mix #[test] with macros; no enforcement mechanism |
-| **Core Solution** | Embed best practices in macros; using macro guarantees compliance |
-| **When to Use** | ✅ Enforcing conventions, ✅ Centralizing boilerplate, ✅ Feature requirements |
-| **When NOT to Use** | ❌ Optional patterns (don't force), ❌ Complex macros > 5 LOC expansion (use modules) |
-| **Difficulty** | Hard - Requires macro expertise |
+| **Problem** | Developers skip timeouts, forget AAA comments, or mix raw test macros; no enforcement mechanism |
+| **Solution** | Embed best practices in macros; using macros guarantees compliance |
+| **When to Use** | Enforcing conventions, centralizing boilerplate, feature requirements |
+| **When NOT to Use** | Optional patterns (don't force), complex macros with large code expansions |
+| **Trade-offs** | Restricts test flexibility, but guarantees compliance across the entire team without code reviews |
+| **Complexity** | Hard |
+| **Real-World Example** | [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs) |
 
 ## The Problem
 
@@ -105,10 +107,10 @@ macro_rules! async_test {
 
 **Why**: Macros are best for enforcing framework requirements (timeouts, features), not code structure.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/macros/test.rs`, `proc_macros/src/lib.rs`
-Purpose: Test macros embedding timeouts, AAA structure, feature requirements
+- **Code location**: [src/core/macros/test.rs](file:///Users/sac/chicago-tdd-tools/src/core/macros/test.rs)
+- **Explanation**: Restricts test definitions to custom macros like `test!` and `fixture_test!` that automatically inject timeouts and AAA structure.
 
 ## Related Patterns
 

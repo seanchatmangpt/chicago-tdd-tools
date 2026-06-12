@@ -1,6 +1,6 @@
 # Learning Architecture Patterns: 60-Minute Mastery
 
-> 🎓 **TUTORIAL** | Master the 5 fundamental architecture patterns
+> 🎓 Tutorial
 
 This tutorial guides you through the 5 architecture patterns that organize your codebase.
 

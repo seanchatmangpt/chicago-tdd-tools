@@ -176,47 +176,108 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-16-fixture-lifecycle-management"><a class="header" href="#pattern-16-fixture-lifecycle-management">Pattern 16: Fixture Lifecycle Management</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>Complex tests require deterministic setup and teardown of shared state: databases, telemetry, temporary directories.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Manual lifecycle logic is error-prone. Forgetting teardown causes cascading failures across tests. Async setup complicates matters further.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Wrap lifecycle responsibilities in <code>TestFixture</code> or <code>AsyncFixtureManager</code>. Use the fixture to hold handles and expose helper methods. Let Drop and the manager <code>.teardown()</code> guarantee cleanup. For async resources, implement <code>AsyncFixtureProvider</code> and return strongly typed handles.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Determinism vs. flexibility: fixtures must isolate state yet allow custom behavior per test</li>
-<li>Async vs. sync complexity: asynchronous resources require explicit lifecycle boundaries</li>
-<li>Performance vs. safety: reuse is tempting, but fresh fixtures avoid hidden coupling</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Manual lifecycle logic is error-prone; forgotten teardown cascades to other tests</td></tr>
+<tr><td><strong>Solution</strong></td><td>Wrap lifecycle in TestFixture or AsyncFixtureManager; Let Drop/teardown guarantee cleanup</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Database connections, containers, async resource setup, temporary directories</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Stateless data (no cleanup needed), shared state between tests (use isolation)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Adds slight structure overhead, but ensures cleanup even on test failures or panics</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Medium</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/async_fixture.rs">src/core/async_fixture.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Complex tests require deterministic setup and teardown. Manual lifecycle logic is scattered across tests and error-prone. Forgetting teardown causes cascading failures in subsequent tests. Async setup adds complexity with explicit boundaries.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Wrap all setup/teardown in <code>TestFixture</code> or <code>AsyncFixtureManager</code>. Use <code>AsyncFixtureProvider</code> trait to define resource creation. The manager handles both setup and guaranteed teardown, even on test failure.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>struct DbProvider;
+</span>use chicago_tdd_tools::core::async_fixture::*;
 
-impl chicago_tdd_tools::core::async_fixture::private::Sealed for DbProvider {}
+struct DatabaseProvider;
 
-impl AsyncFixtureProvider for DbProvider {
+impl AsyncFixtureProvider for DatabaseProvider {
     type Fixture&lt;'a&gt; = DatabaseHandle;
     type Error = DbError;
 
-    fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; DbFuture&lt;'a, DatabaseHandle&gt; {
-        Box::pin(async move { DatabaseHandle::connect().await })
+    async fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; Result&lt;Self::Fixture&lt;'a&gt;, Self::Error&gt; {
+        DatabaseHandle::connect().await
     }
 }
 
-async_test!(test_query_latency, {
-    let manager = AsyncFixtureManager::new(DbProvider);
-    let handle = manager.setup().await?;
-    // ...
-    manager.teardown().await?;
+async_test!(test_query, fixture, {
+    let db = fixture.get_database().await?;
+    let result = db.query("SELECT 1").await?;
+    assert_eq!(result, 1);
     Ok(())
 });
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All resources are wrapped in fixtures</li>
+<li><input disabled="" type="checkbox"/>
+Setup happens in create/setup methods</li>
+<li><input disabled="" type="checkbox"/>
+Teardown is automatic (Drop or explicit teardown())</li>
+<li><input disabled="" type="checkbox"/>
+Fresh fixtures per test (no shared state)</li>
+<li><input disabled="" type="checkbox"/>
+Async resources have explicit lifecycle boundaries</li>
+<li><input disabled="" type="checkbox"/>
+Error messages explain cleanup failures</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Manual cleanup after assertions, which doesn't run if assertion fails:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Cleanup doesn't run if assertion fails
+async_test!(test_bad, {
+    let db = Database::connect().await?;
+    let result = db.query().await?;
+    assert_eq!(result, 42);  // If this fails...
+    db.close().await;  // ...this never runs!
+});
+
+// ✅ RIGHT: Fixture guarantees cleanup
+async_test!(test_good, fixture, {
+    let db = fixture.get_database().await?;
+    let result = db.query().await?;
+    assert_eq!(result, 42);  // Cleanup happens regardless
+    Ok(())
+});
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Explicit cleanup is bypassed by early returns and panics. Fixtures guarantee cleanup via Drop.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/async_fixture.rs">src/core/async_fixture.rs</a></li>
+<li><strong>Explanation</strong>: The <code>AsyncFixtureManager</code> orchestrates the setup and teardown lifecycle of asynchronous resources automatically.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 4: Resource Cleanup</li>
-<li>Pattern 12: Type Safety with GATs</li>
-<li>Pattern 18: Timeout Defense in Depth</li>
+<li><strong>Before this</strong>: <a href="../testing-patterns/resource-cleanup.html">Pattern 4: Resource Cleanup</a> (basic cleanup)</li>
+<li><strong>Use with</strong>: <a href="type-safety-patterns.html">Pattern 12: Type Safety</a> (GATs for lifetimes)</li>
+<li><strong>Next</strong>: <a href="timeout-defense.html">Pattern 18: Timeout Defense</a> (timeout long-running fixtures)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Fixtures hold resources and guarantee cleanup via Drop, even on early return or panic.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Every resource-allocating test uses a fixture</li>
+<li><input disabled="" type="checkbox"/>
+No manual cleanup code</li>
+<li><input disabled="" type="checkbox"/>
+Async resources have explicit setup/teardown</li>
+<li><input disabled="" type="checkbox"/>
+Tests run in any order without pollution</li>
+<li><input disabled="" type="checkbox"/>
+Cleanup failures are reported clearly</li>
 </ul>
 
                     </main>

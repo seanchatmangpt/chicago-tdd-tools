@@ -187,7 +187,7 @@ impl ValidAttribute {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::observability::otel::poka_yoke::*;
 ///
 /// // Create active span

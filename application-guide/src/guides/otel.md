@@ -1,8 +1,20 @@
 # OTEL Instrumentation
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Add OpenTelemetry observability to code
+> 🔧 How-to | Instrument and verify OpenTelemetry spans and metrics
 
 OpenTelemetry instrumentation provides observability into your operations.
+
+## Quick Reference: OTEL API
+
+| Component | Method / Field | Parameters | Returns | Purpose |
+|-----------|----------------|------------|---------|---------|
+| `Span` | `new_active()` | `context, name, start_time, attributes, events, status` | `Span` | Create an active span |
+| `Span` | `complete()` | `end_time` | `Result<(), Error>` | Complete the span |
+| `Span` | `status` | `SpanStatus` value | N/A | Status of the span |
+| `Metric` | `name` | `String` | N/A | Name of the metric |
+| `Metric` | `value` | `MetricValue` value | N/A | Value of the metric |
+| `SpanValidator` | `new()` | None | `SpanValidator` | Create a new validator |
+| `SpanValidator` | `validate()` | `&Span` | `Result<(), ValidationError>` | Validate span attributes |
 
 ## Creating Spans
 

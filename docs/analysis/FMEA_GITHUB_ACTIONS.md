@@ -1,3 +1,4 @@
+> 💡 Explanation
 # FMEA Analysis: GitHub Actions Workflows
 
 ## Step 1: Scope Definition

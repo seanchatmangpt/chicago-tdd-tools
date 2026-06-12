@@ -1,3 +1,4 @@
+> 💡 Explanation
 # FMEA Summary Table - Root Cause Analysis
 ## Chicago TDD Tools: Unit Test GitHub Actions
 

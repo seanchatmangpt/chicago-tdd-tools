@@ -1,3 +1,5 @@
+//! > 📚 Reference
+//!
 //! Test Data Builders
 //!
 //! Provides fluent builders for creating test data structures.
@@ -46,12 +48,26 @@ fn preset_registry() -> &'static Mutex<HashMap<String, PresetFn>> {
 /// or Err(String) with an error message if invalid.
 type ValidationFn = Box<dyn Fn(&HashMap<String, String>) -> Result<(), String> + Send + Sync>;
 
-/// Builder for test data (case variables)
+/// > 📚 Reference
+///
+/// Builder for test data (case variables).
 ///
 /// This builder creates test data as `HashMap<String, String>` and can convert to JSON.
 /// Provides a fluent API for building test data structures.
 ///
 /// Supports optional validation hooks that run when `build()` or `try_build()` is called.
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::builders::TestDataBuilder;
+///
+/// let data = TestDataBuilder::new()
+///     .with_var("key", "value")
+///     .build();
+///
+/// assert_eq!(data.get("key").unwrap(), "value");
+/// ```
 pub struct TestDataBuilder {
     data: HashMap<String, String>,
     #[allow(clippy::type_complexity)] // Validation functions are inherently complex
@@ -98,6 +114,7 @@ impl TestDataBuilder {
     ///
     /// // Use the preset
     /// let data = TestDataBuilder::preset("valid_order")
+    ///     .unwrap()
     ///     .with_var("customer_id", "12345")
     ///     .build();
     /// ```
@@ -137,6 +154,7 @@ impl TestDataBuilder {
     ///
     /// // Then use it
     /// let data = TestDataBuilder::preset("valid_order")
+    ///     .unwrap()
     ///     .with_var("customer_id", "12345")
     ///     .build();
     /// ```
@@ -398,13 +416,28 @@ impl Default for TestDataBuilder {
 // 2nd IDEA: Go bigger (80/20) - Generic version
 // ============================================================================
 
-/// Generic test data builder for any key-value types
+/// > 📚 Reference
+///
+/// Generic test data builder for any key-value types.
 ///
 /// **2nd Idea**: Generic builder that works with any `K: Into<String>, V: Into<String>`
 /// This provides 80% more value (works for all string-convertible types) with minimal effort.
 ///
 /// **Telemetry**: Basic OTEL spans (if otel feature enabled)
 /// **Validation**: OTEL span validation
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::builders::GenericTestDataBuilder;
+///
+/// let data = GenericTestDataBuilder::<String, String>::new()
+///     .with_var("key1", "value1")
+///     .with_var("key2", "value2")
+///     .build();
+///
+/// assert_eq!(data.get("key1").unwrap(), "value1");
+/// ```
 pub struct GenericTestDataBuilder<K, V> {
     data: HashMap<String, String>,
     _key_type: std::marker::PhantomData<K>,
@@ -518,13 +551,30 @@ where
 // 3rd IDEA: Maximum value - Type-level validation + OTEL + Weaver
 // ============================================================================
 
-/// Validated test data builder with type-level validation and OTEL/Weaver validation
+/// > 📚 Reference
+///
+/// Validated test data builder with type-level validation and OTEL/Weaver validation.
 ///
 /// **3rd Idea**: Type-level validated builder that prevents invalid states at compile time.
 /// Maximum value: Type-safe, validated, prevents entire class of errors.
 ///
 /// **Telemetry**: Full OTEL spans and metrics
 /// **Validation**: OTEL span validation + Weaver live-check schema validation
+///
+/// # Examples
+///
+/// ```rust
+/// use chicago_tdd_tools::builders::ValidatedTestDataBuilder;
+///
+/// struct ConfigSchema;
+///
+/// let builder = ValidatedTestDataBuilder::<ConfigSchema>::new();
+/// let data = builder
+///     .with_var("port", "8080")
+///     .build();
+///
+/// assert_eq!(data.get("port").unwrap(), "8080");
+/// ```
 pub struct ValidatedTestDataBuilder<T> {
     data: HashMap<String, String>,
     _validation: std::marker::PhantomData<T>,

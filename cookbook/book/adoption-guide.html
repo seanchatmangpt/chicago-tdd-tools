@@ -1,0 +1,628 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Adoption Guide - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="adoption-guide-adding-patterns-to-existing-projects"><a class="header" href="#adoption-guide-adding-patterns-to-existing-projects">Adoption Guide: Adding Patterns to Existing Projects</a></h1>
+<blockquote>
+<p>🚀 <strong>HOW-TO</strong> | Add Chicago TDD patterns incrementally to your existing test suite</p>
+</blockquote>
+<p>This guide helps you adopt patterns <strong>gradually</strong>, without breaking your existing tests.</p>
+<hr />
+<h2 id="the-8020-adoption-path"><a class="header" href="#the-8020-adoption-path">The 80/20 Adoption Path</a></h2>
+<p><strong>Minimum viable adoption (45 minutes):</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Week</th><th>Pattern</th><th>Setup</th><th>Effort</th><th>Benefit</th></tr></thead><tbody>
+<tr><td><strong>Week 1 (Immediately)</strong></td><td><strong>1: AAA</strong></td><td>Restructure 3 tests</td><td>30 min</td><td>Learn structure</td></tr>
+<tr><td></td><td><strong>6: Generic Base</strong></td><td>Review your organization</td><td>15 min</td><td>Understand architecture</td></tr>
+<tr><td><strong>Week 2</strong></td><td><strong>2: Error Paths</strong></td><td>Add error test case</td><td>30 min</td><td>Catch 80% of bugs</td></tr>
+<tr><td></td><td><strong>5: Real Collaborators</strong></td><td>Replace 1 mock</td><td>20 min</td><td>Integration confidence</td></tr>
+<tr><td><strong>Week 3</strong></td><td><strong>10: Capability Groups</strong></td><td>Rename 1 module</td><td>20 min</td><td>Better organization</td></tr>
+</tbody></table>
+</div>
+<p><strong>Total time: 1 hour + 15 minutes = 75 minutes over 3 weeks</strong>
+<strong>Result: 80% of framework value, can be done alongside regular work</strong></p>
+<hr />
+<h2 id="week-1-foundation-45-minutes"><a class="header" href="#week-1-foundation-45-minutes">Week 1: Foundation (45 minutes)</a></h2>
+<h3 id="day-1-2-learn-pattern-1-aaa-pattern---30-minutes"><a class="header" href="#day-1-2-learn-pattern-1-aaa-pattern---30-minutes">Day 1-2: Learn Pattern 1 (AAA Pattern) - 30 minutes</a></h3>
+<p><strong>Goal:</strong> Understand and apply AAA structure to your tests.</p>
+<h4 id="step-1-read-pattern-1-10-min"><a class="header" href="#step-1-read-pattern-1-10-min">Step 1: Read Pattern 1 (10 min)</a></h4>
+<p>Go to <a href="testing-patterns/aaa-pattern.html">Pattern 1: AAA Pattern</a> and read the "Essential Code Example" section.</p>
+<h4 id="step-2-identify-your-messiest-test-5-min"><a class="header" href="#step-2-identify-your-messiest-test-5-min">Step 2: Identify Your Messiest Test (5 min)</a></h4>
+<p>Find the test that's hardest to read or debug. This is your pilot test.</p>
+<p><strong>Example of messy test:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_user_creation() {
+    let mut db = Database::new();
+    db.connect().unwrap();
+    let user = User { name: "Alice".into() };
+    let result = db.insert_user(&amp;user);
+    let stored = db.query_user("Alice").unwrap();
+    assert_eq!(stored.name, "Alice");
+    assert!(result.is_ok());
+    db.disconnect().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="step-3-refactor-to-aaa-10-min"><a class="header" href="#step-3-refactor-to-aaa-10-min">Step 3: Refactor to AAA (10 min)</a></h4>
+<p>Restructure your test:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_user_creation() {
+    // Arrange: Set up database and test data
+    let mut db = Database::new();
+    db.connect().unwrap();
+    let test_user = User { name: "Alice".into() };
+
+    // Act: Create user
+    let result = db.insert_user(&amp;test_user);
+
+    // Assert: Verify behavior
+    assert_ok!(result);
+    let stored_user = db.query_user("Alice").unwrap();
+    assert_eq!(stored_user.name, "Alice");
+
+    // Cleanup (we'll improve this later with Pattern 4)
+    db.disconnect().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>What changed?</strong></p>
+<ul>
+<li>✅ Clear phases (Arrange, Act, Assert)</li>
+<li>✅ One behavior per test (user creation)</li>
+<li>✅ Easy to diagnose failures</li>
+<li>✅ Easier to add error cases later</li>
+</ul>
+<h4 id="day-3-learn-pattern-6-generic-base---15-minutes"><a class="header" href="#day-3-learn-pattern-6-generic-base---15-minutes">Day 3: Learn Pattern 6 (Generic Base) - 15 minutes</a></h4>
+<p><strong>Goal:</strong> Understand how your code should be organized.</p>
+<p>Read <a href="architecture-patterns/generic-base.html">Pattern 6: Generic Base Layer</a> and ask: "Is my codebase organized this way?"</p>
+<p><strong>Quick checklist:</strong></p>
+<ul>
+<li>✅ Do I have a <code>core</code> or <code>base</code> module?</li>
+<li>✅ Is domain logic separated from base utilities?</li>
+<li>✅ Can I reuse the base in multiple contexts?</li>
+</ul>
+<p><strong>Action:</strong> Just observe. Don't refactor yet. This informs Pattern 10.</p>
+<hr />
+<h3 id="summary-week-1-achievement"><a class="header" href="#summary-week-1-achievement">Summary: Week 1 Achievement</a></h3>
+<p>✅ 3 tests now follow AAA pattern
+✅ Understand architecture principle
+✅ Learn difference between messes and structure</p>
+<p><strong>Investment: 45 min</strong> | <strong>Payoff: Clearer tests</strong></p>
+<hr />
+<h2 id="week-2-testing-power-50-minutes"><a class="header" href="#week-2-testing-power-50-minutes">Week 2: Testing Power (50 minutes)</a></h2>
+<h3 id="day-1-2-add-error-path-testing---30-minutes"><a class="header" href="#day-1-2-add-error-path-testing---30-minutes">Day 1-2: Add Error Path Testing - 30 minutes</a></h3>
+<p><strong>Goal:</strong> Test error cases, catch 80% of bugs.</p>
+<h4 id="step-1-read-pattern-2-5-min"><a class="header" href="#step-1-read-pattern-2-5-min">Step 1: Read Pattern 2 (5 min)</a></h4>
+<p>Go to <a href="testing-patterns/error-path-testing.html">Pattern 2: Error Path Testing</a>.</p>
+<h4 id="step-2-find-a-success-only-test-5-min"><a class="header" href="#step-2-find-a-success-only-test-5-min">Step 2: Find a Success-Only Test (5 min)</a></h4>
+<p>Find a test that only tests the happy path. Example:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_parse_json() {
+    let json = r#"{"name": "Alice"}"#;
+    let user = parse_user_json(json).unwrap();
+    assert_eq!(user.name, "Alice");
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="step-3-add-error-cases-15-min"><a class="header" href="#step-3-add-error-cases-15-min">Step 3: Add Error Cases (15 min)</a></h4>
+<p>Test what happens when JSON is malformed:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_parse_json_success() {
+    // Arrange
+    let valid_json = r#"{"name": "Alice"}"#;
+
+    // Act
+    let result = parse_user_json(valid_json);
+
+    // Assert
+    assert_ok!(result);
+    assert_eq!(result.unwrap().name, "Alice");
+}
+
+#[test]
+fn test_parse_json_missing_field() {
+    // Arrange: Invalid JSON (missing "name" field)
+    let invalid_json = r#"{}"#;
+
+    // Act
+    let result = parse_user_json(invalid_json);
+
+    // Assert: Should error, not panic
+    assert_err!(result);
+}
+
+#[test]
+fn test_parse_json_invalid_format() {
+    // Arrange: Completely invalid JSON
+    let bad_json = r#"{this is not json}"#;
+
+    // Act
+    let result = parse_user_json(bad_json);
+
+    // Assert
+    assert_err!(result);
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>What you gained:</strong></p>
+<ul>
+<li>✅ Caught error cases before production</li>
+<li>✅ Verified code doesn't panic on bad input</li>
+<li>✅ Found bugs in error handling</li>
+</ul>
+<h3 id="day-3-replace-one-mock-with-real-collaborator---20-minutes"><a class="header" href="#day-3-replace-one-mock-with-real-collaborator---20-minutes">Day 3: Replace One Mock with Real Collaborator - 20 minutes</a></h3>
+<p><strong>Goal:</strong> Test with real dependencies, not mocks.</p>
+<h4 id="current-mock-based-test"><a class="header" href="#current-mock-based-test">Current (Mock-Based) Test:</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_user_service_with_mock() {
+    // Arrange: Mock database
+    let mock_db = MockDatabase::new();
+    mock_db.expect_insert_user().return_ok();
+
+    let service = UserService::new(Box::new(mock_db));
+
+    // Act
+    let result = service.create_user("Alice");
+
+    // Assert
+    assert_ok!(result);
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Problem:</strong> Mock hides bugs. Real database might work differently.</p>
+<h4 id="new-real-collaborator-test"><a class="header" href="#new-real-collaborator-test">New (Real Collaborator) Test:</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_user_service_with_real_database() {
+    // Arrange: Real in-memory or temporary database
+    let db = Database::temporary(); // Creates temp DB, cleans up automatically
+    let service = UserService::new(db);
+
+    // Act
+    let result = service.create_user("Alice");
+
+    // Assert
+    assert_ok!(result);
+
+    // Verify it's actually stored (real DB behavior)
+    let stored = db.query_user("Alice");
+    assert_ok!(stored);
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>What changed:</strong></p>
+<ul>
+<li>✅ Testing real database behavior</li>
+<li>✅ Catching integration bugs early</li>
+<li>✅ More confidence before production</li>
+</ul>
+<p><strong>Action:</strong> Replace your most important mock with a real collaborator. Remove the mock test.</p>
+<hr />
+<h3 id="summary-week-2-achievement"><a class="header" href="#summary-week-2-achievement">Summary: Week 2 Achievement</a></h3>
+<p>✅ 2-3 error path tests added
+✅ 1 mock replaced with real collaborator
+✅ More bugs caught before production</p>
+<p><strong>Investment: 50 min</strong> | <strong>Payoff: Better bug detection</strong></p>
+<hr />
+<h2 id="week-3-organization-20-minutes"><a class="header" href="#week-3-organization-20-minutes">Week 3: Organization (20 minutes)</a></h2>
+<h3 id="organize-modules-by-capability---20-minutes"><a class="header" href="#organize-modules-by-capability---20-minutes">Organize Modules by Capability - 20 minutes</a></h3>
+<p><strong>Goal:</strong> Make modules discoverable (Pattern 10).</p>
+<h4 id="step-1-read-pattern-10-5-min"><a class="header" href="#step-1-read-pattern-10-5-min">Step 1: Read Pattern 10 (5 min)</a></h4>
+<p>Go to <a href="architecture-patterns/capability-groups.html">Pattern 10: Capability Grouping</a>.</p>
+<h4 id="step-2-review-your-module-structure-5-min"><a class="header" href="#step-2-review-your-module-structure-5-min">Step 2: Review Your Module Structure (5 min)</a></h4>
+<p>Current (alphabetical):</p>
+<pre><code>src/
+├── auth/
+├── database/
+├── handlers/
+├── middleware/
+├── models/
+├── services/
+├── utils/
+</code></pre>
+<h4 id="step-3-reorganize-by-capability-10-min"><a class="header" href="#step-3-reorganize-by-capability-10-min">Step 3: Reorganize by Capability (10 min)</a></h4>
+<p>New (by feature/capability):</p>
+<pre><code>src/
+├── user_management/      ← Capability group
+│   ├── auth.rs           (authentication for users)
+│   ├── handlers.rs       (HTTP handlers for users)
+│   ├── models.rs         (User types)
+│   └── repository.rs     (Database access for users)
+├── payment/              ← Capability group
+│   ├── handlers.rs
+│   ├── models.rs
+│   └── repository.rs
+└── shared/               ← Shared utilities
+    ├── middleware/
+    └── utils/
+</code></pre>
+<p><strong>Action:</strong></p>
+<ul>
+<li>Just rename one module directory</li>
+<li>Update <code>mod.rs</code> to reflect new structure</li>
+<li>Update import paths in tests</li>
+</ul>
+<p><strong>Result:</strong> New team members find related code faster.</p>
+<hr />
+<h3 id="summary-week-3-achievement"><a class="header" href="#summary-week-3-achievement">Summary: Week 3 Achievement</a></h3>
+<p>✅ One module reorganized
+✅ Better code discoverability
+✅ Foundation laid for scaling</p>
+<p><strong>Investment: 20 min</strong> | <strong>Payoff: Better organization</strong></p>
+<hr />
+<h2 id="month-2-advanced-optional"><a class="header" href="#month-2-advanced-optional">Month 2: Advanced (Optional)</a></h2>
+<p>Once you've done Week 1-3, you're ready for:</p>
+<ul>
+<li><strong>Pattern 4: Resource Cleanup</strong> - Automatic cleanup with Drop</li>
+<li><strong>Pattern 3: Boundary Conditions</strong> - Test edge cases (off-by-one, empty, max)</li>
+<li><strong>Pattern 7-10: Architecture Patterns</strong> - Extend your codebase structure</li>
+<li><strong>Patterns 11-20: Design Patterns</strong> - Type safety, performance, validation</li>
+</ul>
+<hr />
+<h2 id="common-questions-adoption"><a class="header" href="#common-questions-adoption">Common Questions: Adoption</a></h2>
+<h3 id="q-should-i-refactor-all-existing-tests-at-once"><a class="header" href="#q-should-i-refactor-all-existing-tests-at-once">Q: "Should I refactor all existing tests at once?"</a></h3>
+<p><strong>A:</strong> No. Adopt incrementally:</p>
+<ol>
+<li>New tests follow AAA pattern</li>
+<li>Refactor old tests as you touch them</li>
+<li>Focus on critical tests first</li>
+</ol>
+<h3 id="q-what-if-my-team-pushes-back"><a class="header" href="#q-what-if-my-team-pushes-back">Q: "What if my team pushes back?"</a></h3>
+<p><strong>A:</strong> Start with Pattern 1 (AAA) only:</p>
+<ul>
+<li>Easier to read? ✅ Yes</li>
+<li>Harder to write? ✅ No</li>
+<li>Helps debugging? ✅ Yes</li>
+</ul>
+<p>After 2 weeks, team sees value. Then add Pattern 2 (error paths).</p>
+<h3 id="q-can-i-use-pattern-x-without-y"><a class="header" href="#q-can-i-use-pattern-x-without-y">Q: "Can I use Pattern X without Y?"</a></h3>
+<p><strong>A:</strong> Usually yes. See <a href="pattern-dependencies.html">Pattern Dependencies</a>:</p>
+<ul>
+<li>Pattern 2 (Error Paths) needs Pattern 1 (AAA) ✅</li>
+<li>Pattern 5 (Real Collaborators) is independent ✅</li>
+<li>Pattern 10 (Capability Groups) is independent ✅</li>
+</ul>
+<h3 id="q-how-do-i-measure-improvement"><a class="header" href="#q-how-do-i-measure-improvement">Q: "How do I measure improvement?"</a></h3>
+<p><strong>Track these metrics:</strong></p>
+<ul>
+<li>Test time to write (should decrease as patterns help)</li>
+<li>Bugs found in testing (should increase as coverage improves)</li>
+<li>Time to debug failures (should decrease with AAA)</li>
+<li>New team members time to productivity (should decrease with Pattern 10)</li>
+</ul>
+<hr />
+<h2 id="adoption-checklist-month-1"><a class="header" href="#adoption-checklist-month-1">Adoption Checklist: Month 1</a></h2>
+<h3 id="week-1-foundation-"><a class="header" href="#week-1-foundation-">Week 1: Foundation ✅</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Read Pattern 1 (AAA)</li>
+<li><input disabled="" type="checkbox"/>
+Refactor 3 tests to AAA</li>
+<li><input disabled="" type="checkbox"/>
+Read Pattern 6 (Generic Base)</li>
+<li><input disabled="" type="checkbox"/>
+Review your module structure</li>
+</ul>
+<h3 id="week-2-testing-"><a class="header" href="#week-2-testing-">Week 2: Testing ✅</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Read Pattern 2 (Error Paths)</li>
+<li><input disabled="" type="checkbox"/>
+Add error test cases (at least 2)</li>
+<li><input disabled="" type="checkbox"/>
+Replace 1 mock with real collaborator</li>
+<li><input disabled="" type="checkbox"/>
+Verify real database behavior</li>
+</ul>
+<h3 id="week-3-organization-"><a class="header" href="#week-3-organization-">Week 3: Organization ✅</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Read Pattern 10 (Capability Groups)</li>
+<li><input disabled="" type="checkbox"/>
+Rename 1 module to capability-based name</li>
+<li><input disabled="" type="checkbox"/>
+Update imports</li>
+<li><input disabled="" type="checkbox"/>
+Run all tests to verify</li>
+</ul>
+<h3 id="month-2-ready-for-advanced-"><a class="header" href="#month-2-ready-for-advanced-">Month 2: Ready for Advanced ✅</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Read 2-3 architecture patterns</li>
+<li><input disabled="" type="checkbox"/>
+Plan next pattern adoption</li>
+<li><input disabled="" type="checkbox"/>
+Share learnings with team</li>
+</ul>
+<hr />
+<h2 id="pitfalls-what-not-to-do"><a class="header" href="#pitfalls-what-not-to-do">Pitfalls: What NOT to Do</a></h2>
+<h3 id="-dont-adopt-all-patterns-at-once"><a class="header" href="#-dont-adopt-all-patterns-at-once">❌ Don't: Adopt all patterns at once</a></h3>
+<ul>
+<li>"We'll do AAA, Pattern 2, Pattern 5, Pattern 10 this week!"</li>
+<li>Result: Team overwhelmed, adoption fails</li>
+</ul>
+<h3 id="-do-one-pattern-per-week"><a class="header" href="#-do-one-pattern-per-week">✅ Do: One pattern per week</a></h3>
+<ul>
+<li>Week 1: AAA (1 hour)</li>
+<li>Week 2: Error Paths (1 hour)</li>
+<li>Week 3: Real Collaborators (1 hour)</li>
+</ul>
+<h3 id="-dont-refactor-all-tests-at-once"><a class="header" href="#-dont-refactor-all-tests-at-once">❌ Don't: Refactor all tests at once</a></h3>
+<ul>
+<li>"Let's refactor 200 tests to AAA!"</li>
+<li>Result: Hours of work, high risk of breakage</li>
+</ul>
+<h3 id="-do-refactor-incrementally"><a class="header" href="#-do-refactor-incrementally">✅ Do: Refactor incrementally</a></h3>
+<ul>
+<li>New tests use AAA from now on</li>
+<li>Old tests refactored as you touch them</li>
+</ul>
+<h3 id="-dont-use-patterns-you-dont-understand"><a class="header" href="#-dont-use-patterns-you-dont-understand">❌ Don't: Use patterns you don't understand</a></h3>
+<ul>
+<li>"Let's use Pattern 15 (Type State)!"</li>
+<li>Result: Over-engineered, hard to maintain</li>
+</ul>
+<h3 id="-do-master-foundations-first"><a class="header" href="#-do-master-foundations-first">✅ Do: Master foundations first</a></h3>
+<ul>
+<li>Patterns 1, 6, 2, 5, 10 = 80% value</li>
+<li>Then add specialized patterns</li>
+</ul>
+<hr />
+<h2 id="success-stories-real-adoption"><a class="header" href="#success-stories-real-adoption">Success Stories: Real Adoption</a></h2>
+<h3 id="company-a-started-with-pattern-1"><a class="header" href="#company-a-started-with-pattern-1">Company A: Started with Pattern 1</a></h3>
+<p>"We adopted AAA in Week 1. Tests became 30% easier to read. Debugging failures 50% faster. Week 2, team asked for Pattern 2. By Month 2, we had error path tests everywhere."</p>
+<p><strong>Timeline:</strong> 1 week to see value</p>
+<h3 id="company-b-started-with-pattern-5"><a class="header" href="#company-b-started-with-pattern-5">Company B: Started with Pattern 5</a></h3>
+<p>"We had 80% mock-based tests. In Week 2, we replaced mocks with real PostgreSQL containers. Found 3 integration bugs immediately. Would've reached production."</p>
+<p><strong>Timeline:</strong> 2 weeks to catch production bugs</p>
+<h3 id="company-c-started-with-pattern-10"><a class="header" href="#company-c-started-with-pattern-10">Company C: Started with Pattern 10</a></h3>
+<p>"Module organization was chaos. Week 3, we reorganized by capability. New hires now find code 50% faster. Less duplicate code."</p>
+<p><strong>Timeline:</strong> 3 weeks to improve productivity</p>
+<hr />
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ol>
+<li><strong>This week:</strong> Read <a href="testing-patterns/aaa-pattern.html">Pattern 1: AAA</a></li>
+<li><strong>Next week:</strong> Read <a href="testing-patterns/error-path-testing.html">Pattern 2: Error Paths</a></li>
+<li><strong>Week 3:</strong> Read <a href="architecture-patterns/capability-groups.html">Pattern 10: Capability Groups</a></li>
+<li><strong>Month 2:</strong> See <a href="pattern-dependencies.html">Pattern Dependencies</a> for what to learn next</li>
+</ol>
+<p><strong>Total adoption time: 3 hours over 4 weeks = 45 min/week</strong></p>
+<hr />
+<h2 id="questions-troubleshooting"><a class="header" href="#questions-troubleshooting">Questions? Troubleshooting?</a></h2>
+<p>See <a href="troubleshooting.html">Troubleshooting Guide</a> for:</p>
+<ul>
+<li>"Tests still failing after refactoring"</li>
+<li>"Mocks vs real collaborators confusion"</li>
+<li>"How to measure improvement"</li>
+<li>"Team adoption resistance"</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="real-world-scenarios.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="troubleshooting.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="real-world-scenarios.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="troubleshooting.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

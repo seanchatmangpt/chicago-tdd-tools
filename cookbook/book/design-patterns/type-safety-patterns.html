@@ -176,33 +176,95 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-12-type-safety-with-gats"><a class="header" href="#pattern-12-type-safety-with-gats">Pattern 12: Type Safety with GATs</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>You provide fixtures or builders that return references tied to the fixture lifetime.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Without explicit lifetimes, consumers can hold onto references after cleanup, causing dangling pointers or logic bugs.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Use Generic Associated Types (GATs) to bind returned data to the fixture lifetime. In <code>AsyncFixtureProvider</code>, <code>Fixture&lt;'a&gt;</code> ensures the borrow cannot outlive the provider. Pair GATs with sealed traits to prevent downstream crates from violating invariants.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Safety vs. ergonomics: GATs constrain lifetimes but keep APIs pleasant</li>
-<li>Extensibility vs. soundness: sealing the trait permits internal evolution while preserving invariants</li>
-<li>Async vs. sync: async fixtures require lifetimes that sync code cannot express without GATs</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>References escape fixture scope; dangling pointers and logic bugs</td></tr>
+<tr><td><strong>Solution</strong></td><td>Use Generic Associated Types (GATs) to tie returned data's lifetimes to the fixture provider</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Fixtures returning references, async resource providers, lifetime-bound APIs</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Owned values only (no lifetime constraints needed), static data (use associated consts)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Lifetime constraints make API signatures more complex, but prevent references from escaping scope at compile time</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Hard</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Fixtures allocate resources and return references. Without explicit lifetime constraints, consumers can hold references after cleanup, causing dangling pointers or use-after-free bugs.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Use Generic Associated Types (GATs) to encode that returned fixtures are bound to the provider's lifetime. The type system then prevents dangling references. Pair with sealed traits to prevent unsafe downstream implementations.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait AsyncFixtureProvider: private::Sealed {
+    // Fixture's lifetime is tied to self's lifetime
     type Fixture&lt;'a&gt;: Send where Self: 'a;
     type Error: std::error::Error + Send + Sync + 'static;
 
-    fn create_fixture&lt;'a&gt;(&amp;'a self) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = Result&lt;Self::Fixture&lt;'a&gt;, Self::Error&gt;&gt; + Send + 'a&gt;&gt;;
+    async fn create_fixture&lt;'a&gt;(
+        &amp;'a self
+    ) -&gt; Result&lt;Self::Fixture&lt;'a&gt;, Self::Error&gt;;
+}
+
+// Usage: fixture cannot outlive the provider
+async fn test_with_fixture(provider: &amp;MyFixture) {
+    let fixture = provider.create_fixture().await.unwrap();
+    // fixture is bound to provider's lifetime
+    // compile error if you try to return fixture from function
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+GATs tie returned lifetime to provider lifetime</li>
+<li><input disabled="" type="checkbox"/>
+Compile error if reference outlives provider</li>
+<li><input disabled="" type="checkbox"/>
+Sealed trait prevents unsafe downstream implementations</li>
+<li><input disabled="" type="checkbox"/>
+Lifetimes are documented</li>
+<li><input disabled="" type="checkbox"/>
+Tests verify lifetime constraints work</li>
+<li><input disabled="" type="checkbox"/>
+Error types are static (independent of lifetime)</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Forgetting to tie the lifetime to <code>Self</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Lifetime not tied to self
+type Fixture&lt;'a&gt;;  // 'a is free; can outlive provider
+
+// ✅ RIGHT: Lifetime bound to self
+type Fixture&lt;'a&gt; where Self: 'a;  // 'a cannot exceed self's lifetime
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Without the <code>where Self: 'a</code> bound, the lifetime parameter is unconstrained. References can escape.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/fixture.rs">src/core/fixture.rs</a></li>
+<li><strong>Explanation</strong>: Tie the lifetimes of temporary directories or mock services to the fixture provider to ensure they cannot outlive the test execution context.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 13: Sealed Traits for API Safety</li>
-<li>Pattern 16: Fixture Lifecycle Management</li>
-<li>Pattern 17: Builder-Driven Test Data</li>
+<li><strong>Before this</strong>: <a href="sealed-traits.html">Pattern 13: Sealed Traits</a> (prevent unsafe implementations)</li>
+<li><strong>Use with</strong>: <a href="zero-cost-abstractions.html">Pattern 11: Zero-Cost</a> (GATs compile away)</li>
+<li><strong>Next</strong>: <a href="fixture-lifecycle.html">Pattern 16: Fixture Lifecycle</a> (manage complex fixtures)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: The Rust compiler enforces lifetime constraints. If a reference is bound to a fixture, you cannot use it after the fixture drops.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All fixture references are lifetime-bound</li>
+<li><input disabled="" type="checkbox"/>
+Compiler prevents dangling references</li>
+<li><input disabled="" type="checkbox"/>
+Error types don't leak lifetimes</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains lifetime constraints</li>
+<li><input disabled="" type="checkbox"/>
+Tests verify lifetime safety</li>
 </ul>
 
                     </main>

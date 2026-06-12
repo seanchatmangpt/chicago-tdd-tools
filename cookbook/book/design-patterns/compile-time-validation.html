@@ -176,35 +176,107 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-14-compile-time-validation"><a class="header" href="#pattern-14-compile-time-validation">Pattern 14: Compile-Time Validation</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>Invariants (tick budgets, guard limits, feature combinations) should fail fast during compilation.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Runtime checks add overhead and can be bypassed in rarely executed code paths. Missing an invariant leads to subtle production bugs.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Push validation to compile time with const generics, type-level markers, and <code>const_assert!</code>. When runtime validation is unavoidable, encapsulate it in constructors that return <code>Result</code>, making misuse impossible through types.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Safety vs. flexibility: some values remain runtime, but defaults should be encoded in types</li>
-<li>Compile time vs. ergonomics: const generics expose parameters without macros</li>
-<li>Diagnostics vs. noise: compile errors must explain the invariant succinctly</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Runtime validation checks add overhead; missing invariants cause bugs; validation can be bypassed</td></tr>
+<tr><td><strong>Solution</strong></td><td>Use const generics, type markers, and compile-time assertions (const_assert!) to validate invariants</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Numeric limits, feature combinations, configuration constraints</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>User input (must validate at runtime), values only known at runtime</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Moves checks to compile time (which increases compile times slightly) but guarantees zero-cost runtime enforcement</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Medium</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/const_assert.rs">src/core/const_assert.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Runtime validation adds overhead and can be bypassed in rarely tested code paths. An invariant violation might only surface in production under specific conditions, making debugging difficult.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Encode invariants as types and constants. Use const generics to parameterize limits. Use type-level markers to track state. Use <code>const_assert!</code> to validate at compile time. Move as much validation as possible to compile time where the compiler enforces it.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub const fn assert_tick_budget(ticks: u64) {
-    const_assert!(ticks &lt;= 8);
+</span>use chicago_tdd_tools::core::const_assert;
+
+// Compile-time validated array size
+pub struct ValidatedArray&lt;const SIZE: usize, const MAX: usize&gt; {
+    data: [u8; SIZE],
+    _marker: std::marker::PhantomData&lt;[u8; MAX]&gt;,
 }
 
-pub struct SizeValidatedArray&lt;const SIZE: usize, const MAX: usize&gt; {
-    data: [u8; SIZE],
-    _marker: PhantomData&lt;[u8; MAX]&gt;,
+// This fails to compile if SIZE &gt; MAX
+impl&lt;const SIZE: usize, const MAX: usize&gt; ValidatedArray&lt;SIZE, MAX&gt; {
+    pub const fn new() -&gt; Self {
+        const_assert!(SIZE &lt;= MAX);
+        Self {
+            data: [0u8; SIZE],
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+// Usage
+let arr = ValidatedArray::&lt;5, 10&gt;::new();  // Compiles
+// let arr = ValidatedArray::&lt;15, 10&gt;::new();  // Compile error!
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Invariants are encoded as type parameters (const generics)</li>
+<li><input disabled="" type="checkbox"/>
+Violations prevent compilation (not runtime)</li>
+<li><input disabled="" type="checkbox"/>
+Error messages explain the invariant</li>
+<li><input disabled="" type="checkbox"/>
+Runtime validation is only for unpredictable values</li>
+<li><input disabled="" type="checkbox"/>
+Constructors return Result for runtime validation</li>
+<li><input disabled="" type="checkbox"/>
+Type markers track state without runtime cost</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Validating at runtime what could be validated at compile time:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Runtime validation of compile-time value
+pub fn process&lt;T&gt;(data: T, max_size: usize) {
+    if std::mem::size_of::&lt;T&gt;() &gt; max_size {
+        panic!("Size too large");  // Could have failed at compile time!
+    }
+}
+
+// ✅ RIGHT: Compile-time validation
+pub fn process&lt;T, const MAX: usize&gt;(data: T) {
+    const_assert!(std::mem::size_of::&lt;T&gt;() &lt;= MAX);  // Compile error if violated
 }
 <span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Compile-time validation is zero-cost and impossible to bypass.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/const_assert.rs">src/core/const_assert.rs</a></li>
+<li><strong>Explanation</strong>: The <code>const_assert!</code> macro compiles if and only if the boolean expression evaluates to true, enforcing size or value limits at compile time.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 11: Zero-Cost Abstractions</li>
-<li>Pattern 15: Type State Enforcement</li>
-<li>Pattern 18: Timeout Defense in Depth</li>
+<li><strong>Before this</strong>: <a href="zero-cost-abstractions.html">Pattern 11: Zero-Cost</a> (pair with generics)</li>
+<li><strong>Use with</strong>: <a href="type-state-pattern.html">Pattern 15: Type State</a> (encode state at compile time)</li>
+<li><strong>Next</strong>: <a href="timeout-defense.html">Pattern 18: Timeout Defense</a> (validate timeout constants)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Compile-time validation is free (zero runtime cost) and impossible to bypass. Violations are caught before shipping.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Invariants that can be const are compile-time checked</li>
+<li><input disabled="" type="checkbox"/>
+const generics document constraints</li>
+<li><input disabled="" type="checkbox"/>
+Error messages guide users to valid values</li>
+<li><input disabled="" type="checkbox"/>
+No runtime checks for compile-time known values</li>
+<li><input disabled="" type="checkbox"/>
+Performance is not impacted by validation</li>
 </ul>
 
                     </main>

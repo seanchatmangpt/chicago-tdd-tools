@@ -11,7 +11,7 @@
 //! - Type Preservation: Types maintained through lifecycle
 //! - Boundedness: Execution time is measurable and bounded
 
-use crate::{TheoremMetadata, TestResultType};
+use crate::{TestResultType, TheoremMetadata};
 
 /// Get the complete list of theorems for Chapter 7
 pub fn theorems() -> Vec<TheoremMetadata> {
@@ -75,9 +75,7 @@ mod tests {
     fn execute_test(fixture: &TestFixture, data: &TestData) -> TestResult {
         let setup = std::hint::black_box(fixture.setup_data);
         let input = std::hint::black_box(data.input);
-        TestResult {
-            output: std::hint::black_box(setup + input),
-        }
+        TestResult { output: std::hint::black_box(setup + input) }
     }
 
     /// Theorem 7.1: Property of Determinism
@@ -211,7 +209,10 @@ mod tests {
 
         let mut last_result = TestResult { output: 0 };
         for _ in 0..iterations {
-            last_result = std::hint::black_box(execute_test(std::hint::black_box(&fixture), std::hint::black_box(&data)));
+            last_result = std::hint::black_box(execute_test(
+                std::hint::black_box(&fixture),
+                std::hint::black_box(&data),
+            ));
         }
 
         let elapsed = start.elapsed();
@@ -234,7 +235,10 @@ mod tests {
         for _ in 0..10 {
             let start2 = Instant::now();
             for _ in 0..iterations {
-                let _ = std::hint::black_box(execute_test(std::hint::black_box(&fixture), std::hint::black_box(&data)));
+                let _ = std::hint::black_box(execute_test(
+                    std::hint::black_box(&fixture),
+                    std::hint::black_box(&data),
+                ));
             }
             let elapsed2 = start2.elapsed();
             timings.push(elapsed2.as_micros());
@@ -306,11 +310,7 @@ mod tests {
 
         // Verify all tests completed in bounded time
         for (i, (_, elapsed)) in results.iter().enumerate() {
-            assert!(
-                elapsed < &1000000,
-                "Test {} exceeded time bound (> 1 second)",
-                i
-            );
+            assert!(elapsed < &1000000, "Test {} exceeded time bound (> 1 second)", i);
         }
 
         // Verify result types

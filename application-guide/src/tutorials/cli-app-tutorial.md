@@ -1,6 +1,6 @@
 # Building a Real CLI Application: Complete Tutorial
 
-> 🎓 **TUTORIAL** | Build a complete CLI application using Chicago TDD
+> 🎓 Tutorial | Build a complete CLI application using Chicago TDD
 
 This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.
 
@@ -334,6 +334,111 @@ mod tests {
         assert!(output.contains("✓"));
     });
 }
+```
+
+Create `src/commands/done.rs`:
+
+```rust
+use crate::store::TodoStore;
+
+pub fn execute(store: &mut TodoStore, args: &[String]) -> Result<String, String> {
+    if args.is_empty() {
+        return Err("Usage: done <id>".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.mark_done(id) {
+        Ok(format!("Marked todo #{} as done", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_done_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&mut store, &args);
+
+        assert_ok!(&result);
+        assert!(store.list()[0].completed);
+    });
+
+    test!(test_done_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&mut store, &args);
+
+        assert_err!(&result);
+    });
+}
+```
+
+Create `src/commands/delete.rs`:
+
+```rust
+use crate::store::TodoStore;
+
+pub fn execute(store: &mut TodoStore, args: &[String]) -> Result<String, String> {
+    if args.is_empty() {
+        return Err("Usage: delete <id>".to_string());
+    }
+
+    let id: u32 = args[0]
+        .parse()
+        .map_err(|_| "Invalid ID format. Must be a number.".to_string())?;
+
+    if store.delete(id) {
+        Ok(format!("Deleted todo #{}", id))
+    } else {
+        Err(format!("Todo #{} not found", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chicago_tdd_tools::prelude::*;
+
+    test!(test_delete_command_success, {
+        let mut store = TodoStore::new();
+        let id = store.add("Task");
+        let args = vec![id.to_string()];
+
+        let result = execute(&mut store, &args);
+
+        assert_ok!(&result);
+        assert_eq!(store.list().len(), 0);
+    });
+
+    test!(test_delete_command_not_found, {
+        let mut store = TodoStore::new();
+        let args = vec!["999".to_string()];
+
+        let result = execute(&mut store, &args);
+
+        assert_err!(&result);
+    });
+}
+```
+
+Create `src/commands/mod.rs`:
+
+```rust
+pub mod add;
+pub mod list;
+pub mod done;
+pub mod delete;
 ```
 
 ---

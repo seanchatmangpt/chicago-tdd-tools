@@ -1,16 +1,18 @@
 # Pattern 15: Type State Enforcement
 
-> 🔧 **HOW-TO** | Use types to enforce call order at compile time
+> 📚 Reference
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Runtime call-order enforcement can be bypassed; inconsistent state and flakiness |
-| **Core Solution** | Model phases as distinct types; methods consume self and return next state |
-| **When to Use** | ✅ Prescribed call orders, ✅ Multi-phase workflows, ✅ Builder patterns |
-| **When NOT to Use** | ❌ Optional steps (use builder instead), ❌ Dynamic order (use state machines) |
-| **Difficulty** | Medium - Requires understanding PhantomData and type transitions |
+| **Problem** | Runtime call-order enforcement can be bypassed; inconsistent state and flakiness |
+| **Solution** | Model phases as distinct types; methods consume self and return next state type |
+| **When to Use** | Prescribed call orders, multi-phase workflows, builder patterns |
+| **When NOT to Use** | Optional steps (use builder instead), dynamic order (use state machines) |
+| **Trade-offs** | Verbose code due to multiple structs and transitions, but eliminates wrong-order calls entirely at compile time |
+| **Complexity** | Medium |
+| **Real-World Example** | [src/core/state.rs](file:///Users/sac/chicago-tdd-tools/src/core/state.rs) |
 
 ## The Problem
 
@@ -95,10 +97,10 @@ impl TestState<Act> {
 
 **Why**: Each type must only expose methods for valid next states. The type system then enforces order.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/state.rs`
-Purpose: Type-level state machines for test phases
+- **Code location**: [src/core/state.rs](file:///Users/sac/chicago-tdd-tools/src/core/state.rs)
+- **Explanation**: Explicit phases are encoded as distinct types (`Arrange`, `Act`, `Assert`) and methods enforce correct ordering by consuming the previous state.
 
 ## Related Patterns
 

@@ -1,16 +1,18 @@
 # Pattern 2: Error Path Testing
 
-> 🔧 **HOW-TO** | Test every error case to catch regressions before production
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Happy path tests miss error handling bugs; production discovers failures first |
-| **Core Solution** | Write one test per error variant; assert both the error type and error message |
-| **When to Use** | ✅ Functions returning Result/Option, ✅ Every documented error variant, ✅ Integration tests |
-| **When NOT to Use** | ❌ Recovery scenarios (use separate tests), ❌ Non-deterministic failures (use timeouts instead) |
-| **Difficulty** | Medium - Requires understanding error types |
+| **Problem** | Happy path tests miss error handling bugs; production discovers failures first |
+| **Solution** | Write one test per error variant; assert both the error type and error message |
+| **When to Use** | Functions returning Result/Option, every documented error variant, integration tests |
+| **When NOT to Use** | Recovery scenarios (use separate tests), non-deterministic failures (use timeouts instead) |
+| **Trade-offs** | Increases test suite size and maintenance, but catches missing error contexts before release |
+| **Complexity** | Medium |
+| **Real-World Example** | [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs) |
 
 ## The Problem
 
@@ -70,10 +72,10 @@ test!(test_good_error, {
 
 **Why**: If you test the wrong error variant, you won't catch regressions where the error type changes unexpectedly.
 
-## Codebase Example
+## Real-World Example
 
-File: `tests/go_extra_mile_tests.rs`
-Purpose: Demonstrates error path testing for fixture setup and resource cleanup failures
+- **Code location**: [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs)
+- **Explanation**: Demonstrates error path testing for fixture setup and resource cleanup failures, ensuring specific error variants and context strings are matched.
 
 ## Related Patterns
 

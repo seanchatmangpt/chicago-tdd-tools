@@ -1,6 +1,6 @@
 # Observability & Quality
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Add observability and measure quality
+> 💡 Explanation | Add observability and measure quality
 
 Chicago TDD Tools provides comprehensive observability and quality measurement capabilities.
 

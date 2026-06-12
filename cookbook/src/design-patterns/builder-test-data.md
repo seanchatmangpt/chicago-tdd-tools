@@ -1,16 +1,18 @@
 # Pattern 17: Builder-Driven Test Data
 
-> 🔧 **HOW-TO** | Use fluent builders to reduce test data verbosity
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Verbose test data scatters intent; changes break hundreds of tests; duplication of defaults |
-| **Core Solution** | Wrap base builder; provide domain-specific fluent methods with sensible defaults |
-| **When to Use** | ✅ Domain objects, ✅ Complex nested structures, ✅ Multiple optional fields |
-| **When NOT to Use** | ❌ Simple flat objects (direct construction is clearer), ❌ Builder code larger than usage (too much overhead) |
-| **Difficulty** | Low - Standard builder pattern |
+| **Problem** | Test data setup is verbose and repetitive; changes to structures break hundreds of tests |
+| **Solution** | Wrap a generic `TestDataBuilder` with domain-specific builders using fluent interfaces and defaults |
+| **When to Use** | Domain objects, complex nested structures, multiple optional fields |
+| **When NOT to Use** | Simple flat objects (direct construction is clearer), builder code larger than usage |
+| **Trade-offs** | Requires writing domain-specific builder wrappers, but decouples tests from data changes |
+| **Complexity** | Low |
+| **Real-World Example** | [src/core/builders.rs](file:///Users/sac/chicago-tdd-tools/src/core/builders.rs) |
 
 ## The Problem
 
@@ -97,10 +99,10 @@ impl OrderBuilder {
 
 **Why**: Duplicating builder logic is a maintenance burden. Composition keeps you in sync with base improvements.
 
-## Codebase Example
+## Real-World Example
 
-File: `src/core/builders.rs`
-Purpose: Generic TestDataBuilder that domain builders compose
+- **Code location**: [src/core/builders.rs](file:///Users/sac/chicago-tdd-tools/src/core/builders.rs)
+- **Explanation**: The `TestDataBuilder` uses a generic builder wrapper to compose test variables and serializations, reducing setup boilerplate in individual tests.
 
 ## Related Patterns
 

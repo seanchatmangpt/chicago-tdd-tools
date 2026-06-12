@@ -1,16 +1,18 @@
 # Pattern 1: AAA Pattern
 
-> 🔧 **HOW-TO** | Structure every test with Arrange-Act-Assert clarity
+> 🔧 How-to
 
-## Quick Reference
+## Pattern at a Glance
 
 | Aspect | Details |
 |--------|---------|
-| **Problem Solved** | Tests that intermingle setup, behavior, and assertions become hard to read and debug |
-| **Core Solution** | Divide test into three explicit phases: Arrange, Act, Assert |
-| **When to Use** | ✅ All unit tests, ✅ Integration tests, ✅ Even simple assertions |
-| **When NOT to Use** | ❌ Property-based tests (different structure), ❌ Complex multi-stage workflows (use fixtures) |
-| **Difficulty** | Low - Easy to learn and apply immediately |
+| **Problem** | Tests that mix setup, execution, and verification hide intent and make failures hard to diagnose |
+| **Solution** | Divide every test into three explicit phases: Arrange (setup), Act (execute), Assert (verify) |
+| **When to Use** | All unit and integration tests to structure test logic clearly |
+| **When NOT to Use** | Property-based tests (different structure), complex multi-stage workflows (use fixtures) |
+| **Trade-offs** | Adds slight setup verbosity (explicit labels) but greatly improves debugging speed |
+| **Complexity** | Low |
+| **Real-World Example** | [examples/basic_test.rs](file:///Users/sac/chicago-tdd-tools/examples/basic_test.rs) |
 
 ## The Problem
 
@@ -74,10 +76,10 @@ test!(test_good, {
 
 **Why**: When tests fail, you need to know which phase broke. If Arrange and Act are mixed, you can't tell.
 
-## Codebase Example
+## Real-World Example
 
-File: `examples/basic_test.rs` and `tests/go_extra_mile_tests.rs`
-Purpose: Demonstrates the three test macros using AAA structure throughout
+- **Code location**: [examples/basic_test.rs](file:///Users/sac/chicago-tdd-tools/examples/basic_test.rs) and [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs)
+- **Explanation**: The three-phase AAA structure is used to assert scaling factors and message validations cleanly, where comments explicitly separate the setup (`// Arrange`), execution (`// Act`), and verification (`// Assert`).
 
 ## Related Patterns
 

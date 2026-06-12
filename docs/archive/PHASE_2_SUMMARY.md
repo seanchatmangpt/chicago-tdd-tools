@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Phase 2 Completion Summary: Core Ontology & Operator Registry
 
 **Status:** ✅ **COMPLETE** | **Commit:** `pending` | **Date:** November 16, 2025

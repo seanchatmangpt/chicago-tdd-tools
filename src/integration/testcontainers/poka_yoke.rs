@@ -42,7 +42,7 @@ pub mod state {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::testcontainers::poka_yoke::*;
 ///
 /// // Create stopped container

@@ -4,10 +4,10 @@
 //! proving that the Chicago-TDD-Tools framework correctly implements the
 //! Chatman Equation specification.
 
-use serde::{Deserialize, Serialize};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
-use sha2::{Sha256, Digest};
 
 /// A signed receipt proving spec conformance at a specific point in time
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -257,10 +257,7 @@ impl TheoremResult {
         }
     }
 
-    pub fn new_pending(
-        theorem_id: String,
-        theorem_name: String,
-    ) -> Self {
+    pub fn new_pending(theorem_id: String, theorem_name: String) -> Self {
         Self {
             theorem_id,
             theorem_name,
@@ -284,12 +281,7 @@ impl ChapterResult {
             chapter_id,
             chapter_name,
             theorems,
-            summary: ChapterSummary {
-                total,
-                passed,
-                failed,
-                pending,
-            },
+            summary: ChapterSummary { total, passed, failed, pending },
         }
     }
 }
@@ -316,14 +308,12 @@ mod tests {
         let chapter_result = ChapterResult::new(
             "ch02".to_string(),
             "Chapter 2".to_string(),
-            vec![
-                TheoremResult::new_passed(
-                    "Thm-2.1".to_string(),
-                    "Determinism".to_string(),
-                    "input".to_string(),
-                    "output".to_string(),
-                ),
-            ],
+            vec![TheoremResult::new_passed(
+                "Thm-2.1".to_string(),
+                "Determinism".to_string(),
+                "input".to_string(),
+                "output".to_string(),
+            )],
         );
 
         let receipt = SpecConformanceReceipt::new(
@@ -343,11 +333,8 @@ mod tests {
 
     #[test]
     fn test_receipt_integrity_verification() {
-        let chapter_result = ChapterResult::new(
-            "ch02".to_string(),
-            "Chapter 2".to_string(),
-            vec![],
-        );
+        let chapter_result =
+            ChapterResult::new("ch02".to_string(), "Chapter 2".to_string(), vec![]);
 
         let receipt = SpecConformanceReceipt::new(
             "ChatmanEquation-1.0".to_string(),

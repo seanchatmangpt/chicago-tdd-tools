@@ -1,0 +1,663 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Troubleshooting - Chicago TDD Tools Pattern Cookbook</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Alexander-style pattern language for Chicago TDD Tools">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Chicago TDD Tools Pattern Cookbook</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="troubleshooting-guide-common-issues"><a class="header" href="#troubleshooting-guide-common-issues">Troubleshooting Guide: Common Issues</a></h1>
+<blockquote>
+<p>🔧 <strong>HOW-TO</strong> | Fix common problems when using Chicago TDD patterns</p>
+</blockquote>
+<p>Quick answers to the 10 most common issues users hit.</p>
+<hr />
+<h2 id="issue-1-test-passes-locally-but-fails-in-ci"><a class="header" href="#issue-1-test-passes-locally-but-fails-in-ci">Issue 1: "Test Passes Locally but Fails in CI"</a></h2>
+<h3 id="error"><a class="header" href="#error">Error:</a></h3>
+<pre><code>test test_database_query ... ok (local)
+test test_database_query ... FAILED (CI)
+</code></pre>
+<h3 id="root-cause"><a class="header" href="#root-cause">Root Cause:</a></h3>
+<p>Usually <strong>timing</strong> or <strong>environment</strong> differences:</p>
+<ul>
+<li>Local: Single-threaded tests, warm disk cache</li>
+<li>CI: Parallel tests, Docker container with cold cache</li>
+</ul>
+<h3 id="solution"><a class="header" href="#solution">Solution:</a></h3>
+<p><strong>Step 1: Enable single-threaded mode locally</strong></p>
+<pre><code class="language-bash">cargo test -- --test-threads=1
+</code></pre>
+<p>If it fails, problem is <strong>race condition</strong> or <strong>test isolation</strong>.</p>
+<p><strong>Step 2: Check test isolation (Pattern 4)</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Tests share state
+static mut DB: Option&lt;Database&gt; = None;
+
+#[test]
+fn test_a() {
+    unsafe { DB = Some(Database::new()); }
+    // Test runs
+}
+
+#[test]
+fn test_b() {
+    unsafe { /* DB from test_a still exists! */ }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Each test has its own fixture</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_a() {
+    let db = Database::temporary();  // Unique DB per test
+    // Test runs
+    // DB cleaned up automatically (Drop)
+}
+
+#[test]
+fn test_b() {
+    let db = Database::temporary();  // Different DB
+    // Test runs
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Step 3: Use cargo-nextest for parallel safety</strong></p>
+<pre><code class="language-bash">cargo install cargo-nextest
+cargo nextest run
+</code></pre>
+<p>Nextest isolates tests better than <code>cargo test</code>.</p>
+<hr />
+<h2 id="issue-2-docker-container-not-cleaning-up"><a class="header" href="#issue-2-docker-container-not-cleaning-up">Issue 2: "Docker Container Not Cleaning Up"</a></h2>
+<h3 id="error-1"><a class="header" href="#error-1">Error:</a></h3>
+<pre><code>thread 'test_with_container' panicked at 'Docker containers accumulating: 15 orphaned containers'
+</code></pre>
+<h3 id="root-cause-1"><a class="header" href="#root-cause-1">Root Cause:</a></h3>
+<p>Pattern 5 (Real Collaborators) requires cleanup. Not using Drop properly.</p>
+<h3 id="solution-1"><a class="header" href="#solution-1">Solution:</a></h3>
+<p><strong>❌ WRONG: Manual cleanup (doesn't work on panic)</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_container() {
+    let container = GenericContainer::new(client, "postgres", "latest")?;
+
+    // Test runs...
+
+    container.stop()?;  // Only runs if test passes!
+    // If test panics before here, container stays running
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Drop trait (works always)</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_container() {
+    let container = GenericContainer::new(client, "postgres", "latest")?;
+
+    // Test runs...
+
+    // Drop called automatically (even on panic)
+    drop(container);
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Step 1: Verify you're using Drop</strong></p>
+<p>Check if your container type implements Drop:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/integration/testcontainers/mod.rs
+impl Drop for GenericContainer {
+    fn drop(&amp;mut self) {
+        // Automatically stop container
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Step 2: Don't call stop() manually</strong></p>
+<p>Let Drop handle cleanup. Only call stop if you need early cleanup:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_early_cleanup() {
+    let container = GenericContainer::new(client, "postgres", "latest")?;
+    container.execute("SELECT 1")?;
+
+    // Optional: Stop early if you need resources
+    container.stop()?;
+
+    // At end of test, Drop called again (safe, idempotent)
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="issue-3-timeout-still-firing-after-adding-pattern-18"><a class="header" href="#issue-3-timeout-still-firing-after-adding-pattern-18">Issue 3: "Timeout Still Firing After Adding Pattern 18"</a></h2>
+<h3 id="error-2"><a class="header" href="#error-2">Error:</a></h3>
+<pre><code>thread 'test_slow_operation' panicked at 'test timed out after 1s'
+</code></pre>
+<h3 id="root-cause-2"><a class="header" href="#root-cause-2">Root Cause:</a></h3>
+<p>Pattern 18 (Timeout Defense) has <strong>multiple layers</strong>. If inner timeout fails, outer timeout fires.</p>
+<h3 id="solution-2"><a class="header" href="#solution-2">Solution:</a></h3>
+<p><strong>Understand the layers (top priority first):</strong></p>
+<ol>
+<li><strong>Test-level timeout</strong> (outermost, last resort)</li>
+<li><strong>Operation timeout</strong> (what you added)</li>
+<li><strong>Resource timeout</strong> (cleanup timeout)</li>
+</ol>
+<p><strong>✅ Correct order:</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_timeout_defense() {
+    // Arrange: Operation with internal timeout
+    let operation = SlowOperation::new()
+        .with_timeout(Duration::from_millis(100));  // 1st: Operation timeout
+
+    // Act: Execute (should timeout at 100ms)
+    let result = operation.execute();
+
+    // Assert
+    assert_err!(result);  // Should error, not panic
+
+    // Test timeout: 1s (last resort, won't fire if operation handled timeout)
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>If test still times out at 1s:</strong></p>
+<ul>
+<li>Operation didn't respect its internal timeout</li>
+<li>Operation is actually hanging (network wait, deadlock)</li>
+</ul>
+<p><strong>Debug: Add logging</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_timeout_defense_debug() {
+    alert_info!("Starting operation");
+    let operation = SlowOperation::new()
+        .with_timeout(Duration::from_millis(100));
+
+    alert_info!("About to execute");
+    let result = operation.execute();
+
+    alert_info!("Operation completed: {:?}", result);
+    assert_err!(result);
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Run with:</p>
+<pre><code class="language-bash">RUST_LOG=debug cargo test test_with_timeout_defense_debug -- --nocapture
+</code></pre>
+<hr />
+<h2 id="issue-4-fixture-metadata-not-tracking"><a class="header" href="#issue-4-fixture-metadata-not-tracking">Issue 4: "Fixture Metadata Not Tracking"</a></h2>
+<h3 id="error-3"><a class="header" href="#error-3">Error:</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let metadata = fixture.metadata();
+assert!(metadata.has_event("user.created"));  // Fails: no events tracked
+<span class="boring">}</span></code></pre></pre>
+<h3 id="root-cause-3"><a class="header" href="#root-cause-3">Root Cause:</a></h3>
+<p>Metadata tracking requires you to <strong>emit events</strong>. Fixture tracks what you tell it to.</p>
+<h3 id="solution-3"><a class="header" href="#solution-3">Solution:</a></h3>
+<p><strong>❌ WRONG: Expecting automatic tracking</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_tracking() {
+    let fixture = TestFixture::new()?;
+
+    // Manually create user (fixture doesn't know)
+    create_user("Alice");
+
+    // This fails: No events were captured
+    assert!(fixture.metadata().has_event("user.created"));
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Emit events explicitly</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_tracking() {
+    let mut fixture = TestFixture::new()?;
+
+    // Emit event
+    fixture.emit_event("user.created", "Alice");
+
+    // Now it's tracked
+    assert!(fixture.metadata().has_event("user.created"));
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>If you want automatic tracking:</strong></p>
+<p>Use Pattern 5 (Real Collaborators) + observability:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_automatic_tracking() {
+    let weaver = WeaverTestFixture::new()?;
+
+    // Code that emits spans automatically
+    create_user_with_instrumentation("Alice");
+
+    // Weaver captured the spans
+    let spans = weaver.collect_spans();
+    assert!(spans.iter().any(|s| s.name == "user.created"));
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="issue-5-weaver-connection-refused"><a class="header" href="#issue-5-weaver-connection-refused">Issue 5: "Weaver Connection Refused"</a></h2>
+<h3 id="error-4"><a class="header" href="#error-4">Error:</a></h3>
+<pre><code>thread 'test_with_weaver' panicked at 'Failed to connect to Weaver: connection refused on localhost:4317'
+</code></pre>
+<h3 id="root-cause-4"><a class="header" href="#root-cause-4">Root Cause:</a></h3>
+<p>Weaver binary not running or Docker daemon not available.</p>
+<h3 id="solution-4"><a class="header" href="#solution-4">Solution:</a></h3>
+<p><strong>Step 1: Check if Weaver is enabled</strong></p>
+<p>Cargo.toml must have <code>weaver</code> feature:</p>
+<pre><code class="language-toml">[dev-dependencies]
+chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
+</code></pre>
+<p><strong>Step 2: Download Weaver</strong></p>
+<pre><code class="language-bash">cargo make weaver-bootstrap
+</code></pre>
+<p>This downloads the Weaver binary and registry.</p>
+<p><strong>Step 3: Verify Docker running</strong></p>
+<pre><code class="language-bash">docker ps
+</code></pre>
+<p>If error: Start Docker Desktop / daemon</p>
+<p><strong>Step 4: Run Weaver smoke test</strong></p>
+<pre><code class="language-bash">cargo make weaver-smoke
+</code></pre>
+<p>If this passes, Weaver is ready.</p>
+<p><strong>Step 5: If tests still fail, allow skip</strong></p>
+<pre><code class="language-bash">export WEAVER_ALLOW_SKIP=1
+cargo test
+</code></pre>
+<p>This skips Weaver validation if not available. Good for CI with restricted Docker.</p>
+<hr />
+<h2 id="issue-6-unwrap-in-error-handling-after-pattern-2"><a class="header" href="#issue-6-unwrap-in-error-handling-after-pattern-2">Issue 6: "Unwrap in Error Handling After Pattern 2"</a></h2>
+<h3 id="error-5"><a class="header" href="#error-5">Error:</a></h3>
+<pre><code>error: use of `unwrap_used` is not allowed
+    |
+18 |     error_handler.get().unwrap()  // WRONG!
+    |                       ^^^^^^
+</code></pre>
+<h3 id="root-cause-5"><a class="header" href="#root-cause-5">Root Cause:</a></h3>
+<p>Pattern 2 (Error Paths) teaches <code>?</code> operator instead of <code>.unwrap()</code>. Clippy denies unwrap.</p>
+<h3 id="solution-5"><a class="header" href="#solution-5">Solution:</a></h3>
+<p><strong>❌ WRONG: Using unwrap</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let value = result.unwrap();  // Panics on error
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Option 1 - Propagate with ?</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let value = result?;  // Propagates error
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Option 2 - Handle explicitly</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let value = match result {
+    Ok(v) =&gt; v,
+    Err(e) =&gt; {
+        alert_warning!("Operation failed: {}", e);
+        DEFAULT_VALUE
+    }
+};
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Option 3 - Use unwrap_or</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let value = result.unwrap_or(DEFAULT_VALUE);
+<span class="boring">}</span></code></pre></pre>
+<p><strong>✅ RIGHT: Option 4 - Use ? (test code)</strong></p>
+<p>In tests, you can use <code>?</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_operation() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let value = result?;  // Propagates error
+    assert_eq!(value, expected);
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="issue-7-pattern-x-doesnt-match-my-codebase"><a class="header" href="#issue-7-pattern-x-doesnt-match-my-codebase">Issue 7: "Pattern X Doesn't Match My Codebase"</a></h2>
+<h3 id="problem"><a class="header" href="#problem">Problem:</a></h3>
+<p>"We use mocks everywhere. Pattern 5 (Real Collaborators) doesn't fit."</p>
+<h3 id="solution-6"><a class="header" href="#solution-6">Solution:</a></h3>
+<p><strong>Understand pattern dependencies:</strong></p>
+<p>Not all patterns fit all codebases at the same time.</p>
+<p>Check <a href="pattern-dependencies.html">Pattern Dependencies</a>:</p>
+<ul>
+<li>Pattern 5 requires <strong>ability to use real services</strong></li>
+<li>If you can't use Docker, use Pattern 5 just for local tests</li>
+<li>Pattern 2 (Error Paths) works everywhere (no dependencies)</li>
+</ul>
+<p><strong>Start with patterns that fit:</strong></p>
+<ol>
+<li>Pattern 1 (AAA) - Works everywhere ✅</li>
+<li>Pattern 2 (Error Paths) - Works everywhere ✅</li>
+<li>Pattern 10 (Capability Groups) - Works everywhere ✅</li>
+</ol>
+<p>Then add patterns that require your infrastructure:
+4. Pattern 5 (Real Collaborators) - Requires Docker capability
+5. Pattern 4 (Resource Cleanup) - Requires Drop support</p>
+<hr />
+<h2 id="issue-8-tests-pass-with-feature-a-fail-without-feature-b"><a class="header" href="#issue-8-tests-pass-with-feature-a-fail-without-feature-b">Issue 8: "Tests Pass with Feature A, Fail without Feature B"</a></h2>
+<h3 id="error-6"><a class="header" href="#error-6">Error:</a></h3>
+<pre><code>cargo test                      # PASSES
+cargo test --no-default-features # FAILS
+</code></pre>
+<h3 id="root-cause-6"><a class="header" href="#root-cause-6">Root Cause:</a></h3>
+<p>Using features without enabling them in Cargo.toml.</p>
+<h3 id="solution-7"><a class="header" href="#solution-7">Solution:</a></h3>
+<p><strong>Check your dev-dependencies:</strong></p>
+<pre><code class="language-toml">[dev-dependencies]
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-extras"] }
+</code></pre>
+<p><strong>If test uses Pattern 5 (Real Collaborators):</strong></p>
+<pre><code class="language-toml">[dev-dependencies]
+chicago-tdd-tools = { version = "1.3.0", features = ["testing-full"] }
+</code></pre>
+<p><strong>If test uses observability:</strong></p>
+<pre><code class="language-toml">[dev-dependencies]
+chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
+</code></pre>
+<p><strong>Always test both ways:</strong></p>
+<pre><code class="language-bash">cargo test                           # With default features
+cargo test --no-default-features    # Without features
+cargo test --all-features           # With all features
+</code></pre>
+<hr />
+<h2 id="issue-9-how-do-i-know-if-pattern-is-working"><a class="header" href="#issue-9-how-do-i-know-if-pattern-is-working">Issue 9: "How do I Know If Pattern is Working?"</a></h2>
+<h3 id="problem-1"><a class="header" href="#problem-1">Problem:</a></h3>
+<p>"We added Pattern 2 (Error Paths). How do we measure improvement?"</p>
+<h3 id="solution-8"><a class="header" href="#solution-8">Solution:</a></h3>
+<p><strong>Track these metrics:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Metric</th><th>How to Measure</th><th>Expected Change</th></tr></thead><tbody>
+<tr><td><strong>Tests that check errors</strong></td><td><code>grep "assert_err|Err" tests/ | wc -l</code></td><td>Should increase</td></tr>
+<tr><td><strong>Time to write tests</strong></td><td>Measure in PR reviews</td><td>Should decrease (Pattern helps)</td></tr>
+<tr><td><strong>Bugs found before shipping</strong></td><td>Count bugs in QA</td><td>Should increase</td></tr>
+<tr><td><strong>Test readability</strong></td><td>Ask team (1-5 scale)</td><td>Should increase (after Pattern 1)</td></tr>
+<tr><td><strong>Time to debug failures</strong></td><td>Measure test debugging time</td><td>Should decrease (Pattern 1)</td></tr>
+</tbody></table>
+</div>
+<p><strong>Simple before/after:</strong></p>
+<p>Before Pattern 2:</p>
+<pre><code>Happy path tests: 20
+Error path tests: 2
+</code></pre>
+<p>After Pattern 2:</p>
+<pre><code>Happy path tests: 20
+Error path tests: 12 ← 6x improvement!
+</code></pre>
+<hr />
+<h2 id="issue-10-team-resistance-to-patterns"><a class="header" href="#issue-10-team-resistance-to-patterns">Issue 10: "Team Resistance to Patterns"</a></h2>
+<h3 id="problem-2"><a class="header" href="#problem-2">Problem:</a></h3>
+<p>"Developers think patterns are 'too much overhead'."</p>
+<h3 id="solution-9"><a class="header" href="#solution-9">Solution:</a></h3>
+<p><strong>Start with Pattern 1 only:</strong></p>
+<p>Spend 1 week. Ask team:</p>
+<ul>
+<li>Is code harder to read? (Usually: no)</li>
+<li>Is it easier to debug? (Usually: yes)</li>
+<li>Does it take longer? (Usually: no)</li>
+</ul>
+<p><strong>Show metrics:</strong></p>
+<ul>
+<li>Time to write test: 3min → 2.5min (faster due to structure)</li>
+<li>Time to debug failure: 10min → 3min (clearer structure)</li>
+</ul>
+<p><strong>Add Pattern 2 after 2 weeks:</strong></p>
+<p>Team sees error cases missing. Pattern 2 feels natural.</p>
+<p><strong>Key insight:</strong> Patterns should <strong>reduce</strong> work, not add it.</p>
+<p>If pattern makes work harder → use it differently (or skip it).</p>
+<hr />
+<h2 id="still-stuck"><a class="header" href="#still-stuck">Still Stuck?</a></h2>
+<p><strong>Check these in order:</strong></p>
+<ol>
+<li>Reread the pattern docs (easy stuff missed)</li>
+<li>Check <a href="pattern-dependencies.html">Pattern Dependencies</a> (dependency issue)</li>
+<li>Check <a href="common-mistakes.html">Common Mistakes</a> (typical gotcha)</li>
+<li>Check <a href="real-world-scenarios.html">Real-World Scenarios</a> (similar example)</li>
+<li>Run with <code>RUST_LOG=debug</code> (see what's happening)</li>
+<li>Ask in <a href="https://github.com/seanchatmangpt/chicago-tdd-tools/discussions">GitHub Discussions</a></li>
+</ol>
+<hr />
+<h2 id="common-success-pattern"><a class="header" href="#common-success-pattern">Common Success Pattern</a></h2>
+<p>Most users report similar progression:</p>
+<p><strong>Week 1:</strong> "Pattern 1 is just structure, why bother?" → Adoption
+<strong>Week 2:</strong> "Pattern 2 finds bugs we missed" → Enthusiasm
+<strong>Week 3:</strong> "Patterns make testing faster" → Full adoption
+<strong>Month 2:</strong> "We can't imagine testing without patterns" → Spreading to team</p>
+<hr />
+<h2 id="quick-reference-error-messages"><a class="header" href="#quick-reference-error-messages">Quick Reference: Error Messages</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Error</th><th>Likely Cause</th><th>See Issue</th></tr></thead><tbody>
+<tr><td>"test timed out"</td><td>Timeout layer failure</td><td>Issue 3</td></tr>
+<tr><td>"Docker containers accumulating"</td><td>No cleanup</td><td>Issue 2</td></tr>
+<tr><td>"unwrap_used is not allowed"</td><td>Pattern 2 not applied</td><td>Issue 6</td></tr>
+<tr><td>"feature X not enabled"</td><td>Missing Cargo.toml</td><td>Issue 8</td></tr>
+<tr><td>"test passes local, fails CI"</td><td>Race condition</td><td>Issue 1</td></tr>
+<tr><td>"Weaver connection refused"</td><td>Docker not running</td><td>Issue 5</td></tr>
+<tr><td>"metadata.has_event fails"</td><td>Events not emitted</td><td>Issue 4</td></tr>
+<tr><td>"Pattern doesn't fit"</td><td>Not all patterns for all codebases</td><td>Issue 7</td></tr>
+<tr><td>"How to measure improvement"</td><td>Track metrics</td><td>Issue 9</td></tr>
+<tr><td>"Team pushes back"</td><td>Start with Pattern 1 only</td><td>Issue 10</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="adoption-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="observability-instrumentation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="adoption-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="observability-instrumentation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

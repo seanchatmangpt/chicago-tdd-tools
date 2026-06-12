@@ -1,6 +1,6 @@
 # Assertions & Verification
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Write clear, effective assertions
+> 🔧 How-to | Write clear, effective assertions
 
 Assertions verify that code behaves correctly. Chicago TDD Tools provides helpers for clear, readable assertions.
 

@@ -176,35 +176,126 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-15-type-state-enforcement"><a class="header" href="#pattern-15-type-state-enforcement">Pattern 15: Type State Enforcement</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>An API has a prescribed call order (Arrange → Act → Assert) or requires configuration before use.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Runtime enforcement of order relies on documentation and can be bypassed, leading to inconsistent state and test flakiness.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Model the phases as distinct types and use <code>PhantomData</code> to encode the current phase. Methods consume <code>self</code> and return the next state, making it impossible to call methods out of order. Chicago TDD Tools uses this to enforce AAA semantics internally.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Safety vs. ergonomic: type transitions should read naturally without verbose syntax</li>
-<li>Flexibility vs. constraints: provide escape hatches only when absolutely necessary</li>
-<li>Zero-cost vs. clarity: type state should erase at compile time</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>📚 Reference</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Runtime call-order enforcement can be bypassed; inconsistent state and flakiness</td></tr>
+<tr><td><strong>Solution</strong></td><td>Model phases as distinct types; methods consume self and return next state type</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Prescribed call orders, multi-phase workflows, builder patterns</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Optional steps (use builder instead), dynamic order (use state machines)</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Verbose code due to multiple structs and transitions, but eliminates wrong-order calls entirely at compile time</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Medium</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/state.rs">src/core/state.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>APIs with a prescribed call order (like AAA: Arrange → Act → Assert) can be called out of order. Runtime checks rely on documentation and can be bypassed, leading to subtle bugs and test flakiness.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Encode each phase as a distinct type. Methods consume <code>self</code> (requiring move) and return the next phase type. The type system enforces order: you cannot call methods in the wrong sequence because the type doesn't support it. Use <code>PhantomData</code> to add type information with zero runtime cost.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub struct TestState&lt;Phase&gt; {
-    context: Context,
-    _phase: PhantomData&lt;Phase&gt;,
+</span>// Marker types for phases (empty, zero-cost)
+pub struct Arrange;
+pub struct Act;
+pub struct Assert;
+
+pub struct TestState&lt;Phase&gt; {
+    context: TestContext,
+    _phase: std::marker::PhantomData&lt;Phase&gt;,
 }
 
 impl TestState&lt;Arrange&gt; {
+    pub fn new() -&gt; Self {
+        Self {
+            context: TestContext::new(),
+            _phase: std::marker::PhantomData,
+        }
+    }
+
+    // Consume self, return Act phase
+    pub fn act(self) -&gt; TestState&lt;Act&gt; {
+        TestState {
+            context: self.context,
+            _phase: std::marker::PhantomData,
+        }
+    }
+}
+
+impl TestState&lt;Act&gt; {
+    // Only available in Act phase
+    pub fn assert(self) -&gt; TestState&lt;Assert&gt; { /* ... */ }
+}
+
+// Usage: Type system enforces order
+let test = TestState::&lt;Arrange&gt;::new()
+    .act()              // Phase 1: can only call act()
+    .assert();          // Phase 2: can only call assert()
+
+// test.assert().act()  // Compile error! Assert doesn't have act()
+<span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Each phase is a distinct type (struct or empty enum)</li>
+<li><input disabled="" type="checkbox"/>
+Methods consume self and return next phase</li>
+<li><input disabled="" type="checkbox"/>
+PhantomData carries type information (zero cost)</li>
+<li><input disabled="" type="checkbox"/>
+Compile error if methods called out of order</li>
+<li><input disabled="" type="checkbox"/>
+Transition methods have clear names (act, assert, etc.)</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains the state machine</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Implementing multiple methods on each type, allowing bypassing of order:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Can call in any order
+impl TestState&lt;Arrange&gt; {
+    pub fn act(self) -&gt; TestState&lt;Act&gt; { /* ... */ }
+    pub fn assert(&amp;mut self) { /* ... */ }  // Allowed without going to Act!
+}
+
+// ✅ RIGHT: Each phase has only its valid transitions
+impl TestState&lt;Arrange&gt; {
     pub fn act(self) -&gt; TestState&lt;Act&gt; { /* ... */ }
 }
+
+impl TestState&lt;Act&gt; {
+    pub fn assert(self) -&gt; TestState&lt;Assert&gt; { /* ... */ }
+}
 <span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Each type must only expose methods for valid next states. The type system then enforces order.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/state.rs">src/core/state.rs</a></li>
+<li><strong>Explanation</strong>: Explicit phases are encoded as distinct types (<code>Arrange</code>, <code>Act</code>, <code>Assert</code>) and methods enforce correct ordering by consuming the previous state.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 1: AAA Pattern</li>
-<li>Pattern 11: Zero-Cost Abstractions</li>
-<li>Pattern 14: Compile-Time Validation</li>
+<li><strong>Before this</strong>: <a href="../testing-patterns/aaa-pattern.html">Pattern 1: AAA Pattern</a> (what to enforce)</li>
+<li><strong>Use with</strong>: <a href="compile-time-validation.html">Pattern 14: Compile-Time</a> (validate at compile time)</li>
+<li><strong>Next</strong>: <a href="zero-cost-abstractions.html">Pattern 11: Zero-Cost</a> (no runtime overhead)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: The Rust type system enforces that you can only call methods that exist on the current phase type. Wrong-order calls don't compile.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Each phase is well-defined</li>
+<li><input disabled="" type="checkbox"/>
+Transitions happen via method calls</li>
+<li><input disabled="" type="checkbox"/>
+Type system prevents wrong order</li>
+<li><input disabled="" type="checkbox"/>
+PhantomData adds no runtime cost</li>
+<li><input disabled="" type="checkbox"/>
+Documentation shows valid state diagram</li>
 </ul>
 
                     </main>

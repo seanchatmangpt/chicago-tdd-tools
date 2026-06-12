@@ -1,6 +1,6 @@
 # Weaver Live-Check Validation
 
-> 🔧 **HOW-TO** | 📚 **REFERENCE** | Validate telemetry against semantic conventions
+> 🔧 How-to | Validate telemetry against semantic conventions
 
 Weaver validates telemetry against semantic conventions.
 

@@ -176,35 +176,49 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="pattern-17-builder-driven-test-data"><a class="header" href="#pattern-17-builder-driven-test-data">Pattern 17: Builder-Driven Test Data</a></h1>
-<h2 id="context"><a class="header" href="#context">Context</a></h2>
-<p>Domain objects require multiple fields or nested structures. Hand-building them in tests scatters intent and duplicates defaults.</p>
-<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>Verbose setup obscures the behavior under test. When requirements change, hundreds of tests need updates.</p>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>Wrap <code>TestDataBuilder</code> (or create your own builder) to provide fluent helpers and sensible defaults. Expose domain-specific methods (<code>with_customer_id</code>, <code>with_balance</code>) and return JSON or HashMap structures ready for assertions. Builders live close to the domain, yet reuse the underlying generic builder to avoid duplication.</p>
-<h2 id="forces"><a class="header" href="#forces">Forces</a></h2>
-<ul>
-<li>Expressiveness vs. coupling: builders should reflect domain language without leaking implementation details</li>
-<li>Defaults vs. explicitness: provide safe defaults but allow overrides</li>
-<li>Reuse vs. specialization: share base builder logic; extensions add convenience</li>
-</ul>
-<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<blockquote>
+<p>🔧 How-to</p>
+</blockquote>
+<h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td><strong>Problem</strong></td><td>Test data setup is verbose and repetitive; changes to structures break hundreds of tests</td></tr>
+<tr><td><strong>Solution</strong></td><td>Wrap a generic <code>TestDataBuilder</code> with domain-specific builders using fluent interfaces and defaults</td></tr>
+<tr><td><strong>When to Use</strong></td><td>Domain objects, complex nested structures, multiple optional fields</td></tr>
+<tr><td><strong>When NOT to Use</strong></td><td>Simple flat objects (direct construction is clearer), builder code larger than usage</td></tr>
+<tr><td><strong>Trade-offs</strong></td><td>Requires writing domain-specific builder wrappers, but decouples tests from data changes</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td></tr>
+<tr><td><strong>Real-World Example</strong></td><td><a href="file:///Users/sac/chicago-tdd-tools/src/core/builders.rs">src/core/builders.rs</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Complex domain objects require multiple fields. Hand-building them in every test is verbose and scatters intent. When requirements change, hundreds of tests need updates. Defaults are duplicated across tests.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Create domain-specific builders that wrap the generic <code>TestDataBuilder</code>. Provide fluent methods with sensible defaults. Builders document domain requirements while reducing test setup verbosity.</p>
+<h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub struct CustomerBuilder {
+</span>use chicago_tdd_tools::core::builders::TestDataBuilder;
+
+pub struct OrderBuilder {
     base: TestDataBuilder,
 }
 
-impl CustomerBuilder {
+impl OrderBuilder {
     pub fn new() -&gt; Self {
         Self {
             base: TestDataBuilder::new()
-                .with_var("status", "active"),
+                .with_var("status", "pending")
+                .with_var("total", "0.00"),
         }
     }
 
-    pub fn with_id(mut self, id: &amp;str) -&gt; Self {
-        self.base = self.base.with_var("customer_id", id.to_string());
+    pub fn with_customer_id(mut self, id: &amp;str) -&gt; Self {
+        self.base = self.base.with_var("customer_id", id);
+        self
+    }
+
+    pub fn with_amount(mut self, amount: &amp;str) -&gt; Self {
+        self.base = self.base.with_var("total", amount);
         self
     }
 
@@ -212,12 +226,78 @@ impl CustomerBuilder {
         self.base.build_json().expect("valid json")
     }
 }
+
+// Usage: Clear intent, one line per override
+let order = OrderBuilder::new()
+    .with_customer_id("cust-123")
+    .with_amount("99.99")
+    .build();
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-checklist"><a class="header" href="#implementation-checklist">Implementation Checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Domain builder wraps TestDataBuilder (composition)</li>
+<li><input disabled="" type="checkbox"/>
+Sensible defaults in <code>new()</code></li>
+<li><input disabled="" type="checkbox"/>
+Fluent methods for each overridable field</li>
+<li><input disabled="" type="checkbox"/>
+Build method returns ready-to-use data</li>
+<li><input disabled="" type="checkbox"/>
+No duplication of base builder logic</li>
+<li><input disabled="" type="checkbox"/>
+Documentation explains default values</li>
+</ul>
+<h2 id="the-gotcha-most-common-mistake"><a class="header" href="#the-gotcha-most-common-mistake">The Gotcha (Most Common Mistake)</a></h2>
+<p>Duplicating TestDataBuilder logic in domain builders:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ WRONG: Duplication of builder logic
+pub struct OrderBuilder {
+    fields: HashMap&lt;String, String&gt;,
+}
+impl OrderBuilder {
+    pub fn build(self) -&gt; serde_json::Value {
+        // Duplicated serialization logic
+    }
+}
+
+// ✅ RIGHT: Composition (reuse base builder)
+pub struct OrderBuilder {
+    base: TestDataBuilder,  // Reuse, don't duplicate
+}
+impl OrderBuilder {
+    pub fn build(self) -&gt; serde_json::Value {
+        self.base.build_json().expect("valid")  // Delegation
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Why</strong>: Duplicating builder logic is a maintenance burden. Composition keeps you in sync with base improvements.</p>
+<h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>
+<ul>
+<li><strong>Code location</strong>: <a href="file:///Users/sac/chicago-tdd-tools/src/core/builders.rs">src/core/builders.rs</a></li>
+<li><strong>Explanation</strong>: The <code>TestDataBuilder</code> uses a generic builder wrapper to compose test variables and serializations, reducing setup boilerplate in individual tests.</li>
+</ul>
 <h2 id="related-patterns"><a class="header" href="#related-patterns">Related Patterns</a></h2>
 <ul>
-<li>Pattern 8: Composition Over Duplication</li>
-<li>Pattern 11: Zero-Cost Abstractions</li>
-<li>Pattern 19: Feature Gate Slices</li>
+<li><strong>Before this</strong>: <a href="../architecture-patterns/composition-over-duplication.html">Pattern 8: Composition</a> (wrap, don't copy)</li>
+<li><strong>Use with</strong>: <a href="../testing-patterns/aaa-pattern.html">Pattern 1: AAA Pattern</a> (builders simplify Arrange)</li>
+<li><strong>Next</strong>: <a href="zero-cost-abstractions.html">Pattern 11: Zero-Cost</a> (builders compile away)</li>
+</ul>
+<hr />
+<p><strong>Why It Works</strong>: Builders provide fluent APIs that reduce verbosity while centralizing defaults.</p>
+<p><strong>Production Checklist</strong>:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All complex objects have builders</li>
+<li><input disabled="" type="checkbox"/>
+Builders compose base builder (no duplication)</li>
+<li><input disabled="" type="checkbox"/>
+Sensible defaults reduce override noise</li>
+<li><input disabled="" type="checkbox"/>
+Fluent API is clear and readable</li>
+<li><input disabled="" type="checkbox"/>
+Tests using builder are easier to maintain</li>
 </ul>
 
                     </main>

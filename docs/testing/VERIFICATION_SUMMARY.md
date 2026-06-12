@@ -1,3 +1,4 @@
+> 💡 Explanation
 # Mdbook Verification - Executive Summary
 
 ## Overview
