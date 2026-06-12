@@ -2,6 +2,21 @@
 // Mutex poison recovery via `unwrap_or_else(|e| e.into_inner())` is intentional: we
 // always recover from a poisoned lock rather than propagating the panic.
 #![allow(clippy::unwrap_used)]
+#![allow(
+    clippy::redundant_closure,
+    clippy::redundant_closure_for_method_calls,
+    clippy::must_use_candidate,
+    clippy::missing_errors_doc,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::unnecessary_wraps,
+    clippy::significant_drop_tightening,
+    clippy::items_after_statements,
+    clippy::missing_docs_in_private_items,
+    clippy::missing_const_for_fn,
+    clippy::use_self,
+    clippy::unnecessary_literal_bound
+)]
 use super::{
     Diagnostic, DiagnosticCategory, DiagnosticSink, MergeStrategy, RunId, SectorStack, Severity,
 };

@@ -9,6 +9,39 @@
 #![allow(unused_imports)]
 // `unwrap_or(0)` and `unwrap_or_else` throughout this file are safe fallbacks that never panic.
 #![allow(clippy::unwrap_used)]
+// Pedantic lints suppressed for this internal module:
+// - redundant_closure: mutex poison-recovery closures are intentionally explicit
+// - must_use: these are internal governance APIs, not public library surfaces
+// - missing_errors_doc: internal module, documented at the crate level
+// - cast_precision_loss: p_admitted is an approximate ratio; f64 is sufficient
+// - cast_possible_truncation: as_millis() u128→u64 is safe until year 584 million
+// - inline_always / const_fn: left to the compiler to decide
+// - struct_field_names: DiagnosticCode fields follow the type's own naming scheme
+// - wildcard_imports: pub use laws::* is intentional for macro ergonomics
+#![allow(
+    clippy::redundant_closure,
+    clippy::redundant_closure_for_method_calls,
+    clippy::must_use_candidate,
+    clippy::missing_errors_doc,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_lossless,
+    clippy::items_after_statements,
+    clippy::module_name_repetitions,
+    clippy::struct_field_names,
+    clippy::wildcard_imports,
+    clippy::needless_pass_by_value,
+    clippy::result_unit_err,
+    clippy::unnecessary_wraps,
+    clippy::significant_drop_tightening,
+    clippy::needless_lifetimes,
+    clippy::unused_self,
+    clippy::format_collect,
+    clippy::doc_markdown,
+    clippy::missing_const_for_fn,
+    clippy::use_self,
+    clippy::unnecessary_literal_bound
+)]
 
 use serde::{
     de::{self, Deserializer, MapAccess, Visitor},
@@ -483,6 +516,9 @@ impl TaskReceipt {
 
 /// Minimal pure-Rust SHA-256 (no external crate required).
 /// Implements the SHA-256 standard algorithm (FIPS 180-4).
+// The K constants and single-letter working variables (a–h) are defined by
+// FIPS 180-4 §4.2 and §6.2 — we preserve the spec naming exactly.
+#[allow(clippy::unreadable_literal, clippy::many_single_char_names)]
 fn sha256_simple(input: &[u8]) -> Vec<u8> {
     // SHA-256 constants
     const K: [u32; 64] = [

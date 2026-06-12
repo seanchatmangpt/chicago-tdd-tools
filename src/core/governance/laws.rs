@@ -3,6 +3,7 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(clippy::must_use_candidate, clippy::missing_errors_doc)]
 
 #[macro_export]
 macro_rules! assert_admitted {

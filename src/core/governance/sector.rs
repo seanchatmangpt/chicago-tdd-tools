@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(clippy::must_use_candidate, clippy::needless_lifetimes, clippy::return_self_not_must_use)]
 
 use serde_json::Value;
 

@@ -2076,6 +2076,7 @@ dependencies = [
  "lsp-types-max",
  "memchr",
  "regex",
+ "rustc-hash",
  "serde",
  "serde_json",
  "tokio",
