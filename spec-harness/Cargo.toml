@@ -6,6 +6,9 @@ authors = ["KNHK Team"]
 license = "MIT"
 description = "Spec harness for Chatman Equation - theorem-to-test mapping with spec conformance receipt generation"
 repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+readme = "README.md"
+keywords = ["testing", "tdd", "chicago-tdd", "spec-harness"]
+categories = ["development-tools::testing"]
 
 [lib]
 
@@ -26,6 +29,9 @@ uuid = { version = "^1.0", features = ["v4"] }
 
 # Timestamps
 chrono = "^0.4"
+
+# Property-based testing
+proptest = "^1.5"
 
 # Git integration for commit hash tracking
 git2 = { version = "^0.20", optional = true }

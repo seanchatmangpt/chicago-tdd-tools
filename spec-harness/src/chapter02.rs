@@ -58,6 +58,7 @@ pub fn theorems() -> Vec<TheoremMetadata> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
 
     /// Theorem 2.1: Determinism
     ///
@@ -68,35 +69,36 @@ mod tests {
     /// verify that all results are identical (same output hash).
     #[test]
     fn test_determinism() {
-        // Input: Fixed test data
-        let test_input = (5, 10);
+        proptest!(|(a in 0..1000i32, b in 0..1000i32)| {
+            let test_input = (a, b);
 
-        // Run 1: Execute test logic
-        let result1 = {
-            let a = test_input.0;
-            let b = test_input.1;
-            a + b
-        };
+            // Run 1: Execute test logic
+            let result1 = {
+                let a = test_input.0;
+                let b = test_input.1;
+                a + b
+            };
 
-        // Run 2: Repeat with identical input
-        let result2 = {
-            let a = test_input.0;
-            let b = test_input.1;
-            a + b
-        };
+            // Run 2: Repeat with identical input
+            let result2 = {
+                let a = test_input.0;
+                let b = test_input.1;
+                a + b
+            };
 
-        // Run 3: One more time to be sure
-        let result3 = {
-            let a = test_input.0;
-            let b = test_input.1;
-            a + b
-        };
+            // Run 3: One more time to be sure
+            let result3 = {
+                let a = test_input.0;
+                let b = test_input.1;
+                a + b
+            };
 
-        // All three runs must produce identical results
-        assert_eq!(result1, result2, "Run 1 and Run 2 must produce identical output");
-        assert_eq!(result2, result3, "Run 2 and Run 3 must produce identical output");
-        assert_eq!(result1, result3, "Run 1 and Run 3 must produce identical output");
-        assert_eq!(result1, 15, "Expected deterministic result");
+            // All three runs must produce identical results
+            prop_assert_eq!(result1, result2, "Run 1 and Run 2 must produce identical output");
+            prop_assert_eq!(result2, result3, "Run 2 and Run 3 must produce identical output");
+            prop_assert_eq!(result1, result3, "Run 1 and Run 3 must produce identical output");
+            prop_assert_eq!(result1, a + b, "Expected deterministic result");
+        });
     }
 
     /// Theorem 2.2: Idempotence
@@ -109,18 +111,16 @@ mod tests {
     /// observe output O2. Verify O1 == O2.
     #[test]
     fn test_idempotence() {
-        // Fixture setup (immutable)
-        let fixture = [1, 2, 3, 4, 5];
+        proptest!(|(fixture in prop::collection::vec(0..100i32, 1..100))| {
+            // First observation: compute sum
+            let sum1 = fixture.iter().sum::<i32>();
 
-        // First observation: compute sum
-        let sum1 = fixture.iter().sum::<i32>();
+            // Second observation: recompute sum with same fixture
+            let sum2 = fixture.iter().sum::<i32>();
 
-        // Second observation: recompute sum with same fixture
-        let sum2 = fixture.iter().sum::<i32>();
-
-        // Idempotence: Both observations must be identical
-        assert_eq!(sum1, sum2, "Repeating test must produce same result");
-        assert_eq!(sum1, 15, "Expected correct sum");
+            // Idempotence: Both observations must be identical
+            prop_assert_eq!(sum1, sum2, "Repeating test must produce same result");
+        });
     }
 
     /// Theorem 2.3: Type Preservation
@@ -131,38 +131,26 @@ mod tests {
     /// Test: Create typed test data, verify types match through multiple accesses.
     #[test]
     fn test_type_preservation() {
-        // Test data with specific types
-        struct TestData {
-            number: i32,
-            text: String,
-            values: Vec<f64>,
-        }
+        proptest!(|(number in 0..1000i32, text in ".*", values in prop::collection::vec(0.0..100.0f64, 1..10))| {
+            // Test data with specific types
+            struct TestData {
+                number: i32,
+                text: String,
+                values: Vec<f64>,
+            }
 
-        let data = TestData { number: 42, text: "test".to_string(), values: vec![1.0, 2.5, 3.7] };
+            let data = TestData { number, text: text.clone(), values: values.clone() };
 
-        // Type checks at compile time ensure these accesses return correct types
-        let n: i32 = data.number;
-        let t: String = data.text.clone();
-        let v: &Vec<f64> = &data.values;
+            // Type checks at compile time ensure these accesses return correct types
+            let n: i32 = data.number;
+            let t: String = data.text.clone();
+            let v: &Vec<f64> = &data.values;
 
-        // Verify types were preserved by checking actual values
-        // (Type system prevents wrong types at compile time)
-        assert_eq!(n, 42, "i32 type preserved");
-        assert_eq!(t, "test", "String type preserved");
-        assert_eq!(v.len(), 3, "Vec type preserved");
-
-        // Verify type metadata
-        assert_eq!(std::mem::size_of::<i32>(), 4, "i32 has correct size");
-        assert_eq!(
-            std::mem::size_of::<String>(),
-            std::mem::size_of::<String>(),
-            "String type matches"
-        );
-        assert_eq!(
-            std::mem::size_of::<Vec<f64>>(),
-            std::mem::size_of::<Vec<f64>>(),
-            "Vec type matches"
-        );
+            // Verify types were preserved by checking actual values
+            prop_assert_eq!(n, number, "i32 type preserved");
+            prop_assert_eq!(t, text, "String type preserved");
+            prop_assert_eq!(v.len(), values.len(), "Vec type preserved");
+        });
     }
 
     /// Theorem 2.4: Boundedness

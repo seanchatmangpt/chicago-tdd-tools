@@ -6,10 +6,12 @@ authors = ["KNHK Team"]
 license = "MIT"
 description = "Chicago TDD testing framework and tools for Rust projects"
 repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+readme = "README.md"
 keywords = ["testing", "tdd", "chicago-tdd", "test-framework"]
 categories = ["development-tools::testing"]
 
 [dependencies]
+lsp-types = { version = "0.94", optional = true }
 # Async runtime
 # Tokio features optimized for testing: rt (basic runtime), rt-multi-thread (parallel execution),
 # macros (async test macros). Minimal feature set for testing use case.
@@ -20,6 +22,8 @@ futures = "^0.3"
 # Serde with derive feature for automatic serialization/deserialization of test data structures
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
+serde_yaml = "0.9"
+toml = "0.8"
 
 # Utilities
 uuid = { version = "^1.0", features = ["v4"] }
@@ -87,12 +91,19 @@ arbitrary = { version = "^1.4", optional = true }
 # Enables: builders::FakeDataBuilder, fake data generation helpers
 # Common combo: Use with property-testing for comprehensive test data generation
 fake = { version = "^3.0", optional = true, features = ["derive"] }
-
 # Concurrency testing (optional, concurrency-testing feature)
 # When to use: Thread model checking, concurrency bug detection, deterministic testing
 # Enables: testing::concurrency module, LoomModel API
 # Note: Loom provides deterministic concurrency testing (exhaustive exploration)
 loom = { version = "^0.7", optional = true }
+
+# OCEL 2.0 Generation (optional, ocel-generation feature)
+# When to use: Process mining, automatic discovery of test execution patterns
+# Enables: observability::ocel module, OcelCollector DiagnosticSink
+# wasm4pm-compat provides the Evidence lifecycle and OCEL standard types
+wasm4pm-compat = { path = "vendors/wasm4pm-compat", version = "26.6.10", optional = true, features = ["formats"] }
+dashmap = { version = "^6.0", optional = true }
+tracing = { version = "^0.1", optional = true }
 
 # Parameterized testing (optional, parameterized-testing feature)
 # When to use: Testing multiple inputs, test matrices, fixture injection
@@ -128,6 +139,7 @@ proptest = "^1.5"        # Property-based testing for invariant validation
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
 
 [features]
+governance-tests = ["dep:lsp-types"]
 # Default features: Minimal set for best DX
 # logging: Alert helpers integration with log crate (enabled by default)
 default = ["logging"]
@@ -164,6 +176,10 @@ fake-data = ["dep:fake"]
 # When to use: Detecting concurrency bugs, verifying thread safety
 # Enables: testing::concurrency module, LoomModel API
 concurrency-testing = ["dep:loom"]
+
+# OCEL 2.0 generation features
+ocel-generation = ["dep:wasm4pm-compat", "dep:dashmap", "dep:tracing"]
+ocel-generation-discovery = ["ocel-generation", "wasm4pm-compat/wasm4pm"]
 
 # Parameterized testing: Multiple inputs, test matrices
 # When to use: Testing multiple inputs efficiently, fixture injection
@@ -339,3 +355,10 @@ harness = false
 [[bench]]
 name = "builders"
 harness = false
+
+[workspace]
+members = [
+    ".",
+    "crates/chicago-tdd-lsp",
+]
+resolver = "2"

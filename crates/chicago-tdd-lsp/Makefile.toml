@@ -1,0 +1,30 @@
+# Makefile.toml for chicago-tdd-lsp
+# Minimal stubs so `cargo make` workspace iteration does not fail on tasks that
+# are only meaningful for the main library crate.
+
+[tasks.docs-check]
+description = "No-op: chicago-tdd-lsp is a binary with no mdbook documentation"
+script = ["echo '✅ docs-check: skipped for binary crate chicago-tdd-lsp'"]
+
+[tasks.spec]
+description = "No-op: spec-harness is in the root crate only"
+script = ["echo '✅ spec: skipped for binary crate chicago-tdd-lsp'"]
+
+[tasks.spec-check]
+description = "No-op: spec-check is in the root crate only"
+script = ["echo '✅ spec-check: skipped for binary crate chicago-tdd-lsp'"]
+
+[tasks.check]
+description = "Check LSP binary"
+command = "cargo"
+args = ["check", "--manifest-path", "Cargo.toml"]
+
+[tasks.build]
+description = "Build LSP binary"
+command = "cargo"
+args = ["build", "--manifest-path", "Cargo.toml"]
+
+[tasks.test]
+description = "Run LSP binary tests (none yet)"
+command = "cargo"
+args = ["test", "--manifest-path", "Cargo.toml"]

@@ -1,0 +1,56 @@
+[project]
+name = "chicago-tdd-tools"
+version = "26.6.12"
+description = "Chicago TDD testing framework with AI agent governance"
+authors = ["PhaseShift Research"]
+license = "MIT"
+
+[ontology]
+source = "ontology/chatman-equation.ttl"
+standard_only = false
+
+[inference]
+rules = [
+  { name = "pattern-hooks", construct = """
+PREFIX ce: <http://chatman-equation.org/>
+CONSTRUCT {
+  ?op ce:hasHook ?hook .
+}
+WHERE {
+  ?op ce:hookId ?hook .
+}
+""" }
+]
+
+[generation]
+output_dir = "src"
+
+[[generation.rules]]
+name = "operator-registry"
+query = { inline = """
+PREFIX ce: <http://chatman-equation.org/core/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX yawl: <http://workflow-patterns.org/yawl/>
+
+SELECT ?op ?pattern_id ?name ?hook_id ?max_latency
+WHERE {
+  ?op a ce:YAWLPattern ;
+      yawl:patternNumber ?pattern_id ;
+      rdfs:label ?name ;
+      ce:hookId ?hook_id ;
+      ce:maxLatencyNs ?max_latency .
+}
+ORDER BY ?pattern_id
+""" }
+template = { file = "templates/operator_registry.rs.tera" }
+output_file = "operator_registry.rs"
+mode = "Overwrite"
+
+[sync]
+enabled = true
+on_change = "manual"
+validate_after = true
+conflict_mode = "fail"
+
+[output]
+formatting = "rustfmt"

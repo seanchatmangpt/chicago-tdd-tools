@@ -20,6 +20,7 @@ pub mod contract;
 /// Strict verification pipeline with fail-fast semantics for all 12 phases.
 pub mod fail_fast;
 pub mod fixture;
+pub mod governance;
 /// Property-based tests validating invariant detection using proptest.
 pub mod invariant_properties;
 /// Unrecoverable invariant violations - core type system for hardening.
@@ -45,6 +46,7 @@ pub use const_assert::*;
 pub use contract::*;
 pub use fail_fast::*;
 pub use fixture::*;
+pub use governance::*;
 pub use invariant_properties::helpers;
 pub use invariants::*;
 // poka_yoke types are accessed via core::poka_yoke::* to avoid glob conflicts

@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
 description = "Comprehensive playground demonstrating all features of chicago-tdd-tools"
+readme = "README.md"
+keywords = ["testing", "tdd", "chicago-tdd", "playground"]
+categories = ["development-tools::testing"]
 publish = false
 
 [dependencies]

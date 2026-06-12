@@ -1,0 +1,13 @@
+{
+  "operation_id": "bc1db2cb-2634-46b6-98ff-ed971cb65a69",
+  "timestamp": "2026-06-12T21:25:34.221317Z",
+  "input_hashes": [
+    "actuator:ggen-sync@26.6.9",
+    "ggen.toml:7e95c0786d09f0dbe82dacf025aeda81b2e336347a057cf7f11342895d5ec708",
+    "ontology/chatman-equation.ttl:ba276bedb1d062a7c99e6f976231ac6e1e948ae5f7fdd311abee6a0991cca6e6",
+    "templates/operator_registry.rs.tera:649d48abf1733912627cd9aea8b26d4b4272d2892f919bf3a797247f19c43449"
+  ],
+  "output_hashes": [],
+  "signature": "ad724fb9991f3169cf7430b504505b11e736fc6af231772f886241d4b5b69f55b20421ea6a79ec96cf30a1152e927131d43b7be0c19f0a34b3e744dd598c7a0c",
+  "previous_receipt_hash": "e1ab5112043c6bcac795b91f72866604f01acd28f315d8b92dd5196ef3cdab04"
+}

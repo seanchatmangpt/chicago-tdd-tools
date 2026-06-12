@@ -21,6 +21,7 @@ pub mod coordinator;
 pub mod member;
 pub mod task;
 pub mod test_orchestrator;
+pub mod wave;
 
 pub use composition::{ComposedOperation, OperationChain};
 pub use coordinator::{SwarmCoordinator, SwarmMembership};
@@ -29,6 +30,7 @@ pub use task::{TaskReceipt, TaskRequest, TaskStatus};
 pub use test_orchestrator::{
     QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
 };
+pub use wave::{ResidualClass, Wave, WavePhase, WaveReceipt, WaveStatus};
 
 #[cfg(test)]
 mod tests {

@@ -1,0 +1,42 @@
+[package]
+name = "chicago-tdd-lsp"
+version = "26.6.12"
+edition = "2021"
+authors = ["KNHK Team"]
+license = "MIT"
+description = "LSP server that enforces chicago-tdd-tools is always a dev-dependency"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+keywords = ["testing", "tdd", "chicago-tdd", "lsp"]
+categories = ["development-tools::testing"]
+
+[[bin]]
+name = "chicago-tdd-lsp"
+path = "src/main.rs"
+
+[features]
+# Base build: lsp-max transport + plain lsp_types::Diagnostic.
+# Enable `extended` to add hover, code actions, and structured diagnostic data
+# (conformance_vector, receipt_obligation) via lsp-max-protocol.
+default = []
+extended = [
+    "dep:lsp-max-protocol",
+    "dep:lsp-max-runtime",
+]
+
+[dependencies]
+# lsp-max is the sole LSP transport — lsp-server is never used
+lsp-max          = { path = "/Users/sac/lsp-max" }
+lsp-types-max    = { path = "/Users/sac/lsp-types-max", features = ["proposed"] }
+serde            = { version = "1", features = ["derive"] }
+serde_json       = "1"
+tokio            = { version = "1", features = ["rt", "rt-multi-thread", "macros", "io-std"] }
+async-trait      = "0.1"
+parking_lot      = "0.12"
+
+# extended feature: structured diagnostic surface from lsp-max-protocol
+lsp-max-protocol = { path = "/Users/sac/lsp-max/lsp-max-protocol", optional = true }
+lsp-max-runtime  = { path = "/Users/sac/lsp-max/lsp-max-runtime",  optional = true }
+
+[lints.rust]
+warnings = "deny"
+unsafe_code = "deny"

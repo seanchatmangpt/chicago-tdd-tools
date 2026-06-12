@@ -77,7 +77,21 @@ pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #fn_vis #fn_sig {
                 // Chicago TDD: Auto-generated test metadata
                 let _test_name = stringify!(#fn_name);
+
+                // OCEL: Lifecycle hooks
+                chicago_tdd_tools::core::governance::channel::on_test_started(_test_name);
+
+                struct TestGuard { name: &'static str, passed: bool };
+                impl Drop for TestGuard {
+                    fn drop(&mut self) {
+                        chicago_tdd_tools::core::governance::channel::on_test_completed(self.name, self.passed);
+                    }
+                }
+                let mut _guard = TestGuard { name: _test_name, passed: false };
+
                 #fn_block
+
+                _guard.passed = true;
             }
         }
     } else {
@@ -87,7 +101,21 @@ pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #fn_vis #fn_sig {
                 // Chicago TDD: Auto-generated test metadata
                 let _test_name = stringify!(#fn_name);
+
+                // OCEL: Lifecycle hooks
+                chicago_tdd_tools::core::governance::channel::on_test_started(_test_name);
+
+                struct TestGuard { name: &'static str, passed: bool };
+                impl Drop for TestGuard {
+                    fn drop(&mut self) {
+                        chicago_tdd_tools::core::governance::channel::on_test_completed(self.name, self.passed);
+                    }
+                }
+                let mut _guard = TestGuard { name: _test_name, passed: false };
+
                 #fn_block
+
+                _guard.passed = true;
             }
         }
     };
@@ -126,9 +154,6 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_block = &input.block;
     let fn_attrs = &input.attrs;
 
-    // Extract function name
-    let _fn_name = &fn_sig.ident;
-
     // Check if async
     let is_async = fn_sig.asyncness.is_some();
 
@@ -138,6 +163,18 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#fn_attrs)*
             #[tokio::test]
             #fn_vis async fn #fn_sig {
+                // OCEL: Lifecycle hooks
+                let _test_name = stringify!(#fn_sig); // Best effort name
+                chicago_tdd_tools::core::governance::channel::on_test_started(_test_name);
+
+                struct TestGuard { name: &'static str, passed: bool };
+                impl Drop for TestGuard {
+                    fn drop(&mut self) {
+                        chicago_tdd_tools::core::governance::channel::on_test_completed(self.name, self.passed);
+                    }
+                }
+                let mut _guard = TestGuard { name: _test_name, passed: false };
+
                 // Chicago TDD: Auto-generated fixture setup
                 let mut fixture = chicago_tdd_tools::fixture::TestFixture::new()
                     .unwrap_or_else(|e| panic!("Failed to create test fixture: {}", e));
@@ -145,8 +182,7 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 // Execute test body
                 #fn_block
 
-                // Chicago TDD: Auto-generated fixture teardown
-                // Cleanup happens automatically via Drop trait
+                _guard.passed = true;
             }
         }
     } else {
@@ -154,6 +190,18 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#fn_attrs)*
             #[test]
             #fn_vis fn #fn_sig {
+                // OCEL: Lifecycle hooks
+                let _test_name = stringify!(#fn_sig);
+                chicago_tdd_tools::core::governance::channel::on_test_started(_test_name);
+
+                struct TestGuard { name: &'static str, passed: bool };
+                impl Drop for TestGuard {
+                    fn drop(&mut self) {
+                        chicago_tdd_tools::core::governance::channel::on_test_completed(self.name, self.passed);
+                    }
+                }
+                let mut _guard = TestGuard { name: _test_name, passed: false };
+
                 // Chicago TDD: Auto-generated fixture setup
                 let mut fixture = chicago_tdd_tools::fixture::TestFixture::new()
                     .unwrap_or_else(|e| panic!("Failed to create test fixture: {}", e));
@@ -161,8 +209,7 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 // Execute test body
                 #fn_block
 
-                // Chicago TDD: Auto-generated fixture teardown
-                // Cleanup happens automatically via Drop trait
+                _guard.passed = true;
             }
         }
     };
@@ -172,7 +219,7 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 /// > 📚 Reference
 ///
-/// Derive macro for TestBuilder.
+/// Derive macro for `TestBuilder`.
 ///
 /// Generates a fluent builder pattern for test data structures.
 ///
@@ -196,13 +243,17 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// assert_eq!(user.id, 1);
 /// assert_eq!(user.name, "Alice");
 /// ```
+///
+/// # Panics
+///
+/// Panics if a field identifier is missing, which should not happen for named fields.
 #[proc_macro_derive(TestBuilder)]
 #[allow(clippy::expect_used)] // Proc macro compile-time checks - ident is guaranteed to be Some for named fields
 pub fn test_builder_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let name = &input.ident;
-    let builder_name = syn::Ident::new(&format!("{}Builder", name), name.span());
+    let builder_name = syn::Ident::new(&format!("{name}Builder"), name.span());
 
     let fields = match &input.data {
         Data::Struct(data_struct) => match &data_struct.fields {
@@ -243,7 +294,7 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
         // Named fields always have ident - validated by Fields::Named check
         let field_name = field.ident.as_ref().expect("Named fields should always have ident");
         let field_type = &field.ty;
-        let method_name = syn::Ident::new(&format!("with_{}", field_name), field_name.span());
+        let method_name = syn::Ident::new(&format!("with_{field_name}"), field_name.span());
         quote! {
             pub fn #method_name(mut self, #field_name: #field_type) -> Self {
                 self.#field_name = Some(#field_name);

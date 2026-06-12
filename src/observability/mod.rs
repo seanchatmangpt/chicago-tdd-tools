@@ -47,5 +47,8 @@ pub mod otel;
 #[cfg(feature = "weaver")]
 pub mod weaver;
 
+/// OCEL 2.0 (Object-Centric Event Log) Support
+pub mod ocel;
+
 #[cfg(all(feature = "weaver", feature = "otel"))]
 pub mod fixtures;

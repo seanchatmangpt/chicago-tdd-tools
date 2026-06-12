@@ -41,7 +41,7 @@ pub mod chapter03; // Knowledge hooks and YAWL patterns
 pub mod chapter07; // Chatman Equation realization
 pub mod receipt; // Receipt generation and merkle proofs
 
-pub use receipt::{MerkleProof, SpecConformanceReceipt, TheoremResult};
+pub use receipt::{SpecConformanceReceipt, TheoremResult};
 
 /// Specification version this harness validates against
 pub const SPEC_VERSION: &str = "ChatmanEquation-1.0";

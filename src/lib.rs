@@ -206,7 +206,9 @@ pub use validation::performance::ValidatedTickBudget;
 
 // Backward compatibility: Re-export modules at crate root for existing code
 // New code should use capability group paths: core::fixture, validation::guards, etc.
-pub use core::{alert, assertions, builders, const_assert, fail_fast, fixture, invariants, state};
+pub use core::{
+    alert, assertions, builders, const_assert, fail_fast, fixture, governance, invariants, state,
+};
 // Note: async_fixture is separate because it's feature-gated (requires `async` feature)
 #[cfg(feature = "async")]
 pub use core::async_fixture;
@@ -251,18 +253,20 @@ pub mod prelude {
     // Re-export core modules explicitly to avoid poka_yoke conflicts
     pub use crate::core::{
         alert, assertions, async_fixture, builders, const_assert, contract, fail_fast, fixture,
-        invariants, receipt, state, test_utils, type_level, verification_pipeline,
+        governance, invariants, receipt, state, test_utils, type_level, verification_pipeline,
     };
     // Re-export core struct contents for backward compatibility and sub-crate compilation
     pub use crate::core::assertions::*;
     pub use crate::core::builders::*;
     pub use crate::core::fixture::*;
+    pub use crate::core::governance::*;
     pub use crate::core::state::*;
     // Re-export macros in prelude for use without manual root import
     pub use crate::{
         alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_eq_msg,
         assert_err, assert_fail, assert_guard_constraint, assert_in_range, assert_ok,
-        assert_within_tick_budget, async_test, fixture_test, performance_test, test,
+        assert_within_tick_budget, async_test, fixture_test, performance_test, source_location,
+        test,
     };
     // poka_yoke is accessed via core::poka_yoke::* to avoid conflicts with otel/testcontainers poka_yoke
     pub use crate::validation::*;

@@ -356,6 +356,50 @@ impl TestDataBuilder {
         serde_json::to_value(&self.data)
     }
 
+    /// Build test data as YAML
+    ///
+    /// Converts `HashMap<String, String>` to YAML string.
+    /// Runs all validation hooks before building.
+    ///
+    /// # Errors
+    ///
+    /// Returns `serde_yaml::Error` if serialization fails, or validation error if validation fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if validation fails.
+    pub fn build_yaml(self) -> Result<String, serde_yaml::Error> {
+        if let Err(e) = self.run_validations() {
+            #[allow(clippy::panic)]
+            {
+                panic!("Validation failed: {e}");
+            }
+        }
+        serde_yaml::to_string(&self.data)
+    }
+
+    /// Build test data as TOML
+    ///
+    /// Converts `HashMap<String, String>` to TOML string.
+    /// Runs all validation hooks before building.
+    ///
+    /// # Errors
+    ///
+    /// Returns `toml::ser::Error` if serialization fails, or validation error if validation fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if validation fails.
+    pub fn build_toml(self) -> Result<String, toml::ser::Error> {
+        if let Err(e) = self.run_validations() {
+            #[allow(clippy::panic)]
+            {
+                panic!("Validation failed: {e}");
+            }
+        }
+        toml::to_string(&self.data)
+    }
+
     /// Build test data as `HashMap`
     ///
     /// Returns the underlying `HashMap<String, String>`.

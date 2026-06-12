@@ -57,6 +57,7 @@ pub fn theorems() -> Vec<TheoremMetadata> {
 #[cfg(test)]
 mod tests {
     use std::time::Instant;
+    use proptest::prelude::*;
 
     // Test domain types
     struct TestFixture {
@@ -75,115 +76,77 @@ mod tests {
     fn execute_test(fixture: &TestFixture, data: &TestData) -> TestResult {
         let setup = std::hint::black_box(fixture.setup_data);
         let input = std::hint::black_box(data.input);
-        TestResult { output: std::hint::black_box(setup + input) }
+        TestResult { output: std::hint::black_box(setup.wrapping_add(input)) }
     }
 
     /// Theorem 7.1: Property of Determinism
     ///
     /// The Chatman Equation is deterministic: given the same fixture and
     /// test data, executing the test multiple times produces identical results.
-    ///
-    /// Formally: ∀ fixture, data. test(fixture, data) = test(fixture, data)
-    ///
-    /// This property holds because:
-    /// 1. Fixtures are immutable (passed by reference)
-    /// 2. Test logic is pure (no side effects)
-    /// 3. No external state is accessed during test execution
     #[test]
     fn test_property_determinism() {
-        // Create fixed inputs
-        let fixture = TestFixture { setup_data: 10 };
-        let data = TestData { input: 5 };
+        proptest!(|(setup in 0..1000i32, input in 0..1000i32)| {
+            let fixture = TestFixture { setup_data: setup };
+            let data = TestData { input };
 
-        // Run 1
-        let result1 = execute_test(&fixture, &data);
+            // Run 1
+            let result1 = execute_test(&fixture, &data);
 
-        // Run 2: Identical inputs
-        let result2 = execute_test(&fixture, &data);
+            // Run 2: Identical inputs
+            let result2 = execute_test(&fixture, &data);
 
-        // Run 3: One more time
-        let result3 = execute_test(&fixture, &data);
-
-        // All runs produce identical results
-        assert_eq!(result1.output, result2.output, "Run 1 ≠ Run 2");
-        assert_eq!(result2.output, result3.output, "Run 2 ≠ Run 3");
-        assert_eq!(result1.output, result3.output, "Run 1 ≠ Run 3");
-
-        // And the result is correct
-        assert_eq!(result1.output, 15, "Deterministic computation failed");
+            // All runs produce identical results
+            prop_assert_eq!(result1.output, result2.output, "Run 1 ≠ Run 2");
+            prop_assert_eq!(result1.output, setup + input, "Deterministic computation failed");
+        });
     }
 
     /// Theorem 7.2: Property of Idempotence
     ///
     /// The Chatman Equation is idempotent: running a test twice produces
     /// the same result as running it once.
-    ///
-    /// Formally: ∀ x. test(test(x)) = test(x)
-    ///
-    /// This property holds because test execution doesn't modify the fixture
-    /// or test data (immutability) and produces pure outputs.
     #[test]
     fn test_property_idempotence() {
-        let fixture = TestFixture { setup_data: 20 };
-        let data = TestData { input: 3 };
+        proptest!(|(setup in 0..1000i32, input in 0..1000i32)| {
+            let fixture = TestFixture { setup_data: setup };
+            let data = TestData { input };
 
-        // First execution
-        let result1 = execute_test(&fixture, &data);
+            // First execution
+            let result1 = execute_test(&fixture, &data);
 
-        // Second execution with same inputs
-        let result2 = execute_test(&fixture, &data);
+            // Second execution with same inputs
+            let result2 = execute_test(&fixture, &data);
 
-        // Idempotence: second execution produces same result
-        assert_eq!(result1.output, result2.output, "Idempotence violated");
+            // Idempotence: second execution produces same result
+            prop_assert_eq!(result1.output, result2.output, "Idempotence violated");
 
-        // If we were to "run the result" (apply test logic to result)
-        // we should get the same value (mathematically: test(test(x)) = test(x))
-        let nested_fixture = TestFixture { setup_data: result1.output };
-        let nested_data = TestData { input: 0 }; // No additional change
-        let nested_result = execute_test(&nested_fixture, &nested_data);
+            // Nested idempotence: test(test(x)) = test(x)
+            // In our realization, this means if we use the result as a fixture with zero input,
+            // we get the same result back.
+            let nested_fixture = TestFixture { setup_data: result1.output };
+            let nested_data = TestData { input: 0 };
+            let nested_result = execute_test(&nested_fixture, &nested_data);
 
-        assert_eq!(result1.output, nested_result.output, "Idempotence: test(test(x)) ≠ test(x)");
+            prop_assert_eq!(result1.output, nested_result.output, "Nested idempotence failed");
+        });
     }
 
     /// Theorem 7.3: Property of Type Preservation
     ///
     /// The Chatman Equation preserves types throughout the test lifecycle.
-    /// Test data types are maintained from input through output.
-    ///
-    /// Formally: ∀ x : Type T. test(x) : Type T'
-    /// where T' is deterministically derived from T
-    ///
-    /// This property holds because the framework uses generics and the
-    /// Rust type system to enforce type preservation.
     #[test]
     fn test_property_type_preservation() {
-        // Parametric test: different input types should preserve types
+        proptest!(|(val in 0..1000i32)| {
+            // Test with i32 inputs
+            let fixture_i32 = TestFixture { setup_data: val };
+            let data_i32 = TestData { input: val };
+            let result_i32 = execute_test(&fixture_i32, &data_i32);
 
-        // Test with i32 inputs
-        let fixture_i32 = TestFixture { setup_data: 10i32 };
-        let data_i32 = TestData { input: 5i32 };
-        let result_i32 = execute_test(&fixture_i32, &data_i32);
-
-        // Result should be i32
-        let output_i32: i32 = result_i32.output;
-        assert_eq!(output_i32, 15i32);
-        assert_eq!(std::mem::size_of_val(&output_i32), std::mem::size_of::<i32>());
-
-        // Generic wrapper to demonstrate type preservation
-        struct GenericTestResult<T> {
-            value: T,
-        }
-
-        let int_result: GenericTestResult<i32> = GenericTestResult { value: 42 };
-        assert_eq!(int_result.value, 42i32);
-
-        let float_result: GenericTestResult<f64> = GenericTestResult { value: 3.15 };
-        assert_eq!(float_result.value, 3.15f64);
-
-        // Type system ensures type safety at compile time
-        // This would NOT compile:
-        // let mixed: i32 = int_result.value; // OK: i32
-        // let mixed: f64 = int_result.value; // ERROR: can't convert i32 to f64
+            // Result should be i32
+            let output_i32: i32 = result_i32.output;
+            prop_assert_eq!(output_i32, val.wrapping_add(val));
+            prop_assert_eq!(std::mem::size_of_val(&output_i32), std::mem::size_of::<i32>());
+        });
     }
 
     /// Theorem 7.4: Property of Boundedness

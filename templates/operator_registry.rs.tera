@@ -1,0 +1,24 @@
+//! Generative Operator Registry
+//! Generated via ggen sync from ontology/chatman-equation.ttl
+
+use std::collections::HashMap;
+
+pub struct Operator {
+    pub name: &'static str,
+    pub pattern_id: &'static str,
+    pub hook_id: &'static str,
+    pub slo_ms: u64,
+}
+
+pub fn load_operators() -> Vec<Operator> {
+    let mut ops = Vec::new();
+    {% for row in results %}
+    ops.push(Operator {
+        name: "{{ row.name }}",
+        pattern_id: "{{ row.pattern_id }}",
+        hook_id: "{{ row.hook_id }}",
+        slo_ms: {{ row.max_latency }},
+    });
+    {% endfor %}
+    ops
+}
