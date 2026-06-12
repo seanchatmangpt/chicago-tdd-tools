@@ -36,7 +36,7 @@ thiserror = "^2.0"
 # When to use: Integration testing with Docker containers, real service dependencies
 # Enables: integration::testcontainers module, Docker container lifecycle management
 # Common combo: Use with weaver for full integration testing with observability
-testcontainers = { version = "^0.25", optional = true, features = ["blocking"] }
+testcontainers = { version = "^0.27", optional = true, features = ["blocking"] }
 
 # Logging facade (optional, logging feature)
 # When to use: Alert helpers integration with log crate, structured logging in tests
