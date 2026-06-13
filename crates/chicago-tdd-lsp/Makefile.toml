@@ -33,3 +33,13 @@ args = ["build", "--manifest-path", "Cargo.toml"]
 description = "Run LSP binary tests (none yet)"
 command = "cargo"
 args = ["test", "--manifest-path", "Cargo.toml"]
+
+[tasks.fmt]
+description = "Format LSP binary"
+command = "cargo"
+args = ["fmt", "--manifest-path", "Cargo.toml"]
+
+[tasks.test-unit]
+description = "Run LSP binary unit tests"
+command = "cargo"
+args = ["test", "--manifest-path", "Cargo.toml"]

@@ -6,6 +6,16 @@ description = "Run clippy on proc macros"
 command = "cargo"
 args = ["clippy", "--manifest-path", "Cargo.toml", "--", "-D", "warnings"]
 
+[tasks.fmt]
+description = "Format proc macros"
+command = "cargo"
+args = ["fmt", "--manifest-path", "Cargo.toml"]
+
+[tasks.test-unit]
+description = "Run proc macro tests"
+command = "cargo"
+args = ["test", "--manifest-path", "Cargo.toml"]
+
 [tasks.docs-check]
 description = "No-op: proc_macros has no mdbook documentation"
 script = ["echo '✅ docs-check: skipped for proc_macros'"]
