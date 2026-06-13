@@ -506,7 +506,7 @@ dependencies = [
  "trybuild",
  "trycmd",
  "uuid",
- "wasm4pm-compat 26.6.10",
+ "wasm4pm-compat",
 ]
 
 [[package]]
@@ -2166,7 +2166,7 @@ dependencies = [
  "lsp-types-max",
  "serde",
  "serde_json",
- "wasm4pm-compat 26.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasm4pm-compat",
 ]
 
 [[package]]
@@ -2187,7 +2187,7 @@ dependencies = [
  "thiserror 1.0.69",
  "url",
  "uuid",
- "wasm4pm-compat 26.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasm4pm-compat",
 ]
 
 [[package]]
@@ -4871,17 +4871,9 @@ dependencies = [
 
 [[package]]
 name = "wasm4pm-compat"
-version = "26.6.10"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "wasm4pm-compat"
-version = "26.6.10"
+version = "26.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ee171e44d93a2672c1c2bd4f81da9b167e95e581811e2a63e730790de56777a"
+checksum = "a65d35cb07ff616bbc20516b42db2b0fc0c2d3dd0184d825de8e88eada3693d6"
 dependencies = [
  "blake3",
  "chrono",

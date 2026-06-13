@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use wasm4pm_compat::{Admitted, Evidence, Raw};
 
-/// Implements DiagnosticSink + collects OCEL events automatically.
+/// Implements [`DiagnosticSink`] + collects OCEL events automatically.
 pub struct OcelCollector {
     pub(crate) events: Mutex<Vec<Evidence<TestOcelEvent, Admitted, TestSuiteWitness>>>,
     pub(crate) known_objects: DashSet<String>,
@@ -44,11 +44,9 @@ impl DiagnosticSink for OcelCollector {
 
         for (k, v) in &diagnostic.context {
             let _ = attributes.insert((*k).to_string(), v.clone());
-            // Heuristic to extract objects from context
             if k.ends_with("_id") {
                 if let Some(s) = v.as_str() {
                     let obj_type = match *k {
-                        "artifact_id" => TestObjectType::Artifact,
                         "schema_id" => TestObjectType::Schema,
                         "fixture_id" => TestObjectType::Fixture,
                         _ => TestObjectType::Artifact,
@@ -72,7 +70,7 @@ impl DiagnosticSink for OcelCollector {
         };
 
         let raw = Evidence::<TestOcelEvent, Raw, TestSuiteWitness>::from_boundary(event);
-        match self.admit(&raw) {
+        match self.admit_event(&raw) {
             Ok(admitted) => {
                 let mut events = self.events.lock().map_err(|e| e.to_string())?;
                 events.push(admitted);
@@ -85,7 +83,7 @@ impl DiagnosticSink for OcelCollector {
     }
 
     fn close(&self, summary: RunSummary) -> Result<(), String> {
-        let receipted_log = seal_run(self, summary.run_id.clone())?;
+        let (receipted_log, digest_hex) = seal_run(self, summary.run_id.clone())?;
 
         if let Some(path) = &self.ocel_output_path {
             let log_json =
@@ -93,29 +91,13 @@ impl DiagnosticSink for OcelCollector {
             std::fs::write(path, log_json).map_err(|e| e.to_string())?;
         }
 
-        // Emit substrate contribution
         let _delta = SubstrateDelta {
             contributions: vec![
-                (ContributionKind::ProcessPattern, summary.run_id.to_string()),
-                (ContributionKind::Receipt, receipted_log.digest_hex()),
+                (ContributionKind::ProcessPattern, summary.run_id),
+                (ContributionKind::Receipt, digest_hex),
             ],
         };
 
         Ok(())
-    }
-}
-
-impl OcelCollector {
-    fn admit(
-        &self,
-        raw: &Evidence<TestOcelEvent, Raw, TestSuiteWitness>,
-    ) -> Result<
-        Evidence<TestOcelEvent, Admitted, TestSuiteWitness>,
-        wasm4pm_compat::Refusal<
-            crate::observability::ocel::wasm4pm::TestEventRefusal,
-            TestSuiteWitness,
-        >,
-    > {
-        wasm4pm_compat::Admit::admit(self, raw)
     }
 }

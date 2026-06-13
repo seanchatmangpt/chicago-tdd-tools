@@ -1,10 +1,14 @@
 //! OCEL process-model store and graduation helpers.
 // Mutex poison recovery via `unwrap_or_else(|e| e.into_inner())` is intentional.
 #![allow(clippy::unwrap_used)]
-use crate::observability::ocel::types::{OcelLog, TestSuiteWitness};
+use crate::observability::ocel::types::OcelLog;
+use crate::observability::ocel::wasm4pm::TestSuiteWitness;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use wasm4pm_compat::{Evidence, GraduationCandidate, GraduationReason, Receipted};
+use wasm4pm_compat::{Evidence, Receipted};
+
+#[cfg(feature = "ocel-generation-discovery")]
+use wasm4pm_compat::engine_bridge::{GraduationCandidate, GraduationReason};
 
 pub struct ProcessModelStore {
     models: Mutex<HashMap<String, Vec<u8>>>,
@@ -28,8 +32,14 @@ impl Default for ProcessModelStore {
     }
 }
 
+#[cfg(feature = "ocel-generation-discovery")]
 pub fn graduate_for_discovery(
-    receipted_log: Evidence<OcelLog, Receipted, TestSuiteWitness>,
+    receipted_log: &Evidence<OcelLog, Receipted, TestSuiteWitness>,
 ) -> GraduationCandidate {
-    receipted_log.graduate(GraduationReason::NeedsDiscovery, "test-execution-process-model")
+    let evidence_ref = receipted_log.inner().events.len().to_string();
+    GraduationCandidate::new(
+        GraduationReason::NeedsDiscovery,
+        "test-execution-process-model",
+        evidence_ref,
+    )
 }

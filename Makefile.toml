@@ -90,6 +90,8 @@ args = [
   "300s",
   "cargo",
   "clippy",
+  "-p", "chicago-tdd-tools",
+  "-p", "chicago-tdd-tools-proc-macros",
   "--lib",
   "--all-features",
   "--",

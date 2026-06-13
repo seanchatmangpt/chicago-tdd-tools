@@ -41,7 +41,7 @@ mod testcontainers_placeholder {
     /// This placeholder exists solely to surface the above guidance in `rustdoc`
     /// for users who browse the API without the feature enabled.
     #[allow(dead_code)]
-    pub(crate) struct FeatureGate;
+    pub struct FeatureGate;
 }
 
 // Re-export commonly used items
