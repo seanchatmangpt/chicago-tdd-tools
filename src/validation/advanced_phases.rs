@@ -27,8 +27,8 @@ pub struct ConsensusVote {
     pub approved: bool,
     /// Vote timestamp
     pub timestamp: u64,
-    /// Vote hash-signature (mock implementation using DefaultHasher for testing purposes only;
-    /// not a cryptographic signature — use a real signing library such as ed25519 for
+    /// Vote hash-signature (mock implementation using `DefaultHasher` for testing purposes only;
+    /// not a cryptographic signature — use a real signing library such as `ed25519` for
     /// production consensus).
     pub mock_signature: String,
 }
@@ -36,7 +36,7 @@ pub struct ConsensusVote {
 /// Distributed consensus for multi-node verification
 ///
 /// Implements Byzantine fault-tolerant consensus for test receipts.
-/// **Note:** Vote signatures are mock hash-signatures (DefaultHasher) for testing
+/// **Note:** Vote signatures are mock hash-signatures (`DefaultHasher`) for testing
 /// purposes only. Replace with a real signing scheme (e.g., ed25519) for production use.
 pub struct DistributedConsensus {
     /// Node identifier

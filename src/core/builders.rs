@@ -44,7 +44,7 @@ fn generate_span_id() -> SpanId {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_nanos() as u64)
         .unwrap_or(1);
-    SpanId(nanos.wrapping_add(counter.wrapping_mul(0x517c_c1b7_27220a95)))
+    SpanId(nanos.wrapping_add(counter.wrapping_mul(0x517c_c1b7_2722_0a95)))
 }
 
 // ============================================================================
