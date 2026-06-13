@@ -70,7 +70,7 @@ ignore_errors = true
 [tasks.fmt]
 description = "Format code"
 command = "timeout"
-args = ["5s", "cargo", "fmt", "--all"]
+args = ["30s", "cargo", "fmt", "--all"]
 
 [tasks.lint]
 description = "Run clippy with maximized linting (all, pedantic, nursery, cargo) - canonical configuration for SPR linting"
