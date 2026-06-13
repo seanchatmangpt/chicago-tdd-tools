@@ -56,9 +56,9 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn tdd_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Reject unexpected arguments early with a clear compile error.
-    if !_attr.is_empty() {
+    if !attr.is_empty() {
         return syn::Error::new(
             proc_macro2::Span::call_site(),
             "the #[tdd_test] macro does not accept arguments",
@@ -157,7 +157,7 @@ pub fn tdd_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn fixture(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let fn_vis = &input.vis;
@@ -165,8 +165,8 @@ pub fn fixture(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_block = &input.block;
     let fn_attrs = &input.attrs;
 
-    // FIX 3: Warn if unexpected attributes are provided to the fixture macro.
-    if !_attr.is_empty() {
+    // Reject unexpected attribute arguments with a clear compile error.
+    if !attr.is_empty() {
         return syn::Error::new(
             proc_macro2::Span::call_site(),
             "the #[fixture] macro does not accept arguments",
