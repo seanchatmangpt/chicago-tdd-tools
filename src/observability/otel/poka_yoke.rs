@@ -197,7 +197,7 @@ impl ValidAttribute {
 /// span.add_attribute(ValidAttribute::new("key", ValidAttributeValue::string("value")?)?);
 ///
 /// // Complete span (changes type to Completed)
-/// let span: Span<Completed> = span.complete()?;
+/// let span: Span<Completed> = span.complete();
 ///
 /// // Compile error: Cannot add attribute to completed span
 /// // span.add_attribute(...); // ERROR!
@@ -246,9 +246,8 @@ impl Span<state::Active> {
     /// # Errors
     ///
     /// This always returns `Ok(())` in the placeholder implementation.
-    pub fn add_attribute(&mut self, attr: ValidAttribute) -> Result<(), String> {
+    pub fn add_attribute(&mut self, attr: ValidAttribute) {
         self.attributes.push(attr);
-        Ok(())
     }
 
     /// Complete the span
@@ -263,13 +262,14 @@ impl Span<state::Active> {
     /// # Errors
     ///
     /// This always returns `Ok` in the placeholder implementation.
-    pub fn complete(self) -> Result<Span<state::Completed>, String> {
-        Ok(Span {
+    #[must_use]
+    pub fn complete(self) -> Span<state::Completed> {
+        Span {
             name: self.name,
             attributes: self.attributes,
             _state: PhantomData,
             end_time: Some(std::time::SystemTime::now()),
-        })
+        }
     }
 }
 
@@ -291,7 +291,7 @@ impl Span<state::Completed> {
 
     /// Get the completion timestamp
     #[must_use]
-    pub fn end_time(&self) -> Option<std::time::SystemTime> {
+    pub const fn end_time(&self) -> Option<std::time::SystemTime> {
         self.end_time
     }
 }
@@ -356,10 +356,10 @@ mod tests {
         let attr =
             ValidAttribute::new("key", ValidAttributeValue::string("value").expect("test data"))
                 .expect("test attribute");
-        span.add_attribute(attr).expect("test attribute");
+        span.add_attribute(attr);
 
         // Complete span (changes type)
-        let _completed: Span<state::Completed> = span.complete().expect("test completion");
+        let _completed: Span<state::Completed> = span.complete();
 
         // Compile error: Cannot add attribute to completed span
         // completed.add_attribute(...); // ERROR!

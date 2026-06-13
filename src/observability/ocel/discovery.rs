@@ -21,7 +21,7 @@ impl ProcessModelStore {
     }
 
     pub fn store(&self, name: &str, model: Vec<u8>) {
-        let mut models = self.models.lock().unwrap_or_else(|e| e.into_inner());
+        let mut models = self.models.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let _ = models.insert(name.to_string(), model);
     }
 }
@@ -33,6 +33,7 @@ impl Default for ProcessModelStore {
 }
 
 #[cfg(feature = "ocel-generation-discovery")]
+#[must_use]
 pub fn graduate_for_discovery(
     receipted_log: &Evidence<OcelLog, Receipted, TestSuiteWitness>,
 ) -> GraduationCandidate {

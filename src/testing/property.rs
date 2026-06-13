@@ -162,14 +162,14 @@ impl ProptestStrategy {
 
     /// Set the number of test cases to run
     #[must_use]
-    pub fn with_cases(mut self, cases: u32) -> Self {
+    pub const fn with_cases(mut self, cases: u32) -> Self {
         self.config.cases = cases;
         self
     }
 
     /// Set the maximum number of shrink attempts
     #[must_use]
-    pub fn with_max_shrink_iters(mut self, iters: u32) -> Self {
+    pub const fn with_max_shrink_iters(mut self, iters: u32) -> Self {
         self.config.max_shrink_iters = iters;
         self
     }
@@ -189,13 +189,13 @@ impl ProptestStrategy {
     /// Build a `TestRunner` honouring the stored seed (if any).
     fn build_runner(&self) -> TestRunner {
         use proptest::test_runner::{RngAlgorithm, TestRng};
-        match self.seed {
-            Some(seed_bytes) => {
+        self.seed.map_or_else(
+            || TestRunner::new(self.config.clone()),
+            |seed_bytes| {
                 let rng = TestRng::from_seed(RngAlgorithm::ChaCha, &seed_bytes);
                 TestRunner::new_with_rng(self.config.clone(), rng)
-            }
-            None => TestRunner::new(self.config.clone()),
-        }
+            },
+        )
     }
 
     /// Run a property test with a strategy

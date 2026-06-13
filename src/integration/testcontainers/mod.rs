@@ -389,8 +389,7 @@ pub mod implementation {
 
         // All retries exhausted — container did not reach running state
         Err(TestcontainersError::OperationFailed(format!(
-            "Container {container_id} did not reach 'running' state after {} retries",
-            CONTAINER_STARTUP_MAX_RETRIES
+            "Container {container_id} did not reach 'running' state after {CONTAINER_STARTUP_MAX_RETRIES} retries"
         )))
     }
 

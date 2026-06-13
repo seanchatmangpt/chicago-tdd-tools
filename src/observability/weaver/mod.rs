@@ -39,13 +39,13 @@ pub mod lifecycle {
     /// - `WeaverValidator<Running>`: Can validate, can stop
     pub struct WeaverValidator<S> {
         /// Registry path (validated)
-        _registry_path: PathBuf,
+        registry_path: PathBuf,
         /// OTLP gRPC port
         otlp_grpc_port: u16,
         /// Admin port
-        _admin_port: u16,
+        admin_port: u16,
         /// Process handle (only Some when Running)
-        _process: Option<Child>,
+        process: Option<Child>,
         /// State marker (compile-time guarantee)
         _state: PhantomData<S>,
     }
@@ -74,10 +74,10 @@ pub mod lifecycle {
             }
 
             Ok(Self {
-                _registry_path: registry_path,
+                registry_path,
                 otlp_grpc_port: crate::observability::weaver::DEFAULT_OTLP_GRPC_PORT,
-                _admin_port: crate::observability::weaver::DEFAULT_ADMIN_PORT,
-                _process: None,
+                admin_port: crate::observability::weaver::DEFAULT_ADMIN_PORT,
+                process: None,
                 _state: PhantomData,
             })
         }
@@ -119,7 +119,7 @@ pub mod lifecycle {
                     "registry",
                     "live-check",
                     "-r",
-                    self._registry_path.to_str().ok_or_else(|| {
+                    self.registry_path.to_str().ok_or_else(|| {
                         WeaverValidationError::ProcessStartFailed(
                             "Registry path is not valid UTF-8".to_string(),
                         )
@@ -127,7 +127,7 @@ pub mod lifecycle {
                     "--otlp-grpc-port",
                     &self.otlp_grpc_port.to_string(),
                     "--admin-port",
-                    &self._admin_port.to_string(),
+                    &self.admin_port.to_string(),
                 ])
                 .spawn()
                 .map_err(|e| {
@@ -139,10 +139,10 @@ pub mod lifecycle {
                 })?;
 
             Ok(WeaverValidator::<state::Running> {
-                _registry_path: self._registry_path,
+                registry_path: self.registry_path,
                 otlp_grpc_port: self.otlp_grpc_port,
-                _admin_port: self._admin_port,
-                _process: Some(child),
+                admin_port: self.admin_port,
+                process: Some(child),
                 _state: PhantomData,
             })
         }
@@ -163,10 +163,9 @@ pub mod lifecycle {
         /// Returns `true` if the process has not yet exited.
         #[must_use]
         pub fn is_running(&mut self) -> bool {
-            match self._process {
-                Some(ref mut child) => child.try_wait().map_or(true, |status| status.is_none()),
-                None => false,
-            }
+            self.process.as_mut().is_some_and(|child| {
+                child.try_wait().map_or(true, |status| status.is_none())
+            })
         }
 
         /// Stop the Weaver validator
@@ -183,7 +182,7 @@ pub mod lifecycle {
         {
             use crate::observability::weaver::WeaverValidationError;
 
-            if let Some(ref mut child) = self._process {
+            if let Some(ref mut child) = self.process {
                 child
                     .kill()
                     .map_err(|e| WeaverValidationError::ProcessStopFailed(e.to_string()))?;
@@ -193,10 +192,10 @@ pub mod lifecycle {
             }
 
             Ok(WeaverValidator::<state::Stopped> {
-                _registry_path: self._registry_path,
+                registry_path: self.registry_path,
                 otlp_grpc_port: self.otlp_grpc_port,
-                _admin_port: self._admin_port,
-                _process: None,
+                admin_port: self.admin_port,
+                process: None,
                 _state: PhantomData,
             })
         }
@@ -789,7 +788,7 @@ mod tests {
 
     #[cfg(feature = "weaver")]
     #[test]
-    fn test_weaver_validator_registry_path_validation() {
+    fn test_weaver_validatorregistry_path_validation() {
         use crate::assert_err;
 
         // **Refactored**: Test now runs unconditionally and fails clearly if prerequisites are missing.
