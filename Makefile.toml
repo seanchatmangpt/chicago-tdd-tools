@@ -24,7 +24,7 @@ ignore_errors = false
 [tasks.check]
 description = "Check code without building"
 command = "timeout"
-args = ["5s", "cargo", "check", "--all-targets"]
+args = ["30s", "cargo", "check", "--all-targets"]
 
 [tasks.build]
 description = "Build in debug mode"
