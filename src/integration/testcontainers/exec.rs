@@ -270,7 +270,7 @@ mod implementation {
 #[cfg(not(feature = "testcontainers"))]
 mod stubs {
     use super::*;
-    use crate::integration::testcontainers::implementation::GenericContainer;
+    use crate::integration::testcontainers::GenericContainer;
 
     impl GenericContainer {
         pub fn exec(&self, _command: &str, _args: &[&str]) -> TestcontainersResult<ExecResult> {

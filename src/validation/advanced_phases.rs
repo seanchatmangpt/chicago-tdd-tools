@@ -7,7 +7,9 @@
 //! - Phase 12: Quality Metrics Dashboard
 
 use crate::core::receipt::{TestOutcome, TestReceipt};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::time::{Duration, Instant};
 
 // ============================================================================
@@ -57,15 +59,22 @@ impl DistributedConsensus {
 
     /// Cast a vote for a receipt
     pub fn vote(&mut self, receipt_id: String, approved: bool) -> ConsensusVote {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        let mut hasher = DefaultHasher::new();
+        self.node_id.hash(&mut hasher);
+        receipt_id.hash(&mut hasher);
+        approved.hash(&mut hasher);
+        timestamp.hash(&mut hasher);
+        let sig_hash = hasher.finish();
         let vote = ConsensusVote {
             node_id: self.node_id.clone(),
             receipt_id: receipt_id.clone(),
             approved,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-            signature: format!("sig_{}", self.node_id),
+            timestamp,
+            signature: format!("sig_{}_{:x}", self.node_id, sig_hash),
         };
 
         self.votes.entry(receipt_id).or_default().push(vote.clone());
@@ -420,6 +429,14 @@ impl QualityMetrics {
 
         if !receipt.timing.budget_met {
             self.tau_violations += 1;
+        }
+
+        // coverage_percent: proxy metric — ratio of passing tests to total tests, as a percentage.
+        // This reflects the fraction of tested contract paths that are exercised successfully.
+        #[allow(clippy::cast_precision_loss)]
+        {
+            self.coverage_percent =
+                self.tests_passed as f64 / self.total_tests.max(1) as f64 * 100.0;
         }
     }
 

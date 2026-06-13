@@ -272,16 +272,28 @@ mod tests {
     use chicago_tdd_tools::test;
 
     test!(test_pipeline_components_exist, {
-        // Arrange: Verify main function can be called (compile-time check)
-        // This test ensures the example compiles and basic components exist
-
-        // Act: Verify types are available
+        // Arrange
         const CONTRACT: TestContract = TestContract::hot_path("test", &["module::function"]);
         const CONTRACTS: &[TestContract] = &[CONTRACT];
-        let _config = PipelineConfig::relaxed();
-        let _pipeline = VerificationPipeline::new(CONTRACTS, _config);
+        let config = PipelineConfig::relaxed();
 
-        // Assert: If we get here, types are available and pipeline can be created
-        assert!(true);
+        // Act
+        let pipeline = VerificationPipeline::new(CONTRACTS, config);
+
+        // Assert: the relaxed config is reflected correctly, and the pipeline starts with a
+        // clean receipt registry (no tests have been executed yet).
+        assert!(!config.fail_on_tau_violation, "relaxed config must not fail on tau violations");
+        assert!(
+            !config.fail_on_effect_violation,
+            "relaxed config must not fail on effect violations"
+        );
+        assert_eq!(
+            config.governance_threshold, 0.95,
+            "relaxed config governance threshold must be 0.95"
+        );
+        assert!(
+            pipeline.receipts().is_empty(),
+            "newly created pipeline must have an empty receipt registry"
+        );
     });
 }

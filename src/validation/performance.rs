@@ -103,9 +103,9 @@ impl TickCounter {
     ///
     /// Returns an error if ticks exceed the specified budget.
     pub fn assert_within_budget(&self, budget: u64) -> PerformanceValidationResult<()> {
+        // τ enforcement is uniform across debug and release builds — see Chatman Constant
         let elapsed = self.elapsed_ticks();
-        let effective_budget = if cfg!(debug_assertions) { budget.max(1_000_000) } else { budget };
-        if elapsed > effective_budget {
+        if elapsed > budget {
             return Err(PerformanceValidationError::TickBudgetExceeded(elapsed, budget));
         }
         Ok(())

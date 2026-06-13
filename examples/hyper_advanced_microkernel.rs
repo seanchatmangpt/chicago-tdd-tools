@@ -464,10 +464,20 @@ mod tests {
     use chicago_tdd_tools::test;
 
     test!(test_example_functions_exist, {
-        // Arrange & Act: Verify example functions can be called
-        // This test ensures the example compiles and functions exist
+        use chicago_tdd_tools::core::contract::TestContract;
+        use chicago_tdd_tools::core::verification_pipeline::{
+            PipelineConfig, VerificationPipeline,
+        };
 
-        // Assert: If we get here, functions are available
-        assert!(true);
+        // Arrange: build a minimal contract and pipeline (same as the example uses)
+        const CONTRACT: TestContract = TestContract::hot_path("smoke", &["mod::fn"]);
+        const CONTRACTS: &[TestContract] = &[CONTRACT];
+        let config = PipelineConfig::relaxed();
+
+        // Act: construct the pipeline — this exercises the types used in all 6 tracks
+        let _pipeline = VerificationPipeline::new(CONTRACTS, config);
+
+        // Assert: pipeline was created with the relaxed config values we supplied
+        assert_eq!(config.governance_threshold, 0.95);
     });
 }

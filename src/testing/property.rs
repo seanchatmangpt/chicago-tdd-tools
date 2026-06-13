@@ -144,6 +144,12 @@ pub fn property_all_data_valid<const MAX_ITEMS: usize, const MAX_DEPTH: usize>(
 /// ```
 pub struct ProptestStrategy {
     config: Config,
+    /// Optional seed for reproducible test runs.
+    ///
+    /// When `Some`, the seed is used to initialize the proptest `TestRunner`
+    /// via [`proptest::test_runner::TestRng::from_seed`] so that the same
+    /// sequence of test cases is generated across runs.
+    seed: Option<[u8; 32]>,
 }
 
 #[cfg(feature = "property-testing")]
@@ -151,33 +157,45 @@ impl ProptestStrategy {
     /// Create a new proptest strategy with default configuration
     #[must_use]
     pub fn new() -> Self {
-        Self { config: Config::default() }
+        Self { config: Config::default(), seed: None }
     }
 
     /// Set the number of test cases to run
     #[must_use]
-    pub const fn with_cases(mut self, cases: u32) -> Self {
+    pub fn with_cases(mut self, cases: u32) -> Self {
         self.config.cases = cases;
         self
     }
 
     /// Set the maximum number of shrink attempts
     #[must_use]
-    pub const fn with_max_shrink_iters(mut self, iters: u32) -> Self {
+    pub fn with_max_shrink_iters(mut self, iters: u32) -> Self {
         self.config.max_shrink_iters = iters;
         self
     }
 
-    /// Set the random seed for reproducibility
+    /// Set the random seed for reproducibility.
     ///
-    /// Note: Seed configuration is complex in proptest. For now, use default seeding.
-    /// Future versions may support custom seed configuration.
-    #[allow(dead_code)] // Reserved for future use
+    /// The seed is stored and applied when the `TestRunner` is constructed in
+    /// [`Self::test`] / [`Self::test_default`], producing a deterministic
+    /// sequence of generated values across runs with the same seed and
+    /// configuration.
     #[must_use]
-    pub const fn with_seed(self, _seed: [u8; 32]) -> Self {
-        // Proptest seed configuration is complex - using default for now
-        // Future: implement proper seed configuration
+    pub const fn with_seed(mut self, seed: [u8; 32]) -> Self {
+        self.seed = Some(seed);
         self
+    }
+
+    /// Build a `TestRunner` honouring the stored seed (if any).
+    fn build_runner(&self) -> TestRunner {
+        use proptest::test_runner::{RngAlgorithm, TestRng};
+        match self.seed {
+            Some(seed_bytes) => {
+                let rng = TestRng::from_seed(RngAlgorithm::ChaCha, &seed_bytes);
+                TestRunner::new_with_rng(self.config.clone(), rng)
+            }
+            None => TestRunner::new(self.config.clone()),
+        }
     }
 
     /// Run a property test with a strategy
@@ -197,7 +215,7 @@ impl ProptestStrategy {
         S::Value: std::fmt::Debug,
         F: Fn(S::Value) -> bool,
     {
-        let mut runner = TestRunner::new(self.config.clone());
+        let mut runner = self.build_runner();
         runner
             .run(&strategy, |value| {
                 prop_assert!(property(value));

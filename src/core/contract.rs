@@ -255,18 +255,8 @@ impl TestContract {
 
     /// Check if this test covers a specific module
     #[must_use]
-    #[allow(unused_variables)] // Const fn cannot check coverage yet
-    pub const fn covers_module(&self, _module: &str) -> bool {
-        // Const fn loop to check coverage
-        let mut i = 0;
-        while i < self.coverage.len() {
-            // Note: str::eq is not const yet, so we can't do direct comparison in const fn
-            // This is a compile-time registry builder, actual queries happen at runtime
-            // For now, we mark this as "needs runtime check" and provide a runtime method
-            i += 1;
-        }
-        // Return false for const context, real implementation in runtime method
-        false
+    pub fn covers_module(&self, module: &str) -> bool {
+        self.coverage.contains(&module)
     }
 
     /// Check if this test verifies a specific invariant (runtime)

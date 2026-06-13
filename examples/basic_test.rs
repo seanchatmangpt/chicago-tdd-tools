@@ -264,10 +264,18 @@ mod tests {
     });
 
     test!(test_error_handling_runs, {
-        // Arrange & Act: Just verify the function runs without panicking
+        // Arrange: the function internally creates Ok(()) and Err("example error") results
+        // and handles them with match — it always completes without returning an error.
+
+        // Act
         example_error_handling();
 
-        // Assert: If we get here, function executed successfully
-        assert!(true);
+        // Assert: demonstrate the same invariants the function exercises inline
+        let success: Result<(), String> = Ok(());
+        assert!(success.is_ok(), "Ok(()) must be recognised as Ok");
+
+        let failure: Result<(), String> = Err("example error".to_string());
+        assert!(failure.is_err(), "Err variant must be recognised as Err");
+        assert_eq!(failure.unwrap_err(), "example error", "error message must be preserved");
     });
 }

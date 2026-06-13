@@ -172,7 +172,10 @@ where
 
 /// Default async fixture provider implementation
 ///
-/// Provides a default implementation for simple async fixtures.
+/// No-op fixture provider for tests that don't need fixture state.
+/// `Fixture` is the unit type `()` — setup succeeds immediately with no allocations.
+/// Use this as a stand-in when the test infrastructure requires an `AsyncFixtureProvider`
+/// but the test itself has no external dependencies to set up.
 #[cfg(feature = "async")]
 pub struct DefaultAsyncFixtureProvider;
 

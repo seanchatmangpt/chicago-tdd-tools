@@ -440,10 +440,16 @@ mod tests {
     use chicago_tdd_tools::test;
 
     test!(test_container_client_creation, {
-        // Arrange & Act: Verify container client can be created
-        // This test ensures the example compiles and basic components exist
+        // Arrange & Act: Create a ContainerClient (panics if Docker unavailable — correct fail-fast
+        // behaviour enforced by the FMEA fix in the implementation).
+        let client = ContainerClient::new();
 
-        // Assert: If we get here, types are available
-        assert!(true);
+        // Assert: client() round-trips — the reference returned must point to the same client.
+        // This is a meaningful invariant: the accessor is const and must not allocate or clone.
+        let client_ref = client.client();
+        assert!(
+            std::ptr::eq(&client, client_ref),
+            "client() must return a reference to self, not a clone"
+        );
     });
 }

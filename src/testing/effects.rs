@@ -234,13 +234,11 @@ impl RequiresEffect<NetworkRead> for HttpGet {
     type Effect = Effects<NetworkRead>;
 
     fn execute(&self, _effect: &Self::Effect) -> Result<(), String> {
-        // Actual HTTP GET would go here
-        // For demonstration, we just validate the URL
         if self.url.is_empty() {
-            Err("URL cannot be empty".to_string())
-        } else {
-            Ok(())
+            return Err("URL cannot be empty".to_string());
         }
+        Err("HTTP effects require an HTTP client dependency: enable the 'reqwest-client' feature"
+            .to_string())
     }
 }
 
@@ -262,14 +260,10 @@ impl RequiresEffect<StorageWrite> for FileWrite {
     type Effect = Effects<StorageWrite>;
 
     fn execute(&self, _effect: &Self::Effect) -> Result<(), String> {
-        // Actual file write would go here
         if self.path.is_empty() {
-            Err("Path cannot be empty".to_string())
-        } else if self.content.is_empty() {
-            Err("Content cannot be empty".to_string())
-        } else {
-            Ok(())
+            return Err("Path cannot be empty".to_string());
         }
+        std::fs::write(&self.path, &self.content).map_err(|e| e.to_string())
     }
 }
 
@@ -397,7 +391,11 @@ mod tests {
             http_get.execute(effects)
         });
 
-        assert!(result.is_ok());
+        // HTTP I/O requires the 'reqwest-client' feature; without it the call
+        // must fail with an explanatory error rather than silently succeed.
+        assert!(result.is_err());
+        let msg = result.unwrap_err();
+        assert!(msg.contains("HTTP effects require"), "unexpected error message: {msg}");
     }
 
     #[test]
@@ -405,10 +403,11 @@ mod tests {
         let test = EffectTest::<Effects<StorageWrite>>::new("test_file_write");
 
         let result = test.run(|effects| {
-            let file_write = FileWrite::new("/tmp/test.txt", "content");
+            let file_write = FileWrite::new("/tmp/test_chicago_tdd_effect.txt", "content");
             file_write.execute(effects)
         });
 
+        // std::fs::write is always available; the write should succeed.
         assert!(result.is_ok());
     }
 
@@ -416,18 +415,25 @@ mod tests {
     fn test_http_get_validation() {
         let effects = Effects::<NetworkRead>::new();
 
-        let valid = HttpGet::new("https://example.com");
-        assert!(valid.execute(&effects).is_ok());
+        // Empty URL is rejected before the missing-feature error.
+        let invalid_empty = HttpGet::new("");
+        assert!(invalid_empty.execute(&effects).is_err());
 
-        let invalid = HttpGet::new("");
-        assert!(invalid.execute(&effects).is_err());
+        // Non-empty URL is rejected with a not-implemented error (no HTTP dep).
+        let non_empty = HttpGet::new("https://example.com");
+        let err = non_empty.execute(&effects);
+        assert!(err.is_err());
+        assert!(
+            err.unwrap_err().contains("HTTP effects require"),
+            "should report missing HTTP client feature"
+        );
     }
 
     #[test]
     fn test_file_write_validation() {
         let effects = Effects::<StorageWrite>::new();
 
-        let valid = FileWrite::new("/tmp/test.txt", "content");
+        let valid = FileWrite::new("/tmp/test_chicago_tdd_file_write.txt", "content");
         assert!(valid.execute(&effects).is_ok());
 
         let invalid = FileWrite::new("", "content");

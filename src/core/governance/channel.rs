@@ -63,6 +63,7 @@ struct GlobalChannelState {
     start_time: Instant,
     sector_stacks: Vec<Box<dyn SectorStack>>,
     merge_strategy: MergeStrategy,
+    capacity: Option<usize>,
 }
 
 static STATE: OnceLock<Mutex<GlobalChannelState>> = OnceLock::new();
@@ -78,6 +79,7 @@ fn get_state() -> &'static Mutex<GlobalChannelState> {
             start_time: Instant::now(),
             sector_stacks: Vec::new(),
             merge_strategy: MergeStrategy::Strict,
+            capacity: None,
         })
     })
 }
@@ -219,4 +221,12 @@ pub fn on_test_completed(test_name: &str, passed: bool) {
     emit_diagnostic(&diag);
 }
 
-pub fn set_channel_capacity(_capacity: Option<usize>) {}
+pub fn set_channel_capacity(capacity: Option<usize>) {
+    let mut state = get_state().lock().unwrap_or_else(|e| e.into_inner());
+    log::info!(
+        "governance::channel: setting capacity to {:?} (previous: {:?})",
+        capacity,
+        state.capacity
+    );
+    state.capacity = capacity;
+}

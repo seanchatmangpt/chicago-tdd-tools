@@ -18,12 +18,17 @@ impl TestGenerator {
     }
 
     /// Generate test from specification
+    ///
+    /// Produces a test function with an Arrange-Act-Assert skeleton derived from
+    /// the provided `name` and `spec`. The generated code is valid Rust that
+    /// compiles immediately; fill in the `todo!` placeholders to complete the test.
     #[allow(clippy::needless_pass_by_ref_mut)] // Preserve API compatibility
-    #[allow(clippy::unused_self)] // Part of API - self required for consistency
     pub fn generate_test(&mut self, name: &str, spec: &str) -> String {
-        format!(
-            "#[test]\nfn {name}() {{\n    // Generated from: {spec}\n    // Test implementation needed\n}}\n"
-        )
+        let code = format!(
+            "#[test]\nfn {name}() {{\n    // Spec: {spec}\n\n    // Arrange\n    let subject = todo!(\"{name}: arrange subject under test\");\n\n    // Act\n    let result = todo!(\"{name}: invoke behaviour described by spec\");\n\n    // Assert\n    assert!(\n        todo!(\"{name}: verify result satisfies spec — {spec}\"),\n        \"assertion failed for spec: {spec}\"\n    );\n}}\n",
+        );
+        self.tests.push(code.clone());
+        code
     }
 
     /// Get all generated tests
@@ -126,9 +131,10 @@ mod tests {
 
     #[test]
     fn test_test_generator_get_tests() {
-        let generator = TestGenerator::new();
-        let tests = generator.get_tests();
-        assert_eq!(tests.len(), 0);
+        let mut generator = TestGenerator::new();
+        assert_eq!(generator.get_tests().len(), 0, "starts empty");
+        generator.generate_test("test_foo", "foo spec");
+        assert_eq!(generator.get_tests().len(), 1, "each generate_test call stores the result");
     }
 
     #[test]

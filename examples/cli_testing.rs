@@ -171,14 +171,18 @@ mod tests {
     // let output = "Usage: myapp [OPTIONS]";
     // CliAssertions::assert_output_contains(output, "Usage");
     // ```
+    // API test — exercises CliAssertions with a hardcoded, known input string.
+    // This is NOT an integration test against a real CLI binary; it verifies that
+    // the CliAssertions API correctly detects presence of substrings in a
+    // caller-supplied output string.
     #[test]
-    fn test_cli_assertions() {
-        // Arrange: Create test output
+    fn test_cli_assertions_api_with_known_input() {
         use chicago_tdd_tools::cli::CliAssertions;
 
+        // Arrange: a known CLI-style output string constructed inline
         let output = "Usage: myapp [OPTIONS] <COMMAND>\n\nCommands:\n  help  Print help";
 
-        // Act & Assert: Verify output contains expected text
+        // Act & Assert: CliAssertions must detect each substring that is present in the input
         CliAssertions::assert_output_contains(output, "Usage");
         CliAssertions::assert_output_contains(output, "Commands");
         CliAssertions::assert_output_contains(output, "help");
@@ -210,19 +214,32 @@ mod tests {
     // env.apply();
     // // Environment automatically restored when env goes out of scope
     // ```
+    // API test — verifies the CliEnvironment builder API using hardcoded key/value pairs.
+    // This is NOT an integration test against a real CLI process; it tests that
+    // CliEnvironment::set() and apply() correctly write the specified values into
+    // the current process environment so they are readable via std::env::var().
     #[test]
-    fn test_cli_environment() {
-        // Arrange: Create CLI environment manager
+    fn test_cli_environment_api_with_known_values() {
         use chicago_tdd_tools::cli::CliEnvironment;
 
-        // Act: Set environment variables and apply them
+        // Arrange: build an environment manager with two known key/value pairs
         let mut env = CliEnvironment::new().set("TEST_VAR1", "value1").set("TEST_VAR2", "value2");
+
+        // Act: apply — write the variables into the process environment
         env.apply();
 
-        // Assert: Verify environment variables are set
-        assert_eq!(std::env::var("TEST_VAR1").unwrap_or_default(), "value1");
-        assert_eq!(std::env::var("TEST_VAR2").unwrap_or_default(), "value2");
+        // Assert: both variables are visible via std::env::var with the exact values supplied
+        assert_eq!(
+            std::env::var("TEST_VAR1").unwrap_or_default(),
+            "value1",
+            "TEST_VAR1 must equal the value passed to set()"
+        );
+        assert_eq!(
+            std::env::var("TEST_VAR2").unwrap_or_default(),
+            "value2",
+            "TEST_VAR2 must equal the value passed to set()"
+        );
 
-        // Cleanup: Environment automatically restored on drop
+        // Cleanup: environment automatically restored when env goes out of scope
     }
 }

@@ -90,12 +90,13 @@ pub mod lifecycle {
         /// # Errors
         ///
         /// Returns error if Weaver start fails.
-        #[allow(clippy::unused_self)]
         pub fn start(
             self,
         ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Running>>
         {
+            use crate::observability::weaver::types::WeaverLiveCheck;
             use crate::observability::weaver::WeaverValidationError;
+            use std::process::Command;
 
             // Check Docker if testcontainers feature enabled
             #[cfg(feature = "testcontainers")]
@@ -108,11 +109,42 @@ pub mod lifecycle {
                 })?;
             }
 
-            // Start Weaver process (placeholder - actual implementation would start process)
-            // For now, return error indicating this is a design placeholder
-            Err(WeaverValidationError::ProcessStartFailed(
-                "Poka-yoke design placeholder - actual implementation required".to_string(),
-            ))
+            // Find the Weaver binary
+            let weaver_binary = WeaverLiveCheck::find_weaver_binary()
+                .ok_or(WeaverValidationError::BinaryNotFound)?;
+
+            // Spawn the Weaver live-check process
+            let child = Command::new(&weaver_binary)
+                .args([
+                    "registry",
+                    "live-check",
+                    "-r",
+                    self._registry_path.to_str().ok_or_else(|| {
+                        WeaverValidationError::ProcessStartFailed(
+                            "Registry path is not valid UTF-8".to_string(),
+                        )
+                    })?,
+                    "--otlp-grpc-port",
+                    &self.otlp_grpc_port.to_string(),
+                    "--admin-port",
+                    &self._admin_port.to_string(),
+                ])
+                .spawn()
+                .map_err(|e| {
+                    if e.kind() == std::io::ErrorKind::NotFound {
+                        WeaverValidationError::BinaryNotFound
+                    } else {
+                        WeaverValidationError::ProcessStartFailed(e.to_string())
+                    }
+                })?;
+
+            Ok(WeaverValidator::<state::Running> {
+                _registry_path: self._registry_path,
+                otlp_grpc_port: self.otlp_grpc_port,
+                _admin_port: self._admin_port,
+                _process: Some(child),
+                _state: PhantomData,
+            })
         }
     }
 
@@ -125,12 +157,16 @@ pub mod lifecycle {
             format!("http://{}:{}", crate::observability::weaver::LOCALHOST, self.otlp_grpc_port)
         }
 
-        /// Check if Weaver process is running
+        /// Check if Weaver process is still alive
         ///
-        /// **Poka-yoke**: Always returns true for `WeaverValidator<Running>`.
+        /// Uses `try_wait()` to poll the child process without blocking.
+        /// Returns `true` if the process has not yet exited.
         #[must_use]
-        pub const fn is_running() -> bool {
-            true // Type-level guarantee: Running state means process is running
+        pub fn is_running(&mut self) -> bool {
+            match self._process {
+                Some(ref mut child) => child.try_wait().map_or(true, |status| status.is_none()),
+                None => false,
+            }
         }
 
         /// Stop the Weaver validator
@@ -140,19 +176,29 @@ pub mod lifecycle {
         ///
         /// # Errors
         ///
-        /// Returns error if Weaver stop fails.
-        #[allow(clippy::unused_self)]
+        /// Returns error if killing the child process fails.
         pub fn stop(
-            self,
+            mut self,
         ) -> crate::observability::weaver::WeaverValidationResult<WeaverValidator<state::Stopped>>
         {
             use crate::observability::weaver::WeaverValidationError;
 
-            // Stop Weaver process (placeholder - actual implementation would stop process)
-            // For now, return error indicating this is a design placeholder
-            Err(WeaverValidationError::ProcessStopFailed(
-                "Poka-yoke design placeholder - actual implementation required".to_string(),
-            ))
+            if let Some(ref mut child) = self._process {
+                child
+                    .kill()
+                    .map_err(|e| WeaverValidationError::ProcessStopFailed(e.to_string()))?;
+                child
+                    .wait()
+                    .map_err(|e| WeaverValidationError::ProcessStopFailed(e.to_string()))?;
+            }
+
+            Ok(WeaverValidator::<state::Stopped> {
+                _registry_path: self._registry_path,
+                otlp_grpc_port: self.otlp_grpc_port,
+                _admin_port: self._admin_port,
+                _process: None,
+                _state: PhantomData,
+            })
         }
     }
 }

@@ -30,10 +30,7 @@ fn test_ocel_generation_flow() {
     // Assert: Channel accepted the diagnostics without panicking.
     let summary =
         chicago_tdd_tools::core::governance::close_channel().expect("close_channel should succeed");
-    assert!(
-        summary.total_diagnostics == 0 || summary.total_diagnostics >= 0,
-        "total_diagnostics must be non-negative"
-    );
+    assert_eq!(summary.total_diagnostics, 0, "expected no diagnostics from admitted metadata");
 }
 
 struct OcelCollectorWrapper(Arc<OcelCollector>);

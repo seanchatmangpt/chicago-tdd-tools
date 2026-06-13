@@ -150,6 +150,13 @@ impl MutationTester {
     }
 }
 
+/// Default threshold for an acceptable mutation score (80%).
+///
+/// A mutation score at or above this value indicates the test suite catches
+/// enough mutations to be considered adequate. Callers that need a different
+/// threshold should compare `MutationScore::score()` directly.
+pub const DEFAULT_ACCEPTABLE_MUTATION_SCORE: f64 = 80.0;
+
 /// Mutation score (percentage of mutations caught)
 pub struct MutationScore {
     /// Total mutations tested
@@ -179,10 +186,10 @@ impl MutationScore {
         self.score
     }
 
-    /// Is score acceptable? (>= 80%)
+    /// Is score acceptable? (>= [`DEFAULT_ACCEPTABLE_MUTATION_SCORE`])
     #[must_use]
     pub fn is_acceptable(&self) -> bool {
-        self.score >= 80.0
+        self.score >= DEFAULT_ACCEPTABLE_MUTATION_SCORE
     }
 }
 

@@ -71,44 +71,49 @@ pub struct Container<S> {
 
 #[cfg(feature = "testcontainers")]
 impl Container<state::Stopped> {
-    /// Create a new stopped container
+    /// Create a new stopped container type-safe handle.
     ///
     /// **Poka-yoke**: Returns `Container<Stopped>` - cannot exec until started.
     ///
+    /// Validates that `image` and `tag` are non-empty before constructing
+    /// the handle. This creates a type-safe handle. Call `start()` to
+    /// instantiate the real container.
+    ///
+    /// In production, use `ContainerClient` for real Docker lifecycle management.
+    ///
     /// # Errors
     ///
-    /// This placeholder always returns `Ok` in the design demonstration.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
+    /// Returns `Err` if `image` or `tag` is empty.
     pub fn new(
         client: crate::testcontainers::ContainerClient,
         image: &str,
         tag: &str,
     ) -> crate::testcontainers::TestcontainersResult<Self> {
-        // Docker availability already checked in ContainerClient::new()
-        // Container creation happens here
-        // For now, return placeholder - actual implementation would create container
+        if image.trim().is_empty() {
+            return Err(crate::testcontainers::TestcontainersError::OperationFailed(
+                "image name must not be empty".to_string(),
+            ));
+        }
+        if tag.trim().is_empty() {
+            return Err(crate::testcontainers::TestcontainersError::OperationFailed(
+                "image tag must not be empty".to_string(),
+            ));
+        }
         Ok(Self { id: format!("{image}:{tag}"), client, _state: PhantomData })
     }
 
-    /// Start the container
+    /// Type-state transition only. In production, use `ContainerClient` for real Docker
+    /// lifecycle management.
     ///
     /// **Poka-yoke**: Changes type from `Container<Stopped>` to `Container<Running>`.
-    /// After this call, container can execute commands.
+    /// After this call, the type permits exec and port-mapping calls.
     ///
     /// # Errors
     ///
-    /// This placeholder always returns `Ok` in the design demonstration.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
+    /// Always returns `Ok` — this is a compile-time safety transition, not a real
+    /// Docker start operation.
+    #[allow(clippy::unnecessary_wraps)] // Type-state transition only — no Docker I/O
     pub fn start(self) -> crate::testcontainers::TestcontainersResult<Container<state::Running>> {
-        // Start container logic here
         Ok(Container { id: self.id, client: self.client, _state: PhantomData })
     }
 }
@@ -136,7 +141,7 @@ impl Container<state::Running> {
         // Exec logic here - only works on running containers
         // This is a placeholder - actual implementation would execute command
         Err(crate::testcontainers::TestcontainersError::OperationFailed(
-            "Not implemented - placeholder for poka-yoke design".to_string(),
+            "Use ContainerClient for real container execution. This poka-yoke type demonstrates compile-time lifecycle safety only.".to_string(),
         ))
     }
 
@@ -159,25 +164,22 @@ impl Container<state::Running> {
     ) -> crate::testcontainers::TestcontainersResult<u16> {
         // Port mapping logic here - only works on running containers
         Err(crate::testcontainers::TestcontainersError::OperationFailed(
-            "Not implemented - placeholder for poka-yoke design".to_string(),
+            "Use ContainerClient for real container execution. This poka-yoke type demonstrates compile-time lifecycle safety only.".to_string(),
         ))
     }
 
-    /// Stop the container
+    /// Type-state transition only. In production, use `ContainerClient` for real Docker
+    /// lifecycle management.
     ///
     /// **Poka-yoke**: Changes type from `Container<Running>` to `Container<Stopped>`.
-    /// After this call, container cannot execute commands.
+    /// After this call, the type forbids exec and port-mapping calls at compile time.
     ///
     /// # Errors
     ///
-    /// This placeholder always returns `Ok` in the design demonstration.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
+    /// Always returns `Ok` — this is a compile-time safety transition, not a real
+    /// Docker stop operation.
+    #[allow(clippy::unnecessary_wraps)] // Type-state transition only — no Docker I/O
     pub fn stop(self) -> crate::testcontainers::TestcontainersResult<Container<state::Stopped>> {
-        // Stop container logic here
         Ok(Container { id: self.id, client: self.client, _state: PhantomData })
     }
 }

@@ -250,18 +250,36 @@ mod tests {
     use chicago_tdd_tools::test;
 
     test!(test_type_level_arithmetic_runs, {
-        // Arrange & Act: Verify function runs without panicking
-        example_type_level_arithmetic();
+        use chicago_tdd_tools::core::type_level::SizeValidatedArray;
 
-        // Assert: If we get here, function executed successfully
-        assert!(true);
+        // Arrange & Act: mirror what example_type_level_arithmetic() does
+        example_type_level_arithmetic();
+        const ARRAY: SizeValidatedArray<8, 8> = SizeValidatedArray::new([0u8; 8]);
+
+        // Assert: const-generic size is preserved at runtime
+        assert_eq!(ARRAY.size(), 8, "size() must equal the const generic SIZE parameter");
+        assert_eq!(ARRAY.data().len(), 8, "data() slice must have length equal to SIZE");
     });
 
     test!(test_type_state_pattern_runs, {
-        // Arrange & Act: Verify function runs without panicking
+        use chicago_tdd_tools::core::state::{Arrange, TestState};
+
+        // Arrange & Act: mirror what example_type_state_pattern() does
         example_type_state_pattern();
 
-        // Assert: If we get here, function executed successfully
-        assert!(true);
+        // Also verify the invariant directly: starting with [1,2,3] and pushing 4 gives length 4
+        let arrange_state = TestState::<Arrange>::new().with_arrange_data(vec![1i32, 2, 3]);
+        let act_state = arrange_state.act().execute(|data| {
+            let mut result = data.unwrap_or_default();
+            result.push(4);
+            result
+        });
+        let assert_state = act_state.assert();
+
+        // Assert: the type-state machine produced the expected result
+        assert!(
+            assert_state.assert_that(|result| result.map(|r| r.len() == 4).unwrap_or(false)),
+            "adding one element to a 3-element vec must yield length 4"
+        );
     });
 }

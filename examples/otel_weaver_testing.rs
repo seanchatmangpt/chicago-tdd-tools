@@ -567,14 +567,23 @@ mod integration_tests {
             ..Default::default()
         };
 
+        // Assert: span fields are correct regardless of Weaver availability
+        assert_eq!(
+            span.name, "test.operation",
+            "span name must match the value supplied at construction"
+        );
+
         // Act: Validate span with unified API (OTEL + Weaver)
         if let Ok(test) = ObservabilityTest::with_config(config) {
             let validation_result = test.validate_span(&span);
 
-            // Assert: Verify validation succeeded (or failed appropriately)
-            // Note: May fail if Weaver not available, that's OK for integration test
-            assert!(validation_result.is_ok() || validation_result.is_err());
-            assert_eq!(span.name, "test.operation");
+            // Assert: Weaver is configured and the registry path is set, so validation
+            // must succeed (Ok). A failure here means the span or registry is misconfigured.
+            assert!(
+                validation_result.is_ok(),
+                "unified validation must succeed with a valid span and registry: {:?}",
+                validation_result
+            );
         }
     });
 }

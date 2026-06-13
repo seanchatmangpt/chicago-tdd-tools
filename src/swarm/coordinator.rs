@@ -85,6 +85,9 @@ impl SwarmMembership {
     }
 }
 
+/// Default consensus threshold: 66% of swarm members must agree.
+const DEFAULT_CONSENSUS_THRESHOLD: f32 = 0.66;
+
 /// Coordinates swarm operations and task distribution
 pub struct SwarmCoordinator {
     /// Swarm membership
@@ -105,7 +108,7 @@ impl SwarmCoordinator {
             membership: SwarmMembership::new(),
             task_queue: TaskQueue::new(),
             task_assignments: HashMap::new(),
-            consensus_threshold: 0.66, // 66% consensus required
+            consensus_threshold: DEFAULT_CONSENSUS_THRESHOLD,
         }
     }
 

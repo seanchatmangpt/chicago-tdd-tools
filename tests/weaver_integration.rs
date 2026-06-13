@@ -107,6 +107,7 @@ mod weaver_integration_tests {
     /// **Graceful Degradation**: This test is skipped if Weaver infrastructure has issues.
     /// Skip with WEAVER_ALLOW_SKIP=1 if registry has schema validation problems.
     #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
     async fn test_unified_api_weaver_integration() {
         if !ensure_weaver_prerequisites() {
             eprintln!("⏭️  Skipping Weaver integration test due to missing prerequisites");
@@ -130,6 +131,7 @@ mod weaver_integration_tests {
     /// **Graceful Degradation**: This test is skipped if Weaver infrastructure has issues.
     /// Skip with WEAVER_ALLOW_SKIP=1 if registry has schema validation problems.
     #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
     async fn test_weaver_fixture_happy_path() {
         if !ensure_weaver_prerequisites() {
             eprintln!("⏭️  Skipping Weaver fixture test due to missing prerequisites");
@@ -156,6 +158,7 @@ mod weaver_integration_tests {
     /// **Graceful Degradation**: This test is skipped if Weaver infrastructure has issues.
     /// Skip with WEAVER_ALLOW_SKIP=1 if registry has schema validation problems.
     #[test]
+    #[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
     fn test_weaver_fixture_reports_rendered() {
         if !ensure_weaver_prerequisites() {
             eprintln!("⏭️  Skipping Weaver reports test due to missing prerequisites");

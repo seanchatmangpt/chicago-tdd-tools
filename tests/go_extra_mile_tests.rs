@@ -277,11 +277,19 @@ mod tests {
             status: SpanStatus::Ok,
         };
 
-        // Act: Validate span using helper
+        // Act: Validate span using helper (panics on invalid spans — secondary guard)
         let helper = OtelTestHelper::new();
-        helper.assert_spans_valid(&[span]);
+        let spans = [span];
+        helper.assert_spans_valid(&spans);
 
-        // Assert: If no panic, span is valid (assert_spans_valid panics on invalid spans)
+        // Assert: Explicit checks on the span fields we constructed
+        assert_eq!(spans.len(), 1, "exactly one span should be validated");
+        assert_eq!(spans[0].name, "test.span", "span name must match what was constructed");
+        assert_eq!(
+            spans[0].status,
+            chicago_tdd_tools::otel::types::SpanStatus::Ok,
+            "span status must be Ok"
+        );
     });
 
     #[cfg(all(feature = "otel", feature = "weaver"))]
@@ -299,10 +307,18 @@ mod tests {
             attributes: std::collections::BTreeMap::new(),
         };
 
-        // Act: Validate metric using helper
+        // Act: Validate metric using helper (panics on invalid metrics — secondary guard)
         let helper = OtelTestHelper::new();
-        helper.assert_metrics_valid(&[metric]);
+        let metrics = [metric];
+        helper.assert_metrics_valid(&metrics);
 
-        // Assert: If no panic, metric is valid (assert_metrics_valid panics on invalid metrics)
+        // Assert: Explicit checks on the metric fields we constructed
+        assert_eq!(metrics.len(), 1, "exactly one metric should be validated");
+        assert_eq!(metrics[0].name, "test.metric", "metric name must match what was constructed");
+        assert!(
+            matches!(metrics[0].value, chicago_tdd_tools::otel::types::MetricValue::Counter(42)),
+            "metric value must be Counter(42)"
+        );
+        assert!(metrics[0].timestamp_ms > 0, "metric timestamp must be a positive unix-ms value");
     });
 }

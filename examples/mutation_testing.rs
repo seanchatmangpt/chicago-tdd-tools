@@ -166,13 +166,18 @@ mod tests {
 
     test!(test_mutation_tester_creation, {
         // Arrange
-        let data = HashMap::new();
+        let mut data = HashMap::new();
+        data.insert("key".to_string(), "value".to_string());
 
         // Act
-        let _tester = MutationTester::new(data);
+        let mut tester = MutationTester::new(data);
 
-        // Assert: Tester created successfully
-        assert!(true); // If we get here, creation succeeded
+        // Assert: applying a mutation produces a modified data set and the tester tracks it
+        let mutated = tester.apply_mutation(MutationOperator::RemoveKey("key".to_string()));
+        assert!(
+            !mutated.contains_key("key"),
+            "RemoveKey mutation must remove the specified key from the data"
+        );
     });
 
     test!(test_mutation_score_calculation, {

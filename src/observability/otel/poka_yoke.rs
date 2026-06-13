@@ -205,8 +205,12 @@ impl ValidAttribute {
 pub struct Span<S> {
     /// Span name (internal)
     name: String,
+    /// Attributes collected during the active phase
+    attributes: Vec<ValidAttribute>,
     /// State marker (compile-time guarantee)
     _state: PhantomData<S>,
+    /// Completion timestamp (set when span transitions to Completed)
+    end_time: Option<std::time::SystemTime>,
 }
 
 #[cfg(feature = "otel")]
@@ -222,7 +226,12 @@ impl Span<state::Active> {
         if name.trim().is_empty() {
             return Err("Span name cannot be empty".to_string());
         }
-        Ok(Self { name: name.to_string(), _state: PhantomData })
+        Ok(Self {
+            name: name.to_string(),
+            attributes: Vec::new(),
+            _state: PhantomData,
+            end_time: None,
+        })
     }
 
     /// Add an attribute to the active span
@@ -237,9 +246,8 @@ impl Span<state::Active> {
     /// # Errors
     ///
     /// This always returns `Ok(())` in the placeholder implementation.
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
-    pub fn add_attribute(&self, _attr: ValidAttribute) -> Result<(), String> {
-        // Add attribute logic here - only works on active spans
+    pub fn add_attribute(&mut self, attr: ValidAttribute) -> Result<(), String> {
+        self.attributes.push(attr);
         Ok(())
     }
 
@@ -255,10 +263,13 @@ impl Span<state::Active> {
     /// # Errors
     ///
     /// This always returns `Ok` in the placeholder implementation.
-    #[allow(clippy::unnecessary_wraps)] // Placeholder - will be implemented later
     pub fn complete(self) -> Result<Span<state::Completed>, String> {
-        // Complete span logic here
-        Ok(Span { name: self.name, _state: PhantomData })
+        Ok(Span {
+            name: self.name,
+            attributes: self.attributes,
+            _state: PhantomData,
+            end_time: Some(std::time::SystemTime::now()),
+        })
     }
 }
 
@@ -270,6 +281,18 @@ impl Span<state::Completed> {
     #[must_use]
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Get the attributes recorded during the active phase (read-only)
+    #[must_use]
+    pub fn attributes(&self) -> &[ValidAttribute] {
+        &self.attributes
+    }
+
+    /// Get the completion timestamp
+    #[must_use]
+    pub fn end_time(&self) -> Option<std::time::SystemTime> {
+        self.end_time
     }
 }
 
@@ -327,7 +350,7 @@ mod tests {
     #[test]
     fn test_span_lifecycle() {
         // Create active span
-        let span = Span::<state::Active>::new("test").expect("test span");
+        let mut span = Span::<state::Active>::new("test").expect("test span");
 
         // Add attribute (only works on active span)
         let attr =

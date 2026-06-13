@@ -101,37 +101,31 @@ fn example_execute_all_phases() -> Result<(), Box<dyn std::error::Error>> {
     // Act: Execute all 12 phases
 
     // Phase 1: Contract Definition
-    let result = ctx.phase_1_contract_definition(12)?;
-    assert!(result.is_ok());
+    ctx.phase_1_contract_definition(12)?;
     println!("✓ Phase 1: Contract Definition");
 
     // Phase 2: Thermal Testing (τ ≤ 8 enforced)
-    let result = ctx.phase_2_thermal_testing(5, 8)?;
-    assert!(result.is_ok());
+    ctx.phase_2_thermal_testing(5, 8)?;
     println!("✓ Phase 2: Thermal Testing (τ=5 ≤ 8)");
 
     // Phase 3: Effects Tracking
     let declared = vec!["NetworkRead".to_string(), "StorageWrite".to_string()];
     let observed = vec!["NetworkRead".to_string()];
-    let result = ctx.phase_3_effects_tracking(declared, &observed)?;
-    assert!(result.is_ok());
+    ctx.phase_3_effects_tracking(declared, &observed)?;
     println!("✓ Phase 3: Effects Tracking");
 
     // Phase 4: State Machine
     let initial_state = "Initial".to_string();
     let all_states = vec!["Initial".to_string(), "Processing".to_string(), "Complete".to_string()];
-    let result = ctx.phase_4_state_machine(initial_state, all_states)?;
-    assert!(result.is_ok());
+    ctx.phase_4_state_machine(initial_state, all_states)?;
     println!("✓ Phase 4: State Machine");
 
     // Phase 5: Receipt Generation
-    let result = ctx.phase_5_receipt_generation(1, 0x1234, 0x1234)?;
-    assert!(result.is_ok());
+    ctx.phase_5_receipt_generation(1, 0x1234, 0x1234)?;
     println!("✓ Phase 5: Receipt Generation");
 
     // Phase 6: Swarm Orchestration
-    let result = ctx.phase_6_swarm_orchestration(10, 10)?;
-    assert!(result.is_ok());
+    ctx.phase_6_swarm_orchestration(10, 10)?;
     println!("✓ Phase 6: Swarm Orchestration");
 
     // Phase 7: Verification Pipeline
@@ -143,33 +137,27 @@ fn example_execute_all_phases() -> Result<(), Box<dyn std::error::Error>> {
         PhaseLabel::ReceiptGeneration,
         PhaseLabel::SwarmOrchestration,
     ];
-    let result = ctx.phase_7_verification_pipeline(&expected_phases)?;
-    assert!(result.is_ok());
+    ctx.phase_7_verification_pipeline(&expected_phases)?;
     println!("✓ Phase 7: Verification Pipeline");
 
     // Phase 8: Continuous Learning
-    let result = ctx.phase_8_continuous_learning(10, 0.85)?;
-    assert!(result.is_ok());
+    ctx.phase_8_continuous_learning(10, 0.85)?;
     println!("✓ Phase 8: Continuous Learning");
 
     // Phase 9: Distributed Consensus (2/3 quorum)
-    let result = ctx.phase_9_distributed_consensus(7, 9)?; // 7 >= 7 (2/3 of 9)
-    assert!(result.is_ok());
+    ctx.phase_9_distributed_consensus(7, 9)?; // 7 >= 7 (2/3 of 9)
     println!("✓ Phase 9: Distributed Consensus (7/9 votes)");
 
     // Phase 10: Time-Travel Debugging
-    let result = ctx.phase_10_time_travel_debugging(1, 1)?;
-    assert!(result.is_ok());
+    ctx.phase_10_time_travel_debugging(1, 1)?;
     println!("✓ Phase 10: Time-Travel Debugging");
 
     // Phase 11: Performance Prophet
-    let result = ctx.phase_11_performance_prophet(100, 0.9)?;
-    assert!(result.is_ok());
+    ctx.phase_11_performance_prophet(100, 0.9)?;
     println!("✓ Phase 11: Performance Prophet");
 
     // Phase 12: Quality Dashboard
-    let result = ctx.phase_12_quality_dashboard(100, 95, 5)?;
-    assert!(result.is_ok());
+    ctx.phase_12_quality_dashboard(100, 95, 5)?;
     println!("✓ Phase 12: Quality Dashboard");
 
     // Finalize: Verify all required phases completed
@@ -414,7 +402,7 @@ mod tests {
         // Arrange
         let mut ctx = StrictExecutionContext::new("test-contract".to_string())?;
 
-        // Act: Execute core phases
+        // Act: Execute the four phases that finalize() requires
         ctx.phase_1_contract_definition(12)?;
         ctx.phase_2_thermal_testing(5, 8)?;
         ctx.phase_5_receipt_generation(1, 0x1234, 0x1234)?;
@@ -426,8 +414,13 @@ mod tests {
         ];
         ctx.phase_7_verification_pipeline(&expected_phases)?;
 
-        // Assert: Finalize succeeds
-        ctx.finalize()?;
+        // Assert: all required phases completed — finalize must return Ok
+        let result = ctx.finalize();
+        assert!(
+            result.is_ok(),
+            "finalize() must succeed after all required phases complete: {:?}",
+            result
+        );
     });
 
     test!(test_thermal_violation, {

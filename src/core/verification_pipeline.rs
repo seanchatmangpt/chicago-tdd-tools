@@ -5,6 +5,7 @@
 //!
 //! This module provides the complete A = μ(O) transformation pipeline.
 
+use crate::alert_info;
 use crate::core::contract::{TestContract, TestContractRegistry};
 use crate::core::receipt::{TestOutcome, TestReceipt, TestReceiptRegistry, TimingMeasurement};
 use crate::swarm::test_orchestrator::{QoSClass, ResourceBudget, TestOrchestrator, TestPlan};
@@ -205,12 +206,30 @@ impl VerificationPipeline {
         self.metrics.average_tau =
             (total_tau + ticks as f64) / self.metrics.thermal_tests_executed as f64;
 
+        // Phase 3: Effect Validation
+        // TODO: implement full effect and state-machine verification phases
+        alert_info!("Phase 3: effect validation phase ran (stub — full implementation pending)");
+
+        // Phase 4: State Machine Verification
+        // TODO: implement full effect and state-machine verification phases
+        alert_info!(
+            "Phase 4: state machine verification phase ran (stub — full implementation pending)"
+        );
+
         // Phase 5: Receipt Generation
+        let elapsed_ms = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
+        let thermal_class = if elapsed_ms < 1 {
+            "hot"
+        } else if elapsed_ms < 10 {
+            "warm"
+        } else {
+            "cold"
+        };
         let meets_tau = ticks <= self.config.thermal_config.max_ticks;
         let timing = TimingMeasurement::new(
             ticks,
-            1,
-            "hot".to_string(),
+            elapsed_ms,
+            thermal_class.to_string(),
             meets_tau,
             self.config.thermal_config.max_ticks,
         );

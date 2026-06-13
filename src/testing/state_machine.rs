@@ -256,20 +256,45 @@ impl ScheduleGenerator {
         self.max_depth
     }
 
-    /// Generate all schedules up to max depth
+    /// Generate schedules up to max depth
     ///
-    /// This is a simplified implementation. In a full implementation,
-    /// this would use the state machine definition to generate all
-    /// valid interleavings.
+    /// Generates a base empty schedule plus sequential schedules for the
+    /// canonical Lock state machine (Locked -> Unlocked -> Locked).
+    /// Each schedule represents a linear path through the state machine.
     #[must_use]
-    #[allow(clippy::unused_self)] // Placeholder: full implementation will use self.max_depth
-    pub const fn generate(&self) -> Vec<Schedule> {
-        // Placeholder implementation
-        // Real implementation would:
-        // 1. Take state machine definition
-        // 2. Generate all valid transition sequences
-        // 3. Generate all interleavings up to max_depth
-        Vec::new()
+    pub fn generate(&self) -> Vec<Schedule> {
+        let mut schedules = Vec::new();
+
+        // Always include the empty schedule
+        schedules.push(Schedule::new());
+
+        // Generate sequential schedules for the canonical transitions
+        // up to max_depth steps
+        let canonical_steps = [
+            ScheduleStep {
+                actor_id: "actor0".to_string(),
+                transition: "Unlock".to_string(),
+                from_state: Locked::name().to_string(),
+                to_state: Unlocked::name().to_string(),
+            },
+            ScheduleStep {
+                actor_id: "actor0".to_string(),
+                transition: "Lock".to_string(),
+                from_state: Unlocked::name().to_string(),
+                to_state: Locked::name().to_string(),
+            },
+        ];
+
+        let depth = self.max_depth.min(canonical_steps.len());
+        if depth > 0 {
+            let mut sequential = Schedule::new();
+            for step in canonical_steps.iter().take(depth) {
+                sequential.add_step(step.clone());
+            }
+            schedules.push(sequential);
+        }
+
+        schedules
     }
 }
 
@@ -294,18 +319,21 @@ impl ModelChecker {
     /// # Errors
     ///
     /// Returns error if invariant is violated by any schedule.
-    #[allow(clippy::unused_self)] // Placeholder: full implementation will use self.generator
-    #[allow(clippy::unnecessary_wraps)] // API contract: returns Result for counterexample reporting
-    pub fn check_invariant<F>(&self, _invariant: F) -> Result<(), String>
+    pub fn check_invariant<F>(&self, invariant: F) -> Result<(), String>
     where
         F: Fn(&Schedule) -> bool,
     {
-        // Placeholder implementation
-        // Real implementation would:
-        // 1. Generate all schedules
-        // 2. Execute each schedule
-        // 3. Check invariant after each step
-        // 4. Return counterexample if invariant violated
+        let schedules = self.generator.generate();
+        for (i, schedule) in schedules.iter().enumerate() {
+            if !invariant(schedule) {
+                return Err(format!(
+                    "Invariant violated by schedule {} (length {}): {}",
+                    i,
+                    schedule.len(),
+                    schedule.format()
+                ));
+            }
+        }
         Ok(())
     }
 
@@ -341,7 +369,10 @@ pub struct Unlock;
 
 impl Transition<Locked, Unlocked> for Unlock {
     fn execute() -> Result<(), String> {
-        // Unlock logic would go here
+        // Transition from Locked -> Unlocked: the type system guarantees the
+        // caller held a StateMachine<Locked>, so this transition is always valid.
+        // Returning Ok(()) signals successful unlocking; the new StateMachine<Unlocked>
+        // is constructed by the caller, encoding the unlocked state at the type level.
         Ok(())
     }
 }
@@ -351,7 +382,10 @@ pub struct Lock;
 
 impl Transition<Unlocked, Locked> for Lock {
     fn execute() -> Result<(), String> {
-        // Lock logic would go here
+        // Transition from Unlocked -> Locked: the type system guarantees the
+        // caller held a StateMachine<Unlocked>, so this transition is always valid.
+        // Returning Ok(()) signals successful locking; the new StateMachine<Locked>
+        // is constructed by the caller, encoding the locked state at the type level.
         Ok(())
     }
 }
@@ -413,8 +447,10 @@ mod tests {
         assert_eq!(generator.max_depth(), 10);
 
         let schedules = generator.generate();
-        // Currently returns empty vec (placeholder implementation)
-        assert!(schedules.is_empty());
+        // Always includes at least the empty schedule
+        assert!(!schedules.is_empty());
+        // First schedule is always the empty schedule
+        assert!(schedules[0].is_empty());
     }
 
     #[test]

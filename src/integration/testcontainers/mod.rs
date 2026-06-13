@@ -357,10 +357,10 @@ pub mod implementation {
     /// # Arguments
     /// * `container_id` - Docker container ID to check
     ///
-    /// # Note
+    /// # Errors
     ///
-    /// Always returns Ok - this is best-effort checking. Container may become ready after return.
-    #[allow(clippy::unnecessary_wraps)] // Returns Result for consistency with error-prone operations
+    /// Returns `Err(TestcontainersError::OperationFailed)` when all retries are exhausted and the
+    /// container has still not reached the `running` state.
     fn wait_for_container_ready(container_id: &str) -> TestcontainersResult<()> {
         use std::thread;
         use std::time::Duration;
@@ -387,9 +387,11 @@ pub mod implementation {
             }
         }
 
-        // Container never became ready, but don't fail hard - it might still work
-        // This is best-effort; the container might become ready soon after
-        Ok(())
+        // All retries exhausted — container did not reach running state
+        Err(TestcontainersError::OperationFailed(format!(
+            "Container {container_id} did not reach 'running' state after {} retries",
+            CONTAINER_STARTUP_MAX_RETRIES
+        )))
     }
 
     /// Container client for managing Docker containers
@@ -770,8 +772,7 @@ pub mod implementation {
                 // **FAIL-FAST HARDENING**: Replaces fixed delay with intelligent retry (100ms → 200ms → 400ms).
                 // Root cause: Fixed 100ms delay doesn't adapt to slow Docker daemon.
                 // Solution: Retry with health check and exponential backoff (max 700ms total wait).
-                let _ = wait_for_container_ready(&container_id);
-                // Note: We don't fail on timeout here - container might still become ready shortly
+                wait_for_container_ready(&container_id)?;
 
                 // **Workaround**: Use Docker CLI-created container with entrypoint override.
                 // Store container ID for exec operations using docker exec directly.
@@ -1019,8 +1020,13 @@ mod stubs {
             ))
         }
 
-        pub fn container(&self) -> &Self {
-            self
+        /// Returns `None` — stub only; the `testcontainers` feature is not enabled.
+        ///
+        /// The real implementation returns `Option<&Container<GenericImage>>`.
+        /// The stub always returns `None` because no inner container exists without the feature.
+        #[must_use]
+        pub const fn container(&self) -> Option<&Self> {
+            None
         }
     }
 }

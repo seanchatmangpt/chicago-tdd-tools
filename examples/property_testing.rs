@@ -147,17 +147,23 @@ mod tests {
 
     test!(test_property_test_generator_creation, {
         // Arrange & Act
-        let _generator = PropertyTestGenerator::<10, 5>::new();
+        let mut generator = PropertyTestGenerator::<10, 5>::new();
 
-        // Assert: Generator created successfully
-        assert!(true); // If we get here, creation succeeded
+        // Assert: generator produces a non-empty map of test data
+        let data = generator.generate_test_data();
+        assert!(!data.is_empty(), "generator should produce at least one test data entry");
     });
 
     test!(test_property_test_generator_with_seed, {
-        // Arrange & Act
-        let _generator = PropertyTestGenerator::<10, 5>::new().with_seed(42);
+        // Arrange: two generators with the same seed
+        let mut g1 = PropertyTestGenerator::<10, 5>::new().with_seed(42);
+        let mut g2 = PropertyTestGenerator::<10, 5>::new().with_seed(42);
 
-        // Assert: Generator created with seed
-        assert!(true); // If we get here, creation succeeded
+        // Act
+        let data1 = g1.generate_test_data();
+        let data2 = g2.generate_test_data();
+
+        // Assert: same seed produces the same data (deterministic generation)
+        assert_eq!(data1, data2, "identical seeds must yield identical test data");
     });
 }

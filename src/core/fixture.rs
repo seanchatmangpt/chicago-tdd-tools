@@ -295,10 +295,10 @@ impl<T> TestFixture<T> {
     /// # Errors
     ///
     /// Returns an error if cleanup fails.
-    #[allow(clippy::unused_self)] // Required for trait implementation - const fn needs self
+    #[allow(clippy::unused_self)] // Default no-op; override in specific implementations
     #[allow(clippy::unnecessary_wraps)] // API design - Result allows future error handling without breaking changes
-    pub const fn cleanup(&self) -> FixtureResult<()> {
-        // Override in specific implementations
+    pub fn cleanup(&self) -> FixtureResult<()> {
+        // Default no-op cleanup. Override in specific implementations for real cleanup logic.
         Ok(())
     }
 

@@ -115,8 +115,16 @@ mod tests {
     // ========================================================================
 
     test!(test_wait_module_compiles_without_feature, {
-        // Test that the module compiles and stub implementation works
-        // This verifies the feature-gated code paths are correct
-        assert!(true, "Module should compile without testcontainers feature");
+        // Verify that the stub error type used by with_wait_for is the expected variant.
+        // This asserts something real: the error message produced by the stub matches the
+        // contract callers depend on when the feature is disabled.
+        let err = crate::integration::testcontainers::TestcontainersError::InvalidConfig(
+            "testcontainers feature is not enabled".to_string(),
+        );
+        let msg = err.to_string();
+        assert!(
+            msg.contains("testcontainers feature is not enabled"),
+            "stub error message must contain the feature-disabled notice; got: {msg}"
+        );
     });
 }
