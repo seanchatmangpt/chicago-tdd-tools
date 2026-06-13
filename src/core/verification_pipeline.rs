@@ -295,7 +295,9 @@ impl VerificationPipeline {
         }
         alert_info!(
             "Phase 3: effect validation for '{}' — {} checked, {} violations",
-            contract.name, contract.invariants.len(), violations.len()
+            contract.name,
+            contract.invariants.len(),
+            violations.len()
         );
         Ok(())
     }
@@ -323,7 +325,9 @@ impl VerificationPipeline {
         }
         alert_info!(
             "Phase 4: state machine for '{}' — {} checked, {} missing",
-            contract.name, contract.environment.len(), missing.len()
+            contract.name,
+            contract.environment.len(),
+            missing.len()
         );
         Ok(())
     }
