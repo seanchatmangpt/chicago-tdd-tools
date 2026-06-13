@@ -298,6 +298,7 @@ impl Span<state::Completed> {
 
 #[cfg(all(test, feature = "otel"))]
 mod tests {
+    #![allow(clippy::expect_used)]
     use super::*;
 
     #[test]
