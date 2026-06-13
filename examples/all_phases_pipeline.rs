@@ -278,7 +278,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
 
         // Act
-        let pipeline = VerificationPipeline::new(CONTRACTS, config);
+        let pipeline = VerificationPipeline::new(CONTRACTS, config.clone());
 
         // Assert: the relaxed config is reflected correctly, and the pipeline starts with a
         // clean receipt registry (no tests have been executed yet).

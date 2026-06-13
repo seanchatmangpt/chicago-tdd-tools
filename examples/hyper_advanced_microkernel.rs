@@ -475,7 +475,7 @@ mod tests {
         let config = PipelineConfig::relaxed();
 
         // Act: construct the pipeline — this exercises the types used in all 6 tracks
-        let _pipeline = VerificationPipeline::new(CONTRACTS, config);
+        let _pipeline = VerificationPipeline::new(CONTRACTS, config.clone());
 
         // Assert: pipeline was created with the relaxed config values we supplied
         assert_eq!(config.governance_threshold, 0.95);

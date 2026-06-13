@@ -268,7 +268,7 @@ mod tests {
         example_type_state_pattern();
 
         // Also verify the invariant directly: starting with [1,2,3] and pushing 4 gives length 4
-        let arrange_state = TestState::<Arrange>::new().with_arrange_data(vec![1i32, 2, 3]);
+        let arrange_state = TestState::<Arrange>::new().with_arrange_data(vec![1u8, 2, 3]);
         let act_state = arrange_state.act().execute(|data| {
             let mut result = data.unwrap_or_default();
             result.push(4);
