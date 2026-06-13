@@ -14,6 +14,11 @@ script = ["echo '✅ spec: skipped for binary crate chicago-tdd-lsp'"]
 description = "No-op: spec-check is in the root crate only"
 script = ["echo '✅ spec-check: skipped for binary crate chicago-tdd-lsp'"]
 
+[tasks.lint]
+description = "Run clippy on LSP binary"
+command = "cargo"
+args = ["clippy", "--manifest-path", "Cargo.toml", "--", "-D", "warnings"]
+
 [tasks.check]
 description = "Check LSP binary"
 command = "cargo"
