@@ -1,6 +1,11 @@
 # Makefile.toml for proc_macros
 # Minimal stubs so cargo make workspace iteration does not fail.
 
+[tasks.lint]
+description = "Run clippy on proc macros"
+command = "cargo"
+args = ["clippy", "--manifest-path", "Cargo.toml", "--", "-D", "warnings"]
+
 [tasks.docs-check]
 description = "No-op: proc_macros has no mdbook documentation"
 script = ["echo '✅ docs-check: skipped for proc_macros'"]
