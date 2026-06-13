@@ -9,6 +9,38 @@ repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
 readme = "README.md"
 keywords = ["testing", "tdd", "chicago-tdd", "test-framework"]
 categories = ["development-tools::testing"]
+exclude = [
+    # ggen signing keys and internal state — never published
+    ".ggen/**",
+    "src/.ggen/**",
+    # Cursor/editor configs
+    ".cursor/**",
+    ".cursorrules",
+    # Agent configs and scripts
+    ".agents/**",
+    ".config/**",
+    "scripts/**",
+    # Development planning docs
+    "SWARM_PLAN.md",
+    "TEST_INFRA.md",
+    "TEST_READY.md",
+    "ORIGINAL_REQUEST.md",
+    "COOKBOOK_DIATAXIS_PLAN.md",
+    "DIATAXIS_IMPROVEMENT_PLAN.md",
+    "MDBOOK_VERIFICATION_*.md",
+    # Ontology and template sources (not part of the library)
+    "ontology/**",
+    "templates/**",
+    "weaver-reports/**",
+    "registry/**",
+    # Coverage data
+    "coverage.lcov",
+    "check_output.txt",
+    # Playground
+    "playground/**",
+    # Spec-harness is a dev tool, not the library
+    "spec-harness/**",
+]
 
 [dependencies]
 lsp-types = { version = "0.94", optional = true }
