@@ -179,19 +179,109 @@ fn find_rust_files(dirs: &[&str]) -> Vec<PathBuf> {
     files
 }
 
+/// Determines whether an `assert` pattern found on `line` occurs inside a string literal.
+///
+/// Strategy: scan the characters of the line left-to-right, tracking whether the current
+/// position is inside a regular (`"…"`) or raw (`r#"…"#`, `r"…"`) string literal.
+/// When the first occurrence of `assert` is found, return the current in-string state.
+///
+/// Known limitations (documented trade-offs, not hidden):
+/// - Multi-line string literals are not detected; only the portion on this line is inspected.
+/// - Byte strings (`b"…"`) are treated identically to `"…"`.
+/// - String literals that begin on a previous line will not be detected as in-string context.
+///   The caller already filters out comment lines (`//`, `//!`) and `stringify!` before calling
+///   this function, so those cases are handled upstream.
 fn is_in_string_literal(line: &str) -> bool {
-    // Simple heuristic: if line contains string patterns like r"..." or "..." with assert patterns, skip
-    // This is a simple check - full Rust parsing would be more accurate but overkill
-    let trimmed = line.trim();
-    // Check if line contains string literal patterns with assert patterns
-    if trimmed.contains(r#"r"assert"#)
-        || trimmed.contains(r#""assert"#)
-        || trimmed.contains(r#"r\"assert"#)
-        || (trimmed.contains("assert") && (trimmed.contains(r#"r""#) || trimmed.contains('"')))
-    {
-        // Additional check: is it in a string literal context?
-        if trimmed.starts_with("let") || trimmed.starts_with("const") || trimmed.contains("= ") {
-            return true;
+    let chars: Vec<char> = line.chars().collect();
+    let len = chars.len();
+    let mut i = 0;
+    let mut in_string = false;
+    let mut raw_hashes: usize = 0; // number of `#` in the current raw-string delimiter
+
+    while i < len {
+        if in_string {
+            if raw_hashes > 0 {
+                // Inside a raw string: look for closing `"` followed by `raw_hashes` `#` chars.
+                if chars[i] == '"' {
+                    let closing_start = i + 1;
+                    let available = len.saturating_sub(closing_start);
+                    let actual_hashes = available.min(raw_hashes);
+                    if actual_hashes == raw_hashes
+                        && chars[closing_start..closing_start + raw_hashes]
+                            .iter()
+                            .all(|&c| c == '#')
+                    {
+                        // Closed raw string.
+                        in_string = false;
+                        i = closing_start + raw_hashes;
+                        continue;
+                    }
+                }
+                // Check if we're at the `assert` keyword inside this raw string.
+                if chars[i..].iter().collect::<String>().starts_with("assert") {
+                    return true;
+                }
+                i += 1;
+            } else {
+                // Inside a regular string.
+                if chars[i] == '\\' {
+                    // Escape sequence — skip both characters.
+                    i += 2;
+                    continue;
+                }
+                if chars[i] == '"' {
+                    in_string = false;
+                    i += 1;
+                    continue;
+                }
+                // Check if we're at the `assert` keyword inside this string.
+                if chars[i..].iter().collect::<String>().starts_with("assert") {
+                    return true;
+                }
+                i += 1;
+            }
+        } else {
+            // Outside a string.
+            // Detect raw string: optional `b` then `r` then zero-or-more `#` then `"`.
+            let rest: String = chars[i..].iter().collect();
+            // Strip optional leading `b`.
+            let scan_start = if rest.starts_with('b') { 1 } else { 0 };
+            let after_b: &str = &rest[scan_start..];
+            if after_b.starts_with('r') {
+                let after_r = &after_b[1..];
+                let hashes = after_r.chars().take_while(|&c| c == '#').count();
+                let after_hashes = &after_r[hashes..];
+                if after_hashes.starts_with('"') {
+                    // Entering a raw string.
+                    in_string = true;
+                    raw_hashes = hashes;
+                    i += scan_start + 1 + hashes + 1; // b? + r + #* + "
+                    continue;
+                }
+            }
+            // Detect regular (or byte) string.
+            if rest.starts_with("b\"") || chars[i] == '"' {
+                in_string = true;
+                raw_hashes = 0;
+                i += if rest.starts_with("b\"") { 2 } else { 1 };
+                continue;
+            }
+            // Single-quoted char literals: skip `'x'` or `'\n'` etc.
+            if chars[i] == '\'' {
+                i += 1;
+                if i < len && chars[i] == '\\' {
+                    i += 1; // escape char
+                }
+                // Skip until closing `'`.
+                while i < len && chars[i] != '\'' {
+                    i += 1;
+                }
+                if i < len {
+                    i += 1; // consume closing `'`
+                }
+                continue;
+            }
+            i += 1;
         }
     }
     false

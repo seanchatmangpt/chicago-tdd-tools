@@ -321,8 +321,12 @@ impl ObservabilityTest {
                 Clone::clone,
             )
         } else {
-            // Weaver disabled, don't need registry
-            PathBuf::from("registry") // Dummy path, won't be used
+            // Weaver is disabled — registry_path is never passed to any validator.
+            // This value exists only to satisfy the type system; it is never read.
+            // The only consumer (`validator.start(&registry_path, ...)`) is guarded
+            // by `if config.weaver_enabled`, so this branch is unreachable at the
+            // call site.
+            PathBuf::new()
         };
 
         #[cfg(feature = "weaver")]

@@ -27,13 +27,17 @@ pub struct ConsensusVote {
     pub approved: bool,
     /// Vote timestamp
     pub timestamp: u64,
-    /// Vote signature (placeholder)
-    pub signature: String,
+    /// Vote hash-signature (mock implementation using DefaultHasher for testing purposes only;
+    /// not a cryptographic signature — use a real signing library such as ed25519 for
+    /// production consensus).
+    pub mock_signature: String,
 }
 
 /// Distributed consensus for multi-node verification
 ///
-/// Implements Byzantine fault-tolerant consensus for test receipts
+/// Implements Byzantine fault-tolerant consensus for test receipts.
+/// **Note:** Vote signatures are mock hash-signatures (DefaultHasher) for testing
+/// purposes only. Replace with a real signing scheme (e.g., ed25519) for production use.
 pub struct DistributedConsensus {
     /// Node identifier
     node_id: String,
@@ -74,7 +78,7 @@ impl DistributedConsensus {
             receipt_id: receipt_id.clone(),
             approved,
             timestamp,
-            signature: format!("sig_{}_{:x}", self.node_id, sig_hash),
+            mock_signature: format!("mock_sig_{}_{:x}", self.node_id, sig_hash),
         };
 
         self.votes.entry(receipt_id).or_default().push(vote.clone());
@@ -525,7 +529,7 @@ mod tests {
             receipt_id: receipt_id.clone(),
             approved: true,
             timestamp: 0,
-            signature: "sig_node2".to_string(),
+            mock_signature: "mock_sig_node2".to_string(),
         };
         consensus.record_vote(vote2);
 
@@ -541,7 +545,7 @@ mod tests {
             receipt_id: receipt_id.clone(),
             approved: true,
             timestamp: 0,
-            signature: "sig_node3".to_string(),
+            mock_signature: "mock_sig_node3".to_string(),
         };
         consensus.record_vote(vote3);
 

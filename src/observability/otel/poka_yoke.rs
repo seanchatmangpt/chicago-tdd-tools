@@ -234,34 +234,20 @@ impl Span<state::Active> {
         })
     }
 
-    /// Add an attribute to the active span
+    /// Add a type-safe attribute to the active span.
     ///
     /// **Poka-yoke**: Only available on `Span<Active>`.
-    /// Compiler prevents calling this on completed spans.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    ///
-    /// # Errors
-    ///
-    /// This always returns `Ok(())` in the placeholder implementation.
+    /// The compiler prevents calling this on completed spans, ensuring
+    /// attributes cannot be added after a span has been finalized.
     pub fn add_attribute(&mut self, attr: ValidAttribute) {
         self.attributes.push(attr);
     }
 
-    /// Complete the span
+    /// Transition the span from `Active` to `Completed`.
     ///
-    /// **Poka-yoke**: Changes type from `Span<Active>` to `Span<Completed>`.
-    /// After this call, span cannot be modified.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    ///
-    /// # Errors
-    ///
-    /// This always returns `Ok` in the placeholder implementation.
+    /// **Poka-yoke**: Consumes `Span<Active>` and returns `Span<Completed>`.
+    /// After this call the span type changes, preventing further modification.
+    /// The end time is recorded at the moment of completion.
     #[must_use]
     pub fn complete(self) -> Span<state::Completed> {
         Span {

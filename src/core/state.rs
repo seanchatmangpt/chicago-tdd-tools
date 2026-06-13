@@ -185,14 +185,35 @@ mod tests {
 
     #[test]
     fn test_state_prevents_wrong_order() {
-        // This test demonstrates that the type system prevents calling
-        // methods in the wrong order. The following would not compile:
+        // Verify that only the lawful Arrange -> Act -> Assert path is reachable.
+        // Invalid transitions (e.g. calling assert() on Arrange, or constructing
+        // Act directly) are rejected at compile time by the type system — there
+        // is no assert() method on TestState<Arrange> and no public Act::new().
         //
-        // let state = TestState::<Arrange>::new();
-        // state.assert(); // ERROR: assert() not available on Arrange state
-        //
-        // let state = TestState::<Act>::new(); // ERROR: cannot create Act state directly
-        //
-        // This is the desired behavior - compile-time safety!
+        // This test confirms the positive invariant: every method in the lawful
+        // sequence is callable, and the final assert_that predicate fires
+        // exactly once with the value produced by the Act phase.
+
+        let mut predicate_called = false;
+
+        let arrange = TestState::<Arrange>::new().with_arrange_data(vec![10, 20, 30]);
+        let act = arrange.act().execute(|data| {
+            let mut v = data.unwrap_or_default();
+            v.push(40);
+            v
+        });
+        let result = act.assert();
+
+        // The act result must contain the four elements appended across both phases.
+        assert!(result.assert_that(|r| {
+            predicate_called = true;
+            r.map(|v| v == &[10u8, 20, 30, 40]).unwrap_or(false)
+        }));
+
+        // Ensure the predicate actually ran — not vacuously true.
+        assert!(predicate_called, "assert_that predicate was never invoked");
+
+        // Arrange data must remain accessible after the act phase.
+        assert_eq!(result.arrange_data(), Some(&vec![10u8, 20, 30]));
     }
 }

@@ -21,7 +21,31 @@ use fake::{Fake, Faker};
 #[cfg(feature = "otel")]
 use crate::observability::otel::types::{Span, SpanContext, SpanId, SpanStatus, TraceId};
 #[cfg(feature = "otel")]
+use std::sync::atomic::{AtomicU64, Ordering};
+#[cfg(feature = "otel")]
 use std::time::{SystemTime, UNIX_EPOCH};
+
+#[cfg(feature = "otel")]
+static SPAN_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+
+#[cfg(feature = "otel")]
+fn generate_trace_id() -> TraceId {
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(1);
+    let counter = u128::from(SPAN_ID_COUNTER.fetch_add(1, Ordering::Relaxed));
+    // Mix time and counter to produce a unique 128-bit trace ID
+    TraceId(nanos ^ counter.wrapping_mul(0x9e37_79b9_7f4a_7c15_9e37_79b9_7f4a_7c15))
+}
+
+#[cfg(feature = "otel")]
+fn generate_span_id() -> SpanId {
+    let counter = SPAN_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+    #[allow(clippy::cast_possible_truncation)]
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos() as u64)
+        .unwrap_or(1);
+    SpanId(nanos.wrapping_add(counter.wrapping_mul(0x517c_c1b7_27220a95)))
+}
 
 // ============================================================================
 // BUILDER PRESET SYSTEM
@@ -546,7 +570,7 @@ where
             .as_millis() as u64;
 
         let mut span = Span::new_active(
-            SpanContext::root(TraceId(12345), SpanId(67890), 1),
+            SpanContext::root(generate_trace_id(), generate_span_id(), 1),
             span_name.to_string(),
             start_time,
             std::collections::BTreeMap::new(),
@@ -662,7 +686,7 @@ impl<T> ValidatedTestDataBuilder<T> {
             .as_millis() as u64;
 
         let span = Span::new_active(
-            SpanContext::root(TraceId(12345), SpanId(67890), 1),
+            SpanContext::root(generate_trace_id(), generate_span_id(), 1),
             span_name.to_string(),
             start_time,
             std::collections::BTreeMap::new(),

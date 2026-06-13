@@ -28,10 +28,7 @@ impl OcelCollector {
     pub(crate) fn admit_event(
         &self,
         raw: &Evidence<TestOcelEvent, Raw, TestSuiteWitness>,
-    ) -> Result<
-        Evidence<TestOcelEvent, Admitted, TestSuiteWitness>,
-        TestEventRefusal,
-    > {
+    ) -> Result<Evidence<TestOcelEvent, Admitted, TestSuiteWitness>, TestEventRefusal> {
         let event = raw.inner();
 
         if event.case_id.is_empty() {

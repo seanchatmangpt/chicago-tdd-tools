@@ -24,8 +24,8 @@ use std::fmt::Write;
 /// ```rust
 /// use chicago_tdd_tools::coverage::{TotalCount, CoveredCount};
 ///
-/// let total = TotalCount::new(100).unwrap();
-/// let covered = CoveredCount::new(80).unwrap();
+/// let total = TotalCount::new(100);
+/// let covered = CoveredCount::new(80);
 ///
 /// // Validate: covered <= total
 /// assert!(covered.get() <= total.get());
@@ -39,16 +39,15 @@ impl TotalCount {
     /// Zero total count constant
     ///
     /// **Poka-Yoke**: Infallible constructor - no Option wrapping needed.
-    /// Use this instead of `TotalCount::new(0).unwrap()`.
+    /// Use this instead of `TotalCount::new(0)`.
     pub const ZERO: Self = Self(0);
 
-    /// Create a new total count (legacy API - prefer `from_usize`)
+    /// Create a new total count
     ///
-    /// **Note**: This always returns `Some`. For infallible construction, use `from_usize()`.
+    /// Any `usize` value is valid for total count. For clarity, `from_usize()` is an alias.
     #[must_use]
-    #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
-    pub const fn new(value: usize) -> Option<Self> {
-        Some(Self(value))
+    pub const fn new(value: usize) -> Self {
+        Self(value)
     }
 
     /// Create a new total count (infallible)
@@ -90,7 +89,7 @@ impl From<TotalCount> for usize {
 /// ```rust
 /// use chicago_tdd_tools::coverage::{TotalCount, CoveredCount};
 ///
-/// let total = TotalCount::new(100).unwrap();
+/// let total = TotalCount::new(100);
 /// let covered = CoveredCount::new_for_total(80, total).unwrap();
 ///
 /// // Validated: covered <= total
@@ -104,16 +103,16 @@ impl CoveredCount {
     /// Zero covered count constant
     ///
     /// **Poka-Yoke**: Infallible constructor - no Option wrapping needed.
-    /// Use this instead of `CoveredCount::new(0).unwrap()`.
+    /// Use this instead of `CoveredCount::new(0)`.
     pub const ZERO: Self = Self(0);
 
-    /// Create a new covered count (legacy API - prefer `from_usize`)
+    /// Create a new covered count
     ///
-    /// **Note**: This always returns `Some`. For infallible construction, use `from_usize()`.
+    /// Any `usize` value is valid for covered count (validation against total happens separately
+    /// via `new_for_total`). For clarity, `from_usize()` is an alias.
     #[must_use]
-    #[allow(clippy::unnecessary_wraps)] // API design - Option allows future validation without breaking changes
-    pub const fn new(value: usize) -> Option<Self> {
-        Some(Self(value))
+    pub const fn new(value: usize) -> Self {
+        Self(value)
     }
 
     /// Create a new covered count (infallible)
@@ -134,7 +133,7 @@ impl CoveredCount {
     /// ```rust
     /// use chicago_tdd_tools::coverage::{TotalCount, CoveredCount};
     ///
-    /// let total = TotalCount::new(100).unwrap();
+    /// let total = TotalCount::new(100);
     /// let covered = CoveredCount::new_for_total(80, total).unwrap(); // Valid
     /// assert_eq!(covered.get(), 80);
     /// let invalid = CoveredCount::new_for_total(150, total); // None - 150 > 100
@@ -179,7 +178,7 @@ impl From<CoveredCount> for usize {
 /// ```rust
 /// use chicago_tdd_tools::coverage::{CoveragePercentage, TotalCount, CoveredCount};
 ///
-/// let total = TotalCount::new(100).unwrap();
+/// let total = TotalCount::new(100);
 /// let covered = CoveredCount::new_for_total(80, total).unwrap();
 /// let percentage = CoveragePercentage::from_counts(covered, total).unwrap();
 ///
@@ -239,15 +238,15 @@ impl CoveragePercentage {
     /// ```rust
     /// use chicago_tdd_tools::coverage::{CoveragePercentage, TotalCount, CoveredCount};
     ///
-    /// let total = TotalCount::new(100).unwrap();
+    /// let total = TotalCount::new(100);
     /// let covered = CoveredCount::new_for_total(80, total).unwrap();
     /// let percentage = CoveragePercentage::from_counts(covered, total).unwrap();
     ///
     /// assert_eq!(percentage.get(), 80.0);
     ///
     /// // Division by zero case
-    /// let zero_total = TotalCount::new(0).unwrap();
-    /// let zero_covered = CoveredCount::new(0).unwrap();
+    /// let zero_total = TotalCount::new(0);
+    /// let zero_covered = CoveredCount::new(0);
     /// let result = CoveragePercentage::from_counts(zero_covered, zero_total);
     /// assert!(result.is_none()); // Cannot calculate percentage for zero total
     /// ```
@@ -377,7 +376,7 @@ mod tests {
 
     #[test]
     fn test_total_count() {
-        let total = TotalCount::new(100).unwrap();
+        let total = TotalCount::new(100);
         assert_eq!(total.get(), 100);
 
         let usize_value: usize = total.into();
@@ -386,7 +385,7 @@ mod tests {
 
     #[test]
     fn test_covered_count() {
-        let covered = CoveredCount::new(80).unwrap();
+        let covered = CoveredCount::new(80);
         assert_eq!(covered.get(), 80);
 
         let usize_value: usize = covered.into();
@@ -395,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_covered_count_validation() {
-        let total = TotalCount::new(100).unwrap();
+        let total = TotalCount::new(100);
 
         // Valid: covered <= total
         let covered = CoveredCount::new_for_total(80, total).unwrap();
@@ -432,11 +431,8 @@ mod tests {
         assert_eq!(report.covered.get(), 2);
 
         // Verify percentage using Poka-Yoke validated type
-        let expected_percentage = CoveragePercentage::from_counts(
-            CoveredCount::new(2).unwrap(),
-            TotalCount::new(3).unwrap(),
-        )
-        .unwrap();
+        let expected_percentage =
+            CoveragePercentage::from_counts(CoveredCount::new(2), TotalCount::new(3)).unwrap();
         assert_eq!(report.percentage.get(), expected_percentage.get());
     }
 
@@ -462,7 +458,7 @@ mod tests {
 
     #[test]
     fn test_coverage_percentage_from_counts() {
-        let total = TotalCount::new(100).unwrap();
+        let total = TotalCount::new(100);
         let covered = CoveredCount::new_for_total(80, total).unwrap();
 
         let percentage = CoveragePercentage::from_counts(covered, total).unwrap();

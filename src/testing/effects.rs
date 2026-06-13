@@ -237,8 +237,15 @@ impl RequiresEffect<NetworkRead> for HttpGet {
         if self.url.is_empty() {
             return Err("URL cannot be empty".to_string());
         }
-        Err("HTTP effects require an HTTP client dependency: enable the 'reqwest-client' feature"
-            .to_string())
+        if !self.url.starts_with("http://") && !self.url.starts_with("https://") {
+            return Err(format!(
+                "Invalid URL scheme — expected http:// or https://, got: {}",
+                self.url
+            ));
+        }
+        // Real HTTP execution requires the reqwest feature; without it we
+        // refuse explicitly so callers know why rather than silently succeeding.
+        Err("HTTP effects require an HTTP client feature (e.g. reqwest) — enable it to perform real network I/O".to_string())
     }
 }
 

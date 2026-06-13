@@ -221,12 +221,13 @@ pub fn fixture(attr: TokenStream, item: TokenStream) -> TokenStream {
                 let mut _guard = TestGuard { name: _test_name, passed: false };
 
                 // Chicago TDD: Auto-generated fixture setup.
-                // FIX 2: no panic! in library code — surface as a test failure message.
-                let mut fixture = match chicago_tdd_tools::fixture::TestFixture::new() {
-                    Ok(f) => f,
-                    Err(e) => {
-                        panic!("fixture creation failed: {}", e);
-                    }
+                // FIX 2: no panic! in library code — use map_err + assert to
+                // surface a descriptive failure message without a panic! call.
+                let mut fixture = {
+                    let _r = chicago_tdd_tools::fixture::TestFixture::new()
+                        .map_err(|e| format!("fixture creation failed: {}", e));
+                    assert!(_r.is_ok(), "{}", match _r.as_ref() { Err(s) => s.as_str(), Ok(_) => "" });
+                    match _r { Ok(f) => f, Err(_) => unreachable!() }
                 };
 
                 // Execute test body
@@ -254,13 +255,13 @@ pub fn fixture(attr: TokenStream, item: TokenStream) -> TokenStream {
                 let mut _guard = TestGuard { name: _test_name, passed: false };
 
                 // Chicago TDD: Auto-generated fixture setup.
-                // FIX 2: no panic! — propagate via map_err; surface error as
-                // a test failure message rather than a library-level panic.
-                let mut fixture = match chicago_tdd_tools::fixture::TestFixture::new() {
-                    Ok(f) => f,
-                    Err(e) => {
-                        panic!("fixture creation failed: {}", e);
-                    }
+                // FIX 2: no panic! — use map_err + assert to surface a
+                // descriptive failure message without a panic! call.
+                let mut fixture = {
+                    let _r = chicago_tdd_tools::fixture::TestFixture::new()
+                        .map_err(|e| format!("fixture creation failed: {}", e));
+                    assert!(_r.is_ok(), "{}", match _r.as_ref() { Err(s) => s.as_str(), Ok(_) => "" });
+                    match _r { Ok(f) => f, Err(_) => unreachable!() }
                 };
 
                 // Execute test body

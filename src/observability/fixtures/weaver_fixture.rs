@@ -181,11 +181,3 @@ impl WeaverTestFixture {
         ValidationResults::from_report_dir(self.output_dir())
     }
 }
-
-impl Default for WeaverTestFixture {
-    #[allow(clippy::panic)] // Test fixture - panic is acceptable if initialization fails
-    fn default() -> Self {
-        // **Kaizen improvement**: Use unwrap_or_else instead of expect for consistency
-        Self::new().unwrap_or_else(|err| panic!("Failed to initialise WeaverTestFixture: {err}"))
-    }
-}

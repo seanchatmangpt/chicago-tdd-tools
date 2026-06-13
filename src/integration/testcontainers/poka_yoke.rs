@@ -48,7 +48,7 @@ pub mod state {
 /// // Create stopped container
 /// let container: Container<Stopped> = Container::new(...)?;
 ///
-/// // Start container (changes type to Running)
+/// // Start container (changes type to Running, performs real Docker start)
 /// let container: Container<Running> = container.start()?;
 ///
 /// // Can exec on running container
@@ -61,10 +61,14 @@ pub mod state {
 /// // container.exec("echo", &["hello"])?; // ERROR!
 /// ```
 pub struct Container<S> {
-    /// Container ID (internal)
-    id: String,
-    /// Client reference (internal)
+    /// Image name (e.g. "alpine")
+    image: String,
+    /// Image tag (e.g. "latest")
+    tag: String,
+    /// Client reference used to spawn real containers
     client: crate::testcontainers::ContainerClient,
+    /// Running container handle — present only in the `Running` state
+    running: Option<crate::testcontainers::GenericContainer>,
     /// State marker (compile-time guarantee)
     _state: PhantomData<S>,
 }
@@ -76,10 +80,7 @@ impl Container<state::Stopped> {
     /// **Poka-yoke**: Returns `Container<Stopped>` - cannot exec until started.
     ///
     /// Validates that `image` and `tag` are non-empty before constructing
-    /// the handle. This creates a type-safe handle. Call `start()` to
-    /// instantiate the real container.
-    ///
-    /// In production, use `ContainerClient` for real Docker lifecycle management.
+    /// the handle. Call `start()` to launch the real Docker container.
     ///
     /// # Errors
     ///
@@ -99,88 +100,113 @@ impl Container<state::Stopped> {
                 "image tag must not be empty".to_string(),
             ));
         }
-        Ok(Self { id: format!("{image}:{tag}"), client, _state: PhantomData })
+        Ok(Self {
+            image: image.to_string(),
+            tag: tag.to_string(),
+            client,
+            running: None,
+            _state: PhantomData,
+        })
     }
 
-    /// Type-state transition only. In production, use `ContainerClient` for real Docker
-    /// lifecycle management.
+    /// Start the container, performing real Docker I/O.
     ///
     /// **Poka-yoke**: Changes type from `Container<Stopped>` to `Container<Running>`.
-    /// After this call, the type permits exec and port-mapping calls.
+    /// After this call the type permits exec and port-mapping calls.
+    ///
+    /// The container is kept alive with `sleep infinity` so that subsequent
+    /// `exec()` calls succeed. Use `stop()` to terminate it and reclaim the
+    /// `Container<Stopped>` handle.
     ///
     /// # Errors
     ///
-    /// Always returns `Ok` — this is a compile-time safety transition, not a real
-    /// Docker start operation.
-    #[allow(clippy::unnecessary_wraps)] // Type-state transition only — no Docker I/O
+    /// Returns `Err` if Docker is unavailable or the image cannot be pulled/started.
     pub fn start(self) -> crate::testcontainers::TestcontainersResult<Container<state::Running>> {
-        Ok(Container { id: self.id, client: self.client, _state: PhantomData })
+        let generic = crate::testcontainers::GenericContainer::with_command(
+            self.client.client(),
+            &self.image,
+            &self.tag,
+            "sleep",
+            &["infinity"],
+            None,
+        )?;
+        Ok(Container {
+            image: self.image,
+            tag: self.tag,
+            client: self.client,
+            running: Some(generic),
+            _state: PhantomData,
+        })
     }
 }
 
 #[cfg(feature = "testcontainers")]
 impl Container<state::Running> {
-    /// Execute a command in the running container
+    /// Execute a command in the running container.
     ///
     /// **Poka-yoke**: Only available on `Container<Running>`.
     /// Compiler prevents calling this on stopped containers.
     ///
     /// # Errors
     ///
-    /// Returns error if command execution fails or container stops unexpectedly.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
+    /// Returns error if command execution fails or the inner container handle
+    /// is unexpectedly absent (indicates an internal logic bug).
     pub fn exec(
         &self,
-        _command: &str,
-        _args: &[&str],
+        command: &str,
+        args: &[&str],
     ) -> crate::testcontainers::TestcontainersResult<crate::testcontainers::exec::ExecResult> {
-        // Exec logic here - only works on running containers
-        // This is a placeholder - actual implementation would execute command
-        Err(crate::testcontainers::TestcontainersError::OperationFailed(
-            "Use ContainerClient for real container execution. This poka-yoke type demonstrates compile-time lifecycle safety only.".to_string(),
-        ))
+        let container = self.running.as_ref().ok_or_else(|| {
+            crate::testcontainers::TestcontainersError::OperationFailed(
+                "Running container handle is missing — this is an internal bug.".to_string(),
+            )
+        })?;
+        container.exec(command, args)
     }
 
-    /// Get host port for container port
+    /// Get host port for a container port.
     ///
     /// **Poka-yoke**: Only available on `Container<Running>`.
     /// Compiler prevents calling this on stopped containers.
     ///
     /// # Errors
     ///
-    /// Returns error if port mapping fails.
-    ///
-    /// # Note
-    ///
-    /// This is a placeholder for poka-yoke design demonstration.
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)] // Placeholder - will be implemented later
+    /// Returns error if port mapping fails or the port is not exposed.
     pub fn get_host_port(
         &self,
-        _container_port: u16,
+        container_port: u16,
     ) -> crate::testcontainers::TestcontainersResult<u16> {
-        // Port mapping logic here - only works on running containers
-        Err(crate::testcontainers::TestcontainersError::OperationFailed(
-            "Use ContainerClient for real container execution. This poka-yoke type demonstrates compile-time lifecycle safety only.".to_string(),
-        ))
+        let container = self.running.as_ref().ok_or_else(|| {
+            crate::testcontainers::TestcontainersError::OperationFailed(
+                "Running container handle is missing — this is an internal bug.".to_string(),
+            )
+        })?;
+        container.get_host_port(container_port)
     }
 
-    /// Type-state transition only. In production, use `ContainerClient` for real Docker
-    /// lifecycle management.
+    /// Stop the running container, performing real Docker I/O.
     ///
     /// **Poka-yoke**: Changes type from `Container<Running>` to `Container<Stopped>`.
-    /// After this call, the type forbids exec and port-mapping calls at compile time.
+    /// After this call the type forbids exec and port-mapping calls at compile time.
+    ///
+    /// Dropping the inner `GenericContainer` triggers automatic cleanup via its
+    /// `Drop` implementation.
     ///
     /// # Errors
     ///
-    /// Always returns `Ok` — this is a compile-time safety transition, not a real
-    /// Docker stop operation.
-    #[allow(clippy::unnecessary_wraps)] // Type-state transition only — no Docker I/O
+    /// Currently infallible; the inner container is dropped (and Docker cleanup
+    /// happens automatically). Returns `Ok` once cleanup is complete.
+    #[allow(clippy::unnecessary_wraps)] // Public API — callers use `?`; future Docker stop I/O may return Err
     pub fn stop(self) -> crate::testcontainers::TestcontainersResult<Container<state::Stopped>> {
-        Ok(Container { id: self.id, client: self.client, _state: PhantomData })
+        // Dropping `running` stops and removes the Docker container via Drop.
+        drop(self.running);
+        Ok(Container {
+            image: self.image,
+            tag: self.tag,
+            client: self.client,
+            running: None,
+            _state: PhantomData,
+        })
     }
 }
 

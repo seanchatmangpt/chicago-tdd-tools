@@ -163,9 +163,9 @@ pub mod lifecycle {
         /// Returns `true` if the process has not yet exited.
         #[must_use]
         pub fn is_running(&mut self) -> bool {
-            self.process.as_mut().is_some_and(|child| {
-                child.try_wait().map_or(true, |status| status.is_none())
-            })
+            self.process
+                .as_mut()
+                .is_some_and(|child| child.try_wait().map_or(true, |status| status.is_none()))
         }
 
         /// Stop the Weaver validator

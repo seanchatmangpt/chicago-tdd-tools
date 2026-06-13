@@ -506,8 +506,537 @@ impl OperatorRegistry {
             ),
         );
 
-        // Additional patterns can be added to reach 43 total
-        // For now, this provides a representative sample
+        // Advanced Branching and Synchronization continued (8-14)
+
+        operators.insert(
+            "multi_merge_op".to_string(),
+            OperatorDescriptor::new(
+                "multi_merge_op",
+                8,
+                "Multi-Merge",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Legality, GuardType::Causality],
+            ),
+        );
+
+        operators.insert(
+            "structured_disc_op".to_string(),
+            OperatorDescriptor::new(
+                "structured_disc_op",
+                9,
+                "Structured Discriminator",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Legality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "blocking_disc_op".to_string(),
+            OperatorDescriptor::new(
+                "blocking_disc_op",
+                10,
+                "Blocking Discriminator",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "cancelling_disc_op".to_string(),
+            OperatorDescriptor::new(
+                "cancelling_disc_op",
+                11,
+                "Cancelling Discriminator",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget, GuardType::Causality],
+            ),
+        );
+
+        operators.insert(
+            "local_sync_merge_op".to_string(),
+            OperatorDescriptor::new(
+                "local_sync_merge_op",
+                12,
+                "Local Synchronizing Merge",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Causality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "general_sync_merge_op".to_string(),
+            OperatorDescriptor::new(
+                "general_sync_merge_op",
+                13,
+                "General Synchronizing Merge",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Causality, GuardType::Chronology, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "thread_merge_op".to_string(),
+            OperatorDescriptor::new(
+                "thread_merge_op",
+                14,
+                "Thread Merge",
+                "Advanced Branching",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Causality],
+            ),
+        );
+
+        // Structural Patterns continued (16-19, 21-24, 26-27)
+
+        operators.insert(
+            "implicit_termination_op".to_string(),
+            OperatorDescriptor::new(
+                "implicit_termination_op",
+                16,
+                "Implicit Termination",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                1_000_000_000,
+                vec![GuardType::Legality],
+            ),
+        );
+
+        operators.insert(
+            "explicit_termination_op".to_string(),
+            OperatorDescriptor::new(
+                "explicit_termination_op",
+                17,
+                "Explicit Termination",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                1_000_000_000,
+                vec![GuardType::Legality],
+            ),
+        );
+
+        operators.insert(
+            "transient_trigger_op".to_string(),
+            OperatorDescriptor::new(
+                "transient_trigger_op",
+                18,
+                "Transient Trigger",
+                "Structural",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                2_000_000_000,
+                vec![GuardType::Legality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "persistent_trigger_op".to_string(),
+            OperatorDescriptor::new(
+                "persistent_trigger_op",
+                19,
+                "Persistent Trigger",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                2_000_000_000,
+                vec![GuardType::Legality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "structured_loop_op".to_string(),
+            OperatorDescriptor::new(
+                "structured_loop_op",
+                21,
+                "Structured Loop",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                30_000_000_000,
+                vec![GuardType::Recursion, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "recursion_op".to_string(),
+            OperatorDescriptor::new(
+                "recursion_op",
+                22,
+                "Recursion",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                30_000_000_000,
+                vec![GuardType::Recursion, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "transient_partial_join_op".to_string(),
+            OperatorDescriptor::new(
+                "transient_partial_join_op",
+                23,
+                "Transient Partial Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Causality],
+            ),
+        );
+
+        operators.insert(
+            "persistent_partial_join_op".to_string(),
+            OperatorDescriptor::new(
+                "persistent_partial_join_op",
+                24,
+                "Persistent Partial Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Causality],
+            ),
+        );
+
+        operators.insert(
+            "persistent_partial_and_join_op".to_string(),
+            OperatorDescriptor::new(
+                "persistent_partial_and_join_op",
+                26,
+                "Persistent Partial AND-Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Causality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "generalized_and_join_op".to_string(),
+            OperatorDescriptor::new(
+                "generalized_and_join_op",
+                27,
+                "Generalized AND-Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Causality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "blocking_partial_join_op".to_string(),
+            OperatorDescriptor::new(
+                "blocking_partial_join_op",
+                28,
+                "Blocking Partial Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget, GuardType::Causality],
+            ),
+        );
+
+        operators.insert(
+            "cancelling_partial_join_op".to_string(),
+            OperatorDescriptor::new(
+                "cancelling_partial_join_op",
+                29,
+                "Cancelling Partial Join",
+                "Structural",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget, GuardType::Causality],
+            ),
+        );
+
+        // Multiple Instance Patterns continued (31-32)
+
+        operators.insert(
+            "mi_without_sync_op".to_string(),
+            OperatorDescriptor::new(
+                "mi_without_sync_op",
+                31,
+                "Multiple Instances Without Synchronization",
+                "Multiple Instance",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                50_000_000_000,
+                vec![GuardType::Budget, GuardType::Recursion],
+            ),
+        );
+
+        operators.insert(
+            "mi_with_priori_design_op".to_string(),
+            OperatorDescriptor::new(
+                "mi_with_priori_design_op",
+                32,
+                "Multiple Instances With A Priori Design Time Knowledge",
+                "Multiple Instance",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                30_000_000_000,
+                vec![GuardType::Budget, GuardType::Recursion],
+            ),
+        );
+
+        // State-Based Patterns continued (33-34, 36-38)
+
+        operators.insert(
+            "deferred_choice_state_op".to_string(),
+            OperatorDescriptor::new(
+                "deferred_choice_state_op",
+                33,
+                "Deferred Choice (State-Based)",
+                "State-Based",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "interleaved_parallel_routing_op".to_string(),
+            OperatorDescriptor::new(
+                "interleaved_parallel_routing_op",
+                34,
+                "Interleaved Parallel Routing",
+                "State-Based",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Chronology],
+            ),
+        );
+
+        operators.insert(
+            "milestone_op".to_string(),
+            OperatorDescriptor::new(
+                "milestone_op",
+                36,
+                "Milestone",
+                "State-Based",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Chronology, GuardType::Legality],
+            ),
+        );
+
+        operators.insert(
+            "critical_section_op".to_string(),
+            OperatorDescriptor::new(
+                "critical_section_op",
+                37,
+                "Critical Section",
+                "State-Based",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "interleaved_routing_op".to_string(),
+            OperatorDescriptor::new(
+                "interleaved_routing_op",
+                38,
+                "Interleaved Routing",
+                "State-Based",
+                OperatorProperties {
+                    deterministic: false,
+                    idempotent: false,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                10_000_000_000,
+                vec![GuardType::Legality, GuardType::Chronology],
+            ),
+        );
+
+        // Cancellation and Force Completion continued (39, 41-42)
+
+        operators.insert(
+            "cancel_activity_op".to_string(),
+            OperatorDescriptor::new(
+                "cancel_activity_op",
+                39,
+                "Cancel Activity",
+                "Cancellation",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                1_000_000_000,
+                vec![GuardType::Legality],
+            ),
+        );
+
+        operators.insert(
+            "cancel_case_op".to_string(),
+            OperatorDescriptor::new(
+                "cancel_case_op",
+                41,
+                "Cancel Case",
+                "Cancellation",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                2_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget],
+            ),
+        );
+
+        operators.insert(
+            "cancel_mi_op".to_string(),
+            OperatorDescriptor::new(
+                "cancel_mi_op",
+                42,
+                "Cancel Multiple Instance Activity",
+                "Cancellation",
+                OperatorProperties {
+                    deterministic: true,
+                    idempotent: true,
+                    type_preserving: true,
+                    bounded: true,
+                },
+                5_000_000_000,
+                vec![GuardType::Legality, GuardType::Budget, GuardType::Recursion],
+            ),
+        );
 
         Self { operators }
     }
