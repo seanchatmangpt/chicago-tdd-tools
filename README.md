@@ -984,10 +984,10 @@ cargo make build-release   # Optimized binary
 **Backward compatible** — existing `prelude` and crate-root imports continue to work; the new capabilities are additive and feature-gated.
 
 **📖 Documentation**:
-- [Release Notes](docs/releases/RELEASE_NOTES_v26.6.11.md) - Complete feature documentation
-- [GitHub Release](docs/releases/GITHUB_RELEASE_v26.6.11.md) - GitHub release notes
+- [Release Notes v26.6.121](docs/releases/RELEASE_NOTES_v26.6.121.md) - Complete feature documentation
+- [GitHub Release v26.6.121](docs/releases/GITHUB_RELEASE_v26.6.121.md) - GitHub release notes
 - [Changelog](docs/releases/CHANGELOG.md) - Full change history
-- [Release Checklist](docs/releases/RELEASE_CHECKLIST_v1.4.0.md) - Pre-release verification
+- [OCEL 2.0 Process Mining](docs/OCEL.md) · [Agent Governance](docs/governance_architecture.md) - New module guides
 
 ---
 

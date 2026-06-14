@@ -530,6 +530,76 @@ Weaver live validation. Registry integration. OTLP/Admin ports.
 
 **Requirements**: `weaver` feature (automatically enables `otel`).
 
+## observability::ocel
+
+OCEL 2.0 process mining. Turns test execution into Object-Centric Event Logs and proves the runtime process conformed to the declared one. Built on the published `wasm4pm-compat` crate's one-way `Raw → Admitted → Receipted` evidence lifecycle — there is no bypass to admitted/receipted state.
+
+**Types**:
+- `TestOcelEvent`, `OcelLog`, `TestObject` (OCEL 2.0 carriers)
+- `TestActivity`, `TestObjectType` (event/object taxonomies)
+- `OcelCollector` (a `DiagnosticSink` that captures test diagnostics as OCEL events)
+- `TestSuiteWitness`, `TestEventRefusal` (admission witness + refusal reasons)
+- `ProcessModelStore` (discovery model cache, `ocel-generation-discovery`)
+
+**Methods/Functions**:
+- `OcelCollector::new(output_path: Option<PathBuf>) -> Self` - Create collector
+- `seal_run(collector, run_id) -> Result<(Evidence<OcelLog, Receipted, _>, String), String>` - Seal a run into a receipted log + hex digest
+- `project_admission_events(log) -> Evidence<OcelLog, Projected, _>` - Project an admitted log
+- `graduate_for_discovery(...)` - Surface a `GraduationCandidate` when the mined process diverges (`ocel-generation-discovery`)
+
+**Pattern**: events are admitted via `Admission::new(event).into_evidence()` (validates case IDs, timestamp monotonicity, object references), then `seal_run(...)` yields a digest to pin in CI.
+
+**Requirements**: `ocel-generation` feature (`ocel-generation-discovery` adds process discovery).
+
+## core::governance
+
+Agent governance loop — diagnostic/severity primitives and routing for compile-time and runtime law enforcement.
+
+**Types**:
+- `Severity`, `DiagnosticCategory`, `DiagnosticCode`, `Diagnostic`, `SourceLocation`
+- `DiagnosticSink` (trait), `TaskReceipt`
+- `RunSummary`, `RunId`, `AgentId`
+- `AdmissionMetadata`, `SubstrateDelta`, `ContributionKind` (laws)
+- `SectorStack` (trait), `MergeStrategy`, `ProcessIntelligenceSector` (sectors)
+
+**Methods/Functions**:
+- `DiagnosticCode::new(domain, category, ordinal)` / `::parse(s) -> Result<Self, String>`
+- `Diagnostic::validate() -> Result<(), String>`
+- `TaskReceipt::validate()` / `::sign(secret)`
+- Channel: `register_sink`, `register_domain`, `set_run_id`, `emit_diagnostic`, `on_test_started`/`on_test_completed`, `close_channel() -> Result<RunSummary, String>`
+
+**Pattern**: register a `DiagnosticSink`, set the run id, emit `Diagnostic`s through the global channel, then `close_channel()` for a `RunSummary`.
+
+## swarm::wave
+
+Wave orchestration — N-phase sequential waves with M parallel tasks, with wave-state observability and failure classification.
+
+**Types**:
+- `Wave`, `WavePhase`, `WaveStatus` (`Queued`/`Executing`/`Completed`/`Failed`)
+- `WaveReceipt`, `PhaseReceipt`, `ResidualClass`
+
+**Methods**:
+- `Wave::new(id) -> Self`, `add_phase(name, tasks)`
+- `is_success() -> bool`, `success_count() -> usize`, `total_tasks() -> usize`
+
+**Pattern**: `Wave::new(id)` → `add_phase(...)` per phase → inspect `WaveReceipt`/`ResidualClass`.
+
+## operator_registry
+
+The 43 YAWL workflow control patterns, each characterized by its control-flow law and guard requirements.
+
+**Types**:
+- `OperatorRegistry`, `OperatorDescriptor`, `OperatorProperties`
+- `GuardType` (Legality, Budget, Chronology, Causality, Recursion)
+
+**Methods/Functions**:
+- `OperatorRegistry::new()`, `get_operator(hook_id)`, `all_operators()`
+- `count_by_category()`, `count_deterministic()`/`count_idempotent()`/`count_type_preserving()`/`count_bounded()`
+- `operators_with_guard(guard)`, `operators_fully_deterministic()`
+- `global_registry() -> &'static OperatorRegistry`
+
+**Pattern**: `global_registry().get_operator(hook_id)` to look up a pattern's properties and guards.
+
 ## prelude
 
 Re-exports commonly used items. Feature-gated exports.

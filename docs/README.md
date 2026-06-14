@@ -31,6 +31,8 @@ Step-by-step guides to learn Chicago TDD Tools:
 Goal-focused guides to accomplish specific tasks:
 
 ### Core Features
+- **[OCEL 2.0 Process Mining](OCEL.md)** - Mine test runs as Object-Centric Event Logs (feature `ocel-generation`)
+- **[Agent Governance Architecture](governance_architecture.md)** - Diagnostic channel, laws, and sector stacks (`core::governance`)
 - **[Weaver Live Check](features/WEAVER_LIVE_CHECK.md)** - Weaver integration testing
 - **[Perfect Weaver Live Check](features/PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation with diagrams
 - **[Timeout Enforcement](features/TIMEOUT_ENFORCEMENT.md)** - Timeout handling patterns
@@ -112,7 +114,8 @@ Background, context, and understanding of how/why things work:
 
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
-- **[Release Notes v1.2.0](releases/RELEASE_NOTES_v1.2.0.md)** - Current release (v1.2.0)
+- **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Current release (v26.6.121)
+- **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121
 - **[Release Notes](releases/)** - Detailed release documentation
 
 ### Diagrams
@@ -148,6 +151,7 @@ docs/
 **Testing**: [Quick Guide](getting-started/QUICK_GUIDE.md) | [User Guide](getting-started/USER_GUIDE.md) | [CLI Testing](testing/cli-testing-guide.md)  
 **Architecture**: [Architecture](reference/ARCHITECTURE.md) | [API Reference](reference/API_REFERENCE.md)  
 **Quality**: [SPR Guide](process/SPR_GUIDE.md) | [Code Review](process/CODE_REVIEW_CHECKLIST.md) | [SLA](reference/SLA_REFERENCE.md)  
+**Process Mining**: [OCEL 2.0](OCEL.md) | **Governance**: [Architecture](governance_architecture.md)  
 **Weaver**: [Weaver Live Check](features/WEAVER_LIVE_CHECK.md) | [Diagrams](diagrams/)  
 **Releases**: [CHANGELOG](releases/CHANGELOG.md) | [Release Notes](releases/)
 

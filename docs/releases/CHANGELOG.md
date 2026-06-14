@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.6.121] - 2026-06-13
+
+### Added
+- **OCEL 2.0 process mining** (`observability::ocel`, feature `ocel-generation`): turns test execution into Object-Centric Event Logs. New modules `collector`, `discovery`, `projections`, `types`, `wasm4pm`; types `TestOcelEvent`, `OcelLog`, `TestObject`, `TestActivity`, `TestObjectType`; `OcelCollector` (a `DiagnosticSink` that captures events), `seal_run()` (seals a run into a receipted log + digest), and `project_admission_events()`. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate, which enforces the one-way `Raw → Admitted → Receipted` evidence lifecycle.
+- **Process discovery** (feature `ocel-generation-discovery`): `ProcessModelStore` and `graduate_for_discovery()` surface `GraduationCandidate`s where the mined process diverges from the declared model.
+- **Governance module** (`core::governance`): diagnostic/severity primitives for the agent governance loop — `Severity`, `DiagnosticCategory`, `DiagnosticCode`, `Diagnostic`, `DiagnosticSink`, `TaskReceipt`; a global diagnostic `channel` (`register_sink`, `emit_diagnostic`, `set_run_id`, `close_channel`, …); admission `laws` (`AdmissionMetadata`, `SubstrateDelta`, `ContributionKind`); and `sector` stacks (`SectorStack`, `MergeStrategy`).
+- **Wave orchestration** (`swarm::wave`): N-phase sequential waves with M parallel tasks — `Wave`, `WavePhase`, `WaveStatus`, `WaveReceipt`, `PhaseReceipt`, and `ResidualClass` failure classification.
+- **Full YAWL operator registry** (`operator_registry`): all **43** YAWL workflow control patterns registered via `OperatorRegistry`/`OperatorDescriptor`/`OperatorProperties`, each characterized by its control-flow law and `GuardType`s; `global_registry()` accessor.
+- **`chicago-tdd-lsp`** crate: editor guard that emits `CTDD-DEV-001` when `chicago-tdd-tools` appears in `[dependencies]` instead of `[dev-dependencies]` (built on lsp-max).
+- Feature flags `ocel-generation` and `ocel-generation-discovery`.
+- Documentation: `docs/OCEL.md` (OCEL 2.0 generation guide) and `docs/governance_architecture.md` (agent governance architecture).
+
+### Changed
+- Migrated OCEL evidence handling from the in-tree vendored `wasm4pm-compat` to the published `26.6.11` crate (associated-type `Admit`, `Witness`/`WitnessFamily`, `Admission::new().into_evidence()` as the sole path to admitted evidence).
+- Consolidated workspace version to `26.6.121`.
+- `HttpGet::execute()` (`testing::effects`) now returns an explicit feature-missing error instead of silently succeeding when no HTTP client feature is enabled — test-double semantics.
+- Wired the testcontainers `Container` type-state machine to a real `GenericContainer` (start/exec/get_host_port/stop).
+- Tuned build timeouts for the heavier `testcontainers`/`bollard` dependency graph: `fmt` 5s→30s, `check` 30s→60s.
+- Excluded `chicago-tdd-lsp` from the root workspace build so the root `check`/CI never resolves `lsp-max` against the published `wasm4pm-compat` (which lacks the `fresh_names` module the local source provides).
+
+### Fixed
+- Eliminated **93 stubs and cheats** (69 + 24) across `core`, `testing`, `observability`, and `integration` — placeholders replaced with real implementations (verification-pipeline phases 3 & 4, dog-fooding string-literal scanner, proc-macro panic removal, weaver fixture `Default` panic removal, and more).
+- Resolved all `--all-features` clippy errors across the `ocel`, `otel`, `weaver`, `property`, and `testcontainers` modules (0 warnings under `all`/`pedantic`/`nursery`/`cargo`).
+- Fixed proc_macros doc-test imports (test-unit now runs `--lib`).
+- Added missing `lint`/`fmt`/`test-unit` task stubs to sub-crate `Makefile.toml` files so the workspace runner resolves every root task.
+
+### Security
+- Upgraded `testcontainers` `^0.25 → ^0.27` to clear `astral-tokio-tar` advisories.
+
 ## [26.6.11] - 2026-06-11
 
 ### Changed

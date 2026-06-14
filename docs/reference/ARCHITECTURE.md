@@ -38,6 +38,7 @@ Modules are organized into capability groups for better discoverability and main
 - `const_assert`: Compile-time assertions
 - `type_level`: Type-level arithmetic and compile-time validation (const generics, type-level arithmetic)
 - `alert`: Alert helpers for visual problem indicators (with optional `log` crate integration, requires `logging` feature)
+- `governance`: Agent governance loop — diagnostic/severity types, global diagnostic channel, admission laws, sector stacks (`Diagnostic`, `DiagnosticSink`, `SectorStack`, `MergeStrategy`)
 
 **Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
 - `property`: Property-based testing (const generics, reproducible, requires `property-testing` feature)
@@ -56,9 +57,18 @@ Modules are organized into capability groups for better discoverability and main
 **Telemetry & Observability** (`observability/`): Telemetry validation.
 - `otel`: OTEL validation (span/metric validation, schema conformance, requires `otel` feature)
 - `weaver`: Weaver live validation (live validation, registry, OTLP, requires `weaver` feature, automatically enables `otel`)
+- `ocel`: OCEL 2.0 process mining (Object-Centric Event Logs from test runs, `Raw → Admitted → Receipted` evidence lifecycle on `wasm4pm-compat`, requires `ocel-generation`; process discovery via `ocel-generation-discovery`)
 
 **Integration Testing** (`integration/`): External system integration.
 - `testcontainers`: Docker support (port mapping, exec, auto-cleanup, requires `testcontainers` feature)
+
+**Orchestration** (`swarm/`): Distributed multi-sector coordination.
+- `wave`: N-phase sequential waves with M parallel tasks, wave-state observability, `ResidualClass` failure classification
+
+**Workflow Patterns** (crate root):
+- `operator_registry`: All 43 YAWL workflow control patterns (`OperatorRegistry`, `GuardType`, `global_registry()`)
+
+**Companion crate** (`crates/chicago-tdd-lsp/`): Editor guard built on lsp-max — emits `CTDD-DEV-001` when `chicago-tdd-tools` is placed in `[dependencies]` instead of `[dev-dependencies]`. Excluded from the root workspace build.
 
 **Backward Compatibility**: All modules are re-exported at the crate root. Existing code using `chicago_tdd_tools::fixture::*` continues to work. New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 
