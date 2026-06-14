@@ -100,6 +100,12 @@ See [Observability & Weaver](#observability--weaver) section below.
 
 ---
 
+### 6️⃣ Proving Process Conformance? → OCEL Process Mining
+
+See [Process Mining (OCEL)](#process-mining-ocel) section below.
+
+---
+
 ## Core Capabilities (With Real Examples)
 
 ### 1. Essential Testing Macros
@@ -630,6 +636,39 @@ WEAVER_ALLOW_SKIP=1 cargo make test-integration
 
 ---
 
+## Process Mining (OCEL)
+
+Turn test execution into an **Object-Centric Event Log (OCEL 2.0)** and prove that the runtime process actually conformed to the declared one. Built on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) crate, which enforces a one-way evidence lifecycle: events start `Raw`, must pass an admission gate to become `Admitted`, and are finalized into a `Receipted` log with a digest. There is no bypass — invalid evidence cannot reach the receipted state.
+
+```rust
+use chicago_tdd_tools::observability::ocel::*;   // feature = "ocel-generation"
+
+test!(test_ocel_collector, {
+    // Arrange: a collector that captures test diagnostics as OCEL events
+    let collector = OcelCollector::new();
+
+    // Act: events are admitted (case_id, timestamp monotonicity, and
+    // object references are validated) then sealed into a receipted log
+    // … collector accumulates events during the run …
+
+    // Assert: the sealed log carries a stable digest you can pin in CI
+    // let (receipted_log, digest_hex) = seal_run(&collector, run_id)?;
+    // assert!(!digest_hex.is_empty());
+});
+```
+
+**What you get**:
+- **OCEL 2.0 event logs** — `TestOcelEvent`, `OcelLog`, `TestObject` typed carriers
+- **Admission gate** — events validated for lawful case IDs, timestamp monotonicity, and object references before they count
+- **Receipted logs** — each sealed run yields a digest for tamper-evident pinning
+- **Process discovery** (`ocel-generation-discovery`) — surfaces `GraduationCandidate`s where the mined process diverges from the declared model
+
+> **Doctrine**: *If the code says it worked but the event log cannot prove a lawful process happened, then it did not work.* Model-vs-log mismatch is a defect, not a discrepancy.
+
+**📖 Example**: See `tests/ocel_tests.rs`
+
+---
+
 ## Build System (Important!)
 
 **⚠️ Always use `cargo make`, never raw `cargo`:**
@@ -733,11 +772,13 @@ alert_debug!("State: {:?}", state);         // 🔍 Diagnostics
 chicago-tdd-tools = {
     path = "../chicago-tdd-tools",
     features = [
-        "testing-extras",      # property-testing + snapshot-testing + fake data (most common)
-        "otel",                # OpenTelemetry span/metric validation
-        "weaver",              # Weaver semantic convention live-check (implies otel)
-        "testcontainers",      # Docker container support
-        "async",               # Async fixture providers (Rust 1.75+)
+        "testing-extras",            # property-testing + snapshot-testing + fake data (most common)
+        "otel",                      # OpenTelemetry span/metric validation
+        "weaver",                    # Weaver semantic convention live-check (implies otel)
+        "testcontainers",            # Docker container support
+        "async",                     # Async fixture providers (Rust 1.75+)
+        "ocel-generation",           # OCEL 2.0 event logs from test runs (wasm4pm-compat)
+        "ocel-generation-discovery", # + process discovery / graduation candidates
     ]
 }
 ```
@@ -746,7 +787,10 @@ chicago-tdd-tools = {
 - **80% use case**: `["testing-extras"]` (property + snapshot + fake data)
 - **Full testing**: `["testing-extras", "testcontainers"]`
 - **With observability**: `["testing-extras", "otel", "weaver"]`
-- **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async"]`
+- **With process mining**: `["testing-extras", "ocel-generation"]`
+- **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async", "ocel-generation-discovery"]`
+
+> **Process mining** (`ocel-generation`) builds on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) `26.6.11` crate, which supplies the one-way `Evidence` lifecycle (`Raw → Admitted → Receipted`) and OCEL 2.0 standard types. See [Process Mining (OCEL)](#process-mining-ocel) below.
 
 ---
 
@@ -912,27 +956,32 @@ cargo make build-release   # Optimized binary
 
 ---
 
-## What's New in v1.4.0+
+## What's New in v26.6.121
 
-**Production-Grade Verification Infrastructure**:
+**Process Truth & Governance** (latest):
+
+- 🔬 **OCEL 2.0 Process Mining** *(new module)* - `observability::ocel` turns test runs into Object-Centric Event Logs with a one-way `Raw → Admitted → Receipted` evidence lifecycle. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate (migrated off the in-tree vendor). See [Process Mining (OCEL)](#process-mining-ocel).
+- ⚖️ **Governance Module** *(new)* - `core::governance` adds diagnostic/severity types, law enforcement primitives, channels, and sectors as the baseline for compile-time law-enforcement macros.
+- 🌊 **Wave Orchestration** *(new)* - `swarm::wave` runs N-phase sequential waves with M parallel tasks, with wave-state observability and failure classification (`ResidualClass`).
+- 📋 **Full YAWL Operator Registry** - All **43** YAWL workflow control patterns now registered, each characterized by its control-flow law.
+- 🧩 **chicago-tdd-lsp** *(new crate)* - Editor guard that emits `CTDD-DEV-001` whenever `chicago-tdd-tools` lands in `[dependencies]` instead of `[dev-dependencies]`.
+
+**Hardening**:
+
+- ✅ **93 stubs & cheats eliminated** - Across core, testing, observability, and integration; placeholders replaced with real implementations (HTTP effect semantics, testcontainers state machine, string-literal scanner, verification pipeline phases 3 & 4, …).
+- ✅ **Clean strict build** - 445 unit tests passing, 0 clippy warnings (`all`/`pedantic`/`nursery`/`cargo`), zero `unwrap`/`expect` in production code.
+- ✅ **6-gate pre-push** - check → clippy → error-handling scan → fmt → unit tests → examples → docs, with timeouts tuned for the heavier `testcontainers`/`bollard` dependency graph.
+- ✅ **Security** - `testcontainers` upgraded `^0.25 → ^0.27` to clear `astral-tokio-tar` advisories.
+
+**Earlier: Production-Grade Verification Infrastructure** (v1.4.0):
 
 - 🛡️ **Fail-Fast Hardening** - 47 invariant violations, zero-tolerance execution with 12-phase verification pipeline
-- 📊 **DMAIC Workflow Integration** - Define-Measure-Analyze-Improve-Control methodology with exponential backoff retry logic
 - 🏭 **Sector-Grade Reference Stacks** - Academic publishing & claims processing workflows with deterministic operations
 - 🔗 **RDF Integration** - Ontologies as single source of truth for workflow validation
-- 📋 **Operator Registry** - Global pattern registration with guard system and constraint enforcement
 - 🐝 **Swarm Protocol** - Distributed multi-sector coordination with task receipts and state machines
 - 📸 **Enhanced Snapshot Testing** - Better fixtures and organization with graceful degradation
 
-**Latest Improvements** (Post v1.4.0):
-
-- ✅ **Weaver + Testcontainers Hardening** - Registry health checks with 5-second timeout, exponential backoff for container startup
-- ✅ **OTEL Validation Refinement** - Graceful degradation when registry schema has validation issues
-- ✅ **Integration Test Reliability** - 28/28 tests passing, zero timeouts on infrastructure checks
-- ✅ **Lint & Production Safety** - 0 clippy warnings, zero unwrap/expect in production code, all test code properly allowed
-- ✅ **Pre-Push Validation** - Comprehensive 6-gate validation system preventing bad code from reaching remote
-
-**100% backward compatible** with v1.3.0. Upgrade with confidence.
+**Backward compatible** — existing `prelude` and crate-root imports continue to work; the new capabilities are additive and feature-gated.
 
 **📖 Documentation**:
 - [Release Notes](docs/releases/RELEASE_NOTES_v26.6.11.md) - Complete feature documentation
