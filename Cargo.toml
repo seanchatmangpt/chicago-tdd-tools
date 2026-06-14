@@ -147,7 +147,7 @@ rstest = { version = "^0.19", optional = true }
 # When to use: Testing command-line tools, golden file testing, CLI output verification
 # Enables: testing::cli module, CliTest API, trycmd integration
 # Note: Uses golden files (.trycmd) for CLI output comparison
-trycmd = { version = "^0.15", optional = true }
+trycmd = { version = "^1.2", optional = true }
 
 # Git hooks support (optional, git-hooks feature)
 # When to use: Installing Rust-based git hooks, version-controlled hooks
