@@ -391,6 +391,13 @@ harness = false
 [workspace]
 members = [
     ".",
+]
+# chicago-tdd-lsp depends on the local lsp-max (path = /Users/sac/lsp-max),
+# which tracks the unpublished wasm4pm-compat source (fresh_names module) via
+# its own [patch]. Building it from this workspace resolves wasm4pm-compat to
+# the published crate instead, which lacks fresh_names. Exclude it so the root
+# build/check/CI never compiles lsp-max; the LSP crate builds in its own tree.
+exclude = [
     "crates/chicago-tdd-lsp",
 ]
 resolver = "2"
