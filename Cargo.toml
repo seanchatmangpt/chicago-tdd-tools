@@ -152,7 +152,7 @@ trycmd = { version = "^0.15", optional = true }
 # Git hooks support (optional, git-hooks feature)
 # When to use: Installing Rust-based git hooks, version-controlled hooks
 # Enables: git_hook_installer binary, git2 dependency for repository operations
-git2 = { version = "^0.20", optional = true }
+git2 = { version = "^0.21", optional = true }
 
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "26.6.121" }
