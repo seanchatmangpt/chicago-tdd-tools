@@ -50,5 +50,10 @@ pub mod weaver;
 /// OCEL 2.0 (Object-Centric Event Log) Support
 pub mod ocel;
 
+/// BLAKE3 receipt chain validation — replay and tamper-evidence utilities.
+/// Required by any project that claims BLAKE3 receipt chaining.
+#[cfg(feature = "receipt-validation")]
+pub mod receipt;
+
 #[cfg(all(feature = "weaver", feature = "otel"))]
 pub mod fixtures;
