@@ -220,6 +220,106 @@ fn bcinr_powl_57byte_format_round_trips() {
     Blake3ChainValidator::assert_tamper_evident(&entries);
 }
 
+// ─── test 10b: chain_from_raw_entries — first entry prev_hash is [0u8;32] ────
+
+/// The spec requires that `chain_from_raw_entries` seeds the first entry's
+/// `prev_hash` with 32 zero bytes. Assert this explicitly.
+#[test]
+fn chain_from_raw_entries_first_entry_prev_hash_is_zeroed() {
+    // Build a single raw 57-byte entry with arbitrary content.
+    let run_id_le = 1u64.to_le_bytes();
+    let op_trace_le = 0xABu64.to_le_bytes();
+    let topo_tag = 0x00u8;
+    let prev = [0u8; 32];
+
+    let mut h = blake3::Hasher::new();
+    h.update(&prev);
+    h.update(&run_id_le);
+    h.update(&op_trace_le);
+    h.update(&[topo_tag]);
+    let chain_hash: [u8; 32] = *h.finalize().as_bytes();
+
+    let mut raw = [0u8; 57];
+    raw[0..8].copy_from_slice(&run_id_le);
+    raw[8..16].copy_from_slice(&op_trace_le);
+    raw[16] = topo_tag;
+    raw[17..49].copy_from_slice(&chain_hash);
+
+    let entries = RawReceiptEntry::chain_from_raw_entries(std::iter::once(&raw));
+    assert_eq!(entries.len(), 1);
+    assert_eq!(
+        entries[0].prev_hash(),
+        [0u8; 32],
+        "first entry prev_hash must be zeroed per spec"
+    );
+    Blake3ChainValidator::assert_chain_valid(&entries);
+}
+
+// ─── test 10c: identical-content entries produce different chain hashes ────────
+
+/// Even when two entries have the same run_id, op_trace, and topo_tag, they
+/// must produce different chain hashes because prev_hash differs.
+#[test]
+fn identical_content_entries_produce_different_chain_hashes() {
+    // Both entries have the same content fields.
+    let entries = ReceiptChainBuilder::new()
+        .add_entry(42, 0xDEAD, 0x00)
+        .add_entry(42, 0xDEAD, 0x00)
+        .build();
+
+    assert_eq!(entries.len(), 2);
+    // Both entries are internally valid (chain is correct).
+    Blake3ChainValidator::assert_chain_valid(&entries);
+    // But chain hashes must differ because prev_hash differs.
+    assert_ne!(
+        entries[0].stored_hash(),
+        entries[1].stored_hash(),
+        "identical-content entries must produce different chain hashes because prev_hash differs"
+    );
+}
+
+// ─── test 10d: 256-entry chain (MAX_LOG_ENTRIES) round-trips ─────────────────
+
+/// Build a 256-entry chain (the maximum capacity of ReceiptLog) and confirm
+/// the full chain replays without error.
+#[test]
+fn chain_256_entries_round_trips() {
+    let mut builder = ReceiptChainBuilder::new();
+    for i in 0u64..256 {
+        builder = builder.add_entry(i, i.wrapping_mul(0x9e3779b97f4a7c15), (i & 0xFF) as u8);
+    }
+    let entries = builder.build();
+    assert_eq!(entries.len(), 256);
+    Blake3ChainValidator::assert_chain_valid(&entries);
+}
+
+// ─── test 10e: property test — every entry's chain hash is independently verifiable ──
+
+/// For every entry in a chain, recompute BLAKE3(prev_hash ‖ content_bytes)
+/// independently and assert it equals stored_hash. This is the replay law.
+#[test]
+fn prop_every_entry_hash_independently_verifiable() {
+    let entries = ReceiptChainBuilder::new()
+        .add_entry(1, 0x1111, 0x00)
+        .add_entry(2, 0x2222, 0x01)
+        .add_entry(3, 0x3333, 0x80)
+        .add_entry(4, 0x4444, 0x81)
+        .add_entry(5, 0x5555, 0x00)
+        .build();
+
+    for (i, entry) in entries.iter().enumerate() {
+        let mut h = blake3::Hasher::new();
+        h.update(&entry.prev_hash());
+        h.update(&entry.content_bytes());
+        let recomputed: [u8; 32] = *h.finalize().as_bytes();
+        assert_eq!(
+            recomputed,
+            entry.stored_hash(),
+            "entry[{i}]: independently recomputed hash must equal stored_hash"
+        );
+    }
+}
+
 // ─── test 10: overflow flag in topo_tag is preserved ─────────────────────────
 
 /// Verify that entries with the overflow flag (bit 7 of topo_tag) still
@@ -245,5 +345,86 @@ fn blake3_chain_overflow_flag_preserved_in_hash() {
         entries_no_overflow[0].stored_hash(),
         entries_with_overflow[0].stored_hash(),
         "overflow flag in topo_tag must change the BLAKE3 hash"
+    );
+}
+
+// ─── test 11: invalid single-entry chain (non-zero prev_hash) is rejected ─────
+
+/// A single-entry chain whose prev_hash is not all-zeroes must fail
+/// PrevHashMismatch at index 0. validate_chain requires entry[0].prev_hash == [0u8;32].
+#[test]
+fn blake3_chain_single_entry_invalid_prev_hash_rejected() {
+    let mut entries = ReceiptChainBuilder::new()
+        .add_entry(42, 0xFFFFFFFF, 0x01)
+        .build();
+    // Corrupt the first entry's prev field to be non-zero.
+    entries[0].prev[0] = 0x01;
+
+    let result = Blake3ChainValidator::validate_chain(&entries);
+    assert!(
+        matches!(result, Err(ChainError::PrevHashMismatch { index: 0, .. })),
+        "single-entry chain with non-zero prev_hash must return PrevHashMismatch at index 0, got: {result:?}"
+    );
+}
+
+// ─── test 12: changing replay_ptr does NOT change the chain hash ───────────────
+
+/// Mutating replay_ptr_bytes must NOT affect stored_hash or chain validation.
+/// Only content_bytes (run_id_le ‖ op_trace_le ‖ topo_tag) are hashed.
+#[test]
+fn blake3_chain_replay_ptr_does_not_affect_hash() {
+    let mut entries = ReceiptChainBuilder::new()
+        .add_entry(1, 100, 0x00)
+        .add_entry(2, 200, 0x00)
+        .build();
+
+    let hash_before = entries[0].stored_hash();
+
+    // Mutate replay_ptr_bytes of entry[0] — must not change chain hash.
+    entries[0].replay_ptr_bytes = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+
+    let hash_after = entries[0].stored_hash();
+    assert_eq!(
+        hash_before, hash_after,
+        "changing replay_ptr_bytes must NOT change the stored chain hash"
+    );
+
+    // The chain must still validate after replay_ptr mutation.
+    Blake3ChainValidator::assert_chain_valid(&entries);
+}
+
+// ─── test 13: replay_ptr() returns the stored LE u64 value ───────────────────
+
+/// RawReceiptEntry::replay_ptr() must decode bytes 49..57 as LE u64.
+/// This enables callers to verify replay_ptr == prior entry count * ENTRY_BYTES.
+#[test]
+fn raw_receipt_entry_replay_ptr_decodes_correctly() {
+    const ENTRY_BYTES: usize = 57;
+    let expected_ptr: u64 = 3 * ENTRY_BYTES as u64;
+
+    let run_id_le = 1u64.to_le_bytes();
+    let op_trace_le = 0x42u64.to_le_bytes();
+    let topo_tag = 0x00u8;
+    let prev = [0u8; 32];
+
+    let mut h = blake3::Hasher::new();
+    h.update(&prev);
+    h.update(&run_id_le);
+    h.update(&op_trace_le);
+    h.update(&[topo_tag]);
+    let chain_hash: [u8; 32] = *h.finalize().as_bytes();
+
+    let mut raw = [0u8; 57];
+    raw[0..8].copy_from_slice(&run_id_le);
+    raw[8..16].copy_from_slice(&op_trace_le);
+    raw[16] = topo_tag;
+    raw[17..49].copy_from_slice(&chain_hash);
+    raw[49..57].copy_from_slice(&expected_ptr.to_le_bytes());
+
+    let entry = RawReceiptEntry::from_bcinr_powl(&raw, prev);
+    assert_eq!(
+        entry.replay_ptr(),
+        Some(expected_ptr),
+        "replay_ptr() must decode bytes 49..57 as LE u64"
     );
 }

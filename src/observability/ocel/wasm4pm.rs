@@ -3,8 +3,6 @@
 use crate::core::governance::RunId;
 use crate::observability::ocel::collector::OcelCollector;
 use crate::observability::ocel::types::{OcelLog, TestOcelEvent};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use wasm4pm_compat::admission::Admission;
 use wasm4pm_compat::{Admitted, Evidence, Raw, Receipted, Witness, WitnessFamily};
 
@@ -70,28 +68,19 @@ pub fn seal_run(
         }
     }
 
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = blake3::Hasher::new();
     for (id, ev) in &log.events {
-        id.hash(&mut hasher);
-        ev.case_id.hash(&mut hasher);
-        ev.timestamp_ns.hash(&mut hasher);
-        format!("{:?}", ev.activity).hash(&mut hasher);
+        hasher.update(id.as_bytes());
+        hasher.update(ev.case_id.as_bytes());
+        hasher.update(&ev.timestamp_ns.to_le_bytes());
+        hasher.update(format!("{:?}", ev.activity).as_bytes());
         for (obj_id, obj_type) in &ev.objects {
-            obj_id.hash(&mut hasher);
-            obj_type.hash(&mut hasher);
+            hasher.update(obj_id.as_bytes());
+            hasher.update(format!("{obj_type:?}").as_bytes());
         }
     }
 
-    let hash_value = hasher.finish();
-    let h0 = hash_value.to_le_bytes();
-    let h1 = (hash_value.rotate_left(17) ^ 0x9e37_79b9_7f4a_7c15_u64).to_le_bytes();
-    let h2 = (hash_value.rotate_left(31) ^ 0x6c62_272e_07bb_0142_u64).to_le_bytes();
-    let h3 = (hash_value.rotate_left(47) ^ 0x94d0_49bb_1331_11eb_u64).to_le_bytes();
-    let mut digest_bytes = [0u8; 32];
-    digest_bytes[0..8].copy_from_slice(&h0);
-    digest_bytes[8..16].copy_from_slice(&h1);
-    digest_bytes[16..24].copy_from_slice(&h2);
-    digest_bytes[24..32].copy_from_slice(&h3);
+    let digest_bytes: [u8; 32] = *hasher.finalize().as_bytes();
     let digest_hex = digest_bytes.iter().fold(String::with_capacity(64), |mut acc, b| {
         use std::fmt::Write as _;
         let _ = write!(acc, "{b:02x}");
