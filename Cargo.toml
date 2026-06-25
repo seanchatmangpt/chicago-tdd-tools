@@ -212,7 +212,7 @@ fake-data = ["dep:fake"]
 concurrency-testing = ["dep:loom"]
 
 # OCEL 2.0 generation features
-ocel-generation = ["dep:wasm4pm-compat", "dep:dashmap", "dep:tracing"]
+ocel-generation = ["dep:wasm4pm-compat", "dep:dashmap", "dep:tracing", "dep:blake3"]
 ocel-generation-discovery = ["ocel-generation", "wasm4pm-compat/wasm4pm"]
 
 # BLAKE3 receipt chain validation — validates that any project's BLAKE3 receipt

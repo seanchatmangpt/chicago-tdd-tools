@@ -48,6 +48,14 @@ pub trait Blake3ReceiptEntry {
 
     /// The stored BLAKE3 chain hash for this entry.
     fn stored_hash(&self) -> [u8; 32];
+
+    /// The replay pointer for this entry, if available.
+    ///
+    /// Returns `None` by default. Implementations that store a replay pointer
+    /// (e.g. bytes 49..57 of the bcinr-powl 57-byte format) should override this.
+    fn replay_ptr(&self) -> Option<u64> {
+        None
+    }
 }
 
 // ─── Error type ──────────────────────────────────────────────────────────────
@@ -214,6 +222,8 @@ pub struct RawReceiptEntry {
     pub topo_tag: u8,
     /// Stored BLAKE3 chain hash (bytes 17..49 of the raw entry).
     pub chain_hash: [u8; 32],
+    /// Replay pointer (bytes 49..57 of the raw entry), not included in the hash.
+    pub replay_ptr_bytes: [u8; 8],
 }
 
 impl RawReceiptEntry {
@@ -230,7 +240,9 @@ impl RawReceiptEntry {
         op_trace_le.copy_from_slice(&raw[8..16]);
         let topo_tag = raw[16];
         chain_hash.copy_from_slice(&raw[17..49]);
-        Self { prev: prev_hash, run_id_le, op_trace_le, topo_tag, chain_hash }
+        let mut replay_ptr_bytes = [0u8; 8];
+        replay_ptr_bytes.copy_from_slice(&raw[49..57]);
+        Self { prev: prev_hash, run_id_le, op_trace_le, topo_tag, chain_hash, replay_ptr_bytes }
     }
 
     /// Build a Vec of `RawReceiptEntry` from a bcinr-powl `ReceiptLog`-style
@@ -265,6 +277,10 @@ impl Blake3ReceiptEntry for RawReceiptEntry {
 
     fn stored_hash(&self) -> [u8; 32] {
         self.chain_hash
+    }
+
+    fn replay_ptr(&self) -> Option<u64> {
+        Some(u64::from_le_bytes(self.replay_ptr_bytes))
     }
 }
 
@@ -310,6 +326,7 @@ impl ReceiptChainBuilder {
             op_trace_le,
             topo_tag,
             chain_hash,
+            replay_ptr_bytes: [0u8; 8],
         };
         self.prev_hash = chain_hash;
         self.entries.push(entry);
