@@ -404,6 +404,7 @@ harness = false
 [workspace]
 members = [
     ".",
+    "proc_macros",
 ]
 # chicago-tdd-lsp depends on the local lsp-max (path = /Users/sac/lsp-max),
 # which tracks the unpublished wasm4pm-compat source (fresh_names module) via
