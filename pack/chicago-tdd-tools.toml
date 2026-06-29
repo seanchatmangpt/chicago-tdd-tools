@@ -1,0 +1,26 @@
+[pack]
+id          = "chicago-tdd-tools"
+name        = "Chicago TDD Tools"
+version     = "26.6.29"
+description = "Outside-in (Detroit-school) TDD scaffold: generates scaffold!() stubs and #[chicago_test] integration tests from ticket acceptance criteria."
+category    = "testing"
+license     = "MIT"
+production_ready = false
+
+[[pack.templates]]
+name        = "scaffold-stubs"
+path        = "templates/scaffold_stubs.rs.tera"
+description = "Generates scaffold!() invocations for each function needing implementation"
+variables   = ["ticket_id", "ticket_path", "fn_name", "fn_signature", "test_path", "module_path"]
+
+[[pack.templates]]
+name        = "chicago-test"
+path        = "templates/chicago_test.rs.tera"
+description = "Generates #[chicago_test]-annotated integration test from Given-When-Then criteria"
+variables   = ["ticket_id", "ticket_path", "fn_name", "module_path", "scenario_slug", "given", "when", "then"]
+
+[[pack.templates]]
+name        = "chicago-gwt"
+path        = "templates/chicago_gwt.md.tera"
+description = "Generates Given-When-Then markdown from acceptance criteria"
+variables   = ["ticket_id", "ticket_path", "scenario_slug", "given", "when", "then"]
