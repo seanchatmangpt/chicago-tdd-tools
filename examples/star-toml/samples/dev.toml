@@ -1,0 +1,6 @@
+# dev.toml
+workers = 2
+log_level = "debug"
+
+[server]
+port = 80

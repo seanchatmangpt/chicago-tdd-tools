@@ -121,12 +121,14 @@ async fn main() {
         let strategy = ProptestStrategy::new().with_cases(100);
 
         chicago_tdd_tools::alert_info!("Testing addition commutativity...");
-        strategy.test(proptest::prelude::any::<(u32, u32)>(), |(x, y)| x + y == y + x);
+        strategy.test(proptest::prelude::any::<(u32, u32)>(), |(x, y)| {
+            x.wrapping_add(y) == y.wrapping_add(x)
+        });
         chicago_tdd_tools::alert_success!("Addition is commutative");
 
         chicago_tdd_tools::alert_info!("Testing multiplication distributivity...");
         strategy.test(proptest::prelude::any::<(u32, u32, u32)>(), |(a, b, c)| {
-            a * (b + c) == (a * b) + (a * c)
+            a.wrapping_mul(b.wrapping_add(c)) == a.wrapping_mul(b).wrapping_add(a.wrapping_mul(c))
         });
         chicago_tdd_tools::alert_success!("Multiplication is distributive");
     }

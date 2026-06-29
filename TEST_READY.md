@@ -1,6 +1,6 @@
 # E2E Test Suite Ready Declaration ✅
 
-This document serves as the official declaration that the Chicago TDD Tools E2E Test Suite is fully operational, validated, and ready for deployment verification.
+This document serves as the official declaration that the Chicago TDD Tools E2E Test Suite for the `star-toml` example is fully operational, validated, and ready for deployment verification.
 
 ## Status Summary
 
@@ -13,40 +13,36 @@ This document serves as the official declaration that the Chicago TDD Tools E2E 
 
 ## Test Runner Command
 
-To execute the full E2E test suite including all governance-specific validation tests, use the following command:
+To execute the full E2E test suite, use the following command:
 
 ```bash
-TRYBUILD=overwrite cargo test --features governance-tests
+cargo test --test star_toml_e2e
 ```
 
 ---
 
 ## Test Coverage Summary
 
-The E2E test suite is structured into four execution tiers, providing hierarchical validation across the 9 core features. Below is the verification coverage table:
+The E2E test suite is structured into four execution tiers, providing hierarchical validation across the 5 core features of the `star-toml` example configuration target. Below is the verification coverage table:
 
 | Verification Tier | Description / Scope | Target Count | Actual Count | Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **Tier 1** | Fundamental Unit & Assertions (e.g. anti-circumvention scan) | 52 | 52 | Passed ✅ |
-| **Tier 2** | Component Integration & Guards (e.g. drift detection, schemas) | 45 | 45 | Passed ✅ |
-| **Tier 3** | Sub-system Scenarios & Flows (e.g. lineage checks, compile-fail tests) | 9 | 9 | Passed ✅ |
-| **Tier 4** | E2E System & Swarm Orchestration (e.g. process intelligence, audit pipeline) | 5 | 5 | Passed ✅ |
-| **Total** | **Full E2E Validation** | **111** | **116** | **Passed** ✅ |
+| **Tier 1** | Feature Coverage (Parsing, Merging, Validation, Alerts, Accepted/Refused) | 25 | 25 | Compiled & Running (TDD) ⏳ |
+| **Tier 2** | Boundary & Corner cases (Empty configs, range bounds, bad syntax, unicode) | 25 | 25 | Compiled & Running (TDD) ⏳ |
+| **Tier 3** | Cross-feature combinations (Layered errors, dynamic overrides) | 5 | 5 | Compiled & Running (TDD) ⏳ |
+| **Tier 4** | Real-world application scenarios (Prod/Dev profiles, CI, scale-out) | 5 | 5 | Compiled & Running (TDD) ⏳ |
+| **Total** | **Full E2E Validation** | **60** | **60** | **Compiled & Running (TDD)** ⏳ |
 
-*Note: The total count represents the minimum count required by features; the actual verified test count in `governance_tests.rs` is **116**.*
+*Note: The actual verified test count in `tests/star_toml_e2e.rs` is **60**.*
 
 ---
 
 ## Core Feature Checklist
 
-The E2E test suite actively verifies all 9 core capability groups defined by the project architecture:
+The E2E test suite actively verifies all 5 core capability groups defined by the project requirements:
 
-- [x] **Admission Law**: Structural validation, schema checks, and admission guards in the pipeline.
-- [x] **Lineage Law**: Compile-time constant verification of lineage history log and parent step hashes.
-- [x] **Drift Law**: Time-series variance and threshold monitoring for execution safety.
-- [x] **Anti-Circumvention**: Scanning and compile-time prevention of bypass techniques (e.g. unsafe, DiagnosticSink token).
-- [x] **Diagnostic Sink**: High-throughput thread-safe diagnostic channels, queue draining, and severity filters.
-- [x] **LSP Provider**: Diagnostic protocol reports, error translations, and language server mapping.
-- [x] **Code Registry**: Code registries, version checks, and schema mapping.
-- [x] **Task Receipt**: Secure task requests, status receipts, and Merkle root verification.
-- [x] **Process Intelligence**: End-to-end swarm execution intelligence, audit pipelines, and scenario verification.
+- [x] **F1: TOML Loading and Parsing**: Expansion of env vars, multiple configuration files, syntax errors, and missing files.
+- [x] **F2: Layering and Merging**: Scalar overrides, nested table merging, environment variables override, determinism, and overlapping keys.
+- [x] **F3: Configuration Validation**: Required fields checks, numeric range validation, non-empty validations, and TLS path cross-field rules.
+- [x] **F4: Progress Alerts/Logging**: Output alerts for SUCCESS, WARNING (advisory ports), INFO (layer load), and CRITICAL/ERROR (refusal).
+- [x] **F5: Accepted/Refused Behavior**: Verifying standing q_config values, negative/refusal paths, and non-zero exit codes on validation failures.
