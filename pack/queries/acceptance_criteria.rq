@@ -1,0 +1,15 @@
+PREFIX ctt: <https://chicago-tdd-tools.dev/ontology#>
+
+SELECT ?ticket_id ?ticket_path ?fn_name ?module_path ?scenario_slug ?given ?when ?then
+WHERE {
+    ?criterion a ctt:AcceptanceCriterion ;
+        ctt:ticketId    ?ticket_id ;
+        ctt:ticketPath  ?ticket_path ;
+        ctt:targetFn    ?fn_name ;
+        ctt:targetModule ?module_path ;
+        ctt:scenarioSlug ?scenario_slug ;
+        ctt:given        ?given ;
+        ctt:when         ?when ;
+        ctt:then         ?then .
+}
+ORDER BY ?ticket_id ?scenario_slug

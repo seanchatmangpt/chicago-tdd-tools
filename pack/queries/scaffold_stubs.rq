@@ -1,0 +1,14 @@
+PREFIX ctt: <https://chicago-tdd-tools.dev/ontology#>
+
+SELECT ?ticket_id ?ticket_path ?fn_name ?fn_signature ?test_path ?module_path
+WHERE {
+    ?stub a ctt:ScaffoldStub ;
+        ctt:ticketId    ?ticket_id ;
+        ctt:ticketPath  ?ticket_path ;
+        ctt:fnName      ?fn_name ;
+        ctt:fnSignature ?fn_signature ;
+        ctt:testPath    ?test_path ;
+        ctt:modulePath  ?module_path .
+    FILTER NOT EXISTS { ?stub ctt:status "ADMITTED" }
+}
+ORDER BY ?ticket_id

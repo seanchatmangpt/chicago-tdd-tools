@@ -1,0 +1,16 @@
+# {{ ticket_id }} — {{ scenario_slug }}
+
+**Status**: CANDIDATE
+**Ticket**: {{ ticket_path }}
+
+## Given
+
+{{ given }}
+
+## When
+
+{{ when }}
+
+## Then
+
+{{ then }}

@@ -1,0 +1,7 @@
+[pack]
+name    = "chicago-tdd-tools"
+version = "26.6.29"
+
+[pack.outputs]
+templates = "pack/templates"
+queries   = "pack/queries"
