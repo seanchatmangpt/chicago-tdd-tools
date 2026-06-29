@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.6.29] - 2026-06-28
+
+### Added
+- **Cryptographic BLAKE3 Chaining & Validation** (feature `receipt-validation`): Adds the `Blake3ReceiptEntry` trait, `RawReceiptEntry` struct (providing a 57-byte adapter mapping to `bcinr-powl`), `ReceiptChainBuilder` helper, and the `Blake3ChainValidator` to programmatically assert the validity, replayability, and tamper-evidence of process receipt logs. Wires `seal_run()` to use `blake3::Hasher` for securing mined OCEL log digests under the `ocel-generation` feature.
+- **Star-TOML TDD Integration Workload** (`examples/star-toml/`): Comprehensive config-admissibility testing example using the `star-toml` package as a real collaborator target (layered loader, validation rules, alerts, exit behaviors).
+- **Comprehensive E2E Suite** (`tests/star_toml_e2e.rs`): 60 opaque-box tests mapped across 4 tiers (Feature Coverage, Boundaries, Cross-Feature Combinations, and Real-World Scenarios).
+- **DoD Gap Report** (`examples/star-toml/GAP_REPORT.md`): Closed the loop on Track E requirements, converting feedback issues (ST-201 to ST-206) into actionable Jira/DoD tickets.
+
+### Changed
+- Bumped workspace packages and dependency versions to `26.6.29`.
+- Upgraded `wasm4pm-compat` to version `26.6.26`.
+
+### Fixed
+- Fixed all `anti-llm-cheat-lsp` admissibility scan violations, achieving a zero non-metric diagnostic state across the entire codebase.
+
 ## [26.6.121] - 2026-06-13
 
 ### Added
