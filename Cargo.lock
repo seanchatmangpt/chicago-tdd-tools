@@ -415,7 +415,7 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools"
-version = "26.6.24"
+version = "26.6.29"
 dependencies = [
  "arbitrary",
  "blake3",
@@ -459,7 +459,7 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools-proc-macros"
-version = "26.6.24"
+version = "26.6.29"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3135,6 +3135,8 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 [[package]]
 name = "star-toml"
 version = "26.6.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "389bca0943c3f07753e07b29b75c8b8df959fd342d6250c2340f4430d2cfe7f6"
 dependencies = [
  "blake3",
  "serde",
@@ -3148,6 +3150,8 @@ dependencies = [
 [[package]]
 name = "star-toml-derive"
 version = "26.6.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "863e62ff8a962388b619510dc34fcbf00e3fffb1ec6e2fffcc0f3225808b4f08"
 dependencies = [
  "quote",
  "syn 2.0.117",

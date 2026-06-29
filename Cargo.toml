@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "26.6.24"
+version = "26.6.29"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -156,13 +156,13 @@ trycmd = { version = "^0.15", optional = true }
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "26.6.24" }
+chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "26.6.29" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
 
 [dev-dependencies]
-star-toml = { path = "../star-toml", version = "26.6.29" } # PENDING crates.io publish of 26.6.29
+star-toml = "26.6.29"
 toml_1 = { package = "toml", version = "1.1.0" }
 # Test utilities (dev-only, not included in library)
 tokio-test = "^0.4"      # Tokio testing utilities
