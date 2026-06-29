@@ -161,7 +161,9 @@
 // Both #[tdd_test] and #[fixture] are re-exported at crate root for convenience
 // Users can import from chicago_tdd_tools: use chicago_tdd_tools::{tdd_test, fixture};
 // Or directly from chicago_tdd_tools_proc_macros: use chicago_tdd_tools_proc_macros::{tdd_test, fixture};
+pub use chicago_tdd_tools_proc_macros::chicago_test;
 pub use chicago_tdd_tools_proc_macros::fixture;
+pub use chicago_tdd_tools_proc_macros::scaffold;
 pub use chicago_tdd_tools_proc_macros::tdd_test;
 
 // Re-export TestBuilder derive macro (users will use #[derive(TestBuilder)])
