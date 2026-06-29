@@ -415,11 +415,11 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools"
-version = "26.6.29"
+version = "26.6.30"
 dependencies = [
  "arbitrary",
  "blake3",
- "chicago-tdd-tools-proc-macros",
+ "chicago-tdd-tools-proc-macros 26.6.121",
  "chrono",
  "criterion",
  "dashmap",
@@ -459,7 +459,18 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools-proc-macros"
-version = "26.6.29"
+version = "26.6.30"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "chicago-tdd-tools-proc-macros"
+version = "26.6.121"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b924dfbfd54a6fe85b4ac8bc2031d7bee0217377deaf538e4964cb0c5105177"
 dependencies = [
  "proc-macro2",
  "quote",
