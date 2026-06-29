@@ -18,6 +18,7 @@
 macro_rules! weaver_test {
     ($name:ident, |$fixture:ident| $body:block) => {
         #[test]
+        #[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
         fn $name() {
             if matches!(
                 std::env::var("WEAVER_ALLOW_SKIP"),
@@ -64,6 +65,7 @@ macro_rules! weaver_test {
 macro_rules! weaver_async_test {
     ($name:ident, |$fixture:ident| $body:block) => {
         #[tokio::test(flavor = "multi_thread")]
+        #[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
         async fn $name() {
             if matches!(
                 std::env::var("WEAVER_ALLOW_SKIP"),

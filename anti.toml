@@ -1,0 +1,52 @@
+allowed_suppression_paths = [
+    "src/",
+    "examples/",
+    "tests/",
+    "benches/",
+    "build.rs"
+]
+
+[claim]
+domain_terms = [
+    "victory confirmed",
+    "victory audit",
+    "victory",
+    "done",
+    "all gaps resolved",
+    "all clean",
+    "no issues",
+    "everything passes",
+    "successfully proven",
+    "guaranteed",
+    "impossible to fake",
+    "solved",
+    "fully admitted",
+    "path is clear",
+    "routing to packplan",
+    "no gaps found",
+    "all systems functional",
+    "audit complete",
+    "zero violations",
+    "zero diagnostics"
+]
+
+[test]
+structural_check_paths = [
+    "tests/star_toml_e2e.rs",
+    "tests/hyper_advanced_integration.rs",
+    "tests/testcontainers/integration.rs",
+    "tests/testcontainers/tests.rs",
+    "tests/v1_3_0_integration.rs",
+    "tests/weaver_integration.rs",
+    "examples/otel_weaver_testing.rs",
+    "examples/concurrency_testing.rs",
+    "examples/star-toml/main.rs",
+    "playground/tests/cli_tests.rs",
+    "playground/tests/integration_tests.rs",
+    "playground/tests/validation_tests.rs",
+    "tests/blake3_receipt_tests.rs",
+    "tests/challenger_m1_2_tests.rs",
+    "tests/go_extra_mile_tests.rs",
+    "tests/governance_tests.rs",
+    "tests/ocel_tests.rs"
+]

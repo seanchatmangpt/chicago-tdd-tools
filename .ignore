@@ -1,0 +1,9 @@
+registry/
+application-guide/book/
+cookbook/book/
+target/
+.agents/
+.git/
+.lh/
+playground/
+docs/

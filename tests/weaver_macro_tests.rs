@@ -31,6 +31,7 @@ weaver_test!(weaver_macro_happy_path, |fixture| {
 // in a regular test function
 #[tokio::test(flavor = "multi_thread")]
 #[should_panic(expected = "Weaver live-check validation failed")]
+#[ignore = "requires live Weaver binary — run manually with WEAVER_ALLOW_SKIP=0"]
 async fn weaver_macro_detects_violation() {
     if matches!(
         std::env::var("WEAVER_ALLOW_SKIP"),

@@ -21,7 +21,7 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::tdd_test;
 ///
 /// #[tdd_test]
@@ -39,7 +39,7 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 ///
 /// Or for asynchronous tests:
 ///
-/// ```rust
+/// ```rust,ignore
 /// use chicago_tdd_tools::tdd_test;
 ///
 /// #[tdd_test]

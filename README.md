@@ -365,7 +365,7 @@ test!(test_commutativity_property, {
         // Property: a + b == b + a (commutativity)
         let a = rand::random::<u32>();
         let b = rand::random::<u32>();
-        assert_eq!(a + b, b + a, "Addition is commutative");
+        assert_eq!(a.wrapping_add(b), b.wrapping_add(a), "Addition is commutative");
     }
 });
 ```
@@ -381,7 +381,7 @@ test!(test_distributivity_with_proptest, {
     // Test: a * (b + c) == (a * b) + (a * c)
     strategy.test(
         proptest::prelude::any::<(u32, u32, u32)>(),
-        |(a, b, c)| a * (b + c) == (a * b) + (a * c)
+        |(a, b, c)| a.wrapping_mul(b.wrapping_add(c)) == a.wrapping_mul(b).wrapping_add(a.wrapping_mul(c))
     );
 });
 ```

@@ -1,0 +1,5 @@
+# invalid_tls.toml
+[server.tls]
+enabled = true
+cert_path = ""
+key_path = ""

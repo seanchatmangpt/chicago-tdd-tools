@@ -39,7 +39,7 @@ fn main() {
 
     // Detect platform
     let (arch, os) = detect_platform();
-    let weaver_version = "0.19.0"; // Match weaver workspace version
+    let weaver_version = "0.22.1"; // Match weaver workspace version
 
     // Construct download URL (weaver uses tar.xz format)
     let download_url = format!(

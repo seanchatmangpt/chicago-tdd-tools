@@ -1,0 +1,6 @@
+{
+  "digest": "73c203fb3179f56c079312074d809802d24c02d449e07ab7a54a912d744fe9e2",
+  "digest_algorithm": "BLAKE3",
+  "boundary": "crates/anti-llm-cheat-lsp/ocel",
+  "checkpoint": "OCEL-COMPAT-001"
+}

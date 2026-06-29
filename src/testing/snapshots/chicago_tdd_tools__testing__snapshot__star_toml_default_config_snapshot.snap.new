@@ -1,0 +1,15 @@
+---
+source: src/testing/snapshot.rs
+assertion_line: 55
+expression: value
+---
+name = "star-toml-app"
+workers = 4
+log_level = "info"
+[server]
+host = "127.0.0.1"
+port = 8080
+[server.tls]
+enabled = false
+cert_path = ""
+key_path = ""

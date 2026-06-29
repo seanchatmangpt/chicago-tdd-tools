@@ -65,6 +65,12 @@ impl<const MAX_ITEMS: usize, const MAX_DEPTH: usize> PropertyTestGenerator<MAX_I
         data
     }
 
+    /// Get the random seed test counter value
+    #[must_use]
+    pub const fn test_counter(&self) -> u64 {
+        self.seed
+    }
+
     /// Get compile-time `MAX_ITEMS` constant
     #[must_use]
     pub const fn max_items() -> usize {

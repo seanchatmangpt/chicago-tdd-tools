@@ -162,6 +162,8 @@ chicago-tdd-tools-proc-macros = { path = "proc_macros", version = "26.6.24" }
 # No external dependency on knhk-otel needed
 
 [dev-dependencies]
+star-toml = { path = "../star-toml", version = "26.6.29" } # PENDING crates.io publish of 26.6.29
+toml_1 = { package = "toml", version = "1.1.0" }
 # Test utilities (dev-only, not included in library)
 tokio-test = "^0.4"      # Tokio testing utilities
 ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
@@ -377,6 +379,10 @@ path = "examples/concurrency_testing.rs"
 [[example]]
 name = "advanced_features"
 path = "examples/advanced_features.rs"
+
+[[example]]
+name = "star_toml"
+path = "examples/star-toml/main.rs"
 
 # Benchmarks
 [[bench]]
