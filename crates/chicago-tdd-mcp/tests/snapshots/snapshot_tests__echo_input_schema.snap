@@ -1,0 +1,17 @@
+---
+source: crates/chicago-mcp/tests/snapshot_tests.rs
+expression: schema
+---
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "message": {
+      "description": "The text to echo back.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "message"
+  ],
+  "type": "object"
+}

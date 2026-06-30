@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "26.6.30"
+version = "26.7.1"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -156,7 +156,7 @@ trycmd = { version = "^0.15", optional = true }
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = "26.6"
+chicago-tdd-tools-proc-macros = { version = "26.7.1", path = "proc_macros" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
@@ -405,6 +405,12 @@ harness = false
 members = [
     ".",
     "proc_macros",
+    "proc_macros/chicago-tdd-mcp-macros",
+    "crates/chicago-tdd-mcp",
+]
+default-members = [
+    ".",
+    "proc_macros",
 ]
 # chicago-tdd-lsp depends on the local lsp-max (path = /Users/sac/lsp-max),
 # which tracks the unpublished wasm4pm-compat source (fresh_names module) via
@@ -413,5 +419,9 @@ members = [
 # build/check/CI never compiles lsp-max; the LSP crate builds in its own tree.
 exclude = [
     "crates/chicago-tdd-lsp",
+    "spec-harness",
 ]
 resolver = "2"
+
+[workspace.metadata.dylint]
+libraries = [{ path = "crates/chicago-lints" }]

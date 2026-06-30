@@ -5,7 +5,7 @@
 //! Star TOML example showing integration with Chicago TDD tools.
 
 use serde::{Deserialize, Serialize};
-use star_toml::{Validate, Validator, ConfigLifecycle, TrustedLoader, Severity};
+use star_toml::{ConfigLifecycle, Severity, TrustedLoader, Validate, Validator};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppConfig {
@@ -153,8 +153,7 @@ mod tests {
     use chicago_tdd_tools::prelude::*;
 
     chicago_tdd_tools::test!(test_basic_load_succeeds, {
-        let loader = star_toml::trusted()
-            .layer_file("examples/star-toml/samples/default.toml");
+        let loader = star_toml::trusted().layer_file("examples/star-toml/samples/default.toml");
         let result = loader.load_admitted::<AppConfig>();
         chicago_tdd_tools::assert_ok!(&result);
     });
@@ -176,19 +175,17 @@ key_path = ""
 "#;
         std::fs::write(&file_path, content).unwrap();
 
-        let result = star_toml::trusted()
-            .layer_file(&file_path)
-            .load_admitted::<AppConfig>();
+        let result = star_toml::trusted().layer_file(&file_path).load_admitted::<AppConfig>();
 
         chicago_tdd_tools::assert_ok!(&result);
-        
+
         let _ = std::fs::remove_file(file_path);
     });
 
     chicago_tdd_tools::test!(test_property_idempotence, {
         let mut gen = chicago_tdd_tools::testing::property::PropertyTestGenerator::<10, 3>::new()
             .with_seed(12345);
-        
+
         for _ in 0..100 {
             let test_data = gen.generate_test_data();
             let mut toml_map = toml_1::map::Map::new();
@@ -196,7 +193,7 @@ key_path = ""
                 toml_map.insert(k, toml_1::Value::String(v));
             }
             let a = toml_1::Value::Table(toml_map);
-            
+
             let mut base = a.clone();
             star_toml::deep_merge(&mut base, a.clone());
             assert_eq!(base, a);
@@ -208,24 +205,26 @@ key_path = ""
     fn test_property_overriding_behavior() {
         use chicago_tdd_tools::testing::property::ProptestStrategy;
         use proptest::prelude::*;
-        
+
         let strategy = ProptestStrategy::new().with_cases(100);
-        strategy.test(
-            (any::<String>(), any::<String>(), any::<String>()),
-            |(key, val1, val2)| {
-                if key.is_empty() { return true; }
-                let mut base = toml_1::Value::Table(toml_1::map::Map::new());
-                base.as_table_mut().unwrap().insert(key.clone(), toml_1::Value::String(val1));
-                
-                let mut overlay = toml_1::Value::Table(toml_1::map::Map::new());
-                overlay.as_table_mut().unwrap().insert(key.clone(), toml_1::Value::String(val2.clone()));
-                
-                star_toml::deep_merge(&mut base, overlay);
-                
-                let result_val = base.as_table().unwrap().get(&key).unwrap().as_str().unwrap();
-                result_val == val2
+        strategy.test((any::<String>(), any::<String>(), any::<String>()), |(key, val1, val2)| {
+            if key.is_empty() {
+                return true;
             }
-        );
+            let mut base = toml_1::Value::Table(toml_1::map::Map::new());
+            base.as_table_mut().unwrap().insert(key.clone(), toml_1::Value::String(val1));
+
+            let mut overlay = toml_1::Value::Table(toml_1::map::Map::new());
+            overlay
+                .as_table_mut()
+                .unwrap()
+                .insert(key.clone(), toml_1::Value::String(val2.clone()));
+
+            star_toml::deep_merge(&mut base, overlay);
+
+            let result_val = base.as_table().unwrap().get(&key).unwrap().as_str().unwrap();
+            result_val == val2
+        });
     }
 
     #[cfg(feature = "snapshot-testing")]
@@ -233,24 +232,28 @@ key_path = ""
     fn test_snapshot_config() {
         use chicago_tdd_tools::testing::snapshot::SnapshotAssert;
 
-        let loader = star_toml::trusted()
-            .layer_file("examples/star-toml/samples/default.toml");
+        let loader = star_toml::trusted().layer_file("examples/star-toml/samples/default.toml");
         let admitted = loader.load_admitted::<AppConfig>().unwrap();
         let toml_string = toml_1::to_string(admitted.value()).unwrap();
-        SnapshotAssert::with_settings(|settings| {
-            settings.set_snapshot_path("../../examples/snapshots");
-            settings.set_prepend_module_to_snapshot(false);
-        }, || {
-            SnapshotAssert::assert_matches(&toml_string, "star_toml__star_toml_default_config_snapshot");
-        });
+        SnapshotAssert::with_settings(
+            |settings| {
+                settings.set_snapshot_path("../../examples/snapshots");
+                settings.set_prepend_module_to_snapshot(false);
+            },
+            || {
+                SnapshotAssert::assert_matches(
+                    &toml_string,
+                    "star_toml__star_toml_default_config_snapshot",
+                );
+            },
+        );
     }
 
     chicago_tdd_tools::performance_test!(test_load_performance, {
         use chicago_tdd_tools::validation::performance::measure_ticks;
-        
+
         let (_, ticks) = measure_ticks(|| {
-            let loader = star_toml::trusted()
-                .layer_file("examples/star-toml/samples/default.toml");
+            let loader = star_toml::trusted().layer_file("examples/star-toml/samples/default.toml");
             let _ = loader.load_admitted::<AppConfig>().unwrap();
         });
         assert!(ticks < 10_000_000);
@@ -265,8 +268,8 @@ key_path = ""
     }
 
     chicago_tdd_tools::test!(test_invalid_port_fails, {
-        let loader = star_toml::trusted()
-            .layer_file("examples/star-toml/samples/invalid_port.toml");
+        let loader =
+            star_toml::trusted().layer_file("examples/star-toml/samples/invalid_port.toml");
         let result = loader.load_admitted::<AppConfig>();
         chicago_tdd_tools::assert_err!(&result);
     });

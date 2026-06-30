@@ -1,0 +1,87 @@
+[package]
+name = "chicago-tdd-mcp"
+version = "26.7.1"
+edition = "2021"
+description = "LLM-free MCP server/client testing utilities for chicago-tdd-tools"
+license = "MIT"
+
+# rmcp and tokio live here and ONLY here in the workspace.
+# Add this crate as a [dev-dependencies] path dep to test MCP servers/clients.
+[features]
+# Core testing harness — McpServerHarness, McpStubServer, McpPipe, McpSession
+testing = ["dep:rmcp", "dep:tokio", "dep:jsonschema", "dep:anyhow"]
+# Snapshot assertions via insta — assert_tool_schema_stable
+snapshot-testing = ["testing", "dep:insta"]
+# Property-based codec tests via proptest
+property-testing = ["testing", "dep:proptest", "dep:proptest-derive"]
+# OCEL 2.0 evidence log integration
+ocel = ["testing", "dep:wasm4pm-compat", "dep:blake3", "dep:uuid", "dep:chrono"]
+# Declarative macros (assert_mcp_tools!, etc.) — proc-macro is in chicago-tdd-mcp-macros
+macros = ["testing", "dep:chicago-tdd-mcp-macros"]
+# Google A2A protocol testing — A2aStubAgent (axum) + A2aTaskHarness (reqwest)
+a2a = ["testing", "dep:axum", "dep:reqwest", "dep:tokio-stream"]
+# Receipt chain validation and chaining utilities
+chain = ["testing"]
+
+[dependencies]
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+rmcp = { version = "2.0.0", features = [
+    "client",
+    "server",
+    "transport-io",
+    "transport-child-process",
+    "macros",
+    "schemars",
+], optional = true }
+
+tokio = { version = "1", features = [
+    "rt", "rt-multi-thread", "macros",
+    "io-util", "process", "sync", "time",
+], optional = true }
+
+chrono = { version = "0.4", optional = true }
+insta = { version = "1", features = ["json"], optional = true }
+proptest = { version = "1", optional = true }
+proptest-derive = { version = "0.4", optional = true }
+wasm4pm-compat = { version = "26.6.28", features = ["formats"], optional = true }
+blake3 = { version = "1", optional = true }
+uuid = { version = "1", features = ["v4", "serde"], optional = true }
+
+# JSON Schema validation for assert_tool_input_valid — pure Rust, no C FFI
+jsonschema = { version = "0.29", optional = true }
+anyhow = { version = "1", optional = true }
+
+chicago-tdd-mcp-macros = { version = "26.7.1", path = "../../proc_macros/chicago-tdd-mcp-macros", optional = true }
+
+axum = { version = "0.8", optional = true }
+reqwest = { version = "0.12", features = ["json"], optional = true }
+tokio-stream = { version = "0.1", optional = true }
+
+[[bin]]
+name = "echo-mcp-server"
+path = "tests/fixtures/echo_mcp_server/main.rs"
+required-features = ["testing"]
+
+[dev-dependencies]
+tokio = { version = "1", features = [
+    "rt", "rt-multi-thread", "macros",
+    "io-util", "process", "sync", "time",
+] }
+rmcp = { version = "2.0.0", features = [
+    "client", "server", "transport-io", "transport-child-process", "macros", "schemars",
+] }
+anyhow = "1"
+insta = "1"
+proptest = "1"
+which = "7"
+
+[lints.rust]
+warnings = "deny"
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

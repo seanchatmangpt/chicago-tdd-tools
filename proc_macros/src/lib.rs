@@ -5,9 +5,9 @@
 //! Provides procedural macros for zero-boilerplate test generation,
 //! compile-time AAA pattern validation, and automatic fixture management.
 
-mod path_resolver;
-mod scaffold;
 mod chicago_test;
+mod path_resolver;
+mod scaffold_impl;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -432,7 +432,7 @@ pub fn test_builder_derive(input: TokenStream) -> TokenStream {
 /// Expands to ::chicago_tdd_tools::__runtime::scaffold_pending(...) — NOT todo!() — so hollow detectors do not flag it.
 #[proc_macro]
 pub fn scaffold(input: TokenStream) -> TokenStream {
-    scaffold::scaffold_impl(input)
+    scaffold_impl::scaffold_impl(input)
 }
 
 /// #[chicago_test] — marks a test as a Chicago-style (outside-in) acceptance test.

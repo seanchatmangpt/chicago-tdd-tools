@@ -12,7 +12,7 @@
 #![cfg(feature = "receipt-validation")]
 
 use chicago_tdd_tools::observability::receipt::{
-    Blake3ChainValidator, Blake3ReceiptEntry, ChainError, ReceiptChainBuilder, RawReceiptEntry,
+    Blake3ChainValidator, Blake3ReceiptEntry, ChainError, RawReceiptEntry, ReceiptChainBuilder,
 };
 
 // ─── test 1: synthetic chain round-trips ─────────────────────────────────────
@@ -101,10 +101,8 @@ fn blake3_chain_entry0_mutation_breaks_chain() {
 /// PrevHashMismatch is returned before the hash computation.
 #[test]
 fn blake3_chain_prev_hash_mismatch_detected() {
-    let mut entries = ReceiptChainBuilder::new()
-        .add_entry(1, 1, 0x00)
-        .add_entry(2, 2, 0x00)
-        .build();
+    let mut entries =
+        ReceiptChainBuilder::new().add_entry(1, 1, 0x00).add_entry(2, 2, 0x00).build();
 
     // Corrupt entry[1]'s prev field.
     entries[1].prev[0] ^= 0x01;
@@ -129,9 +127,7 @@ fn blake3_chain_empty_rejected() {
 
 #[test]
 fn blake3_chain_single_entry_valid() {
-    let entries = ReceiptChainBuilder::new()
-        .add_entry(42, 0xFFFFFFFF, 0x01)
-        .build();
+    let entries = ReceiptChainBuilder::new().add_entry(42, 0xFFFFFFFF, 0x01).build();
     Blake3ChainValidator::assert_chain_valid(&entries);
 }
 
@@ -153,11 +149,7 @@ fn blake3_replay_is_deterministic() {
     let chain_a = build();
     let chain_b = build();
 
-    assert_eq!(
-        chain_a.len(),
-        chain_b.len(),
-        "replayed chains must have same length"
-    );
+    assert_eq!(chain_a.len(), chain_b.len(), "replayed chains must have same length");
     for i in 0..chain_a.len() {
         assert_eq!(
             chain_a[i].stored_hash(),
@@ -213,8 +205,7 @@ fn bcinr_powl_57byte_format_round_trips() {
     }
 
     // Parse via chain_from_raw_entries.
-    let entries =
-        RawReceiptEntry::chain_from_raw_entries(raw_entries.iter());
+    let entries = RawReceiptEntry::chain_from_raw_entries(raw_entries.iter());
 
     assert_eq!(entries.len(), 3);
     Blake3ChainValidator::assert_tamper_evident(&entries);
@@ -247,11 +238,7 @@ fn chain_from_raw_entries_first_entry_prev_hash_is_zeroed() {
 
     let entries = RawReceiptEntry::chain_from_raw_entries(std::iter::once(&raw));
     assert_eq!(entries.len(), 1);
-    assert_eq!(
-        entries[0].prev_hash(),
-        [0u8; 32],
-        "first entry prev_hash must be zeroed per spec"
-    );
+    assert_eq!(entries[0].prev_hash(), [0u8; 32], "first entry prev_hash must be zeroed per spec");
     Blake3ChainValidator::assert_chain_valid(&entries);
 }
 
@@ -354,9 +341,7 @@ fn blake3_chain_overflow_flag_preserved_in_hash() {
 /// PrevHashMismatch at index 0. validate_chain requires entry[0].prev_hash == [0u8;32].
 #[test]
 fn blake3_chain_single_entry_invalid_prev_hash_rejected() {
-    let mut entries = ReceiptChainBuilder::new()
-        .add_entry(42, 0xFFFFFFFF, 0x01)
-        .build();
+    let mut entries = ReceiptChainBuilder::new().add_entry(42, 0xFFFFFFFF, 0x01).build();
     // Corrupt the first entry's prev field to be non-zero.
     entries[0].prev[0] = 0x01;
 

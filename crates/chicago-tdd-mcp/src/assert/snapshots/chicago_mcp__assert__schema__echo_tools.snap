@@ -1,0 +1,23 @@
+---
+source: crates/chicago-mcp/src/assert/schema.rs
+expression: canonical
+---
+[
+  {
+    "description": "Echo a message back as text content",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "message": {
+          "description": "The text to echo back.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "name": "echo"
+  }
+]

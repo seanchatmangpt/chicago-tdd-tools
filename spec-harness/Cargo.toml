@@ -1,6 +1,6 @@
 [package]
 name = "chatman-spec-harness"
-version = "26.6.11"
+version = "26.7.1"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -14,7 +14,7 @@ categories = ["development-tools::testing"]
 
 [dependencies]
 # Chicago TDD Tools framework
-chicago-tdd-tools = { path = "..", version = "26.6.11", features = ["testing-extras"] }
+chicago-tdd-tools = { path = "..", version = "26.7.1", features = ["testing-extras"] }
 
 # Serialization for receipt generation
 serde = { version = "^1.0", features = ["derive"] }
@@ -37,7 +37,7 @@ proptest = "^1.5"
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros for test generation
-chicago-tdd-tools-proc-macros = { path = "../proc_macros", version = "26.6.11" }
+chicago-tdd-tools-proc-macros = { path = "../proc_macros", version = "26.7.1" }
 
 [dev-dependencies]
 tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
@@ -45,3 +45,5 @@ tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
 [features]
 default = []
 git-integration = ["git2"]
+
+[workspace]

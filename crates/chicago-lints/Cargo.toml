@@ -1,0 +1,25 @@
+[package]
+name = "chicago-lints"
+version = "0.1.0"
+edition = "2024"
+description = "Custom Clippy-style lints enforcing Chicago TDD patterns"
+license = "MIT"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Rev matches nightly-2026-04-16 (the channel in rust-toolchain.toml).
+# Update both together: cargo dylint new shows the correct rev for each nightly.
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "f6d310692116e9a527ce6d0b3526c965d9c5d7b9" }
+dylint_linting = "6"
+
+[dev-dependencies]
+dylint_testing = "6"
+
+[workspace]
+
+[package.metadata.rust-analyzer]
+rustc_private = true

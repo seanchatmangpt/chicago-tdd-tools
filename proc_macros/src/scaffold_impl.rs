@@ -46,8 +46,7 @@ pub fn scaffold_impl(input: TokenStream) -> TokenStream {
     let test_val = args.test_lit.value();
 
     // Resolve workspace root from CARGO_MANIFEST_DIR
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .unwrap_or_else(|_| ".".to_string());
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let manifest_path = std::path::Path::new(&manifest_dir);
 
     let root = match workspace_root(manifest_path) {
@@ -86,8 +85,7 @@ pub fn scaffold_impl(input: TokenStream) -> TokenStream {
     println!("cargo::rerun-if-changed={}", test_path.display());
 
     // Extract ticket ID for the warning message
-    let ticket_id = extract_ticket_id(&ticket_val)
-        .unwrap_or_else(|| ticket_val.clone());
+    let ticket_id = extract_ticket_id(&ticket_val).unwrap_or_else(|| ticket_val.clone());
 
     // Emit build warning so agents can grep build output
     println!("cargo::warning=SCAFFOLD PENDING: {ticket_id}  ticket={ticket_val}  test={test_val}");

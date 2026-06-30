@@ -1,0 +1,15 @@
+[package]
+name = "chicago-tdd-mcp-macros"
+version = "26.7.1"
+edition = "2021"
+description = "Proc-macro attributes for chicago-tdd-mcp MCP testing"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+which = "7"

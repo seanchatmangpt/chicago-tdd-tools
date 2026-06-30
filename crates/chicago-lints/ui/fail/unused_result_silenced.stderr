@@ -1,0 +1,19 @@
+warning: `let _ = …` silently discards a `Result` or `Option`
+  --> $DIR/unused_result_silenced.rs:15:5
+   |
+LL |     let _ = fallible();
+   |     ^^^^^^^^^^^^^^^^^^^
+   |
+   = help: use `expr?` to propagate, or `if let Err(e) = expr { … }` to handle
+   = note: `#[warn(unused_result_silenced)]` on by default
+
+warning: `let _ = …` silently discards a `Result` or `Option`
+  --> $DIR/unused_result_silenced.rs:16:5
+   |
+LL |     let _ = maybe();
+   |     ^^^^^^^^^^^^^^^^
+   |
+   = help: use `expr?` to propagate, or `if let Err(e) = expr { … }` to handle
+
+warning: 2 warnings emitted
+
