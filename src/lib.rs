@@ -335,9 +335,7 @@ pub mod __runtime {
     #[track_caller]
     #[allow(clippy::panic)]
     pub fn scaffold_pending(ticket_id: &str, ticket: &str, test: &str) -> ! {
-        panic!(
-            "SCAFFOLD PENDING: {ticket_id}  ticket={ticket}  test={test}"
-        )
+        panic!("SCAFFOLD PENDING: {ticket_id}  ticket={ticket}  test={test}")
     }
 
     /// Wraps a test closure so that scaffold_pending panics are treated as CANDIDATE

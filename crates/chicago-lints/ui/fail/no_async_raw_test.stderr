@@ -1,0 +1,18 @@
+error[E0433]: cannot find module or crate `tokio` in this scope
+  --> $DIR/no_async_raw_test.rs:6:3
+   |
+LL | #[tokio::test]
+   |   ^^^^^ use of unresolved module or unlinked crate `tokio`
+
+warning: `#[tokio::test]` bypasses CTT's `async_test!()` — timeouts and AAA tracking are disabled
+  --> $DIR/no_async_raw_test.rs:6:1
+   |
+LL | #[tokio::test]
+   | ^^^^^^^^^^^^^^
+   |
+   = help: replace with `async_test!(fn_name, { … })` from `chicago_tdd_tools::prelude::*`
+   = note: `#[warn(no_async_raw_test)]` on by default
+
+error: aborting due to 1 previous error; 1 warning emitted
+
+For more information about this error, try `rustc --explain E0433`.

@@ -73,18 +73,15 @@ command = "timeout"
 args = ["30s", "cargo", "fmt", "--all"]
 
 [tasks.lint]
-description = "Run clippy with maximized linting (all, pedantic, nursery, cargo) - canonical configuration for SPR linting"
-# ROOT CAUSE FIX: Preserve historical alignment with former git hook behavior (hooks removed)
-# `cargo make lint` is now the single source of truth for lint settings
-# This ensures consistency across local development and CI pipelines
+description = "Run clippy + chicago-lints (dylint) — single source of truth for all lint enforcement"
+dependencies = ["lint-clippy", "lint-dylint"]
+ignore_errors = false
+
+[tasks.lint-clippy]
+description = "Clippy with maximized linting (all, pedantic, nursery, cargo)"
 # **Poka-Yoke Design**: -D warnings treats warnings as errors, preventing defects at compile time
-# Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
-# **Root Cause Prevention**: CI/CD pipeline enforces this check automatically, preventing accumulation of lint errors
-# **Timeout**: 300s (5min) for CI cold-start with all features (testcontainers, otel, weaver)
-# Local warm cache: ~3-5s, CI cold cache: ~2-3min for deps + 30s for project
+# **Timeout**: 300s (5min) for CI cold-start with all features
 # **FMEA Fix**: Deny unwrap_used and expect_used to prevent production panics (RPN: 180 → 36)
-# **Andon Signal**: Lint errors are CRITICAL signals - build MUST fail on any lint error
-# This ensures lint errors stop the line (prevent work from proceeding with quality issues)
 command = "timeout"
 args = [
   "300s",
@@ -95,22 +92,27 @@ args = [
   "--lib",
   "--all-features",
   "--",
-  "-W",
-  "clippy::all",
-  "-W",
-  "clippy::pedantic",
-  "-W",
-  "clippy::nursery",
-  "-W",
-  "clippy::cargo",
-  "-D",
-  "warnings",         # Poka-Yoke: Treat warnings as errors - prevent defects at compile time
-  "-D",
-  "clippy::unwrap_used",    # FMEA: Prevent .unwrap() in production code
-  "-D",
-  "clippy::expect_used",    # FMEA: Prevent .expect() in production code
+  "-W", "clippy::all",
+  "-W", "clippy::pedantic",
+  "-W", "clippy::nursery",
+  "-W", "clippy::cargo",
+  "-D", "warnings",
+  "-D", "clippy::unwrap_used",
+  "-D", "clippy::expect_used",
+  "-D", "clippy::dbg_macro",
+  "-D", "clippy::todo",
+  "-D", "clippy::panic",
+  "-D", "clippy::unimplemented",
+  "-D", "clippy::print_stdout",
+  "-D", "clippy::print_stderr",
 ]
-ignore_errors = false  # Andon Signal: CRITICAL - Build MUST fail on lint errors
+ignore_errors = false
+
+[tasks.lint-dylint]
+description = "chicago-lints via dylint — no_raw_test, no_println, unused_result_silenced, no_direct_log, no_async_raw_test, assert_without_message"
+command = "cargo"
+args = ["dylint", "--all"]
+ignore_errors = false
 
 [tasks.clippy]
 alias = "lint"

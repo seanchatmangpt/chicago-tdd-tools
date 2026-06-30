@@ -179,11 +179,7 @@ impl Blake3ChainValidator {
     /// A valid chain with ≥ 2 entries demonstrates that `prev_hash` threading
     /// is active — entry 1's hash depends on entry 0's hash.
     pub fn assert_tamper_evident<E: Blake3ReceiptEntry>(entries: &[E]) {
-        assert!(
-            entries.len() >= 2,
-            "tamper-evidence requires ≥ 2 entries; got {}",
-            entries.len()
-        );
+        assert!(entries.len() >= 2, "tamper-evidence requires ≥ 2 entries; got {}", entries.len());
         Self::assert_chain_valid(entries);
 
         // Verify that entries[1].prev_hash == entries[0].stored_hash —
@@ -247,9 +243,7 @@ impl RawReceiptEntry {
 
     /// Build a Vec of `RawReceiptEntry` from a bcinr-powl `ReceiptLog`-style
     /// iterator of raw 57-byte entries.
-    pub fn chain_from_raw_entries<'a>(
-        entries: impl Iterator<Item = &'a [u8; 57]>,
-    ) -> Vec<Self> {
+    pub fn chain_from_raw_entries<'a>(entries: impl Iterator<Item = &'a [u8; 57]>) -> Vec<Self> {
         let mut prev = [0u8; 32];
         let mut result = Vec::new();
         for raw in entries {

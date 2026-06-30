@@ -45,8 +45,7 @@ pub fn chicago_test_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     let scaffold_fn_val = args.scaffold_fn_lit.value();
 
     // Resolve workspace root and validate ticket exists
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .unwrap_or_else(|_| ".".to_string());
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let manifest_path = std::path::Path::new(&manifest_dir);
     let root = workspace_root(manifest_path).unwrap_or_else(|| manifest_path.to_path_buf());
     let ticket_path = root.join(&ticket_val);
@@ -65,8 +64,7 @@ pub fn chicago_test_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     println!("cargo::rerun-if-changed={}", ticket_path.display());
 
     // Derive test name: chicago_cc_NNN_<original>
-    let ticket_id = extract_ticket_id(&ticket_val)
-        .unwrap_or_else(|| "unknown".to_string());
+    let ticket_id = extract_ticket_id(&ticket_val).unwrap_or_else(|| "unknown".to_string());
     let ticket_slug = ticket_id.to_lowercase().replace('-', "_");
     let original_name = func.sig.ident.to_string();
     let test_name_str = format!("chicago_{ticket_slug}_{original_name}");

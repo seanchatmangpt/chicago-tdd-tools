@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-lsp"
-version = "26.6.12"
+version = "26.7.1"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -25,8 +25,8 @@ extended = [
 
 [dependencies]
 # lsp-max is the sole LSP transport — lsp-server is never used
-lsp-max          = { path = "/Users/sac/lsp-max" }
-lsp-types-max    = { path = "/Users/sac/lsp-types-max", features = ["proposed"] }
+lsp-max          = "26.6.24"
+lsp-types-max    = { version = "26.6.24", features = ["proposed"] }
 serde            = { version = "1", features = ["derive"] }
 serde_json       = "1"
 tokio            = { version = "1", features = ["rt", "rt-multi-thread", "macros", "io-std"] }
@@ -34,9 +34,11 @@ async-trait      = "0.1"
 parking_lot      = "0.12"
 
 # extended feature: structured diagnostic surface from lsp-max-protocol
-lsp-max-protocol = { path = "/Users/sac/lsp-max/lsp-max-protocol", optional = true }
-lsp-max-runtime  = { path = "/Users/sac/lsp-max/lsp-max-runtime",  optional = true }
+lsp-max-protocol = { version = "26.6.24", optional = true }
+lsp-max-runtime  = { version = "26.6.24", optional = true }
 
 [lints.rust]
 warnings = "deny"
 unsafe_code = "deny"
+
+[workspace]

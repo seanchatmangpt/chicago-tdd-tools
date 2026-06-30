@@ -580,7 +580,10 @@ mod integration_tests {
             // Assert: If Weaver validation failed due to environmental schema/registry issues,
             // gracefully print a warning and return rather than panicking the test suite.
             if let Err(ref err) = validation_result {
-                println!("⚠️ Skipping Weaver validation checks due to environment issue: {:?}", err);
+                println!(
+                    "⚠️ Skipping Weaver validation checks due to environment issue: {:?}",
+                    err
+                );
                 return Ok(());
             }
 
