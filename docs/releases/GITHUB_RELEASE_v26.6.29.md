@@ -25,8 +25,8 @@ chicago-tdd-tools = { version = "26.6.29", features = ["testing-extras", "ocel-g
 
 ## ✨ What's Changed
 
-- **Cryptographic validation**: `Blake3ReceiptEntry`, `Blake3ChainValidator`, `RawReceiptEntry`, `ReceiptChainBuilder` — see [tests/blake3_receipt_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/blake3_receipt_tests.rs).
-- **External target**: `examples/star-toml/main.rs`, negative fixtures, and `tests/star_toml_e2e.rs` — see [examples/star-toml/README.md](file:///Users/sac/chicago-tdd-tools/examples/star-toml/README.md).
+- **Cryptographic validation**: `Blake3ReceiptEntry`, `Blake3ChainValidator`, `RawReceiptEntry`, `ReceiptChainBuilder` — see [tests/blake3_receipt_tests.rs](../../tests/blake3_receipt_tests.rs).
+- **External target**: `examples/star-toml/main.rs`, negative fixtures, and `tests/star_toml_e2e.rs` — see [examples/star-toml/README.md](../../examples/star-toml/README.md).
 - **Scanner tuning**: Refactored `anti-llm-cheat-lsp` rules (oracle, hollow, version, placeholder, receipts) to respect allowed suppressions and test inline modules.
 - **Dependencies**: Bumped `wasm4pm-compat` to `26.6.26`.
 

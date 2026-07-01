@@ -117,7 +117,7 @@ while IFS= read -r file; do
         LINK_ERRORS=$((LINK_ERRORS + 1))
       fi
     fi
-  done < <(grep -oE '\[([^\]]+)\]\(([^)]+)\)' "$file" 2>/dev/null | sed -E 's/\[([^\]]+)\]\(([^)]+)\)/\2/')
+  done < <(grep -oE '\[([^]]+)\]\(([^)]+)\)' "$file" 2>/dev/null | sed -E 's/\[([^]]+)\]\(([^)]+)\)/\2/')
 done < <(find "$DOCS_DIR" -name "*.md" -type f 2>/dev/null)
 
 if [ $LINK_ERRORS -eq 0 ]; then

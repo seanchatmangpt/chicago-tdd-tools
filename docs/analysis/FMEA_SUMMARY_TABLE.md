@@ -201,10 +201,10 @@
 - [ ] Automatic git pre-commit hook
 
 ### 📋 Reference Documents
-- [FMEA_TESTS_BUILD_ACTIONS.md](docs/process/FMEA_TESTS_BUILD_ACTIONS.md) - Detailed FMEA
-- [TEST_ISOLATION_GUIDE.md](docs/process/TEST_ISOLATION_GUIDE.md) - Test isolation patterns
-- [CODE_REVIEW_CHECKLIST.md](docs/process/CODE_REVIEW_CHECKLIST.md) - Review guidelines
-- [SPR_GUIDE.md](docs/process/SPR_GUIDE.md) - Development standards
+- [FMEA_TESTS_BUILD_ACTIONS.md](../process/FMEA_TESTS_BUILD_ACTIONS.md) - Detailed FMEA
+- [TEST_ISOLATION_GUIDE.md](../process/TEST_ISOLATION_GUIDE.md) - Test isolation patterns
+- [CODE_REVIEW_CHECKLIST.md](../process/CODE_REVIEW_CHECKLIST.md) - Review guidelines
+- [SPR_GUIDE.md](../process/SPR_GUIDE.md) - Development standards
 
 ---
 
