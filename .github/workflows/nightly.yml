@@ -59,13 +59,13 @@ jobs:
         with:
           key: nightly-lint
 
-      - name: Install cargo-make
+      - name: Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: Run clippy with nightly
-        run: cargo make lint
+        run: just lint
         continue-on-error: true
         id: lint
 
@@ -95,14 +95,14 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-make
+      - name: Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: Check formatting with nightly
         run: |
-          cargo make fmt
+          just fmt
           if ! git diff --exit-code; then
             echo "⚠️  Nightly rustfmt would reformat code"
             echo "::warning::Nightly Rust formatter has different output. This may indicate formatting changes in upcoming Rust versions."
@@ -140,10 +140,10 @@ jobs:
         with:
           key: nightly-${{ matrix.os }}-test
 
-      - name: Install cargo-make
+      - name: Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
@@ -151,7 +151,7 @@ jobs:
           tool: cargo-nextest
 
       - name: Run tests with nightly
-        run: cargo make test-unit
+        run: just test-unit
         continue-on-error: true
         id: test
 

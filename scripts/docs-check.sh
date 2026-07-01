@@ -68,15 +68,15 @@ echo "" >&2
 echo "2️⃣  Checking build commands..." >&2
 BUILD_ERRORS=0
 while IFS= read -r file; do
-  # Check for direct cargo commands in code blocks (should use cargo make)
+  # Check for direct cargo commands in code blocks (should use just)
   # Look for cargo test, cargo check, cargo build, cargo run, cargo publish in code blocks
   if grep -qE '```(bash|sh|shell|text|toml).*\ncargo (test|check|build|run|publish)' "$file" 2>/dev/null; then
-    # Allow exceptions: cargo make, cargo doc, cargo audit, cargo outdated, cargo install
+    # Allow exceptions: cargo doc, cargo audit, cargo outdated, cargo install
     # Also allow in comments explaining what NOT to do
-    if ! grep -qE '(cargo (make|doc|audit|outdated|install)|should use|do not use|incorrect|wrong)' "$file" 2>/dev/null; then
+    if ! grep -qE '(just |cargo (doc|audit|outdated|install)|should use|do not use|incorrect|wrong)' "$file" 2>/dev/null; then
       # Check if it's actually in a code example (not just mentioned)
       if grep -qE '```(bash|sh|shell).*\ncargo (test|check|build|run|publish)' "$file" 2>/dev/null; then
-        error "Direct cargo command in $file: should use 'cargo make' instead"
+        error "Direct cargo command in $file: should use 'just' instead"
         BUILD_ERRORS=$((BUILD_ERRORS + 1))
       fi
     fi

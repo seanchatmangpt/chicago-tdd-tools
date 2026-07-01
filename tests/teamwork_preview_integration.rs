@@ -29,7 +29,9 @@ fn test_teamwork_preview_workflow_simulation() {
     // Perform static elicitation validation
     let parsed_draft = parse_prompt_draft(&prompt_draft_path).expect("failed to parse draft");
     assert_eq!(parsed_draft.target_dir, PathBuf::from(".agents/worker_doc_fixer/"));
-    assert!(parsed_draft.criteria.contains(&"Add Multi-Agent Teamwork Orchestration section to README.md".to_string()));
+    assert!(parsed_draft
+        .criteria
+        .contains(&"Add Multi-Agent Teamwork Orchestration section to README.md".to_string()));
 
     // 2. Phase 2: Execution - Simulate subagent folder-isolated workspace under .agents/
     let agents_dir = proj_root.join(".agents");
@@ -89,9 +91,13 @@ fn parse_prompt_draft(path: &Path) -> Result<PromptDraft, String> {
             if let Some(dir) = parts.get(1) {
                 target_dir = PathBuf::from(dir.trim());
             }
-        } else if line.trim().starts_with('-') || line.trim().starts_with("1.") || line.trim().starts_with("2.") {
+        } else if line.trim().starts_with('-')
+            || line.trim().starts_with("1.")
+            || line.trim().starts_with("2.")
+        {
             // Simple parsing of bullet points
-            let text = line.trim()
+            let text = line
+                .trim()
                 .trim_start_matches('-')
                 .trim_start_matches("1.")
                 .trim_start_matches("2.")
@@ -115,13 +121,8 @@ fn validate_liveness_heartbeat(path: &Path) -> Result<(), String> {
 
 fn validate_handoff_report(path: &Path) -> Result<(), String> {
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let required_headers = [
-        "Observation",
-        "Logic Chain",
-        "Caveats",
-        "Conclusion",
-        "Verification Method",
-    ];
+    let required_headers =
+        ["Observation", "Logic Chain", "Caveats", "Conclusion", "Verification Method"];
 
     for header in &required_headers {
         if !content.contains(header) {

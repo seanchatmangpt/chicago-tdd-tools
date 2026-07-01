@@ -55,20 +55,20 @@ src/
 
 ## Critical Constraints
 
-### 1. Always Use `cargo make`, Never Raw `cargo`
+### 1. Always Use `just`, Never Raw `cargo`
 
 ```bash
 # ✅ Correct
-cargo make test
-cargo make lint
-cargo make pre-commit
+just test
+just lint
+just pre-commit
 
 # ❌ Never this
 cargo test
 cargo clippy
 ```
 
-**Why**: cargo-make handles proc-macros correctly, enforces timeouts (prevents hanging), provides consistent build environment.
+**Why**: the Justfile handles workspace members correctly, enforces timeouts (prevents hanging), provides consistent build environment.
 
 ### 2. No Production Panics or Unwraps
 
@@ -102,7 +102,7 @@ let value = result.unwrap();
 
 ```bash
 # This will fail the build
-cargo make lint
+just lint
 ```
 
 Configured in `Cargo.toml`:
@@ -119,7 +119,7 @@ If you need to allow something, use inline justification:
 fn process(...) { }
 ```
 
-### 4. Timeout SLAs (Enforced in Makefile.toml)
+### 4. Timeout SLAs (Enforced in Justfile)
 
 | Operation | Timeout | Context |
 |-----------|---------|---------|
@@ -137,7 +137,7 @@ If a command hangs, it fails. By design. Prevents CI zombies.
 ### Before Every Commit (Required)
 
 ```bash
-cargo make pre-commit  # fmt + lint + unit tests
+just pre-commit  # fmt + lint + unit tests
 ```
 
 This catches 95% of issues before CI sees them.
@@ -148,8 +148,8 @@ This catches 95% of issues before CI sees them.
 # 1. Write failing test first (TDD)
 # 2. Implement minimal code
 # 3. Run this before committing
-cargo make pre-commit
-cargo make ci-local    # Simulate full CI pipeline
+just pre-commit
+just ci-local    # Simulate full CI pipeline
 
 # 4. Commit
 git add . && git commit -m "feat: description"
@@ -159,12 +159,12 @@ git add . && git commit -m "feat: description"
 
 ```bash
 # Reproduce CI environment locally
-cargo make ci-local
+just ci-local
 
 # Check for specific issues
-cargo make fmt         # Auto-fix formatting
-cargo make lint        # See what clippy complains about
-cargo make test-unit   # Re-run tests
+just fmt         # Auto-fix formatting
+just lint        # See what clippy complains about
+just test-unit   # Re-run tests
 ```
 
 ## Testing Organization
@@ -197,7 +197,7 @@ fixture_test!(test_with_container, fixture, {
 
 Location: `tests/` with integration test files
 
-Run with: `cargo make test-integration`
+Run with: `just test-integration`
 
 ### Advanced Testing Techniques
 
@@ -248,7 +248,7 @@ See `Cargo.toml` for full feature list.
 | File | Purpose |
 |------|---------|
 | `Cargo.toml` | Dependencies, features, lints (source of truth for quality settings) |
-| `Makefile.toml` | Build system, timeouts, development tasks |
+| `Justfile` | Build system, timeouts, development tasks |
 | `src/lib.rs` | Public API, module organization, re-exports |
 | `.github/workflows/ci.yml` | CI pipeline definition |
 | `docs/process/CODE_REVIEW_CHECKLIST.md` | What reviewers expect |
@@ -273,21 +273,21 @@ Requires `log` feature (enabled by default).
 ### Bootstrap (First Time)
 
 ```bash
-cargo make weaver-bootstrap  # Download Weaver CLI + semantic conventions
+just weaver-bootstrap  # Download Weaver CLI + semantic conventions
 ```
 
 ### Smoke Test (Verify It Works)
 
 ```bash
-cargo make weaver-smoke  # No Docker required
+just weaver-smoke  # No Docker required
 ```
 
 ### Integration Tests with Weaver
 
 ```bash
-cargo make test-integration  # Runs Weaver validation tests
+just test-integration  # Runs Weaver validation tests
 # Or skip if Docker unavailable
-WEAVER_ALLOW_SKIP=1 cargo make test-integration
+WEAVER_ALLOW_SKIP=1 just test-integration
 ```
 
 ## Procedural Macros
@@ -303,8 +303,8 @@ These are re-exported from `chicago_tdd_tools` and available in the prelude.
 
 ## Common Patterns (DO)
 
-1. ✅ Use `cargo make` exclusively
-2. ✅ Run `cargo make pre-commit` before every commit
+1. ✅ Use `just` exclusively
+2. ✅ Run `just pre-commit` before every commit
 3. ✅ Follow AAA pattern in all tests (Arrange-Act-Assert)
 4. ✅ Use `?` operator for error propagation
 5. ✅ Add tests when adding features (TDD approach)
@@ -318,10 +318,10 @@ These are re-exported from `chicago_tdd_tools` and available in the prelude.
 2. ❌ `println!` or `eprintln!` for logging
 3. ❌ Ignoring clippy warnings
 4. ❌ Skipping tests when adding features
-5. ❌ Using raw `cargo` instead of `cargo make`
+5. ❌ Using raw `cargo` instead of `just`
 6. ❌ Adding dependencies without justification
 7. ❌ Breaking backward compatibility without discussion
-8. ❌ Committing without running `cargo make pre-commit`
+8. ❌ Committing without running `just pre-commit`
 
 ## Git Workflow
 
@@ -335,39 +335,39 @@ These are re-exported from `chicago_tdd_tools` and available in the prelude.
 
 ```bash
 # Setup (once)
-cargo install cargo-make
-cargo make install-hooks
+cargo install just
+just install-hooks
 
 # Daily workflow
-cargo make pre-commit              # Before every commit
-cargo make check                   # Quick check
-cargo make test                    # All tests
-cargo make lint                    # Code quality
-cargo make docs                    # Generate API docs
+just pre-commit              # Before every commit
+just check                   # Quick check
+just test                    # All tests
+just lint                    # Code quality
+just docs                    # Generate API docs
 
 # Debugging CI
-cargo make ci-local                # Simulate full pipeline
-cargo make fmt && cargo make check # Fast feedback loop
+just ci-local                # Simulate full pipeline
+just fmt && just check # Fast feedback loop
 
 # Special cases
-cargo make test-integration        # With Docker
-cargo make weaver-bootstrap        # First Weaver setup
-cargo make coverage                # Coverage report
+just test-integration        # With Docker
+just weaver-bootstrap        # First Weaver setup
+just coverage                # Coverage report
 ```
 
 ## When Something Breaks
 
-**Most common**: Running `cargo test` instead of `cargo make test`
-- **Fix**: Use `cargo make test` only
+**Most common**: Running `cargo test` instead of `just test`
+- **Fix**: Use `just test` only
 
 **Proc-macro compilation fails**: Probably used raw cargo
-- **Fix**: `cargo make clean && cargo make check`
+- **Fix**: `just clean && just check`
 
 **Lint fails locally, passed before**: New code introduced clippy violations
-- **Fix**: `cargo make lint` to see what, then fix inline or allow with justification
+- **Fix**: `just lint` to see what, then fix inline or allow with justification
 
 **Tests pass locally, fail CI**: Architecture differences or missing Docker
-- **Fix**: `cargo make ci-local` to reproduce, then fix
+- **Fix**: `just ci-local` to reproduce, then fix
 
 **Weaver tests skip**: Docker not available
 - **Fix**: Start Docker or set `WEAVER_ALLOW_SKIP=1`
@@ -375,7 +375,7 @@ cargo make coverage                # Coverage report
 ## Getting Help
 
 - **Project philosophy**: README.md (why this framework exists)
-- **API documentation**: `cargo make docs`
+- **API documentation**: `just docs`
 - **Code review expectations**: `docs/process/CODE_REVIEW_CHECKLIST.md`
 - **Examples**: `examples/` directory (18+ complete, working examples)
 - **Architecture**: `docs/reference/ARCHITECTURE.md`
