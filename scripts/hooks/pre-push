@@ -29,27 +29,27 @@ echo ""
 
 # Gate 1: Cargo check
 echo "Gate 1/6: Cargo check..."
-if timeout 10s cargo make check >/dev/null 2>&1; then
+if timeout 10s just check >/dev/null 2>&1; then
     echo "✅ Gate 1 passed"
 else
-    echo "❌ ERROR: cargo make check failed"
-    echo "Run 'cargo make check' to see details"
+    echo "❌ ERROR: just check failed"
+    echo "Run 'just check' to see details"
     exit 1
 fi
 echo ""
 
 # Gate 2: Clippy (strict mode)
 echo "Gate 2/6: Clippy (strict mode)..."
-LINT_OUTPUT=$(timeout 300s cargo make lint 2>&1) || LINT_EXIT=$?
+LINT_OUTPUT=$(timeout 300s just lint 2>&1) || LINT_EXIT=$?
 if [ -z "${LINT_EXIT:-}" ]; then
     echo "✅ Gate 2 passed"
 else
-    echo "❌ ERROR: cargo make lint failed"
+    echo "❌ ERROR: just lint failed"
     echo ""
     echo "Last 30 lines of lint output:"
     echo "$LINT_OUTPUT" | tail -30
     echo ""
-    echo "Run 'cargo make lint' to see full details"
+    echo "Run 'just lint' to see full details"
     exit 1
 fi
 echo ""
@@ -101,9 +101,9 @@ echo ""
 echo "Gate 3/6: Formatting check..."
 # Save git state before formatting
 BEFORE_FMT=$(git diff --name-only 2>/dev/null || true)
-FMT_OUTPUT=$(timeout 10s cargo make fmt 2>&1) || FMT_EXIT=$?
+FMT_OUTPUT=$(timeout 10s just fmt 2>&1) || FMT_EXIT=$?
 if [ -n "${FMT_EXIT:-}" ]; then
-    echo "❌ ERROR: cargo make fmt failed"
+    echo "❌ ERROR: just fmt failed"
     echo ""
     echo "Last 20 lines of fmt output:"
     echo "$FMT_OUTPUT" | tail -20
@@ -113,7 +113,7 @@ fi
 AFTER_FMT=$(git diff --name-only 2>/dev/null || true)
 if [ "$BEFORE_FMT" != "$AFTER_FMT" ]; then
     echo "❌ ERROR: Code is not formatted"
-    echo "Run 'cargo make fmt' to format code"
+    echo "Run 'just fmt' to format code"
     exit 1
 fi
 echo "✅ Gate 3 passed"
@@ -121,16 +121,16 @@ echo ""
 
 # Gate 4: Unit tests
 echo "Gate 4/6: Unit tests..."
-TEST_OUTPUT=$(timeout 300s cargo make test-unit 2>&1) || TEST_EXIT=$?
+TEST_OUTPUT=$(timeout 300s just test-unit 2>&1) || TEST_EXIT=$?
 if [ -z "${TEST_EXIT:-}" ]; then
     echo "✅ Gate 4 passed"
 else
-    echo "❌ ERROR: cargo make test-unit failed"
+    echo "❌ ERROR: just test-unit failed"
     echo ""
     echo "Last 30 lines of test output:"
     echo "$TEST_OUTPUT" | tail -30
     echo ""
-    echo "Run 'cargo make test-unit' to see full details"
+    echo "Run 'just test-unit' to see full details"
     exit 1
 fi
 echo ""
@@ -190,11 +190,11 @@ fi
 
 if [ -n "$DOC_FILES" ]; then
     echo "📚 Documentation files changed, validating..."
-    if timeout 10s cargo make docs-check >/dev/null 2>&1; then
+    if timeout 10s just docs-check >/dev/null 2>&1; then
         echo "✅ Gate 6 passed"
     else
         echo "❌ ERROR: Documentation validation failed"
-        echo "Run 'cargo make docs-check' to see details"
+        echo "Run 'just docs-check' to see details"
         exit 1
     fi
 else

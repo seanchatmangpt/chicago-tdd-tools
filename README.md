@@ -27,8 +27,8 @@ Chicago-style TDD (Classicist approach) focuses on **behavior verification** usi
 ### 1️⃣ First Time User? → 5-Minute Setup
 
 ```bash
-# Install cargo-make (required)
-cargo install cargo-make
+# Install just (required)
+cargo install just
 
 # Create test file: tests/my_first_test.rs
 mkdir -p tests
@@ -57,10 +57,10 @@ fixture_test!(test_with_fixture, fixture, {
 EOF
 
 # Run tests
-cargo make test
+just test
 ```
 
-**✓ Installation complete** when `cargo make test` shows 3 passing tests.
+**✓ Installation complete** when `just test` shows 3 passing tests.
 
 ---
 
@@ -83,7 +83,7 @@ cargo run --example sector_stacks_workflows
 ### 3️⃣ Need Full Reference? → API Documentation
 
 ```bash
-cargo make docs   # Generate and open Rustdoc
+just docs   # Generate and open Rustdoc
 ```
 
 ---
@@ -442,15 +442,15 @@ test!(test_snapshot_comparison, {
     // Workflow:
     // 1. First run: creates snapshot file
     // 2. Second run: compares against snapshot
-    // 3. Change output? Update snapshot with: cargo make snapshot-accept
+    // 3. Change output? Update snapshot with: just snapshot-accept
 });
 ```
 
 **Snapshot management**:
 ```bash
-cargo make snapshot-review    # Review changes
-cargo make snapshot-accept    # Accept new snapshots
-cargo make snapshot-reject    # Reject and revert
+just snapshot-review    # Review changes
+just snapshot-accept    # Accept new snapshots
+just snapshot-reject    # Reject and revert
 ```
 
 ---
@@ -545,7 +545,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["testcontainers
 
 **Run with**:
 ```bash
-cargo make test-integration  # Requires Docker running
+just test-integration  # Requires Docker running
 ```
 
 ---
@@ -558,7 +558,7 @@ Test OpenTelemetry (OTEL) instrumentation and semantic convention compliance wit
 
 ```bash
 # Download Weaver CLI + semantic convention registry
-cargo make weaver-bootstrap
+just weaver-bootstrap
 
 # This creates:
 # - target/<profile>/weaver (executable)
@@ -569,7 +569,7 @@ cargo make weaver-bootstrap
 
 ```bash
 # Verify Weaver works + send test span
-cargo make weaver-smoke
+just weaver-smoke
 
 # Output: Weaver version + telemetry validation
 ```
@@ -629,9 +629,9 @@ chicago-tdd-tools = {
 
 **Run integration tests**:
 ```bash
-cargo make test-integration  # Includes Weaver tests
+just test-integration  # Includes Weaver tests
 # Or skip if Docker unavailable:
-WEAVER_ALLOW_SKIP=1 cargo make test-integration
+WEAVER_ALLOW_SKIP=1 just test-integration
 ```
 
 ---
@@ -705,18 +705,18 @@ Integration with host-level services and environment tools is supported through 
 
 ## Build System (Important!)
 
-**⚠️ Always use `cargo make`, never raw `cargo`:**
+**⚠️ Always use `just`, never raw `cargo`:**
 
 ```bash
-cargo make check              # Compilation check (fast)
-cargo make test               # Unit tests only
-cargo make test-unit          # Same as test
-cargo make test-integration   # Integration tests (Docker, Weaver)
-cargo make test-all           # Unit + integration
-cargo make lint               # Clippy checks
-cargo make fmt                # Code formatting
-cargo make pre-commit         # fmt + lint + unit tests (always run before commit)
-cargo make ci-local           # Simulate full CI pipeline
+just check              # Compilation check (fast)
+just test               # Unit tests only
+just test-unit          # Same as test
+just test-integration   # Integration tests (Docker, Weaver)
+just test-all           # Unit + integration
+just lint               # Clippy checks
+just fmt                # Code formatting
+just pre-commit         # fmt + lint + unit tests (always run before commit)
+just ci-local           # Simulate full CI pipeline
 ```
 
 **Why mandatory?**
@@ -727,7 +727,7 @@ cargo make ci-local           # Simulate full CI pipeline
 
 **Essential for safety**:
 ```bash
-cargo make install-hooks  # Install git hooks that prevent unwrap/expect in production
+just install-hooks  # Install git hooks that prevent unwrap/expect in production
 ```
 
 ---
@@ -863,8 +863,8 @@ chicago-tdd-tools = {
 
 ### 🔍 Troubleshooting
 
-**Problem**: "command not found: cargo-make"
-- **Fix**: `cargo install cargo-make`
+**Problem**: "command not found: just"
+- **Fix**: `cargo install just`
 
 **Problem**: "cannot find macro 'test!'"
 - **Fix**: Add `use chicago_tdd_tools::prelude::*;` to your test file
@@ -873,7 +873,7 @@ chicago-tdd-tools = {
 - **Fix**: Enable feature in `Cargo.toml`: `features = ["feature-name"]`
 
 **Problem**: Tests pass locally but fail in CI
-- **Fix**: Run `cargo make ci-local` to simulate CI environment
+- **Fix**: Run `just ci-local` to simulate CI environment
 
 **More help**: See [Getting Started - Troubleshooting](docs/getting-started/GETTING_STARTED.md#troubleshooting)
 
@@ -934,7 +934,7 @@ cargo run --example operator_registry
 |-----------|---------|--------|---------|
 | Rust | 1.70 | `rustc --version` | [rustup](https://rustup.rs/) |
 | Cargo | Latest stable | `cargo --version` | Included with Rust |
-| cargo-make | Latest | `cargo make --version` | `cargo install cargo-make` |
+| just | Latest | `just --version` | `cargo install just` |
 | Tokio | 1.0+ | (add to Cargo.toml) | [tokio](https://tokio.rs) |
 | Docker* | Latest | `docker ps` | [Docker Desktop](https://www.docker.com) |
 | Rust 1.75+* | For async fixtures | `rustc --version` | `rustup update stable` |
@@ -961,31 +961,31 @@ MIT
 
 ```bash
 # Development
-cargo make pre-commit      # Format + lint + test (before every commit)
-cargo make ci-local        # Simulate full CI pipeline
+just pre-commit      # Format + lint + test (before every commit)
+just ci-local        # Simulate full CI pipeline
 
 # Testing
-cargo make test            # Unit tests (fast)
-cargo make test-all        # Unit + integration
-cargo make test-property   # Property-based tests
-cargo make test-mutation   # Mutation testing
-cargo make test-snapshot   # Snapshot tests
+just test            # Unit tests (fast)
+just test-all        # Unit + integration
+just test-property   # Property-based tests
+just test-mutation   # Mutation testing
+just test-snapshot   # Snapshot tests
 
 # Observability
-cargo make weaver-bootstrap  # Setup Weaver (once)
-cargo make weaver-smoke      # Verify Weaver works
-cargo make test-integration  # Full integration tests
+just weaver-bootstrap  # Setup Weaver (once)
+just weaver-smoke      # Verify Weaver works
+just test-integration  # Full integration tests
 
 # Code Quality
-cargo make lint            # Clippy checks (strict)
-cargo make fmt             # Code formatting
-cargo make coverage        # Test coverage report
-cargo make docs            # Generate & open Rustdoc
+just lint            # Clippy checks (strict)
+just fmt             # Code formatting
+just coverage        # Test coverage report
+just docs            # Generate & open Rustdoc
 
 # Build
-cargo make check           # Compilation check
-cargo make build           # Debug binary
-cargo make build-release   # Optimized binary
+just check           # Compilation check
+just build           # Debug binary
+just build-release   # Optimized binary
 ```
 
 ---

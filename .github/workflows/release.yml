@@ -74,10 +74,10 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-make
+      - name: Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: Validate version matches tag
         run: |
@@ -106,13 +106,8 @@ jobs:
       - name: Run tests before release
         run: cargo test --all-features --workspace
 
-      - name: Run release validation (if defined)
-        run: |
-          if cargo make --list-all-steps | grep -q release-validate; then
-            cargo make release-validate
-          else
-            echo "ℹ️  No release-validate task defined in Makefile.toml, skipping"
-          fi
+      - name: Run release validation
+        run: just release-validate
         continue-on-error: false
 
   # Build release artifacts
@@ -156,9 +151,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Build release binary
-        # FMEA Fix: Use cargo make for consistency, but build-release task doesn't support target
+        # FMEA Fix: Use just for consistency, but build-release task doesn't support target
         # Keeping direct cargo build for cross-compilation targets
-        # Note: cargo make build-release doesn't support --target flag
+        # Note: just build-release doesn't support --target flag
         run: cargo build --release --target ${{ matrix.target }} --all-features
 
       - name: Package artifacts (Unix)

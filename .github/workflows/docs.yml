@@ -48,10 +48,10 @@ jobs:
         with:
           key: docs
 
-      - name: Install cargo-make
+      - name: Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: Install mdBook
         uses: taiki-e/install-action@v2
@@ -60,15 +60,12 @@ jobs:
         continue-on-error: true
 
       - name: Build rustdoc
-        # FMEA Fix: Use cargo make for consistency with build system standards
-        # Note: cargo make docs-build may not exist, so keeping direct cargo doc for now
-        # TODO: Add docs-build task to Makefile.toml if needed
-        run: cargo doc --no-deps --all-features
+        run: just docs-build
 
       - name: Build cookbook (if present)
         run: |
           if [ -d "cookbook" ]; then
-            cargo make cookbook-build || echo "⚠️ Cookbook build failed, skipping"
+            just cookbook-build || echo "⚠️ Cookbook build failed, skipping"
           else
             echo "No cookbook directory found, skipping"
           fi

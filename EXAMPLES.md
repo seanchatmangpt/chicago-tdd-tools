@@ -95,7 +95,7 @@ Understand concepts and philosophy:
 
 ```bash
 # Run all runnable examples
-cargo make test-examples
+just test-examples
 
 # Run all with all features
 for example in basic_test advanced_features property_testing mutation_testing go_extra_mile testcontainers_example; do
@@ -208,7 +208,7 @@ fixture_test!(my_test, fixture, {
 **Error:** Weaver not available
 - **Fix:** Bootstrap Weaver:
   ```bash
-  cargo make weaver-bootstrap
+  just weaver-bootstrap
   ```
 
 ---

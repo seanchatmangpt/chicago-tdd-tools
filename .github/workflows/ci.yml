@@ -80,16 +80,16 @@ jobs:
         with:
           key: ${{ matrix.rust }}-lint
 
-      - name: 🔨 Install cargo-make
+      - name: 🔨 Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
           
       - name: 🎯 Run clippy lint check
         run: |
           echo "🟡 ANDON SIGNAL: Checking for lint warnings..."
           echo "If lint errors appear, work stops until fixed"
-          cargo make lint
+          just lint
         continue-on-error: ${{ matrix.rust == 'nightly' }}
 
         # **Root Cause Prevention**: Exit code 1 on failure blocks merge
@@ -119,19 +119,19 @@ jobs:
       - name: 💾 Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: 🔨 Install cargo-make
+      - name: 🔨 Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: 🎯 Check code formatting
         run: |
           echo "🟡 ANDON SIGNAL: Checking code formatting..."
-          cargo make fmt
+          just fmt
           # Check if formatting changed anything
           if ! git diff --exit-code; then
             echo "❌ ANDON SIGNAL DETECTED: Code is not formatted correctly"
-            echo "📝 Fix: Run 'cargo make fmt' to automatically fix formatting"
+            echo "📝 Fix: Run 'just fmt' to automatically fix formatting"
             exit 1
           fi
           echo "✅ Format check passed - no Andon signals"
@@ -164,10 +164,10 @@ jobs:
         with:
           key: ${{ matrix.os }}-${{ matrix.rust }}-test
 
-      - name: 🔨 Install cargo-make
+      - name: 🔨 Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: 🧪 Install cargo-nextest
         uses: taiki-e/install-action@v2
@@ -185,7 +185,7 @@ jobs:
           command: |
             echo "🔴 ANDON SIGNAL: Running critical unit tests..."
             echo "Test failures are CRITICAL signals that stop all work"
-            cargo make test-unit
+            just test-unit
           on_retry_command: |
             echo "⚠️  ANDON SIGNAL: Test failure detected (attempt ${{ github.run_attempt }}/3)"
             echo "Retrying transient test failures..."
@@ -215,10 +215,10 @@ jobs:
         with:
           key: integration-test
 
-      - name: 🔨 Install cargo-make
+      - name: 🔨 Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: 🧪 Install cargo-nextest
         uses: taiki-e/install-action@v2
@@ -247,7 +247,7 @@ jobs:
         run: |
           echo "🔴 ANDON SIGNAL: Running critical integration tests..."
           echo "Integration test failures are CRITICAL signals that stop all work"
-          cargo make test-integration
+          just test-integration
         timeout-minutes: 15
         env:
           RUST_BACKTRACE: 1
@@ -360,10 +360,10 @@ jobs:
       - name: 💾 Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: 🔨 Install cargo-make
+      - name: 🔨 Install just
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-make
+          tool: just
 
       - name: 📊 Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
