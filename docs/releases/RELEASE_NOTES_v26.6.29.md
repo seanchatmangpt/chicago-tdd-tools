@@ -18,21 +18,21 @@ Migrates the framework's process verification layer from standard hashing to sec
   - `assert_chain_valid()` and `assert_tamper_evident()`: Ensures that any mutated bytes in any entry break the chain and invalidate downstream digests.
 - **OCEL Hashing Upgrade**: Wires the `ocel-generation` feature to use `blake3::Hasher` within `seal_run()`, making mined process logs cryptographically sealed.
 
-See **[tests/blake3_receipt_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/blake3_receipt_tests.rs)** (17 tests verifying replay determinism, tamper-evidence, mutation detection, and overflow flags).
+See **[tests/blake3_receipt_tests.rs](../../tests/blake3_receipt_tests.rs)** (17 tests verifying replay determinism, tamper-evidence, mutation detection, and overflow flags).
 
 ### 2. E2E Integration Suite: `star-toml` Workload (`examples/star-toml`)
 A real collaborator TDD integration example proving config-admission laws against the crates.io `star-toml` package.
 
 - **Load & Validate**: Leverages `TrustedLoader` to layer TOML files (Default, Dev, Prod) with dynamic environment overrides.
 - **Interface Guards**: Validates port ranges, workers constraints, non-empty fields, and cross-field TLS paths rules.
-- **Verification Tiers**: 60 E2E tests written under **[tests/star_toml_e2e.rs](file:///Users/sac/chicago-tdd-tools/tests/star_toml_e2e.rs)** across 4 execution tiers:
+- **Verification Tiers**: 60 E2E tests written under **[tests/star_toml_e2e.rs](../../tests/star_toml_e2e.rs)** across 4 execution tiers:
   - **Tier 1**: Feature Coverage (Parsing, Merging, Validation, Alerts, Exit Codes).
   - **Tier 2**: Boundary & Corner cases (Empty configs, range bounds, bad syntax, unicode).
   - **Tier 3**: Cross-feature combinations (Layered errors, dynamic overrides).
   - **Tier 4**: Real-world application scenarios (Prod/Dev profiles, scale-out).
-- **Gap Feedback**: Includes a detailed **[examples/star-toml/GAP_REPORT.md](file:///Users/sac/chicago-tdd-tools/examples/star-toml/GAP_REPORT.md)** converting feedback loops into trackable Jira/DoD tickets (ST-201 to ST-206).
+- **Gap Feedback**: Includes a detailed **[examples/star-toml/GAP_REPORT.md](../../examples/star-toml/GAP_REPORT.md)** converting feedback loops into trackable Jira/DoD tickets (ST-201 to ST-206).
 
-See **[examples/star-toml/README.md](file:///Users/sac/chicago-tdd-tools/examples/star-toml/README.md)**.
+See **[examples/star-toml/README.md](../../examples/star-toml/README.md)**.
 
 ### 3. Forensic Compliance & Clean-Room Scan
 Hardens the repository against LLM-cheats and stubbed implementations by configuring the forensic admissibility scanner (`anti-llm-cheat-lsp`).

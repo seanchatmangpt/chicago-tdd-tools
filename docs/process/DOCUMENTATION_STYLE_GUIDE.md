@@ -178,8 +178,8 @@ All major documentation should include:
 
 **Internal Links**:
 ```markdown
-[Link Text](relative/path/to/file.md)
-[Link Text with Anchor](relative/path/to/file.md#anchor)
+[Link Text](../getting-started/GETTING_STARTED.md)
+[Link Text with Anchor](../getting-started/GETTING_STARTED.md#installation)
 ```
 
 **External Links**:

@@ -669,6 +669,40 @@ test!(test_ocel_collector, {
 
 ---
 
+## Multi-Agent Teamwork Orchestration
+
+Coordinate multi-agent swarms with high-integrity guarantees and structured execution workflows. The teamwork subsystem supports dry-running, validation, and multi-agent execution.
+
+### 👥 Trigger Mechanics & Two-Phase Workflow
+
+Orchestration proceeds in a structured two-phase lifecycle:
+1. **Triggering via slash commands**: Run `/teamwork-preview` in the CLI or IDE interface to dry-run swarm execution plans.
+2. **Requirements Elicitation**: The orchestrator looks for `prompt_draft.md` at the project root to perform static requirements elicitation, ensuring all acceptance criteria and target directories are explicitly defined before execution begins.
+
+### 🛡️ Configurable Integrity Modes
+
+Governing agent behavior is done through three different compliance profiles:
+- **Permissive**: Relaxed validation. Warnings for test failures or style guide non-compliance are logged, but do not halt progression. Good for quick iteration.
+- **Strict**: Strong validation. Code modifications must compile, all unit tests must pass, and style guidelines must have zero violations before agent submissions are accepted.
+- **Cryptographic / Audit**: Maximum accountability. Every action, validation result, and status transition is hashed and chained into a tamper-evident audit log using BLAKE3 digests, providing cryptographic assurance of the agent's work.
+
+### 📂 Folder-Isolated Coordination & Artifacts
+
+Swarm members coordinate via the filesystem under the `.agents/` folder:
+- **Workspace Isolation**: Each subagent gets a folder-isolated directory (e.g. `.agents/worker_doc_writer/`). Agents can read from any folder but can only write to their own folder.
+- **Liveness Heartbeats**: Active agents regularly write to their `progress.md` with a `Last visited: [timestamp]` header for liveness tracking.
+- **Strict Handoffs**: When transitioning work or completing tasks, agents compile a formal `handoff.md` containing the five mandatory sections: Observation, Logic Chain, Caveats, Conclusion, and Verification Method.
+
+### 🔌 Model Context Protocol (MCP) Tool Bridging
+
+Integration with host-level services and environment tools is supported through bridging components:
+- **`McpAgentBridge`**: Exposes host-side capabilities, databases, and compilers dynamically to subagents via MCP JSON-RPC pipes.
+- **`A2aTaskHarness`**: Provides HTTP stubbing and A2A testing interfaces to validate tool calls, schema adherence, and multi-agent interactions.
+
+**📖 Example**: See [tests/teamwork_preview_integration.rs](tests/teamwork_preview_integration.rs) and the [Release Notes for v26.7.2](docs/releases/RELEASE_NOTES_v26.7.2.md) for more details.
+
+---
+
 ## Build System (Important!)
 
 **⚠️ Always use `cargo make`, never raw `cargo`:**
@@ -956,36 +990,33 @@ cargo make build-release   # Optimized binary
 
 ---
 
-## What's New in v26.6.121
+## What's New in v26.7.2
 
-**Process Truth & Governance** (latest):
+**Multi-Agent Swarm & High-Integrity Coordination** (latest):
 
-- 🔬 **OCEL 2.0 Process Mining** *(new module)* - `observability::ocel` turns test runs into Object-Centric Event Logs with a one-way `Raw → Admitted → Receipted` evidence lifecycle. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate (migrated off the in-tree vendor). See [Process Mining (OCEL)](#process-mining-ocel).
-- ⚖️ **Governance Module** *(new)* - `core::governance` adds diagnostic/severity types, law enforcement primitives, channels, and sectors as the baseline for compile-time law-enforcement macros.
-- 🌊 **Wave Orchestration** *(new)* - `swarm::wave` runs N-phase sequential waves with M parallel tasks, with wave-state observability and failure classification (`ResidualClass`).
+- 👥 **`/teamwork-preview` Slash Command** - A structured workflow for dry-running and orchestrating multi-agent tasks in classical TDD swarms.
+- 📝 **Two-Phase Workflow** - Separates task execution into **Requirements Elicitation** (parsing `prompt_draft.md` for clear acceptance criteria) and **Swarm Delegation** (assigning tasks to subagents).
+- ⚙️ **Configurable Integrity Modes** - Controls agent constraints across three levels:
+  - *Permissive*: Warning-only mode for fast local iteration.
+  - *Strict*: Blocks unless formatting, compilation, style checks, and all tests pass.
+  - *Cryptographic / Audit*: Seals every agent step and verification run inside a tamper-evident BLAKE3-hashed receipt chain.
+- 💓 **Swarm Coordination Heartbeats** - Folder-isolated agent execution under the `.agents/` directory, tracked via automated `progress.md` liveness heartbeats and concluded via structured `handoff.md` reports.
+- 🔌 **MCP Agent Bridging** - Enables agents to seamlessly discover and execute external tools configured in `mcp_config.json` via the Model Context Protocol.
+
+**Earlier: Process Truth & Governance** (v26.6.121):
+
+- 🔬 **OCEL 2.0 Process Mining** - `observability::ocel` turns test runs into Object-Centric Event Logs with a one-way `Raw → Admitted → Receipted` evidence lifecycle. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate (migrated off the in-tree vendor). See [Process Mining (OCEL)](#process-mining-ocel).
+- ⚖️ **Governance Module** - `core::governance` adds diagnostic/severity types, law enforcement primitives, channels, and sectors as the baseline for compile-time law-enforcement macros.
+- 🌊 **Wave Orchestration** - `swarm::wave` runs N-phase sequential waves with M parallel tasks, with wave-state observability and failure classification (`ResidualClass`).
 - 📋 **Full YAWL Operator Registry** - All **43** YAWL workflow control patterns now registered, each characterized by its control-flow law.
-- 🧩 **chicago-tdd-lsp** *(new crate)* - Editor guard that emits `CTDD-DEV-001` whenever `chicago-tdd-tools` lands in `[dependencies]` instead of `[dev-dependencies]`.
-
-**Hardening**:
-
-- ✅ **93 stubs & cheats eliminated** - Across core, testing, observability, and integration; placeholders replaced with real implementations (HTTP effect semantics, testcontainers state machine, string-literal scanner, verification pipeline phases 3 & 4, …).
-- ✅ **Clean strict build** - 445 unit tests passing, 0 clippy warnings (`all`/`pedantic`/`nursery`/`cargo`), zero `unwrap`/`expect` in production code.
-- ✅ **6-gate pre-push** - check → clippy → error-handling scan → fmt → unit tests → examples → docs, with timeouts tuned for the heavier `testcontainers`/`bollard` dependency graph.
-- ✅ **Security** - `testcontainers` upgraded `^0.25 → ^0.27` to clear `astral-tokio-tar` advisories.
-
-**Earlier: Production-Grade Verification Infrastructure** (v1.4.0):
-
-- 🛡️ **Fail-Fast Hardening** - 47 invariant violations, zero-tolerance execution with 12-phase verification pipeline
-- 🏭 **Sector-Grade Reference Stacks** - Academic publishing & claims processing workflows with deterministic operations
-- 🔗 **RDF Integration** - Ontologies as single source of truth for workflow validation
-- 🐝 **Swarm Protocol** - Distributed multi-sector coordination with task receipts and state machines
-- 📸 **Enhanced Snapshot Testing** - Better fixtures and organization with graceful degradation
+- 🧩 **chicago-tdd-lsp** - Editor guard that emits `CTDD-DEV-001` whenever `chicago-tdd-tools` lands in `[dependencies]` instead of `[dev-dependencies]`.
 
 **Backward compatible** — existing `prelude` and crate-root imports continue to work; the new capabilities are additive and feature-gated.
 
 **📖 Documentation**:
-- [Release Notes v26.6.121](docs/releases/RELEASE_NOTES_v26.6.121.md) - Complete feature documentation
-- [GitHub Release v26.6.121](docs/releases/GITHUB_RELEASE_v26.6.121.md) - GitHub release notes
+- [Release Notes v26.7.2](docs/releases/RELEASE_NOTES_v26.7.2.md) - Complete feature documentation
+- [GitHub Release v26.7.2](docs/releases/GITHUB_RELEASE_v26.7.2.md) - GitHub release notes
+- [Release Notes v26.6.121](docs/releases/RELEASE_NOTES_v26.6.121.md) - v26.6.121 documentation
 - [Changelog](docs/releases/CHANGELOG.md) - Full change history
 - [OCEL 2.0 Process Mining](docs/OCEL.md) · [Agent Governance](docs/governance_architecture.md) - New module guides
 
