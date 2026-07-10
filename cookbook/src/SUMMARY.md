@@ -21,6 +21,7 @@
 - [Pattern Dependencies & Learning Order](pattern-dependencies.md)
 - [All Patterns: Quick Reference](all-patterns-reference.md)
 
+- [Patterns in Practice](patterns-in-practice.md)
 # Learning Sequences (Tutorials)
 
 - [Learning Testing Patterns (90 min)](tutorials/learning-testing-patterns.md)

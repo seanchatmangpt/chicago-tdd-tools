@@ -434,3 +434,13 @@ let latest = fixture.latest_snapshot();
 ```
 
 **Congratulations!** You've mastered fixtures. You can now write tests with proper isolation and state tracking.
+
+
+---
+
+## Cookbook References
+
+Want to dive deeper into the theoretical patterns used in this tutorial? Check out these patterns from the Cookbook:
+- [Pattern 4: Resource Cleanup](../../../cookbook/src/testing-patterns/resource-cleanup.md)
+- [Pattern 16: Fixture Lifecycle Management](../../../cookbook/src/design-patterns/fixture-lifecycle.md)
+- [Pattern 17: Builder-Driven Test Data](../../../cookbook/src/design-patterns/builder-test-data.md)

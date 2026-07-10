@@ -655,3 +655,13 @@ You've built a real CLI application with:
 ---
 
 **Congratulations!** You've built and tested a real CLI application using Chicago TDD. You're now ready to build production applications!
+
+
+---
+
+## Cookbook References
+
+Want to dive deeper into the theoretical patterns used in this tutorial? Check out these patterns from the Cookbook:
+- [Pattern 6: Generic Base Layer](../../../cookbook/src/architecture-patterns/generic-base.md)
+- [Pattern 8: Composition Over Duplication](../../../cookbook/src/architecture-patterns/composition-over-duplication.md)
+- [Pattern 11: Zero-Cost Abstractions](../../../cookbook/src/design-patterns/zero-cost-abstractions.md)

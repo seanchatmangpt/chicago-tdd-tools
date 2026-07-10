@@ -727,3 +727,13 @@ pub fn list_users_paginated(
 ---
 
 **Congratulations!** You've built a production-ready REST API with comprehensive tests. You're ready to deploy real services!
+
+
+---
+
+## Cookbook References
+
+Want to dive deeper into the theoretical patterns used in this tutorial? Check out these patterns from the Cookbook:
+- [Pattern 9: Single Source of Truth](../../../cookbook/src/architecture-patterns/single-source-of-truth.md)
+- [Pattern 14: Compile-Time Validation](../../../cookbook/src/design-patterns/compile-time-validation.md)
+- [Pattern 15: Type State Enforcement](../../../cookbook/src/design-patterns/type-state-pattern.md)

@@ -309,3 +309,12 @@ assert!(condition);           // Condition is true
 ---
 
 **Congratulations!** You can now write tests with Chicago TDD Tools. The rest is practice and learning specific patterns for your use case.
+
+
+---
+
+## Cookbook References
+
+Want to dive deeper into the theoretical patterns used in this tutorial? Check out these patterns from the Cookbook:
+- [Pattern 1: AAA Pattern](../../../cookbook/src/testing-patterns/aaa-pattern.md)
+- [Pattern 2: Error Path Testing](../../../cookbook/src/testing-patterns/error-path-testing.md)
