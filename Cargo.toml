@@ -99,10 +99,10 @@ tempfile = { version = "^3.0", optional = true }
 opentelemetry = { version = "^0.31", optional = true, default-features = false, features = [
   "trace",
 ] }
-opentelemetry_sdk = { version = "^0.31", optional = true, default-features = false }
+opentelemetry_sdk = { version = "^0.31", optional = true, default-features = false, features = ["trace"] }
 opentelemetry-otlp = { version = "^0.31", optional = true, default-features = false, features = [
-  "http-proto",
-  "reqwest-client",
+  "grpc-tonic",
+  "trace",
 ] }
 
 # Snapshot testing (optional, snapshot-testing feature)
@@ -237,6 +237,7 @@ cli-testing = ["dep:trycmd"]
 # When to use: Installing Rust-based git hooks, version-controlled hooks
 # Enables: git_hook_installer binary, git2 dependency for repository operations
 git-hooks = ["dep:git2"]
+cli-proof = []
 
 # Observability features
 # OTEL validation: OpenTelemetry span/metric validation
@@ -425,3 +426,13 @@ resolver = "2"
 
 [workspace.metadata.dylint]
 libraries = [{ path = "crates/chicago-lints" }]
+
+[[bin]]
+name = "otel_production_run"
+path = "src/bin/otel_production_run.rs"
+required-features = ["weaver"]
+
+[[bin]]
+name = "otel_negative_run"
+path = "src/bin/otel_negative_run.rs"
+required-features = ["weaver"]

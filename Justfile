@@ -564,3 +564,27 @@ setup-dev: install-hooks
     @echo '✅ Development environment setup complete!'
     @echo '🔧 Git hooks installed for unwrap/expect prevention'
     @echo '📚 See docs/process/SPR_GUIDE.md for error handling patterns'
+
+# ---------------------------------------------------------------------------
+# OTEL Weaver Live Check
+# ---------------------------------------------------------------------------
+
+otel-weaver-check:
+    target/debug/weaver registry check -r registry/model
+
+otel-weaver-live-start:
+    mkdir -p ./weaver-reports
+    target/debug/weaver registry live-check -r registry/model --otlp-grpc-port 4317 --admin-port 4320 --format json --output http &
+
+otel-production-run:
+    cargo run --quiet --bin otel_production_run --features weaver
+
+otel-weaver-live-stop:
+    curl -s -X POST http://127.0.0.1:4320/stop > weaver-reports/report.json || true
+    pkill -f 'weaver registry live-check' || true
+
+otel-weaver-live-negative:
+    cargo run --quiet --bin otel_negative_run --features weaver
+
+otel-weaver-live:
+    ./scripts/otel-workflow.sh
