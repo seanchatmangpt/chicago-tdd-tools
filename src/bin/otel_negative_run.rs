@@ -31,12 +31,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let tracer = provider.tracer("chicago-tdd-tools");
 
-        // Negative case: wrong type for http.request.method
-        let mut span = tracer.span_builder("HTTP POST").with_kind(opentelemetry::trace::SpanKind::Client).start(&tracer);
-        span.set_attribute(KeyValue::new("http.request.method", 123i64));
-        // intentionally missing url.full which is required
+        // Negative case: Missing process.object.type
+        let mut span = tracer.span_builder("workflow").start(&tracer);
+        span.add_event(
+            "praxis.activity_executed",
+            vec![
+                KeyValue::new("process.workflow.id", 123i64),
+                KeyValue::new("process.object.id", "obj-456"),
+                KeyValue::new("process.activity.iri", "http://chatman-equation.org/core/Execute"),
+                KeyValue::new("process.outcome", "completed"),
+            ],
+        );
         span.end();
-
         provider.force_flush()?;
         tokio::time::sleep(Duration::from_millis(500)).await;
         provider.shutdown()?;

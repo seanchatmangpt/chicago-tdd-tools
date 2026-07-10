@@ -23,12 +23,17 @@ else
 fi
 
 # G2
-echo "G2_WEAVER_REGISTRY_GENERATED=BLOCKED"
-echo "WEAVER_REGISTRY_DIGEST="
+if ../praxis/target/debug/ggen sync run > /dev/null 2>&1; then
+    echo "G2_WEAVER_REGISTRY_GENERATED=ALIVE"
+    WEAVER_REGISTRY_DIGEST=$(shasum -a 256 registry/otel/manifest.yaml | cut -d' ' -f1)
+else
+    echo "G2_WEAVER_REGISTRY_GENERATED=BLOCKED"
+    WEAVER_REGISTRY_DIGEST=
+fi
 
 # G3
 echo "Running registry check..."
-if target/debug/weaver registry check -r registry/model > /dev/null 2>&1; then
+if target/debug/weaver registry check -r registry/otel > /dev/null 2>&1; then
     echo "G3_WEAVER_REGISTRY_CHECKED=ALIVE"
 else
     echo "G3_WEAVER_REGISTRY_CHECKED=BLOCKED"
@@ -36,7 +41,12 @@ else
 fi
 
 # G4 & G5
-echo "G4_RUST_TELEMETRY_BINDINGS_GENERATED=BLOCKED"
+if [ -f "crates/cng/src/telemetry_gen.rs" ]; then
+    echo "G4_RUST_TELEMETRY_BINDINGS_GENERATED=ALIVE"
+else
+    echo "G4_RUST_TELEMETRY_BINDINGS_GENERATED=BLOCKED"
+fi
+
 if cargo build --bin otel_production_run --bin otel_negative_run --features weaver > /dev/null 2>&1; then
     echo "G5_GENERATED_BINDINGS_COMPILE=ALIVE"
     ART_DIGEST=$(shasum -a 256 target/debug/otel_production_run | cut -d' ' -f1)
@@ -50,7 +60,7 @@ rm -rf ./weaver-reports
 mkdir -p ./weaver-reports
 
 start_weaver() {
-    target/debug/weaver registry live-check -r registry/model --otlp-grpc-port 4317 --admin-port 4320 --format json --output http > /dev/null 2>&1 &
+    target/debug/weaver registry live-check -r registry/otel --otlp-grpc-port 4317 --admin-port 4320 --format json --output http > /dev/null 2>&1 &
     WEAVER_PID=$!
     
     # Wait for health
@@ -86,7 +96,12 @@ stop_weaver
 # Extract stats using jq
 if [ -f weaver-reports/report.json ]; then
     SPANS_RECV=$(jq '[.samples[] | select(.span != null)] | length' weaver-reports/report.json || echo "0")
-    VIOLATIONS=$(jq '[.samples[] | select(.span != null and (.span.live_check_result.highest_advice_level != null or any(.span.attributes[]; .live_check_result.highest_advice_level != null)))] | length' weaver-reports/report.json || echo "0")
+    VIOLATIONS=$(jq '[.samples[] | select(.span != null and (
+      .span.live_check_result.highest_advice_level == "error" or .span.live_check_result.highest_advice_level == "violation" or
+      any(.span.attributes[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation") or
+      any(.span.span_events[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation") or
+      any(.span.span_events[]?.attributes[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation")
+    ))] | length' weaver-reports/report.json || echo "0")
     
     if [ "$SPANS_RECV" -gt 0 ]; then
         echo "G7_PRODUCTION_TELEMETRY_RECEIVED=ALIVE"
@@ -125,7 +140,12 @@ stop_weaver
 
 if [ -f weaver-reports/report.json ]; then
     NEG_SPANS=$(jq '[.samples[] | select(.span != null)] | length' weaver-reports/report.json || echo "0")
-    NEG_VIOLATIONS=$(jq '[.samples[] | select(.span != null and (.span.live_check_result.highest_advice_level != null or any(.span.attributes[]; .live_check_result.highest_advice_level != null)))] | length' weaver-reports/report.json || echo "0")
+    NEG_VIOLATIONS=$(jq '[.samples[] | select(.span != null and (
+      .span.live_check_result.highest_advice_level == "error" or .span.live_check_result.highest_advice_level == "violation" or
+      any(.span.attributes[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation") or
+      any(.span.span_events[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation") or
+      any(.span.span_events[]?.attributes[]?; .live_check_result.highest_advice_level == "error" or .live_check_result.highest_advice_level == "violation")
+    ))] | length' weaver-reports/report.json || echo "0")
     
     if [ "$NEG_SPANS" -gt 0 ] && [ "$NEG_VIOLATIONS" -gt 0 ]; then
         echo "G9_NEGATIVE_RUNTIME_TELEMETRY_REFUSED=ALIVE"

@@ -37,15 +37,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let tracer = provider.tracer("chicago-tdd-tools");
 
-        // Positive case: Conformant span (span.http.client)
-        let mut span = tracer.span_builder("HTTP GET").with_kind(opentelemetry::trace::SpanKind::Client).start(&tracer);
-        
-        // Required attributes for span.http.client
-        span.set_attribute(KeyValue::new("url.full", "http://example.com/api/data"));
-        span.set_attribute(KeyValue::new("http.request.method", "GET"));
-        span.set_attribute(KeyValue::new("server.address", "example.com"));
-        span.set_attribute(KeyValue::new("server.port", 80i64));
-
+        // Positive case: Praxis Activity Executed event
+        let mut span = tracer.span_builder("workflow").start(&tracer);
+        span.add_event(
+            "praxis.activity_executed",
+            vec![
+                KeyValue::new("process.workflow.id", "wf-123"),
+                KeyValue::new("process.object.id", "obj-456"),
+                KeyValue::new("process.object.type", "Invoice"),
+                KeyValue::new("process.activity.iri", "http://chatman-equation.org/core/Execute"),
+                KeyValue::new("process.outcome", "completed"),
+            ],
+        );
         span.end();
 
         provider.force_flush()?;
