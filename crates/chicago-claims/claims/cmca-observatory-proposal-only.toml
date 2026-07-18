@@ -1,0 +1,90 @@
+# JTBD5 generalization probe, claim 2 of 2: "the Observatory never mints a
+# CertificateReceipt" (bcinr-cmca's Invariant 1 authority-separation law:
+# observation/proposal and certification are two distinct implementations,
+# `.claude/rules/cmca/authority-and-c3.md`).
+#
+# GENERALIZATION FINDING FOR THIS CLAIM: the existing schema
+# (type_name/field_name/field_must_be_private/required_methods) is a PRESENCE
+# check ("does a field/method with this shape exist"). "Observatory never mints a
+# certificate" is an ABSENCE check over call sites ("is `CertificateReceipt::new`
+# or a `CertificateReceipt { .. }` literal reachable anywhere in this file") — a
+# structurally different question. Expressing it required a genuine, minimal
+# scanner extension: a new `forbidden_constructions: Vec<String>` claim field
+# (src/claim.rs), a new `ForbiddenConstructionVisitor` walking `syn::ExprCall` /
+# `syn::ExprStruct` nodes file-wide (src/scan.rs), a new
+# `forbidden_constructions_absent` field on `ScanResult`, and one new branch in
+# `reconcile::structural_gap`. This was NOT a "just add a TOML file" case — see
+# the JTBD5 report for the companion claim (`cmca-rejection-invariance.toml`),
+# which WAS TOML-only, for the contrast.
+#
+# SCOPE OF WHAT THIS CLAIM VERIFIES: only that the AST of `observatory.rs`,
+# read syntactically, contains no call to `CertificateReceipt::<anything>(..)`
+# and no `CertificateReceipt { .. }` struct-literal expression, anywhere in the
+# file (not scoped to any one function). It does NOT prove: that no macro
+# expands to such a construction (macro-invisible, per the scanner's disclosed
+# evidence-class limits); that `evaluate_calibration`'s actual return value is
+# never later reinterpreted as a certificate downstream; or that the observed
+# absence is preserved by future edits without re-running this scan. It is
+# syntax-level evidence, reconciled with (in this MLP slice) zero mutant-kill
+# evidence — this claim carries NO mutants, because a mutant for a call-site
+# ABSENCE law would mean literally inserting the forbidden construction into a
+# fixture and confirming the scanner flags it (a different, valid future
+# extension of `mutate.rs`, not yet built here — an honestly-reported gap, not a
+# hidden one).
+#
+# KNOWN LIMITATION (shared with the sibling claim): `scope.file` is an absolute
+# cross-repository path into a sibling checkout (/Users/sac/bcinr), same
+# disclosed limitation as `cmca-fault-union.toml`.
+#
+# GENERALIZATION ROUND 2 FINDING (mutation-provider generalization pass): the gap
+# named above ("a different, valid future extension of mutate.rs, not yet built
+# here") is closed on the MECHANISM side — src/claim.rs's MutantSpec now supports
+# a `{crate_path, feature, test_name}` cargo-feature shape alongside the original
+# `fixture_path` shape, and src/mutate.rs's new `MutationProvider` trait has a
+# second concrete implementation, `CargoFeatureProvider`, that drives a REAL
+# `cargo test -p <crate> --features <feature> --test <bin> <test_name> --
+# --exact` subprocess and classifies from its real parsed pass/fail. This is
+# proven working end-to-end against a real external mutant — see
+# `mutate::tests::cargo_feature_provider_kills_real_bcinr_cmca_mutant_1_via_real_subprocess`
+# (an `#[ignore]`d, real-subprocess integration test; run explicitly with
+# `cargo test -p chicago-claims -- --ignored`), which drives bcinr-cmca's real
+# `mutant_1` feature and its real `kill_mutant_1_single_measure_collapse` oracle
+# test and observes a real `KilledByIntendedOracle` classification.
+#
+# THIS CLAIM STILL CARRIES NO MUTANTS, and that remains the honest finding for
+# THIS SPECIFIC LAW: all 11 of bcinr-cmca's real `mutant_1..mutant_11` cfg
+# features were individually read at their exact source locations (per
+# MUTANT_KILL_MATRIX.md) and checked against "the Observatory never mints a
+# CertificateReceipt" — a structural ABSENCE property (no CertificateReceipt
+# construction reachable in observatory.rs), not a value computed at runtime.
+# `mutant_9`/`mutant_10`/`mutant_11` are the only three that touch
+# `observatory.rs` at all (`src/observatory.rs:270,279,289`); each flips a
+# comparison operand order inside `evaluate_calibration`'s flag-computation logic
+# (drift / `kappa_under_off` / `gamma_under_off`), corrupting which
+# `ObservatoryFlag`s end up set in the returned `ObservatoryFlagSet` — a
+# DIFFERENT invariant (`authority-and-c3.md` Invariant 2, full-flag-set
+# preservation) than this claim's own (Invariant 1, proposal/certification
+# separation). None of the 11 features insert, gate, or otherwise touch a
+# `CertificateReceipt` construction anywhere in `observatory.rs`; there is
+# structurally nothing in the current mutant set that could corrupt THIS claim's
+# law. Wiring `mutant_9`/`10`/`11` here would be exactly the "unrelated mutant
+# just to have one" the generalization task explicitly disallowed. A future
+# mutant that actually inserts a forbidden `CertificateReceipt` construction into
+# `observatory.rs` behind a new cfg feature would be directly wireable through
+# `CargoFeatureProvider` today — that capability now exists; the matching mutant
+# does not yet.
+
+id = "cmca-observatory-proposal-only"
+evidence_required = ["scan_result.json"]
+mutants = []
+
+[scope]
+file = "/Users/sac/bcinr/crates/bcinr-cmca/src/observatory.rs"
+symbol = "ObservatoryOutcome"
+
+[required]
+type_name = "ObservatoryOutcome"
+field_name = "flags"
+field_must_be_private = false
+required_methods = []
+forbidden_constructions = ["CertificateReceipt"]

@@ -1,0 +1,99 @@
+# JTBD5 generalization probe, claim 1 of 2: the CMCA allocator's `RefusalSet`
+# byte-level rejection-invariance law (bcinr-cmca's allocator.rs,
+# `authority-and-c3.md` Invariant 2 / `numeric-hot-path.md` Invariant 1): refusal
+# reasons that can co-occur must be preserved as a bitset union, never collapsed
+# to "keep only one" — the exact same join-semilattice-under-union shape as the
+# pilot `NumericFaultSet` claim (`cmca-fault-union.toml`), applied to a second,
+# independently-implemented type (`RefusalSet` in allocator.rs, not `fixed.rs`).
+#
+# GENERALIZATION FINDING FOR THIS CLAIM — STRUCTURAL SCAN ONLY: `RefusalSet`
+# has the IDENTICAL shape the existing schema already expresses: a private
+# `u32` tuple field (`RefusalSet(u32)`, field "0"), and public methods `union`,
+# `is_empty`, `bits`. Writing this claim's `[required]` table required ZERO
+# changes to claim.rs or scan.rs — this half of the claim genuinely is a
+# "just add a TOML file" case, confirming the schema generalizes AT LEAST for
+# this shape of law (private-bitset-newtype + union/is_empty/bits).
+#
+# GENERALIZATION FINDING — MUTANT EVIDENCE: this claim intentionally carries
+# NO mutants (`mutants = []`), and that omission is itself the honest finding
+# for the mutant-execution half of the pipeline. `src/mutate.rs`'s
+# `evaluate_fixture` is a hardcoded match over SIX specific fixture module
+# names wired via `include!` at compile time; it has no data-driven path from
+# a claim TOML to a fixture. Reusing it for `RefusalSet` would require writing
+# new self-contained fixture files (a `RefusalSet`-shaped stand-in, distinct
+# from the `NumericFaultSet` u32-bitset stand-in already used for the pilot
+# claim) AND adding new match arms + `include!` modules to `mutate.rs` by hand
+# — real new code, not a TOML-only change. So: the SCAN half of the MLP
+# generalizes cheaply for this claim; the MUTANT half does not yet generalize
+# at all without per-claim engineering, regardless of how structurally similar
+# the underlying law is. This is the second, independent axis of the JTBD5
+# question and its answer is negative for the current `mutate.rs`.
+#
+# SCOPE OF WHAT THIS CLAIM (AS RUN) VERIFIES: only that `RefusalSet` in
+# `allocator.rs` is a struct with a private single tuple field and public
+# `union`/`is_empty`/`bits` methods — syntax-level evidence that the same
+# "opaque private bitset with a total union accumulator" SHAPE the pilot claim
+# scanned for exists a second time, for a second, independently-defined type.
+# It does NOT verify: that `union`'s body actually implements bitwise-OR (no
+# mutant-kill evidence is attached to this claim, per the finding above); that
+# `RefusalSet::masked` correctly zeroes on `condition == 0` (untested by this
+# claim); or any object-code/branchless property (source-level only).
+#
+# KNOWN LIMITATION (shared with the sibling claim): `scope.file` is an absolute
+# cross-repository path into a sibling checkout (/Users/sac/bcinr), same
+# disclosed limitation as `cmca-fault-union.toml`.
+#
+# GENERALIZATION ROUND 2 FINDING (mutation-provider generalization pass): the
+# "MUTANT half does not yet generalize at all" gap named above is closed on the
+# MECHANISM side — src/claim.rs's MutantSpec now supports a `{crate_path,
+# feature, test_name}` cargo-feature shape, and src/mutate.rs's new
+# `MutationProvider` trait has a second concrete implementation,
+# `CargoFeatureProvider`, that drives a REAL `cargo test -p <crate> --features
+# <feature> --test <bin> <test_name> -- --exact` subprocess and classifies from
+# its real parsed pass/fail — no new fixture files or match arms required per
+# mutant, unlike the old `include!`-based mechanism this generalizes past. This
+# is proven working end-to-end against a real external mutant — see
+# `mutate::tests::cargo_feature_provider_kills_real_bcinr_cmca_mutant_1_via_real_subprocess`
+# (an `#[ignore]`d, real-subprocess integration test; run explicitly with
+# `cargo test -p chicago-claims -- --ignored`), which drives bcinr-cmca's real
+# `mutant_1` feature and its real `kill_mutant_1_single_measure_collapse` oracle
+# test and observes a real `KilledByIntendedOracle` classification.
+#
+# THIS CLAIM STILL CARRIES NO MUTANTS, and that remains the honest finding for
+# THIS SPECIFIC LAW: all 11 of bcinr-cmca's real `mutant_1..mutant_11` cfg
+# features were individually read at their exact source locations (per
+# MUTANT_KILL_MATRIX.md) and checked against `RefusalSet`'s union-preservation
+# law. `RefusalSet::union` itself (`src/allocator.rs:536`, `Self(self.0 |
+# other.0)`) and its real composition site inside `allocate()`
+# (`src/allocator.rs:1982-1994`, the `gated_refusals`/`final_refusals` chained
+# `.union(..)` calls) are not wrapped in any `#[cfg(feature = "mutant_N")]`
+# block — confirmed by reading every one of the 11 cfg sites in
+# `src/allocator.rs` (lines 1079, 1702, 1772, 1782, 1816, 1873, 1885) and
+# `src/observatory.rs`/`src/fixed.rs` (the remaining mutants): mutants 1-5
+# corrupt unrelated numeric terms feeding `pi_res` (per-measure index, Lens
+# Q-value sign, weight normalization, `eta`/`zeta` identity, `mu` clipping);
+# mutants 6-8 corrupt `fixed.rs` primitives (`saturating_add` overflow sense,
+# `const_eq_u32` zero-check sense, `log2` zero-domain refusal); mutants 9-11
+# corrupt `observatory.rs` flag gates, an unrelated module. None flips, gates, or
+# otherwise touches `RefusalSet`'s union composition. There is structurally
+# nothing in the current mutant set that could corrupt THIS claim's law. Wiring
+# any of the 11 here would be exactly the "unrelated mutant just to have one"
+# the generalization task explicitly disallowed. A future mutant that actually
+# corrupts the `RefusalSet` union chain (e.g. an `AND` instead of `OR`, or
+# dropping one of the four `.union(..)` calls) behind a new cfg feature would be
+# directly wireable through `CargoFeatureProvider` today — that capability now
+# exists; the matching mutant does not yet.
+
+id = "cmca-rejection-invariance"
+evidence_required = ["scan_result.json"]
+mutants = []
+
+[scope]
+file = "/Users/sac/bcinr/crates/bcinr-cmca/src/allocator.rs"
+symbol = "RefusalSet"
+
+[required]
+type_name = "RefusalSet"
+field_name = "0"
+field_must_be_private = true
+required_methods = ["union", "is_empty", "bits"]

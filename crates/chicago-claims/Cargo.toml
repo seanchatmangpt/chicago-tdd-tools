@@ -1,0 +1,30 @@
+[package]
+name = "chicago-claims"
+version = "26.7.1"
+edition = "2021"
+authors = ["KNHK Team"]
+license = "MIT"
+description = "TDD claim-reconciliation MLP: TOML claims, syn-based AST scanning, mutant oracle attribution"
+
+[dependencies]
+syn = { version = "2", features = ["full", "visit", "extra-traits"] }
+quote = "1"
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+
+[dev-dependencies]
+tempfile = "3.0"
+
+[features]
+# Off by default. `tests/fixtures/*.rs` are self-contained fixture files each with
+# their own `#[cfg(test)] mod tests` oracle. `src/mutate.rs` pulls the fixture
+# *functions* into the crate via `include!` for in-process evaluation, but their
+# `mod tests` blocks are gated behind this feature so a corrupted fixture's
+# intentionally-failing oracle test (that IS the point — it demonstrates the mutant
+# is killed) does not make the crate's default `cargo test -p chicago-claims` run
+# report spurious failures. Run `cargo test -p chicago-claims --features
+# fixture-self-test -- fixture_` to execute the fixtures' own tests directly and see
+# each corrupted variant's oracle fail on its own, independent of `mutate.rs`.
+fixture-self-test = []

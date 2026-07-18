@@ -1,0 +1,60 @@
+# Reference claim for the chicago-claims MLP: the CMCA numeric fault
+# join-semilattice invariant `faults_out = faults_left UNION faults_right UNION
+# faults_local` (empty set = zero), as actually implemented in bcinr-cmca's
+# `NumericFaultSet` (crates/bcinr-cmca/src/fixed.rs).
+#
+# KNOWN LIMITATION: `scope.file` below is an absolute, cross-repository path into
+# a sibling checkout (/Users/sac/bcinr). This is expected and documented for this
+# MLP: chicago-claims has no configurable claim root today. A real product would
+# resolve `scope.file` against a per-workspace configured root (or vendor/pin the
+# referenced source) rather than hardcoding an absolute path to another repo on
+# this machine. See README.md for the full disclosure.
+
+id = "cmca-numeric-fault-join-semilattice"
+evidence_required = ["scan_result.json", "mutant_ledger.json"]
+
+[scope]
+file = "/Users/sac/bcinr/crates/bcinr-cmca/src/fixed.rs"
+symbol = "NumericFaultSet"
+
+[required]
+type_name = "NumericFaultSet"
+field_name = "0"
+field_must_be_private = true
+required_methods = ["union", "is_empty", "bits"]
+
+[[mutants]]
+id = "first-wins"
+description = "union collapses to keeping only the first operand's faults"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/first_wins.rs"
+
+[[mutants]]
+id = "last-wins"
+description = "union collapses to keeping only the second operand's faults"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/last_wins.rs"
+
+[[mutants]]
+id = "left-only"
+description = "union always returns the left operand's faults unchanged, ignoring the right"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/left_only.rs"
+
+[[mutants]]
+id = "right-only"
+description = "union always returns the right operand's faults unchanged, ignoring the left"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/right_only.rs"
+
+[[mutants]]
+id = "empty-set"
+description = "union always returns the empty fault set regardless of operands"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/empty_set.rs"
+
+[[mutants]]
+id = "overwrite"
+description = "union overwrites rather than bitwise-ORs, dropping bits present in both operands"
+intended_oracle_test = "oracle_union_preserves_both_operands_distinct_faults"
+fixture_path = "tests/fixtures/overwrite.rs"

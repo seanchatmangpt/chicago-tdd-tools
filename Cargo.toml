@@ -408,6 +408,7 @@ members = [
     "proc_macros",
     "proc_macros/chicago-tdd-mcp-macros",
     "crates/chicago-tdd-mcp",
+    "crates/chicago-claims",
 ]
 default-members = [
     ".",
