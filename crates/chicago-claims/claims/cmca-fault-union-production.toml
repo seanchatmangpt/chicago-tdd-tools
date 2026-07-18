@@ -1,0 +1,180 @@
+# PRODUCTION-mutation claim for the CMCA numeric fault join-semilattice invariant
+# `faults_out = faults_left UNION faults_right UNION faults_local`, as REALLY
+# implemented by `NumericFaultSet::union` in `bcinr-cmca/src/fixed.rs`
+# (crates/bcinr-cmca/src/fixed.rs:34-36 at the time this claim was written:
+# `pub const fn union(self, other: Self) -> Self { Self(self.0 | other.0) }`).
+#
+# EVIDENCE-CLASS SEPARATION (per the repo's evidence-class law): this claim is
+# DISTINCT from the sibling `cmca-fault-union.toml`, which is FIXTURE evidence —
+# its six mutants each corrupt a small, standalone, self-contained `u32`-bitset
+# stand-in function (`tests/fixtures/*.rs`) that models the same algebraic law
+# but is never the real `NumericFaultSet::union` symbol. This claim's eight
+# mutants instead use the `PatchOverlayProvider` (chicago-claims `src/mutate.rs`)
+# patch-overlay mechanism: each mutant copies the REAL `bcinr` repository into a
+# fresh isolated temp directory, patches ONLY that isolated copy's
+# `crates/bcinr-cmca/src/fixed.rs` at the exact literal `union` body
+# (`Self(self.0 | other.0)`), and runs a real `cargo test` subprocess against
+# the isolated, patched copy. The real working tree at
+# `/Users/sac/bcinr/crates/bcinr-cmca/src/fixed.rs` is never opened for
+# writing by this mechanism — see `PatchOverlayProvider::run_oracle`'s doc
+# comment for the isolation guarantee. Fixture evidence and this production
+# evidence must never be conflated: neither substitutes for the other, per the
+# same-object falsification law (a falsifier must attack the same
+# implementation object named by the claim).
+#
+# REQUIRED MUTANT COUNT: 8 (FIRST_WINS, LAST_WINS, LEFT_ONLY, RIGHT_ONLY,
+# EMPTY_SET, OVERWRITE, XOR, LOCAL_ONLY). The first six extend the six already
+# covered by the fixture pilot (`cmca-fault-union.toml`) to the real
+# production symbol; XOR and LOCAL_ONLY are the two new mutants added for this
+# track.
+#
+# KNOWN CODE-IDENTICAL-PATCH GROUP: `right-only`, `overwrite`, and `local-only`
+# all reduce, at the level of the single-line patch to the two-argument
+# `union(self, other)` primitive, to the SAME replacement text
+# (`Self(other.0)`) — there is no third "local" parameter on the primitive
+# itself for a patch to target separately. This mirrors the precedent already
+# established and documented in the sibling fixture claim's
+# `tests/fixtures/overwrite.rs` (kept as a fixture distinct from
+# `right_only.rs` despite identical corrupted logic, because the two model
+# different real-world bug shapes). Here the three are kept as three distinct
+# claim entries for the analogous reason: `right-only` models a caller
+# threading only the right-hand fault set through a merge (a *selection* bug);
+# `overwrite` models an in-place accumulator assignment (`acc = b`) instead of
+# a join (`acc = acc | b`) (a *mutation* bug); `local-only` models the fully
+# composed three-way law's real production call-site shape
+# (`self.faults.union(other.faults).union(e)`, e.g. in `saturating_add`),
+# where the freshly-computed LOCAL fault `e` is always threaded as the second
+# argument of the outer `.union(e)` call — so a primitive-level "keep only the
+# second argument" corruption, exercised through that real call chain,
+# collapses the whole law to "faults_out = faults_local only", exactly
+# matching this track's `LOCAL_ONLY` definition. `local-only`'s dedicated
+# secondary-oracle evidence (exercising the full three-way chain rather than
+# the bare two-argument primitive) lives in the separate
+# `cmca-fault-union-production-secondary-oracle-probe.toml` claim, not
+# required for the 8-mutant count here but referenced in the mutation report.
+#
+# XOR SURVIVAL DISCLOSURE: the `intended_oracle_test` used for every mutant
+# below (`fixed::tests::union_accumulates_both_operands_distinct_faults`,
+# the pre-existing real production unit test in `src/fixed.rs`) calls `union`
+# on two operands whose fault bits are DISJOINT (`UNDERFLOW` = bit 1,
+# `DIVIDE_BY_ZERO` = bit 2). For any pair of distinct single-bit
+# `NumericFaultSet` constants, bitwise-OR and bitwise-XOR are numerically
+# IDENTICAL (disjoint bits never cancel), so this real, pre-existing oracle
+# CANNOT distinguish the correct union law from an XOR corruption — expect
+# (and this claim run genuinely reports, uninvestigated-away) `xor` to
+# SURVIVE this intended oracle. A secondary oracle that DOES kill `xor`
+# (idempotence: `a.union(a) == a`, which fails under XOR for nonzero `a`) is
+# `oracle_union_is_idempotent_on_repeated_fault_bit`, added at
+# `crates/bcinr-cmca/tests/fault_union_production_oracle.rs` and run
+# separately in `cmca-fault-union-production-secondary-oracle-probe.toml` —
+# see the mutation report for the full account of why this is a genuine test
+# coverage gap in the crate's DEFAULT/production suite, not a harness defect.
+
+id = "cmca-numeric-fault-join-semilattice-production"
+evidence_required = ["scan_result.json", "mutant_ledger.json", "cmca-fault-union-production-mutation.md"]
+
+[scope]
+file = "/Users/sac/bcinr/crates/bcinr-cmca/src/fixed.rs"
+symbol = "NumericFaultSet"
+
+[required]
+type_name = "NumericFaultSet"
+field_name = "0"
+field_must_be_private = true
+required_methods = ["union", "is_empty", "bits"]
+
+[[mutants]]
+id = "first-wins"
+description = "union collapses to first-wins: keeps self's faults whenever self is non-empty, silently dropping other's faults (conditional short-circuit)"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(if self.0 != 0 { self.0 } else { other.0 })"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "last-wins"
+description = "union collapses to last-wins: keeps other's faults whenever other is non-empty, silently dropping self's faults (conditional short-circuit)"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(if other.0 != 0 { other.0 } else { self.0 })"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "left-only"
+description = "union always returns self's faults unconditionally; other is never consulted"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(self.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "right-only"
+description = "union always returns other's faults unconditionally; self is never consulted (a caller-selection bug shape)"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "empty-set"
+description = "union always returns the empty fault set regardless of operands"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "overwrite"
+description = "union overwrites rather than bitwise-ORs (in-place accumulator assignment acc = other instead of acc = acc | other); same observable shape as right-only, kept distinct per the precedent set by tests/fixtures/overwrite.rs in the sibling fixture claim"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "xor"
+description = "union replaces bitwise-OR with bitwise-XOR: distinct single-bit faults still combine correctly, but any bit already present in BOTH operands cancels to zero instead of staying set (breaks idempotence a.union(a) == a)"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(self.0 ^ other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600
+
+[[mutants]]
+id = "local-only"
+description = "union collapses the composed three-way law to faults_out = faults_local only: since the real production call chain (e.g. saturating_add's self.faults.union(other.faults).union(e)) always threads the freshly-computed local fault e as the second argument of the outer union call, a keep-only-the-second-argument patch to the primitive drops both faults_left and faults_right, retaining only faults_local"
+intended_oracle_test = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "fixed::tests::union_accumulates_both_operands_distinct_faults"
+timeout_secs = 600

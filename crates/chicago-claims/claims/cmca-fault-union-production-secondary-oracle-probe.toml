@@ -1,0 +1,65 @@
+# SUPPLEMENTARY (non-required) secondary-oracle evidence for two mutants in the
+# sibling `cmca-fault-union-production.toml` claim: `xor` and `local-only`.
+# This file is NOT part of the required 8-mutant count for that claim — it
+# exists solely to run a second, purpose-built oracle against the SAME two
+# production patches, so the mutation report can honestly distinguish
+# "survived every oracle we ran" from "survived the pre-existing intended
+# oracle but IS detectable by a well-designed secondary oracle". Both new
+# oracle tests live at
+# `crates/bcinr-cmca/tests/fault_union_production_oracle.rs` (a new test file,
+# written for this track; production `src/fixed.rs`/`src/allocator.rs` are
+# untouched).
+#
+# `xor-secondary-idempotence-probe`: re-applies the IDENTICAL patch as the
+# `xor` mutant in the sibling claim (`Self(self.0 ^ other.0)`), but points the
+# oracle at `oracle_union_is_idempotent_on_repeated_fault_bit`
+# (`a.union(a) == a`), which XOR corruption violates for any nonzero `a`
+# (disjoint-bit inputs, which the primary intended oracle uses, cannot
+# distinguish OR from XOR at all).
+#
+# `local-only-secondary-law-probe`: re-applies the IDENTICAL patch as the
+# `local-only` mutant in the sibling claim (`Self(other.0)`), but points the
+# oracle at `oracle_union_law_preserves_left_and_right_faults_when_local_is_clean`,
+# which exercises the full three-way law
+# `faults_out = faults_left UNION faults_right UNION faults_local` through a
+# real `saturating_add` call site rather than calling the two-argument
+# `union` primitive directly.
+
+id = "cmca-numeric-fault-join-semilattice-production-secondary-oracle-probe"
+evidence_required = ["cmca-fault-union-production-mutation.md"]
+
+[scope]
+file = "/Users/sac/bcinr/crates/bcinr-cmca/src/fixed.rs"
+symbol = "NumericFaultSet"
+
+[required]
+type_name = "NumericFaultSet"
+field_name = "0"
+field_must_be_private = true
+required_methods = ["union", "is_empty", "bits"]
+
+[[mutants]]
+id = "xor-secondary-idempotence-probe"
+description = "SECONDARY-ORACLE PROBE (not one of the 8 required mutants): same patch as `xor`, tested against the idempotence oracle instead of the disjoint-bit intended oracle"
+intended_oracle_test = "oracle_union_is_idempotent_on_repeated_fault_bit"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(self.0 ^ other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "oracle_union_is_idempotent_on_repeated_fault_bit"
+test_binary = "fault_union_production_oracle"
+timeout_secs = 600
+
+[[mutants]]
+id = "local-only-secondary-law-probe"
+description = "SECONDARY-ORACLE PROBE (not one of the 8 required mutants): same patch as `local-only`, tested against the full three-way law oracle instead of the bare two-argument intended oracle"
+intended_oracle_test = "oracle_union_law_preserves_left_and_right_faults_when_local_is_clean"
+repo_root = "/Users/sac/bcinr"
+target_file = "crates/bcinr-cmca/src/fixed.rs"
+search_pattern = "Self(self.0 | other.0)"
+replace_pattern = "Self(other.0)"
+crate_dir = "crates/bcinr-cmca"
+test_name = "oracle_union_law_preserves_left_and_right_faults_when_local_is_clean"
+test_binary = "fault_union_production_oracle"
+timeout_secs = 600
