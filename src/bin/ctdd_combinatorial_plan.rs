@@ -1,5 +1,6 @@
 //! Read-only CLI projection of the generated combinatorial-maximalism kernel.
 
+#[rustfmt::skip]
 #[allow(
     dead_code,
     missing_docs,
