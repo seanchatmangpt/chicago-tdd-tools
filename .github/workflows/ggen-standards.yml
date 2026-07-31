@@ -1,81 +1,52 @@
-name: Gall checkpoint bootstrap and receipt
+name: ggen standards receipt
 
 on:
   pull_request:
     paths:
-      - '.bootstrap/**'
       - 'AGENTS.md'
       - 'docs/standards/**'
       - 'standards/chicago-tdd/**'
       - 'scripts/verify_ggen_standards.py'
+      - 'scripts/.verify_ggen_standards/**'
+      - 'scripts/sabotage_ggen_standards.py'
+      - 'scripts/run_real_ggen_standards.sh'
+      - '.github/workflows/ggen-standards.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'docs/standards/**'
+      - 'standards/chicago-tdd/**'
+      - 'scripts/verify_ggen_standards.py'
+      - 'scripts/.verify_ggen_standards/**'
       - 'scripts/sabotage_ggen_standards.py'
       - 'scripts/run_real_ggen_standards.sh'
       - '.github/workflows/ggen-standards.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  materialize-verify-replay:
+  manufacture-verify-replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 25
     steps:
-      - name: Checkout exact candidate branch
+      - name: Checkout exact candidate
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
-
-      - name: Admit bounded checkpoint payload
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat .bootstrap/chunk*.b64 > /tmp/gall-patch.b64
-          echo '7de8947e6157e7228a1b78a5b0bc81fd04a23404b21df319eeceec8e9b467535  /tmp/gall-patch.b64' | sha256sum -c -
-          base64 -d /tmp/gall-patch.b64 > /tmp/gall-patch.tar.gz
-          echo 'feb5962ecb994c08a8133d3bf24ec05c406214547a7b9d3476ee9caa7c8348c7  /tmp/gall-patch.tar.gz' | sha256sum -c -
-          python3 - <<'PY'
-          import pathlib
-          import tarfile
-
-          with tarfile.open('/tmp/gall-patch.tar.gz', 'r:gz') as archive:
-              for member in archive.getmembers():
-                  path = pathlib.PurePosixPath(member.name)
-                  if path.is_absolute() or '..' in path.parts:
-                      raise SystemExit(f'unsafe archive member: {member.name}')
-          PY
-          tar -xzf /tmp/gall-patch.tar.gz -C .
-          rm -rf .bootstrap
-          find . -type d -name __pycache__ -prune -exec rm -rf {} +
-
-      - name: Commit final Gall checkpoint tree
-        id: final_commit
-        shell: bash
-        env:
-          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
-        run: |
-          set -euo pipefail
-          git config user.name 'chatgpt-gall-checkpoint-agent'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          git commit -m 'feat: implement Gall checkpoints 13-22'
-          FINAL_SHA="$(git rev-parse HEAD)"
-          git push origin "HEAD:${TARGET_BRANCH}"
-          echo "FINAL_SHA=${FINAL_SHA}" >> "$GITHUB_ENV"
-          echo "final_sha=${FINAL_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Install pinned nightly for real ggen
         uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
         with:
           toolchain: nightly-2026-06-22
 
-      - name: Install ggen and receipt prerequisites
+      - name: Install ggen build prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install -y b3sum sccache
@@ -83,42 +54,44 @@ jobs:
       - name: Execute real pinned ggen manufacture
         run: bash scripts/run_real_ggen_standards.sh
 
-      - name: Verify exact-head Gall checkpoint receipt
-        run: python3 scripts/verify_ggen_standards.py --require-blake3 --require-exact-head --exact-head "$FINAL_SHA" --write-receipt
+      - name: Verify exact-head checkpoint and receipt closure
+        run: |
+          python3 scripts/verify_ggen_standards.py             --require-blake3             --require-exact-head             --exact-head "$GITHUB_SHA"             --write-receipt
 
-      - name: Execute eleven sabotage falsifiers
+      - name: Execute sabotage falsifiers
         run: python3 scripts/sabotage_ggen_standards.py
 
       - name: Compile generated standalone contract crate
         run: cargo test --manifest-path standards/chicago-tdd/generated/Cargo.toml
 
       - name: Prove generation idempotence
-        shell: bash
         run: |
-          set -euo pipefail
           before="$(find standards/chicago-tdd/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
-          python3 scripts/verify_ggen_standards.py --write --require-blake3 --require-exact-head --exact-head "$FINAL_SHA"
+          python3 scripts/verify_ggen_standards.py             --write             --require-blake3             --require-exact-head             --exact-head "$GITHUB_SHA"
           after="$(find standards/chicago-tdd/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
           test "$before" = "$after"
           git diff --exit-code -- standards/chicago-tdd/generated
 
-      - name: Validate OCEL 2.0 checkpoint evidence
+      - name: Verify OCEL checkpoint evidence
         run: |
-          python3 -m json.tool standards/chicago-tdd/evidence/checkpoints.ocel.json > /dev/null
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          ocel = json.loads(Path('standards/chicago-tdd/evidence/checkpoints.ocel.json').read_text())
-          assert ocel['ocelVersion'] == '2.0'
-          assert len(ocel['objects']) == 10
-          assert len(ocel['events']) == 10
+          path = Path("standards/chicago-tdd/evidence/checkpoints.ocel.json")
+          data = json.loads(path.read_text())
+          assert data["ocelVersion"] == "2.0"
+          assert len(data["objects"]) == 10
+          assert len(data["events"]) == 10
+          assert {obj["id"] for obj in data["objects"]} == {
+              f"GALL-{n:03d}" for n in range(13, 23)
+          }
           PY
 
       - name: Publish exact-head evidence
         uses: actions/upload-artifact@v4
         with:
-          name: chicago-tdd-gall-checkpoints-${{ steps.final_commit.outputs.final_sha }}
+          name: chicago-tdd-ggen-receipt-${{ github.sha }}
           path: |
             standards/chicago-tdd/evidence/receipt.json
             standards/chicago-tdd/evidence/checkpoints.ocel.json

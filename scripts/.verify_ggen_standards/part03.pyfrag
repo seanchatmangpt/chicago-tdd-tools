@@ -1,0 +1,155 @@
+            "id": checkpoint_id,
+            "type": "gall-checkpoint",
+            "attributes": [
+                {"name": "phase", "time": "2026-07-30T00:00:00Z", "value": row["phase"]},
+                {"name": "standing", "time": "2026-07-30T00:00:00Z", "value": row["standing"]},
+                {"name": "targetState", "time": "2026-07-30T00:00:00Z", "value": row["target_state"]},
+            ],
+            "relationships": [
+                {"objectId": row["depends_on"], "qualifier": "depends-on"},
+            ],
+        })
+        events.append({
+            "id": f"event-{checkpoint_id.lower()}",
+            "type": "checkpoint-observed",
+            "time": "2026-07-30T00:00:00Z",
+            "attributes": [
+                {"name": "state", "value": state},
+                {"name": "exactHead", "value": exact_head},
+                {"name": "evidence", "value": row["evidence"]},
+            ],
+            "relationships": [
+                {"objectId": checkpoint_id, "qualifier": "observes"},
+            ],
+        })
+    return {
+        "ocelVersion": "2.0",
+        "objectTypes": [{
+            "name": "gall-checkpoint",
+            "attributes": [
+                {"name": "phase", "type": "string"},
+                {"name": "standing", "type": "string"},
+                {"name": "targetState", "type": "string"},
+            ],
+        }],
+        "eventTypes": [{
+            "name": "checkpoint-observed",
+            "attributes": [
+                {"name": "state", "type": "string"},
+                {"name": "exactHead", "type": "string"},
+                {"name": "evidence", "type": "string"},
+            ],
+        }],
+        "objects": objects,
+        "events": events,
+    }
+
+
+def validate_gates(
+    root: Path,
+    outputs: dict[Path, bytes],
+    observation: dict,
+    standards: list[dict[str, str]],
+    refusals: list[dict[str, str]],
+    checkpoints: list[dict[str, str]],
+    rules: list[Rule],
+    exact_head: str,
+    require_exact_head: bool,
+) -> tuple[list[str], dict[str, str], dict]:
+    gates: list[str] = []
+    obs = observation.get("observation", {})
+    if not all(
+        obs.get(key) is True
+        for key in ("admitted", "aligned", "complete", "grounded", "bounded")
+    ):
+        raise Refusal("CTDD-ADM-001", "O* admission fields must all be true")
+    gates.append("010-admitted-observation")
+
+    authority = observation.get("authority", {})
+    if authority.get("broker_only") is not True:
+        raise Refusal("CTDD-ACT-001", "broker_only must be true")
+    if authority.get("hook_direct_actuation") is not False:
+        raise Refusal("CTDD-HOOK-001", "hooks must be intent-only")
+    if (
+        authority.get("network_actuation") is not False
+        or authority.get("arbitrary_shell_actuation") is not False
+    ):
+        raise Refusal("CTDD-ACT-001", "unbounded actuation authority admitted")
+    gates.append("020-broker-authority")
+
+    ids = {row["id"] for row in standards}
+    if ids != REQUIRED_STANDARDS:
+        raise Refusal(
+            "CTDD-VAL-001",
+            f"standards closure mismatch: {sorted(ids ^ REQUIRED_STANDARDS)}",
+        )
+    if len({row["order"] for row in standards}) != len(standards):
+        raise Refusal("CTDD-VAL-001", "duplicate standard order")
+    gates.append("030-standard-totality")
+
+    codes = {row["code"] for row in refusals}
+    if codes != REQUIRED_REFUSALS:
+        raise Refusal(
+            "CTDD-VAL-001",
+            f"refusal closure mismatch: {sorted(codes ^ REQUIRED_REFUSALS)}",
+        )
+    if len({row["order"] for row in refusals}) != len(refusals):
+        raise Refusal("CTDD-VAL-001", "duplicate refusal order")
+    gates.append("040-refusal-totality")
+
+    if any(row["standing"] != "ADMITTED" for row in standards):
+        raise Refusal("CTDD-STD-001", "ontology overclaims standing")
+    gates.append("050-standing-separation")
+
+    if any(row["receipt"] != "true" for row in standards):
+        raise Refusal(
+            "CTDD-ACT-002", "a standard permits unreceipted consequence",
+        )
+    gates.append("060-receipt-totality")
+
+    lifecycle = observation.get("manufacturing", {}).get("lifecycle")
+    if lifecycle != ["Resolve", "Enrich", "Extract", "Render", "Write", "Receipt"]:
+        raise Refusal("CTDD-VAL-001", "ggen lifecycle drift")
+    gates.append("070-lifecycle-exactness")
+
+    components = set(observation.get("receipt", {}).get("components", []))
+    if components != RECEIPT_COMPONENTS:
+        raise Refusal(
+            "CTDD-RCP-001",
+            f"receipt component mismatch: {sorted(components ^ RECEIPT_COMPONENTS)}",
+        )
+    if not observation.get("receipt", {}).get("previous_receipt"):
+        raise Refusal("CTDD-RCP-002", "previous receipt is empty")
+    gates.append("080-receipt-v2-closure")
+
+    generated_root = root / CELL_REL / "generated"
+    actual_outputs = {
+        path.relative_to(generated_root).as_posix() for path in outputs
+    }
+    if actual_outputs != EXPECTED_OUTPUTS:
+        raise Refusal(
+            "CTDD-GEN-001",
+            f"generated ownership mismatch: {sorted(actual_outputs ^ EXPECTED_OUTPUTS)}",
+        )
+    gates.append("090-output-ownership")
+
+    first = dict(outputs)
+    second, *_ = manufacture(root)
+    if first != second:
+        raise Refusal("CTDD-GEN-003", "two projection passes differ")
+    gates.append("100-second-sync-identity")
+
+    for rule in rules:
+        if rule.output not in outputs:
+            raise Refusal("CTDD-GEN-001", f"unmaterialized rule {rule.name}")
+        if not rule.template.is_file():
+            raise Refusal("CTDD-VAL-001", f"missing template {rule.template}")
+    gates.append("110-query-template-closure")
+
+    manufacturing = observation.get("manufacturing", {})
+    if (
+        manufacturing.get("permanent_validation_read_only") is not True
+        or manufacturing.get("fail_closed") is not True
+    ):
+        raise Refusal(
+            "CTDD-VAL-001",

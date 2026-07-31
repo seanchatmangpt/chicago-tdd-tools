@@ -66,6 +66,32 @@ output_file = "REFUSALS.md"
 mode = "Overwrite"
 
 [[generation.rules]]
+name = "checkpoints-markdown"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?depends_on ?standing ?target_state ?receipt ?evidence ?falsifier ?description
+WHERE {
+  ?checkpoint a ctdd:GallCheckpoint ;
+    ctdd:order ?order ;
+    ctdd:identifier ?id ;
+    dcterms:title ?title ;
+    ctdd:phase ?phase ;
+    ctdd:dependsOn ?depends_on ;
+    ctdd:standing ?standing ;
+    ctdd:targetState ?target_state ;
+    ctdd:receiptRequirement ?receipt ;
+    ctdd:evidenceRequirement ?evidence ;
+    ctdd:falsifier ?falsifier ;
+    dcterms:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/checkpoints.md.tera" }
+output_file = "CHECKPOINTS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
 name = "standards-rust"
 query = { inline = """
 PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
@@ -89,6 +115,19 @@ ORDER BY ?order
 """ }
 template = { file = "templates/refusals.rs.tera" }
 output_file = "src/refusals.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "checkpoints-rust"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?depends_on ?standing ?target_state ?receipt ?evidence ?falsifier ?description
+WHERE { ?checkpoint a ctdd:GallCheckpoint ; ctdd:order ?order ; ctdd:identifier ?id ; dcterms:title ?title ; ctdd:phase ?phase ; ctdd:dependsOn ?depends_on ; ctdd:standing ?standing ; ctdd:targetState ?target_state ; ctdd:receiptRequirement ?receipt ; ctdd:evidenceRequirement ?evidence ; ctdd:falsifier ?falsifier ; dcterms:description ?description . }
+ORDER BY ?order
+""" }
+template = { file = "templates/checkpoints.rs.tera" }
+output_file = "src/checkpoints.rs"
 mode = "Overwrite"
 
 [[generation.rules]]

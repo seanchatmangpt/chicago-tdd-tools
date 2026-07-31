@@ -49,6 +49,24 @@ rm -rf "$WORK/cell/generated" "$WORK/cell/.ggen-v2"
   "$GGEN" receipt verify
 )
 
-diff -ru "$ROOT/standards/chicago-tdd/generated" "$WORK/cell/generated"
+PROJECTED="$WORK/cell/generated"
+if [[ ! -d "$PROJECTED" ]]; then
+  # ggen 26.7.61 writes output_file paths relative to the cell root even when
+  # generation.output_dir is present. Normalize those real outputs into the
+  # authored ownership root before byte comparison.
+  PROJECTED="$WORK/projected"
+  mkdir -p "$PROJECTED/src" "$PROJECTED/tests"
+  for rel in \
+    STANDARDS.md REFUSALS.md CHECKPOINTS.md Cargo.toml \
+    src/standards.rs src/refusals.rs src/checkpoints.rs src/lib.rs \
+    tests/contracts.rs
+  do
+    test -f "$WORK/cell/$rel"
+    mkdir -p "$PROJECTED/$(dirname "$rel")"
+    cp "$WORK/cell/$rel" "$PROJECTED/$rel"
+  done
+fi
+
+diff -ru "$ROOT/standards/chicago-tdd/generated" "$PROJECTED"
 test -f "$WORK/cell/.ggen-v2/receipt.json"
 printf '%s\n' "real-ggen-standards: ALIVE @ $GGEN_SHA"

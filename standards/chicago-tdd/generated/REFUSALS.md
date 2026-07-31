@@ -16,3 +16,10 @@
 | 10 | `CTDD-STD-001` | `PREMATURE_STANDING` | `standing` | Admission or checkpoint evidence was overclaimed as ALIVE. |
 | 11 | `CTDD-VAL-001` | `FAIL_OPEN_VALIDATION` | `validation` | A validator continued after incomplete or malformed evidence. |
 | 12 | `CTDD-VAL-002` | `EXACT_HEAD_MISMATCH` | `receiver` | Published evidence is not bound to the exact candidate head. |
+| 13 | `CTDD-CHK-001` | `CHECKPOINT_SET_INCOMPLETE` | `checkpoint` | The required Gall checkpoint set is missing, duplicated, or non-contiguous. |
+| 14 | `CTDD-CHK-002` | `CHECKPOINT_DEPENDENCY_DRIFT` | `checkpoint` | A Gall checkpoint does not depend on its immediate predecessor. |
+| 15 | `CTDD-CHK-003` | `CHECKPOINT_STANDING_OVERCLAIM` | `checkpoint` | An authored checkpoint claims execution standing or crown completion. |
+| 16 | `CTDD-PIN-001` | `TOOLCHAIN_PIN_DRIFT` | `resolve` | The admitted toolchain pins differ from the real execution rail. |
+| 17 | `CTDD-OCL-001` | `OCEL_CHECKPOINT_DRIFT` | `observe` | Checkpoint OCEL schema, object, event, or relationship closure is invalid. |
+| 18 | `CTDD-RCP-003` | `RECEIPT_REPLAY_DRIFT` | `replay` | Two receipt computations over identical admitted inputs differ. |
+

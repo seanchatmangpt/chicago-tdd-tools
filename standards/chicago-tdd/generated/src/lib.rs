@@ -1,9 +1,11 @@
 #![forbid(unsafe_code)]
 #![deny(warnings)]
 
+pub mod checkpoints;
 pub mod refusals;
 pub mod standards;
 
+pub use checkpoints::{GallCheckpoint, GALL_CHECKPOINTS};
 pub use refusals::{Refusal, REFUSALS};
 pub use standards::{Standard, STANDARDS};
 

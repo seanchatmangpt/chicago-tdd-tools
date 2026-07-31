@@ -22,4 +22,10 @@ pub const REFUSALS: &[Refusal] = &[
     Refusal { order: 10, code: "CTDD-STD-001", name: "PREMATURE_STANDING", boundary: "standing", description: "Admission or checkpoint evidence was overclaimed as ALIVE." },
     Refusal { order: 11, code: "CTDD-VAL-001", name: "FAIL_OPEN_VALIDATION", boundary: "validation", description: "A validator continued after incomplete or malformed evidence." },
     Refusal { order: 12, code: "CTDD-VAL-002", name: "EXACT_HEAD_MISMATCH", boundary: "receiver", description: "Published evidence is not bound to the exact candidate head." },
+    Refusal { order: 13, code: "CTDD-CHK-001", name: "CHECKPOINT_SET_INCOMPLETE", boundary: "checkpoint", description: "The required Gall checkpoint set is missing, duplicated, or non-contiguous." },
+    Refusal { order: 14, code: "CTDD-CHK-002", name: "CHECKPOINT_DEPENDENCY_DRIFT", boundary: "checkpoint", description: "A Gall checkpoint does not depend on its immediate predecessor." },
+    Refusal { order: 15, code: "CTDD-CHK-003", name: "CHECKPOINT_STANDING_OVERCLAIM", boundary: "checkpoint", description: "An authored checkpoint claims execution standing or crown completion." },
+    Refusal { order: 16, code: "CTDD-PIN-001", name: "TOOLCHAIN_PIN_DRIFT", boundary: "resolve", description: "The admitted toolchain pins differ from the real execution rail." },
+    Refusal { order: 17, code: "CTDD-OCL-001", name: "OCEL_CHECKPOINT_DRIFT", boundary: "observe", description: "Checkpoint OCEL schema, object, event, or relationship closure is invalid." },
+    Refusal { order: 18, code: "CTDD-RCP-003", name: "RECEIPT_REPLAY_DRIFT", boundary: "replay", description: "Two receipt computations over identical admitted inputs differ." },
 ];
