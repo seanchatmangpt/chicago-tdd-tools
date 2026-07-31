@@ -1,0 +1,122 @@
+[project]
+name = "chicago-tdd-standards-v26.7.30"
+version = "26.7.30"
+description = "RDF-first constitutional manufacturing cell for Chicago TDD Tools"
+authors = ["Sean Chatman"]
+license = "MIT"
+
+[ontology]
+source = "ontology.ttl"
+standard_only = false
+
+[ontology.prefixes]
+ctdd = "https://chatmangpt.com/ontology/chicago-tdd#"
+dcat = "http://www.w3.org/ns/dcat#"
+dcterms = "http://purl.org/dc/terms/"
+odrl = "http://www.w3.org/ns/odrl/2/"
+prov = "http://www.w3.org/ns/prov#"
+rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+skos = "http://www.w3.org/2004/02/skos/core#"
+xsd = "http://www.w3.org/2001/XMLSchema#"
+
+[generation]
+output_dir = "generated"
+
+[[generation.rules]]
+name = "standards-markdown"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?standing ?receipt ?description
+WHERE {
+  ?standard a ctdd:Standard ;
+    ctdd:order ?order ;
+    ctdd:identifier ?id ;
+    dcterms:title ?title ;
+    ctdd:phase ?phase ;
+    ctdd:standing ?standing ;
+    ctdd:receiptRequirement ?receipt ;
+    dcterms:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/standards.md.tera" }
+output_file = "STANDARDS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "refusals-markdown"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?code ?name ?boundary ?description
+WHERE {
+  ?refusal a ctdd:Refusal ;
+    ctdd:order ?order ;
+    ctdd:code ?code ;
+    ctdd:name ?name ;
+    ctdd:boundary ?boundary ;
+    dcterms:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/refusals.md.tera" }
+output_file = "REFUSALS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "standards-rust"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?standing ?receipt ?description
+WHERE { ?standard a ctdd:Standard ; ctdd:order ?order ; ctdd:identifier ?id ; dcterms:title ?title ; ctdd:phase ?phase ; ctdd:standing ?standing ; ctdd:receiptRequirement ?receipt ; dcterms:description ?description . }
+ORDER BY ?order
+""" }
+template = { file = "templates/standards.rs.tera" }
+output_file = "src/standards.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "refusals-rust"
+query = { inline = """
+PREFIX ctdd: <https://chatmangpt.com/ontology/chicago-tdd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?order ?code ?name ?boundary ?description
+WHERE { ?refusal a ctdd:Refusal ; ctdd:order ?order ; ctdd:code ?code ; ctdd:name ?name ; ctdd:boundary ?boundary ; dcterms:description ?description . }
+ORDER BY ?order
+""" }
+template = { file = "templates/refusals.rs.tera" }
+output_file = "src/refusals.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "crate-lib"
+query = { inline = "SELECT * WHERE { FILTER(false) }" }
+template = { file = "templates/lib.rs.tera" }
+output_file = "src/lib.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "crate-manifest"
+query = { inline = "SELECT * WHERE { FILTER(false) }" }
+template = { file = "templates/Cargo.toml.tera" }
+output_file = "Cargo.toml"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "contract-tests"
+query = { inline = "SELECT * WHERE { FILTER(false) }" }
+template = { file = "templates/contracts.rs.tera" }
+output_file = "tests/contracts.rs"
+mode = "Overwrite"
+
+[sync]
+enabled = true
+on_change = "manual"
+validate_after = true
+conflict_mode = "fail"
+
+[output]
+formatting = "none"

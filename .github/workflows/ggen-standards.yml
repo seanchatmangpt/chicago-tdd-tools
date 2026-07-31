@@ -1,0 +1,80 @@
+name: ggen standards receipt
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'docs/standards/**'
+      - 'standards/chicago-tdd/**'
+      - 'scripts/verify_ggen_standards.py'
+      - 'scripts/sabotage_ggen_standards.py'
+      - 'scripts/run_real_ggen_standards.sh'
+      - '.github/workflows/ggen-standards.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'docs/standards/**'
+      - 'standards/chicago-tdd/**'
+      - 'scripts/verify_ggen_standards.py'
+      - 'scripts/sabotage_ggen_standards.py'
+      - 'scripts/run_real_ggen_standards.sh'
+      - '.github/workflows/ggen-standards.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manufacture-verify-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install pinned nightly for real ggen
+        uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+        with:
+          toolchain: nightly-2026-06-22
+
+      - name: Install ggen build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y b3sum sccache
+
+      - name: Execute real pinned ggen manufacture
+        run: bash scripts/run_real_ggen_standards.sh
+
+      - name: Install BLAKE3 executor
+        run: command -v b3sum
+
+      - name: Verify committed ggen projections
+        run: python3 scripts/verify_ggen_standards.py --require-blake3 --exact-head "$GITHUB_SHA" --write-receipt
+
+      - name: Execute sabotage falsifiers
+        run: python3 scripts/sabotage_ggen_standards.py
+
+      - name: Compile generated standalone contract crate
+        run: cargo test --manifest-path standards/chicago-tdd/generated/Cargo.toml
+
+      - name: Prove generation idempotence
+        run: |
+          before="$(find standards/chicago-tdd/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          python3 scripts/verify_ggen_standards.py --write --require-blake3 --exact-head "$GITHUB_SHA"
+          after="$(find standards/chicago-tdd/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          test "$before" = "$after"
+          git diff --exit-code -- standards/chicago-tdd/generated
+
+      - name: Publish exact-head receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: chicago-tdd-ggen-receipt-${{ github.sha }}
+          path: standards/chicago-tdd/evidence/receipt.json
+          if-no-files-found: error

@@ -1,0 +1,37 @@
+[observation]
+id = "urn:ctdd:observation:v26.7.30"
+admitted = true
+aligned = true
+complete = true
+grounded = true
+bounded = true
+source_window_start = "2026-07-24"
+source_window_end = "2026-07-30"
+
+[authority]
+broker_only = true
+hook_direct_actuation = false
+network_actuation = false
+arbitrary_shell_actuation = false
+
+[manufacturing]
+engine = "ggen"
+lifecycle = ["Resolve", "Enrich", "Extract", "Render", "Write", "Receipt"]
+generated_root = "generated"
+second_sync_byte_identity = true
+permanent_validation_read_only = true
+fail_closed = true
+
+[receipt]
+required_algorithm = "blake3"
+previous_receipt = "GENESIS"
+components = ["ttl", "query", "template", "observation", "output", "utility", "test", "previous_receipt"]
+
+[exclusions]
+arbitrary_irreversible_reversibility = true
+admission_equals_standing = true
+hook_is_broker = true
+checkpoint_equals_crown = true
+
+[falsifiers]
+required = ["ontology-mutation", "template-mutation", "generated-output-mutation", "authority-mutation"]

@@ -1,0 +1,14 @@
+//! Manufactured from ontology.ttl. Do not edit.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Refusal {
+    pub order: u16,
+    pub code: &'static str,
+    pub name: &'static str,
+    pub boundary: &'static str,
+    pub description: &'static str,
+}
+
+pub const REFUSALS: &[Refusal] = &[
+{% for row in results %}    Refusal { order: {{ row.order }}, code: "{{ row.code }}", name: "{{ row.name }}", boundary: "{{ row.boundary }}", description: "{{ row.description }}" },
+{% endfor %}];
