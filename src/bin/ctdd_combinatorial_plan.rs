@@ -1,6 +1,14 @@
 //! Read-only CLI projection of the generated combinatorial-maximalism kernel.
 
-#[allow(dead_code, missing_docs, unused_imports)]
+#[allow(
+    dead_code,
+    missing_docs,
+    unused_imports,
+    clippy::all,
+    clippy::cargo,
+    clippy::nursery,
+    clippy::pedantic
+)]
 #[path = "../../architecture/combinatorial-maximalism/generated/src/lib.rs"]
 mod cmd;
 
@@ -20,7 +28,11 @@ fn main() -> ExitCode {
 
     if first == "--list" {
         for profile in PROFILES {
-            println!("{}\t{}\texternal={}\tinclude_all={}", profile.id, profile.title, profile.external_allowed, profile.include_all);
+            let id = profile.id;
+            let title = profile.title;
+            let external = profile.external_allowed;
+            let include_all = profile.include_all;
+            println!("{id}\t{title}\texternal={external}\tinclude_all={include_all}");
         }
         return ExitCode::SUCCESS;
     }
@@ -28,16 +40,23 @@ fn main() -> ExitCode {
     let include_external = args.any(|argument| argument == "--external");
     match compose(CompositionRequest { profile: &first, include_external }) {
         Ok(plan) => {
-            println!("profile={}", plan.profile.id);
-            println!("standing={:?}", plan.standing);
-            println!("realizations={}", plan.realizations.len());
-            println!("projections={}", plan.projections.len());
-            println!("external_contracts={}", plan.external_contracts.len());
-            println!("fingerprint={:016x}", plan.fingerprint);
+            let profile = plan.profile.id;
+            let standing = plan.standing;
+            let realizations = plan.realizations.len();
+            let projections = plan.projections.len();
+            let external_contracts = plan.external_contracts.len();
+            let fingerprint = plan.fingerprint;
+            println!("profile={profile}");
+            println!("standing={standing:?}");
+            println!("realizations={realizations}");
+            println!("projections={projections}");
+            println!("external_contracts={external_contracts}");
+            println!("fingerprint={fingerprint:016x}");
             ExitCode::SUCCESS
         }
         Err(refusal) => {
-            eprintln!("refusal={} detail={refusal:?}", refusal.code());
+            let code = refusal.code();
+            eprintln!("refusal={code} detail={refusal:?}");
             ExitCode::from(2)
         }
     }
