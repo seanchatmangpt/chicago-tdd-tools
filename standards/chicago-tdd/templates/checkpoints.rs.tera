@@ -1,0 +1,20 @@
+//! Manufactured from ontology.ttl. Do not edit.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GallCheckpoint {
+    pub order: u16,
+    pub id: &'static str,
+    pub title: &'static str,
+    pub phase: &'static str,
+    pub depends_on: &'static str,
+    pub standing: &'static str,
+    pub target_state: &'static str,
+    pub receipt_required: bool,
+    pub evidence: &'static str,
+    pub falsifier: &'static str,
+    pub description: &'static str,
+}
+
+pub const GALL_CHECKPOINTS: &[GallCheckpoint] = &[
+{% for row in results %}    GallCheckpoint { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", phase: "{{ row.phase }}", depends_on: "{{ row.depends_on }}", standing: "{{ row.standing }}", target_state: "{{ row.target_state }}", receipt_required: {{ row.receipt }}, evidence: "{{ row.evidence }}", falsifier: "{{ row.falsifier }}", description: "{{ row.description }}" },
+{% endfor %}];

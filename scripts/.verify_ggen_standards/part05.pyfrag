@@ -1,0 +1,138 @@
+            raise Refusal("CTDD-GEN-001", f"missing generated output {path}")
+        if path.read_bytes() != expected:
+            raise Refusal(
+                "CTDD-GEN-001", f"generated output drift at {path}",
+            )
+
+
+def composite(parts: Iterable[tuple[str, bytes]]) -> bytes:
+    payload = bytearray()
+    for name, data in sorted(parts, key=lambda item: item[0]):
+        payload.extend(name.encode("utf-8"))
+        payload.extend(b"\0")
+        payload.extend(len(data).to_bytes(8, "big"))
+        payload.extend(data)
+    return bytes(payload)
+
+
+def receipt(
+    root: Path,
+    outputs: dict[Path, bytes],
+    exact_head: str,
+    require_blake3: bool,
+    checkpoint_states: dict[str, str],
+    ocel: dict,
+) -> dict:
+    cell = root / CELL_REL
+    template_paths = sorted((cell / "templates").glob("*.tera"))
+    ocel_bytes = (
+        json.dumps(ocel, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    components = {
+        "ttl": (cell / "ontology.ttl").read_bytes(),
+        "query": (cell / "ggen.toml").read_bytes(),
+        "template": composite(
+            (path.relative_to(cell).as_posix(), path.read_bytes())
+            for path in template_paths
+        ),
+        "observation": (cell / "O.star.toml").read_bytes(),
+        "output": composite(
+            (path.relative_to(cell).as_posix(), data)
+            for path, data in outputs.items()
+        ),
+        "utility": (root / "scripts/verify_ggen_standards.py").read_bytes(),
+        "test": (root / "scripts/sabotage_ggen_standards.py").read_bytes(),
+        "checkpoint_ocel": ocel_bytes,
+        "previous_receipt": load_toml(
+            cell / "O.star.toml",
+        )["receipt"]["previous_receipt"].encode("utf-8"),
+    }
+    if set(components) != RECEIPT_COMPONENTS:
+        raise Refusal("CTDD-RCP-001", "receipt components incomplete")
+    component_sha256 = {
+        name: sha256_bytes(data) for name, data in sorted(components.items())
+    }
+    envelope = composite(components.items())
+    blake3 = b3sum_bytes(envelope)
+    if require_blake3 and blake3 is None:
+        raise Refusal("UNSUPPORTED", "BLAKE3 executor unavailable")
+    all_alive = all(state == "ALIVE" for state in checkpoint_states.values())
+    return {
+        "schema": "ctdd.receipt.v2",
+        "standing": "ALIVE" if blake3 and all_alive else "PARTIAL_ALIVE",
+        "exact_head": exact_head,
+        "algorithm": "blake3" if blake3 else "UNSUPPORTED",
+        "digest": blake3,
+        "diagnostic_sha256": sha256_bytes(envelope),
+        "components_sha256": component_sha256,
+        "checkpoint_states": checkpoint_states,
+        "previous_receipt": components["previous_receipt"].decode("utf-8"),
+    }
+
+
+def main() -> int:
+    args = parse_args()
+    root = args.root.resolve()
+    cell = root / CELL_REL
+    try:
+        (
+            outputs, observation, standards, refusals, checkpoints, rules,
+        ) = manufacture(root)
+        gates, checkpoint_states, ocel = validate_gates(
+            root, outputs, observation, standards, refusals, checkpoints, rules,
+            args.exact_head, args.require_exact_head,
+        )
+        compare_or_write(outputs, args.write, cell / "generated")
+        compare_or_write(outputs, False, cell / "generated")
+
+        first_receipt = receipt(
+            root, outputs, args.exact_head, args.require_blake3,
+            checkpoint_states, ocel,
+        )
+        second_receipt = receipt(
+            root, outputs, args.exact_head, args.require_blake3,
+            checkpoint_states, ocel,
+        )
+        if first_receipt != second_receipt:
+            raise Refusal(
+                "CTDD-RCP-003",
+                "two receipt computations over identical inputs differ",
+            )
+        gates.append("220-receipt-replay-closure")
+        evidence = first_receipt
+        evidence["gates"] = gates
+        evidence["counts"] = {
+            "standards": len(standards),
+            "refusals": len(refusals),
+            "checkpoints": len(checkpoints),
+            "outputs": len(outputs),
+        }
+
+        if args.write_receipt:
+            evidence_root = cell / "evidence"
+            atomic_write(
+                evidence_root / "receipt.json",
+                (json.dumps(evidence, indent=2, sort_keys=True) + "\n").encode(),
+                evidence_root,
+            )
+            atomic_write(
+                evidence_root / "checkpoints.ocel.json",
+                (json.dumps(ocel, indent=2, sort_keys=True) + "\n").encode(),
+                evidence_root,
+            )
+        print(json.dumps(evidence, indent=2, sort_keys=True))
+        return 0
+    except Refusal as exc:
+        print(
+            json.dumps({
+                "standing": "BLOCKED",
+                "refusal": exc.code,
+                "message": exc.message,
+            }, sort_keys=True),
+            file=sys.stderr,
+        )
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

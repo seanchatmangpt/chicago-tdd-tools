@@ -1,0 +1,152 @@
+            "permanent validation must be read-only and fail-closed",
+        )
+    gates.append("120-read-only-fail-closed")
+
+    # GALL-013
+    try:
+        start = date.fromisoformat(obs["source_window_start"])
+        end = date.fromisoformat(obs["source_window_end"])
+    except (KeyError, ValueError) as exc:
+        raise Refusal("CTDD-ADM-001", f"invalid provenance window: {exc}") from exc
+    if (
+        obs.get("id") != "urn:ctdd:observation:v26.7.30"
+        or start.isoformat() != "2026-07-24"
+        or end.isoformat() != "2026-07-30"
+        or (end - start).days != 6
+    ):
+        raise Refusal("CTDD-ADM-001", "observation provenance window drift")
+    gates.append("130-observation-provenance-closure")
+
+    # GALL-014
+    checkpoint_ids = {row["id"] for row in checkpoints}
+    orders = [int(row["order"]) for row in checkpoints]
+    gall = observation.get("gall", {})
+    if (
+        checkpoint_ids != REQUIRED_CHECKPOINTS
+        or orders != list(range(13, 23))
+        or gall.get("required") != [f"GALL-{n:03d}" for n in range(13, 23)]
+    ):
+        raise Refusal("CTDD-CHK-001", "checkpoint set is incomplete or non-contiguous")
+    gates.append("140-checkpoint-totality-closure")
+
+    # GALL-015
+    expected_dependency = gall.get("root_dependency")
+    if expected_dependency != "GALL-012":
+        raise Refusal("CTDD-CHK-002", "checkpoint root dependency drift")
+    for row in checkpoints:
+        if row["depends_on"] != expected_dependency:
+            raise Refusal(
+                "CTDD-CHK-002",
+                f"{row['id']} depends on {row['depends_on']}, expected {expected_dependency}",
+            )
+        expected_dependency = row["id"]
+    gates.append("150-checkpoint-dependency-closure")
+
+    # GALL-016
+    if set(gall.get("states", [])) != GALL_STATES:
+        raise Refusal("CTDD-CHK-003", "Gall state vocabulary drift")
+    if any(
+        row["standing"] != "ADMITTED" or row["target_state"] != "ALIVE"
+        for row in checkpoints
+    ):
+        raise Refusal("CTDD-CHK-003", "checkpoint standing is overclaimed")
+    if gall.get("checkpoint_completion_is_crown") is not False:
+        raise Refusal("CTDD-CHK-003", "checkpoint completion equals crown")
+    if observation.get("exclusions", {}).get("checkpoint_equals_crown") is not True:
+        raise Refusal("CTDD-CHK-003", "crown exclusion is missing")
+    gates.append("160-state-and-crown-separation")
+
+    # GALL-017
+    evidence = [row["evidence"] for row in checkpoints]
+    falsifiers = [row["falsifier"] for row in checkpoints]
+    if (
+        any(row["receipt"] != "true" for row in checkpoints)
+        or any(not value.strip() for value in evidence + falsifiers)
+        or len(set(evidence)) != len(evidence)
+        or len(set(falsifiers)) != len(falsifiers)
+        or set(observation.get("falsifiers", {}).get("required", []))
+        != EXPECTED_FALSIFIERS
+    ):
+        raise Refusal(
+            "CTDD-CHK-001",
+            "checkpoint evidence, falsifier, or receipt closure failed",
+        )
+    gates.append("170-evidence-falsifier-closure")
+
+    # GALL-018
+    toolchain = observation.get("toolchain", {})
+    if toolchain != PIN_MAP:
+        raise Refusal("CTDD-PIN-001", "admitted toolchain pin map drift")
+    runner = (root / "scripts/run_real_ggen_standards.sh").read_text(
+        encoding="utf-8",
+    )
+    for pin in PIN_MAP.values():
+        if pin not in runner:
+            raise Refusal("CTDD-PIN-001", f"runner does not bind pin {pin}")
+    gates.append("180-toolchain-pin-closure")
+
+    # GALL-019
+    authored = {
+        (root / CELL_REL / "O.star.toml").resolve(),
+        (root / CELL_REL / "ontology.ttl").resolve(),
+        (root / CELL_REL / "ggen.toml").resolve(),
+        (root / "scripts/verify_ggen_standards.py").resolve(),
+        (root / "scripts/sabotage_ggen_standards.py").resolve(),
+    }
+    authored.update(rule.template.resolve() for rule in rules)
+    output_paths = {path.resolve() for path in outputs}
+    if authored & output_paths:
+        raise Refusal("CTDD-GEN-002", "authored and generated paths overlap")
+    if any(
+        generated_root.resolve() != path.parent.resolve()
+        and generated_root.resolve() not in path.parent.resolve().parents
+        for path in output_paths
+    ):
+        raise Refusal("CTDD-GEN-001", "generated output escapes generated root")
+    gates.append("190-authored-generated-disjointness")
+
+    # GALL-020
+    head_is_exact = valid_exact_head(exact_head)
+    if require_exact_head and not head_is_exact:
+        raise Refusal(
+            "CTDD-VAL-002",
+            f"receiver requires an exact 40-hex head, observed {exact_head!r}",
+        )
+    gates.append("200-exact-head-receiver-binding")
+
+    checkpoint_states = {row["id"]: "ALIVE" for row in checkpoints}
+    if not head_is_exact:
+        checkpoint_states["GALL-020"] = "PARTIAL_ALIVE"
+
+    # GALL-021
+    if gall.get("ocel_schema") != "2.0":
+        raise Refusal("CTDD-OCL-001", "admitted OCEL schema is not 2.0")
+    ocel = checkpoint_ocel(checkpoints, checkpoint_states, exact_head)
+    object_ids = {item["id"] for item in ocel["objects"]}
+    event_ids = {item["id"] for item in ocel["events"]}
+    related = {
+        rel["objectId"]
+        for event in ocel["events"]
+        for rel in event["relationships"]
+        if rel["qualifier"] == "observes"
+    }
+    if (
+        ocel.get("ocelVersion") != "2.0"
+        or object_ids != REQUIRED_CHECKPOINTS
+        or len(event_ids) != 10
+        or related != REQUIRED_CHECKPOINTS
+    ):
+        raise Refusal("CTDD-OCL-001", "checkpoint OCEL closure failed")
+    gates.append("210-ocel-checkpoint-evidence")
+
+    return gates, checkpoint_states, ocel
+
+
+def compare_or_write(
+    outputs: dict[Path, bytes], write: bool, generated_root: Path,
+) -> None:
+    for path, expected in outputs.items():
+        if write:
+            atomic_write(path, expected, generated_root)
+            continue
+        if not path.exists():

@@ -1,0 +1,16 @@
+//! Manufactured from ontology.ttl. Do not edit.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Standard {
+    pub order: u16,
+    pub id: &'static str,
+    pub title: &'static str,
+    pub phase: &'static str,
+    pub standing: &'static str,
+    pub receipt_required: bool,
+    pub description: &'static str,
+}
+
+pub const STANDARDS: &[Standard] = &[
+{% for row in results %}    Standard { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", phase: "{{ row.phase }}", standing: "{{ row.standing }}", receipt_required: {{ row.receipt }}, description: "{{ row.description }}" },
+{% endfor %}];

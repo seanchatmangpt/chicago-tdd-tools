@@ -1,0 +1,163 @@
+        "title": require(row, "dcterms:title", "CTDD-CHK-001"),
+        "phase": require(row, "ctdd:phase", "CTDD-CHK-001"),
+        "depends_on": require(row, "ctdd:dependsOn", "CTDD-CHK-002"),
+        "standing": require(row, "ctdd:standing", "CTDD-CHK-003"),
+        "target_state": require(row, "ctdd:targetState", "CTDD-CHK-003"),
+        "receipt": require(row, "ctdd:receiptRequirement", "CTDD-CHK-001"),
+        "evidence": require(row, "ctdd:evidenceRequirement", "CTDD-CHK-001"),
+        "falsifier": require(row, "ctdd:falsifier", "CTDD-CHK-001"),
+        "description": require(row, "dcterms:description", "CTDD-CHK-001"),
+    }
+
+
+def parse_rules(config: dict, cell: Path) -> list[Rule]:
+    rules = []
+    output_dir = Path(config.get("generation", {}).get("output_dir", "generated"))
+    for raw in config.get("generation", {}).get("rules", []):
+        try:
+            rules.append(Rule(
+                name=raw["name"],
+                query=raw["query"]["inline"],
+                template=cell / raw["template"]["file"],
+                output=cell / output_dir / raw["output_file"],
+            ))
+        except KeyError as exc:
+            raise Refusal(
+                "CTDD-VAL-001", f"malformed generation rule: missing {exc}",
+            ) from exc
+    if not rules:
+        raise Refusal("CTDD-VAL-001", "no generation rules")
+    return rules
+
+
+def validate_query(rule: Rule, expected_fields: Iterable[str]) -> None:
+    if "SELECT" not in rule.query or "WHERE" not in rule.query:
+        raise Refusal(
+            "CTDD-VAL-001", f"{rule.name} is not a bounded SELECT query",
+        )
+    for field in expected_fields:
+        if f"?{field}" not in rule.query:
+            raise Refusal(
+                "CTDD-VAL-001", f"{rule.name} does not select ?{field}",
+            )
+
+
+def render(template: str, rows: list[dict[str, str]]) -> bytes:
+    loop = re.compile(
+        r"(?P<prefix>.*?)\{%\s*for\s+row\s+in\s+results\s*%\}"
+        r"(?P<body>.*?)\{%\s*endfor\s*%\}(?P<suffix>.*)",
+        re.DOTALL,
+    )
+    match = loop.fullmatch(template)
+    if match is None:
+        if "{{" in template or "{%" in template:
+            raise Refusal("CTDD-VAL-001", "unsupported template construct")
+        return template.encode("utf-8")
+    rendered_rows = []
+    variable = re.compile(r"\{\{\s*row\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}")
+    for row in rows:
+        body = match.group("body")
+        referenced = set(variable.findall(body))
+        missing = referenced - row.keys()
+        if missing:
+            raise Refusal(
+                "CTDD-VAL-001",
+                f"template references missing fields: {sorted(missing)}",
+            )
+        rendered_rows.append(variable.sub(lambda m: row[m.group(1)], body))
+    output = match.group("prefix") + "".join(rendered_rows) + match.group("suffix")
+    return output.encode("utf-8")
+
+
+def atomic_write(path: Path, data: bytes, broker_root: Path) -> None:
+    resolved_root = broker_root.resolve()
+    resolved_parent = path.parent.resolve()
+    if resolved_root != resolved_parent and resolved_root not in resolved_parent.parents:
+        raise Refusal("CTDD-ACT-001", f"output escapes broker root: {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, path)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
+def manufacture(root: Path) -> tuple[
+    dict[Path, bytes], dict, list[dict[str, str]], list[dict[str, str]],
+    list[dict[str, str]], list[Rule],
+]:
+    cell = root / CELL_REL
+    observation = load_toml(cell / "O.star.toml")
+    config = load_toml(cell / "ggen.toml")
+    ontology = (cell / "ontology.ttl").read_text(encoding="utf-8")
+    standards = sorted(
+        (
+            normalize_standard(row)
+            for row in parse_blocks(ontology, "ctdd:Standard")
+        ),
+        key=lambda row: int(row["order"]),
+    )
+    refusals = sorted(
+        (
+            normalize_refusal(row)
+            for row in parse_blocks(ontology, "ctdd:Refusal")
+        ),
+        key=lambda row: int(row["order"]),
+    )
+    checkpoints = sorted(
+        (
+            normalize_checkpoint(row)
+            for row in parse_blocks(ontology, "ctdd:GallCheckpoint")
+        ),
+        key=lambda row: int(row["order"]),
+    )
+    rules = parse_rules(config, cell)
+
+    outputs: dict[Path, bytes] = {}
+    standard_fields = (
+        "order", "id", "title", "phase", "standing", "receipt", "description",
+    )
+    refusal_fields = (
+        "order", "code", "name", "boundary", "description",
+    )
+    checkpoint_fields = (
+        "order", "id", "title", "phase", "depends_on", "standing",
+        "target_state", "receipt", "evidence", "falsifier", "description",
+    )
+    for rule in rules:
+        template = rule.template.read_text(encoding="utf-8")
+        if rule.name.startswith("standards-"):
+            validate_query(rule, standard_fields)
+            rows = standards
+        elif rule.name.startswith("refusals-"):
+            validate_query(rule, refusal_fields)
+            rows = refusals
+        elif rule.name.startswith("checkpoints-"):
+            validate_query(rule, checkpoint_fields)
+            rows = checkpoints
+        else:
+            rows = []
+        outputs[rule.output] = render(template, rows)
+    return outputs, observation, standards, refusals, checkpoints, rules
+
+
+def valid_exact_head(value: str) -> bool:
+    return re.fullmatch(r"[0-9a-f]{40}", value) is not None
+
+
+def checkpoint_ocel(
+    checkpoints: list[dict[str, str]],
+    states: dict[str, str],
+    exact_head: str,
+) -> dict:
+    objects = []
+    events = []
+    for row in checkpoints:
+        checkpoint_id = row["id"]
+        state = states[checkpoint_id]
+        objects.append({
