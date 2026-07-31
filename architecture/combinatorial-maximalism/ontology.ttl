@@ -1,7 +1,13 @@
 @prefix c:<https://chatmangpt.com/ontology/combinatorial-maximalism#>.
 @prefix d:<http://purl.org/dc/terms/>.
 @prefix sk:<http://www.w3.org/2004/02/skos/core#>.
-c:F a sk:Concept.c:R a sk:Concept.c:P a sk:Concept.c:C a sk:Concept.c:A a sk:Concept.c:E a sk:Concept.c:X a sk:Concept.
+c:F a sk:Concept .
+c:R a sk:Concept .
+c:P a sk:Concept .
+c:C a sk:Concept .
+c:A a sk:Concept .
+c:E a sk:Concept .
+c:X a sk:Concept .
 <f1> a c:F;c:o 1;c:i "facet.observation";d:title "Observation";c:h "observe";d:description "Admit exact observations and environment evidence before composition.".
 <f2> a c:F;c:o 2;c:i "facet.admission";d:title "Admission";c:h "admit";d:description "Convert observations into bounded admitted facts and constraints.".
 <f3> a c:F;c:o 3;c:i "facet.construction";d:title "Construction";c:h "construct";d:description "Explore reversible candidate combinations in the graph domain.".
