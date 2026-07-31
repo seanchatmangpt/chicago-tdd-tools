@@ -1,0 +1,99 @@
+name: combinatorial maximalism receipt
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'architecture/combinatorial-maximalism/**'
+      - 'docs/architecture/combinatorial-maximalism.md'
+      - 'scripts/verify_combinatorial_maximalism.py'
+      - 'scripts/.verify_combinatorial_maximalism/**'
+      - 'scripts/sabotage_combinatorial_maximalism.py'
+      - 'scripts/run_real_ggen_cell.sh'
+      - 'scripts/run_real_ggen_combinatorial_maximalism.sh'
+      - 'src/bin/ctdd_combinatorial_plan.rs'
+      - '.github/workflows/combinatorial-maximalism.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'architecture/combinatorial-maximalism/**'
+      - 'scripts/verify_combinatorial_maximalism.py'
+      - 'scripts/.verify_combinatorial_maximalism/**'
+      - 'scripts/sabotage_combinatorial_maximalism.py'
+      - 'scripts/run_real_ggen_cell.sh'
+      - 'scripts/run_real_ggen_combinatorial_maximalism.sh'
+      - 'src/bin/ctdd_combinatorial_plan.rs'
+      - '.github/workflows/combinatorial-maximalism.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manufacture-verify-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install exact Rust toolchain
+        uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+        with:
+          toolchain: nightly-2026-06-22
+
+      - name: Install receipt executors
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y b3sum sccache
+
+      - name: Execute real pinned ggen
+        run: bash scripts/run_real_ggen_combinatorial_maximalism.sh
+
+      - name: Verify exact-head architecture closure
+        run: |
+          python3 scripts/verify_combinatorial_maximalism.py \
+            --require-blake3 \
+            --require-exact-head \
+            --exact-head "$GITHUB_SHA" \
+            --write-receipt
+
+      - name: Execute thirteen falsifiers
+        run: python3 scripts/sabotage_combinatorial_maximalism.py
+
+      - name: Execute standalone kernel contracts
+        run: cargo +nightly-2026-06-22 test --manifest-path architecture/combinatorial-maximalism/generated/Cargo.toml
+
+      - name: Compile isolated read-only CLI adapter
+        run: rustc +nightly-2026-06-22 --edition 2021 src/bin/ctdd_combinatorial_plan.rs -o "$RUNNER_TEMP/ctdd_combinatorial_plan"
+
+      - name: Execute CLI lattice receipts
+        run: |
+          "$RUNNER_TEMP/ctdd_combinatorial_plan" --list
+          "$RUNNER_TEMP/ctdd_combinatorial_plan" profile.core-local
+          "$RUNNER_TEMP/ctdd_combinatorial_plan" profile.enterprise-max --external
+
+      - name: Prove deterministic second sync
+        run: |
+          before="$(find architecture/combinatorial-maximalism/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          python3 scripts/verify_combinatorial_maximalism.py \
+            --write \
+            --require-blake3 \
+            --require-exact-head \
+            --exact-head "$GITHUB_SHA"
+          after="$(find architecture/combinatorial-maximalism/generated -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          test "$before" = "$after"
+          git diff --exit-code -- architecture/combinatorial-maximalism/generated
+
+      - name: Publish exact-head architecture receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: combinatorial-maximalism-receipt-${{ github.sha }}
+          path: architecture/combinatorial-maximalism/evidence/receipt.json
+          if-no-files-found: error

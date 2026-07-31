@@ -1,0 +1,316 @@
+[project]
+name = "chicago-tdd-combinatorial-maximalism"
+version = "26.7.30"
+description = "Canonical ggen combinatorial-maximalism architecture pack"
+authors = ["Sean Chatman"]
+license = "MIT"
+
+[ontology]
+source = "ontology.ttl"
+standard_only = false
+
+[generation]
+output_dir = "generated"
+
+[[generation.rules]]
+name = "facets-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?description
+WHERE {
+  ?item a c:F ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    c:h ?phase ;
+    d:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/facets.rs.tera" }
+output_file = "src/facets.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "realizations-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?facet ?module ?visibility ?authority ?effect ?protocol ?dependency ?standing ?receipt
+WHERE {
+  ?item a c:R ;
+    c:o ?order ;
+    c:i ?id ;
+    c:f ?facet ;
+    c:m ?module ;
+    c:v ?visibility ;
+    c:a ?authority ;
+    c:e ?effect ;
+    c:p ?protocol ;
+    c:d ?dependency ;
+    c:s ?standing ;
+    c:q ?receipt .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/realizations.rs.tera" }
+output_file = "src/realizations.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "profiles-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?external_allowed ?include_all ?selections ?standing ?description
+WHERE {
+  ?item a c:P ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    c:x ?external_allowed ;
+    c:z ?include_all ;
+    c:l ?selections ;
+    c:s ?standing ;
+    d:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/profiles.rs.tera" }
+output_file = "src/profiles.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "contracts-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?protocol ?source ?authority ?receipt ?replay ?private_leak ?standing
+WHERE {
+  ?item a c:C ;
+    c:o ?order ;
+    c:i ?id ;
+    c:p ?protocol ;
+    c:u ?source ;
+    c:a ?authority ;
+    c:q ?receipt ;
+    c:y ?replay ;
+    c:k ?private_leak ;
+    c:s ?standing .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/external_contracts.rs.tera" }
+output_file = "src/external_contracts.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "axes-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?description
+WHERE {
+  ?item a c:A ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    d:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/projection_axes.rs.tera" }
+output_file = "src/projection_axes.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "evidence-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?required
+WHERE {
+  ?item a c:E ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    c:n ?required .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/evidence.rs.tera" }
+output_file = "src/evidence.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "refusals-rust"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?code ?name ?boundary
+WHERE {
+  ?item a c:X ;
+    c:o ?order ;
+    c:c ?code ;
+    c:w ?name ;
+    c:b ?boundary .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/refusals.rs.tera" }
+output_file = "src/refusals.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "facets-markdown"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?phase ?description
+WHERE {
+  ?item a c:F ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    c:h ?phase ;
+    d:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/FACETS.md.tera" }
+output_file = "docs/FACETS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "realizations-markdown"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?facet ?module ?visibility ?authority ?effect ?protocol ?dependency
+WHERE {
+  ?item a c:R ;
+    c:o ?order ;
+    c:i ?id ;
+    c:f ?facet ;
+    c:m ?module ;
+    c:v ?visibility ;
+    c:a ?authority ;
+    c:e ?effect ;
+    c:p ?protocol ;
+    c:d ?dependency .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/REALIZATIONS.md.tera" }
+output_file = "docs/REALIZATIONS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "profiles-markdown"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?title ?external_allowed ?include_all ?selections ?standing ?description
+WHERE {
+  ?item a c:P ;
+    c:o ?order ;
+    c:i ?id ;
+    d:title ?title ;
+    c:x ?external_allowed ;
+    c:z ?include_all ;
+    c:l ?selections ;
+    c:s ?standing ;
+    d:description ?description .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/PROFILES.md.tera" }
+output_file = "docs/PROFILES.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "contracts-markdown"
+query = { inline = """
+PREFIX c: <https://chatmangpt.com/ontology/combinatorial-maximalism#>
+PREFIX d: <http://purl.org/dc/terms/>
+SELECT ?order ?id ?protocol ?source ?authority ?receipt ?replay ?private_leak
+WHERE {
+  ?item a c:C ;
+    c:o ?order ;
+    c:i ?id ;
+    c:p ?protocol ;
+    c:u ?source ;
+    c:a ?authority ;
+    c:q ?receipt ;
+    c:y ?replay ;
+    c:k ?private_leak .
+}
+ORDER BY ?order
+""" }
+template = { file = "templates/EXTERNAL_CONTRACTS.md.tera" }
+output_file = "docs/EXTERNAL_CONTRACTS.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "types-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/types.rs.tera" }
+output_file = "src/types.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "kernel-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/kernel.rs.tera" }
+output_file = "src/kernel.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "lib-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/lib.rs.tera" }
+output_file = "src/lib.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "manifest-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/Cargo.toml.tera" }
+output_file = "Cargo.toml"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "tests-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/contracts.rs.tera" }
+output_file = "tests/contracts.rs"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "guide-static"
+query = { inline = """
+SELECT * WHERE { FILTER(false) }
+""" }
+template = { file = "templates/GUIDE.md.tera" }
+output_file = "docs/GUIDE.md"
+mode = "Overwrite"
+
+[sync]
+enabled = true
+on_change = "manual"
+validate_after = true
+conflict_mode = "fail"
+
+[output]
+formatting = "none"

@@ -1,0 +1,8 @@
+# Realization Lattice
+
+> Manufactured from `ontology.ttl`. Do not edit.
+
+| Order | ID | Facet | Module | Visibility | Authority | Effect | Protocol | Dependency |
+|---:|---|---|---|---|---|---|---|---|
+{% for row in results %}| {{ row.order }} | `{{ row.id }}` | `{{ row.facet }}` | `{{ row.module }}` | `{{ row.visibility }}` | `{{ row.authority }}` | `{{ row.effect }}` | `{{ row.protocol }}` | `{{ row.dependency }}` |
+{% endfor %}

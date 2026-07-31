@@ -1,0 +1,6 @@
+//! Manufactured profiles. Do not edit.
+use super::types::Profile;
+
+pub const PROFILES: &[Profile] = &[
+{% for row in results %}    Profile { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", external_allowed: {{ row.external_allowed }}, include_all: {{ row.include_all }}, selections: "{{ row.selections }}", standing: "{{ row.standing }}", description: "{{ row.description }}" },
+{% endfor %}];

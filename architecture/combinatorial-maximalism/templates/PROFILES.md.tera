@@ -1,0 +1,8 @@
+# Bounded Profiles
+
+> Manufactured from `ontology.ttl`. Do not edit.
+
+| Order | ID | Profile | External | Include all | Standing | Meaning |
+|---:|---|---|:---:|:---:|---|---|
+{% for row in results %}| {{ row.order }} | `{{ row.id }}` | {{ row.title }} | {{ row.external_allowed }} | {{ row.include_all }} | `{{ row.standing }}` | {{ row.description }} |
+{% endfor %}

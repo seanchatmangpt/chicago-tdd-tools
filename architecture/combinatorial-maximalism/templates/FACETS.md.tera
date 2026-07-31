@@ -1,0 +1,8 @@
+# Combinatorial-Maximalism Facets
+
+> Manufactured from `ontology.ttl`. Do not edit.
+
+| Order | ID | Facet | Phase | Law |
+|---:|---|---|---|---|
+{% for row in results %}| {{ row.order }} | `{{ row.id }}` | {{ row.title }} | `{{ row.phase }}` | {{ row.description }} |
+{% endfor %}

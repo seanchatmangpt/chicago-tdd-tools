@@ -1,0 +1,6 @@
+//! Manufactured evidence obligations. Do not edit.
+use super::types::EvidenceObligation;
+
+pub const EVIDENCE_OBLIGATIONS: &[EvidenceObligation] = &[
+{% for row in results %}    EvidenceObligation { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", required: {{ row.required }} },
+{% endfor %}];

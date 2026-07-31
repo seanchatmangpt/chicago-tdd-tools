@@ -1,0 +1,6 @@
+//! Manufactured refusal catalog. Do not edit.
+use super::types::RefusalDefinition;
+
+pub const REFUSALS: &[RefusalDefinition] = &[
+{% for row in results %}    RefusalDefinition { order: {{ row.order }}, code: "{{ row.code }}", name: "{{ row.name }}", boundary: "{{ row.boundary }}" },
+{% endfor %}];

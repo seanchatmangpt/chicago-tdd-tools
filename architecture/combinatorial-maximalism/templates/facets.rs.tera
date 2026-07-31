@@ -1,0 +1,6 @@
+//! Manufactured facet registry. Do not edit.
+use super::types::Facet;
+
+pub const FACETS: &[Facet] = &[
+{% for row in results %}    Facet { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", phase: "{{ row.phase }}", description: "{{ row.description }}" },
+{% endfor %}];

@@ -1,0 +1,6 @@
+//! Manufactured external contracts. Do not edit.
+use super::types::{Authority, ExternalContract};
+
+pub const EXTERNAL_CONTRACTS: &[ExternalContract] = &[
+{% for row in results %}    ExternalContract { order: {{ row.order }}, id: "{{ row.id }}", protocol: "{{ row.protocol }}", source_realization: "{{ row.source }}", authority: Authority::{{ row.authority }}, receipt_required: {{ row.receipt }}, replay_required: {{ row.replay }}, private_dependency_leak: {{ row.private_leak }}, standing: "{{ row.standing }}" },
+{% endfor %}];

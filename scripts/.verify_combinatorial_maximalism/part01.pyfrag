@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""Independent verifier and bounded broker for the combinatorial-maximalism ggen cell."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import tomllib
+from pathlib import Path
+from typing import Iterable
+
+CELL_REL = Path("architecture/combinatorial-maximalism")
+EXPECTED_COUNTS = {"facets": 8, "realizations": 35, "profiles": 4, "contracts": 10, "axes": 10, "evidence": 12, "refusals": 17}
+EXPECTED_AXES = {"axis.strategy", "axis.process", "axis.role", "axis.data", "axis.application", "axis.technology", "axis.control", "axis.evidence", "axis.deployment", "axis.consumer"}
+RECEIPT_COMPONENTS = {"sources", "query", "template", "observation", "output", "utility", "test", "previous_receipt"}
+PIN_KEYS = {"ggen", "lsp_max", "lsp_types_max", "wasm4pm", "wasm4pm_compat", "rust_toolchain"}
+
+class Refusal(RuntimeError):
+    def __init__(self, code: str, message: str):
+        super().__init__(f"{code}: {message}")
+        self.code = code
+        self.message = message
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--write-receipt", action="store_true")
+    parser.add_argument("--require-blake3", action="store_true")
+    parser.add_argument("--require-exact-head", action="store_true")
+    parser.add_argument("--exact-head", default=os.environ.get("GITHUB_SHA", "LOCAL"))
+    return parser.parse_args()
+
+def load_toml(path: Path) -> dict:
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        raise Refusal("CMD-ADM-001", f"cannot parse {path}: {exc}") from exc
+
+def parse_blocks(text: str, rdf_type: str) -> list[dict[str, str]]:
+    block_pattern = re.compile(rf"<(?P<subject>[^>]+)>\s+a\s+{re.escape(rdf_type)}\s*;(?P<body>.*?)\.\s*(?=\n<|\Z)", re.DOTALL)
+    property_pattern = re.compile(r"(?P<key>(?:[A-Za-z][\w-]*):[A-Za-z][\w-]*)\s+(?P<value>\"(?:[^\"\\]|\\.)*\"|true|false|-?\d+)\s*(?:;|$)", re.MULTILINE)
+    records = []
+    for match in block_pattern.finditer(text):
+        row = {"subject": match.group("subject")}
+        for prop in property_pattern.finditer(match.group("body")):
+            value = prop.group("value")
+            if value.startswith('"'):
+                value = json.loads(value)
+            row[prop.group("key")] = value
+        records.append(row)
+    return records
+
+def require(row: dict[str, str], key: str, code: str) -> str:
+    value = row.get(key)
+    if value is None:
+        raise Refusal(code, f"missing {key} on {row.get('subject', '<unknown>')}")
+    return value
+
+def norm(rows: list[dict[str, str]], fields: dict[str, str], code: str) -> list[dict[str, str]]:
+    result = [{name: require(row, prop, code) for name, prop in fields.items()} for row in rows]
+    return sorted(result, key=lambda item: int(item.get("order", "0")))
+
+def parse_model(cell: Path) -> dict[str, list[dict[str, str]]]:
+    text = (cell / "ontology.ttl").read_text(encoding="utf-8")
+    return {
+        "facets": norm(parse_blocks(text, "c:F"), {"order":"c:o","id":"c:i","title":"d:title","phase":"c:h","description":"d:description"}, "CMD-FAC-001"),
+        "realizations": norm(parse_blocks(text, "c:R"), {"order":"c:o","id":"c:i","facet":"c:f","module":"c:m","visibility":"c:v","authority":"c:a","effect":"c:e","protocol":"c:p","dependency":"c:d","standing":"c:s","receipt":"c:q"}, "CMD-REA-001"),
+        "profiles": norm(parse_blocks(text, "c:P"), {"order":"c:o","id":"c:i","title":"d:title","external_allowed":"c:x","include_all":"c:z","selections":"c:l","standing":"c:s","description":"d:description"}, "CMD-PRF-001"),
+        "contracts": norm(parse_blocks(text, "c:C"), {"order":"c:o","id":"c:i","protocol":"c:p","source":"c:u","authority":"c:a","receipt":"c:q","replay":"c:y","private_leak":"c:k","standing":"c:s"}, "CMD-EXT-001"),
+        "axes": norm(parse_blocks(text, "c:A"), {"order":"c:o","id":"c:i","title":"d:title","description":"d:description"}, "CMD-PRJ-001"),
+        "evidence": norm(parse_blocks(text, "c:E"), {"order":"c:o","id":"c:i","title":"d:title","required":"c:n"}, "CMD-EVD-001"),
+        "refusals": norm(parse_blocks(text, "c:X"), {"order":"c:o","code":"c:c","name":"c:w","boundary":"c:b"}, "CMD-ADM-001"),
+    }
+
+def validate_unique(rows, key, code, label):
+    values = [row[key] for row in rows]
+    if len(values) != len(set(values)):
+        raise Refusal(code, f"duplicate {label}")
+    orders = [row["order"] for row in rows]
+    if len(orders) != len(set(orders)):
+        raise Refusal(code, f"duplicate {label} order")
+
+def validate_model(root, cell, observation, model, exact_head, require_exact_head):
+    gates = []
+    obs = observation.get("observation", {})
+    if not all(obs.get(key) is True for key in ("admitted","aligned","complete","grounded","bounded")):
+        raise Refusal("CMD-ADM-001", "O* fields must all be true")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(obs.get("base_sha", ""))):
+        raise Refusal("CMD-ADM-001", "base_sha must be exact")
+    gates.append("010-exact-observation")
+    source_paths = observation.get("sources", {}).get("authoritative", [])
+    if len(source_paths) != 3:
+        raise Refusal("CMD-SRC-001", "exactly three semantic sources required")
+    for raw in source_paths:
+        if not (cell / raw).resolve().is_file():
+            raise Refusal("CMD-SRC-001", f"missing semantic source {raw}")
+    gates.append("020-source-closure")
+    for name, expected in EXPECTED_COUNTS.items():
+        if len(model[name]) != expected:
+            code = {"facets":"CMD-FAC-001","realizations":"CMD-REA-001","profiles":"CMD-PRF-001","contracts":"CMD-EXT-001","axes":"CMD-PRJ-001","evidence":"CMD-EVD-001"}.get(name,"CMD-ADM-001")
+            raise Refusal(code, f"{name} count {len(model[name])} != {expected}")
+    gates.append("030-model-counts")
+    for name, key, code in (("facets","id","CMD-FAC-001"),("realizations","id","CMD-REA-001"),("profiles","id","CMD-PRF-001"),("contracts","id","CMD-EXT-001"),("axes","id","CMD-PRJ-001"),("evidence","id","CMD-EVD-001"),("refusals","code","CMD-ADM-001")):
+        validate_unique(model[name], key, code, name)
+    gates.append("040-identity-uniqueness")
+    facet_ids = {row["id"] for row in model["facets"]}
+    realization_ids = {row["id"] for row in model["realizations"]}
+    profile_ids = {row["id"] for row in model["profiles"]}
+    if {int(row["order"]) for row in model["facets"]} != set(range(1,9)):
+        raise Refusal("CMD-FAC-001", "facet order is not contiguous")
+    for row in model["realizations"]:
+        if row["facet"] not in facet_ids or row["standing"] != "ADMITTED" or row["receipt"] != "true":
+            raise Refusal("CMD-REA-001", f"invalid realization {row['id']}")
+        if row["dependency"] != "NONE" and row["dependency"] not in realization_ids:
+            raise Refusal("CMD-DEP-001", f"unknown dependency {row['dependency']}")
+    gates.append("050-realization-closure")
+    by_id = {row["id"]:row for row in model["realizations"]}
+    for profile in model["profiles"]:
+        if profile["standing"] != "ADMITTED":
+            raise Refusal("CMD-STD-001", "profile overclaims standing")
+        listed = [item for item in profile["selections"].split(",") if item]
+        if len(listed) != len(set(listed)) or any(item not in realization_ids for item in listed):
+            raise Refusal("CMD-PRF-001", f"invalid selections for {profile['id']}")
+        selected = set(realization_ids) if profile["include_all"] == "true" else set(listed)
+        covered = {by_id[r]["facet"] for r in selected}
+        if covered != facet_ids:
+            raise Refusal("CMD-PRF-001", f"profile {profile['id']} misses facets {sorted(facet_ids-covered)}")
+        for rid in selected:
+            dep = by_id[rid]["dependency"]
+            if dep != "NONE" and dep not in selected:
+                raise Refusal("CMD-DEP-001", f"profile {profile['id']} misses dependency {dep}")
+        if any(by_id[r]["visibility"] == "External" for r in selected) and profile["external_allowed"] != "true":
+            raise Refusal("CMD-EXT-001", f"profile {profile['id']} hides external boundary")
+    gates += ["060-profile-totality","070-profile-dependency-closure"]
+    contract_sources = {row["source"] for row in model["contracts"]}
+    external_ids = {row["id"] for row in model["realizations"] if row["visibility"] == "External"}
+    if contract_sources != external_ids:
+        raise Refusal("CMD-EXT-001", f"external contract mismatch {sorted(contract_sources ^ external_ids)}")
+    for row in model["contracts"]:
+        if row["receipt"] != "true" or row["replay"] != "true" or row["private_leak"] != "false" or row["standing"] != "ADMITTED":
+            raise Refusal("CMD-EXT-001", f"contract not closed {row['id']}")
+    gates.append("080-external-contract-closure")
+    authority = observation.get("authority", {})
+    if authority.get("pure_kernel") is not True or authority.get("broker_only") is not True:
+        raise Refusal("CMD-AUT-001", "pure kernel and broker-only authority required")
+    if any(authority.get(key) is not False for key in ("hook_direct_actuation","network_actuation","filesystem_actuation","process_actuation","provider_sdk_in_kernel")):
+        raise Refusal("CMD-ACT-001", "direct actuation admitted")
+    if any(row["authority"] == "Brokered" and row["receipt"] != "true" for row in model["realizations"]):
+        raise Refusal("CMD-AUT-001", "brokered realization lacks receipt")
+    gates.append("090-authority-monotonicity")
+    axis_ids = {row["id"] for row in model["axes"]}
+    if axis_ids != EXPECTED_AXES or set(observation.get("projection", {}).get("axes", [])) != EXPECTED_AXES:
+        raise Refusal("CMD-PRJ-001", "projection axes drift")
+    if len(model["realizations"]) * len(model["axes"]) > observation.get("limits",{}).get("max_projections",0):
+        raise Refusal("CMD-PRJ-001", "enterprise projection product exceeds bound")
+    gates.append("100-projection-lattice")
+    if any(row["required"] != "true" for row in model["evidence"]):
+        raise Refusal("CMD-EVD-001", "evidence obligation is optional")
+    gates.append("110-evidence-totality")
+    pins = observation.get("pins", {})
+    if set(pins) != PIN_KEYS:
+        raise Refusal("CMD-PIN-001", "pin key closure mismatch")
+    for key,value in pins.items():
+        if key == "rust_toolchain":
+            if value != "nightly-2026-06-22": raise Refusal("CMD-PIN-001", "Rust toolchain drift")
+        elif not re.fullmatch(r"[0-9a-f]{40}", value):
+            raise Refusal("CMD-PIN-001", f"{key} is not exact")
+    gates.append("120-exact-pin-closure")
+    standing = observation.get("standing", {})
+    if standing.get("authored") != "ADMITTED" or standing.get("target") != "ALIVE" or standing.get("crown_complete") is not False:
+        raise Refusal("CMD-STD-001", "standing or crown separation drift")
+    gates.append("130-standing-separation")
+    if set(observation.get("receipt",{}).get("components",[])) != RECEIPT_COMPONENTS or not observation.get("receipt",{}).get("previous_receipt"):
+        raise Refusal("CMD-RCP-001", "receipt components incomplete")
+    gates.append("140-receipt-closure")
+    if require_exact_head and not re.fullmatch(r"[0-9a-f]{40}", exact_head):
+        raise Refusal("CMD-RCP-002", "receiver exact head missing")
+    gates.append("150-exact-head-binding")
+    return gates
+
