@@ -77,7 +77,7 @@ jobs:
         run: |
           "$RUNNER_TEMP/ctdd_combinatorial_plan" --list
           "$RUNNER_TEMP/ctdd_combinatorial_plan" profile.core-local
-          "$RUNNER_TEMP/ctdd_combinatorial_plan" profile.enterprise-max --external
+          "$RUNNER_TEMP/ctdd_combinatorial_plan" profile.enterprise-maximal --external
 
       - name: Prove deterministic second sync
         run: |
