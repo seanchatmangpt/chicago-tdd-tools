@@ -677,12 +677,18 @@ mod tests {
 
     #[test]
     fn test_observability_test_new() {
-        // Test that new() creates an instance (may fail if Weaver not available, that's OK)
-        // Note: new() will try to auto-detect, which may timeout in unit tests
-        // This is expected behavior - use with_config() with weaver_enabled: false for unit tests
+        // new() delegates to with_config(TestConfig::default()), and
+        // TestConfig::default() sets weaver_enabled: false specifically to
+        // avoid auto-detection/auto-start in unit tests (see the Default impl
+        // above). With Weaver disabled, none of the fallible branches in
+        // with_config (registry auto-detection, output-dir creation, Weaver
+        // process start) execute, so construction must succeed.
         let result = ObservabilityTest::new();
-        // Assert: Method returns Result (behavior test, not existence test)
-        assert!(result.is_ok() || result.is_err(), "new() should return Result");
+        assert!(
+            result.is_ok(),
+            "new() must construct with the default (weaver_enabled=false) config: {:?}",
+            result.err().map(|e| e.to_string())
+        );
     }
 
     #[test]
@@ -693,8 +699,13 @@ mod tests {
             ..Default::default()
         };
         let result = ObservabilityTest::with_config(config);
-        // Assert: Method returns Result (behavior test)
-        assert!(result.is_ok() || result.is_err(), "with_config() should return Result");
+        // With Weaver disabled there is no external detection to fail:
+        // construction must succeed.
+        assert!(
+            result.is_ok(),
+            "with_config(weaver_enabled=false) must construct: {:?}",
+            result.err().map(|e| e.to_string())
+        );
     }
 
     #[test]
@@ -704,14 +715,15 @@ mod tests {
             weaver_enabled: false, // Disable Weaver to avoid auto-detection
             ..Default::default()
         };
-        if let Ok(test) = ObservabilityTest::with_config(config) {
-            // Test builder methods exist and work
-            let _test1 = test.with_registry(PathBuf::from("registry"));
-            let _test2 = _test1.with_weaver(false);
-            let _test3 = _test2.with_compile_time_validation(true);
-            // Assert: Builder pattern works (behavior test)
-            assert!(true, "Builder pattern should work");
-        }
+        let test = ObservabilityTest::with_config(config)
+            .expect("with_config(weaver_enabled=false) must construct");
+        // Each builder method must return the moved-through instance; the
+        // chain completing without panic + the terminal drop is the observable.
+        let chained = test
+            .with_registry(PathBuf::from("registry"))
+            .with_weaver(false)
+            .with_compile_time_validation(true);
+        drop(chained);
     }
 
     #[cfg(feature = "otel")]
@@ -735,9 +747,17 @@ mod tests {
                 SpanStatus::Ok,
             );
 
-            // Test validation (may fail if span is invalid, that's OK)
+            // This span has a non-empty name ("test.operation") and non-zero
+            // trace_id/span_id, so it satisfies both validate_span_static's
+            // and OtelValidator::validate_span's checks; weaver_enabled is
+            // false in `config`, so the Weaver-report branch is skipped
+            // entirely. A valid span must therefore validate successfully.
             let result = test.validate_span(&span);
-            assert!(result.is_ok() || result.is_err(), "validate_span() should return Result");
+            assert!(
+                result.is_ok(),
+                "validate_span() must accept a well-formed span with non-empty name and non-zero trace/span IDs: {:?}",
+                result.err().map(|e| e.to_string())
+            );
         }
     }
 
@@ -759,9 +779,17 @@ mod tests {
                 attributes: Default::default(),
             };
 
-            // Test validation (may fail if metric is invalid, that's OK)
+            // This metric has a non-empty name ("test.counter"), so it
+            // satisfies both validate_metric_static's and
+            // OtelValidator::validate_metric's only check; weaver_enabled is
+            // false in `config`, so the Weaver-report branch is skipped
+            // entirely. A valid metric must therefore validate successfully.
             let result = test.validate_metric(&metric);
-            assert!(result.is_ok() || result.is_err(), "validate_metric() should return Result");
+            assert!(
+                result.is_ok(),
+                "validate_metric() must accept a well-formed metric with a non-empty name: {:?}",
+                result.err().map(|e| e.to_string())
+            );
         }
     }
 }

@@ -671,15 +671,6 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
 mod tests {
     use super::*;
 
-    // Test feature-gated code paths (critical - verify features work correctly)
-    #[cfg(not(feature = "weaver"))]
-    #[test]
-    fn test_weaver_module_not_accessible_without_feature() {
-        // Verify weaver module is not accessible without feature
-        // This test should compile and pass when weaver feature is disabled
-        assert!(true, "weaver module should not be accessible without feature");
-    }
-
     #[cfg(feature = "weaver")]
     #[test]
     fn test_weaver_validation_error_variants() {
@@ -806,11 +797,35 @@ mod tests {
     #[cfg(feature = "weaver")]
     #[test]
     fn test_weaver_validator_check_weaver_available() {
-        // Test check_weaver_available (may fail if Weaver not installed, that's OK)
+        // check_weaver_available() (this module, line ~330) delegates to
+        // WeaverLiveCheck::check_weaver_available() and maps *any* inner error into
+        // WeaverValidationError::ValidationFailed(String) via `.map_err(...)`. So the
+        // only two real outcomes are Ok(()) (weaver binary found and `--version` works)
+        // or Err(ValidationFailed(msg)) carrying the underlying diagnostic. Assert on
+        // that actual mapping instead of the tautological `is_ok() || is_err()`.
         let result = WeaverValidator::check_weaver_available();
-        // Assert: Method returns Result (behavior test, not existence test)
-        // We don't assert success because Weaver may not be installed in test environment
-        assert!(result.is_ok() || result.is_err(), "check_weaver_available should return Result");
+        match result {
+            Ok(()) => {
+                // Weaver binary is installed in this environment and `--version` succeeded.
+            }
+            Err(WeaverValidationError::ValidationFailed(msg)) => {
+                // Weaver binary is not installed here - confirm the error carries the
+                // real diagnostic (from WeaverValidationError::BinaryNotFound's Display)
+                // rather than an empty/opaque failure.
+                assert!(!msg.is_empty(), "ValidationFailed error message should not be empty");
+                assert!(
+                    msg.contains("Weaver binary not found"),
+                    "expected the wrapped BinaryNotFound diagnostic, got: {msg}"
+                );
+            }
+            Err(other) => {
+                panic!(
+                    "check_weaver_available() only ever maps errors to ValidationFailed \
+                     (see this module's `check_weaver_available` impl), got unexpected \
+                     variant: {other:?}"
+                );
+            }
+        }
     }
 
     #[cfg(feature = "weaver")]

@@ -1,5 +1,14 @@
 //! [`ReceiptAssertions`] — reads and verifies signed receipt JSON files on disk.
 
+// This module's entire contract is Chicago-TDD assertion helpers: every method
+// panics with a descriptive message on an unmet expectation, exactly like the
+// stdlib `assert!`/`assert_eq!` macros (which themselves call `panic!`
+// internally and are exempt from this lint for the same reason). The crate-wide
+// `#![deny(clippy::panic)]` (lib.rs) targets accidental panics in production
+// logic; it doesn't distinguish that from an assertion helper's intended
+// failure signal, so it's allowed here explicitly rather than crate-wide.
+#![allow(clippy::panic)]
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -102,7 +111,7 @@ impl ReceiptAssertions {
                 serde_json::to_string_pretty(receipt).unwrap_or_default()
             )
         });
-        let found = hashes.iter().filter_map(Value::as_str).any(|s| predicate(s));
+        let found = hashes.iter().filter_map(Value::as_str).any(predicate);
         if !found {
             panic!(
                 "no entry in latest receipt's 'input_hashes' matched the predicate\nhashes: {:?}",

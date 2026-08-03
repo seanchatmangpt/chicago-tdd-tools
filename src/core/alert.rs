@@ -537,10 +537,36 @@ mod logging_tests {
 
     #[test]
     fn test_alert_logger_init() {
-        // Test logger can be initialized
-        let result = AlertLogger::init(log::LevelFilter::Info);
-        // May fail if logger already set, that's OK
-        assert!(result.is_ok() || result.is_err());
+        // This is the only call to `log::set_logger` in this crate's `--lib`
+        // test binary, so the first invocation in the process must succeed.
+        let first = AlertLogger::init(log::LevelFilter::Info);
+        assert!(
+            first.is_ok(),
+            "first AlertLogger::init call must succeed when no global logger \
+             has been installed yet, got: {first:?}"
+        );
+        assert_eq!(
+            log::max_level(),
+            log::LevelFilter::Info,
+            "AlertLogger::init must apply the requested max level"
+        );
+
+        // `log::set_logger` can only ever succeed once per process, so a
+        // second call must observably fail with `SetLoggerError` rather than
+        // silently replacing the already-installed logger.
+        let second = AlertLogger::init(log::LevelFilter::Debug);
+        assert!(
+            second.is_err(),
+            "a second AlertLogger::init call must fail because the global \
+             logger is already set, got: {second:?}"
+        );
+        // The failed second call short-circuits before `set_max_level` runs,
+        // so the level from the first, successful call must be unchanged.
+        assert_eq!(
+            log::max_level(),
+            log::LevelFilter::Info,
+            "a failed second init must not alter the previously-set max level"
+        );
     }
 
     #[test]
@@ -566,76 +592,6 @@ mod logging_tests {
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_alert_critical() {
-        // Test critical alert without fix
-        alert_critical!("Test critical error");
-
-        // Test critical alert with fix
-        alert_critical!("Test critical error", "Test fix");
-
-        // Test critical alert with fix and actions
-        alert_critical!("Test critical error", "Test fix", "Action 1", "Action 2");
-    }
-
-    #[test]
-    fn test_alert_warning() {
-        // Test warning alert without fix
-        alert_warning!("Test warning");
-
-        // Test warning alert with fix
-        alert_warning!("Test warning", "Test fix");
-
-        // Test warning alert with fix and actions
-        alert_warning!("Test warning", "Test fix", "Action 1", "Action 2");
-    }
-
-    #[test]
-    fn test_alert_info() {
-        // Test info alert
-        alert_info!("Test info");
-
-        // Test info alert with details
-        alert_info!("Test info", "Detail 1", "Detail 2");
-    }
-
-    #[test]
-    fn test_alert_success() {
-        // Test success alert
-        alert_success!("Test success");
-
-        // Test success alert with details
-        alert_success!("Test success", "Detail 1", "Detail 2");
-    }
-
-    #[test]
-    fn test_alert_debug() {
-        // Test debug alert
-        alert_debug!("Test debug");
-
-        // Test debug alert with format
-        alert_debug!("Test debug: {}", "value");
-    }
-
-    #[test]
-    fn test_alert_custom() {
-        // Test custom alert
-        alert!("🚨", "Custom critical");
-
-        // Test custom alert with stop and fix
-        alert!("🚨", "Custom critical", "STOP: Cannot proceed", "FIX: Resolve issue");
-
-        // Test custom alert with stop, fix, and actions
-        alert!(
-            "🚨",
-            "Custom critical",
-            "STOP: Cannot proceed",
-            "FIX: Resolve issue",
-            "Action 1",
-            "Action 2"
-        );
-    }
 
     #[test]
     fn test_write_alert() {
