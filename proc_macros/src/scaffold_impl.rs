@@ -1,5 +1,9 @@
 // proc-macro code runs at compile time; unwrap_or/unwrap_or_else are correct fallback patterns here
-#[allow(clippy::unwrap_used)]
+#![allow(clippy::unwrap_used)]
+// These println! calls emit `cargo::rerun-if-changed=`/`cargo::warning=` directives, which
+// cargo only recognizes on stdout — the equivalent of a build script's println! protocol.
+#![allow(clippy::print_stdout)]
+
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
@@ -35,7 +39,7 @@ impl Parse for ScaffoldArgs {
         // optional trailing comma
         let _: Option<Token![,]> = input.parse()?;
 
-        Ok(ScaffoldArgs { ticket_lit, test_lit })
+        Ok(Self { ticket_lit, test_lit })
     }
 }
 
@@ -49,10 +53,7 @@ pub fn scaffold_impl(input: TokenStream) -> TokenStream {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let manifest_path = std::path::Path::new(&manifest_dir);
 
-    let root = match workspace_root(manifest_path) {
-        Some(r) => r,
-        None => manifest_path.to_path_buf(),
-    };
+    let root = workspace_root(manifest_path).unwrap_or_else(|| manifest_path.to_path_buf());
 
     let ticket_path = root.join(&ticket_val);
     let test_path = root.join(&test_val);

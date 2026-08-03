@@ -1,9 +1,12 @@
 ---
 source: src/testing/snapshot.rs
-assertion_line: 83
 expression: "serde_json::to_string_pretty(value).unwrap_or_else(|_|\n\"invalid json\".to_string())"
 ---
 {
+  "metadata": {
+    "count": 2,
+    "version": "1.0.0"
+  },
   "users": [
     {
       "id": 1,
@@ -20,9 +23,5 @@ expression: "serde_json::to_string_pretty(value).unwrap_or_else(|_|\n\"invalid j
         "user"
       ]
     }
-  ],
-  "metadata": {
-    "count": 2,
-    "version": "1.0.0"
-  }
+  ]
 }

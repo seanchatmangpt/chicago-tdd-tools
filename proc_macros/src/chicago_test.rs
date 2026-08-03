@@ -1,5 +1,9 @@
 // proc-macro code runs at compile time; unwrap_or/unwrap_or_else are correct fallback patterns here
-#[allow(clippy::unwrap_used)]
+#![allow(clippy::unwrap_used)]
+// This proc-macro emits a `cargo::rerun-if-changed=` directive, which cargo only recognizes
+// on stdout — the equivalent of a build script's println! protocol, not a production log line.
+#![allow(clippy::print_stdout)]
+
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
@@ -33,7 +37,7 @@ impl Parse for ChicagoTestArgs {
         let scaffold_fn_lit: LitStr = input.parse()?;
         let _: Option<Token![,]> = input.parse()?;
 
-        Ok(ChicagoTestArgs { ticket_lit, scaffold_fn_lit })
+        Ok(Self { ticket_lit, scaffold_fn_lit })
     }
 }
 
