@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "26.7.1"
+version = "26.8.3"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
