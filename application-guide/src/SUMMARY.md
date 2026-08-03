@@ -1,5 +1,7 @@
 # Summary
 
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
+
 - [Application Guide](README.md)
 - [Introduction](introduction.md)
 - [Choosing Your Learning Path](choosing-your-path.md)

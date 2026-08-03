@@ -1,6 +1,6 @@
 # Chicago TDD Tools - Application Guide
 
-> 💡 Explanation | Overview of the Chicago TDD application guide
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Welcome to the practical application guide for Chicago TDD Tools! This guide focuses on **real-world usage patterns** and practical techniques for testing Rust applications.
 

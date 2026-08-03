@@ -24,7 +24,7 @@ pub fn example_coverage_basic() {
 /// Example: Coverage with newtypes
 pub fn example_coverage_newtypes() {
     // Arrange: Create counts with newtypes
-    let total = TotalCount::new(100).unwrap();
+    let total = TotalCount::new(100);
     let covered = CoveredCount::new_for_total(80, total).unwrap();
 
     // Act-Assert: Verify type-safe counts
@@ -36,7 +36,7 @@ pub fn example_coverage_newtypes() {
 /// Example: CoveragePercentage newtype usage
 pub fn example_coverage_percentage() {
     // Arrange: Create coverage percentage
-    let total = TotalCount::new(100).unwrap();
+    let total = TotalCount::new(100);
     let covered = CoveredCount::new_for_total(75, total).unwrap();
 
     // Act: Calculate percentage using newtype
@@ -82,7 +82,7 @@ pub fn example_coverage_markdown() {
 /// Example: Coverage report with newtype conversions
 pub fn example_coverage_conversions() {
     // Arrange: Create counts
-    let total = TotalCount::new(50).unwrap();
+    let total = TotalCount::new(50);
     let covered = CoveredCount::new_for_total(40, total).unwrap();
 
     // Act: Convert to usize

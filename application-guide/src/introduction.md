@@ -1,6 +1,6 @@
 # Introduction: Chicago TDD Philosophy
 
-> 💡 Explanation | Learn the philosophy and principles of Chicago-style TDD
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 ## What Do You Want to Do?
 

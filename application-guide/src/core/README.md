@@ -1,6 +1,6 @@
 # Core Testing Patterns
 
-> 💡 Explanation | Overview of core testing patterns for Rust applications
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Welcome to the core testing patterns section! Here you'll learn the everyday patterns you'll use in almost every test.
 

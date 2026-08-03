@@ -1,6 +1,6 @@
 # Fixtures Deep Dive: 15-Minute Tutorial
 
-> 🎓 Tutorial | Master test isolation with fixtures
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Fixtures are the foundation of isolated testing. This tutorial builds on the basics and shows you how to use fixtures for real-world scenarios.
 

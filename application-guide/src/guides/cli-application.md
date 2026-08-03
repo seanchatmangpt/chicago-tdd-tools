@@ -1,6 +1,6 @@
 # Building a CLI Application
 
-> 🔧 How-to | Complete example of testing a CLI application
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Complete example of testing a CLI application with Chicago TDD Tools.
 

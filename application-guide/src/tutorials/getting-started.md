@@ -1,6 +1,6 @@
 # Getting Started: 25-Minute Tutorial
 
-> 🎓 Tutorial | Learn the basics of Chicago TDD in 25 minutes
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 This tutorial teaches you everything you need to write your first test with Chicago TDD Tools. No prior knowledge required.
 

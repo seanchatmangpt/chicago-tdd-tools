@@ -1,5 +1,7 @@
 # Pattern 12: Type Safety with GATs
 
+> 🔧 **PATTERN 12: TYPE SAFETY WITH GATS** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

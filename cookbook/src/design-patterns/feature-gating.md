@@ -1,5 +1,7 @@
 # Pattern 19: Feature Gate Slices
 
+> 🔧 **PATTERN 19: FEATURE GATE SLICES** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

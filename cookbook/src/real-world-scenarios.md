@@ -1,5 +1,7 @@
 # Real-World Scenarios: Patterns in Action
 
+> 🔧 **REAL-WORLD SCENARIOS: PATTERNS IN ACTION** | **How-to** | Solve this problem
+
 > 🔧 How-to | Real-world scenarios combining multiple patterns
 
 This guide shows how patterns combine to solve actual problems you'll encounter.
@@ -298,3 +300,16 @@ This guide shows how patterns combine to solve actual problems you'll encounter.
 4. Add Pattern 12 (GATs) for lifetime safety
 
 **Pro tip:** Don't use all patterns at once. Start with the ones that solve your current problem, then add others as complexity grows.
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

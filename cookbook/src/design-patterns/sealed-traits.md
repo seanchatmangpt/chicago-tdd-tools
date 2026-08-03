@@ -1,5 +1,7 @@
 # Pattern 13: Sealed Traits for API Safety
 
+> 🔧 **PATTERN 13: SEALED TRAITS FOR API SAFETY** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

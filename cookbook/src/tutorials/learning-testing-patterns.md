@@ -1,5 +1,7 @@
 # Learning Testing Patterns: 90-Minute Mastery
 
+> 🔧 **LEARNING TESTING PATTERNS: 90-MINUTE MASTERY** | **How-to** | Solve this problem
+
 > 🎓 Tutorial
 
 This tutorial guides you through the 5 testing patterns in a natural progression. Each builds on the previous one.
@@ -414,3 +416,16 @@ If you answered yes to all, you've mastered Testing Patterns! 🎉
 ---
 
 **Congratulations!** You now understand the 5 fundamental testing patterns. Next, learn how to organize your code with Architecture Patterns.
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

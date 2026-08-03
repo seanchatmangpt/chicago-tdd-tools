@@ -1,5 +1,7 @@
 # Pattern 16: Fixture Lifecycle Management
 
+> 🔧 **PATTERN 16: FIXTURE LIFECYCLE MANAGEMENT** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

@@ -1,6 +1,6 @@
 # Best Practices & Migration
 
-> 🔧 How-to | Proven patterns and migration strategies
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Proven patterns and migration strategies for Chicago TDD.
 

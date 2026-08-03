@@ -1,6 +1,6 @@
 # Mutation Testing
 
-> 🔧 How-to | Run mutation testing to validate test suite quality
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Mutation testing validates test quality by introducing mutations (changes) to code and verifying tests catch them.
 

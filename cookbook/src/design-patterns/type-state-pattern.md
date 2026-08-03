@@ -1,5 +1,7 @@
 # Pattern 15: Type State Enforcement
 
+> 🔧 **PATTERN 15: TYPE STATE ENFORCEMENT** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

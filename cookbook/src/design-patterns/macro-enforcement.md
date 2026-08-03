@@ -1,5 +1,7 @@
 # Pattern 20: Macro Pattern Enforcement
 
+> 🔧 **PATTERN 20: MACRO PATTERN ENFORCEMENT** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

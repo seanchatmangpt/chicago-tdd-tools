@@ -1,5 +1,7 @@
 # Pattern 9: Single Source of Truth
 
+> 🔧 **PATTERN 9: SINGLE SOURCE OF TRUTH** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

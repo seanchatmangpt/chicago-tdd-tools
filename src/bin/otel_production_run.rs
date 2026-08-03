@@ -3,10 +3,10 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
     use opentelemetry::KeyValue;
+    use opentelemetry_otlp::WithExportConfig;
     use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, SdkTracerProvider};
     use opentelemetry_sdk::Resource;
     use std::time::Duration;
-    use opentelemetry_otlp::WithExportConfig;
 
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async {

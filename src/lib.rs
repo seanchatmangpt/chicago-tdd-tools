@@ -169,6 +169,12 @@ pub use chicago_tdd_tools_proc_macros::tdd_test;
 // Re-export TestBuilder derive macro (users will use #[derive(TestBuilder)])
 pub use chicago_tdd_tools_proc_macros::TestBuilder;
 
+// Re-export rstest so `param_test!` expands dep-free in consumer crates.
+// The macro emits `#[$crate::rstest::rstest]`; without this re-export, consumers
+// enabling `parameterized-testing` without a direct rstest dep hit E0433.
+#[cfg(feature = "parameterized-testing")]
+pub use rstest;
+
 // Capability groups - organized by functionality
 //
 // **Kaizen improvement**: Module declaration pattern to prevent dead code.
@@ -177,6 +183,8 @@ pub use chicago_tdd_tools_proc_macros::TestBuilder;
 // Pattern: Use `pub mod` for new modules, `pub use` for re-exports.
 // **Waste elimination**: Work reports and internal documentation don't belong in docs/.
 // Only user-facing documentation should be in docs/ (guides, API refs, architecture).
+#[cfg(feature = "cli-proof")]
+pub mod cli_proof;
 pub mod core;
 pub mod integration;
 pub mod observability;
@@ -310,6 +318,11 @@ pub mod prelude {
         ContainerClient, ExecResult, GenericContainer, TestcontainersError, TestcontainersResult,
     };
     // Note: testcontainers::poka_yoke is NOT re-exported via glob to avoid conflicts
+
+    #[cfg(feature = "cli-proof")]
+    pub use crate::cli_proof::{
+        CliHarness, CliOutput, ReceiptAssertions, SabotageFixture, TempWorkspace,
+    };
 
     // Hyper-advanced μ-kernel verification substrate (Track 1-6)
     // Track 1: Test Contracts as First-Class Types (already in core::*)

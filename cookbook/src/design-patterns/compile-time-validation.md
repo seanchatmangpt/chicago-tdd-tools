@@ -1,5 +1,7 @@
 # Pattern 14: Compile-Time Validation
 
+> 🔧 **PATTERN 14: COMPILE-TIME VALIDATION** | **How-to** | Solve this problem
+
 > 📚 Reference
 
 ## Pattern at a Glance

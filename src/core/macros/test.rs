@@ -419,7 +419,7 @@ macro_rules! param_test {
         $(#[$attr:meta])*
         fn $name:ident($($param:ident: $type:ty),* $(,)?) $body:block
     } => {
-        #[rstest::rstest($($param),*)]
+        #[$crate::rstest::rstest($($param),*)]
         $(#[$attr])*
         fn $name($($param: $type),*) $body
     };
@@ -550,6 +550,21 @@ mod tests {
         // This test demonstrates parameterized testing
         // Actual parameterized tests would use param_test! macro
         assert_that_with_msg(&true, |v| *v, "Value should be true");
+    }
+
+    // Compile + runtime check: param_test! must expand via the crate-root
+    // rstest re-export ($crate::rstest::rstest) so consumers without a direct
+    // rstest dependency can use it. This module deliberately has no
+    // `use rstest` import.
+    #[cfg(feature = "parameterized-testing")]
+    mod param_test_expansion {
+        crate::param_test! {
+            #[case(1, 2, 3)]
+            #[case(2, 3, 5)]
+            fn param_test_expands_dep_free(a: i32, b: i32, expected: i32) {
+                assert_eq!(a + b, expected);
+            }
+        }
     }
 
     #[test]

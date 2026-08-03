@@ -1,5 +1,7 @@
 # Pattern 2: Error Path Testing
 
+> 🔧 **PATTERN 2: ERROR PATH TESTING** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

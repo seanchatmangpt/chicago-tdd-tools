@@ -1,6 +1,6 @@
 # Choosing Your Learning Path
 
-> 💡 Explanation | Find the right resources for your goals
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 This page helps you navigate the documentation based on what you want to accomplish.
 

@@ -1,0 +1,212 @@
+{
+  "samples": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "name": "service.name",
+            "value": "chicago-tdd-tools-negative-test",
+            "type": "string",
+            "live_check_result": {
+              "all_advice": [
+                {
+                  "type": "PolicyFinding",
+                  "id": "missing_attribute",
+                  "context": {
+                    "attribute_key": "service.name"
+                  },
+                  "message": "Attribute 'service.name' does not exist in the registry.",
+                  "level": "violation",
+                  "signal_type": "resource",
+                  "signal_name": null
+                }
+              ],
+              "highest_advice_level": "violation"
+            }
+          }
+        ],
+        "live_check_result": {
+          "all_advice": [],
+          "highest_advice_level": null
+        }
+      }
+    },
+    {
+      "span": {
+        "name": "workflow",
+        "kind": "internal",
+        "status": {
+          "code": "unset",
+          "message": ""
+        },
+        "attributes": [],
+        "span_events": [
+          {
+            "name": "praxis.activity_executed",
+            "attributes": [
+              {
+                "name": "process.workflow.id",
+                "value": 123,
+                "type": "int",
+                "live_check_result": {
+                  "all_advice": [
+                    {
+                      "type": "PolicyFinding",
+                      "id": "not_stable",
+                      "context": {
+                        "attribute_key": "process.workflow.id",
+                        "stability": "development"
+                      },
+                      "message": "Attribute 'process.workflow.id' is not stable; stability = development.",
+                      "level": "improvement",
+                      "signal_type": "span",
+                      "signal_name": "workflow"
+                    },
+                    {
+                      "type": "PolicyFinding",
+                      "id": "type_mismatch",
+                      "context": {
+                        "attribute_key": "process.workflow.id",
+                        "attribute_type": "int",
+                        "expected": "string"
+                      },
+                      "message": "Attribute 'process.workflow.id' has type 'int'. Type should be 'string'.",
+                      "level": "violation",
+                      "signal_type": "span",
+                      "signal_name": "workflow"
+                    }
+                  ],
+                  "highest_advice_level": "violation"
+                }
+              },
+              {
+                "name": "process.object.id",
+                "value": "obj-456",
+                "type": "string",
+                "live_check_result": {
+                  "all_advice": [
+                    {
+                      "type": "PolicyFinding",
+                      "id": "not_stable",
+                      "context": {
+                        "attribute_key": "process.object.id",
+                        "stability": "development"
+                      },
+                      "message": "Attribute 'process.object.id' is not stable; stability = development.",
+                      "level": "improvement",
+                      "signal_type": "span",
+                      "signal_name": "workflow"
+                    }
+                  ],
+                  "highest_advice_level": "improvement"
+                }
+              },
+              {
+                "name": "process.activity.iri",
+                "value": "http://chatman-equation.org/core/Execute",
+                "type": "string",
+                "live_check_result": {
+                  "all_advice": [
+                    {
+                      "type": "PolicyFinding",
+                      "id": "not_stable",
+                      "context": {
+                        "attribute_key": "process.activity.iri",
+                        "stability": "development"
+                      },
+                      "message": "Attribute 'process.activity.iri' is not stable; stability = development.",
+                      "level": "improvement",
+                      "signal_type": "span",
+                      "signal_name": "workflow"
+                    }
+                  ],
+                  "highest_advice_level": "improvement"
+                }
+              },
+              {
+                "name": "process.outcome",
+                "value": "completed",
+                "type": "string",
+                "live_check_result": {
+                  "all_advice": [
+                    {
+                      "type": "PolicyFinding",
+                      "id": "not_stable",
+                      "context": {
+                        "attribute_key": "process.outcome",
+                        "stability": "development"
+                      },
+                      "message": "Attribute 'process.outcome' is not stable; stability = development.",
+                      "level": "improvement",
+                      "signal_type": "span",
+                      "signal_name": "workflow"
+                    }
+                  ],
+                  "highest_advice_level": "improvement"
+                }
+              }
+            ],
+            "live_check_result": {
+              "all_advice": [],
+              "highest_advice_level": null
+            }
+          }
+        ],
+        "span_links": [],
+        "live_check_result": {
+          "all_advice": [],
+          "highest_advice_level": null
+        }
+      }
+    }
+  ],
+  "statistics": {
+    "total_entities": 8,
+    "total_entities_by_type": {
+      "resource": 1,
+      "span": 1,
+      "attribute": 5,
+      "span_event": 1
+    },
+    "total_advisories": 6,
+    "advice_level_counts": {
+      "violation": 2,
+      "improvement": 4
+    },
+    "highest_advice_level_counts": {
+      "improvement": 3,
+      "violation": 2
+    },
+    "no_advice_count": 3,
+    "advice_type_counts": {
+      "not_stable": 4,
+      "missing_attribute": 1,
+      "type_mismatch": 1
+    },
+    "advice_message_counts": {
+      "Attribute 'process.outcome' is not stable; stability = development.": 1,
+      "Attribute 'service.name' does not exist in the registry.": 1,
+      "Attribute 'process.workflow.id' is not stable; stability = development.": 1,
+      "Attribute 'process.object.id' is not stable; stability = development.": 1,
+      "Attribute 'process.workflow.id' has type 'int'. Type should be 'string'.": 1,
+      "Attribute 'process.activity.iri' is not stable; stability = development.": 1
+    },
+    "seen_registry_attributes": {
+      "process.activity.iri": 1,
+      "process.outcome": 1,
+      "process.workflow.id": 1,
+      "process.object.type": 0,
+      "process.object.id": 1
+    },
+    "seen_non_registry_attributes": {
+      "service.name": 1
+    },
+    "seen_registry_metrics": {},
+    "seen_non_registry_metrics": {},
+    "seen_registry_events": {
+      "praxis.activity_executed": 0
+    },
+    "seen_non_registry_events": {},
+    "registry_coverage": 0.6666667
+  }
+}

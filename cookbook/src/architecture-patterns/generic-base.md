@@ -1,5 +1,7 @@
 # Pattern 6: Generic Base Layer
 
+> 🔧 **PATTERN 6: GENERIC BASE LAYER** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

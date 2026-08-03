@@ -77,6 +77,8 @@ anyhow = "1"
 insta = "1"
 proptest = "1"
 which = "7"
+tempfile = "3"
+filetime = "0.2"
 
 [lints.rust]
 warnings = "deny"

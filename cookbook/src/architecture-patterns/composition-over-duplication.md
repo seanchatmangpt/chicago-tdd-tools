@@ -1,5 +1,7 @@
 # Pattern 8: Composition Over Duplication
 
+> 🔧 **PATTERN 8: COMPOSITION OVER DUPLICATION** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

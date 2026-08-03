@@ -1,6 +1,6 @@
 # Advanced Testing Techniques
 
-> 💡 Explanation | Overview of advanced testing techniques
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Welcome to advanced testing techniques! These specialized methods help you test complex scenarios effectively.
 

@@ -1,5 +1,7 @@
 # Pattern 5: Real Collaborators
 
+> 🔧 **PATTERN 5: REAL COLLABORATORS** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

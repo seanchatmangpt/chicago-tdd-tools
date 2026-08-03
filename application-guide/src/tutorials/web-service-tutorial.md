@@ -1,6 +1,6 @@
 # Building a REST Web Service: Complete Tutorial
 
-> 🎓 Tutorial | Build a production-ready REST API with Chicago TDD
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 This tutorial guides you through building a real REST web service with comprehensive tests, using Rust.
 

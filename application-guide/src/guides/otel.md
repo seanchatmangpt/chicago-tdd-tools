@@ -1,6 +1,6 @@
 # OTEL Instrumentation
 
-> 🔧 How-to | Instrument and verify OpenTelemetry spans and metrics
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 OpenTelemetry instrumentation provides observability into your operations.
 

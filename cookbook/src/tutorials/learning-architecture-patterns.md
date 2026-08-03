@@ -1,5 +1,7 @@
 # Learning Architecture Patterns: 60-Minute Mastery
 
+> 🔧 **LEARNING ARCHITECTURE PATTERNS: 60-MINUTE MASTERY** | **How-to** | Solve this problem
+
 > 🎓 Tutorial
 
 This tutorial guides you through the 5 architecture patterns that organize your codebase.
@@ -503,3 +505,16 @@ If yes to all, you've mastered Architecture Patterns! 🎉
 ---
 
 **Congratulations!** You now understand how to organize production code. Next, master type safety and design with Design Patterns.
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

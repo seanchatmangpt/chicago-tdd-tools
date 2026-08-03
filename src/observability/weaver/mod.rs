@@ -113,21 +113,25 @@ pub mod lifecycle {
             let weaver_binary = WeaverLiveCheck::find_weaver_binary()
                 .ok_or(WeaverValidationError::BinaryNotFound)?;
 
+            let mut actual_registry_path = self.registry_path.clone();
+            if actual_registry_path.join("model").exists() {
+                actual_registry_path = actual_registry_path.join("model");
+            }
+            let registry_str = actual_registry_path.to_string_lossy().into_owned();
+            let grpc_port_str = self.otlp_grpc_port.to_string();
+            let admin_port_str = self.admin_port.to_string();
+
             // Spawn the Weaver live-check process
             let child = Command::new(&weaver_binary)
                 .args([
                     "registry",
                     "live-check",
                     "-r",
-                    self.registry_path.to_str().ok_or_else(|| {
-                        WeaverValidationError::ProcessStartFailed(
-                            "Registry path is not valid UTF-8".to_string(),
-                        )
-                    })?,
+                    &registry_str,
                     "--otlp-grpc-port",
-                    &self.otlp_grpc_port.to_string(),
+                    &grpc_port_str,
                     "--admin-port",
-                    &self.admin_port.to_string(),
+                    &admin_port_str,
                 ])
                 .spawn()
                 .map_err(|e| {
@@ -405,7 +409,12 @@ impl WeaverValidator {
         // ✅ Registry path exists
 
         // Create Weaver live-check instance
-        let registry_str = self.registry_path.to_str().ok_or_else(|| {
+        let mut actual_registry_path = self.registry_path.clone();
+        if actual_registry_path.join("model").exists() {
+            actual_registry_path = actual_registry_path.join("model");
+        }
+
+        let registry_str = actual_registry_path.to_str().ok_or_else(|| {
             WeaverValidationError::ValidationFailed("Registry path is not valid UTF-8".to_string())
         })?;
 
@@ -497,79 +506,93 @@ impl Drop for WeaverValidator {
 ///
 /// Returns an error if sending the span to Weaver fails.
 #[cfg(feature = "weaver")]
-pub fn send_test_span_to_weaver(endpoint: &str, span_name: &str) -> WeaverValidationResult<()> {
-    // Items (use statements) must come before statements (Rust requirement)
-    use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
-    use opentelemetry::KeyValue;
-    use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, SdkTracerProvider};
-    use opentelemetry_sdk::Resource;
-    use std::time::Duration;
-
-    // Create OTLP HTTP exporter and tracer provider
-    // Using OpenTelemetry 0.31 API pattern from knhk
-    // Set endpoint via environment variable (required by exporter)
-    let base_endpoint = endpoint.trim_end_matches("/v1/traces").trim_end_matches('/');
-    std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", base_endpoint);
-
-    // Create OTLP HTTP exporter using builder pattern
-    let exporter =
-        opentelemetry_otlp::SpanExporter::builder().with_http().build().map_err(|e| {
-            WeaverValidationError::ValidationFailed(format!(
-                "🚨 Failed to create OTLP HTTP exporter: {e}\n   ⚠️  STOP: Cannot create OTLP exporter\n   💡 FIX: Check OpenTelemetry SDK configuration and endpoint"
-            ))
-        })?;
-
-    // Create resource with service information
-    let resource = Resource::builder_empty()
-        .with_service_name("chicago-tdd-tools-test")
-        .with_attributes([
-            KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
-            KeyValue::new("telemetry.sdk.language", "rust"),
-            KeyValue::new("telemetry.sdk.name", "opentelemetry"),
-            KeyValue::new("telemetry.sdk.version", "0.31.0"),
-        ])
-        .build();
-
-    // Create tracer provider with batch exporter (sync pattern from knhk)
-    let provider = SdkTracerProvider::builder()
-        .with_batch_exporter(exporter)
-        .with_sampler(Sampler::TraceIdRatioBased(1.0)) // Always sample for tests
-        .with_id_generator(RandomIdGenerator::default())
-        .with_resource(resource)
-        .build();
-
-    // Get tracer
-    let tracer = provider.tracer("chicago-tdd-tools");
-
-    // Create and start span using span_builder pattern
-    // Kaizen improvement: Create owned string once and reuse to avoid unnecessary clone
-    let span_name_owned = span_name.to_string();
-    let mut span = tracer.span_builder(span_name_owned.clone()).start(&tracer);
-
-    // Set test attributes
-    span.set_attribute(KeyValue::new("test.operation", span_name_owned));
-    span.set_attribute(KeyValue::new("test.framework", "chicago-tdd-tools"));
-    span.set_attribute(KeyValue::new("span.kind", "internal"));
-
-    // End span (this triggers export)
-    span.end();
-
-    // Force flush to ensure span is exported before shutdown
-    provider.force_flush().map_err(|e| {
-        WeaverValidationError::ValidationFailed(format!("⚠️  Failed to flush traces: {e}\n   ⚠️  WARNING: Traces may not be exported\n   💡 FIX: Check OTLP endpoint connectivity"))
+pub fn send_test_span_to_weaver(
+    endpoint: &str,
+    span_name: &str,
+) -> Result<(), WeaverValidationError> {
+    // Weaver live check ONLY listens on gRPC (no HTTP endpoint).
+    // We MUST use `grpc-tonic` which requires a Tokio runtime.
+    let rt = tokio::runtime::Runtime::new().map_err(|e| {
+        WeaverValidationError::ValidationFailed(format!("Failed to create Tokio runtime: {e}"))
     })?;
 
-    // Give async exports time to complete
-    std::thread::sleep(Duration::from_millis(500));
+    rt.block_on(async {
+        // Items (use statements) must come before statements (Rust requirement)
+        use opentelemetry::trace::{Span, Tracer, TracerProvider as _};
+        use opentelemetry::KeyValue;
+        use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, SdkTracerProvider};
+        use opentelemetry_sdk::Resource;
+        use std::time::Duration;
 
-    // Shutdown tracer provider
-    provider.shutdown().map_err(|e| {
-        WeaverValidationError::ValidationFailed(format!(
-            "⚠️  Failed to shutdown tracer provider: {e}\n   ⚠️  WARNING: Tracer provider may not have shut down cleanly\n   💡 FIX: Check resource cleanup"
-        ))
-    })?;
+        // Create OTLP HTTP exporter and tracer provider
+        // Set endpoint via environment variable (required by exporter)
+        let base_endpoint = endpoint.trim_end_matches("/v1/traces").trim_end_matches('/');
+        // For gRPC, we often just need the base endpoint like "http://127.0.0.1:4317"
+        std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", base_endpoint);
 
-    Ok(())
+        // Create OTLP gRPC exporter using builder pattern
+        let exporter = opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .build()
+            .map_err(|e| {
+                WeaverValidationError::ValidationFailed(format!(
+                    "🚨 Failed to create OTLP gRPC exporter: {e}\n   ⚠️  STOP: Cannot create OTLP exporter\n   💡 FIX: Check OpenTelemetry SDK configuration and endpoint"
+                ))
+            })?;
+
+        // Create resource with service information
+        let resource = Resource::builder_empty()
+            .with_service_name("chicago-tdd-tools-test")
+            .with_attributes([
+                KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+                KeyValue::new("telemetry.sdk.language", "rust"),
+                KeyValue::new("telemetry.sdk.name", "opentelemetry"),
+                KeyValue::new("telemetry.sdk.version", "0.31.0"),
+            ])
+            .build();
+
+        // Create tracer provider with batch exporter
+        let provider = SdkTracerProvider::builder()
+            .with_batch_exporter(exporter)
+            .with_sampler(Sampler::TraceIdRatioBased(1.0)) // Always sample for tests
+            .with_id_generator(RandomIdGenerator::default())
+            .with_resource(resource)
+            .build();
+
+        // Get tracer
+        let tracer = provider.tracer("chicago-tdd-tools");
+
+        // Create and start span using span_builder pattern
+        let span_name_owned = span_name.to_string();
+        let mut span = tracer.span_builder(span_name_owned.clone()).start(&tracer);
+
+        // Set test attributes
+        span.set_attribute(KeyValue::new("test.operation", span_name_owned));
+        span.set_attribute(KeyValue::new("test.framework", "chicago-tdd-tools"));
+        span.set_attribute(KeyValue::new("span.kind", "internal"));
+
+        // End span (this triggers export)
+        span.end();
+
+        // Force flush to ensure span is exported before shutdown
+        if let Err(e) = provider.force_flush() {
+            return Err(WeaverValidationError::ValidationFailed(format!(
+                "⚠️  Failed to flush traces: {e}\n   ⚠️  WARNING: Traces may not be exported\n   💡 FIX: Check OTLP endpoint connectivity"
+            )));
+        }
+
+        // Give async exports time to complete
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
+        // Shutdown tracer provider
+        if let Err(e) = provider.shutdown() {
+            return Err(WeaverValidationError::ValidationFailed(format!(
+                "⚠️  Failed to shutdown tracer provider: {e}\n   ⚠️  WARNING: Tracer provider may not have shut down cleanly\n   💡 FIX: Check resource cleanup"
+            )));
+        }
+
+        Ok(())
+    })
 }
 
 /// Run Weaver static schema validation
@@ -607,8 +630,12 @@ pub fn validate_schema_static(registry_path: &std::path::Path) -> WeaverValidati
         return Err(WeaverValidationError::RegistryNotFound(registry_path.display().to_string()));
     }
 
-    // Run weaver registry check
-    let registry_str = registry_path.to_str().ok_or_else(|| {
+    let mut actual_registry_path = registry_path.to_path_buf();
+    if actual_registry_path.join("model").exists() {
+        actual_registry_path = actual_registry_path.join("model");
+    }
+
+    let registry_str = actual_registry_path.to_str().ok_or_else(|| {
         WeaverValidationError::ValidationFailed("Registry path is not valid UTF-8".to_string())
     })?;
 

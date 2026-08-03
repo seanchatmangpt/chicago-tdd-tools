@@ -62,6 +62,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut validator = WeaverValidator::new(registry_path);
     validator.start()?;
 
+    // Give Weaver a moment to process incoming telemetry before shutdown
+    sleep(Duration::from_millis(1500));
+
     let endpoint = format!("http://{LOCALHOST}:{DEFAULT_OTLP_GRPC_PORT}/v1/traces");
     send_test_span_to_weaver(&endpoint, "weaver_smoke_span")?;
 

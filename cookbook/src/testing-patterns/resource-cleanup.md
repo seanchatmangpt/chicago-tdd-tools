@@ -1,5 +1,7 @@
 # Pattern 4: Resource Cleanup
 
+> 🔧 **PATTERN 4: RESOURCE CLEANUP** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

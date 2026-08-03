@@ -1,6 +1,6 @@
 # Testing a Web Service
 
-> 🔧 How-to | Complete example of testing a web service
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Complete example of testing a web service with Chicago TDD Tools.
 

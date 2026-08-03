@@ -237,7 +237,7 @@ cli-testing = ["dep:trycmd"]
 # When to use: Installing Rust-based git hooks, version-controlled hooks
 # Enables: git_hook_installer binary, git2 dependency for repository operations
 git-hooks = ["dep:git2"]
-cli-proof = []
+cli-proof = ["dep:tempfile"]
 
 # Observability features
 # OTEL validation: OpenTelemetry span/metric validation

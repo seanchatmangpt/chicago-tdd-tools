@@ -1,5 +1,7 @@
 # Adoption Guide: Adding Patterns to Existing Projects
 
+> 🔧 **ADOPTION GUIDE: ADDING PATTERNS TO EXISTING PROJECTS** | **How-to** | Solve this problem
+
 > 🚀 **HOW-TO** | Add Chicago TDD patterns incrementally to your existing test suite
 
 This guide helps you adopt patterns **gradually**, without breaking your existing tests.
@@ -448,3 +450,16 @@ See [Troubleshooting Guide](troubleshooting.md) for:
 - "Mocks vs real collaborators confusion"
 - "How to measure improvement"
 - "Team adoption resistance"
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

@@ -1,5 +1,7 @@
 # Pattern 7: Extension Layer
 
+> 🔧 **PATTERN 7: EXTENSION LAYER** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

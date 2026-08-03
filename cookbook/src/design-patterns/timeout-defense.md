@@ -1,5 +1,7 @@
 # Pattern 18: Timeout Defense in Depth
 
+> 🔧 **PATTERN 18: TIMEOUT DEFENSE IN DEPTH** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

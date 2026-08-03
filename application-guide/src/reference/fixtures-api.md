@@ -1,6 +1,6 @@
 # TestFixture API Reference
 
-> 📚 Reference | Complete API documentation for test fixtures
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 ## Overview
 

@@ -1,5 +1,7 @@
 # Pattern 3: Boundary Conditions
 
+> 🔧 **PATTERN 3: BOUNDARY CONDITIONS** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

@@ -1,6 +1,6 @@
 # Building a Real CLI Application: Complete Tutorial
 
-> 🎓 Tutorial | Build a complete CLI application using Chicago TDD
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 This tutorial walks you through building a real command-line todo application from scratch using Chicago TDD principles.
 

@@ -209,7 +209,10 @@ impl WeaverLiveCheck {
         use std::path::PathBuf;
         use std::time::Instant;
 
-        let registry_path = PathBuf::from("registry");
+        let mut registry_path = PathBuf::from("registry");
+        if registry_path.join("model").exists() {
+            registry_path = registry_path.join("model");
+        }
         let start_time = Instant::now();
 
         // Check 1: Path exists
@@ -262,20 +265,19 @@ impl WeaverLiveCheck {
                 let has_content = entries
                     .take(100) // Limit iterations to prevent long hangs
                     .any(|entry| {
-                        entry
-                            .ok()
-                            .and_then(|e| {
-                                e.path().extension().and_then(|ext| {
+                        if let Ok(e) = entry {
+                            if let Ok(m) = e.metadata() {
+                                if m.is_dir() {
+                                    return true;
+                                }
+                                if let Some(ext) = e.path().extension() {
                                     if ext == "yaml" || ext == "yml" || ext == "json" {
-                                        Some(())
-                                    } else {
-                                        e.metadata().ok().and_then(|m| {
-                                            if m.is_dir() { Some(()) } else { None }
-                                        })
+                                        return true;
                                     }
-                                })
-                            })
-                            .is_some()
+                                }
+                            }
+                        }
+                        false
                     });
 
                 if !has_content {

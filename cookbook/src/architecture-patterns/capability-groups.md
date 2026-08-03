@@ -1,5 +1,7 @@
 # Pattern 10: Capability Grouping
 
+> 🔧 **PATTERN 10: CAPABILITY GROUPING** | **How-to** | Solve this problem
+
 > 🔧 How-to
 
 ## Pattern at a Glance

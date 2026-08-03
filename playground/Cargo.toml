@@ -10,7 +10,24 @@ keywords = ["testing", "tdd", "chicago-tdd", "playground"]
 categories = ["development-tools::testing"]
 publish = false
 
+# Standalone package: not a member of the parent workspace.
+[workspace]
+
+[features]
+# Chatman Engine validation suite (praxis-graphlaw). Off by default so the
+# default playground build/test is unaffected.
+chatman = [
+    "dep:praxis-graphlaw",
+    # Extra framework capabilities exercised by the chatman suite only, so the
+    # default playground build stays byte-identical in behavior.
+    "chicago-tdd-tools/receipt-validation",
+    "chicago-tdd-tools/ocel-generation",
+]
+
 [dependencies]
+# Chatman Engine under test (feature-gated; only built with --features chatman)
+praxis-graphlaw = { path = "/Users/sac/praxis/crates/praxis-graphlaw", optional = true }
+
 # Chicago TDD Tools with ALL features enabled
 chicago-tdd-tools = { path = "..", version = "26.6.11", features = [
     # Feature groups (convenience bundles)
@@ -59,9 +76,53 @@ path = "src/lib.rs"
 name = "playg"
 path = "src/main.rs"
 
+# ── Chatman Engine validation suite (feature-gated; never built by default) ──
+[[test]]
+name = "chatman_01_macros_aaa"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_02_assertions"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_03_builders_fixtures"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_04_property"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_05_parameterized"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_06_snapshot"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_07_receipts_chain"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_08_typestate_state_machine"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_09_mutation_score"
+required-features = ["chatman"]
+
+[[test]]
+name = "chatman_10_performance"
+required-features = ["chatman"]
+
 [dev-dependencies]
 # Test utilities
 tokio-test = "^0.4"
+# param_test! expands to #[rstest::rstest] in the consumer crate, so rstest
+# must be a direct dev-dependency (version matched to chicago-tdd-tools').
+rstest = "^0.19"
 ntest = "^0.9"
 assert_cmd = "^2.0"
 predicates = "^3.0"

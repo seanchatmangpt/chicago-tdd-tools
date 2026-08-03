@@ -1,5 +1,7 @@
 # Introduction
 
+> 🔧 **INTRODUCTION** | **How-to** | Solve this problem
+
 > 💡 Explanation | Introduction to the pattern language of Chicago TDD Tools
 
 Christopher Alexander famously observed that great environments share a pattern language – a network of proven responses to recurring forces. Chicago TDD Tools embodies the same philosophy for Rust testing. Instead of isolated utilities, the framework codifies high-leverage patterns that push teams toward dependable, behavior-focused tests and extendable architecture.
@@ -107,3 +109,16 @@ Learn patterns progressively through structured tutorials:
 - **[Testing Patterns](testing-patterns/)** - Learn to write great tests
 - **[Architecture Patterns](architecture-patterns/)** - Learn to organize code
 - **[Design Patterns](design-patterns/)** - Learn advanced safety and design
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

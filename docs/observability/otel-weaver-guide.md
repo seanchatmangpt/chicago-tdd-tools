@@ -13,6 +13,7 @@ Chicago TDD Tools provides comprehensive observability testing through OTEL (Ope
 5. [Best Practices](#best-practices)
 6. [Troubleshooting](#troubleshooting)
 7. [Real-World Examples](#real-world-examples)
+8. [Architecture & Technical Details](#architecture--technical-details)
 
 ## Quick Start
 
@@ -176,6 +177,21 @@ let config = TestConfig {
     weaver_output_dir: Some(PathBuf::from("./test-reports")),
 };
 ```
+
+## Architecture & Technical Details
+
+### Weaver Live-Check Architecture
+
+The Weaver integration uses Weaver's `live-check` command to run an ephemeral OTLP receiver that validates traces against a Semantic Conventions registry in real-time.
+
+1. **Protocol Requirements (gRPC only):**
+   The Weaver `live-check` command currently ONLY exposes a gRPC listener (configured via `--otlp-grpc-port`). It **does not** support HTTP trace ingestion. Therefore, test clients *must* use the `grpc-tonic` feature in `opentelemetry-otlp` and configure their exporters with `.with_tonic()`.
+
+2. **Tokio Runtime Requirement:**
+   Because `tonic` strictly requires a Tokio runtime to drive its asynchronous I/O, synchronous test suites cannot simply use blocking HTTP clients. The observability fixtures automatically spin up and maintain a dedicated `tokio::runtime::Runtime` internally to keep the gRPC transport and `BatchSpanProcessor` alive throughout the test.
+
+3. **Semantic Conventions Registry Structure:**
+   Modern versions of the [OpenTelemetry Semantic Conventions](https://github.com/open-telemetry/semantic-conventions) repository store their schema files in a `model/` subdirectory. The Weaver integration intelligently detects this and automatically traverses into `registry/model` if it exists, ensuring the Weaver binary targets the correct YAML/JSON manifests without failing.
 
 ## Testing Patterns
 

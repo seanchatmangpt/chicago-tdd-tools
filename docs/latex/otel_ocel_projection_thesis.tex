@@ -1,0 +1,183 @@
+\documentclass[12pt,a4paper,oneside]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{cite}
+
+\geometry{
+    a4paper,
+    left=35mm,
+    right=25mm,
+    top=25mm,
+    bottom=25mm
+}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \Huge
+        \textbf{Deterministic Semantic Projections: Bridging OpenTelemetry and Object-Centric Event Logs through Graph-Based Morphisms}
+        
+        \vspace{1.5cm}
+        
+        \Large
+        \textbf{A Dissertation}
+        
+        \vspace{1.5cm}
+        
+        \textit{Submitted in partial fulfillment of the requirements \\ for the degree of Doctor of Philosophy}
+        
+        \vspace{2cm}
+        
+        \Large
+        Department of Computer Science \\
+        Systems and Process Intelligence Group
+        
+        \vspace{1.5cm}
+        
+        \today
+        
+    \end{center}
+\end{titlepage}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+The gap between low-level distributed system observability and high-level process intelligence has historically been bridged by ad-hoc log parsing and imperative software logic. This thesis proposes a strictly declarative, mechanical pipeline for the deterministic semantic projection of OpenTelemetry (OTEL) execution signals into Object-Centric Event Logs (OCEL). We demonstrate that semantic authority must originate exclusively from public ontologies (RDF/Turtle) rather than imperative code. By projecting these ontologies into Weaver semantic-convention registries via graph generators (GGEN), we enforce strict runtime telemetry admission using Weaver live-checks. Admitted signals are subsequently converted into an RDF observation graph and projected into a formal OCEL graph via \texttt{SPARQL CONSTRUCT} queries. This decouples the admission of system telemetry ("what was said") from the derivation of process evidence ("what happened"), ensuring fully receiptable, reproducible, and verifiable process mining corpora.
+
+\tableofcontents
+
+\mainmatter
+
+\chapter{Introduction}
+
+\section{The Observability-Intelligence Gap}
+Modern distributed architectures emit petabytes of telemetry data, primarily structured as logs, metrics, and distributed traces under the OpenTelemetry (OTEL) standard. Concurrently, the field of Process Mining has evolved to embrace Object-Centric Event Logs (OCEL), which model complex many-to-many relationships between process events and physical or logical objects. However, the translation of raw OTEL spans into highly-structured OCEL corpora relies heavily on imperative parsing scripts. These scripts embed semantic decisions deeply into application code (e.g., \texttt{if span.name == "workflow.execute"}), making the translation fragile, untraceable, and mathematically unprovable.
+
+\section{Thesis Statement}
+Imperative code cannot serve as semantic authority. The lawful translation of system observability data into process intelligence requires a deterministic semantic projection pipeline. By separating telemetry admission from evidence derivation, and by utilizing graph-based morphisms (\texttt{SPARQL CONSTRUCT}), we can produce mathematically verifiable OCEL evidence directly from OpenTelemetry signals governed by public ontologies.
+
+\chapter{Theoretical Framework}
+
+\section{Public Ontologies as Semantic Authority}
+Semantic meaning must not be hardcoded in software artifacts. Instead, the canonical definition of a system's behavior—its activities, participating objects, event attributes, and relation qualifiers—must reside in public ontologies authored in RDF/Turtle. This graph establishes the universal vocabulary for both the software instrumentation and the process mining analysis.
+
+\section{The OpenTelemetry Model}
+OpenTelemetry provides the transport mechanism and schema for system observability. Through distributed traces, spans, and span events, OTEL captures causal relationships and hierarchical execution. A single trace represents a workflow or process instance, while spans denote activity executions.
+
+\section{Object-Centric Process Mining (OCEL)}
+Unlike traditional event logs that force a single case identifier onto an event, OCEL permits events to relate to multiple objects of different types simultaneously. This is essential for modern microservice architectures where a single HTTP request (span) might interact with a User object, an Order object, and a Payment object concurrently.
+
+\chapter{Methodology: Telemetry Contract and Admission}
+
+\section{GGEN and the Weaver Registry}
+To bridge the public ontology with OpenTelemetry instrumentation, we introduce GGEN (Graph Generator). GGEN queries the admitted public ontology graph and projects it into a Weaver semantic-convention YAML registry. This generated artifact acts as the contractual bridge between abstract semantics and runtime telemetry requirements.
+
+\section{Static Validation and API Generation}
+Weaver enforces strict static validation over the generated registry, ensuring that references resolve, types are consistent, and organizational policies are met. Once validated, Weaver generates typed Rust telemetry bindings. Consequently, developers interact with strongly-typed constructors (e.g., \texttt{ActivityExecuted::new()}) that guarantee required attributes are provided at compile-time, preventing the emission of semantically void telemetry.
+
+\section{Runtime Admission via Weaver Live-Check}
+Static generation guarantees the \textit{capability} of emitting correct telemetry, but it does not guarantee runtime conformance. To achieve this, the emitted OTLP payload is routed through a Weaver \texttt{live-check} process acting as a runtime admission gate. Only telemetry that conforms entirely to the generated semantic registry is admitted into the analytical pipeline. This phase proves "what was said" by the system is structurally sound.
+
+\chapter{The Projection Engine: OTEL to OCEL}
+
+\section{The RDF Observation Graph ($G_{OTEL}$)}
+Admitted OTLP telemetry must be decoupled from its proprietary wire format. The payloads are mapped into an RDF observation graph ($G_{OTEL}$). In this graph, traces, spans, and attributes become triples associated with \texttt{otel:Span} and \texttt{otel:Attribute} entities.
+
+\section{Deterministic Morphism via SPARQL CONSTRUCT}
+The core of the projection relies on \texttt{SPARQL CONSTRUCT} queries, which are generated from the public projection profile. The query acts as the mathematical morphism $P: G_{OTEL} \to G_{OCEL}$.
+
+\begin{lstlisting}[language=SQL, caption=Conceptual SPARQL Projection Query]
+CONSTRUCT {
+  ?event a ocel:Event ;
+         ocel:eventType ?eventType ;
+         ocel:activity ?activity ;
+         ocel:timestamp ?timestamp ;
+         ocel:relatedObject ?execution ;
+         ocel:relatedObject ?worker .
+
+  ?execution a ocel:Object ;
+             ocel:objectType ex:WorkflowExecution .
+}
+WHERE {
+  ?span a otel:Span ;
+        otel:traceId ?traceId ;
+        otel:spanId ?spanId ;
+        otel:startTime ?timestamp ;
+        otel:attribute ?activityAttribute .
+
+  ?activityAttribute otel:key "process.activity.iri" ;
+                     otel:value ?activity .
+
+  BIND(IRI(CONCAT("urn:ocel:event:", STR(?spanId))) AS ?event)
+  BIND(ex:ActivityExecuted AS ?eventType)
+}
+\end{lstlisting}
+
+This declarative approach ensures that the transformation logic is transparent, queryable, and distinctly separated from the application's runtime.
+
+\chapter{Verification, Conformance, and Provenance}
+
+\section{Process Evidence and Conformance}
+While Weaver validates that telemetry adheres to semantic formatting, it cannot guarantee process completeness (e.g., that every child span has a parent, or that a transaction reached a terminal state). Process conformance is calculated by executing \texttt{SPARQL ASK} and \texttt{SELECT} queries, along with SHACL shapes, directly over the newly constructed $G_{OCEL}$ evidence graph.
+
+\section{Provenance and Receipting}
+A critical requirement of enterprise process mining is auditability. Because the projection is deterministic, the materialization is represented via the PROV-O ontology. The transformation event is recorded as a \texttt{prov:Activity}. The resulting receipt mathematically binds the digest of the $G_{OTEL}$ graph, the digest of the \texttt{SPARQL CONSTRUCT} query artifact, and the digest of the resulting $G_{OCEL}$ graph, guaranteeing tamper-evident traceability from raw system signal to process mining insight.
+
+\chapter{Conclusion}
+This dissertation formalizes a pipeline connecting the lowest levels of distributed systems observability with the highest levels of object-centric process intelligence. By treating ontologies as the sole semantic authority, validating telemetry via Weaver, and utilizing SPARQL graph projections instead of imperative parsers, we establish a verifiable, receiptable, and completely deterministic path from OpenTelemetry to OCEL.
+
+\backmatter
+
+\begin{thebibliography}{9}
+
+\bibitem{weber2023}
+Weber, I., et al. \textit{Object-Centric Process Mining: Foundations and Challenges}. Springer, 2023.
+
+\bibitem{opentelemetry}
+The OpenTelemetry Authors. \textit{OpenTelemetry Semantic Conventions}, 2024. Available at: \url{https://opentelemetry.io/docs/specs/semconv/}
+
+\bibitem{weaver}
+The OpenTelemetry Authors. \textit{Weaver: A Semantic Convention Registry and Tooling Ecosystem}, 2024.
+
+\bibitem{w3c_rdf}
+W3C. \textit{RDF 1.1 Concepts and Abstract Syntax}. W3C Recommendation, 2014.
+
+\end{thebibliography}
+
+\end{document}

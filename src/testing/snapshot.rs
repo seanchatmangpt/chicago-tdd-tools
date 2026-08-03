@@ -249,7 +249,11 @@ impl SnapshotAssert {
 
     /// Apply redactions to a JSON value using dot-notation paths
     fn apply_redactions(value: &mut serde_json::Value, redactions: &HashMap<String, String>) {
-        for (selector, replacement) in redactions {
+        // Determinism: HashMap iteration order is unspecified; sort selectors so
+        // redactions apply in a stable order regardless of hasher state.
+        let mut sorted: Vec<(&String, &String)> = redactions.iter().collect();
+        sorted.sort_by_key(|(selector, _)| selector.as_str());
+        for (selector, replacement) in sorted {
             let path: Vec<&str> = selector.trim_start_matches('.').split('.').collect();
             Self::set_json_path(value, &path, serde_json::Value::String(replacement.clone()));
         }
@@ -265,7 +269,13 @@ impl SnapshotAssert {
             serde_json::Value::Object(map) => {
                 let key = path[0];
                 if path.len() == 1 {
-                    map.insert(key.to_string(), replacement);
+                    // Replace-only: redacting a field that is absent must not
+                    // insert it. Inserting added phantom keys in HashMap
+                    // iteration order, making snapshots nondeterministic
+                    // (serde_json preserve_order keeps insertion order).
+                    if let Some(existing) = map.get_mut(key) {
+                        *existing = replacement;
+                    }
                 } else if let Some(nested) = map.get_mut(key) {
                     Self::set_json_path(nested, &path[1..], replacement);
                 }

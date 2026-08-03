@@ -10,7 +10,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROFILE="${PROFILE:-debug}"
-WEAVER_VERSION="${WEAVER_VERSION:-0.19.0}"
+WEAVER_VERSION="${WEAVER_VERSION:-0.24.2}"
 REGISTRY_URL="https://github.com/open-telemetry/semantic-conventions.git"
 WEAVER_BIN_DIR="${PROJECT_ROOT}/target/${PROFILE}"
 WEAVER_BIN_PATH="${WEAVER_BIN_DIR}/weaver"
@@ -78,8 +78,7 @@ download_weaver() {
   log "Downloading Weaver ${WEAVER_VERSION} for ${platform}"
   local tmp_dir
   tmp_dir="$(mktemp -d)"
-
-  trap 'rm -rf "${tmp_dir}"' EXIT
+  trap "rm -rf \"${tmp_dir}\"" EXIT
 
   local archive="${tmp_dir}/weaver.tar.xz"
   if command -v curl >/dev/null 2>&1; then
@@ -116,8 +115,7 @@ clone_registry() {
     rm -rf "${REGISTRY_DIR}"
   fi
 
-  log "Cloning OpenTelemetry semantic conventions registry"
-  timeout 60s git clone --depth 1 --single-branch "${REGISTRY_URL}" "${REGISTRY_DIR}"
+  timeout 60s git clone --depth 1 --branch v1.42.0 --single-branch "${REGISTRY_URL}" "${REGISTRY_DIR}"
 }
 
 main() {

@@ -23,13 +23,19 @@ use crate::observability::{ObservabilityError, ObservabilityResult};
 pub struct TelemetryCapture {
     endpoint: String,
     tracers: Mutex<Vec<Arc<TelemetryTracerInner>>>,
+    _rt: std::sync::Arc<tokio::runtime::Runtime>,
 }
 
 impl TelemetryCapture {
-    /// Create a new capture context for the supplied OTLP endpoint.
+    /// Create a new telemetry capture for the given endpoint.
     #[must_use]
     pub fn new(endpoint: impl Into<String>) -> Self {
-        Self { endpoint: endpoint.into(), tracers: Mutex::new(Vec::new()) }
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        Self {
+            endpoint: endpoint.into(),
+            tracers: Mutex::new(Vec::new()),
+            _rt: std::sync::Arc::new(rt),
+        }
     }
 
     /// Provision a tracer that exports to the Weaver endpoint.
@@ -49,8 +55,9 @@ impl TelemetryCapture {
         instrumentation_name: &str,
         service_name: &str,
     ) -> ObservabilityResult<TelemetryTracer> {
+        let _guard = self._rt.enter();
         let exporter = opentelemetry_otlp::SpanExporter::builder()
-            .with_http()
+            .with_tonic()
             .with_endpoint(self.endpoint.clone())
             .build()
             .map_err(|err| {

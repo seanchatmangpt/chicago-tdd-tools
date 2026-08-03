@@ -1,5 +1,7 @@
 # All Patterns: Quick Reference Card
 
+> 🔧 **ALL PATTERNS: QUICK REFERENCE CARD** | **How-to** | Solve this problem
+
 > 📚 **REFERENCE** | All 20 patterns at a glance
 
 Quick lookup for all patterns. Use this to find a pattern and jump to its full description.
@@ -175,3 +177,16 @@ Pattern 13 (Sealed Traits)
 ---
 
 **Next**: Choose your learning path or jump to a pattern you need right now!
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

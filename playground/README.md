@@ -225,3 +225,42 @@ When adding new examples:
 
 MIT (same as chicago-tdd-tools)
 
+
+## Chatman Engine validation (feature: chatman)
+
+Feature-gated validation suite exercising the Chatman Engine v26.7.9
+(`praxis-graphlaw`'s `chatman` module, workflow wf_255e0807) through every
+chicago-tdd-tools capability. Off by default: the default playground
+build/test is unaffected (the `chatman` test targets use
+`required-features = ["chatman"]` and are never compiled without the flag).
+
+```bash
+cargo test --features chatman
+```
+
+Note: this suite compiles only once praxis's `chatman` module lands/compiles
+(workflow wf_255e0807); the `praxis-graphlaw` path dependency is optional and
+pulled in solely by the `chatman` feature.
+
+### Capability -> test-file map
+
+| Capability | Test file |
+|---|---|
+| AAA macros (`test!`, `fixture_test!`, `async_test!`) | `tests/chatman_01_macros_aaa.rs` |
+| Assertion family (`assert_ok/err/fail/matches/contains/subset/eq_msg!`) | `tests/chatman_02_assertions.rs` |
+| Builders + fixtures (`GenericTestDataBuilder`, `FixtureProvider`, `ScopedMetadata`) | `tests/chatman_03_builders_fixtures.rs` |
+| Property testing (`ProptestStrategy`, pinned BLAKE3-derived seeds) | `tests/chatman_04_property.rs` |
+| Parameterized testing (`param_test!` boundary/routing matrices) | `tests/chatman_05_parameterized.rs` |
+| Snapshot testing (`SnapshotAssert`: 29-name Refusal contract, envelope JSON) | `tests/chatman_06_snapshot.rs` |
+| Receipt chains (`ReceiptChainBuilder`, `Blake3ChainValidator`) | `tests/chatman_07_receipts_chain.rs` |
+| Typestate + model checking (`StateMachine` S1-S6, `ModelChecker`) | `tests/chatman_08_typestate_state_machine.rs` |
+| Mutation testing (`MutationTester`, `MutationScore`) | `tests/chatman_09_mutation_score.rs` |
+| Performance (`performance_test!`, `TickCounter`; Chatman Constant <= 8 ticks, lenient reference gate) | `tests/chatman_10_performance.rs` |
+
+Shared helpers: `tests/chatman_common/mod.rs` (deterministic envelope/seed
+builders, refusal exemplars — no production logic).
+
+Framework quirk: `SnapshotAssert` invokes insta inside chicago-tdd-tools
+itself, so accepted snapshots are stored in the framework repo at
+`../src/testing/snapshots/chicago_tdd_tools__testing__snapshot__chatman_*.snap`,
+not under `playground/tests/snapshots/`.

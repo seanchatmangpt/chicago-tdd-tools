@@ -1,7 +1,23 @@
 //! Performance Validation
 //!
-//! Provides RDTSC benchmarking and tick measurement utilities for hot path validation.
-//! Ensures operations meet the Chatman Constant (≤8 ticks = 2ns budget).
+//! Provides hardware-counter benchmarking and tick measurement utilities for hot
+//! path validation.
+//!
+//! # The Chatman Constant is a logical step count, not a time budget
+//!
+//! The Chatman Constant (8 ticks) is a count of deterministic logical operations.
+//! The target runtime is WASM, where timing guarantees do not exist. The timer-based
+//! measurements in this module are an INFORMATIONAL, native-only signal and must not
+//! be used as the Chatman Constant gate. Assert the constant via explicit step
+//! counting or structural verification of the operation, not via timers.
+//!
+//! # What a "tick" means here (platform-dependent)
+//!
+//! - `x86_64`: `rdtsc` — CPU reference cycles (frequency-dependent).
+//! - `aarch64` (e.g. Apple Silicon): `cntvct_el0` — a fixed-frequency wall-clock
+//!   timer (~1 GHz), so 1 tick ≈ 1 ns of wall time, NOT CPU cycles. "8 ticks = 2ns"
+//!   does not hold here.
+//! - Other platforms: `SystemTime` nanoseconds fallback.
 //!
 //! # Poka-Yoke: Type-Level Validation
 //!
@@ -29,7 +45,11 @@ pub enum PerformanceValidationError {
 /// Result type for performance validation
 pub type PerformanceValidationResult<T> = Result<T, PerformanceValidationError>;
 
-/// Tick budget for hot path operations (Chatman Constant: 8 ticks = 2ns)
+/// Tick budget for hot path operations (Chatman Constant: 8 logical steps).
+///
+/// This is a deterministic operation count, not a wall-clock budget. Timer-based
+/// checks against it are informational and platform-dependent (see module docs);
+/// on `aarch64` one hardware "tick" is ~1 ns of wall time, not a cycle.
 pub const HOT_PATH_TICK_BUDGET: u64 = 8;
 
 /// Tick counter using RDTSC (Read Time-Stamp Counter)

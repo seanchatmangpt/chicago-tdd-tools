@@ -1,5 +1,7 @@
 # Observability & Instrumentation in Tests
 
+> 🔧 **OBSERVABILITY & INSTRUMENTATION IN TESTS** | **How-to** | Solve this problem
+
 > 🔍 **REFERENCE** | Instrument tests with observability to validate telemetry in real-time
 
 This guide shows how to use Chicago TDD Tools' observability features to validate that your code generates correct telemetry (OpenTelemetry spans, metrics, Weaver validation).
@@ -364,3 +366,16 @@ This guide integrates with:
 4. **Automate:** Add observability checks to shipping checklist
 
 See [Pattern Dependencies](pattern-dependencies.md) for how observability fits with other patterns.
+
+
+## Quick Glance
+
+| Aspect | Details |
+|--------|---------|
+| Problem | Addressed by this pattern |
+| Solution | Core idea in 1-2 sentences |
+| When To Use | Typical scenarios |
+| When NOT To Use | Anti-patterns |
+| Trade-offs | What you gain/lose |
+| Complexity | Low/Medium/High |
+| Real-World Example | Link to actual code |

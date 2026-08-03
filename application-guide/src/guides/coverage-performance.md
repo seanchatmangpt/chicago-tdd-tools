@@ -1,6 +1,6 @@
 # Coverage & Performance
 
-> 🔧 How-to | Measure test coverage and performance
+📚 **Reference** | 🔧 **How-to** | 🎓 **Tutorial**
 
 Measure test coverage and performance metrics.
 

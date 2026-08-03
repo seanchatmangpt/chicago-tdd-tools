@@ -2,9 +2,23 @@
 //!
 //! Assertions for performance validation and constraint checking.
 
-/// Assert that a value is within tick budget (≤8 ticks)
+/// Assert that a value is within tick budget (≤8 ticks in release builds)
 ///
-/// Validates performance constraints according to Chatman Constant.
+/// Validates performance constraints according to the Chatman Constant.
+///
+/// # Debug builds substitute a 1,000,000-tick budget
+///
+/// Under `cfg(debug_assertions)` the budget is NOT 8 — it is 1,000,000 ticks.
+/// A debug-mode pass says nothing about the 8-tick budget; only release builds
+/// check the real constant.
+///
+/// # This is not the Chatman Constant gate
+///
+/// The Chatman Constant is a count of deterministic logical steps (WASM-portable),
+/// not elapsed timer ticks. Timer-derived tick counts are informational,
+/// native-only, and platform-dependent (on `aarch64`, `cntvct_el0` ticks are
+/// ~1 ns of wall time, not cycles). Gate the constant via explicit step counting
+/// or structural verification, and treat this macro as a native smoke check only.
 ///
 /// # Example
 ///
