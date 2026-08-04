@@ -10,7 +10,7 @@ keywords = ["testing", "tdd", "mutation-testing", "claims"]
 categories = ["development-tools::testing"]
 
 [dependencies]
-syn = { version = "2", features = ["full", "visit", "extra-traits"] }
+syn = { version = "3", features = ["full", "visit", "extra-traits"] }
 quote = "1"
 toml = "0.8"
 serde = { version = "1.0", features = ["derive"] }
