@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
 description = "TDD claim-reconciliation MLP: TOML claims, syn-based AST scanning, mutant oracle attribution"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+keywords = ["testing", "tdd", "mutation-testing", "claims"]
+categories = ["development-tools::testing"]
 
 [dependencies]
 syn = { version = "2", features = ["full", "visit", "extra-traits"] }

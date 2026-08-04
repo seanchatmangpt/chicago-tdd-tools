@@ -4,6 +4,10 @@ version = "26.7.1"
 edition = "2021"
 description = "LLM-free MCP server/client testing utilities for chicago-tdd-tools"
 license = "MIT"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+readme = "README.md"
+keywords = ["testing", "tdd", "mcp", "test-framework"]
+categories = ["development-tools::testing"]
 
 # rmcp and tokio live here and ONLY here in the workspace.
 # Add this crate as a [dev-dependencies] path dep to test MCP servers/clients.

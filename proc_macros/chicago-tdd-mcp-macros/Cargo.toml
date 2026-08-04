@@ -4,6 +4,10 @@ version = "26.7.1"
 edition = "2021"
 description = "Proc-macro attributes for chicago-tdd-mcp MCP testing"
 license = "MIT"
+repository = "https://github.com/seanchatmangpt/chicago-tdd-tools"
+readme = "README.md"
+keywords = ["testing", "tdd", "mcp", "proc-macro"]
+categories = ["development-tools::testing"]
 
 [lib]
 proc-macro = true
