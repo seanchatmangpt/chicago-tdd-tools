@@ -37,12 +37,12 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout exact candidate
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
 
       - name: Install pinned nightly for real ggen
-        uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
         with:
           toolchain: nightly-2026-06-22
 
@@ -89,7 +89,7 @@ jobs:
           PY
 
       - name: Publish exact-head evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: chicago-tdd-ggen-receipt-${{ github.sha }}
           path: |

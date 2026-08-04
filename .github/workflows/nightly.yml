@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -60,7 +60,7 @@ jobs:
           key: nightly-lint
 
       - name: Install just
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.6
         with:
           tool: just
 
@@ -85,7 +85,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -96,7 +96,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install just
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.6
         with:
           tool: just
 
@@ -130,7 +130,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -141,12 +141,12 @@ jobs:
           key: nightly-${{ matrix.os }}-test
 
       - name: Install just
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.6
         with:
           tool: just
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.6
         with:
           tool: cargo-nextest
 
