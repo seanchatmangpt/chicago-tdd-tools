@@ -80,7 +80,7 @@ rmcp = { version = "2.0.0", features = [
 anyhow = "1"
 insta = "1"
 proptest = "1"
-which = "7"
+which = "8"
 tempfile = "3"
 filetime = "0.2"
 
