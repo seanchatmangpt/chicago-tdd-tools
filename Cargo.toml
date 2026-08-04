@@ -40,6 +40,8 @@ exclude = [
     "playground/**",
     # Spec-harness is a dev tool, not the library
     "spec-harness/**",
+    # Downloaded weaver binary (22M) — build tool, not source; never belongs in the package
+    "weaver-aarch64-apple-darwin/**",
 ]
 
 [dependencies]
