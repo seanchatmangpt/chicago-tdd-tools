@@ -12,7 +12,7 @@ categories = ["development-tools::testing"]
 [dependencies]
 syn = { version = "2", features = ["full", "visit", "extra-traits"] }
 quote = "1"
-toml = "0.8"
+toml = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"
