@@ -7,7 +7,7 @@
 //! > must prove it — not the project's own unit tests.
 //!
 //! Run with:
-//!   cargo test --test blake3_receipt_tests --features receipt-validation
+//!   cargo test --test `blake3_receipt_tests` --features receipt-validation
 
 #![cfg(feature = "receipt-validation")]
 

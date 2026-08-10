@@ -25,7 +25,7 @@ impl TempWorkspace {
     /// Create a workspace pre-populated with a fixture directory.
     ///
     /// Looks for the fixture at
-    /// `$CARGO_MANIFEST_DIR/../tests/fixtures/<name>/`.  
+    /// `$CARGO_MANIFEST_DIR/../tests/fixtures/<name>/`.\
     /// If the fixture directory is not found, an empty workspace is returned
     /// rather than an error — callers that need the fixture to exist should
     /// assert with [`Self::assert_file_exists`] afterwards.
@@ -134,59 +134,81 @@ impl TempWorkspace {
 
     // ── Assertion helpers ────────────────────────────────────────────────────
 
-    /// Panic if the file at `rel` does not exist.
+    /// Assert the file at `rel` exists.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the file does not exist.
+    #[must_use]
     pub fn assert_file_exists(&self, rel: &str) -> &Self {
         let path = self.resolve(rel);
-        if !path.exists() {
-            panic!("expected file to exist but it does not: {}", path.display());
-        }
+        assert!(path.exists(), "expected file to exist but it does not: {}", path.display());
         self
     }
 
-    /// Panic if the file at `rel` exists when it should be absent.
+    /// Assert the file at `rel` does not exist.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the file exists.
+    #[must_use]
     pub fn assert_file_absent(&self, rel: &str) -> &Self {
         let path = self.resolve(rel);
-        if path.exists() {
-            panic!("expected file to be absent but it exists: {}", path.display());
-        }
+        assert!(!path.exists(), "expected file to be absent but it exists: {}", path.display());
         self
     }
 
-    /// Panic if the file at `rel` does not contain `needle`.
+    /// Assert the file at `rel` contains `needle`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the file cannot be read, or does not contain `needle`.
+    #[must_use]
+    #[allow(clippy::panic)]
+    // JUSTIFICATION: assertion helper — panicking with a diagnostic message is the point.
     pub fn assert_file_contains(&self, rel: &str, needle: &str) -> &Self {
         let path = self.resolve(rel);
         let content = fs::read_to_string(&path)
             .unwrap_or_else(|e| panic!("could not read file {}: {e}", path.display()));
-        if !content.contains(needle) {
-            panic!(
-                "expected file {} to contain {:?} but it did not\ncontent:\n{}",
-                path.display(),
-                needle,
-                content
-            );
-        }
+        assert!(
+            content.contains(needle),
+            "expected file {} to contain {:?} but it did not\ncontent:\n{}",
+            path.display(),
+            needle,
+            content
+        );
         self
     }
 
-    /// Panic if the directory at `rel` does not contain exactly `expected` entries.
+    /// Assert the directory at `rel` contains exactly `expected` entries.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the directory cannot be read, or does not contain exactly
+    /// `expected` entries.
+    #[must_use]
+    #[allow(clippy::panic)]
+    // JUSTIFICATION: assertion helper — panicking with a diagnostic message is the point.
     pub fn assert_dir_count(&self, rel: &str, expected: usize) -> &Self {
         let path = self.resolve(rel);
         let count = fs::read_dir(&path)
             .unwrap_or_else(|e| panic!("could not read directory {}: {e}", path.display()))
             .count();
-        if count != expected {
-            panic!(
-                "expected {} entries in directory {} but found {}",
-                expected,
-                path.display(),
-                count
-            );
-        }
+        assert!(
+            count == expected,
+            "expected {} entries in directory {} but found {}",
+            expected,
+            path.display(),
+            count
+        );
         self
     }
 }
 
 impl Default for TempWorkspace {
+    #[allow(clippy::panic)]
+    // JUSTIFICATION: `Default::default()` cannot return `Result`; a hermetic temp-dir
+    // creation failure here is an unrecoverable test-environment error.
     fn default() -> Self {
         Self::new().unwrap_or_else(|e| panic!("TempWorkspace::new failed: {e}"))
     }

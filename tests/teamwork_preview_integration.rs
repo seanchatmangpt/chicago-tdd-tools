@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Simulates the two-phase workflow for /teamwork-preview.
-/// Phase 1: Requirements elicitation via prompt_draft.md.
+/// Phase 1: Requirements elicitation via `prompt_draft.md`.
 /// Phase 2: Execution and workspace validation under .agents/.
 #[test]
 fn test_teamwork_preview_workflow_simulation() {
@@ -126,7 +126,7 @@ fn validate_handoff_report(path: &Path) -> Result<(), String> {
 
     for header in &required_headers {
         if !content.contains(header) {
-            return Err(format!("handoff.md missing required section: {}", header));
+            return Err(format!("handoff.md missing required section: {header}"));
         }
     }
     Ok(())

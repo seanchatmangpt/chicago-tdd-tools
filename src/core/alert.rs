@@ -500,6 +500,8 @@ impl log::Log for AlertLogger {
         metadata.level() <= log::max_level()
     }
 
+    #[allow(clippy::print_stderr)]
+    // JUSTIFICATION: this IS the logger's stderr sink — writing to stderr is its job.
     fn log(&self, record: &log::Record) {
         if !self.enabled(record.metadata()) {
             return;

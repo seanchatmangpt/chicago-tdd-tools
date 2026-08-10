@@ -726,7 +726,12 @@ impl<T> ValidatedTestDataBuilder<T> {
             // End time should always be >= start time in normal operation
             if let Err(e) = s.complete(end_time) {
                 // Log error but don't fail - span will remain active
-                eprintln!("Warning: Failed to complete span: {e}");
+                #[allow(clippy::print_stderr)]
+                // JUSTIFICATION: no logging feature imported in this module; stderr is
+                // the only diagnostic sink available for this non-fatal fallback path.
+                {
+                    eprintln!("Warning: Failed to complete span: {e}");
+                }
             } else {
                 s.status = SpanStatus::Ok;
             }

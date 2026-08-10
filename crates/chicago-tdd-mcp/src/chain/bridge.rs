@@ -1,9 +1,8 @@
 use rmcp::{
     model::{
-        CallToolRequestParams, CallToolResult, GetPromptRequestParams, GetPromptResult,
-        ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult, ListToolsResult,
-        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, ServerCapabilities,
-        ServerInfo,
+        CallToolRequestParams, GetPromptRequestParams, ListPromptsResult,
+        ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, PaginatedRequestParams,
+        ReadResourceRequestParams, ServerCapabilities, ServerInfo,
     },
     service::RequestContext,
     ServerHandler,
@@ -107,14 +106,14 @@ impl ServerHandler for McpAgentBridge {
             message: e.to_string().into(),
             data: None,
         })?;
-        Ok(ListToolsResult { tools, next_cursor: None, meta: None })
+        Ok(ListToolsResult::with_all_items(tools))
     }
 
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<CallToolResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::CallToolResponse, rmcp::ErrorData> {
         let name = request.name.as_ref().to_string();
         let args = request
             .arguments
@@ -129,11 +128,16 @@ impl ServerHandler for McpAgentBridge {
             .recorded
             .push(ForwardedCall { tool_name: name.clone(), arguments: args.clone() });
 
-        state.downstream.call_tool(&name, args).await.map_err(|e| rmcp::ErrorData {
-            code: rmcp::model::ErrorCode(-32_603),
-            message: e.to_string().into(),
-            data: None,
-        })
+        state
+            .downstream
+            .call_tool(&name, args)
+            .await
+            .map(Into::into)
+            .map_err(|e| rmcp::ErrorData {
+                code: rmcp::model::ErrorCode(-32_603),
+                message: e.to_string().into(),
+                data: None,
+            })
     }
 
     async fn list_resources(
@@ -141,14 +145,14 @@ impl ServerHandler for McpAgentBridge {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListResourcesResult, rmcp::ErrorData> {
-        Ok(ListResourcesResult { resources: vec![], next_cursor: None, meta: None })
+        Ok(ListResourcesResult::with_all_items(vec![]))
     }
 
     async fn read_resource(
         &self,
         _request: ReadResourceRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<ReadResourceResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::ReadResourceResponse, rmcp::ErrorData> {
         Err(rmcp::ErrorData::resource_not_found("bridge has no resources", None))
     }
 
@@ -157,11 +161,7 @@ impl ServerHandler for McpAgentBridge {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListResourceTemplatesResult, rmcp::ErrorData> {
-        Ok(ListResourceTemplatesResult {
-            resource_templates: vec![],
-            next_cursor: None,
-            meta: None,
-        })
+        Ok(ListResourceTemplatesResult::with_all_items(vec![]))
     }
 
     async fn list_prompts(
@@ -169,14 +169,14 @@ impl ServerHandler for McpAgentBridge {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListPromptsResult, rmcp::ErrorData> {
-        Ok(ListPromptsResult { prompts: vec![], next_cursor: None, meta: None })
+        Ok(ListPromptsResult::with_all_items(vec![]))
     }
 
     async fn get_prompt(
         &self,
         _request: GetPromptRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<GetPromptResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::GetPromptResponse, rmcp::ErrorData> {
         Err(rmcp::ErrorData::resource_not_found("bridge has no prompts", None))
     }
 }

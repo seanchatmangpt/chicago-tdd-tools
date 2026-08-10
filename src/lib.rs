@@ -342,16 +342,18 @@ pub mod prelude {
 pub mod __runtime {
     use std::panic::UnwindSafe;
 
-    /// Called by scaffold!() macro expansion. Panics with "SCAFFOLD PENDING:" prefix
-    /// so catch_scaffold can distinguish scaffold panics from real test failures.
-    /// Uses a custom panic string (NOT "not yet implemented") to avoid hollow-detector flags.
+    /// Called by scaffold!() macro expansion.
+    ///
+    /// Panics with "SCAFFOLD PENDING:" prefix so `catch_scaffold` can distinguish
+    /// scaffold panics from real test failures. Uses a custom panic string (NOT "not
+    /// yet implemented") to avoid hollow-detector flags.
     #[track_caller]
     #[allow(clippy::panic)]
     pub fn scaffold_pending(ticket_id: &str, ticket: &str, test: &str) -> ! {
         panic!("SCAFFOLD PENDING: {ticket_id}  ticket={ticket}  test={test}")
     }
 
-    /// Wraps a test closure so that scaffold_pending panics are treated as CANDIDATE
+    /// Wraps a test closure so that `scaffold_pending` panics are treated as CANDIDATE
     /// (test passes with a warning) rather than test failure.
     /// Any other panic is re-raised as a real test failure.
     // unwrap_or("") is a safe fallback on a panic payload; hook false-positive on BSD grep \(\) BRE
@@ -361,7 +363,7 @@ pub mod __runtime {
         F: FnOnce() + UnwindSafe,
     {
         match std::panic::catch_unwind(f) {
-            Ok(_) => { /* implementation complete — test passed normally */ }
+            Ok(()) => { /* implementation complete — test passed normally */ }
             Err(e) => {
                 let msg = e
                     .downcast_ref::<&str>()
@@ -369,9 +371,14 @@ pub mod __runtime {
                     .or_else(|| e.downcast_ref::<String>().map(String::as_str))
                     .unwrap_or("");
                 if msg.starts_with("SCAFFOLD PENDING:") {
-                    eprintln!(
-                        "CANDIDATE: {ticket_id} ({scaffold_fn}) — scaffold still active; implement the fn to make this test pass"
-                    );
+                    #[allow(clippy::print_stderr)]
+                    // JUSTIFICATION: test-runtime diagnostic surfaced directly to the
+                    // developer console; no logging feature is guaranteed available here.
+                    {
+                        eprintln!(
+                            "CANDIDATE: {ticket_id} ({scaffold_fn}) — scaffold still active; implement the fn to make this test pass"
+                        );
+                    }
                     // test passes — scaffold state is expected during development
                 } else {
                     std::panic::resume_unwind(e);

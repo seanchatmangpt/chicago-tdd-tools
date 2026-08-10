@@ -154,7 +154,16 @@ impl TempDir {
 
 impl Drop for TempDir {
     fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.path);
+        // Best-effort cleanup: Drop must not panic, and a leftover temp dir is
+        // harmless (OS-cleaned eventually).
+        if let Err(e) = std::fs::remove_dir_all(&self.path) {
+            #[allow(clippy::print_stderr)]
+            // JUSTIFICATION: Drop must not panic; stderr is the only diagnostic sink
+            // available here.
+            {
+                eprintln!("warning: failed to remove temp dir {}: {e}", self.path.display());
+            }
+        }
     }
 }
 

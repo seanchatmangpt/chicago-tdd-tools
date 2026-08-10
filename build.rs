@@ -125,19 +125,60 @@ fn detect_platform() -> (&'static str, &'static str) {
     }
 }
 
+/// Recursively search `dir` for a file named exactly `name`, returning the first match.
+///
+/// GitHub release archives for `weaver` extract into a versioned subdirectory
+/// (e.g. `weaver-aarch64-apple-darwin/weaver`), not a flat file directly in the
+/// extraction root, so callers cannot assume `dir.join(name)`.
+fn find_file_recursive(dir: &Path, name: &str) -> Option<PathBuf> {
+    let entries = fs::read_dir(dir).ok()?;
+    let mut subdirs = Vec::new();
+    for entry in entries.filter_map(std::result::Result::ok) {
+        let path = entry.path();
+        if path.is_dir() {
+            subdirs.push(path);
+        } else if path.file_name().is_some_and(|f| f == name) {
+            return Some(path);
+        }
+    }
+    for subdir in subdirs {
+        if let Some(found) = find_file_recursive(&subdir, name) {
+            return Some(found);
+        }
+    }
+    None
+}
+
 fn download_weaver(url: &str, output_path: &PathBuf) -> Result<(), String> {
     // Create parent directory if it doesn't exist
-    if let Some(parent) = output_path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {e}"))?;
-    }
+    let output_dir = output_path
+        .parent()
+        .ok_or_else(|| "Output path has no parent directory".to_string())?;
+    fs::create_dir_all(output_dir).map_err(|e| format!("Failed to create directory: {e}"))?;
+
+    // Download to a distinct archive path — `output_path` is reserved for the
+    // final extracted binary, and downloading the raw archive directly onto it
+    // would make the later "does the binary exist yet" check vacuously true
+    // (it'd be matching the still-unextracted archive, not extracted content).
+    #[allow(clippy::case_sensitive_file_extension_comparisons)] // URL extensions are case-sensitive
+    let archive_ext = if url.ends_with(".tar.xz") {
+        "tar.xz"
+    } else if url.ends_with(".tar.gz") {
+        "tar.gz"
+    } else if url.ends_with(".zip") {
+        "zip"
+    } else {
+        "archive"
+    };
+    let archive_path = output_path.with_extension(archive_ext);
 
     // Use curl if available (most Unix systems)
     if Command::new("curl").arg("--version").output().is_ok() {
-        let output_str = output_path
+        let archive_str = archive_path
             .to_str()
-            .ok_or_else(|| "Output path is not valid UTF-8".to_string())?;
+            .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
         let status = Command::new("curl")
-            .args(["-L", "-o", output_str, url])
+            .args(["-L", "-o", archive_str, url])
             .status()
             .map_err(|e| format!("Failed to execute curl: {e}"))?;
 
@@ -146,11 +187,11 @@ fn download_weaver(url: &str, output_path: &PathBuf) -> Result<(), String> {
         }
     } else if Command::new("wget").arg("--version").output().is_ok() {
         // Fallback to wget
-        let output_str = output_path
+        let archive_str = archive_path
             .to_str()
-            .ok_or_else(|| "Output path is not valid UTF-8".to_string())?;
+            .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
         let status = Command::new("wget")
-            .args(["-O", output_str, url])
+            .args(["-O", archive_str, url])
             .status()
             .map_err(|e| format!("Failed to execute wget: {e}"))?;
 
@@ -166,18 +207,19 @@ fn download_weaver(url: &str, output_path: &PathBuf) -> Result<(), String> {
     // Extract if archive (tar.xz, tar.gz, or zip)
     #[allow(clippy::case_sensitive_file_extension_comparisons)] // URL extensions are case-sensitive
     if url.ends_with(".tar.xz") {
-        extract_tar_xz(output_path)?;
+        extract_tar_xz(&archive_path, output_path)?;
     } else if url.ends_with(".tar.gz") {
-        extract_tar_gz(output_path)?;
+        extract_tar_gz(&archive_path, output_path)?;
     } else if url.ends_with(".zip") {
-        extract_zip(output_path)?;
+        extract_zip(&archive_path, output_path)?;
     }
 
     Ok(())
 }
 
-fn extract_tar_xz(archive_path: &PathBuf) -> Result<(), String> {
-    // Extract tar.xz and find weaver binary
+/// Extract `archive_path` (tar.xz) into its parent directory, locate the `weaver`
+/// binary anywhere within the extracted tree, and move it to `final_path`.
+fn extract_tar_xz(archive_path: &PathBuf, final_path: &PathBuf) -> Result<(), String> {
     let output_dir = archive_path
         .parent()
         .ok_or_else(|| "Archive path has no parent directory".to_string())?;
@@ -199,22 +241,12 @@ fn extract_tar_xz(archive_path: &PathBuf) -> Result<(), String> {
         return Err("tar extraction failed".to_string());
     }
 
-    // Find weaver binary in extracted files
-    let weaver_binary = output_dir.join("weaver");
-    if weaver_binary.exists() {
-        // Move to final location
-        fs::rename(&weaver_binary, archive_path)
-            .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
-    }
-
-    // Clean up archive
-    let _ = fs::remove_file(archive_path);
-
-    Ok(())
+    finish_extraction(output_dir, archive_path, final_path, "weaver")
 }
 
-fn extract_tar_gz(archive_path: &PathBuf) -> Result<(), String> {
-    // Extract tar.gz and find weaver binary
+/// Extract `archive_path` (tar.gz) into its parent directory, locate the `weaver`
+/// binary anywhere within the extracted tree, and move it to `final_path`.
+fn extract_tar_gz(archive_path: &PathBuf, final_path: &PathBuf) -> Result<(), String> {
     let output_dir = archive_path
         .parent()
         .ok_or_else(|| "Archive path has no parent directory".to_string())?;
@@ -235,22 +267,12 @@ fn extract_tar_gz(archive_path: &PathBuf) -> Result<(), String> {
         return Err("tar extraction failed".to_string());
     }
 
-    // Find weaver binary in extracted files
-    let weaver_binary = output_dir.join("weaver");
-    if weaver_binary.exists() {
-        // Move to final location
-        fs::rename(&weaver_binary, archive_path)
-            .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
-    }
-
-    // Clean up archive
-    let _ = fs::remove_file(archive_path);
-
-    Ok(())
+    finish_extraction(output_dir, archive_path, final_path, "weaver")
 }
 
-fn extract_zip(archive_path: &PathBuf) -> Result<(), String> {
-    // Extract zip and find weaver binary
+/// Extract `archive_path` (zip) into its parent directory, locate the `weaver.exe`
+/// binary anywhere within the extracted tree, and move it to `final_path`.
+fn extract_zip(archive_path: &PathBuf, final_path: &PathBuf) -> Result<(), String> {
     let output_dir = archive_path
         .parent()
         .ok_or_else(|| "Archive path has no parent directory".to_string())?;
@@ -271,16 +293,38 @@ fn extract_zip(archive_path: &PathBuf) -> Result<(), String> {
         return Err("unzip extraction failed".to_string());
     }
 
-    // Find weaver binary in extracted files (Windows uses .exe)
-    let weaver_binary = output_dir.join("weaver.exe");
-    if weaver_binary.exists() {
-        // Move to final location
-        fs::rename(&weaver_binary, archive_path)
-            .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
-    }
+    finish_extraction(output_dir, archive_path, final_path, "weaver.exe")
+}
 
-    // Clean up archive
-    let _ = fs::remove_file(archive_path);
+/// Shared tail of the three extractors: find `binary_name` anywhere under
+/// `output_dir`, move it to `final_path`, then clean up the archive and any
+/// extracted scaffolding directory it came from.
+fn finish_extraction(
+    output_dir: &Path,
+    archive_path: &PathBuf,
+    final_path: &PathBuf,
+    binary_name: &str,
+) -> Result<(), String> {
+    let found = find_file_recursive(output_dir, binary_name)
+        .ok_or_else(|| format!("could not find `{binary_name}` in extracted archive"))?;
+
+    // The versioned scaffolding directory the binary was found in (if any), so
+    // it can be cleaned up after the binary is moved out of it.
+    let scaffold_dir =
+        found.parent().filter(|p| *p != output_dir).map(std::path::Path::to_path_buf);
+
+    fs::rename(&found, final_path).map_err(|e| format!("Failed to move weaver binary: {e}"))?;
+
+    // Clean up archive and any leftover extraction scaffolding (best-effort; a
+    // leftover archive/directory is harmless).
+    if let Err(e) = fs::remove_file(archive_path) {
+        println!("cargo:warning=failed to remove archive {}: {e}", archive_path.display());
+    }
+    if let Some(dir) = scaffold_dir {
+        if let Err(e) = fs::remove_dir_all(&dir) {
+            println!("cargo:warning=failed to remove extraction directory {}: {e}", dir.display());
+        }
+    }
 
     Ok(())
 }

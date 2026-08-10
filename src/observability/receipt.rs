@@ -72,13 +72,13 @@ pub enum ChainError {
         /// The hash we recomputed from the entry's content.
         computed: [u8; 32],
     },
-    /// The prev_hash at `index` does not match the stored_hash of the previous entry.
+    /// The `prev_hash` at `index` does not match the `stored_hash` of the previous entry.
     PrevHashMismatch {
-        /// Zero-based index of the entry whose prev_hash is wrong.
+        /// Zero-based index of the entry whose `prev_hash` is wrong.
         index: usize,
-        /// The stored_hash of the prior entry (what prev_hash must equal).
+        /// The `stored_hash` of the prior entry (what `prev_hash` must equal).
         expected: [u8; 32],
-        /// The actual prev_hash the entry claims.
+        /// The actual `prev_hash` the entry claims.
         actual: [u8; 32],
     },
     /// The chain is empty — no entries to validate.
@@ -127,6 +127,13 @@ impl Blake3ChainValidator {
     /// 2. `BLAKE3(prev_hash ‖ content_bytes)` matches `entry.stored_hash()`.
     ///
     /// Returns `Err(ChainError)` on the first failure found.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ChainError::Empty`] if `entries` is empty, [`ChainError::PrevHashMismatch`]
+    /// if an entry's `prev_hash` doesn't match the prior entry's stored hash, or
+    /// [`ChainError::HashMismatch`] if the recomputed BLAKE3 digest doesn't match the
+    /// entry's stored hash.
     pub fn validate_chain<E: Blake3ReceiptEntry>(entries: &[E]) -> Result<(), ChainError> {
         if entries.is_empty() {
             return Err(ChainError::Empty);
@@ -167,6 +174,12 @@ impl Blake3ChainValidator {
     /// ```rust,ignore
     /// Blake3ChainValidator::assert_chain_valid(&entries);
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics with the [`ChainError`] display message if the chain fails validation.
+    #[allow(clippy::panic)]
+    // JUSTIFICATION: assertion helper — panicking with a diagnostic message is the point.
     pub fn assert_chain_valid<E: Blake3ReceiptEntry>(entries: &[E]) {
         if let Err(e) = Self::validate_chain(entries) {
             panic!("BLAKE3 chain replay failed: {e}");
@@ -178,6 +191,11 @@ impl Blake3ChainValidator {
     ///
     /// A valid chain with ≥ 2 entries demonstrates that `prev_hash` threading
     /// is active — entry 1's hash depends on entry 0's hash.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `entries` has fewer than 2 elements, if the chain fails validation,
+    /// or if `entries[1].prev_hash()` doesn't match `entries[0].stored_hash()`.
     pub fn assert_tamper_evident<E: Blake3ReceiptEntry>(entries: &[E]) {
         assert!(entries.len() >= 2, "tamper-evidence requires ≥ 2 entries; got {}", entries.len());
         Self::assert_chain_valid(entries);
@@ -199,22 +217,22 @@ impl Blake3ChainValidator {
 ///
 /// | Offset | Field       |
 /// |--------|-------------|
-/// | 0..8   | run_id LE   |
-/// | 8..16  | op_trace LE |
-/// | 16     | topo_tag    |
-/// | 17..49 | chain_hash  |
-/// | 49..57 | replay_ptr LE |
+/// | 0..8   | `run_id` LE   |
+/// | 8..16  | `op_trace` LE |
+/// | 16     | `topo_tag`    |
+/// | 17..49 | `chain_hash`  |
+/// | 49..57 | `replay_ptr` LE |
 ///
 /// Chain law: `BLAKE3(prev_chain_hash ‖ run_id_le ‖ op_trace_le ‖ topo_tag)`
 #[derive(Clone, Debug)]
 pub struct RawReceiptEntry {
-    /// Previous chain hash (zeroed for first entry, copied from prior entry's stored_hash).
+    /// Previous chain hash (zeroed for first entry, copied from prior entry's `stored_hash`).
     pub prev: [u8; 32],
-    /// run_id as little-endian bytes.
+    /// `run_id` as little-endian bytes.
     pub run_id_le: [u8; 8],
-    /// op_trace as little-endian bytes.
+    /// `op_trace` as little-endian bytes.
     pub op_trace_le: [u8; 8],
-    /// topo_tag byte (bit 7 = overflow flag).
+    /// `topo_tag` byte (bit 7 = overflow flag).
     pub topo_tag: u8,
     /// Stored BLAKE3 chain hash (bytes 17..49 of the raw entry).
     pub chain_hash: [u8; 32],
@@ -228,6 +246,7 @@ impl RawReceiptEntry {
     ///
     /// # Panics
     /// Panics if `raw.len() != 57`.
+    #[must_use]
     pub fn from_bcinr_powl(raw: &[u8; 57], prev_hash: [u8; 32]) -> Self {
         let mut run_id_le = [0u8; 8];
         let mut op_trace_le = [0u8; 8];
@@ -260,7 +279,7 @@ impl Blake3ReceiptEntry for RawReceiptEntry {
         self.prev
     }
 
-    /// Content bytes: run_id_le ‖ op_trace_le ‖ topo_tag
+    /// Content bytes: `run_id_le` ‖ `op_trace_le` ‖ `topo_tag`
     fn content_bytes(&self) -> Vec<u8> {
         let mut v = Vec::with_capacity(17);
         v.extend_from_slice(&self.run_id_le);
@@ -297,12 +316,14 @@ pub struct ReceiptChainBuilder {
 
 impl ReceiptChainBuilder {
     /// Create a new builder with a zeroed initial chain hash.
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { entries: Vec::new(), prev_hash: [0u8; 32] }
     }
 
-    /// Append an entry with the given run_id, op_trace, and topo_tag.
+    /// Append an entry with the given `run_id`, `op_trace`, and `topo_tag`.
     /// The chain hash is computed automatically.
+    #[must_use]
     pub fn add_entry(mut self, run_id: u64, op_trace: u64, topo_tag: u8) -> Self {
         let run_id_le = run_id.to_le_bytes();
         let op_trace_le = op_trace.to_le_bytes();
@@ -328,6 +349,7 @@ impl ReceiptChainBuilder {
     }
 
     /// Consume the builder and return the chain entries.
+    #[must_use]
     pub fn build(self) -> Vec<RawReceiptEntry> {
         self.entries
     }

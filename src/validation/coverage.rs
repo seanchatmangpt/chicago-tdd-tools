@@ -355,7 +355,8 @@ impl CoverageReport {
         for name in keys {
             let covered = self.details.get(name).unwrap_or(&false);
             let status = if *covered { "[x] covered" } else { "[ ] uncovered" };
-            let _ = writeln!(markdown, "- {name}: {status}");
+            // Writing to a `String` via `fmt::Write` is infallible.
+            writeln!(markdown, "- {name}: {status}").ok();
         }
         markdown
     }

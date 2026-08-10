@@ -363,13 +363,15 @@ impl EffectCoverageRegistry {
         report.push_str("======================\n\n");
 
         for effect in &self.effects {
-            let _ = writeln!(
+            // Writing to a `String` via `fmt::Write` is infallible.
+            writeln!(
                 report,
                 "Effect: {}\n  Tests: {}\n  Invariants: {}",
                 effect.effect_name,
                 effect.test_count,
                 effect.invariants.join(", ")
-            );
+            )
+            .ok();
             report.push('\n');
         }
 

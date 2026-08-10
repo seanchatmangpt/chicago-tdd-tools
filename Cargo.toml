@@ -165,7 +165,6 @@ chicago-tdd-tools-proc-macros = { version = "26.7.1", path = "proc_macros" }
 
 [dev-dependencies]
 star-toml = "26.6.29"
-toml_1 = { package = "toml", version = "1.1.0" }
 # Test utilities (dev-only, not included in library)
 tokio-test = "^0.4"      # Tokio testing utilities
 ntest = "^0.9"           # Test timeout enforcement (SLA compliance)

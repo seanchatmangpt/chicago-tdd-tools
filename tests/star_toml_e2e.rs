@@ -18,7 +18,7 @@ use std::sync::Once;
 
 static COMPILE_ONCE: Once = Once::new();
 
-/// Build the star_toml example binary once and return its path.
+/// Build the `star_toml` example binary once and return its path.
 fn get_bin_path() -> PathBuf {
     COMPILE_ONCE.call_once(|| {
         let status = Command::new("cargo")
@@ -60,7 +60,7 @@ fn run_bin(args: &[&str], envs: &[(&str, &str)]) -> (i32, String, String) {
     let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
     let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
     if exit_code != 0 {
-        eprintln!("DEBUG [run_bin]: failed for args={:?} envs={:?}, exit_code={}, stdout={:?}, stderr={:?}", args, envs, exit_code, stdout, stderr);
+        eprintln!("DEBUG [run_bin]: failed for args={args:?} envs={envs:?}, exit_code={exit_code}, stdout={stdout:?}, stderr={stderr:?}");
     }
     (exit_code, stdout, stderr)
 }
@@ -734,7 +734,7 @@ chicago_tdd_tools::test!(test_b2_large_file_parsing, {
     let path = temp_dir.join("large_config.toml");
     let mut content = String::from("name = \"app\"\nworkers = 4\n");
     for i in 0..5000 {
-        content.push_str(&format!("unrelated_key_{} = {}\n", i, i));
+        content.push_str(&format!("unrelated_key_{i} = {i}\n"));
     }
     content.push_str("[server]\nhost = \"127.0.0.1\"\nport = 8080\n");
     std::fs::write(&path, content).unwrap();
@@ -941,18 +941,18 @@ fn test_property_based_merge_determinism() {
         let test_data_base = generator.generate_test_data();
         let test_data_overlay = generator.generate_test_data();
 
-        let mut base1 = toml_1::Value::Table(
+        let mut base1 = toml::Value::Table(
             test_data_base
                 .iter()
-                .map(|(k, v)| (k.clone(), toml_1::Value::String(v.clone())))
+                .map(|(k, v)| (k.clone(), toml::Value::String(v.clone())))
                 .collect(),
         );
         let mut base2 = base1.clone();
 
-        let overlay1 = toml_1::Value::Table(
+        let overlay1 = toml::Value::Table(
             test_data_overlay
                 .iter()
-                .map(|(k, v)| (k.clone(), toml_1::Value::String(v.clone())))
+                .map(|(k, v)| (k.clone(), toml::Value::String(v.clone())))
                 .collect(),
         );
         let overlay2 = overlay1.clone();
@@ -1011,7 +1011,7 @@ fn test_performance_budget_validation_ticks() {
         name: String,
         workers: usize,
         #[serde(flatten, default)]
-        extra: std::collections::HashMap<String, toml_1::Value>,
+        extra: std::collections::HashMap<String, toml::Value>,
     }
     impl star_toml::Validate for SimpleConfig {
         fn validate(&self, v: &mut star_toml::Validator) {
@@ -1020,7 +1020,7 @@ fn test_performance_budget_validation_ticks() {
     }
     impl star_toml::ConfigLifecycle for SimpleConfig {}
 
-    let (_, ticks) = measure_ticks(|| {
+    let ((), ticks) = measure_ticks(|| {
         let loader = star_toml::trusted().layer_file("examples/star-toml/samples/default.toml");
         let _ = loader.load_admitted::<SimpleConfig>().unwrap();
     });

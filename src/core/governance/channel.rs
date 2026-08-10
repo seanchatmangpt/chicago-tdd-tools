@@ -169,11 +169,18 @@ pub fn close_channel() -> Result<RunSummary, String> {
         category_counts,
     };
 
+    #[allow(clippy::print_stderr)]
+    // JUSTIFICATION: best-effort multi-sink fan-out — one sink's failure must not
+    // stop delivery to others; no logger context is guaranteed at this call site.
     for sink in &sinks {
         for diag in &diagnostics {
-            let _ = sink.emit(diag.clone());
+            if let Err(e) = sink.emit(diag.clone()) {
+                eprintln!("warning: diagnostic sink emit failed: {e}");
+            }
         }
-        let _ = sink.close(summary.clone());
+        if let Err(e) = sink.close(summary.clone()) {
+            eprintln!("warning: diagnostic sink close failed: {e}");
+        }
     }
 
     Ok(summary)
@@ -201,7 +208,7 @@ pub fn on_test_started(test_name: &str) {
 
 pub fn on_test_completed(test_name: &str, passed: bool) {
     let mut context = HashMap::new();
-    let _ = context.insert("passed", serde_json::json!(passed));
+    context.insert("passed", serde_json::json!(passed));
     let diag = Diagnostic {
         code: crate::core::governance::DiagnosticCode::new(
             get_domain(),

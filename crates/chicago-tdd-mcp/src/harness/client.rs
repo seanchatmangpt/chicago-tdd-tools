@@ -7,10 +7,9 @@ use std::sync::Arc;
 
 use rmcp::{
     model::{
-        CallToolRequestParams, CallToolResult, GetPromptRequestParams, GetPromptResult,
-        ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult, ListToolsResult,
-        PaginatedRequestParams, ReadResourceRequestParams, ReadResourceResult, ServerCapabilities,
-        ServerInfo,
+        CallToolRequestParams, CallToolResult, GetPromptRequestParams, ListPromptsResult,
+        ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, PaginatedRequestParams,
+        ReadResourceRequestParams, ServerCapabilities, ServerInfo,
     },
     service::RequestContext,
     ServerHandler,
@@ -134,14 +133,14 @@ impl ServerHandler for McpStubServer {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListToolsResult, rmcp::ErrorData> {
-        Ok(ListToolsResult { tools: self.tools.clone(), next_cursor: None, meta: None })
+        Ok(ListToolsResult::with_all_items(self.tools.clone()))
     }
 
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<CallToolResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::CallToolResponse, rmcp::ErrorData> {
         let name = request.name.as_ref();
         let args = request
             .arguments
@@ -157,7 +156,7 @@ impl ServerHandler for McpStubServer {
             .push(RecordedRequest { tool_name: Some(name.to_string()), arguments: args });
 
         if let Some(result) = self.tool_calls.get(name) {
-            return Ok(result.clone());
+            return Ok(result.clone().into());
         }
 
         match self.policy {
@@ -177,14 +176,14 @@ impl ServerHandler for McpStubServer {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListResourcesResult, rmcp::ErrorData> {
-        Ok(ListResourcesResult { resources: vec![], next_cursor: None, meta: None })
+        Ok(ListResourcesResult::with_all_items(vec![]))
     }
 
     async fn read_resource(
         &self,
         _request: ReadResourceRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<ReadResourceResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::ReadResourceResponse, rmcp::ErrorData> {
         Err(rmcp::ErrorData::resource_not_found("no resources", None))
     }
 
@@ -193,11 +192,7 @@ impl ServerHandler for McpStubServer {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListResourceTemplatesResult, rmcp::ErrorData> {
-        Ok(ListResourceTemplatesResult {
-            resource_templates: vec![],
-            next_cursor: None,
-            meta: None,
-        })
+        Ok(ListResourceTemplatesResult::with_all_items(vec![]))
     }
 
     async fn list_prompts(
@@ -205,14 +200,14 @@ impl ServerHandler for McpStubServer {
         _request: Option<PaginatedRequestParams>,
         _ctx: RequestContext<rmcp::RoleServer>,
     ) -> Result<ListPromptsResult, rmcp::ErrorData> {
-        Ok(ListPromptsResult { prompts: vec![], next_cursor: None, meta: None })
+        Ok(ListPromptsResult::with_all_items(vec![]))
     }
 
     async fn get_prompt(
         &self,
         _request: GetPromptRequestParams,
         _ctx: RequestContext<rmcp::RoleServer>,
-    ) -> Result<GetPromptResult, rmcp::ErrorData> {
+    ) -> Result<rmcp::model::GetPromptResponse, rmcp::ErrorData> {
         Err(rmcp::ErrorData::resource_not_found("no prompts", None))
     }
 }

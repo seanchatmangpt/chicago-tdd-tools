@@ -112,7 +112,14 @@ docker-check:
 
 # Unit tests only (excludes integration tests via test organization)
 test-unit:
-    timeout 300s cargo test --workspace --lib --all-features
+    # chicago-claims's `fixture-self-test` feature is intentionally excluded from
+    # --all-features: it gates each corrupted fixture's own oracle test, which is
+    # DESIGNED to fail (that failure IS the demonstration that the mutant is
+    # killed — see crates/chicago-claims/Cargo.toml). Run it explicitly with
+    # `cargo test -p chicago-claims --features fixture-self-test -- fixture_` to
+    # see each corrupted variant's oracle fail on its own.
+    timeout 300s cargo test --workspace --lib --all-features --exclude chicago-claims
+    timeout 60s cargo test -p chicago-claims --lib
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check

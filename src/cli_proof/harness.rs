@@ -263,88 +263,137 @@ pub struct CliOutput {
 }
 
 impl CliOutput {
-    /// Assert the process exited with code `0`. Panics with a detailed message otherwise.
+    /// Assert the process exited with code `0`.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a detailed message (including captured stdout/stderr) if the exit
+    /// code was non-zero.
+    #[must_use]
     pub fn assert_success(&self) -> &Self {
-        if self.exit_code != 0 {
-            panic!(
-                "expected success (exit 0) but got exit code {}\n\
-                 stdout:\n{}\nstderr:\n{}",
-                self.exit_code, self.stdout, self.stderr
-            );
-        }
+        assert!(
+            self.exit_code == 0,
+            "expected success (exit 0) but got exit code {}\n\
+             stdout:\n{}\nstderr:\n{}",
+            self.exit_code,
+            self.stdout,
+            self.stderr
+        );
         self
     }
 
-    /// Assert the process exited with a non-zero code. Panics if it succeeded.
+    /// Assert the process exited with a non-zero code.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a detailed message (including captured stdout/stderr) if the exit
+    /// code was `0`.
+    #[must_use]
     pub fn assert_failure(&self) -> &Self {
-        if self.exit_code == 0 {
-            panic!(
-                "expected non-zero exit but process succeeded (exit 0)\n\
-                 stdout:\n{}\nstderr:\n{}",
-                self.stdout, self.stderr
-            );
-        }
+        assert!(
+            self.exit_code != 0,
+            "expected non-zero exit but process succeeded (exit 0)\n\
+             stdout:\n{}\nstderr:\n{}",
+            self.stdout,
+            self.stderr
+        );
         self
     }
 
-    /// Assert the process exited with exactly `expected`. Panics otherwise.
+    /// Assert the process exited with exactly `expected`.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a detailed message (including captured stdout/stderr) if the actual
+    /// exit code differs from `expected`.
+    #[must_use]
     pub fn assert_exit_code(&self, expected: i32) -> &Self {
-        if self.exit_code != expected {
-            panic!(
-                "expected exit code {expected} but got {}\n\
-                 stdout:\n{}\nstderr:\n{}",
-                self.exit_code, self.stdout, self.stderr
-            );
-        }
+        assert!(
+            self.exit_code == expected,
+            "expected exit code {expected} but got {}\n\
+             stdout:\n{}\nstderr:\n{}",
+            self.exit_code,
+            self.stdout,
+            self.stderr
+        );
         self
     }
 
-    /// Assert that stdout contains `needle`. Panics with a diff-friendly message otherwise.
+    /// Assert that stdout contains `needle`.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a diff-friendly message (including captured stdout) if `needle` is
+    /// not found.
+    #[must_use]
     pub fn assert_stdout_contains(&self, needle: &str) -> &Self {
-        if !self.stdout.contains(needle) {
-            panic!(
-                "expected stdout to contain {:?} but it did not\n\
-                 stdout:\n{}",
-                needle, self.stdout
-            );
-        }
+        assert!(
+            self.stdout.contains(needle),
+            "expected stdout to contain {:?} but it did not\n\
+             stdout:\n{}",
+            needle,
+            self.stdout
+        );
         self
     }
 
-    /// Assert that stdout does NOT contain `needle`. Panics if found.
+    /// Assert that stdout does NOT contain `needle`.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a diff-friendly message (including captured stdout) if `needle` is
+    /// found.
+    #[must_use]
     pub fn assert_stdout_not_contains(&self, needle: &str) -> &Self {
-        if self.stdout.contains(needle) {
-            panic!(
-                "expected stdout NOT to contain {:?} but it did\n\
-                 stdout:\n{}",
-                needle, self.stdout
-            );
-        }
+        assert!(
+            !self.stdout.contains(needle),
+            "expected stdout NOT to contain {:?} but it did\n\
+             stdout:\n{}",
+            needle,
+            self.stdout
+        );
         self
     }
 
-    /// Assert that stderr is empty. Panics if stderr contains any bytes.
+    /// Assert that stderr is empty.
+    ///
+    /// # Panics
+    ///
+    /// Panics with the captured stderr if it is non-empty.
+    #[must_use]
     pub fn assert_stderr_empty(&self) -> &Self {
-        if !self.stderr.is_empty() {
-            panic!("expected empty stderr but got:\n{}", self.stderr);
-        }
+        assert!(self.stderr.is_empty(), "expected empty stderr but got:\n{}", self.stderr);
         self
     }
 
-    /// Assert that stderr contains `needle`. Panics otherwise.
+    /// Assert that stderr contains `needle`.
+    ///
+    /// # Panics
+    ///
+    /// Panics with a diff-friendly message (including captured stderr) if `needle` is
+    /// not found.
+    #[must_use]
     pub fn assert_stderr_contains(&self, needle: &str) -> &Self {
-        if !self.stderr.contains(needle) {
-            panic!(
-                "expected stderr to contain {:?} but it did not\n\
-                 stderr:\n{}",
-                needle, self.stderr
-            );
-        }
+        assert!(
+            self.stderr.contains(needle),
+            "expected stderr to contain {:?} but it did not\n\
+             stderr:\n{}",
+            needle,
+            self.stderr
+        );
         self
     }
 
     /// Parse stdout as JSON and assert that the top-level field `key` equals
     /// `expected_value` (string representation).
+    ///
+    /// # Panics
+    ///
+    /// Panics if stdout is not valid JSON, or if `key` is not present — this is a
+    /// test-assertion helper, so a loud diagnostic panic is the intended failure mode.
+    #[must_use]
+    #[allow(clippy::panic)]
+    // JUSTIFICATION: assertion helper — panicking with a diagnostic message is the point.
     pub fn assert_stdout_json_field(&self, key: &str, expected_value: &str) -> &Self {
         let parsed: serde_json::Value = serde_json::from_str(&self.stdout).unwrap_or_else(|e| {
             panic!("stdout is not valid JSON ({})\nstdout:\n{}", e, self.stdout)
@@ -356,12 +405,14 @@ impl CliOutput {
             serde_json::Value::String(s) => s.clone(),
             other => other.to_string(),
         };
-        if actual_str != expected_value {
-            panic!(
-                "JSON field {:?}: expected {:?} but got {:?}\nstdout:\n{}",
-                key, expected_value, actual_str, self.stdout
-            );
-        }
+        assert!(
+            actual_str == expected_value,
+            "JSON field {:?}: expected {:?} but got {:?}\nstdout:\n{}",
+            key,
+            expected_value,
+            actual_str,
+            self.stdout
+        );
         self
     }
 }

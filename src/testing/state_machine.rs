@@ -215,7 +215,8 @@ impl Schedule {
 
         let mut s = String::from("Schedule:\n");
         for (i, step) in self.steps.iter().enumerate() {
-            let _ = writeln!(
+            // Writing to a `String` via `fmt::Write` is infallible.
+            writeln!(
                 s,
                 "  {}. Actor {} - {} -> {}: {}",
                 i + 1,
@@ -223,7 +224,8 @@ impl Schedule {
                 step.from_state,
                 step.to_state,
                 step.transition
-            );
+            )
+            .ok();
         }
         s
     }

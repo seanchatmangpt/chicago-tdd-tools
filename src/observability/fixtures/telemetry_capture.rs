@@ -23,18 +23,25 @@ use crate::observability::{ObservabilityError, ObservabilityResult};
 pub struct TelemetryCapture {
     endpoint: String,
     tracers: Mutex<Vec<Arc<TelemetryTracerInner>>>,
-    _rt: std::sync::Arc<tokio::runtime::Runtime>,
+    rt: std::sync::Arc<tokio::runtime::Runtime>,
 }
 
 impl TelemetryCapture {
     /// Create a new telemetry capture for the given endpoint.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a Tokio runtime cannot be created (e.g. no OS threads available) —
+    /// this is an unrecoverable test-environment error and `new()` has no `Result`
+    /// return to propagate it through.
     #[must_use]
+    #[allow(clippy::unwrap_used)]
     pub fn new(endpoint: impl Into<String>) -> Self {
         let rt = tokio::runtime::Runtime::new().unwrap();
         Self {
             endpoint: endpoint.into(),
             tracers: Mutex::new(Vec::new()),
-            _rt: std::sync::Arc::new(rt),
+            rt: std::sync::Arc::new(rt),
         }
     }
 
@@ -55,7 +62,7 @@ impl TelemetryCapture {
         instrumentation_name: &str,
         service_name: &str,
     ) -> ObservabilityResult<TelemetryTracer> {
-        let _guard = self._rt.enter();
+        let _guard = self.rt.enter();
         let exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_tonic()
             .with_endpoint(self.endpoint.clone())

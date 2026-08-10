@@ -763,9 +763,14 @@ pub mod implementation {
                         Command::new("docker").args(["rm", "-f", &container_id]).output();
                     if let Err(e) = cleanup_result {
                         // Log cleanup failure but don't fail the operation (container creation already failed)
-                        eprintln!(
-                            "⚠️  WARNING: Failed to cleanup container {container_id} after start failure: {e}"
-                        );
+                        #[allow(clippy::print_stderr)]
+                        // JUSTIFICATION: best-effort cleanup diagnostic; no logger context
+                        // guaranteed at this call site.
+                        {
+                            eprintln!(
+                                "⚠️  WARNING: Failed to cleanup container {container_id} after start failure: {e}"
+                            );
+                        }
                     }
                     return Err(TestcontainersError::CreationFailed(format!(
                         "Failed to start container: {}\n   ⚠️  STOP: Container start failed\n   💡 FIX: Check container logs and Docker daemon\n   Error: {}",
@@ -930,6 +935,9 @@ pub mod implementation {
     /// testcontainers containers are automatically cleaned up by testcontainers,
     /// but Docker CLI-created containers need manual cleanup using docker rm.
     impl Drop for GenericContainer {
+        #[allow(clippy::print_stderr)]
+        // JUSTIFICATION: Drop must not panic and no logger context is guaranteed here;
+        // stderr is the only diagnostic sink available for best-effort cleanup failures.
         fn drop(&mut self) {
             // Clean up Docker CLI-created containers
             if let Some(container_id) = &self.docker_cli_container_id {

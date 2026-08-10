@@ -303,19 +303,39 @@ impl WeaverLiveCheck {
         Ok(())
     }
 
-    /// Download weaver binary at runtime if not found
+    /// Download weaver binary at runtime if not found.
+    ///
+    /// # Concurrency
+    ///
+    /// Test binaries run tests in parallel threads by default, and several tests
+    /// can independently reach this path at once. Without serialization, two
+    /// threads racing `curl -o` into the same archive path corrupt each other's
+    /// writes (interleaved partial downloads), which then fails `tar` extraction
+    /// with a cryptic "Unrecognized archive format". A process-wide mutex
+    /// serializes the download/extract sequence so only one thread performs it;
+    /// the rest observe `output_path.exists()` and return immediately.
     #[cfg(feature = "weaver")]
     fn download_weaver_runtime() -> Result<(), String> {
         use std::env;
         use std::fs;
         use std::path::PathBuf;
         use std::process::Command;
+        use std::sync::{Mutex, OnceLock};
+
+        static DOWNLOAD_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        // A poisoned lock (prior download attempt panicked while holding it) still
+        // lets us proceed — we only need mutual exclusion, not the stale data.
+        let _guard = DOWNLOAD_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // Determine target directory
         let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
         let output_path = PathBuf::from(format!("target/{profile}/weaver"));
 
-        // Skip if already exists
+        // Skip if already exists (may have been downloaded by another thread
+        // while we were waiting on the lock).
         if output_path.exists() {
             return Ok(());
         }
@@ -386,15 +406,24 @@ impl WeaverLiveCheck {
             return Err("tar extraction failed".to_string());
         }
 
-        // Find and move weaver binary
-        let weaver_binary = output_dir.join("weaver");
-        if weaver_binary.exists() {
-            fs::rename(&weaver_binary, &output_path)
-                .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
-        }
+        // Find and move weaver binary. The release archive extracts into a
+        // versioned subdirectory (e.g. `weaver-aarch64-apple-darwin/weaver`), not
+        // flatly into `output_dir`, so this must search recursively.
+        let weaver_binary = Self::find_file_recursive(output_dir, "weaver")
+            .ok_or_else(|| "could not find `weaver` binary in extracted archive".to_string())?;
+        let scaffold_dir = weaver_binary
+            .parent()
+            .filter(|p| *p != output_dir)
+            .map(std::path::Path::to_path_buf);
+        fs::rename(&weaver_binary, &output_path)
+            .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
 
-        // Clean up archive
-        let _ = fs::remove_file(&archive_path);
+        // Clean up archive and any leftover extraction scaffolding (best-effort;
+        // this is library code so no `cargo:warning=` sink is available here).
+        fs::remove_file(&archive_path).ok();
+        if let Some(dir) = scaffold_dir {
+            fs::remove_dir_all(&dir).ok();
+        }
 
         // Make executable (Unix-like systems)
         #[cfg(unix)]
@@ -402,11 +431,34 @@ impl WeaverLiveCheck {
             use std::os::unix::fs::PermissionsExt;
             if let Ok(mut perms) = fs::metadata(&output_path).map(|m| m.permissions()) {
                 perms.set_mode(0o755);
-                let _ = fs::set_permissions(&output_path, perms);
+                fs::set_permissions(&output_path, perms).ok();
             }
         }
 
         Ok(())
+    }
+
+    /// Recursively search `dir` for a file named exactly `name`, returning the
+    /// first match. Mirrors `build.rs`'s helper of the same purpose (kept
+    /// separate — a build script and the library it builds can't share code).
+    #[cfg(feature = "weaver")]
+    fn find_file_recursive(dir: &std::path::Path, name: &str) -> Option<std::path::PathBuf> {
+        let entries = std::fs::read_dir(dir).ok()?;
+        let mut subdirs = Vec::new();
+        for entry in entries.filter_map(std::result::Result::ok) {
+            let path = entry.path();
+            if path.is_dir() {
+                subdirs.push(path);
+            } else if path.file_name().is_some_and(|f| f == name) {
+                return Some(path);
+            }
+        }
+        for subdir in subdirs {
+            if let Some(found) = Self::find_file_recursive(&subdir, name) {
+                return Some(found);
+            }
+        }
+        None
     }
 
     /// Detect platform from TARGET environment variable

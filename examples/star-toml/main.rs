@@ -15,7 +15,7 @@ pub struct AppConfig {
     pub log_level: String,
     pub server: ServerConfig,
     #[serde(flatten, default)]
-    pub extra: std::collections::HashMap<String, toml_1::Value>,
+    pub extra: std::collections::HashMap<String, toml::Value>,
 }
 
 fn default_log_level() -> String {
@@ -125,9 +125,9 @@ fn main() {
             chicago_tdd_tools::alert_success!("Configuration admitted");
             println!("SUCCESS: Configuration admitted");
             let val = admitted.value();
-            println!("{:#?}", val);
-            if let Ok(toml_str) = toml_1::to_string(val) {
-                println!("{}", toml_str);
+            println!("{val:#?}");
+            if let Ok(toml_str) = toml::to_string(val) {
+                println!("{toml_str}");
             }
             if val.server.port <= 1024 {
                 chicago_tdd_tools::alert_warning!("prefer a port above 1024");
@@ -140,8 +140,8 @@ fn main() {
         Err(err) => {
             chicago_tdd_tools::alert_critical!("Configuration refused!");
             eprintln!("CRITICAL ERROR: Configuration refused!");
-            eprintln!("Invalid: {:?}", err);
-            eprintln!("Error: {}", err);
+            eprintln!("Invalid: {err:?}");
+            eprintln!("Error: {err}");
             std::process::exit(1);
         }
     }
@@ -188,11 +188,11 @@ key_path = ""
 
         for _ in 0..100 {
             let test_data = gen.generate_test_data();
-            let mut toml_map = toml_1::map::Map::new();
+            let mut toml_map = toml::map::Map::new();
             for (k, v) in test_data {
-                toml_map.insert(k, toml_1::Value::String(v));
+                toml_map.insert(k, toml::Value::String(v));
             }
-            let a = toml_1::Value::Table(toml_map);
+            let a = toml::Value::Table(toml_map);
 
             let mut base = a.clone();
             star_toml::deep_merge(&mut base, a.clone());
@@ -211,14 +211,14 @@ key_path = ""
             if key.is_empty() {
                 return true;
             }
-            let mut base = toml_1::Value::Table(toml_1::map::Map::new());
-            base.as_table_mut().unwrap().insert(key.clone(), toml_1::Value::String(val1));
+            let mut base = toml::Value::Table(toml::map::Map::new());
+            base.as_table_mut().unwrap().insert(key.clone(), toml::Value::String(val1));
 
-            let mut overlay = toml_1::Value::Table(toml_1::map::Map::new());
+            let mut overlay = toml::Value::Table(toml::map::Map::new());
             overlay
                 .as_table_mut()
                 .unwrap()
-                .insert(key.clone(), toml_1::Value::String(val2.clone()));
+                .insert(key.clone(), toml::Value::String(val2.clone()));
 
             star_toml::deep_merge(&mut base, overlay);
 
@@ -234,7 +234,7 @@ key_path = ""
 
         let loader = star_toml::trusted().layer_file("examples/star-toml/samples/default.toml");
         let admitted = loader.load_admitted::<AppConfig>().unwrap();
-        let toml_string = toml_1::to_string(admitted.value()).unwrap();
+        let toml_string = toml::to_string(admitted.value()).unwrap();
         SnapshotAssert::with_settings(
             |settings| {
                 settings.set_snapshot_path("../../examples/snapshots");
