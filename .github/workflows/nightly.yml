@@ -60,7 +60,7 @@ jobs:
           key: nightly-lint
 
       - name: Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: just
 
@@ -96,7 +96,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: just
 
@@ -141,12 +141,12 @@ jobs:
           key: nightly-${{ matrix.os }}-test
 
       - name: Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: just
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: cargo-nextest
 
