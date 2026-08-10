@@ -45,7 +45,7 @@ exclude = [
 ]
 
 [dependencies]
-lsp-types = { version = "0.94", optional = true }
+lsp-types = { version = "0.97", optional = true }
 # Async runtime
 # Tokio features optimized for testing: rt (basic runtime), rt-multi-thread (parallel execution),
 # macros (async test macros). Minimal feature set for testing use case.
