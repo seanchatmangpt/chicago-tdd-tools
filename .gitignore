@@ -43,6 +43,13 @@ CHANGELOG.md.backup
 README.md.old
 vendors/
 
+# OpenTelemetry semantic-conventions registry — cloned at build time by
+# build.rs (clone_registry) for Weaver validation; never source, never
+# published (see Cargo.toml `exclude`). It was previously committed as a
+# stray gitlink (mode 160000) with no matching .gitmodules entry, which
+# made `git status` perpetually report it as dirty/modified content.
+registry/
+
 # Agent and temporary files
 .agents/
 check_output.txt
