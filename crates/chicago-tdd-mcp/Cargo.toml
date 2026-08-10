@@ -55,7 +55,7 @@ blake3 = { version = "1", optional = true }
 uuid = { version = "1", features = ["v4", "serde"], optional = true }
 
 # JSON Schema validation for assert_tool_input_valid — pure Rust, no C FFI
-jsonschema = { version = "0.29", optional = true }
+jsonschema = { version = "0.49", optional = true }
 anyhow = { version = "1", optional = true }
 
 chicago-tdd-mcp-macros = { version = "26.7.1", path = "../../proc_macros/chicago-tdd-mcp-macros", optional = true }
