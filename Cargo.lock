@@ -534,7 +534,7 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools"
-version = "26.8.3"
+version = "26.8.9"
 dependencies = [
  "arbitrary",
  "blake3",
@@ -577,7 +577,7 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools-proc-macros"
-version = "26.7.1"
+version = "26.8.9"
 dependencies = [
  "proc-macro2",
  "quote",
