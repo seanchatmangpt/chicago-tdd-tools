@@ -69,8 +69,11 @@ if [ -n "$PROD_FILES" ]; then
         if grep -qE '#!?\[allow\(clippy::(unwrap|expect)_used\)\]' "$FILE" 2>/dev/null; then
             continue
         fi
-        # Count unwrap/expect occurrences (handle empty results)
-        COUNT=$(grep -cE '\.unwrap\(\)|\.expect\(' "$FILE" 2>/dev/null || true)
+        # Count unwrap/expect occurrences, excluding doc-comment lines
+        # (e.g. `///     .expect("...")` in an example code block is
+        # documentation, not production code -- counting it was a false
+        # positive that blocked pushes with no real unwrap/expect added).
+        COUNT=$(grep -vE '^\s*//[/!]' "$FILE" 2>/dev/null | grep -cE '\.unwrap\(\)|\.expect\(' || true)
         if [ -z "$COUNT" ]; then
             COUNT=0
         fi
