@@ -9,6 +9,66 @@ If it compiles, correctness follows. Type system encodes invariants. Quality is 
 
 ---
 
+## Use As a Dependency
+
+`chicago-tdd-tools` is published to crates.io (`version = "26.8.3"` and later — see
+[Cargo.toml](Cargo.toml) for the current version) and is also consumable directly from this
+repo via a `path`/`git` dependency for sibling projects in the same workspace tree. All three
+forms are real and in active use:
+
+```toml
+# From crates.io (what ggen's crates use in production):
+[dev-dependencies]
+chicago-tdd-tools = { version = "26.8.9", features = ["testing-extras"] }
+
+# From a sibling checkout on disk (what this repo's own examples/ and castle use):
+[dev-dependencies]
+chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["testing-extras"] }
+
+# From git, pinned to a tag/rev, when neither of the above fits:
+[dev-dependencies]
+chicago-tdd-tools = { git = "https://github.com/seanchatmangpt/chicago-tdd-tools", tag = "v26.8.9" }
+```
+
+Only `core`/`prelude` (the `test!`/`fixture_test!`/`async_test!` macros, builders, assertions)
+are enabled by default — no external services required. Enable `otel`/`weaver` for observability
+testing, `testcontainers` for Docker-backed integration tests, `cli-proof` for CLI harness
+testing, etc. — see [Feature Flags](#feature-flags) below. Everything under `ontology/`,
+`templates/`, `weaver-reports/`, `registry/`, `scripts/`, `spec-harness/`, and `playground/` is
+dev-repo tooling only and is excluded from the published crate (see `exclude` in
+[Cargo.toml](Cargo.toml)) — importing this crate never pulls that in.
+
+Minimal example that actually compiles against the default feature set:
+
+```rust
+// tests/smoke.rs
+use chicago_tdd_tools::prelude::*;
+
+test!(chicago_tdd_tools_is_usable, {
+    let x = 2 + 2;
+    assert_eq!(x, 4);
+});
+```
+
+For the `ObservabilityTest` unified OTEL/Weaver harness:
+
+```toml
+[dev-dependencies]
+chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["otel"] }
+```
+
+```rust
+use chicago_tdd_tools::observability::ObservabilityTest;
+
+#[test]
+fn observability_harness_initializes() -> Result<(), Box<dyn std::error::Error>> {
+    let _test = ObservabilityTest::new()?;
+    Ok(())
+}
+```
+
+---
+
 ## Why Chicago TDD?
 
 Chicago-style TDD (Classicist approach) focuses on **behavior verification** using **real collaborators** instead of mocks. This framework enforces that philosophy through Rust's type system:
