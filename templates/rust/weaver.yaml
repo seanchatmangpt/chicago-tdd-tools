@@ -1,0 +1,5 @@
+templates:
+  - pattern: semantic_conventions.rs.j2
+    filter: "."
+    application_mode: single
+    file_name: semantic_conventions.rs
