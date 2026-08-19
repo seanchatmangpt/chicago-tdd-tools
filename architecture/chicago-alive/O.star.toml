@@ -1,0 +1,59 @@
+[observation]
+id = "urn:ctdd:observation:chicago-alive:v26.8.19"
+base_sha = "b3324d642b5f87658598f6f8a259bdf77fa9b9f7"
+admitted = true
+aligned = true
+complete = true
+grounded = true
+bounded = true
+
+[standing]
+source = "PARTIAL_ALIVE"
+intermediate = "CHICAGO_ALIVE"
+target = "ALIVE"
+chicago_is_alive = false
+alive_requires_exact_real_target = true
+
+[authority]
+select = true
+construct = true
+direct_actuation = false
+production_do_from_synthetic_world = false
+broker_only = true
+
+[chicago]
+exact_subject_required = true
+admitted_world_required = true
+real_load_bearing_collaborators_required = true
+observed_consequence_required = true
+falsifiers_required = true
+receipt_required = true
+replay_match_required = true
+bounded_correspondence_required = true
+
+[alive]
+exact_real_target_required = true
+observed_real_target_consequence_required = true
+
+[receipt]
+algorithm = "BLAKE3"
+components = [
+  "exact_head",
+  "subject",
+  "world",
+  "collaborators",
+  "authority",
+  "trial",
+  "falsifiers",
+  "correspondence",
+  "replay",
+  "decision",
+]
+
+[exclusions]
+caller_supplied_standing_is_authority = true
+load_bearing_mock_can_crown = true
+failed_falsifier_can_crown = true
+replay_mismatch_can_crown = true
+synthetic_world_can_imply_alive = true
+direct_actuation_can_crown = true
