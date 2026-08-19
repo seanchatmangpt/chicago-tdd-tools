@@ -1,0 +1,6 @@
+//! Manufactured projection axes. Do not edit.
+use super::types::ProjectionAxis;
+
+pub const PROJECTION_AXES: &[ProjectionAxis] = &[
+{% for row in results %}    ProjectionAxis { order: {{ row.order }}, id: "{{ row.id }}", title: "{{ row.title }}", description: "{{ row.description }}" },
+{% endfor %}];

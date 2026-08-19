@@ -1,0 +1,6 @@
+//! Manufactured realization lattice. Do not edit.
+use super::types::{Authority, Realization, Visibility};
+
+pub const REALIZATIONS: &[Realization] = &[
+{% for row in results %}    Realization { order: {{ row.order }}, id: "{{ row.id }}", facet: "{{ row.facet }}", module: "{{ row.module }}", visibility: Visibility::{{ row.visibility }}, authority: Authority::{{ row.authority }}, effect: "{{ row.effect }}", protocol: "{{ row.protocol }}", dependency: "{{ row.dependency }}", standing: "{{ row.standing }}", receipt_required: {{ row.receipt }} },
+{% endfor %}];

@@ -1,0 +1,9 @@
+//! Manufactured profiles. Do not edit.
+use super::types::Profile;
+
+pub const PROFILES: &[Profile] = &[
+    Profile { order: 1, id: "profile.core-local", title: "Core Local", external_allowed: false, include_all: false, selections: "obs.fixture,obs.contract,admit.type_level,admit.invariants,construct.builders,construct.operator_registry,verify.assertions,verify.property,authorize.contract,actuate.intent,receipt.test,replay.pipeline", standing: "ADMITTED", description: "Pure local testing kernel with no external authority." },
+    Profile { order: 2, id: "profile.external-integration", title: "External Integration", external_allowed: true, include_all: false, selections: "obs.contract,obs.otel,admit.governance,admit.guards,construct.operator_registry,verify.assertions,verify.integration,authorize.governance,actuate.testcontainers,receipt.test,replay.pipeline,admit.invariants,obs.fixture", standing: "ADMITTED", description: "Real collaborator integration through admitted observer and broker boundaries." },
+    Profile { order: 3, id: "profile.process-evidence", title: "Process Evidence", external_allowed: true, include_all: false, selections: "obs.contract,obs.ocel,admit.governance,construct.swarm,verify.assertions,verify.performance,authorize.governance,actuate.intent,receipt.test,receipt.ocel,receipt.swarm,replay.pipeline,replay.ocel,replay.verifier_report,admit.invariants,authorize.contract,admit.type_level,obs.fixture", standing: "ADMITTED", description: "OCEL and receipt/replay profile for process evidence." },
+    Profile { order: 4, id: "profile.enterprise-maximal", title: "Enterprise Maximal", external_allowed: true, include_all: true, selections: "", standing: "ADMITTED", description: "Dependency-closed maximum lawful combination of every admitted realization." },
+];

@@ -1,0 +1,53 @@
+def render(template, rows):
+    loop = re.compile(r"(?P<prefix>.*?)\{%\s*for\s+row\s+in\s+results\s*%\}(?P<body>.*?)\{%\s*endfor\s*%\}(?P<suffix>.*)", re.DOTALL)
+    match = loop.fullmatch(template)
+    if match is None:
+        if "{{" in template or "{%" in template: raise Refusal("CMD-GEN-001", "unsupported template construct")
+        return template.encode()
+    variable = re.compile(r"\{\{\s*row\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}")
+    rendered=[]
+    for row in rows:
+        body=match.group("body")
+        missing=set(variable.findall(body))-row.keys()
+        if missing: raise Refusal("CMD-GEN-001", f"template fields missing: {sorted(missing)}")
+        rendered.append(variable.sub(lambda item: row[item.group(1)], body))
+    return (match.group("prefix")+"".join(rendered)+match.group("suffix")).encode()
+
+def manufacture(cell, model):
+    config=load_toml(cell/"ggen.toml")
+    output_dir=cell/config.get("generation",{}).get("output_dir","generated")
+    prefixes={"facets-":"facets","realizations-":"realizations","profiles-":"profiles","selections-":"selections","contracts-":"contracts","axes-":"axes","evidence-":"evidence","refusals-":"refusals"}
+    outputs={}
+    for raw in config.get("generation",{}).get("rules",[]):
+        name=raw["name"]; dataset=[]
+        for prefix,model_name in prefixes.items():
+            if name.startswith(prefix): dataset=model[model_name]; break
+        query=raw["query"]["inline"]
+        if "SELECT" not in query or "WHERE" not in query: raise Refusal("CMD-GEN-001", f"rule {name} is not bounded SELECT")
+        template=(cell/raw["template"]["file"]).read_text()
+        outputs[output_dir/raw["output_file"]]=render(template,dataset)
+    if len(outputs)!=17: raise Refusal("CMD-GEN-001", f"expected 17 outputs, observed {len(outputs)}")
+    return outputs
+
+def atomic_write(path,data,root):
+    rr=root.resolve(); rp=path.parent.resolve()
+    if rr!=rp and rr not in rp.parents: raise Refusal("CMD-ACT-001", f"write escapes generated root: {path}")
+    path.parent.mkdir(parents=True,exist_ok=True)
+    fd,tmp=tempfile.mkstemp(prefix=f".{path.name}.",dir=path.parent)
+    try:
+        with os.fdopen(fd,"wb") as h: h.write(data); h.flush(); os.fsync(h.fileno())
+        os.replace(tmp,path)
+    finally:
+        if os.path.exists(tmp): os.unlink(tmp)
+
+def compare_or_write(outputs,generated_root,write):
+    for path,expected in outputs.items():
+        if write: atomic_write(path,expected,generated_root)
+        elif not path.is_file() or path.read_bytes()!=expected: raise Refusal("CMD-GEN-001", f"generated output drift at {path}")
+
+def composite(parts: Iterable[tuple[str,bytes]]) -> bytes:
+    payload=bytearray()
+    for name,data in sorted(parts,key=lambda item:item[0]):
+        payload.extend(name.encode());payload.extend(b"\0");payload.extend(len(data).to_bytes(8,"big"));payload.extend(data)
+    return bytes(payload)
+

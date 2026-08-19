@@ -1,0 +1,8 @@
+# External Contracts
+
+> Manufactured from `ontology.ttl`. Do not edit.
+
+| Order | ID | Protocol | Source realization | Authority | Receipt | Replay | Private leak |
+|---:|---|---|---|---|:---:|:---:|:---:|
+{% for row in results %}| {{ row.order }} | `{{ row.id }}` | `{{ row.protocol }}` | `{{ row.source }}` | `{{ row.authority }}` | {{ row.receipt }} | {{ row.replay }} | {{ row.private_leak }} |
+{% endfor %}

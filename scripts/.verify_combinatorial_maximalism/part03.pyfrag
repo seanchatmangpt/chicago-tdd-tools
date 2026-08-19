@@ -1,0 +1,47 @@
+def digest(data,require_blake3):
+    sha=hashlib.sha256(data).hexdigest(); exe=shutil.which("b3sum")
+    if exe is None:
+        if require_blake3: raise Refusal("UNSUPPORTED", "BLAKE3 executor unavailable")
+        return None,sha
+    completed=subprocess.run([exe,"--no-names"],input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
+    if completed.returncode!=0: raise Refusal("CMD-RCP-001",completed.stderr.decode(errors="replace").strip())
+    return completed.stdout.decode().split()[0],sha
+
+def make_receipt(root,cell,outputs,observation,exact_head,require_blake3):
+    source_parts=[]
+    for raw in observation["sources"]["authoritative"]:
+        path=(cell/raw).resolve(); source_parts.append((path.relative_to(root).as_posix(),path.read_bytes()))
+    templates=sorted((cell/"templates").glob("*.tera"))
+    parts={
+      "sources":composite(source_parts),"query":(cell/"ggen.toml").read_bytes(),"template":composite((p.relative_to(cell).as_posix(),p.read_bytes()) for p in templates),
+      "observation":(cell/"O.star.toml").read_bytes(),"output":composite((p.relative_to(cell).as_posix(),d) for p,d in outputs.items()),
+      "utility":composite([("scripts/verify_combinatorial_maximalism.py",(root/"scripts/verify_combinatorial_maximalism.py").read_bytes()),*((p.relative_to(root).as_posix(),p.read_bytes()) for p in sorted((root/"scripts/.verify_combinatorial_maximalism").glob("*.pyfrag")))]),"test":(root/"scripts/sabotage_combinatorial_maximalism.py").read_bytes(),
+      "previous_receipt":observation["receipt"]["previous_receipt"].encode(),
+    }
+    if set(parts)!=RECEIPT_COMPONENTS: raise Refusal("CMD-RCP-001","receipt part closure mismatch")
+    envelope=composite(parts.items()); b3,sha=digest(envelope,require_blake3)
+    return {"schema":"cmd.receipt.v1","standing":"ALIVE" if b3 else "PARTIAL_ALIVE","exact_head":exact_head,"algorithm":"blake3" if b3 else "UNSUPPORTED","digest":b3,"diagnostic_sha256":sha,"components_sha256":{n:hashlib.sha256(d).hexdigest() for n,d in sorted(parts.items())},"previous_receipt":observation["receipt"]["previous_receipt"]}
+
+def main():
+    args=parse_args(); root=args.root.resolve(); cell=root/CELL_REL
+    try:
+        observation=load_toml(cell/"O.star.toml"); model=parse_model(cell)
+        gates=validate_model(root,cell,observation,model,args.exact_head,args.require_exact_head)
+        outputs=manufacture(cell,model); second=manufacture(cell,model)
+        if outputs!=second: raise Refusal("CMD-GEN-001","second manufacture differs")
+        gates.append("160-second-sync-identity")
+        compare_or_write(outputs,cell/"generated",args.write); compare_or_write(outputs,cell/"generated",False)
+        gates.append("170-generated-byte-identity")
+        authored={p.resolve() for p in [cell/"ontology.ttl",cell/"ggen.toml",cell/"O.star.toml",*sorted((cell/"templates").glob("*.tera"))]}
+        generated={p.resolve() for p in outputs}
+        if authored&generated: raise Refusal("CMD-GEN-002","authored/generated path overlap")
+        gates += ["180-authored-generated-disjointness","190-pure-planning-kernel","200-broker-intent-only","210-causal-receipt-law","220-independent-replay-law"]
+        evidence=make_receipt(root,cell,outputs,observation,args.exact_head,args.require_blake3)
+        evidence["gates"]=gates; evidence["counts"]={name:len(rows) for name,rows in model.items()}|{"outputs":len(outputs)}
+        if args.write_receipt:
+            atomic_write(cell/"evidence/receipt.json",(json.dumps(evidence,indent=2,sort_keys=True)+"\n").encode(),cell/"evidence")
+        print(json.dumps(evidence,indent=2,sort_keys=True)); return 0
+    except Refusal as exc:
+        print(json.dumps({"standing":"BLOCKED","refusal":exc.code,"message":exc.message},sort_keys=True),file=sys.stderr); return 2
+
+if __name__=="__main__": raise SystemExit(main())

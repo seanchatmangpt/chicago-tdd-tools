@@ -1,0 +1,106 @@
+@prefix c:<https://chatmangpt.com/ontology/combinatorial-maximalism#>.
+@prefix d:<http://purl.org/dc/terms/>.
+@prefix sk:<http://www.w3.org/2004/02/skos/core#>.
+c:F a sk:Concept .
+c:R a sk:Concept .
+c:P a sk:Concept .
+c:C a sk:Concept .
+c:A a sk:Concept .
+c:E a sk:Concept .
+c:X a sk:Concept .
+<f1> a c:F;c:o 1;c:i "facet.observation";d:title "Observation";c:h "observe";d:description "Admit exact observations and environment evidence before composition.".
+<f2> a c:F;c:o 2;c:i "facet.admission";d:title "Admission";c:h "admit";d:description "Convert observations into bounded admitted facts and constraints.".
+<f3> a c:F;c:o 3;c:i "facet.construction";d:title "Construction";c:h "construct";d:description "Explore reversible candidate combinations in the graph domain.".
+<f4> a c:F;c:o 4;c:i "facet.verification";d:title "Verification";c:h "verify";d:description "Prove state and consequence across the verification ladder.".
+<f5> a c:F;c:o 5;c:i "facet.authorization";d:title "Authorization";c:h "authorize";d:description "Separate verified candidates from explicit execution grants.".
+<f6> a c:F;c:o 6;c:i "facet.actuation";d:title "Actuation";c:h "actuate";d:description "Route every side effect through a bounded broker intent.".
+<f7> a c:F;c:o 7;c:i "facet.receipt";d:title "Receipt";c:h "receipt";d:description "Bind observed consequences to causal BLAKE3 receipts.".
+<f8> a c:F;c:o 8;c:i "facet.replay";d:title "Replay";c:h "replay";d:description "Independently reproduce or compare consequences from receipts.".
+<r1> a c:R;c:o 1;c:i "obs.fixture";c:f "facet.observation";c:m "core::fixture";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "NONE";c:s "ADMITTED";c:q true.
+<r2> a c:R;c:o 2;c:i "obs.contract";c:f "facet.observation";c:m "core::contract";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "NONE";c:s "ADMITTED";c:q true.
+<r3> a c:R;c:o 3;c:i "obs.otel";c:f "facet.observation";c:m "observability::otel";c:v "External";c:a "Observer";c:e "network";c:p "otlp";c:d "NONE";c:s "ADMITTED";c:q true.
+<r4> a c:R;c:o 4;c:i "obs.ocel";c:f "facet.observation";c:m "observability::ocel";c:v "External";c:a "Observer";c:e "storage";c:p "ocel-2.0";c:d "NONE";c:s "ADMITTED";c:q true.
+<r5> a c:R;c:o 5;c:i "admit.type_level";c:f "facet.admission";c:m "core::type_level";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "obs.contract";c:s "ADMITTED";c:q true.
+<r6> a c:R;c:o 6;c:i "admit.invariants";c:f "facet.admission";c:m "core::invariants";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "obs.fixture";c:s "ADMITTED";c:q true.
+<r7> a c:R;c:o 7;c:i "admit.governance";c:f "facet.admission";c:m "core::governance";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "obs.contract";c:s "ADMITTED";c:q true.
+<r8> a c:R;c:o 8;c:i "admit.guards";c:f "facet.admission";c:m "validation::guards";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "obs.contract";c:s "ADMITTED";c:q true.
+<r9> a c:R;c:o 9;c:i "construct.builders";c:f "facet.construction";c:m "core::builders";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.type_level";c:s "ADMITTED";c:q true.
+<r10> a c:R;c:o 10;c:i "construct.generator";c:f "facet.construction";c:m "testing::generator";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.type_level";c:s "ADMITTED";c:q true.
+<r11> a c:R;c:o 11;c:i "construct.operator_registry";c:f "facet.construction";c:m "operator_registry";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.invariants";c:s "ADMITTED";c:q true.
+<r12> a c:R;c:o 12;c:i "construct.swarm";c:f "facet.construction";c:m "swarm";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.governance";c:s "ADMITTED";c:q true.
+<r13> a c:R;c:o 13;c:i "verify.assertions";c:f "facet.verification";c:m "core::assertions";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.invariants";c:s "ADMITTED";c:q true.
+<r14> a c:R;c:o 14;c:i "verify.property";c:f "facet.verification";c:m "testing::property";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r15> a c:R;c:o 15;c:i "verify.snapshot";c:f "facet.verification";c:m "testing::snapshot";c:v "Internal";c:a "Pure";c:e "storage";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r16> a c:R;c:o 16;c:i "verify.mutation";c:f "facet.verification";c:m "testing::mutation";c:v "Internal";c:a "Pure";c:e "process";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r17> a c:R;c:o 17;c:i "verify.concurrency";c:f "facet.verification";c:m "testing::concurrency";c:v "Internal";c:a "Pure";c:e "process";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r18> a c:R;c:o 18;c:i "verify.cli";c:f "facet.verification";c:m "testing::cli";c:v "External";c:a "Observer";c:e "process";c:p "stdio";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r19> a c:R;c:o 19;c:i "verify.integration";c:f "facet.verification";c:m "integration::testcontainers";c:v "External";c:a "Observer";c:e "network+storage+process";c:p "docker-api";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r20> a c:R;c:o 20;c:i "verify.performance";c:f "facet.verification";c:m "validation::performance";c:v "Internal";c:a "Observer";c:e "none";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r21> a c:R;c:o 21;c:i "authorize.contract";c:f "facet.authorization";c:m "core::contract";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.type_level";c:s "ADMITTED";c:q true.
+<r22> a c:R;c:o 22;c:i "authorize.governance";c:f "facet.authorization";c:m "core::governance";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "admit.governance";c:s "ADMITTED";c:q true.
+<r23> a c:R;c:o 23;c:i "authorize.jtbd";c:f "facet.authorization";c:m "validation::jtbd";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r24> a c:R;c:o 24;c:i "actuate.intent";c:f "facet.actuation";c:m "architecture::combinatorial_maximalism";c:v "Internal";c:a "Pure";c:e "none";c:p "intent";c:d "authorize.contract";c:s "ADMITTED";c:q true.
+<r25> a c:R;c:o 25;c:i "actuate.testcontainers";c:f "facet.actuation";c:m "integration::testcontainers";c:v "External";c:a "Brokered";c:e "network+storage+process";c:p "docker-api";c:d "authorize.governance";c:s "ADMITTED";c:q true.
+<r26> a c:R;c:o 26;c:i "actuate.sector";c:f "facet.actuation";c:m "sector_stacks";c:v "External";c:a "Brokered";c:e "storage";c:p "rust-api";c:d "authorize.contract";c:s "ADMITTED";c:q true.
+<r27> a c:R;c:o 27;c:i "actuate.git_hook";c:f "facet.actuation";c:m "git_hook_installer";c:v "External";c:a "Brokered";c:e "filesystem+process";c:p "git-hook-intent";c:d "authorize.governance";c:s "ADMITTED";c:q true.
+<r28> a c:R;c:o 28;c:i "receipt.test";c:f "facet.receipt";c:m "core::receipt";c:v "Internal";c:a "Pure";c:e "none";c:p "receipt-v2";c:d "verify.assertions";c:s "ADMITTED";c:q true.
+<r29> a c:R;c:o 29;c:i "receipt.sector";c:f "facet.receipt";c:m "sector_stacks::OperationReceipt";c:v "Internal";c:a "Pure";c:e "none";c:p "receipt-v2";c:d "actuate.sector";c:s "ADMITTED";c:q true.
+<r30> a c:R;c:o 30;c:i "receipt.swarm";c:f "facet.receipt";c:m "swarm::TaskReceipt";c:v "Internal";c:a "Pure";c:e "none";c:p "receipt-v2";c:d "construct.swarm";c:s "ADMITTED";c:q true.
+<r31> a c:R;c:o 31;c:i "receipt.ocel";c:f "facet.receipt";c:m "observability::ocel";c:v "External";c:a "Observer";c:e "storage";c:p "ocel-2.0";c:d "obs.ocel";c:s "ADMITTED";c:q true.
+<r32> a c:R;c:o 32;c:i "replay.pipeline";c:f "facet.replay";c:m "core::verification_pipeline";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "receipt.test";c:s "ADMITTED";c:q true.
+<r33> a c:R;c:o 33;c:i "replay.fail_fast";c:f "facet.replay";c:m "core::fail_fast";c:v "Internal";c:a "Pure";c:e "none";c:p "rust";c:d "replay.pipeline";c:s "ADMITTED";c:q true.
+<r34> a c:R;c:o 34;c:i "replay.ocel";c:f "facet.replay";c:m "observability::ocel";c:v "External";c:a "Observer";c:e "storage";c:p "ocel-2.0";c:d "receipt.ocel";c:s "ADMITTED";c:q true.
+<r35> a c:R;c:o 35;c:i "replay.verifier_report";c:f "facet.replay";c:m "architecture::verifier_report";c:v "External";c:a "Observer";c:e "storage";c:p "verifier-report-v1";c:d "replay.pipeline";c:s "ADMITTED";c:q true.
+<p1> a c:P;c:o 1;c:i "profile.core-local";d:title "Core Local";c:x false;c:z false;c:l "obs.fixture,obs.contract,admit.type_level,admit.invariants,construct.builders,construct.operator_registry,verify.assertions,verify.property,authorize.contract,actuate.intent,receipt.test,replay.pipeline";c:s "ADMITTED";d:description "Pure local testing kernel with no external authority.".
+<p2> a c:P;c:o 2;c:i "profile.external-integration";d:title "External Integration";c:x true;c:z false;c:l "obs.contract,obs.otel,admit.governance,admit.guards,construct.operator_registry,verify.assertions,verify.integration,authorize.governance,actuate.testcontainers,receipt.test,replay.pipeline,admit.invariants,obs.fixture";c:s "ADMITTED";d:description "Real collaborator integration through admitted observer and broker boundaries.".
+<p3> a c:P;c:o 3;c:i "profile.process-evidence";d:title "Process Evidence";c:x true;c:z false;c:l "obs.contract,obs.ocel,admit.governance,construct.swarm,verify.assertions,verify.performance,authorize.governance,actuate.intent,receipt.test,receipt.ocel,receipt.swarm,replay.pipeline,replay.ocel,replay.verifier_report,admit.invariants,authorize.contract,admit.type_level,obs.fixture";c:s "ADMITTED";d:description "OCEL and receipt/replay profile for process evidence.".
+<p4> a c:P;c:o 4;c:i "profile.enterprise-maximal";d:title "Enterprise Maximal";c:x true;c:z true;c:l "";c:s "ADMITTED";d:description "Dependency-closed maximum lawful combination of every admitted realization.".
+<c1> a c:C;c:o 1;c:i "contract.otlp";c:p "otlp";c:u "obs.otel";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c2> a c:C;c:o 2;c:i "contract.ocel";c:p "ocel-2.0";c:u "obs.ocel";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c3> a c:C;c:o 3;c:i "contract.cli";c:p "stdio";c:u "verify.cli";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c4> a c:C;c:o 4;c:i "contract.docker";c:p "docker-api";c:u "verify.integration";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c5> a c:C;c:o 5;c:i "contract.container-broker";c:p "docker-api";c:u "actuate.testcontainers";c:a "Brokered";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c6> a c:C;c:o 6;c:i "contract.sector-broker";c:p "rust-api";c:u "actuate.sector";c:a "Brokered";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c7> a c:C;c:o 7;c:i "contract.git-hook";c:p "git-hook-intent";c:u "actuate.git_hook";c:a "Brokered";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c8> a c:C;c:o 8;c:i "contract.ocel-receipt";c:p "ocel-2.0";c:u "receipt.ocel";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c9> a c:C;c:o 9;c:i "contract.ocel-replay";c:p "ocel-2.0";c:u "replay.ocel";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<c10> a c:C;c:o 10;c:i "contract.verifier-report";c:p "verifier-report-v1";c:u "replay.verifier_report";c:a "Observer";c:q true;c:y true;c:k false;c:s "ADMITTED".
+<a1> a c:A;c:o 1;c:i "axis.strategy";d:title "Strategy";d:description "Capability and value projection.".
+<a2> a c:A;c:o 2;c:i "axis.process";d:title "Process";d:description "Workflow and lifecycle projection.".
+<a3> a c:A;c:o 3;c:i "axis.role";d:title "Role";d:description "Ownership and responsibility projection.".
+<a4> a c:A;c:o 4;c:i "axis.data";d:title "Data";d:description "Semantic and storage projection.".
+<a5> a c:A;c:o 5;c:i "axis.application";d:title "Application";d:description "API and module projection.".
+<a6> a c:A;c:o 6;c:i "axis.technology";d:title "Technology";d:description "Runtime and infrastructure projection.".
+<a7> a c:A;c:o 7;c:i "axis.control";d:title "Control";d:description "Policy and authority projection.".
+<a8> a c:A;c:o 8;c:i "axis.evidence";d:title "Evidence";d:description "Test, receipt, and verifier projection.".
+<a9> a c:A;c:o 9;c:i "axis.deployment";d:title "Deployment";d:description "Environment and rollout projection.".
+<a10> a c:A;c:o 10;c:i "axis.consumer";d:title "Consumer";d:description "External interoperability projection.".
+<e1> a c:E;c:o 1;c:i "evidence.observation-hash";d:title "Observation hash";c:n true.
+<e2> a c:E;c:o 2;c:i "evidence.source-closure";d:title "Source closure";c:n true.
+<e3> a c:E;c:o 3;c:i "evidence.profile-totality";d:title "Profile totality";c:n true.
+<e4> a c:E;c:o 4;c:i "evidence.dependency-closure";d:title "Dependency closure";c:n true.
+<e5> a c:E;c:o 5;c:i "evidence.authority-fence";d:title "Authority fence";c:n true.
+<e6> a c:E;c:o 6;c:i "evidence.generated-identity";d:title "Generated identity";c:n true.
+<e7> a c:E;c:o 7;c:i "evidence.external-contract";d:title "External contract";c:n true.
+<e8> a c:E;c:o 8;c:i "evidence.receipt-v2";d:title "Receipt v2";c:n true.
+<e9> a c:E;c:o 9;c:i "evidence.exact-head";d:title "Exact head";c:n true.
+<e10> a c:E;c:o 10;c:i "evidence.replay-identity";d:title "Replay identity";c:n true.
+<e11> a c:E;c:o 11;c:i "evidence.ocel-conformance";d:title "OCEL conformance";c:n true.
+<e12> a c:E;c:o 12;c:i "evidence.verifier-report";d:title "Verifier report";c:n true.
+<x1> a c:X;c:o 1;c:c "CMD-ADM-001";c:w "OBSERVATION_NOT_ADMITTED";c:b "admission".
+<x2> a c:X;c:o 2;c:c "CMD-SRC-001";c:w "SOURCE_CLOSURE_DRIFT";c:b "source".
+<x3> a c:X;c:o 3;c:c "CMD-FAC-001";c:w "FACET_TOTALITY_DRIFT";c:b "facet".
+<x4> a c:X;c:o 4;c:c "CMD-REA-001";c:w "REALIZATION_DRIFT";c:b "realization".
+<x5> a c:X;c:o 5;c:c "CMD-DEP-001";c:w "DEPENDENCY_NOT_CLOSED";c:b "dependency".
+<x6> a c:X;c:o 6;c:c "CMD-PRF-001";c:w "PROFILE_NOT_TOTAL";c:b "profile".
+<x7> a c:X;c:o 7;c:c "CMD-EXT-001";c:w "EXTERNAL_CONTRACT_DRIFT";c:b "external".
+<x8> a c:X;c:o 8;c:c "CMD-AUT-001";c:w "AUTHORITY_LEAK";c:b "authority".
+<x9> a c:X;c:o 9;c:c "CMD-PRJ-001";c:w "PROJECTION_LATTICE_DRIFT";c:b "projection".
+<x10> a c:X;c:o 10;c:c "CMD-EVD-001";c:w "EVIDENCE_OBLIGATION_DRIFT";c:b "evidence".
+<x11> a c:X;c:o 11;c:c "CMD-GEN-001";c:w "GENERATED_OUTPUT_DRIFT";c:b "generation".
+<x12> a c:X;c:o 12;c:c "CMD-GEN-002";c:w "AUTHORED_GENERATED_OVERLAP";c:b "generation".
+<x13> a c:X;c:o 13;c:c "CMD-ACT-001";c:w "DIRECT_ACTUATION_REFUSED";c:b "actuation".
+<x14> a c:X;c:o 14;c:c "CMD-PIN-001";c:w "EXECUTION_PIN_DRIFT";c:b "resolution".
+<x15> a c:X;c:o 15;c:c "CMD-RCP-001";c:w "RECEIPT_COMPONENT_MISSING";c:b "receipt".
+<x16> a c:X;c:o 16;c:c "CMD-RCP-002";c:w "EXACT_HEAD_MISMATCH";c:b "receiver".
+<x17> a c:X;c:o 17;c:c "CMD-STD-001";c:w "PREMATURE_STANDING";c:b "standing".
