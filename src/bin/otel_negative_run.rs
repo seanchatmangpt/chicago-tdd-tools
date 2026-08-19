@@ -10,12 +10,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async {
-        let endpoint = "http://127.0.0.1:4317";
-        std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", endpoint);
+        // See otel_production_run.rs's matching comment: overridable to keep
+        // this smoke test isolated on its own port.
+        let port = std::env::var("WEAVER_TEST_OTLP_PORT").unwrap_or_else(|_| "4317".to_string());
+        let endpoint = format!("http://127.0.0.1:{port}");
+        std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", &endpoint);
 
         let exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_tonic()
-            .with_endpoint("http://127.0.0.1:4317")
+            .with_endpoint(&endpoint)
             .build()?;
 
         let resource = Resource::builder_empty()

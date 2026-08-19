@@ -579,19 +579,23 @@ setup-dev: install-hooks
 otel-weaver-check:
     target/debug/weaver registry check -r registry/model
 
+# Isolated on ports 4319/4321 (not the crate's DEFAULT_OTLP_GRPC_PORT
+# 4317) so this manual live-check session never collides with a real,
+# non-test OTLP collector -- e.g. a consuming project's own Istio/Jaeger
+# pipeline using 4317 in-cluster.
 otel-weaver-live-start:
     mkdir -p ./weaver-reports
-    target/debug/weaver registry live-check -r registry/model --otlp-grpc-port 4317 --admin-port 4320 --format json --output http &
+    target/debug/weaver registry live-check -r registry/model --otlp-grpc-port 4319 --admin-port 4321 --format json --output http &
 
 otel-production-run:
-    cargo run --quiet --bin otel_production_run --features weaver
+    WEAVER_TEST_OTLP_PORT=4319 cargo run --quiet --bin otel_production_run --features weaver
 
 otel-weaver-live-stop:
-    curl -s -X POST http://127.0.0.1:4320/stop > weaver-reports/report.json || true
+    curl -s -X POST http://127.0.0.1:4321/stop > weaver-reports/report.json || true
     pkill -f 'weaver registry live-check' || true
 
 otel-weaver-live-negative:
-    cargo run --quiet --bin otel_negative_run --features weaver
+    WEAVER_TEST_OTLP_PORT=4319 cargo run --quiet --bin otel_negative_run --features weaver
 
 otel-weaver-live:
     ./scripts/otel-workflow.sh

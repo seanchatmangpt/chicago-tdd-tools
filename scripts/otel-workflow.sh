@@ -59,14 +59,21 @@ fi
 rm -rf ./weaver-reports
 mkdir -p ./weaver-reports
 
+# Isolated on its own OTLP + admin ports (not the crate's
+# DEFAULT_OTLP_GRPC_PORT 4317) so this standalone smoke test can never
+# collide with a real, non-test OTLP collector -- e.g. a consuming
+# project's own Istio/Jaeger pipeline using 4317 in-cluster.
+export WEAVER_TEST_OTLP_PORT="${WEAVER_TEST_OTLP_PORT:-4319}"
+WEAVER_ADMIN_PORT="${WEAVER_ADMIN_PORT:-4321}"
+
 start_weaver() {
-    target/debug/weaver registry live-check -r registry/otel --otlp-grpc-port 4317 --admin-port 4320 --format json --output http > /dev/null 2>&1 &
+    target/debug/weaver registry live-check -r registry/otel --otlp-grpc-port "$WEAVER_TEST_OTLP_PORT" --admin-port "$WEAVER_ADMIN_PORT" --format json --output http > /dev/null 2>&1 &
     WEAVER_PID=$!
-    
+
     # Wait for health
     local max_wait=10
     local i=0
-    while ! curl -s http://127.0.0.1:4320/health > /dev/null; do
+    while ! curl -s "http://127.0.0.1:${WEAVER_ADMIN_PORT}/health" > /dev/null; do
         sleep 1
         i=$((i+1))
         if [ $i -ge $max_wait ]; then
@@ -79,7 +86,7 @@ start_weaver() {
 
 stop_weaver() {
     sleep 1
-    curl -s -X POST http://127.0.0.1:4320/stop > weaver-reports/report.json || true
+    curl -s -X POST "http://127.0.0.1:${WEAVER_ADMIN_PORT}/stop" > weaver-reports/report.json || true
     kill $WEAVER_PID 2>/dev/null || true
     wait $WEAVER_PID 2>/dev/null || true
 }

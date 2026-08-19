@@ -163,15 +163,15 @@
   "statistics": {
     "total_entities": 8,
     "total_entities_by_type": {
-      "resource": 1,
+      "span": 1,
       "span_event": 1,
-      "attribute": 5,
-      "span": 1
+      "resource": 1,
+      "attribute": 5
     },
     "total_advisories": 6,
     "advice_level_counts": {
-      "improvement": 4,
-      "violation": 2
+      "violation": 2,
+      "improvement": 4
     },
     "highest_advice_level_counts": {
       "improvement": 3,
@@ -179,24 +179,24 @@
     },
     "no_advice_count": 3,
     "advice_type_counts": {
-      "not_stable": 4,
       "missing_attribute": 1,
+      "not_stable": 4,
       "type_mismatch": 1
     },
     "advice_message_counts": {
+      "Attribute 'process.activity.iri' is not stable; stability = development.": 1,
+      "Attribute 'process.object.id' is not stable; stability = development.": 1,
       "Attribute 'service.name' does not exist in the registry.": 1,
       "Attribute 'process.workflow.id' is not stable; stability = development.": 1,
-      "Attribute 'process.workflow.id' has type 'int'. Type should be 'string'.": 1,
       "Attribute 'process.outcome' is not stable; stability = development.": 1,
-      "Attribute 'process.object.id' is not stable; stability = development.": 1,
-      "Attribute 'process.activity.iri' is not stable; stability = development.": 1
+      "Attribute 'process.workflow.id' has type 'int'. Type should be 'string'.": 1
     },
     "seen_registry_attributes": {
       "process.object.type": 0,
-      "process.outcome": 1,
-      "process.activity.iri": 1,
       "process.object.id": 1,
-      "process.workflow.id": 1
+      "process.workflow.id": 1,
+      "process.activity.iri": 1,
+      "process.outcome": 1
     },
     "seen_non_registry_attributes": {
       "service.name": 1
