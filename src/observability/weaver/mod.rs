@@ -121,13 +121,26 @@ pub mod lifecycle {
             let grpc_port_str = self.otlp_grpc_port.to_string();
             let admin_port_str = self.admin_port.to_string();
 
-            // Spawn the Weaver live-check process
+            // Spawn the Weaver live-check process.
+            //
+            // Security (CISO finding): bind the OTLP gRPC listener to localhost only via
+            // `--otlp-grpc-address`, so it is not remotely reachable. Weaver's
+            // `registry live-check` has no `--otlp-grpc-address`/`--admin-port` auth or
+            // API-key flag as of upstream `docs/usage.md`
+            // (https://github.com/open-telemetry/weaver/blob/main/docs/usage.md) and no
+            // separate admin bind-address flag either -- `--admin-port` only selects the
+            // port, not the interface. Restricting the gRPC listener to
+            // `crate::observability::weaver::LOCALHOST` closes the remote-reachability half
+            // of the finding for the port we can control; the admin HTTP port's bind
+            // interface remains a Weaver-upstream gap, tracked, not silently accepted.
             let child = Command::new(&weaver_binary)
                 .args([
                     "registry",
                     "live-check",
                     "-r",
                     &registry_str,
+                    "--otlp-grpc-address",
+                    crate::observability::weaver::LOCALHOST,
                     "--otlp-grpc-port",
                     &grpc_port_str,
                     "--admin-port",
@@ -787,7 +800,9 @@ mod tests {
     fn test_weaver_validator_otlp_endpoint() {
         let registry_path = PathBuf::from("registry/");
         let validator = WeaverValidator::new(registry_path);
-        // OTLP endpoint uses LOCALHOST for client connections (even though server listens on 0.0.0.0)
+        // OTLP endpoint uses LOCALHOST for client connections; the spawned server is now
+        // also bound to LOCALHOST via --otlp-grpc-address (see lifecycle::start), so this
+        // is a same-host loopback endpoint, not a remotely-reachable one.
         assert_eq!(
             validator.otlp_endpoint(),
             format!("http://{LOCALHOST}:{DEFAULT_OTLP_GRPC_PORT}")

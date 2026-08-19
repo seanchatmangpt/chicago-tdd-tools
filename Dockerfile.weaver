@@ -1,0 +1,33 @@
+# Standing weaver live-check service. Downloads the real, official
+# open-telemetry/weaver linux release binary (no cross-compilation of our
+# own Rust workspace needed -- weaver is a separate upstream CLI tool, not
+# code owned by this repo) matching the cluster node's arm64 architecture,
+# bundled with this repo's real registry/model semantic-convention corpus.
+FROM debian:bookworm-slim AS fetch
+ARG WEAVER_VERSION=latest
+RUN apt-get update && apt-get install -y --no-install-recommends curl xz-utils ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /w
+# musl build: statically linked, avoids the glibc-version mismatch the
+# gnu build hit against debian:bookworm-slim's older glibc (confirmed live:
+# "GLIBC_2.39 not found" at container start against the gnu asset).
+RUN curl -fL -o weaver.tar.xz \
+      "https://github.com/open-telemetry/weaver/releases/${WEAVER_VERSION}/download/weaver-aarch64-unknown-linux-musl.tar.xz" \
+    && tar -xf weaver.tar.xz \
+    && find . -maxdepth 3 -type f -name weaver -exec cp {} /w/weaver \; \
+    && chmod +x /w/weaver
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -u 65532 -M -s /usr/sbin/nologin weaver
+COPY --from=fetch /w/weaver /usr/local/bin/weaver
+COPY registry/model /registry/model
+WORKDIR /
+USER 65532
+EXPOSE 4319 4321
+# --inactivity-timeout is set very large (~24h): confirmed live that
+# without it the process exits after its default idle window (~10s) with
+# no traffic, which is fatal for a k8s Deployment meant to stay standing
+# continuously, not just survive one burst of spans.
+ENTRYPOINT ["/usr/local/bin/weaver", "registry", "live-check", "-r", "/registry/model", "--otlp-grpc-port", "4319", "--admin-port", "4321", "--inactivity-timeout", "86400", "--format", "json", "--output", "http"]
