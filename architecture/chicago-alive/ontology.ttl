@@ -1,0 +1,125 @@
+@prefix ctdd: <https://chatmangpt.com/ontology/chicago-tdd#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# CHICAGO_ALIVE is modeled as an admitted standing concept and evidence contract.
+# This file defines semantics; scripts/verify_chicago_alive.py and
+# chicago_claims::chicago_alive are independent executable realizations.
+
+<urn:ctdd:standing-scheme>
+    a skos:ConceptScheme, prov:Entity ;
+    dcterms:title "Chicago TDD execution standing" ;
+    dcterms:description "Evidence-bounded standing ladder preserving ALIVE as the exact-real-target crown." .
+
+<urn:ctdd:standing:partial-alive>
+    a skos:Concept ;
+    skos:inScheme <urn:ctdd:standing-scheme> ;
+    skos:notation "PARTIAL_ALIVE" ;
+    skos:prefLabel "Partial alive" ;
+    skos:definition "Meaningful bounded execution exists, but one or more required world, collaborator, consequence, authority, falsifier, receipt, replay, or correspondence obligations remain open." .
+
+<urn:ctdd:standing:chicago-alive>
+    a skos:Concept ;
+    skos:inScheme <urn:ctdd:standing-scheme> ;
+    skos:notation "CHICAGO_ALIVE" ;
+    skos:prefLabel "Chicago alive" ;
+    skos:broader <urn:ctdd:standing:partial-alive> ;
+    skos:definition "The exact software subject executed through real load-bearing collaborators against an admitted executable world; consequence, authority path, adversarial falsification, receipts, replay, and bounded correspondence close, while the exact real-target crown remains absent." ;
+    dcterms:requires
+        <urn:ctdd:obligation:exact-subject>,
+        <urn:ctdd:obligation:admitted-world>,
+        <urn:ctdd:obligation:real-collaborators>,
+        <urn:ctdd:obligation:execution>,
+        <urn:ctdd:obligation:consequence>,
+        <urn:ctdd:obligation:authority-path>,
+        <urn:ctdd:obligation:falsifiers>,
+        <urn:ctdd:obligation:receipt>,
+        <urn:ctdd:obligation:replay>,
+        <urn:ctdd:obligation:bounded-correspondence> .
+
+<urn:ctdd:standing:alive>
+    a skos:Concept ;
+    skos:inScheme <urn:ctdd:standing-scheme> ;
+    skos:notation "ALIVE" ;
+    skos:prefLabel "Alive" ;
+    skos:broader <urn:ctdd:standing:chicago-alive> ;
+    skos:definition "CHICAGO_ALIVE obligations remain satisfied and the exact admitted real target itself produced the claimed observed consequence." ;
+    dcterms:requires
+        <urn:ctdd:obligation:exact-real-target>,
+        <urn:ctdd:obligation:real-target-consequence> .
+
+<urn:ctdd:obligation:exact-subject>
+    a skos:Concept ; skos:notation "CTA-SUB" ;
+    skos:prefLabel "Exact subject identity" .
+<urn:ctdd:obligation:admitted-world>
+    a skos:Concept ; skos:notation "CTA-WLD" ;
+    skos:prefLabel "Admitted executable world" .
+<urn:ctdd:obligation:real-collaborators>
+    a skos:Concept ; skos:notation "CTA-COL" ;
+    skos:prefLabel "Real load-bearing collaborators" .
+<urn:ctdd:obligation:execution>
+    a skos:Concept ; skos:notation "CTA-EXE" ;
+    skos:prefLabel "Observed exact-subject execution" .
+<urn:ctdd:obligation:consequence>
+    a skos:Concept ; skos:notation "CTA-CON" ;
+    skos:prefLabel "Observed world consequence" .
+<urn:ctdd:obligation:authority-path>
+    a skos:Concept ; skos:notation "CTA-AUT" ;
+    skos:prefLabel "Observed governed authority path" .
+<urn:ctdd:obligation:falsifiers>
+    a skos:Concept ; skos:notation "CTA-FAL" ;
+    skos:prefLabel "Adversarial falsifier closure" .
+<urn:ctdd:obligation:receipt>
+    a skos:Concept ; skos:notation "CTA-RCP" ;
+    skos:prefLabel "Consequence receipt" .
+<urn:ctdd:obligation:replay>
+    a skos:Concept ; skos:notation "CTA-RPL" ;
+    skos:prefLabel "Deterministic replay match" .
+<urn:ctdd:obligation:bounded-correspondence>
+    a skos:Concept ; skos:notation "CTA-COR" ;
+    skos:prefLabel "Bounded target correspondence" .
+<urn:ctdd:obligation:exact-real-target>
+    a skos:Concept ; skos:notation "CTA-ALV-TARGET" ;
+    skos:prefLabel "Exact admitted real target" .
+<urn:ctdd:obligation:real-target-consequence>
+    a skos:Concept ; skos:notation "CTA-ALV-CONSEQUENCE" ;
+    skos:prefLabel "Observed real-target consequence" .
+
+<urn:ctdd:activity:chicago-alive-court>
+    a prov:Activity ;
+    dcterms:title "CHICAGO_ALIVE standing court" ;
+    dcterms:description "Pure derivation from admitted trial evidence to typed standing; the court has no direct actuation authority." ;
+    prov:used <urn:ctdd:standing:partial-alive>, <urn:ctdd:standing:chicago-alive>, <urn:ctdd:standing:alive> .
+
+<urn:ctdd:policy:chicago-alive>
+    a odrl:Policy ;
+    dcterms:title "CHICAGO_ALIVE authority fence" ;
+    odrl:prohibition
+        <urn:ctdd:prohibition:load-bearing-test-double-crown>,
+        <urn:ctdd:prohibition:direct-actuation-crown>,
+        <urn:ctdd:prohibition:synthetic-implies-alive> .
+
+<urn:ctdd:prohibition:load-bearing-test-double-crown>
+    a odrl:Prohibition ;
+    odrl:action odrl:use ;
+    dcterms:description "A test double supplying load-bearing claimed behavior cannot contribute to CHICAGO_ALIVE." .
+
+<urn:ctdd:prohibition:direct-actuation-crown>
+    a odrl:Prohibition ;
+    odrl:action odrl:execute ;
+    dcterms:description "The semantic court never gains direct actuation authority; consequential DO remains brokered." .
+
+<urn:ctdd:prohibition:synthetic-implies-alive>
+    a odrl:Prohibition ;
+    odrl:action odrl:derive ;
+    dcterms:description "Synthetic, emulated, or test-tenant execution cannot by itself imply ALIVE." .
+
+<urn:ctdd:contract:chicago-alive-v1>
+    a prov:Plan ;
+    dcterms:title "CHICAGO_ALIVE evidence contract v1" ;
+    dcterms:conformsTo <https://json-schema.org/draft/2020-12/schema> ;
+    dcterms:hasVersion "1"^^xsd:string ;
+    dcterms:requires <urn:ctdd:standing:chicago-alive>, <urn:ctdd:policy:chicago-alive> .
