@@ -149,11 +149,15 @@ cmd_live_stop() {
   mkdir -p "${WEAVER_REPORTS_DIR}"
   curl -s -X POST "http://127.0.0.1:${WEAVER_ADMIN_PORT}/stop" \
     > "${WEAVER_REPORTS_DIR}/report.json" || true
+  # Kill by the exact PID this script recorded at live-start, never by a
+  # host-wide `pkill -f` pattern match: a broad pattern match would also
+  # kill any *other* live-check session on the same host (a real hazard
+  # under parallel test runs, multiple consumers, or a shared CI host --
+  # found during adversarial review of weaver-toolkit/verify-python).
   if [ -f "${WEAVER_PID_FILE}" ]; then
     kill "$(cat "${WEAVER_PID_FILE}")" 2>/dev/null || true
     rm -f "${WEAVER_PID_FILE}"
   fi
-  pkill -f 'weaver registry live-check' 2>/dev/null || true
   log "weaver live-check stopped, report at ${WEAVER_REPORTS_DIR}/report.json"
 }
 
