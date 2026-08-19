@@ -7,6 +7,15 @@ complete = true
 grounded = true
 bounded = true
 
+[sources]
+authoritative = [
+  "ontology.ttl",
+  "trial.schema.json",
+  "README.md",
+  "../../scripts/verify_chicago_alive.py",
+  "../../crates/chicago-claims/src/chicago_alive.rs",
+]
+
 [standing]
 source = "PARTIAL_ALIVE"
 intermediate = "CHICAGO_ALIVE"
