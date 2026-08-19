@@ -65,6 +65,14 @@ official weaver musl binary with a semantic-convention registry and starts
 `registry live-check` with a long inactivity timeout so it stays up as a
 standing service.
 
+## Verification (from outside Rust)
+
+`verify-python/` is a self-contained [uv](https://docs.astral.sh/uv/)
+project that Chicago-style black-box tests `weaver-wrapper.sh` and the OTLP
+listener it starts, driven purely as a shell CLI + real OTLP client — no
+Rust, no mocks. See `verify-python/README.md`. Run it with
+`just weaver-toolkit-verify-python`.
+
 ## Why a wrapper instead of a Cargo dependency
 
 `weaver` is an external Go/Rust upstream binary, not code this repo owns —

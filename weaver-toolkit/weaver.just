@@ -32,3 +32,7 @@ weaver-toolkit-live-stop:
 # Print the installed weaver binary's version
 weaver-toolkit-version:
     bash {{weaver_toolkit_wrapper}} version
+
+# Black-box test this toolkit from outside Rust (uv/pytest) -- see verify-python/README.md
+weaver-toolkit-verify-python:
+    cd {{source_directory()}}/verify-python && uv sync && uv run pytest -v

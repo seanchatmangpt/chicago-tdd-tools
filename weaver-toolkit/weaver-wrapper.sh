@@ -129,10 +129,18 @@ cmd_live_start() {
   [ -x "${WEAVER_BIN_PATH}" ] || die "weaver binary not found, run: $0 bootstrap"
   mkdir -p "${WEAVER_REPORTS_DIR}"
   log "starting weaver live-check on grpc:${WEAVER_OTLP_GRPC_PORT} admin:${WEAVER_ADMIN_PORT}"
+  # Redirect the backgrounded process's stdout/stderr to a log file instead
+  # of inheriting this script's own fds. Without this, a caller that
+  # captures this script's output (e.g. `subprocess.run(capture_output=True)`
+  # from a driving process, or any `$(...)`/pipe) never sees EOF on that
+  # pipe -- the still-running weaver process holds the write end open even
+  # after this script itself has exited -- so the caller hangs until its own
+  # timeout instead of returning once `live-start` completes.
   "${WEAVER_BIN_PATH}" registry live-check -r "$(registry_model_dir)" \
     --otlp-grpc-port "${WEAVER_OTLP_GRPC_PORT}" \
     --admin-port "${WEAVER_ADMIN_PORT}" \
-    --format json --output http &
+    --format json --output http \
+    > "${WEAVER_REPORTS_DIR}/live-check.log" 2>&1 &
   echo $! > "${WEAVER_PID_FILE}"
   log "weaver live-check pid $(cat "${WEAVER_PID_FILE}") (report will land in ${WEAVER_REPORTS_DIR})"
 }

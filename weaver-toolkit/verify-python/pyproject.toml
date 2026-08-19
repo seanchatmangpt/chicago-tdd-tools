@@ -1,0 +1,16 @@
+[project]
+name = "weaver-toolkit-verify"
+version = "0.1.0"
+description = "Chicago-style black-box tests of weaver-toolkit's shell wrapper, exercised from outside Rust: real subprocess calls to weaver-wrapper.sh, real OTLP spans sent over gRPC from Python, real report.json state assertions -- no mocks."
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
