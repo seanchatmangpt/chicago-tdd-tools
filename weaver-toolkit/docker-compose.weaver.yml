@@ -1,0 +1,31 @@
+# docker-compose.weaver.yml — reusable standing weaver live-check service.
+#
+# Consuming projects reference this directly:
+#
+#   docker compose -f path/to/weaver-toolkit/docker-compose.weaver.yml up -d
+#
+# or merge it into their own compose file with the `include:` directive
+# (Compose v2.20+):
+#
+#   include:
+#     - path/to/weaver-toolkit/docker-compose.weaver.yml
+#
+# Override via env vars / .env: WEAVER_IMAGE to point at a pre-built image
+# instead of building locally, WEAVER_GRPC_PORT / WEAVER_ADMIN_PORT to remap
+# host ports, WEAVER_REGISTRY_DIR to point the build context at a different
+# semantic-convention registry checkout.
+
+services:
+  weaver-live-check:
+    image: ${WEAVER_IMAGE:-chicago-tdd-tools/weaver-live-check:local}
+    build:
+      context: ${WEAVER_BUILD_CONTEXT:-.}
+      dockerfile: ${WEAVER_DOCKERFILE:-Dockerfile.weaver}
+    ports:
+      # Host side is configurable; container always listens on 4319/4321 to
+      # match Dockerfile.weaver's ENTRYPOINT. Bound to loopback by default —
+      # this is an ephemeral local dev listener, not meant for cluster-wide
+      # OTLP ingestion.
+      - "127.0.0.1:${WEAVER_GRPC_PORT:-4319}:4319"
+      - "127.0.0.1:${WEAVER_ADMIN_PORT:-4321}:4321"
+    restart: unless-stopped

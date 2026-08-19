@@ -543,6 +543,10 @@ weaver-bootstrap:
 weaver-smoke: weaver-bootstrap
     timeout 30s cargo run --quiet --bin weaver_smoke --features weaver
 
+# Reusable, project-agnostic weaver wrappers — see weaver-toolkit/README.md.
+# Vendorable by other projects independent of this crate's Rust workspace.
+import 'weaver-toolkit/weaver.just'
+
 # ---------------------------------------------------------------------------
 # Spec harness (Chatman Equation conformance)
 # ---------------------------------------------------------------------------
