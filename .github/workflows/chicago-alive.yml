@@ -5,6 +5,8 @@ on:
     paths:
       - 'AGENTS.md'
       - 'architecture/chicago-alive/**'
+      - 'crates/chicago-claims/src/chicago_alive.rs'
+      - 'crates/chicago-claims/src/lib.rs'
       - 'scripts/verify_chicago_alive.py'
       - '.github/workflows/chicago-alive.yml'
   push:
@@ -12,6 +14,8 @@ on:
     paths:
       - 'AGENTS.md'
       - 'architecture/chicago-alive/**'
+      - 'crates/chicago-claims/src/chicago_alive.rs'
+      - 'crates/chicago-claims/src/lib.rs'
       - 'scripts/verify_chicago_alive.py'
       - '.github/workflows/chicago-alive.yml'
   workflow_dispatch:
@@ -31,6 +35,11 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
+      - name: Install exact Rust toolchain
+        uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+        with:
+          toolchain: nightly-2026-06-22
+
       - name: Install BLAKE3 receipt executor
         run: |
           sudo apt-get update
@@ -42,7 +51,10 @@ jobs:
           python3 -m json.tool architecture/chicago-alive/example-trial.json >/dev/null
           python3 -m py_compile scripts/verify_chicago_alive.py
 
-      - name: Execute thirteen semantic falsifiers
+      - name: Execute typed Rust semantic court
+        run: cargo +nightly-2026-06-22 test --manifest-path crates/chicago-claims/Cargo.toml chicago_alive
+
+      - name: Execute thirteen independent semantic falsifiers
         run: python3 scripts/verify_chicago_alive.py --self-test
 
       - name: Bind synthetic trial to exact candidate head
