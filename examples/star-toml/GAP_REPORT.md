@@ -102,12 +102,12 @@
 
 | Ticket ID | Title | Priority |
 |-----------|-------|----------|
-| ST-201 | Add `#[derive(TestConfig)]` to auto-impl `Validate + ConfigLifecycle` for test structs | Medium |
-| ST-202 | Add `load_test_config::<T>(path)` convenience shortcut to `star-toml-config-test` | Medium |
-| ST-203 | Add `config_test!` macro to chicago-tdd-tools for single-line admitted-config tests | Low |
-| ST-204 | Document layering order precedence in type signatures and error messages | Medium |
-| ST-205 | Publish star-toml 26.6.29 to crates.io to unblock chicago-tdd-tools path dep | High |
-| ST-206 | Add `chicago_example_compiles` and `chicago_example_runs` to release verifier | Low |
+| ST-201 | Add `#[derive(TestConfig)]` to auto-impl `Validate + ConfigLifecycle` for test structs | Medium | OPEN — belongs to `star-toml`/`star-toml-config-test`, not this repo |
+| ST-202 | Add `load_test_config::<T>(path)` convenience shortcut to `star-toml-config-test` | Medium | OPEN — belongs to `star-toml`/`star-toml-config-test`, not this repo |
+| ST-203 | Add `config_test!` macro to chicago-tdd-tools for single-line admitted-config tests | Low | **DONE** — `config_test!`/`config_refusal_test!` in `src/core/macros/config_test.rs`, exercised in `examples/star-toml/main.rs` (`test_config_test_macro_admits_valid_config`, `test_config_refusal_test_macro_rejects_out_of_range_port`) |
+| ST-204 | Document layering order precedence in type signatures and error messages | Medium | OPEN — belongs to `star-toml`, not this repo |
+| ST-205 | Publish star-toml 26.6.29 to crates.io to unblock chicago-tdd-tools path dep | High | **DONE** — `Cargo.toml` now pins `star-toml = "26.6.29"` from crates.io, no path dep |
+| ST-206 | Add `chicago_example_compiles` and `chicago_example_runs` to release verifier | Low | OPEN — "release verifier" is a `star-toml` concept; this repo has no equivalent gate to add it to |
 
 ---
 

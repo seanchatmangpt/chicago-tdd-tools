@@ -273,4 +273,38 @@ key_path = ""
         let result = loader.load_admitted::<AppConfig>();
         chicago_tdd_tools::assert_err!(&result);
     });
+
+    // DoD ST-203 (examples/star-toml/GAP_REPORT.md): `config_test!` and
+    // `config_refusal_test!` wrap the repeated TrustedLoader + assert_ok!/
+    // assert_err! pattern used throughout this file in one invocation.
+    chicago_tdd_tools::config_test!(
+        test_config_test_macro_admits_valid_config,
+        AppConfig,
+        r#"
+name = "macro-app"
+workers = 4
+
+[server]
+host = "localhost"
+port = 8080
+"#,
+        |config| {
+            assert_eq!(config.name, "macro-app");
+            assert_eq!(config.workers, 4);
+            assert_eq!(config.server.port, 8080);
+        }
+    );
+
+    chicago_tdd_tools::config_refusal_test!(
+        test_config_refusal_test_macro_rejects_out_of_range_port,
+        AppConfig,
+        r#"
+name = "macro-app"
+workers = 4
+
+[server]
+host = "localhost"
+port = 0
+"#
+    );
 }
