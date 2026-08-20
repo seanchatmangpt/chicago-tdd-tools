@@ -49,12 +49,12 @@ jobs:
           key: docs
 
       - name: Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: just
 
       - name: Install mdBook
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: mdbook
         continue-on-error: true
