@@ -5,7 +5,21 @@
 #
 # Run `just --list` to see all recipes.
 
-set shell := ["bash", "-uc"]
+# -u (nounset) means ANY unset-variable reference aborts a recipe. GitHub
+# Actions' hosted runners export BASH_ENV pointing at /etc/bash.bashrc, and
+# bash sources that file for every non-interactive `-c` invocation when
+# BASH_ENV is set (not just login/interactive shells). /etc/bash.bashrc's own
+# early-return guard reads $PS1 unguarded (`if [ -n "$PS1" ]` style, not
+# `${PS1-}`), so under -u that read itself is the unset-variable error --
+# every recipe fails immediately with "PS1: unbound variable" before its own
+# first command ever runs, on every OS runner, regardless of what the recipe
+# does. Confirmed live in CI (chicago-tdd-tools#93, ubuntu-latest/stable):
+#   /etc/bash.bashrc: line 7: PS1: unbound variable
+#   error: recipe `test-unit` failed on line 115 with exit code 1
+# `env -u BASH_ENV` strips the variable before bash starts, so nothing sources
+# /etc/bash.bashrc in the first place -- -u still catches real unset-variable
+# bugs in our own recipes, which is what it's here for.
+set shell := ["env", "-u", "BASH_ENV", "bash", "-uc"]
 
 # Default: show available recipes
 default:
