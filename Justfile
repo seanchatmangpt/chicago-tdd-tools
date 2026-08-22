@@ -5,7 +5,39 @@
 #
 # Run `just --list` to see all recipes.
 
-set shell := ["bash", "-uc"]
+# -u (nounset) means ANY unset-variable reference aborts a recipe -- it's
+# here to catch real unset-variable bugs in OUR OWN recipe bodies. GitHub
+# Actions' ubuntu-latest runners source /etc/bash.bashrc as part of bash's
+# own non-interactive startup, and that file's early-return guard reads $PS1
+# unguarded (`if [ -n "$PS1" ]` style, not `${PS1-}`). bash never sets PS1
+# for a non-interactive shell in the first place (that's universal bash
+# behavior, confirmed locally: `env PS1= bash -c 'echo ${PS1-UNSET}'` prints
+# UNSET even though PS1 was passed in via env), so if `-u` is active as a
+# bash(1) CLI flag -- i.e. active for bash's OWN startup, before our script's
+# first line runs -- that guard's read is itself the unbound-variable error.
+# Every recipe failed immediately with "PS1: unbound variable" before its
+# own first command ever ran, on every OS runner, regardless of what the
+# recipe did. Confirmed live in CI (chicago-tdd-tools#93, ubuntu-latest/
+# stable):
+#   /etc/bash.bashrc: line 7: PS1: unbound variable
+#   error: recipe `test-unit` failed on line 115 with exit code 1
+# Two earlier attempts at this fix (chicago-tdd-tools PR #96) did NOT work:
+# `env -u BASH_ENV` and pre-setting `PS1=` both still failed identically on
+# the real runner afterward, because neither addresses the actual cause --
+# bash unconditionally discards/never-sets PS1 for non-interactive shells,
+# and (on this distro's bash) sources /etc/bash.bashrc unconditionally too,
+# independent of BASH_ENV.
+#
+# The fix that actually works: never pass `-u` as a bash CLI flag at all, so
+# bash's own startup (and whatever it sources during that startup) runs
+# without nounset active. `set -u` is instead the FIRST STATEMENT of the
+# script itself, turned on only once OUR code starts running -- after
+# bash's startup (and any implicit sourcing) has already finished. Verified
+# locally: a two-line recipe runs normally through this wrapper, and a
+# recipe that references a genuinely-unset variable of ITS OWN still fails
+# with "unbound variable" exactly as before -- nounset protection for our
+# own code is unchanged, only bash's own startup phase is now exempt.
+set shell := ["bash", "-c", "set -u; eval \"$1\"", "--"]
 
 # Default: show available recipes
 default:
