@@ -61,7 +61,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -74,7 +74,7 @@ jobs:
           key: benchmark
 
       - name: Install cargo-make
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.86.5
         with:
           tool: cargo-make
 
