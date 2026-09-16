@@ -881,6 +881,81 @@ pub fn weaver_telemetry_processing_wait_milliseconds() -> u64 {
     )
 }
 
+/// Environment variable for pinning the Weaver semantic-conventions registry version.
+///
+/// Documented in `docs/features/REGISTRY_VERSION_PINNING.md` as the recommended
+/// pinning mechanism; takes precedence over the config-file value.
+pub const WEAVER_REGISTRY_VERSION_ENV: &str = "WEAVER_REGISTRY_VERSION";
+
+/// Get the pinned Weaver registry version (tag, branch, or commit hash).
+///
+/// Implements the capability documented in `docs/features/REGISTRY_VERSION_PINNING.md`
+/// (previously "planned but not yet implemented" for the config file):
+///
+/// 1. `WEAVER_REGISTRY_VERSION` environment variable (recommended, takes precedence)
+/// 2. `[observability.weaver] registry_version` in `chicago-tdd-tools.toml`
+///
+/// Returns `None` when neither source provides a non-empty value, meaning
+/// "use latest". Whitespace-only values are rejected rather than silently
+/// treated as unset, matching the `RegistryVersion` poka-yoke contract.
+///
+/// ```rust,no_run
+/// use chicago_tdd_tools::core::config::loading;
+///
+/// match loading::weaver_registry_version() {
+///     Some(version) => println!("Pinned registry version: {version}"),
+///     None => println!("Registry not pinned; latest will be used"),
+/// }
+/// ```
+#[must_use]
+pub fn weaver_registry_version() -> Option<String> {
+    let env_value = env::var(WEAVER_REGISTRY_VERSION_ENV).ok();
+    let config_value = read_config_string_value("observability.weaver", "registry_version");
+    resolve_registry_version(env_value.as_deref(), config_value.as_deref())
+}
+
+/// Pure registry-version resolver: environment wins over config file.
+///
+/// Extracted as a total function so precedence and blank-rejection are
+/// testable without process or filesystem state.
+fn resolve_registry_version(env_value: Option<&str>, config_value: Option<&str>) -> Option<String> {
+    env_value
+        .or(config_value)
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(str::to_string)
+}
+
+/// Read a string config value from `chicago-tdd-tools.toml`.
+///
+/// Same simple single-line TOML subset as [`read_config_value`]: section
+/// headers, `key = "value"` pairs, quote stripping. Returns `None` when the
+/// file, section, or key is absent (callers fall back to defaults).
+fn read_config_string_value(section: &str, key: &str) -> Option<String> {
+    let config_path = find_config_file()?;
+    let contents = fs::read_to_string(&config_path).ok()?;
+    let mut current_section = String::new();
+    for line in contents.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if line.starts_with('[') && line.ends_with(']') {
+            current_section = line[1..line.len() - 1].trim().to_string();
+            continue;
+        }
+        if current_section == section {
+            if let Some((k, v)) = line.split_once('=') {
+                if k.trim() == key {
+                    let v = v.trim().trim_matches('"').trim_matches('\'');
+                    return Some(v.to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1382,5 +1457,123 @@ max_batch_size = 0
         );
 
         // Cleanup: Guards' Drop implementations automatically restore state
+    }
+
+    /// **Registry Version Pinning (docs/features/REGISTRY_VERSION_PINNING.md)**:
+    /// Environment variable takes precedence over the config-file value.
+    #[test]
+    fn test_resolve_registry_version_env_precedence() {
+        let resolved = resolve_registry_version(Some("v1.30.0"), Some("v1.25.0"));
+        assert_eq!(
+            resolved,
+            Some("v1.30.0".to_string()),
+            "Environment variable must win over config file"
+        );
+    }
+
+    /// Config-file value is used when the environment variable is unset.
+    #[test]
+    fn test_resolve_registry_version_config_fallback() {
+        let resolved = resolve_registry_version(None, Some(" v1.25.0 "));
+        assert_eq!(
+            resolved,
+            Some("v1.25.0".to_string()),
+            "Config value must be used and trimmed when env var is unset"
+        );
+    }
+
+    /// Blank values are rejected (None), matching the `RegistryVersion` poka-yoke contract.
+    #[test]
+    fn test_resolve_registry_version_rejects_blank() {
+        assert_eq!(
+            resolve_registry_version(Some("   "), None),
+            None,
+            "Whitespace-only env value must resolve to None"
+        );
+        assert_eq!(
+            resolve_registry_version(None, Some("")),
+            None,
+            "Empty config value must resolve to None"
+        );
+        assert_eq!(
+            resolve_registry_version(None, None),
+            None,
+            "No sources must resolve to None (use latest)"
+        );
+    }
+
+    /// End-to-end: `[observability.weaver] registry_version` is read from the
+    /// config file when the env var is unset (documented config-file support).
+    #[test]
+    fn test_weaver_registry_version_from_config_file() {
+        let _lock = get_lock();
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
+        fs::write(
+            &config_path,
+            r#"
+[observability.weaver]
+registry_version = "v1.25.0"
+otlp_grpc_port = 4317
+"#,
+        )
+        .expect("Failed to write config file");
+
+        let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
+        let original_env_version = std::env::var(WEAVER_REGISTRY_VERSION_ENV).ok();
+        std::env::set_var("CARGO_MANIFEST_DIR", temp_dir.path());
+        std::env::remove_var(WEAVER_REGISTRY_VERSION_ENV);
+
+        assert_eq!(
+            weaver_registry_version(),
+            Some("v1.25.0".to_string()),
+            "registry_version must be read from [observability.weaver] config section"
+        );
+
+        if let Some(dir) = original_manifest_dir {
+            std::env::set_var("CARGO_MANIFEST_DIR", dir);
+        } else {
+            std::env::remove_var("CARGO_MANIFEST_DIR");
+        }
+        if let Some(v) = original_env_version {
+            std::env::set_var(WEAVER_REGISTRY_VERSION_ENV, v);
+        }
+    }
+
+    /// End-to-end: `WEAVER_REGISTRY_VERSION` overrides a config-file pin.
+    #[test]
+    fn test_weaver_registry_version_env_overrides_config_file() {
+        let _lock = get_lock();
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let config_path = temp_dir.path().join("chicago-tdd-tools.toml");
+        fs::write(
+            &config_path,
+            r#"
+[observability.weaver]
+registry_version = "v1.25.0"
+"#,
+        )
+        .expect("Failed to write config file");
+
+        let original_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok();
+        let original_env_version = std::env::var(WEAVER_REGISTRY_VERSION_ENV).ok();
+        std::env::set_var("CARGO_MANIFEST_DIR", temp_dir.path());
+        std::env::set_var(WEAVER_REGISTRY_VERSION_ENV, "v1.30.0");
+
+        assert_eq!(
+            weaver_registry_version(),
+            Some("v1.30.0".to_string()),
+            "WEAVER_REGISTRY_VERSION must override the config-file pin"
+        );
+
+        if let Some(dir) = original_manifest_dir {
+            std::env::set_var("CARGO_MANIFEST_DIR", dir);
+        } else {
+            std::env::remove_var("CARGO_MANIFEST_DIR");
+        }
+        match original_env_version {
+            Some(v) => std::env::set_var(WEAVER_REGISTRY_VERSION_ENV, v),
+            None => std::env::remove_var(WEAVER_REGISTRY_VERSION_ENV),
+        }
     }
 }
