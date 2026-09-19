@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chatmangpt.com/schema/chicago-alive-trial-v1.json",
+  "title": "CHICAGO_ALIVE Trial Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "subject",
+    "world",
+    "authority",
+    "trial",
+    "collaborators",
+    "falsifiers",
+    "correspondence",
+    "receipt_refs",
+    "replay"
+  ],
+  "properties": {
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "exact", "commit_sha"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "exact": {"const": true},
+        "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "admitted", "kind"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "admitted": {"type": "boolean"},
+        "kind": {"enum": ["SYNTHETIC", "EMULATED", "TEST_TENANT", "REAL_TARGET"]}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_observed", "direct_actuation", "production_authority_used"],
+      "properties": {
+        "path_observed": {"type": "boolean"},
+        "direct_actuation": {"type": "boolean"},
+        "production_authority_used": {"type": "boolean"}
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_observed",
+        "consequence_observed",
+        "real_target_identity_exact",
+        "real_target_consequence_observed"
+      ],
+      "properties": {
+        "execution_observed": {"type": "boolean"},
+        "consequence_observed": {"type": "boolean"},
+        "real_target_identity_exact": {"type": "boolean"},
+        "real_target_consequence_observed": {"type": "boolean"}
+      }
+    },
+    "collaborators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "load_bearing", "evidence_ref"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["REAL", "TEST_DOUBLE"]},
+          "load_bearing": {"type": "boolean"},
+          "evidence_ref": {"type": "string"}
+        }
+      }
+    },
+    "falsifiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "passed", "evidence_ref"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "passed": {"type": "boolean"},
+          "evidence_ref": {"type": "string"}
+        }
+      }
+    },
+    "correspondence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bounded", "target_ref", "contract_ref", "known_divergences"],
+      "properties": {
+        "bounded": {"type": "boolean"},
+        "target_ref": {"type": "string", "minLength": 1},
+        "contract_ref": {"type": "string", "minLength": 1},
+        "known_divergences": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "receipt_refs": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "replay": {"enum": ["MATCH", "MISMATCH", "NOT_RUN"]}
+  }
+}

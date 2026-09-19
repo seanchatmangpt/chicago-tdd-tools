@@ -1,0 +1,72 @@
+{
+  "subject": {
+    "ref": "seanchatmangpt/chicago-tdd-tools@0000000000000000000000000000000000000000",
+    "exact": true,
+    "commit_sha": "0000000000000000000000000000000000000000"
+  },
+  "world": {
+    "ref": "urn:gymact:world:chicago-alive-example",
+    "admitted": true,
+    "kind": "SYNTHETIC"
+  },
+  "authority": {
+    "path_observed": true,
+    "direct_actuation": false,
+    "production_authority_used": false
+  },
+  "trial": {
+    "execution_observed": true,
+    "consequence_observed": true,
+    "real_target_identity_exact": false,
+    "real_target_consequence_observed": false
+  },
+  "collaborators": [
+    {
+      "id": "gymact-world",
+      "kind": "REAL",
+      "load_bearing": true,
+      "evidence_ref": "urn:evidence:gymact-world"
+    },
+    {
+      "id": "authority-resolver",
+      "kind": "REAL",
+      "load_bearing": true,
+      "evidence_ref": "urn:evidence:authority-resolver"
+    },
+    {
+      "id": "receipt-replay",
+      "kind": "REAL",
+      "load_bearing": true,
+      "evidence_ref": "urn:evidence:receipt-replay"
+    }
+  ],
+  "falsifiers": [
+    {
+      "id": "authority-removed",
+      "passed": true,
+      "evidence_ref": "urn:evidence:falsifier:authority-removed"
+    },
+    {
+      "id": "load-bearing-mock",
+      "passed": true,
+      "evidence_ref": "urn:evidence:falsifier:load-bearing-mock"
+    },
+    {
+      "id": "receipt-tamper",
+      "passed": true,
+      "evidence_ref": "urn:evidence:falsifier:receipt-tamper"
+    }
+  ],
+  "correspondence": {
+    "bounded": true,
+    "target_ref": "urn:target:declared-real-environment",
+    "contract_ref": "urn:contract:bounded-correspondence:v1",
+    "known_divergences": [
+      "The fixture is not evidence of exact real-target execution."
+    ]
+  },
+  "receipt_refs": [
+    "urn:receipt:gymact:example"
+  ],
+  "replay": "MATCH"
+}

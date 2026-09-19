@@ -76,11 +76,31 @@ Verification expands only after narrower proof succeeds:
 
 `unit → integration → e2e → chaos → stress → benchmark → verifier report`
 
+## CHICAGO_ALIVE standing
+
+`CHICAGO_ALIVE` is the execution standing between `PARTIAL_ALIVE` and `ALIVE`.
+
+`PARTIAL_ALIVE → CHICAGO_ALIVE → ALIVE`
+
+A subject may claim `CHICAGO_ALIVE` only when the exact software subject has executed through real load-bearing collaborators against an admitted executable world, the consequence and authority path were observed, adversarial falsifiers passed, a consequence receipt exists, replay matches, and correspondence to the target world is explicitly bounded.
+
+- A load-bearing test double refuses `CHICAGO_ALIVE`.
+- Direct actuation refuses `CHICAGO_ALIVE`; DO remains broker-only.
+- A failed falsifier or replay mismatch refuses the crown.
+- Missing but non-contradictory evidence remains `PARTIAL_ALIVE`.
+- `CHICAGO_ALIVE` never implies exact real-target execution.
+- `ALIVE` additionally requires the exact admitted real target and its observed claimed consequence.
+- Standing is capability/subject scoped. One edge reaching `CHICAGO_ALIVE` does not promote adjacent edges.
+
+The executable court is `scripts/verify_chicago_alive.py`; the contract is `architecture/chicago-alive/`.
+
 ## Gall states
 
-Use only: `PARTIAL_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNKNOWN`, `UNSUPPORTED`.
+Use only: `PARTIAL_ALIVE`, `CHICAGO_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNKNOWN`, `UNSUPPORTED`, plus typed `REFUSED` where an admission or authority boundary denies transition.
 
-- `ALIVE` requires observed execution.
+- `PARTIAL_ALIVE` means meaningful bounded execution exists but the relevant world/evidence closure is incomplete.
+- `CHICAGO_ALIVE` requires exact-subject execution in an admitted executable world with real load-bearing collaborators, consequence observation, falsification, receipts, replay, and bounded correspondence.
+- `ALIVE` requires observed execution against the exact admitted real target subject/boundary.
 - `UNKNOWN` is not admitted.
 - `UNSUPPORTED` is not refused.
 - A checkpoint must not be overclaimed as crown completion.
@@ -123,7 +143,14 @@ cargo test --manifest-path architecture/combinatorial-maximalism/generated/Cargo
 rustc +nightly-2026-06-22 --edition 2021 src/bin/ctdd_combinatorial_plan.rs -o /tmp/ctdd_combinatorial_plan
 ```
 
-Receiver admission additionally requires BLAKE3, real pinned ggen, exact-head binding, deterministic second sync, and artifact publication.
+CHICAGO_ALIVE court:
+
+```bash
+python3 scripts/verify_chicago_alive.py --self-test
+python3 scripts/verify_chicago_alive.py architecture/chicago-alive/example-trial.json --require-blake3
+```
+
+Receiver admission additionally requires BLAKE3, real pinned ggen where generation is in scope, exact-head binding, deterministic replay, and artifact publication.
 
 ## Write safety
 

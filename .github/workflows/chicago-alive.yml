@@ -1,0 +1,160 @@
+name: CHICAGO_ALIVE court
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'architecture/chicago-alive/**'
+      - 'crates/chicago-claims/src/chicago_alive.rs'
+      - 'crates/chicago-claims/src/lib.rs'
+      - 'scripts/verify_chicago_alive.py'
+      - 'scripts/sabotage_chicago_alive.py'
+      - '.github/workflows/chicago-alive.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'architecture/chicago-alive/**'
+      - 'crates/chicago-claims/src/chicago_alive.rs'
+      - 'crates/chicago-claims/src/lib.rs'
+      - 'scripts/verify_chicago_alive.py'
+      - 'scripts/sabotage_chicago_alive.py'
+      - '.github/workflows/chicago-alive.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  court:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Install exact Rust toolchain
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        with:
+          toolchain: nightly-2026-06-22
+
+      - name: Install BLAKE3 receipt executor
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y b3sum
+
+      - name: Parse machine-readable contracts
+        run: |
+          python3 -m json.tool architecture/chicago-alive/trial.schema.json >/dev/null
+          python3 -m json.tool architecture/chicago-alive/example-trial.json >/dev/null
+          python3 -m py_compile scripts/verify_chicago_alive.py scripts/sabotage_chicago_alive.py
+
+      - name: Execute typed Rust semantic court
+        run: cargo +nightly-2026-06-22 test --manifest-path crates/chicago-claims/Cargo.toml chicago_alive
+
+      - name: Execute built-in semantic falsifiers
+        run: python3 scripts/verify_chicago_alive.py --self-test
+
+      - name: Execute independent black-box sabotage court
+        run: python3 scripts/sabotage_chicago_alive.py
+
+      - name: Bind positive contract fixture to exact candidate head
+        env:
+          EXACT_HEAD: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path('architecture/chicago-alive/example-trial.json')
+          target = Path('/tmp/chicago-alive-trial.json')
+          trial = json.loads(source.read_text(encoding='utf-8'))
+          head = os.environ['EXACT_HEAD']
+          trial['subject']['commit_sha'] = head
+          trial['subject']['ref'] = f'seanchatmangpt/chicago-tdd-tools@{head}'
+          target.write_text(json.dumps(trial, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Evaluate exact-head positive fixture and write court receipt
+        env:
+          EXACT_HEAD: ${{ github.sha }}
+        run: |
+          python3 scripts/verify_chicago_alive.py \
+            /tmp/chicago-alive-trial.json \
+            --require-exact-head "$EXACT_HEAD" \
+            --require-blake3 \
+            --write-receipt /tmp/chicago-alive-receipt.json \
+            > /tmp/chicago-alive-decision.json
+          grep -q '"standing": "CHICAGO_ALIVE"' /tmp/chicago-alive-decision.json
+          grep -q '"direct_actuation": false' /tmp/chicago-alive-decision.json
+
+      - name: Replay fixture court receipt exactly
+        env:
+          EXACT_HEAD: ${{ github.sha }}
+        run: |
+          python3 scripts/verify_chicago_alive.py \
+            /tmp/chicago-alive-trial.json \
+            --require-exact-head "$EXACT_HEAD" \
+            --require-blake3 \
+            --replay-receipt /tmp/chicago-alive-receipt.json \
+            > /tmp/chicago-alive-replay.json
+          grep -q '"court_replay": "MATCH"' /tmp/chicago-alive-replay.json
+
+      - name: Prove load-bearing mock refuses fixture crown
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source = Path('/tmp/chicago-alive-trial.json')
+          target = Path('/tmp/chicago-alive-mock.json')
+          trial = json.loads(source.read_text(encoding='utf-8'))
+          trial['collaborators'][0]['kind'] = 'TEST_DOUBLE'
+          target.write_text(json.dumps(trial, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          PY
+          if python3 scripts/verify_chicago_alive.py /tmp/chicago-alive-mock.json > /tmp/chicago-alive-mock-decision.json; then
+            echo 'load-bearing mock unexpectedly crowned'
+            exit 1
+          fi
+          grep -q '"standing": "REFUSED"' /tmp/chicago-alive-mock-decision.json
+          grep -q 'CTA-COL-001' /tmp/chicago-alive-mock-decision.json
+
+      - name: Prove ALIVE fixture requires exact real target consequence
+        env:
+          EXACT_HEAD: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source = Path('/tmp/chicago-alive-trial.json')
+          target = Path('/tmp/chicago-alive-real.json')
+          trial = json.loads(source.read_text(encoding='utf-8'))
+          trial['world']['kind'] = 'REAL_TARGET'
+          trial['trial']['real_target_identity_exact'] = True
+          trial['trial']['real_target_consequence_observed'] = True
+          target.write_text(json.dumps(trial, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          PY
+          python3 scripts/verify_chicago_alive.py \
+            /tmp/chicago-alive-real.json \
+            --require-exact-head "$EXACT_HEAD" \
+            > /tmp/chicago-alive-real-decision.json
+          grep -q '"standing": "ALIVE"' /tmp/chicago-alive-real-decision.json
+
+      - name: Publish contract-fixture evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: chicago-alive-contract-fixture-${{ github.sha }}
+          path: |
+            /tmp/chicago-alive-trial.json
+            /tmp/chicago-alive-decision.json
+            /tmp/chicago-alive-receipt.json
+            /tmp/chicago-alive-replay.json
+            /tmp/chicago-alive-mock-decision.json
+            /tmp/chicago-alive-real-decision.json
+          if-no-files-found: error
