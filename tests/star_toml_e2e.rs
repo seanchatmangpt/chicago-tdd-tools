@@ -28,15 +28,26 @@ fn get_bin_path() -> PathBuf {
         assert!(status.success(), "Failed to compile star_toml example");
     });
 
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("target");
+    // Honor an inherited CARGO_TARGET_DIR (shared build caches): cargo puts the
+    // example there, not under CARGO_MANIFEST_DIR/target.
+    let target_root = std::env::var_os("CARGO_TARGET_DIR").map_or_else(
+        || PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target"),
+        |dir| {
+            let dir = PathBuf::from(dir);
+            if dir.is_absolute() {
+                dir
+            } else {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(dir)
+            }
+        },
+    );
+    let mut path = target_root.clone();
     path.push("debug");
     path.push("examples");
     path.push("star_toml");
 
     if !path.exists() {
-        let mut fallback = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        fallback.push("target");
+        let mut fallback = target_root;
         fallback.push("release");
         fallback.push("examples");
         fallback.push("star_toml");

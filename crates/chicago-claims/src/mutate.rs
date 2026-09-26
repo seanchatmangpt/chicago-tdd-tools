@@ -937,6 +937,12 @@ impl MutationProvider for PatchOverlayProvider {
 
         let mut cmd = Command::new("cargo");
         cmd.current_dir(isolated_root.path().join(f.crate_dir));
+        // Isolation: pin the build directory inside the isolated copy. An
+        // inherited CARGO_TARGET_DIR (shared build caches, CI runners) would
+        // otherwise make concurrent mutants share one target dir and race on
+        // the same crate artifacts, so one mutant's oracle could run another
+        // mutant's (or the pristine) binary and report the wrong outcome.
+        cmd.env("CARGO_TARGET_DIR", isolated_root.path().join("target"));
         cmd.arg("test");
         if let Some(bin) = f.test_binary {
             cmd.arg("--test").arg(bin);
