@@ -1,0 +1,35 @@
+{
+  "bench": "benches/receipt_chain.rs",
+  "command": "cargo bench --locked --bench receipt_chain --features receipt-validation -- --warm-up-time 1 --measurement-time 3",
+  "subject": {
+    "repo": "seanchatmangpt/chicago-tdd-tools",
+    "pr": 104,
+    "pr_head": "b1746e4689fc7a842a977743b1ded9097a9a7942",
+    "base_main": "9e03955646238d2f53efb78ced68d152e6f6a2fc"
+  },
+  "host": "darwin arm64 Apple M3 Max, toolchain nightly-2026-04-15, release bench profile",
+  "unit": "criterion median time [low, median, high]",
+  "results": {
+    "head_lock_blake3_1.8.7": {
+      "validate/16": ["2.0882us", "2.1288us", "2.1735us"],
+      "build/16": ["2.5670us", "2.7297us", "2.9905us"],
+      "validate/1024": ["174.83us", "203.26us", "236.88us"],
+      "build/1024": ["156.58us", "166.44us", "178.46us"],
+      "validate/10000": ["1.6310ms", "1.7660ms", "1.9524ms"],
+      "build/10000": ["1.4875ms", "1.5914ms", "1.7236ms"]
+    },
+    "base_lock_blake3_1.8.6": {
+      "validate/16": ["2.7291us", "3.1096us", "3.5217us"],
+      "build/16": ["3.0875us", "3.4856us", "3.9871us"],
+      "validate/1024": ["144.80us", "151.82us", "161.40us"],
+      "build/1024": ["166.53us", "181.44us", "200.62us"],
+      "validate/10000": ["1.4329ms", "1.4971ms", "1.5967ms"],
+      "build/10000": ["1.5176ms", "1.6205ms", "1.7473ms"]
+    }
+  },
+  "verdict": "no material regression: head/base medians within run-to-run noise on a shared host (validate/10000 1.77ms vs 1.50ms, build/10000 1.59ms vs 1.62ms); digests byte-identical across both locks (tests/dependency_lock_guard.rs GOLDEN)",
+  "regression_bound": {
+    "test": "tests/dependency_lock_guard.rs::receipt_chain::ten_thousand_entry_chain_validates_within_bound",
+    "bound": "validate 10_000 entries < 2000 ms in the debug test profile (~1000x headroom over the release median)"
+  }
+}

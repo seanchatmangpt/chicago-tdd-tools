@@ -403,6 +403,11 @@ harness = false
 name = "builders"
 harness = false
 
+[[bench]]
+name = "receipt_chain"
+harness = false
+required-features = ["receipt-validation"]
+
 [workspace]
 members = [
     ".",
