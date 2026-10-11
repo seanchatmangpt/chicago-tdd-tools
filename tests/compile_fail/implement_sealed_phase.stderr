@@ -1,0 +1,16 @@
+error[E0432]: unresolved import `chicago_tdd_tools::state::Sealed`
+ --> tests/compile_fail/implement_sealed_phase.rs:8:41
+  |
+8 | use chicago_tdd_tools::state::{Arrange, Sealed};
+  |                                         ^^^^^^ no `Sealed` in `core::state`
+
+error[E0433]: cannot find type `TestState` in this scope
+  --> tests/compile_fail/implement_sealed_phase.rs:15:13
+   |
+15 |     let _ = TestState::<Arrange>::new();
+   |             ^^^^^^^^^ use of undeclared type `TestState`
+   |
+help: consider importing this struct
+   |
+ 8 + use chicago_tdd_tools::state::TestState;
+   |

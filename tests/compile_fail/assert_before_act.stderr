@@ -1,0 +1,7 @@
+error[E0599]: no method named `assert` found for struct `TestState<Arrange>` in the current scope
+  --> tests/compile_fail/assert_before_act.rs:11:19
+   |
+11 |     let _ = state.assert();
+   |                   ^^^^^^ method not found in `TestState<Arrange>`
+   |
+   = note: the method was found for `TestState<Act>`

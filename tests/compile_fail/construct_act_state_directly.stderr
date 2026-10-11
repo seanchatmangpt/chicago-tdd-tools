@@ -1,0 +1,5 @@
+error[E0308]: mismatched types
+  --> tests/compile_fail/construct_act_state_directly.rs:11:15
+   |
+11 |         data: (),
+   |               ^^ expected `TestData`, found `()`

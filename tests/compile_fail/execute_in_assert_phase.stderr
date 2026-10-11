@@ -1,0 +1,7 @@
+error[E0599]: no method named `execute` found for struct `TestState<Assert>` in the current scope
+  --> tests/compile_fail/execute_in_assert_phase.rs:11:19
+   |
+11 |     let _ = state.execute(|data| data.unwrap_or_default());
+   |                   ^^^^^^^ method not found in `TestState<Assert>`
+   |
+   = note: the method was found for `TestState<Act>`

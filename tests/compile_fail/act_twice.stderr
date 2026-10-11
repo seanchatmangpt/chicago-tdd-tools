@@ -1,0 +1,7 @@
+error[E0599]: no method named `act` found for struct `TestState<Act>` in the current scope
+  --> tests/compile_fail/act_twice.rs:11:25
+   |
+11 |     let _ = state.act().act();
+   |                         ^^^ method not found in `TestState<Act>`
+   |
+   = note: the method was found for `TestState<Arrange>`
