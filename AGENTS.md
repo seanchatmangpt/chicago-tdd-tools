@@ -111,7 +111,7 @@ Standards cell:
 ```bash
 python3 scripts/verify_ggen_standards.py --exact-head 0000000000000000000000000000000000000000
 python3 scripts/sabotage_ggen_standards.py
-cargo test --manifest-path standards/chicago-tdd/generated/Cargo.toml
+just test-unit  # plus: cargo test --manifest-path standards/chicago-tdd/generated/Cargo.toml (generated crate, not covered by Justfile)
 ```
 
 Combinatorial-maximalism cell:
@@ -119,7 +119,7 @@ Combinatorial-maximalism cell:
 ```bash
 python3 scripts/verify_combinatorial_maximalism.py --exact-head 0000000000000000000000000000000000000000
 python3 scripts/sabotage_combinatorial_maximalism.py
-cargo test --manifest-path architecture/combinatorial-maximalism/generated/Cargo.toml
+just test-unit  # plus: cargo test --manifest-path architecture/combinatorial-maximalism/generated/Cargo.toml (generated crate, not covered by Justfile)
 rustc +nightly-2026-06-22 --edition 2021 src/bin/ctdd_combinatorial_plan.rs -o /tmp/ctdd_combinatorial_plan
 ```
 

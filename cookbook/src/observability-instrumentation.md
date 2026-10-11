@@ -47,22 +47,25 @@ This enables:
 ### 2. Initialize Observability in Tests
 
 ```rust
-use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
-use chicago_tdd_tools::observability::otel::OtelTestValidator;
+use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_with_observability() {
     // Arrange: Create fixture with observability
-    let fixture = WeaverTestFixture::new()
+    let mut fixture = WeaverTestFixture::new()
         .expect("Failed to initialize Weaver fixture");
 
-    // Act: Your code under test runs (emits spans)
-    your_function_that_emits_spans();
+    // Act: Your code under test runs (emits spans through the fixture tracer)
+    let tracer = fixture
+        .tracer("test-component", "your-service")
+        .expect("Failed to create tracer");
+    your_function_that_emits_spans(&tracer);
 
-    // Assert: Validate the spans
-    let spans = fixture.collect_spans();
-    assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].name, "your.operation");
+    // Assert: Flush telemetry and inspect the Weaver validation results
+    let results = fixture
+        .finish()
+        .expect("Failed to collect Weaver validation results");
+    assert!(!results.has_violations());
 }
 ```
 
@@ -75,24 +78,32 @@ Use when: You want to validate span structure without Weaver semantic convention
 ### Example: Validating Span Attributes
 
 ```rust
-use chicago_tdd_tools::observability::otel::OtelTestValidator;
+use chicago_tdd_tools::observability::otel::test_helpers::create_test_span_with_attributes;
+use chicago_tdd_tools::observability::otel::SpanValidator;
+use std::collections::BTreeMap;
 
 #[test]
 fn test_span_has_correct_attributes() {
     // Arrange
-    let validator = OtelTestValidator::new();
+    let validator = SpanValidator::new()
+        .with_required_attributes(vec![
+            "db.system".to_string(),
+            "db.operation".to_string(),
+        ]);
 
     // Act: Function under test emits span
     let result = my_function_that_creates_span();
-
-    // Assert: Span has expected attributes
-    validator.assert_span_exists("db.query", |span| {
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-        assert_eq!(span.get_attribute("db.operation"), Some("SELECT"));
-        // Verify no .unwrap() calls in code (no panics recorded)
-        assert!(!span.has_exception());
+    let span = create_test_span_with_attributes("db.query", {
+        let mut attrs = BTreeMap::new();
+        attrs.insert("db.system".to_string(), "postgres".to_string());
+        attrs.insert("db.operation".to_string(), "SELECT".to_string());
+        attrs
     });
 
+    // Assert: Span satisfies the validator
+    validator
+        .validate(&span)
+        .expect("Span failed validation");
     // Verify function returned correct result
     assert_ok!(result);
 }
@@ -100,9 +111,9 @@ fn test_span_has_correct_attributes() {
 
 **What this validates:**
 - ✅ Span was created with correct name
-- ✅ Required attributes present
-- ✅ Attribute values correct
-- ✅ No exceptions in span
+- ✅ Required attributes present (`SpanValidator::with_required_attributes`)
+- ✅ Span ID / trace ID valid (non-zero validation is on by default)
+- ✅ Function behavior correct
 
 ---
 
@@ -113,28 +124,31 @@ Use when: You want to validate spans against semantic conventions in real-time.
 ### Example: Validating Against Semantic Conventions
 
 ```rust
-use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
+use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_http_request_span_complies_with_conventions() {
     // Arrange: Create Weaver fixture
-    let fixture = WeaverTestFixture::new()
+    let mut fixture = WeaverTestFixture::new()
         .expect("Weaver not available (needs Docker)");
 
-    // Act: Code under test
-    let response = make_http_request("GET", "https://api.example.com/users/123");
+    // Act: Code under test, instrumented through the fixture tracer
+    let tracer = fixture
+        .tracer("http-client", "your-service")
+        .expect("Failed to create tracer");
+    let response = make_http_request(&tracer, "GET", "https://api.example.com/users/123");
 
-    // Assert: Span complies with semantic conventions
-    let result = fixture.validate_span("http.client", |span| {
-        // Weaver checks these automatically:
-        // - http.method is one of GET, POST, etc (not "download")
-        // - http.url is valid URL (not just "example")
-        // - http.status_code is 100-599 (not 999)
-        // - http.response_content_length is positive (not negative)
-        span
-    });
+    // Assert: Flush telemetry and check Weaver's verdict
+    let results = fixture
+        .finish()
+        .expect("Failed to collect Weaver validation results");
 
-    assert_ok!(result);
+    // Weaver checks these automatically:
+    // - http.method is one of GET, POST, etc (not "download")
+    // - http.url is valid URL (not just "example")
+    // - http.status_code is 100-599 (not 999)
+    // - http.response_content_length is positive (not negative)
+    assert!(!results.has_violations(), "{}", results.violations_summary());
     assert_ok!(response);
 }
 ```
@@ -154,7 +168,7 @@ fn test_http_request_span_complies_with_conventions() {
 
 ```rust
 use chicago_tdd_tools::integration::testcontainers::GenericContainer;
-use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
+use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_database_query_with_instrumentation() {
@@ -162,26 +176,26 @@ fn test_database_query_with_instrumentation() {
     let db_container = GenericContainer::new(client, "postgres", "latest")
         .expect("Docker not available");
 
-    let weaver = WeaverTestFixture::new()
+    let mut weaver = WeaverTestFixture::new()
         .expect("Weaver not available");
 
     let db_url = db_container.get_connection_string();
 
-    // Act: Execute query (which emits spans)
-    let result = execute_query_with_logging(db_url, "SELECT * FROM users");
+    // Act: Execute query (which emits spans through the fixture tracer)
+    let tracer = weaver
+        .tracer("db-client", "your-service")
+        .expect("Failed to create tracer");
+    let result = execute_query_with_logging(&tracer, db_url, "SELECT * FROM users");
 
     // Assert: Verify both behavior and observability
     assert_ok!(result);
 
-    // Validate span structure
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "db.client.operation"));
-
-    // Validate semantic conventions
-    weaver.validate_span("db.client.operation", |span| {
-        // Weaver checks: db.system = "postgres", db.operation = "SELECT", etc
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-    }).expect("Span violates semantic conventions");
+    // Flush telemetry and validate semantic conventions via Weaver
+    let results = weaver
+        .finish()
+        .expect("Failed to collect Weaver validation results");
+    // Weaver checks: db.system = "postgres", db.operation = "SELECT", etc
+    assert!(!results.has_violations(), "{}", results.violations_summary());
 }
 ```
 
@@ -236,8 +250,9 @@ thread 'test_http_span' panicked at 'Expected span "http.client" not found'
 
 **Fix:**
 ```rust
-// Ensure spans are flushed before collecting
-let spans = fixture.collect_spans_with_timeout(Duration::from_secs(1))?;
+// Ensure spans are flushed before validating
+let results = fixture.finish()?;
+assert!(!results.has_violations(), "{}", results.violations_summary());
 ```
 
 ### Issue 3: "Semantic Convention Violation"
@@ -292,7 +307,7 @@ Before shipping code that emits telemetry, verify:
 ```rust
 use chicago_tdd_tools::{
     integration::testcontainers::GenericContainer,
-    observability::weaver::WeaverTestFixture,
+    observability::fixtures::WeaverTestFixture,
     test,
 };
 
@@ -300,10 +315,12 @@ use chicago_tdd_tools::{
 test!(test_user_service_with_full_observability, {
     // Arrange: Database + Weaver
     let db = GenericContainer::new(client, "postgres", "latest")?;
-    let weaver = WeaverTestFixture::new()?;
+    let mut weaver = WeaverTestFixture::new()?;
     let db_url = db.get_connection_string();
 
-    let user_service = UserService::new(&db_url);
+    let tracer = weaver
+        .tracer("user-service", "your-service")?;
+    let user_service = UserService::new(&db_url, tracer);
 
     // Act: Create user (emits spans, writes to DB)
     let result = user_service.create_user(User {
@@ -320,22 +337,9 @@ test!(test_user_service_with_full_observability, {
     assert_eq!(stored_user.name, "Alice");
 
     // Assert: Observability correct
-    // Validate structure
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "db.client.operation"));
-    assert!(spans.iter().any(|s| s.name == "user.service.create"));
-
-    // Validate semantic conventions (Weaver)
-    weaver.validate_span("db.client.operation", |span| {
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-        assert_eq!(span.get_attribute("db.operation"), Some("INSERT"));
-    })?;
-
-    // Validate trace shows proper nesting
-    // user.service.create → db.client.operation (parent-child)
-    let service_span = spans.iter().find(|s| s.name == "user.service.create").unwrap();
-    let db_span = spans.iter().find(|s| s.name == "db.client.operation").unwrap();
-    assert_eq!(db_span.parent_span_id, service_span.span_id);
+    // Flush telemetry and validate semantic conventions (Weaver)
+    let results = weaver.finish()?;
+    assert!(!results.has_violations(), "{}", results.violations_summary());
 });
 ```
 

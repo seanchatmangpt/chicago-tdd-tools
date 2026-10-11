@@ -7,6 +7,8 @@ Procedural macros for the Chicago TDD Tools framework.
 - `#[tdd_test]`: Automatically detects AAA sections, generates test metadata, and validates AAA pattern at compile time.
 - `#[fixture]`: Generates fixture setup/teardown code and provides type-safe fixture state management.
 - `#[derive(TestBuilder)]`: Generates a fluent builder pattern for test data structures.
+- `#[chicago_test]`: Zero-boilerplate test macro wrapping AAA-structured test functions (see `src/chicago_test.rs`).
+- `#[scaffold(...)]`: ggen-backed code-generation attribute for scaffolding test/module code (see `src/scaffold_impl.rs`).
 
 ## Usage
 

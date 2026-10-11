@@ -1,7 +1,5 @@
 # Summary
 
-> 🔧 **SUMMARY** | **How-to** | Solve this problem
-
 - [Cookbook Overview](README.md)
 - [Introduction](introduction.md)
 
@@ -56,15 +54,3 @@
   - [Pattern 19: Feature Gate Slices](design-patterns/feature-gating.md)
   - [Pattern 20: Macro Pattern Enforcement](design-patterns/macro-enforcement.md)
 
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |

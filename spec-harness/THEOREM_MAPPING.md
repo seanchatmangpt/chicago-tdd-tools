@@ -45,16 +45,17 @@ build process, preventing incorrect sequences.
 
 ## Chapter 3: Type-Level Safety
 
-| Theorem ID | LaTeX Name | Lines | Test Path | Test Type | Status |
-|-----------|-----------|-------|-----------|-----------|--------|
-| Thm-3.1 | Type State Pattern for AAA Enforcement | 100-150 | `chapter03::test_type_state_aaa` | Unit | ✅ Pass |
-| Thm-3.2 | Sealed Traits Prevent Invalid Implementations | 151-200 | `chapter03::test_sealed_traits` | Unit | ✅ Pass |
-| Thm-3.3 | Const Generics Enable Compile-Time Validation | 201-250 | `chapter03::test_const_generics` | Unit | ✅ Pass |
-| Thm-3.4 | Invalid Test States Are Unrepresentable | 251-300 | `chapter03::test_invalid_states_unrepresentable` | Unit | ✅ Pass |
-| Thm-3.5 | Error Handling Without Unwrap is Enforced | 301-350 | `chapter03::test_error_handling_without_unwrap` | Unit | ✅ Pass |
-| Thm-3.6 | Recursion Depth Is Bounded by Chatman Constant | 351-400 | `chapter03::test_chatman_constant_recursion` | Unit | ✅ Pass |
+| Theorem ID | Coverage Area | Test Path | Test Type | Status |
+|-----------|-----------|-------|-----------|--------|
+| Thm-3.1 | Knowledge hook atomicity | `chapter03::test_knowledge_hook_atomicity` | Unit | ✅ Pass |
+| Thm-3.2 | YAWL Pattern 1: Sequence | `chapter03::test_yawl_pattern_1_sequence` | Unit | ✅ Pass |
+| Thm-3.3 | YAWL Pattern 2: Parallel Split | `chapter03::test_yawl_pattern_2_parallel_split` | Unit | ✅ Pass |
+| Thm-3.4 | YAWL Pattern 3: Synchronization | `chapter03::test_yawl_pattern_3_synchronization` | Unit | ✅ Pass |
+| Thm-3.5 | YAWL Pattern 4: Exclusive Choice | `chapter03::test_yawl_pattern_4_exclusive_choice` | Unit | ✅ Pass |
+| Thm-3.6 | YAWL Pattern 5: Simple Merge | `chapter03::test_yawl_pattern_5_simple_merge` | Unit | ✅ Pass |
+| — | Registry properties (property-based) | `chapter03::test_registry_properties_proptest` | Property | ✅ Pass |
 
-**Total Tests:** 6 | **Passed:** 6 | **Failed:** 0 | **Pending:** 0
+**Total Tests:** 7 | **Passed:** 7 | **Failed:** 0 | **Pending:** 0
 
 ### Chapter 3 Key Concepts
 
@@ -116,18 +117,18 @@ complete Chatman Equation framework.
 | Chapter | Theorems | Tests | Passed | Failed | Coverage |
 |---------|----------|-------|--------|--------|----------|
 | **Chapter 2** | 6 | 6 | 6 | 0 | 100% |
-| **Chapter 3** | 6 | 6 | 6 | 0 | 100% |
+| **Chapter 3** | 6 | 7 | 7 | 0 | 100% |
 | **Chapter 7** | 5 | 5 | 5 | 0 | 100% |
-| **TOTAL** | **17** | **17** | **17** | **0** | **100%** |
+| **TOTAL** | **17** | **18** | **18** | **0** | **100%** |
 
 ### By Test Type
 
 | Test Type | Count | Purpose |
 |-----------|-------|---------|
-| Property-based | 8 | Tests mathematical properties (Determinism, Idempotence, etc.) |
-| Unit | 8 | Tests individual type system features |
+| Property-based | 11 | Tests mathematical properties (Determinism, Idempotence, registry properties, etc.) |
+| Unit | 6 | Tests type-system features (Chapter 3) |
 | Integration | 1 | Tests all properties together |
-| **TOTAL** | **17** | |
+| **TOTAL** | **18** | |
 
 ---
 

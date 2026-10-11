@@ -1,6 +1,6 @@
 # Chicago TDD Tools
 
-[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Rust testing framework enforcing Chicago-style TDD (Classicist Test-Driven Development) through compile-time guarantees.**
@@ -884,7 +884,7 @@ chicago-tdd-tools = {
 - **With process mining**: `["testing-extras", "ocel-generation"]`
 - **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async", "ocel-generation-discovery"]`
 
-> **Process mining** (`ocel-generation`) builds on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) `26.6.11` crate, which supplies the one-way `Evidence` lifecycle (`Raw → Admitted → Receipted`) and OCEL 2.0 standard types. See [Process Mining (OCEL)](#process-mining-ocel) below.
+> **Process mining** (`ocel-generation`) builds on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) `26.6.26` crate, which supplies the one-way `Evidence` lifecycle (`Raw → Admitted → Receipted`) and OCEL 2.0 standard types. See [Process Mining (OCEL)](#process-mining-ocel) below.
 
 ---
 
@@ -992,7 +992,7 @@ cargo run --example operator_registry
 
 | Component | Minimum | Verify | Install |
 |-----------|---------|--------|---------|
-| Rust | 1.70 | `rustc --version` | [rustup](https://rustup.rs/) |
+| Rust | nightly (see [rust-toolchain.toml](rust-toolchain.toml)) | `rustc --version` | [rustup](https://rustup.rs/) |
 | Cargo | Latest stable | `cargo --version` | Included with Rust |
 | just | Latest | `just --version` | `cargo install just` |
 | Tokio | 1.0+ | (add to Cargo.toml) | [tokio](https://tokio.rs) |
@@ -1050,9 +1050,9 @@ just build-release   # Optimized binary
 
 ---
 
-## What's New in v26.7.2
+## Recent Highlights
 
-**Multi-Agent Swarm & High-Integrity Coordination** (latest):
+**Multi-Agent Swarm & High-Integrity Coordination**:
 
 - 👥 **`/teamwork-preview` Slash Command** - A structured workflow for dry-running and orchestrating multi-agent tasks in classical TDD swarms.
 - 📝 **Two-Phase Workflow** - Separates task execution into **Requirements Elicitation** (parsing `prompt_draft.md` for clear acceptance criteria) and **Swarm Delegation** (assigning tasks to subagents).
@@ -1065,7 +1065,7 @@ just build-release   # Optimized binary
 
 **Earlier: Process Truth & Governance** (v26.6.121):
 
-- 🔬 **OCEL 2.0 Process Mining** - `observability::ocel` turns test runs into Object-Centric Event Logs with a one-way `Raw → Admitted → Receipted` evidence lifecycle. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate (migrated off the in-tree vendor). See [Process Mining (OCEL)](#process-mining-ocel).
+- 🔬 **OCEL 2.0 Process Mining** - `observability::ocel` turns test runs into Object-Centric Event Logs with a one-way `Raw → Admitted → Receipted` evidence lifecycle. Built on the published [`wasm4pm-compat 26.6.26`](https://crates.io/crates/wasm4pm-compat) crate (migrated off the in-tree vendor). See [Process Mining (OCEL)](#process-mining-ocel).
 - ⚖️ **Governance Module** - `core::governance` adds diagnostic/severity types, law enforcement primitives, channels, and sectors as the baseline for compile-time law-enforcement macros.
 - 🌊 **Wave Orchestration** - `swarm::wave` runs N-phase sequential waves with M parallel tasks, with wave-state observability and failure classification (`ResidualClass`).
 - 📋 **Full YAWL Operator Registry** - All **43** YAWL workflow control patterns now registered, each characterized by its control-flow law.

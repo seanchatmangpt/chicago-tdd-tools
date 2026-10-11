@@ -39,9 +39,9 @@ The `.cursorrules` file defines the core principles, non-negotiables, and patter
 ### Critical Non-Negotiables
 
 #### Build System
-- **Always use `cargo make` commands**, never direct `cargo` commands
-- Cargo-make handles proc-macro crates, includes timeouts, ensures consistency
-- Example: `cargo make test` (not `cargo test`)
+- **Always use `just` commands**, never direct `cargo` commands
+- The Justfile handles workspace members correctly, enforces timeouts, ensures consistency
+- Example: `just test` (not `cargo test`)
 
 #### Git Hooks
 - **NEVER use `--no-verify` flag**
@@ -50,12 +50,12 @@ The `.cursorrules` file defines the core principles, non-negotiables, and patter
 - Hooks are mandatory quality checks that prevent defects from entering the codebase
 
 #### Timeout SLA
-Every CLI command MUST have timeout wrapper to prevent freezing:
-- Quick checks: `timeout 5s`
-- Compilation: `timeout 10s`
-- Unit tests: `timeout 1s`
-- Integration: `timeout 30s`
-- Long ops: `timeout 60s`
+Most `just` recipes wrap their command in a timeout to prevent freezing (enforced by the Justfile):
+- Check: 30s
+- Lint (clippy): 300s (`lint-dylint` is currently untimed)
+- Fmt: 30s
+- Unit tests: 300s
+- Integration tests: 60s
 
 Timeouts indicate issues early.
 
@@ -136,13 +136,13 @@ Always generate 3 ideas:
 
 ### Completion Workflow (Mandatory)
 
-1. **Run Tests Immediately**: `cargo make test` before completion claims
+1. **Run Tests Immediately**: `just test` before completion claims
 2. **Rich Todos**: For each failing test, include: test name, error message, file/line, root cause, proposed fix, status. Batch create 5-10+ related todos in single call
 3. **Fix Systematically**: Read failure message → Identify root cause → Fix issue → Run specific test → Verify fix → Update todo status → Remove when fixed
-4. **Re-Run All Tests**: `cargo make test` to verify all fixes worked
+4. **Re-Run All Tests**: `just test` to verify all fixes worked
 5. **Verify Completion**: All tests pass, no compilation errors, no test failures, all failing tests fixed and removed from todos, no pending test-related todos. Never mark complete without running tests first
 
-**Quick Feedback**: `cargo make check` (~1s), `cargo make test-unit` (~1s), `cargo make test test_name` (single test). Full validation: `cargo make test`, `cargo make pre-commit`.
+**Quick Feedback**: `just check` (~30s SLA), `just test-unit` (~300s SLA), `cargo nextest run <test_name>` (single test). Full validation: `just test`, `just pre-commit`.
 
 ### Prohibited Patterns
 
@@ -298,7 +298,7 @@ The `.cursor/commands` directory contains slash commands that implement comprehe
 **Use when**: Committing changes, ensuring quality before commit
 
 **Workflow**:
-1. Pre-validation checkpoint (`cargo make pre-commit`)
+1. Pre-validation checkpoint (`just pre-commit`)
 2. Fix issues (if any)
 3. Re-validation checkpoint
 4. Stage changes (`git add -A`)
@@ -389,22 +389,22 @@ The development standards and workflow commands are designed to work together se
 
 **Before Committing**:
 ```bash
-cargo make pre-commit  # Validate before commit
+just pre-commit  # Validate before commit
 ```
 
 **Testing**:
 ```bash
-cargo make test              # Run all tests
-cargo make test-unit         # Quick unit tests (~1s)
-cargo make test test_name    # Single test
-cargo make check             # Quick compilation check (~1s)
+just test              # Run all tests
+just test-unit         # Quick unit tests (300s SLA)
+cargo nextest run <test_name>  # Single test
+just check             # Quick compilation check (30s SLA)
 ```
 
 **Quality Checks**:
 ```bash
-cargo make fmt               # Format code
-cargo make lint              # Lint code
-cargo make pre-commit        # Full pre-commit validation
+just fmt               # Format code
+just lint              # Lint code
+just pre-commit        # Full pre-commit validation
 ```
 
 ### Workflow Command Quick Guide
@@ -435,7 +435,7 @@ cargo make pre-commit        # Full pre-commit validation
 
 ### Standards Quick Reference
 
-**Build System**: Always use `cargo make`, never direct `cargo`
+**Build System**: Always use `just`, never direct `cargo`
 
 **Git Hooks**: NEVER use `--no-verify` flag
 
@@ -443,7 +443,7 @@ cargo make pre-commit        # Full pre-commit validation
 
 **Tests**: Must verify behavior, not just existence
 
-**Completion**: Run `cargo make test` before marking complete
+**Completion**: Run `just test` before marking complete
 
 **80/20**: Always generate 3 ideas, second idea is usually sweet spot
 

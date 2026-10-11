@@ -33,6 +33,7 @@ Goal-focused guides to accomplish specific tasks:
 ### Core Features
 - **[OCEL 2.0 Process Mining](OCEL.md)** - Mine test runs as Object-Centric Event Logs (feature `ocel-generation`)
 - **[Agent Governance Architecture](governance_architecture.md)** - Diagnostic channel, laws, and sector stacks (`core::governance`)
+- **[ANDON Operating Principle](ANDON.md)** - Mandatory-interrupt semantics for `Severity::Andon` diagnostics
 - **[Weaver Live Check](features/WEAVER_LIVE_CHECK.md)** - Weaver integration testing
 - **[Perfect Weaver Live Check](features/PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation with diagrams
 - **[Timeout Enforcement](features/TIMEOUT_ENFORCEMENT.md)** - Timeout handling patterns
@@ -114,8 +115,9 @@ Background, context, and understanding of how/why things work:
 
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
-- **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Current release (v26.6.121)
+- **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Release notes for v26.6.121
 - **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121
+- **[Latest Release Notes](releases/)** - See the newest release documentation
 - **[Release Notes](releases/)** - Detailed release documentation
 
 ### Diagrams
@@ -132,7 +134,15 @@ Background, context, and understanding of how/why things work:
 ```
 docs/
 ├── README.md (this file)
+├── ANDON.md             # ANDON operating principle (top-level)
+├── governance_architecture.md  # Agent governance architecture (top-level)
 ├── getting-started/     # Tutorials (learn)
+├── product/             # Product documentation
+├── standards/           # Standards documentation
+├── security/            # Security documentation
+├── architecture/        # Architecture documentation
+├── jira/                # Jira / work-order documentation
+├── coverage/            # Coverage documentation
 ├── features/            # How-to Guides (accomplish)
 ├── testing/             # How-to Guides (accomplish)
 ├── observability/       # How-to Guides (accomplish)

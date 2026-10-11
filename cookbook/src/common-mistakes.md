@@ -229,10 +229,10 @@ const TIMEOUT_SECS: u64 = 30;  // Will diverge!
 **The Fix:**
 ```rust
 // src/core/macros/test.rs (single source)
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs (imports)
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 ```
 
 **Why It Matters:** "Same value" isn't "same source." Copies diverge when someone forgets to update both.

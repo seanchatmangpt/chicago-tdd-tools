@@ -31,7 +31,7 @@ For example: `MYAPP-ADM-001` (Admission violation in MYAPP domain).
 
 ### Integration with LSP
 
-When integrated with a Language Server, `Severity::Andon` diagnostics are mapped to `DiagnosticSeverity::Error`. This ensures that the IDE provides a clear, visual indicator of the violation, and agents receiving push diagnostics are interrupted in the same turn as the edit.
+LSP diagnostic mapping is planned; no runtime mapping ships today.
 
 ## Governance Arc
 

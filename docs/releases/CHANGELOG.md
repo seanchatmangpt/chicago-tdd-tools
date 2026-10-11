@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Conformance module** (`src/conformance/`): PN64 branchless Petri-net transition kernel ported from strata-protocol (`pn64.rs`, @ 0de13a3); POWL model/loader/validator (`model.rs`, `loader.rs`, `validate.rs`); `ConformanceSession` trajectory verification with reduction budgets (`session.rs`); OCEL64 ingestion bridge (`session.rs`).
+- **OCEL importers** (`src/observability/ocel/`): `import_json.rs` and `import_xml.rs` behind the `ocel-ingest-json` / `ocel-ingest-xml` features, feeding the OCEL64 bridge (`ocel64_bridge.rs`, `idmap_bridge.rs`).
+- **Ledger module** (`src/ledger/`): strict 320/352-byte court-receipt wire format (`receipt.rs`) with deserialize-time BLAKE3 digest verification; Merkle dossier roots and per-court inclusion proofs (`dossier.rs`, `proof.rs`); ML-DSA-65 signer/sealer/keys (`signing/`); `ctdd_ledger` CLI (`src/bin/ctdd_ledger.rs`).
+- **NATO court framework** (`src/nato/`): adversarial court framework with positive-control gate (`control.rs`), Pillar I–V classification (Security/Timing/Resilience/Proof/Dossier), honest scoping records (`disclosure.rs`), and deterministic LCG-strided probes (`rng.rs`, `cache.rs`).
+- **Compile-fail suite** (`tests/compile_fail/`, `tests/trybuild.rs`): trybuild-based compile-fail courts; new test suites `prelude_surface_tests.rs`, `cli_proof_tests.rs`, `observability_fixtures_tests.rs`, `ocel_ingest_tests.rs`.
+- **Conformance-test macro** (`src/core/macros/conformance_test.rs`) and `assurance.yml` workflow (`.github/workflows/assurance.yml`).
+
+### Changed
+- **Docs wave**: 15 dated plan/verification docs archived to `docs/archive/2026-10/` and `cookbook/archive/`; fabricated-API claims removed from docs; `cargo make` → `just` migrations; stale counts corrected.
+
 ## [26.6.29] - 2026-06-28
 
 ### Added

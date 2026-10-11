@@ -15,15 +15,3 @@ Every pattern includes:
 
 Use this cookbook as a field guide while building and testing Rust systems with Chicago TDD Tools.
 
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |

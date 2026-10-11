@@ -261,15 +261,21 @@ Use Pattern 5 (Real Collaborators) + observability:
 
 ```rust
 #[test]
-fn test_with_automatic_tracking() {
-    let weaver = WeaverTestFixture::new()?;
+fn test_with_automatic_tracking() -> observability::ObservabilityResult<()> {
+    let mut weaver = WeaverTestFixture::new()?;
 
-    // Code that emits spans automatically
-    create_user_with_instrumentation("Alice");
+    // Instrument the code under test with a tracer that exports to Weaver
+    let tracer = weaver.tracer("user_service", "test-suite")?;
+    create_user_with_instrumentation(&tracer, "Alice");
 
-    // Weaver captured the spans
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "user.created"));
+    // Flush telemetry, run live-check, and parse validation results
+    let results = weaver.finish()?;
+
+    // Assert on real validation state: no semantic convention violations,
+    // and the user.created span was actually observed
+    assert!(!results.has_violations(), "{}", results.violations_summary());
+    assert!(results.advices().any(|a| a.signal_name.as_deref() == Some("user.created")));
+    Ok(())
 }
 ```
 

@@ -61,6 +61,8 @@ Understand concepts and philosophy:
 |---------|-------------|---------|
 | [go_extra_mile.rs](examples/go_extra_mile.rs) | 1st/2nd/3rd idea progression, 80/20 thinking | `cargo run --example go_extra_mile --features otel,weaver` |
 | [advanced_features.rs](examples/advanced_features.rs) | Type-level guarantees, zero-cost abstractions | `cargo run --example advanced_features` |
+| [hyper_advanced_microkernel.rs](examples/hyper_advanced_microkernel.rs) | μ-kernel verification substrate: contracts, thermal paths, receipts, swarm orchestration | `cargo run --example hyper_advanced_microkernel` |
+| [all_phases_pipeline.rs](examples/all_phases_pipeline.rs) | Complete 12-phase hyper-advanced verification pipeline | `cargo run --example all_phases_pipeline` |
 
 ---
 

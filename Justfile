@@ -103,7 +103,7 @@ clippy: lint
 # Testing
 # ---------------------------------------------------------------------------
 
-# Run all tests (unit + integration) - tests will fail clearly if prerequisites are missing
+# Run unit tests (lib, all features) - use test-all for unit + integration
 test:
     timeout 300s cargo nextest run --lib --all-features
 
@@ -120,6 +120,62 @@ test-unit:
     # see each corrupted variant's oracle fail on its own.
     timeout 300s cargo test --workspace --lib --all-features --exclude chicago-claims
     timeout 60s cargo test -p chicago-claims --lib
+
+# Conformance: pn64/POWL trajectory verification suite (feature conformance)
+test-conformance:
+    timeout 120s cargo nextest run --test conformance_tests --test conformance_loader_tests --features conformance
+
+# OCEL 2.0 ingestion bridge tests (feature ocel-ingest)
+test-ocel-ingest:
+    timeout 120s cargo nextest run --test ocel_ingest_tests --features ocel-ingest,ocel-generation
+
+# Ledger: receipt/dossier verification suite (feature ledger)
+test-ledger:
+    timeout 120s cargo nextest run --features ledger --lib ledger
+
+# NATO courts: fast tier (always-run courts; tier-3 via nato-courts-full)
+test-nato:
+    timeout 300s cargo nextest run --lib --features nato nato::
+
+# NATO courts: full tier (release profile; strata-exact scales)
+nato-courts-full:
+    timeout 600s cargo test --release --lib --features nato -- --ignored nato::
+
+# Pure-Rust receipt/dossier CLI (PRD P15)
+ctdd-ledger:
+    timeout 60s cargo build --release --bin ctdd_ledger --features ledger,ledger-cli
+
+verify-ledger SOURCE:
+    just ctdd-ledger
+    timeout 30s ./target/release/ctdd_ledger validate "{{SOURCE}}" --json
+
+# Compile-fail suite (trybuild; stderr must be seeded and committed)
+test-compile-fail:
+    timeout 120s cargo test --test trybuild
+
+# One-time stderr seeding for the compile-fail suite (commit the generated .stderr files)
+seed-trybuild:
+    TRYBUILD=overwrite cargo test --test trybuild
+
+# Hermetic verification matrix (locked + offline; PRD NFR hermetic toolchain)
+verify-hermetic:
+    CARGO_NET_OFFLINE=true cargo build --locked --offline
+    CARGO_NET_OFFLINE=true cargo build --locked --offline --features conformance
+    CARGO_NET_OFFLINE=true cargo build --locked --offline --features ledger
+    CARGO_NET_OFFLINE=true cargo build --locked --offline --features nato
+    CARGO_NET_OFFLINE=true cargo test --locked --offline --features conformance --no-run
+
+# Mutation gate: zero killable survivors in the assurance modules (PRD)
+check-mutation-gate:
+    timeout 300s cargo mutants --all-features --file src/conformance --file src/nato --file src/ledger
+
+# NATO tier-2 (medium courts; tier-1 runs in test-unit, tier-3 in nato-courts-full)
+test-nato-tier2:
+    timeout 120s cargo nextest run --lib --features nato -- --ignored nato_tier2
+
+# Aggregate: emit the sealed compliance dossier (N20; gated on green courts)
+emit-dossier:
+    timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check

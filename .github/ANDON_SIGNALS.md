@@ -39,10 +39,10 @@
 **Quick Fixes**:
 ```bash
 # Format issues
-cargo make fmt
+just fmt
 
 # Lint warnings
-cargo make lint  # Review warnings
+just lint  # Review warnings
 # Fix code or add #[allow] with justification
 ```
 
@@ -68,8 +68,8 @@ cargo make lint  # Review warnings
 
 | Job | Signal | Severity | What it Checks | Response |
 |-----|--------|----------|---|---|
-| **🟡 Lint Check** | Clippy warnings | HIGH | Code quality, best practices | `cargo make lint` + fix |
-| **🟡 Format Check** | rustfmt issues | HIGH | Code style consistency | `cargo make fmt` |
+| **🟡 Lint Check** | Clippy warnings | HIGH | Code quality, best practices | `just lint` + fix |
+| **🟡 Format Check** | rustfmt issues | HIGH | Code style consistency | `just fmt` |
 | **🔴 Unit Tests** | Test failures | CRITICAL | Functionality works correctly | Fix failing test logic |
 | **🔴 Production Safety** | unwrap/expect | CRITICAL | No panics in production | Use `?` operator or error handling |
 | **🟠 Code Coverage** | Coverage below 70% | MEDIUM | Test comprehensiveness | Add tests if important |
@@ -127,7 +127,7 @@ Root Cause: Missing cross-platform test coverage
 | Signal Type | Symptom | Fix |
 |---|---|---|
 | Lint warning | Too many nesting levels | Refactor function into smaller pieces |
-| Format issue | Wrong spacing | Run `cargo make fmt` |
+| Format issue | Wrong spacing | Run `just fmt` |
 | Test failure | Assertion mismatch | Fix test logic or implementation |
 | Production panic | `unwrap()` in code | Use `?` operator or error handling |
 | Coverage low | 65% coverage | Add tests for untested paths |
@@ -135,11 +135,11 @@ Root Cause: Missing cross-platform test coverage
 **Verification**:
 ```bash
 # Re-run the specific check
-cargo make lint          # For lint signals
-cargo make fmt           # For format signals
-cargo make test-unit     # For test signals
-cargo make pre-commit    # All local checks
-cargo make ci-local      # Simulate CI
+just lint          # For lint signals
+just fmt           # For format signals
+just test-unit     # For test signals
+just pre-commit    # All local checks
+just ci-local      # Simulate CI
 ```
 
 ### Step 5: Verify Signal Cleared
@@ -147,8 +147,8 @@ cargo make ci-local      # Simulate CI
 **Action**: Confirm signal is gone and won't return.
 
 **Verification Steps**:
-1. ✅ Local checks pass: `cargo make pre-commit`
-2. ✅ CI simulation passes: `cargo make ci-local`
+1. ✅ Local checks pass: `just pre-commit`
+2. ✅ CI simulation passes: `just ci-local`
 3. ✅ Push to branch and verify GitHub Actions passes
 4. ✅ Commit message documents the fix
 5. ✅ Add test if appropriate to prevent regression
@@ -169,7 +169,7 @@ assertion failed: expected 10, got 5
 1. Read the assertion message carefully
 2. Check test logic (did you test the right thing?)
 3. Check implementation (is it correct?)
-4. Run test locally: `cargo make test-unit`
+4. Run test locally: `just test-unit`
 5. Add debug output if unclear
 6. Commit fix with clear message
 
@@ -201,7 +201,7 @@ warning: used `unwrap()` on a `Result` value
        }
    };
    ```
-4. Run lint check: `cargo make lint`
+4. Run lint check: `just lint`
 
 ### 🟡 Format Issue
 
@@ -211,7 +211,7 @@ warning: used `unwrap()` on a `Result` value
 ```
 
 **Steps to Fix**:
-1. Run formatter: `cargo make fmt`
+1. Run formatter: `just fmt`
 2. Review changes: `git diff`
 3. Commit: `git add . && git commit -m "style: format code"`
 
@@ -230,7 +230,7 @@ Found 3 unwrap() calls in src/core/fixture.rs
    - Use `?` if in Result-returning function
    - Use `if let` or `match` for error handling
    - Use `default_value` if recovery is possible
-4. Test locally: `cargo make test-unit`
+4. Test locally: `just test-unit`
 5. Re-run safety check via CI
 
 ### 🟠 Coverage Below Threshold
@@ -245,7 +245,7 @@ Found 3 unwrap() calls in src/core/fixture.rs
 **Steps to Address**:
 1. Identify untested code paths
 2. Add tests for critical paths
-3. Run coverage locally: `cargo make coverage`
+3. Run coverage locally: `just coverage`
 4. Focus on error paths and edge cases
 5. Verify coverage improves
 
@@ -259,11 +259,11 @@ Catch signals locally before pushing to GitHub:
 
 ```bash
 # Install hook (one-time setup)
-cargo install cargo-make
+cargo install just
 ./scripts/install-hooks.sh
 
 # Or manual installation
-cargo make install-hooks
+just install-hooks
 ```
 
 **What it does**:
@@ -279,7 +279,7 @@ Before pushing, simulate the full CI:
 
 ```bash
 # Runs all checks locally (faster than GitHub Actions)
-cargo make ci-local
+just ci-local
 ```
 
 **Equivalent to**:
@@ -292,7 +292,7 @@ cargo make ci-local
 ### Best Practices
 
 1. **Commit frequently**: Smaller commits are easier to debug
-2. **Test before pushing**: Run `cargo make pre-commit` before every commit
+2. **Test before pushing**: Run `just pre-commit` before every commit
 3. **Read warnings**: Don't ignore clippy warnings - they catch real issues
 4. **Fix immediately**: Don't accumulate signals
 5. **Understand the fix**: Don't just blindly apply suggestions
@@ -347,8 +347,8 @@ When you see an Andon signal:
 - [ ] **Understand** what went wrong (root cause)
 - [ ] **Locate** the problematic code
 - [ ] **Fix** the underlying issue (not symptom)
-- [ ] **Verify** locally with `cargo make pre-commit`
-- [ ] **Test** with `cargo make ci-local`
+- [ ] **Verify** locally with `just pre-commit`
+- [ ] **Test** with `just ci-local`
 - [ ] **Commit** with descriptive message
 - [ ] **Verify** GitHub Actions passes
 - [ ] **Add test** if needed to prevent regression
@@ -363,7 +363,7 @@ If the same signal keeps appearing:
 1. **Pattern Analysis**: What's the pattern?
 2. **Root Cause**: Use 5 Whys to find root cause
 3. **System Fix**: Can we prevent this type of problem?
-4. **Automation**: Add check to `Makefile.toml` or CI if possible
+4. **Automation**: Add check to `Justfile` or CI if possible
 5. **Documentation**: Document the solution for others
 
 **Examples**:
@@ -378,7 +378,7 @@ If the same signal keeps appearing:
 - 📚 **Andon Signals Workflow**: See `andon-signals-workflow.md` for 5-step process
 - 📚 **Root Cause Analysis**: See `docs/process/SPR_GUIDE.md`
 - 🔗 **Pre-commit Setup**: `./scripts/install-hooks.sh`
-- 📖 **Build Commands**: `cargo make --list`
+- 📖 **Build Commands**: `just --list`
 
 ---
 

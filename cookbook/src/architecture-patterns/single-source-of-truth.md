@@ -64,10 +64,10 @@ const TIMEOUT_SECS: u64 = 30;  // Same value, will diverge!
 
 // ✅ RIGHT: Single definition
 // src/core/macros/test.rs
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 ```
 
 **Why**: "Same value" isn't the same source. Accidental changes to one copy create bugs in unexpected places.

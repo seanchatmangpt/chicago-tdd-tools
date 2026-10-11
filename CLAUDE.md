@@ -4,14 +4,14 @@
 
 A Rust testing framework that enforces Chicago-style TDD (Classicist approach) through compile-time guarantees. The core principle: **if it compiles, correctness follows**. Quality is not an afterthought—it's encoded in the type system.
 
-**Stats:** ~8,000 LOC | Rust 2021+ | MIT License | 445+ unit tests | Zero production panics
+**Stats:** ~38,000 LOC | Rust 2021+ | MIT License | 520+ unit tests | Zero production panics
 
 ## Core Philosophy: Poka-Yoke Design
 
 This framework prevents errors at three levels:
 
 1. **Compile-time**: Type-level state machines enforce AAA pattern. Sealed traits prevent invalid test states.
-2. **Build-time**: Git hooks prevent `.unwrap()` and `panic!()` from being committed. Clippy treats all warnings as errors.
+2. **Build-time**: Git hooks prevent `.unwrap()` and `.expect()` from being committed; `panic!()`/`todo!()` blocking comes from clippy (`-D clippy::panic` etc.). Clippy treats all warnings as errors.
 3. **Runtime**: Result-based error handling everywhere. No panics in production code.
 
 **Key decisions flow from this**: When something could fail at runtime, we encode it as a type constraint and fail at compile time instead.
@@ -127,7 +127,7 @@ fn process(...) { }
 | lint | 300s | Cold-start with all features |
 | fmt | 30s | Code formatting |
 | test-unit | 300s | Fast unit tests |
-| test-integration | 300s | Docker tests |
+| test-integration | 60s | Docker tests |
 | build-release | 30s | Release build |
 
 If a command hangs, it fails. By design. Prevents CI zombies.
@@ -341,7 +341,7 @@ just install-hooks
 # Daily workflow
 just pre-commit              # Before every commit
 just check                   # Quick check
-just test                    # All tests
+just test                    # Unit tests (lib only; `just test-all` for unit + integration)
 just lint                    # Code quality
 just docs                    # Generate API docs
 
@@ -394,8 +394,10 @@ just coverage                # Coverage report
 | `loom` | Concurrency testing | Thread safety verification (optional) |
 | `trybuild` | Compile-fail tests | Compile-time validation (dev-only) |
 
-## Recent Work (Last 30 Days)
+## Recent Highlights
 
+- **v26.8.9**: Current workspace version
+- **v26.9.x**: Signing-key rotation + dependabot hardening (see `docs/releases/`)
 - **v26.6.30**: Proc macros exposed in public API
 - **v26.6.29**: Track E feedback loop with Weaver integration
 - **v26.6.24**: BLAKE3 receipt chain validation + OCEL utilities
@@ -405,4 +407,4 @@ See `CHANGELOG.md` for full history.
 
 ---
 
-**Version:** 1.2.0 | **Updated:** 2026-06-29 | **Principle:** Compile-time prevention > runtime detection
+**Version:** 26.8.9 | **Updated:** 2026-10-11 | **Principle:** Compile-time prevention > runtime detection

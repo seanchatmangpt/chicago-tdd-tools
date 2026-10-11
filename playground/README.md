@@ -135,7 +135,6 @@ cargo test --features integration-full
 ```
 playground/
 ├── Cargo.toml          # All features enabled
-├── PROJECT_CHARTER.md  # Project charter and goals
 ├── README.md           # This file
 ├── src/
 │   ├── main.rs        # Main entry point

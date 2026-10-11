@@ -5,7 +5,7 @@ This document describes the design and flow of the agent governance sub-system i
 ## 1. Governance Loop Architecture
 
 The governance loop verifies that code modifications, metadata, and runtime execution conform to safety and regulatory laws. It operates in two phases:
-1. **Compile-Time Static Verification**: Scans token streams for forbidden constructs and validates lineage history using a `const fn`.
+1. **Compile-Time Static Verification**: Scans token streams for forbidden constructs via governance macros.
 2. **Runtime Execution Verification**: Monitors artifact admission, sector validation stacks, and merge strategies during runtime execution.
 
 ```mermaid
@@ -15,9 +15,7 @@ graph TD
     
     %% Compile-Time Path
     subgraph Compile-Time ["Compile-Time Enforcement"]
-        Macros["Governance Macros<br>(assert_admitted!, assert_no_bypass!, etc.)"]
-        TokenScanner["Recursive Token Scanner<br>(assert_admitted_scan!, assert_no_bypass_scan!)"]
-        ConstLineage["verify_lineage (const fn)"]
+        Macros["Governance Macros<br>(assert_admitted!, etc.)"]
         CompileError["std::compile_error! / panic!"]
     end
 
@@ -35,10 +33,7 @@ graph TD
 
     %% Connections
     DeveloperCode -->|1. Macros Guard Code| Macros
-    Macros -->|Token Parsing| TokenScanner
-    Macros -->|Lineage Constraints| ConstLineage
-    TokenScanner -->|Bypass/Empty Violation| CompileError
-    ConstLineage -->|Constraint Violation| CompileError
+    Macros -->|Bypass/Empty Violation| CompileError
 
     DeveloperCode -->|2. Artifact Lifecycle| ArtifactAdmission
     ArtifactAdmission -->|Validate| ValidateArtifact
@@ -50,14 +45,13 @@ graph TD
 
 ## 2. Diagnostic Data Flow
 
-Diagnostics are generated from macro checks, lineage failures, or schema validation conflicts. They are emitted to the global diagnostics channel which applies thread-safe synchronization, capacity limits, and routes the reports to registered sinks.
+Diagnostics are generated from macro assertion failures or schema validation conflicts. They are emitted to the global diagnostics channel which applies thread-safe synchronization, capacity limits, and routes the reports to registered sinks.
 
 ```mermaid
 graph LR
     %% Data Sources
     subgraph Violations ["Violation Triggers"]
         MacroFail["Macro Assertion Failure<br>(Drift, Substrate, Bypass, etc.)"]
-        RuntimeLineage["verify_lineage_runtime Failure"]
         RuntimeValidation["validate_artifact Failure / Conflict"]
     end
 
@@ -71,14 +65,11 @@ graph LR
 
     %% Sinks
     subgraph Sinks ["Diagnostic Sinks"]
-        LspMapper["map_to_lsp()"]
-        LspTypes["LSP Diagnostics"]
         CustomSinks["Registered DiagnosticSinks<br>(Loggers, Metrics, etc.)"]
     end
 
     %% Flow
     MacroFail -->|Emit Diagnostic| EmitDiag
-    RuntimeLineage -->|Emit Diagnostic| EmitDiag
     RuntimeValidation -->|Emit Diagnostic| EmitDiag
 
     EmitDiag -->|Queue Enabled| Queue
@@ -87,6 +78,4 @@ graph LR
     Queue -->|On Close| CloseChan
     CloseChan -->|Summarize| RunSummary
     CloseChan -->|Drain to Sinks| CustomSinks
-    CustomSinks -->|LSP Sink| LspMapper
-    LspMapper --> LspTypes
 ```
