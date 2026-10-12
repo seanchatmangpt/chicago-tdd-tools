@@ -226,7 +226,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: seanchatmangpt/affidavit
-          ref: b5112f321816837ee0c2594a00768a7f7d994d51  # pinned 2026-10-12 (origin/main at pin time; local 27cd80ae was unpushed)
+          ref: b5112f321816837ee0c2594a00768a7f7d994d51  # pinned 2026-10-12 (origin/main tip at pin time). KNOWN BLOCKER: origin/main
+          # predates the affi dossier verbs (local eeda22b, 22 commits unpushed) —
+          # `affi dossier emit` will fail at CLI dispatch until the affidavit main
+          # is pushed (operator action). Checkout itself is verified-good; the
+          # first pin (27cd80ae) was local-only and would have failed earlier.
           path: affidavit
 
       - name: 🎯 Emit dossier

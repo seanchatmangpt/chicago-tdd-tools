@@ -75,7 +75,7 @@ assert!(ticks <= 8); // Chatman Constant enforced
 - `HotPathConfig`: Configurable constraints (`max_ticks`, `enforce_no_alloc`, `enforce_no_syscall`)
 - `ThermalTestError`: Error type for budget violations
 
-Note: the τ values (8, 500_000, 1_000_000) are configurable engineering budgets (`WarmPathConfig` fields), not physical derivations.
+Note: the τ values (8, 500_000, 1_000_000) are configurable engineering budgets — the 8 is `HOT_PATH_TICK_BUDGET` (`HotPathConfig.max_ticks`), the 500_000/1_000_000 are `WarmPathConfig.max_ticks` values, not physical derivations.
 
 **RDTSC/CNTVCT Integration:**
 Uses `TickCounter` from `validation::performance` for cycle-accurate timing.

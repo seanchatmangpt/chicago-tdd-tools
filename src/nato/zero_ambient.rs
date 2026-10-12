@@ -401,8 +401,8 @@ impl Court for ZeroAmbientCourt {
             scoping: ScopingRecord::partial(
                 "zero ambient authority on the NATO state surface, corroborated at the \
                  binary tier (strata: wasm import census) and by a declared clock identity",
-                "include_str!-based banned-symbol + allowlist static audit over the 15-module \
-                 enumerated src/nato state set, with cfg(test) excision and scanner canaries",
+                "include_str!-based banned-symbol + allowlist static audit over the 20-module \
+                 enumerated src/nato state set (N04 extension), with cfg(test) excision and scanner canaries",
                 "binary-tier legs dropped (no wasm artifacts in this crate; no tick-source \
                  surface in the ported kernel) and disclosed; audited set excludes this \
                  scanner file (self-reference) and disasm.rs/stackbound.rs (ambient \

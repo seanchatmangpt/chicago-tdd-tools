@@ -112,7 +112,10 @@
 //! 25      violation code (table in `violation`; 0 when not Faulted)
 //! 26..58  module_digest (32B; BLAKE3 of the wasm artifact with its
 //!         CTT_MODULE_DIGEST slot zero-filled — build-time threaded, W-ABI2
-//!         item 2; all-zero placeholder until the build splices it)
+//!         item 2. The `CTT_MODULE_DIGEST` static now EXISTS but is
+//!         all-zero until the build-pipeline splice step lands (xtask/CI,
+//!         NOT build.rs); all-zero means "module identity not yet
+//!         attested", disclosed and never silently trusted)
 //! ```
 //!
 //! The v1 `reserved == 0` law and the v2 digest law are mutually
@@ -251,6 +254,12 @@ pub const ERR_DEFERRED_HEAP: i32 = 16;
 /// ABI revision reported by [`ctt_guest_abi_version`]. v2: 58-byte seal
 /// preimage with a threaded module digest, and the split OOB read/write
 /// errnos 14/15.
+///
+/// Feature-selected: `guest-abi-v1` compiles the shim tier (probe -> 1,
+/// 34-byte seal preimage, digest parameter ignored); default is v2.
+#[cfg(feature = "guest-abi-v1")]
+pub const ABI_VERSION: u32 = 1;
+#[cfg(not(feature = "guest-abi-v1"))]
 pub const ABI_VERSION: u32 = 2;
 
 // ---------------------------------------------------------------------------
@@ -270,6 +279,23 @@ pub const SEAL_PREIMAGE_V2_LEN: usize = 58;
 pub const DIGEST_LEN: usize = 32;
 /// Length of the module digest carried in the v2 seal preimage.
 pub const MODULE_DIGEST_LEN: usize = 32;
+/// Length of the seal preimage produced by [`seal_preimage`] for the
+/// compiled ABI: the legacy 34-byte v1 record under `guest-abi-v1`,
+/// the 58-byte v2 record otherwise.
+#[cfg(feature = "guest-abi-v1")]
+pub const SEAL_PREIMAGE_ACTIVE_LEN: usize = SEAL_PREIMAGE_LEN;
+#[cfg(not(feature = "guest-abi-v1"))]
+pub const SEAL_PREIMAGE_ACTIVE_LEN: usize = SEAL_PREIMAGE_V2_LEN;
+
+/// Build-time module-identity slot (32 bytes).
+///
+/// Zero-filled by default. The build pipeline (an xtask/CI step, **not**
+/// `build.rs` — the artifact cannot hash itself) splices
+/// `BLAKE3(zero-filled artifact bytes)` into this slot post-link. Callers
+/// may pass it as the default `module_digest` until that splicing step
+/// lands. An all-zero digest means **"module identity not yet attested"** —
+/// it is disclosed as such and never silently trusted as an attestation.
+pub static CTT_MODULE_DIGEST: [u8; MODULE_DIGEST_LEN] = [0u8; MODULE_DIGEST_LEN];
 
 // ---------------------------------------------------------------------------
 // Violation code table (byte values used in the seal preimage)
@@ -494,8 +520,12 @@ fn write_u64_le(out: &mut [u8], off: usize, v: u64) {
     out[off..off + 8].copy_from_slice(&v.to_le_bytes());
 }
 
-/// Builds the fixed 58-byte (v2) seal preimage for a [`ReplaySummary`]
-/// -shaped verdict bound to `module_digest` (module-doc layout).
+/// Builds the seal preimage for a [`ReplaySummary`]-shaped verdict
+/// (module-doc layout). v2 (default): the fixed 58-byte record bound to
+/// `module_digest`. v1 (`guest-abi-v1`): the legacy fixed 34-byte record —
+/// `module_digest` is accepted for signature stability and IGNORED (the
+/// v1 reserved field over `26..34` stays zero; a v1 seal is not
+/// digest-bound, that binding is the v2 upgrade).
 const fn seal_preimage(
     steps_executed: u32,
     events_total: u32,
@@ -503,7 +533,7 @@ const fn seal_preimage(
     outcome_byte: u8,
     violation_byte: u8,
     module_digest: &[u8; MODULE_DIGEST_LEN],
-) -> [u8; SEAL_PREIMAGE_V2_LEN] {
+) -> [u8; SEAL_PREIMAGE_ACTIVE_LEN] {
     // JUSTIFICATION: `copy_from_slice` is not const-stable; fixed-width
     // index writes keep the preimage builder const (it is reused by tests
     // and by the seal path without a runtime dependency). Declared before
@@ -516,18 +546,28 @@ const fn seal_preimage(
             i += 1;
         }
     }
-    let mut p = [0u8; SEAL_PREIMAGE_V2_LEN];
+    let mut p = [0u8; SEAL_PREIMAGE_ACTIVE_LEN];
     put64(&mut p, 0, steps_executed as u64);
     put64(&mut p, 8, events_total as u64);
     put64(&mut p, 16, final_marking);
     p[24] = outcome_byte;
     p[25] = violation_byte;
-    // v2: the v1 reserved field is consumed — the module digest occupies
-    // 26..58. (26..34 overlaps the former reserved bytes by construction.)
-    let mut i = 0;
-    while i < MODULE_DIGEST_LEN {
-        p[26 + i] = module_digest[i];
-        i += 1;
+    #[cfg(not(feature = "guest-abi-v1"))]
+    {
+        // v2: the v1 reserved field is consumed — the module digest
+        // occupies 26..58. (26..34 overlaps the former reserved bytes by
+        // construction.)
+        let mut i = 0;
+        while i < MODULE_DIGEST_LEN {
+            p[26 + i] = module_digest[i];
+            i += 1;
+        }
+    }
+    #[cfg(feature = "guest-abi-v1")]
+    {
+        // v1: reserved `26..34` stays zero; the digest parameter is not
+        // part of the v1 record (signature kept stable across versions).
+        let _ = module_digest;
     }
     p
 }
@@ -537,9 +577,12 @@ const fn seal_preimage(
 // ---------------------------------------------------------------------------
 
 /// ABI revision of this guest surface.
-// TODO(plan W-ABI2 item 5, shim tier): a `guest-abi-v1` feature compiling
-// the v1 layout/errno semantics (probe -> 1) is not yet wired; until it is,
-// v1 consumers must migrate or consume the shim tier. Related pin:
+// W-ABI2 item 5, shim tier (LANDED): the `guest-abi-v1` feature compiles
+// the version probe (-> 1) and the legacy 34-byte seal preimage (digest
+// parameter ignored, reserved `26..34` zero). It does NOT remap the errno
+// table: under v1 the distinct v2 errnos `ERR_OOB_READ`/`ERR_OOB_WRITE`/
+// `ERR_DEFERRED_HEAP` keep their v2 numeric values rather than collapsing
+// into the v1 `ERR_CAP_TOO_SMALL` overload. Related pin:
 // crates/ctt-wasm-guest/src/lib.rs asserts probe == 2 (ABI v2) (cross-crate
 // migration, outside this lane).
 #[no_mangle]
@@ -792,9 +835,11 @@ pub unsafe extern "C" fn ctt_session_seal(
                 outcome_byte,
                 violation_byte,
                 // TODO(plan W-ABI2 item 2: build-time module digest) — the
-                // all-zero placeholder is the documented pre-item-2 state;
-                // the digest PARAMETER is the v2 surface.
-                &[0u8; MODULE_DIGEST_LEN],
+                // spliced digest is not yet threaded by the build pipeline;
+                // until then this is the disclosed all-zero
+                // "not yet attested" state (see `CTT_MODULE_DIGEST`).
+                // The digest PARAMETER is the v2 surface.
+                &CTT_MODULE_DIGEST,
             ))
         }),
     });
@@ -919,13 +964,39 @@ mod tests {
         }
     }
 
+    /// Pins the pre-splice zero state of `CTT_MODULE_DIGEST`: until the
+    /// build pipeline (xtask/CI step, not build.rs) splices
+    /// BLAKE3(zero-filled artifact bytes) in, the static must be 32 zero
+    /// bytes — so a splice landing without this pin being updated is
+    /// visible, and an all-zero digest is never silently read as an
+    /// attestation.
     #[test]
-    fn abi_version_is_two() {
+    fn ctt_module_digest_is_zero_until_splice_lands() {
+        assert_eq!(CTT_MODULE_DIGEST, [0u8; MODULE_DIGEST_LEN]);
+        assert_eq!(CTT_MODULE_DIGEST.len(), MODULE_DIGEST_LEN);
+    }
+
+    // The probe pins the compiled ABI version; one build compiles one
+    // feature state, so the assertion is cfg-mirrored to the feature.
+    #[cfg(feature = "guest-abi-v1")]
+    #[test]
+    fn abi_version_matches_feature_state() {
+        assert_eq!(ctt_guest_abi_version(), 1);
+        assert_eq!(ABI_VERSION, 1);
+        assert_eq!(SEAL_PREIMAGE_ACTIVE_LEN, SEAL_PREIMAGE_LEN);
+    }
+
+    #[cfg(not(feature = "guest-abi-v1"))]
+    #[test]
+    fn abi_version_matches_feature_state() {
         assert_eq!(ctt_guest_abi_version(), 2);
+        assert_eq!(ABI_VERSION, 2);
+        assert_eq!(SEAL_PREIMAGE_ACTIVE_LEN, SEAL_PREIMAGE_V2_LEN);
     }
 
     // -- record encoding ------------------------------------------------------
 
+    #[cfg(not(feature = "guest-abi-v1"))]
     #[test]
     fn seal_preimage_layout_is_fixed() {
         let digest: [u8; MODULE_DIGEST_LEN] =
@@ -950,6 +1021,7 @@ mod tests {
     /// preimages AND distinct BLAKE3 outputs — the v1 collision class
     /// (different modules, identical `ReplaySummary`, byte-identical seal)
     /// is closed.
+    #[cfg(not(feature = "guest-abi-v1"))]
     #[test]
     fn seal_preimage_binds_module_digest_distinct_digests_distinct_seals() {
         let digest_a = [0xA5u8; MODULE_DIGEST_LEN];

@@ -30,8 +30,10 @@
 //!   every landed fixture file with a typed `ImportError::MissingField { field:
 //!   "ocel:activity" }`. `import_refuses_landed_fixtures_typed` pins that law
 //!   so the divergence stays loud; the landed fixtures are driven into the
-//!   session through a raw-JSON remap that reads the activity name directly
-//!   (the fixtures' own convention, same tid law).
+//!   session through `merger_fixture_to_session_words` (the composed bridge,
+//!   which reads the activity name directly from `ocel:activity` — the
+//!   fixtures' own convention, same tid law); the in-test `session_words`
+//!   wrapper covers only the inline contract-pipeline cases.
 //! * Phase 1 (20 atoms) and phase 2 (21 atoms) exceed the linear net's
 //!   16-place budget (`MAX_PETRI_PLACES - 1`); their models refuse to compile
 //!   with `TooManyPlaces`, so no golden replay exists for them — the refusal
@@ -398,6 +400,7 @@ fn phase4_golden_pipeline_and_landed_golden_complete() {
         YieldStatus::Complete(report) => {
             assert_eq!(report.steps_executed, 5);
             assert_eq!(report.final_marking, 1 << 5);
+            assert!(session.conformance_report().is_conforming(), "phase4 golden must conform");
         }
         other => panic!("phase4 landed golden: expected Complete, got {other:?}"),
     }
@@ -944,7 +947,14 @@ fn phase8_violation_over_issuance_pins_structural_equality() {
         .unwrap_or_else(|e| panic!("phase8 session compile: {e}"));
     session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
     match session.step_budget(words.len() as u32) {
-        YieldStatus::Complete(_) => {}
+        YieldStatus::Complete(_) => {
+            // structural court: attributes are UNSUPPORTED at the packed tier,
+            // so the replay is Complete — pin that it is also conforming.
+            assert!(
+                session.conformance_report().is_conforming(),
+                "phase8 violation skeleton replays structurally conforming"
+            );
+        }
         other => panic!("phase8 violation skeleton: expected structural Complete, got {other:?}"),
     }
 }
@@ -976,6 +986,7 @@ fn phase6_landed_golden_completes() {
         YieldStatus::Complete(report) => {
             assert_eq!(report.steps_executed, 13);
             assert_eq!(report.final_marking, 1 << 13);
+            assert!(session.conformance_report().is_conforming(), "phase6 golden must conform");
         }
         other => panic!("phase6 landed golden: expected Complete, got {other:?}"),
     }

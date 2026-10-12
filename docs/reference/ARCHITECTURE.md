@@ -46,7 +46,7 @@ Modules are organized into capability groups for better discoverability and main
 - `fail_fast`: Strict verification pipeline with zero tolerance — orchestrates all 12 phases with fail-fast semantics; every invariant violation is immediate test failure
 - `invariant_properties`: Property-based invariant validation — proptest properties exhaustively verifying that invariant violations are always detected (derived from the 47 failure modes in INVARIANT_MATRIX.md)
 - `receipt`: Proof-carrying test receipts — cryptographically verifiable receipts (contract ID, code hash, environment fingerprint, invariants checked, timing windows, SHA-256 signature) making tests observable operations
-- `verification_pipeline`: Phase 7 unified verification pipeline — straight-line Contract → Thermal → Effects → State Machine → Receipt → Orchestration sequencing for the A = μ(O) transformation (String error channel; typed-channel refactor registered as follow-up)
+- `verification_pipeline`: Phase 7 unified verification pipeline — straight-line Contract → Thermal → Effects → State Machine → Receipt → Orchestration sequencing for the A = μ(O) transformation (typed `PipelineError` channel — the wave-24 String channel was replaced in fa6a633)
 - `test_utils`: Community-requested test utilities — retry configuration for flaky tests, timing and path helpers
 
 **Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
