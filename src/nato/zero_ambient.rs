@@ -86,6 +86,13 @@ use crate::nato::disclosure::ScopingRecord;
 
 /// Audited `src/nato` modules, relative to this file. Exclusions are
 /// disclosed in the module doc and the court's scoping record.
+/// AUDIT SCOPE DISCLOSURE (W13): this list covers the courts whose state
+/// paths must be zero-ambient. Deliberately NOT audited here: the timing
+/// courts (tick/thrash/cache — their subject IS the clock; `std::time` is
+/// an allowlisted, documented surface) and the env-gated modules
+/// (disasm/dossier_court/guest_audit/receipts — `CTT_EMIT_RECEIPTS` /
+/// `N06_OUT` / artifact reads are their documented authority). Adding a
+/// module here requires its state paths to actually be zero-ambient.
 pub const AUDITED_MODULES: &[(&str, &str)] = &[
     ("mod.rs", include_str!("mod.rs")),
     ("control.rs", include_str!("control.rs")),
