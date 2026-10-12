@@ -15,8 +15,8 @@
 | Lane | Verdict | Finding (one line) | Disposition |
 |------|---------|--------------------|-------------|
 | SK1 | FALSIFIED | PN64 fold is non-associative and `fire` panics outside the 1-safe domain; conservation only holds on the restricted 1-safe sub-domain. | DOCUMENTED (domain precondition now stated at `src/conformance/pn64.rs:16-24`; conservation guard test landed) |
-| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | QUEUED (doc correction: relabel claim as constant-flow) |
-| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide and `SigningKey::from_seed` is publicly reachable (`src/ledger/signing/keys.rs:158`), bypassing key-id admission. | QUEUED |
+| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e; F1 module digest placeholder until build-time splice) (doc correction: relabel claim as constant-flow) |
+| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide and `SigningKey::from_seed` is publicly reachable (`src/ledger/signing/keys.rs:158`), bypassing key-id admission. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e; F1 module digest placeholder until build-time splice) |
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | QUEUED |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | QUEUED |
