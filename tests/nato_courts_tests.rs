@@ -16,6 +16,7 @@
 #![allow(clippy::unwrap_used)]
 
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
 use chicago_tdd_tools::nato::bell_lapadula::BellLapadulaCourt;
 use chicago_tdd_tools::nato::mils::MilSeparationCourt;
@@ -32,6 +33,9 @@ use chicago_tdd_tools::nato::{
 // Test courts: probe the positive-control gate law with an AtomicBool tripwire
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Mutex-serialized: the tripwire is process-global and two gate-law tests
+// race it under the parallel harness (A81 flake root cause).
+static GATE_TRIPWIRE_LOCK: Mutex<()> = Mutex::new(());
 static RUN_CALLED: AtomicBool = AtomicBool::new(false);
 
 fn run_called() -> bool {
@@ -129,6 +133,7 @@ impl Court for PassingControlCourt {
 
 #[test]
 fn gate_refuses_adjudication_when_mutant_survives() {
+    let _guard = GATE_TRIPWIRE_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     reset_run_called();
     let receipt = run_court(
         &BrokenControlCourt,
@@ -163,6 +168,7 @@ fn gate_refuses_adjudication_when_mutant_survives() {
 
 #[test]
 fn passing_control_clears_the_gate_and_runs() {
+    let _guard = GATE_TRIPWIRE_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     reset_run_called();
     let receipt = run_court(
         &PassingControlCourt,

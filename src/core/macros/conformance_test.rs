@@ -24,7 +24,7 @@
 ///
 /// Expands the body into a `#[test]` function. The body must bind a session
 /// value and end with an assertion against that session's report (typically
-/// via [`assert_conforms!`]).
+/// via `assert_conforms!`).
 ///
 /// # Usage
 ///

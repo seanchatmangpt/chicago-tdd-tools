@@ -44,10 +44,11 @@ section of `/Users/sac/strata/docs/nato/NATO_N01_N20.md`.
 | N19 | Reproducible build | supply chain | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
 | N20 | Dossier generator | supply chain | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
 
-Note on numbering: N08, N12, N14, N15 remain strata-side lanes (Hamming
-profile, clock-glitch, CAST-32A thrash, TLC liveness) and are not part of
-this module's delivered set; receipts exist only for the courts listed
-above.
+Note on numbering (E-M18): all 20 courts are delivered CTT-side and the
+matrix is 20/20 (`src/nato/registry.rs` `COURT_NAMES`). N08 Hamming profile
+(`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
+thrash (`src/nato/thrash.rs`), N15 liveness (`src/nato/liveness.rs`) landed
+CTT-side; the Erlang/OTP tiers remain strata-side.
 
 ## The positive-control gate law
 
@@ -75,7 +76,8 @@ claims another tier's strength.
 ## Receipt contract
 
 Each court writes a `CourtReceipt` as JSON to `docs/receipts/N{01..20}.json`
-(one file per court). Required fields:
+(one file per court) when the opt-in gate `CTT_EMIT_RECEIPTS=1` is set
+(hermetic by default otherwise). Required fields:
 
 ```json
 {

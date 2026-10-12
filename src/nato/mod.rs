@@ -64,7 +64,9 @@ pub mod disclosure;
 pub mod dossier_court;
 pub mod entropy;
 pub mod guest_audit;
+pub mod hamming;
 pub mod kat;
+pub mod liveness;
 pub mod mils;
 pub mod orthogonality;
 pub mod receipt;
@@ -74,6 +76,8 @@ pub mod reproducible;
 pub mod rng;
 pub mod seu;
 pub mod stackbound;
+pub mod thrash;
+pub mod tick;
 pub mod timing;
 pub mod torn;
 pub mod transition_tables;
@@ -86,7 +90,7 @@ pub use court::{
     Verdict,
 };
 pub use disclosure::{ScopingRecord, ScopingValidationError};
-pub use receipt::{ControlResult, CourtReceipt};
-pub use receipts::{PersistError, load_dir, persist};
+pub use receipt::{ControlResult, CourtReceipt, ReceiptParseError};
+pub use receipts::{load_dir, persist, PersistError};
 pub use registry::{CourtEntry, COURT_NAMES};
 pub use rng::Lcg;

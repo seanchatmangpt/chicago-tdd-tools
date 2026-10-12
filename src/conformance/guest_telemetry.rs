@@ -1,5 +1,6 @@
 #![cfg(all(feature = "wasm-guest", feature = "ocel-ingest"))]
-#![allow(unsafe_code)] // JUSTIFICATION: ABI boundary writes raw guest-memory pointers; # Safety contract documented at each fn
+#![allow(unsafe_code)]
+// JUSTIFICATION: ABI boundary writes raw guest-memory pointers; # Safety contract documented at each fn
 //! WASM guest OCEL telemetry export (PRD §3: "records every internal state
 //! transition as an IEEE OCEL 2.0 causal event graph").
 //!
@@ -8,8 +9,8 @@
 //! words and a BLAKE3 digest. It owns NO packing law of its own: every word
 //! is minted through the landed `crate::observability::ocel::ocel64_bridge`
 //! [`pack`] primitive, so this module inherits the bridge's word layout
-//! (activity [15:0], src [31:16], tgt [47:32], qualifier [55:48], tick
-//! [63:56]) and its lossy-by-design disclosures verbatim:
+//! (activity `[15:0]`, src `[31:16]`, tgt `[47:32]`, qualifier `[55:48]`,
+//! tick `[63:56]`) and its lossy-by-design disclosures verbatim:
 //!
 //! * the 8-bit tick field wraps at 256; a trajectory spanning more than one
 //!   256-tick era is caller-checkpoint duty (see the bridge's era-wrap
@@ -147,8 +148,9 @@ pub fn trajectory_digest(words: &[u64]) -> [u8; 32] {
 /// is too small for all `words.len() * 8` bytes, [`STATUS_E_INVALID`] for a
 /// null or non-8-byte-aligned `out`. Note these refusal codes are
 /// `guest_yield`'s yield-scheduling statuses, NOT the canonical `guest.rs`
-/// ABI errno table (`ERR_*` 0..=13); they do not collide with any wire ABI
-/// errno and must not be presented as such. NEVER truncates: on any refusal
+/// ABI errno table (`ERR_*` 0..=13); their numeric values do overlap
+/// `ERR_*` 2/3, but the surfaces are distinct namespaces — they must not be
+/// presented as ABI errnos. NEVER truncates: on any refusal
 /// the buffer is left untouched and nothing is written.
 ///
 /// Words are serialized little-endian, matching [`trajectory_digest`]'s
@@ -344,12 +346,18 @@ mod tests {
     #[test]
     fn bounded_write_refuses_null_and_misaligned_out() {
         let words = emit_trajectory(&sample_summary(), &sample_events());
-        assert_eq!(unsafe { write_event_words(&words, std::ptr::null_mut(), u32::MAX) }, STATUS_E_INVALID); // SAFETY: refusal path, no write performed
-        // Deliberately misaligned destination (1 mod 8).
+        assert_eq!(
+            unsafe { write_event_words(&words, std::ptr::null_mut(), u32::MAX) },
+            STATUS_E_INVALID
+        ); // SAFETY: refusal path, no write performed
+           // Deliberately misaligned destination (1 mod 8).
         let mut raw = vec![0u8; words.len() * 8 + 1];
         let misaligned = raw.as_mut_ptr().wrapping_add(1);
         assert_eq!(misaligned as usize % 8, 1);
-        assert_eq!(unsafe { write_event_words(&words, misaligned, raw.len() as u32) }, STATUS_E_INVALID); // SAFETY: refusal path, no write performed
+        assert_eq!(
+            unsafe { write_event_words(&words, misaligned, raw.len() as u32) },
+            STATUS_E_INVALID
+        ); // SAFETY: refusal path, no write performed
     }
 
     #[test]

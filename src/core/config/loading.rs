@@ -156,6 +156,7 @@ fn find_config_file() -> Option<PathBuf> {
     // This helps users understand where config file should be placed
     // Only log in library context, not in tests (to avoid test noise)
     if env::var("CARGO_MANIFEST_DIR").is_ok() && !searched_paths.is_empty() {
+        #[cfg(feature = "logging")]
         log::debug!(
             "ℹ️  Info: Config file chicago-tdd-tools.toml not found in searched paths:\n   {}",
             searched_paths
@@ -164,6 +165,7 @@ fn find_config_file() -> Option<PathBuf> {
                 .collect::<Vec<_>>()
                 .join("\n   ")
         );
+        #[cfg(feature = "logging")]
         log::debug!(
             "   💡 SUGGESTION: Place chicago-tdd-tools.toml in project root (same directory as Cargo.toml)\n   \
              💡 SUGGESTION: Config file is optional - framework will use defaults if not found"
@@ -282,6 +284,7 @@ fn read_config_value(section: &str, key: &str, default: u64) -> u64 {
             // **FMEA Fix FM1 (RPN 270)**: Warn if config file exists but key not found
             // This detects typos in section/key names
             if found_section && !found_key {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "⚠️  Warning: Config file {} has section [{}] but key '{}' not found.\n   \
                      💡 FIX: Check for typos in key name\n   \
@@ -302,6 +305,7 @@ fn read_config_value(section: &str, key: &str, default: u64) -> u64 {
                     line.starts_with('[') && line.ends_with(']')
                 });
                 if has_any_section {
+                    #[cfg(feature = "logging")]
                     log::info!(
                         "ℹ️  Info: Config file {} exists but section [{}] not found.\n   \
                          💡 Using default value: {}\n   \
@@ -316,15 +320,18 @@ fn read_config_value(section: &str, key: &str, default: u64) -> u64 {
 
             // **Gemba Fix**: Log warnings if config file exists but has parse errors
             if !parse_errors.is_empty() {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "⚠️  Warning: Config file {} has parse errors:\n   {}",
                     config_path.display(),
                     parse_errors.join("\n   ")
                 );
+                #[cfg(feature = "logging")]
                 log::warn!("   Using default value: {default}");
             }
         } else {
             // **Gemba Fix**: Log warning if config file exists but cannot be read
+            #[cfg(feature = "logging")]
             log::warn!(
                 "⚠️  Warning: Config file {} exists but cannot be read. Using default value: {}",
                 config_path.display(),
@@ -390,11 +397,13 @@ fn read_config_value_u32(section: &str, key: &str, default: u32) -> u32 {
             }
 
             if !parse_errors.is_empty() {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "⚠️  Warning: Config file {} has parse errors:\n   {}",
                     config_path.display(),
                     parse_errors.join("\n   ")
                 );
+                #[cfg(feature = "logging")]
                 log::warn!("   Using default value: {default}");
             }
         }
@@ -457,11 +466,13 @@ fn read_config_value_usize(section: &str, key: &str, default: usize) -> usize {
             }
 
             if !parse_errors.is_empty() {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "⚠️  Warning: Config file {} has parse errors:\n   {}",
                     config_path.display(),
                     parse_errors.join("\n   ")
                 );
+                #[cfg(feature = "logging")]
                 log::warn!("   Using default value: {default}");
             }
         }
@@ -526,11 +537,13 @@ fn read_config_value_u16(section: &str, key: &str, default: u16) -> u16 {
             }
 
             if !parse_errors.is_empty() {
+                #[cfg(feature = "logging")]
                 log::warn!(
                     "⚠️  Warning: Config file {} has parse errors:\n   {}",
                     config_path.display(),
                     parse_errors.join("\n   ")
                 );
+                #[cfg(feature = "logging")]
                 log::warn!("   Using default value: {default}");
             }
         }
@@ -1412,6 +1425,7 @@ max_batch_size = 0
                 if self.had_config {
                     if let Err(e) = fs::rename(&self.backup_path, &self.config_path) {
                         // Log error but don't panic in Drop
+                        #[cfg(feature = "logging")]
                         log::warn!("Failed to restore config file: {}", e);
                     }
                 }

@@ -4,11 +4,11 @@
 //! fix/kg-42-status-code (0de13a3), Apache/MIT per strata LICENSE.
 //!
 //! Bit layout (little-endian bit fields), one `u64` = the whole state:
-//!   - bits [15:0]  : marking `m` (token presence per place, one bit per place)
-//!   - bits [31:16] : precondition mask `W-` (places this transition consumes)
-//!   - bits [47:32] : postcondition mask `W+` (places this transition produces)
-//!   - bits [55:48] : transition id
-//!   - bits [63:56] : flags / invariant byte
+//!   - bits `15:0`  : marking `m` (token presence per place, one bit per place)
+//!   - bits `31:16` : precondition mask `W-` (places this transition consumes)
+//!   - bits `47:32` : postcondition mask `W+` (places this transition produces)
+//!   - bits `55:48` : transition id
+//!   - bits `63:56` : flags / invariant byte
 //!
 //! All accessors are total and branch-light; no heap, no strings — the word is
 //! the whole state, suitable for dispatch tables and OCEL-style event streams.

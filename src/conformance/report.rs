@@ -57,6 +57,19 @@ pub enum Deviation {
         /// Total events in the recorded trace.
         total_events: usize,
     },
+    /// A step referenced a transition id never declared in the model.
+    Undeclared {
+        /// Trajectory step at which the undeclared id was offered.
+        step: u32,
+        /// The undeclared transition id.
+        tid: u8,
+    },
+    /// A declared step was out of the model's linear order (or the tick
+    /// stream skipped ahead), so the event was refused.
+    Skipped {
+        /// Trajectory step at which the refusal occurred.
+        step: u32,
+    },
 }
 
 /// Terminal status of a replay run.

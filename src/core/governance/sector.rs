@@ -51,6 +51,8 @@ impl SectorStack for ProcessIntelligenceSector {
                 Err("ProcessIntelligenceSector: artifact must be a JSON object, got string"
                     .to_string())
             }
+            // The `Value::Null` arm above is rejected early, so this match arm
+            // is unreachable for any value reaching this match.
             Value::Null => unreachable!("null already handled above"),
         }
     }

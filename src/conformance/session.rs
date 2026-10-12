@@ -26,8 +26,8 @@
 //!
 //! # Event word (OCEL64) layout used by the session
 //!
-//!   * bits [7:0]   : activity id (verb); matched against transition `tid`
-//!   * bits [15:8]  : tick — must be exactly `prev_tick + 1 (mod 256)`
+//!   * bits `7:0`   : activity id (verb); matched against transition `tid`
+//!   * bits `15:8`  : tick — must be exactly `prev_tick + 1 (mod 256)`
 //!
 //! # Step semantics (P3)
 //!
@@ -207,15 +207,20 @@ impl ConformanceSession {
     /// Binds the OCEL64 event stream to replay and rewinds the cursor to
     /// its first event. Attaching a new stream unfreezes a `Yielded`
     /// session only from the new stream's start; `Complete`/`Faulted`
-    /// remain frozen.
+    /// remain frozen: attaching into a terminal phase is refused.
     ///
     /// A zero-length stream is rejected eagerly as
-    /// [`ConformanceError::TraceMalformed`].
+    /// [`ConformanceError::TraceMalformed`], as is an attach attempt into a
+    /// terminal (`Complete`/`Faulted`) phase.
     ///
     /// # Errors
     ///
-    /// [`ConformanceError::TraceMalformed`] when `words.is_empty()`.
+    /// [`ConformanceError::TraceMalformed`] when `words.is_empty()` or the
+    /// session is already in a terminal phase (`Complete`/`Faulted`).
     pub fn attach_stream(&mut self, words: &[u64]) -> ConformanceResult<()> {
+        if matches!(self.phase, Phase::Complete | Phase::Faulted(_)) {
+            return Err(ConformanceError::TraceMalformed { len: words.len() });
+        }
         if words.is_empty() {
             return Err(ConformanceError::TraceMalformed { len: 0 });
         }
@@ -227,11 +232,21 @@ impl ConformanceSession {
     /// Replays at most `quota` events, returning early on violation or
     /// trace exhaustion.
     ///
-    /// # Errors
-    ///
-    /// Never returns `Err`; all outcomes travel through [`YieldStatus`]
-    /// (violations latch and are re-reported as `YieldStatus::Violation`).
+    /// A session with no attached (or an empty) stream is refused, not
+    /// completed: stepping an unattached session latches
+    /// `Phase::Faulted(ConformanceError::TraceMalformed { len: 0 })` and
+    /// reports `YieldStatus::Violation` — the same trace law `attach_stream`
+    /// enforces, applied at step time so a never-attached session can never
+    /// reach `Complete` on a zero-event trajectory.
     pub fn step_budget(&mut self, quota: u32) -> YieldStatus {
+        // Trace law at step time (X2): an empty bound stream is malformed,
+        // never a vacuous Complete. A session that attached a nonempty
+        // stream keeps its Complete-on-exhaustion behavior below.
+        if self.stream.is_empty() {
+            let err = ConformanceError::TraceMalformed { len: 0 };
+            self.phase = Phase::Faulted(err.clone());
+            return YieldStatus::Violation(err);
+        }
         match self.phase {
             Phase::Faulted(ref e) => return YieldStatus::Violation(e.clone()),
             Phase::Complete => return YieldStatus::Complete(self.report(ReportOutcome::Complete)),
@@ -455,8 +470,9 @@ fn atom_count(model: &super::loader::PowlModel) -> usize {
 }
 
 /// Maps a classified replay violation onto the report vocabulary's
-/// [`super::report::Deviation`] surface. Session-side classes with no
-/// report-side twin fall back to the marking/step fields they carry.
+/// [`super::report::Deviation`] surface. Every replay-classified violation
+/// carries its real data into the report; nothing is fabricated as a
+/// phantom `NotEnabled { tid: 0, marking: 0 }`.
 const fn conformance_error_deviation(
     err: &ConformanceError,
     step: u32,
@@ -469,8 +485,17 @@ const fn conformance_error_deviation(
         ConformanceError::OutOfOrder { prev_tick, tick, .. } => {
             Deviation::OutOfOrder { step, prev_tick: *prev_tick, tick: *tick }
         }
-        // No report-side twin: express as a not-enabled step at the live
-        // marking (the closest structured verdict the vocabulary carries).
+        ConformanceError::Undeclared { tid, .. } => Deviation::Undeclared { step, tid: *tid },
+        ConformanceError::Skipped { .. } => Deviation::Skipped { step },
+        // Terminal-before-start latch (never-attached session): the
+        // trajectory never played, which the vocabulary expresses as an
+        // unfinished trajectory of zero replayed steps.
+        ConformanceError::TraceMalformed { .. } => {
+            Deviation::Unfinished { steps_done: step as usize, total_events: 0 }
+        }
+        // No replay path latches Io / model errors into Phase::Faulted; if a
+        // new session-side variant is added without a report twin, it falls
+        // back to the real marking it was latched at rather than a phantom.
         _ => Deviation::NotEnabled { step, tid: 0, marking: 0 },
     }
 }
@@ -679,6 +704,130 @@ mod tests {
         let mut s = ConformanceSession::from_model(&three_atom_model())
             .unwrap_or_else(|e| panic!("compile: {e}"));
         assert!(matches!(s.attach_stream(&[]), Err(ConformanceError::TraceMalformed { len: 0 })));
+    }
+
+    // -- S3 exploit-closure regressions (X1/X2/X3/X4) ----------------------
+
+    /// X1 (S3): attach into a `Complete` session must REFUSE — a terminal
+    /// session is frozen; re-arming it with a fresh stream would unfreeze a
+    /// verdict already reported.
+    #[test]
+    fn x1_attach_after_complete_refuses() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(1, 2), event(2, 3)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        assert!(matches!(s.step_budget(10), YieldStatus::Complete(_)));
+        assert_eq!(*s.phase(), Phase::Complete);
+        assert!(matches!(
+            s.attach_stream(&[event(0, 1)]),
+            Err(ConformanceError::TraceMalformed { len: 1 })
+        ));
+        // Still frozen at the terminal verdict.
+        assert_eq!(*s.phase(), Phase::Complete);
+        assert_eq!(s.steps_done(), 3);
+    }
+
+    /// X3 (S3): attach into a `Faulted` session must REFUSE — the latch
+    /// carries the violation; a re-attach must not erase it.
+    #[test]
+    fn x3_attach_after_faulted_refuses() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(9, 2)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        assert!(matches!(
+            s.step_budget(10),
+            YieldStatus::Violation(ConformanceError::Undeclared { .. })
+        ));
+        assert!(matches!(
+            s.attach_stream(&[event(0, 1), event(1, 2), event(2, 3)]),
+            Err(ConformanceError::TraceMalformed { len: 3 })
+        ));
+        // The original violation latch survives the refused re-attach.
+        assert!(matches!(s.phase(), Phase::Faulted(ConformanceError::Undeclared { .. })));
+        assert!(matches!(s.resume(5), YieldStatus::Violation(_)));
+    }
+
+    /// X2 (S3): a never-attached session must NOT reach `Complete` on
+    /// `step_budget` — a zero-event trajectory is malformed, not vacuously
+    /// conforming. Same trace law as `attach_stream`, applied at step time.
+    #[test]
+    fn x2_step_budget_unattached_refuses_not_completes() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        assert_eq!(*s.phase(), Phase::Idle);
+        match s.step_budget(10) {
+            YieldStatus::Violation(ConformanceError::TraceMalformed { len: 0 }) => {}
+            other => panic!("expected TraceMalformed refusal, got {other:?}"),
+        }
+        assert!(matches!(s.phase(), Phase::Faulted(ConformanceError::TraceMalformed { len: 0 })));
+        assert_eq!(s.steps_done(), 0);
+        // Terminal latch: subsequent budget re-reports the violation.
+        assert!(matches!(
+            s.step_budget(10),
+            YieldStatus::Violation(ConformanceError::TraceMalformed { len: 0 })
+        ));
+        // And its structured report is not conforming (no phantom Complete).
+        assert!(!s.conformance_report().is_conforming());
+    }
+
+    /// X4 (S3): the report lane carries the REAL violation data —
+    /// `Undeclared` maps to `Deviation::Undeclared` with the offending tid,
+    /// never the phantom `NotEnabled { tid: 0, marking: 0 }`.
+    #[test]
+    fn x4_undeclared_deviation_carries_real_tid() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(9, 2)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        let _ = s.step_budget(10);
+        let cr = s.conformance_report();
+        assert!(
+            cr.deviations()
+                .iter()
+                .any(|d| matches!(d, Deviation::Undeclared { step: 1, tid: 9 })),
+            "expected real Undeclared deviation, got {cr:?}"
+        );
+        assert!(
+            !cr.deviations()
+                .iter()
+                .any(|d| matches!(d, Deviation::NotEnabled { tid: 0, marking: 0, .. })),
+            "phantom NotEnabled must not appear: {cr:?}"
+        );
+    }
+
+    /// X4 (S3): `Skipped` maps to `Deviation::Skipped` with the real step,
+    /// not the phantom fallback.
+    #[test]
+    fn x4_skipped_deviation_carries_real_step() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(1, 1)]).unwrap_or_else(|e| panic!("attach: {e}"));
+        let _ = s.step_budget(10);
+        let cr = s.conformance_report();
+        assert!(
+            cr.deviations().iter().any(|d| matches!(d, Deviation::Skipped { step: 0 })),
+            "expected real Skipped deviation, got {cr:?}"
+        );
+        assert!(
+            !cr.deviations()
+                .iter()
+                .any(|d| matches!(d, Deviation::NotEnabled { tid: 0, marking: 0, .. })),
+            "phantom NotEnabled must not appear: {cr:?}"
+        );
+    }
+
+    /// X2 companion: an unattached session's summary is `Incomplete`
+    /// (never `Complete`), and `finish()` reflects that.
+    #[test]
+    fn unattached_session_finish_is_incomplete_never_complete() {
+        let s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        let summary = s.finish();
+        assert_eq!(summary.outcome, ReportOutcome::Incomplete);
+        assert_eq!(summary.steps_executed, 0);
+        assert_eq!(summary.events_total, 0);
     }
 
     #[test]

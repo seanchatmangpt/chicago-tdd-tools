@@ -41,8 +41,9 @@
 //! protocol. [`STATUS_OK`] is an alias of the canonical `guest::OK` so the
 //! two surfaces share one zero. The remaining `STATUS_*` consts are
 //! **yield-scheduling statuses, NOT ABI errnos**: their numeric values
-//! intentionally do NOT match the canonical table's occupants at the same
-//! numbers, and they must never cross the wire as ABI errnos. If a yield
+//! numerically overlap the canonical table's `ERR_*` 1..=9, but they live in
+//! a different namespace/surface (yield scheduling, never the ABI errno
+//! lane) and must never cross the wire as ABI errnos. If a yield
 //! status ever needs to appear in an ABI errno position, extend `guest.rs`'s
 //! table there — never renumber these to coincide with `ERR_*`.
 #![cfg(feature = "wasm-guest")]

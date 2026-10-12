@@ -57,7 +57,7 @@ little-endian, tightly packed. Handles are
 | `ctt_session_new(net_buf, net_len, out_handle)` | wire-format `CTTG` buffer → `u64` handle | errno table below |
 | `ctt_session_attach(host, stream_ptr, stream_len)` | flat LE u64 OCEL64 event words (zero-length rejected: `ERR_STREAM_EMPTY`) | errno table below |
 | `ctt_session_step(handle, quota, out_status, out_cap)` | → 21-byte step status record (1B outcome: 0 Yielded / 1 Complete / 2 Violation; 4B remaining_events; 4B steps_executed; 4B events_total; 8B final_marking) | errno table below |
-| `ctt_session_seal(handle, out_buf, out_cap, out_len)` | → 34-byte seal preimage (8B steps + 8B events + 8B final_marking + 1B outcome + 1B violation code + 8B reserved, zero), BLAKE3-digested when `ledger` is on | errno table below |
+| `ctt_session_seal(handle, out_buf, out_cap, out_len)` | → 34-byte seal preimage (8B steps + 8B events + 8B final_marking + 1B outcome + 1B violation code + 8B reserved (zero)), BLAKE3-digested when `ledger` is on | errno table below |
 | `ctt_session_drop(handle)` | — | errno table below |
 
 ### Status (errno) table
@@ -68,19 +68,21 @@ runtime, never returned by an ABI fn in v1).
 | code | name | meaning |
 |-----:|---|---|
 | 0 | `OK` | success |
-| 1 | `ERR_NULL_PTR` | null pointer / out-pointer |
-| 2 | `ERR_BAD_MAGIC` | buffer lacks `CTTG` magic |
+| 1 | `ERR_NULL_PTR` | a required pointer/out-pointer argument was null |
+| 2 | `ERR_BAD_MAGIC` | buffer does not start with `CTTG` |
 | 3 | `ERR_BAD_VERSION` | wire version byte != 1 |
-| 4 | `ERR_TRUNCATED` | buffer shorter than layout requires |
+| 4 | `ERR_TRUNCATED` | buffer shorter than its declared layout requires |
 | 5 | `ERR_TRAILING` | bytes present after the declared payload |
-| 6 | `ERR_RESERVED_NOT_ZERO` | must-be-zero field non-zero |
+| 6 | `ERR_RESERVED_NOT_ZERO` | a must-be-zero field is non-zero |
 | 7 | `ERR_BAD_MODEL` | model DSL failed parse/validate/compile |
-| 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` (8) slots occupied |
-| 9 | `ERR_BAD_HANDLE` | handle free, out of range, or generation-stale |
+| 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` slots occupied |
+| 9 | `ERR_BAD_HANDLE` | handle is free, out of range, or generation-stale |
 | 10 | `ERR_STREAM_EMPTY` | attach of a zero-length stream |
-| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below fixed record length |
-| 12 | `ERR_SEAL_UNAVAILABLE` | sealing without the `ledger` feature |
+| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length |
+| 12 | `ERR_SEAL_UNAVAILABLE` | sealing requested without the `ledger` feature |
 | 13 | `ERR_STREAM_ALIGNMENT` | stream byte length not a multiple of 8 |
+
+Codes 0..=13, no reserved slot.
 
 ### Cooperative-yield statuses (`guest_yield`)
 
@@ -124,4 +126,6 @@ little-endian framing of the step status record.
 * Guest telemetry ABI: `src/conformance/guest_telemetry.rs` — landed,
   gated `all(feature = "wasm-guest", feature = "ocel-ingest")`; converts
   replayed trajectories to packed OCEL64 words via
-  `observability::ocel::ocel64_bridge::pack`.
+  `observability::ocel::ocel64_bridge::pack`. Its exports return
+  yield-protocol statuses (`STATUS_OK`/`STATUS_E_NOMEM`/`STATUS_E_INVALID`
+  from `guest_yield`), not the ABI errno table above.

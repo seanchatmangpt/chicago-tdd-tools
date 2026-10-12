@@ -33,7 +33,7 @@
 //! `TickCounter` reads RDTSC (CPU reference cycles); on aarch64 it reads
 //! CNTVCT_EL0, a fixed-frequency wall-clock timer where 1 tick ≈ 1 ns —
 //! ticks are NEVER claimed to be cycles on aarch64. The local budget is
-//! [`TRAJECTORY_TICK_BUDGET`] = 12; the crate-wide
+//! `TRAJECTORY_TICK_BUDGET` = 12; the crate-wide
 //! `HOT_PATH_TICK_BUDGET` (8) is a different gate for different paths and is
 //! deliberately not touched.
 

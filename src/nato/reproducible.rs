@@ -1,10 +1,12 @@
 #![cfg(feature = "nato")]
+// unwrap_used is allowed in the module allow-block below: schema-court tests
+// + test-mutant helpers are test-only.
 // Court harness library: probes and full-tier entry points run under
 // `#[ignore]`d tests, so non-test builds legitimately see unused items.
 #![allow(dead_code)]
 //! Reproducible-build contract court (lane N6, plan P11).
 //!
-//! Contract under audit: [`bin/nato_reproducible_build.sh`] emits a JSON
+//! Contract under audit: `bin/nato_reproducible_build.sh` emits a JSON
 //! receipt recording a double clean-target build compared byte-wise
 //! (cmp + sha256), with toolchain identity, honest scope, and a MANDATORY
 //! `not_run` disclosure naming the 3-host cross-host reproduction commands
@@ -22,7 +24,6 @@
 // style-class lints below are allowed at module scope with this
 // justification rather than 300+ inline permits.
 #![allow(
-#![allow(clippy::unwrap_used)] // JUSTIFICATION: schema-court tests + test-mutant helpers are test-only
     clippy::doc_markdown,
     clippy::must_use_candidate,
     clippy::use_self,

@@ -83,6 +83,14 @@ use ctt_wasm_guest::{
 /// failures, SDC=6947, all from cross-test interference, none from the ABI).
 static ABI_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+/// Locks the ABI table, recovering from a poisoned lock: the parent's table
+/// itself recovers poison via `into_inner` (`guest.rs` `with_table`), and a
+/// panicking sibling test must cascade a PoisonError into 4 other failures —
+/// one root failure is one failure, not six.
+fn lock_abi() -> std::sync::MutexGuard<'static, ()> {
+    ABI_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 struct Lcg(u64);
 
 impl Lcg {
@@ -440,7 +448,7 @@ const FULL_N: u64 = 1_000_000;
 
 #[test]
 fn seu_single_bit_never_wrong_ok_fast() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     let c = run_seu_sweep(FAST_N, |h, q| unsafe { abi_step(h, q) });
     assert_eq!(c.refused + c.lawful + c.sdc, FAST_N, "every fault must land in exactly one class");
     assert_eq!(
@@ -454,7 +462,7 @@ fn seu_single_bit_never_wrong_ok_fast() {
 #[test]
 #[ignore = "nato-tier3"]
 fn seu_single_bit_never_wrong_ok_full() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     let c = run_seu_sweep(FULL_N, |h, q| unsafe { abi_step(h, q) });
     assert_eq!(c.refused + c.lawful + c.sdc, FULL_N);
     assert_eq!(c.sdc, 0, "SDC at donor scale — silent corruption detected");
@@ -469,11 +477,12 @@ fn seu_single_bit_never_wrong_ok_full() {
 
 #[test]
 fn handle_bit_flips_obey_handle_law() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     let mut rng = Lcg(SEU_SEED ^ 0x0000_0000_0000_BEEF);
     let net = net_wire(MODEL_DSL);
-    // Two occupied slots (both generation 0) so slot-bit flips can land
-    // in-range on the other occupied slot.
+    // Two occupied slots (whatever generations the shared table currently
+    // holds — earlier tests' drops bump per-slot generations, so this court
+    // must be reset-agnostic, never assume gen 0 / slots 0..=1).
     let (st0, h0) = unsafe { abi_new(&net) };
     let (st1, h1) = unsafe { abi_new(&net) };
     assert_eq!(st0, OK);
@@ -487,10 +496,16 @@ fn handle_bit_flips_obey_handle_law() {
         hb[byte_idx] ^= 1 << rng.below(8);
         let corrupted = u64::from_le_bytes(hb);
 
-        // Oracle: documented handle law, re-derived here.
+        // Oracle: documented handle law, re-derived here, RELATIVE to the
+        // handles this court actually holds. A single-bit flip of `target`
+        // either (a) lands on the exact bit pattern of the other live
+        // handle (h0 or h1 — the only occupied slot+generation pairs in the
+        // table, and unoccupied slots refuse regardless of generation), or
+        // (b) names a stale/foreign slot+generation -> ERR_BAD_HANDLE.
         let slot = (corrupted & 0xFFFF_FFFF) as usize;
         let generation = (corrupted >> 32) as u32;
-        let expected_ok = slot < MAX_SESSIONS && generation == 0 && slot <= 1;
+        let expected_ok = corrupted == h0 || corrupted == h1;
+        let _ = (slot, generation); // kept for the diagnostic in the asserts below
 
         let st = unsafe { abi_attach(corrupted, &stream_bytes()) };
         if expected_ok {
@@ -521,7 +536,7 @@ fn assert_torn_refused(tag: &'static str, st: i32) {
 
 #[test]
 fn torn_net_input_fails_closed() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     let clean = net_wire(MODEL_DSL);
     let mid = clean.len() / 2;
 
@@ -556,7 +571,7 @@ fn torn_net_input_fails_closed() {
 
 #[test]
 fn torn_stream_input_fails_closed() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     let clean = stream_bytes();
     let (st_new, h) = unsafe { abi_new(&net_wire(MODEL_DSL)) };
     assert_eq!(st_new, OK);
@@ -617,7 +632,7 @@ fn torn_stream_input_fails_closed() {
 
 #[test]
 fn torn_refusals_never_partial_admit() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     // After every torn refusal above, the table must be intact: MAX_SESSIONS
     // lawful sessions still succeed, proving no leaked or poisoned slots.
     let net = net_wire(MODEL_DSL);
@@ -733,7 +748,7 @@ fn leaky_step_shim(_handle: u64, _quota: u32) -> (i32, [u8; STEP_STATUS_LEN]) {
 
 #[test]
 fn positive_control_leaky_step_shim_is_caught() {
-    let _table = ABI_LOCK.lock().unwrap();
+    let _table = lock_abi();
     // The sweep machinery, run against the leaky shim on the clean fixture:
     // the shim reports Complete even where the oracle says refusal/violation
     // or a different summary — SDC must fire.

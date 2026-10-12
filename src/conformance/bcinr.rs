@@ -1,4 +1,4 @@
-//! Bridge from the local [`PowlModel`](super::model::PowlModel) surface to the
+//! Bridge from the local [`PowlModel`](super::loader::PowlModel) surface to the
 //! BCINR POWL2 conformance validator.
 //!
 //! **Bridge target**: `bcinr-powl` 26.10.11 — `validate_powl2` /
@@ -28,7 +28,8 @@
 //! | `Parallel(children)`               | `PartialOrder`                    | Interleaving becomes a partial order.    |
 //! | `Loop { body, redo, max_iters }`   | `DoRedo`                          | `max_iters` carried as the iteration bound; `max_iters == 0` is rejected (`UnboundedLoop`). |
 //!
-//! Both directions of the bound check are enforced: a [`PowlModel`] can never
+//! Both directions of the bound check are enforced: a
+//! [`PowlModel`](super::loader::PowlModel) can never
 //! exceed `MAX_POWL_NODES = 64` nodes (its constructor rejects it), and the
 //! converted `Powl2Model` is validated against `bcinr_powl::powl2::POWL2_MAX_NODES`
 //! (also 64) before being handed to `validate_powl2`.
@@ -39,8 +40,8 @@
 // `bcinr_powl::powl2::*`, which does not exist until the dependency lands
 // (coordinator work). `cfg(any())` keeps this file compiling empty — the
 // documented pre-wiring state — instead of breaking `--all-features` builds.
-#[cfg(any())]
 #![allow(clippy::unwrap_used)] // JUSTIFICATION: cfg(any()) bridge; unwrap is inside cfg-gated code
+#[cfg(any())]
 pub use powl_bcinr_impl::*;
 
 #[cfg(any())]

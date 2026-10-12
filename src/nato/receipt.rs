@@ -163,9 +163,64 @@ impl CourtReceipt {
         serde_json::to_string_pretty(self)
     }
 
-    /// Deserialize from JSON.
-    pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
-        serde_json::from_str(json)
+    /// Deserialize from JSON, validating the wire invariants the in-memory
+    /// constructor enforces structurally. In particular the `digest` field
+    /// must be exactly 64 hex chars (a SHA-256 hex string): `dossier_root`
+    /// slices its first 32 bytes, so a short digest admitted here would
+    /// panic out-of-range downstream (AS5 D1). Refusal is typed, not a
+    /// serde error, so the caller can name the offending court/file.
+    pub fn from_json(json: &str) -> Result<Self, ReceiptParseError> {
+        let receipt: CourtReceipt = serde_json::from_str(json).map_err(ReceiptParseError::Json)?;
+        if !is_valid_digest(&receipt.digest) {
+            return Err(ReceiptParseError::InvalidDigest {
+                court_id: CourtId::canonical(receipt.court_id).to_string(),
+                reason: format!(
+                    "digest must be 64 hex chars, got {} chars {:?}",
+                    receipt.digest.len(),
+                    receipt.digest
+                ),
+            });
+        }
+        Ok(receipt)
+    }
+}
+
+/// Whether `s` is exactly 64 hex chars (either case), i.e. a SHA-256 hex
+/// digest as minted by [`canonical_digest`].
+fn is_valid_digest(s: &str) -> bool {
+    s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+/// Typed failure of [`CourtReceipt::from_json`].
+#[derive(Debug)]
+pub enum ReceiptParseError {
+    /// The JSON document itself failed to parse against the receipt schema.
+    Json(serde_json::Error),
+    /// The `digest` field is not a 64-hex-char SHA-256 string.
+    InvalidDigest {
+        /// Canonical id of the court whose receipt carries the bad digest.
+        court_id: String,
+        /// What is wrong with the digest, including the offending value.
+        reason: String,
+    },
+}
+
+impl core::fmt::Display for ReceiptParseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            ReceiptParseError::Json(e) => write!(f, "{e}"),
+            ReceiptParseError::InvalidDigest { court_id, reason } => {
+                write!(f, "invalid digest for court {court_id}: {reason}")
+            }
+        }
+    }
+}
+
+impl core::error::Error for ReceiptParseError {}
+
+impl From<serde_json::Error> for ReceiptParseError {
+    fn from(e: serde_json::Error) -> Self {
+        ReceiptParseError::Json(e)
     }
 }
 

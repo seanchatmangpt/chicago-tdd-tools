@@ -67,7 +67,7 @@
 //! of the run (two independent full-marking level snapshots must be
 //! identical, and every documented place bit must carry a defined level).
 //!
-//! Ported from strata n03_bell_lapadula.rs onto [`transition_tables`].
+//! Ported from strata n03_bell_lapadula.rs onto [`crate::nato::transition_tables`].
 
 // Lint-scope note: NATO court-harness and ledger wire-format modules use
 // domain literals, metric casts, and court-assertion panics by design; the

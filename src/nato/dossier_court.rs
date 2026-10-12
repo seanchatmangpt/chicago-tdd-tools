@@ -70,6 +70,7 @@
 )]
 
 use crate::ledger::proof::{leaf_hash, node_hash};
+use crate::ledger::signing::dossier_subject;
 use crate::ledger::signing::signer::Signer;
 use crate::nato::court::{Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
 use crate::nato::disclosure::ScopingRecord;
@@ -78,23 +79,90 @@ use crate::nato::receipt::{canonical_digest, ControlResult, CourtReceipt};
 /// Number of courts in the dossier: N01..N20.
 pub const COURT_COUNT: usize = 20;
 
+/// Typed failure of the digest-head guard in [`dossier_root`].
+///
+/// Defense in depth for AS5 D1: `CourtReceipt::from_json` refuses receipts
+/// whose `digest` is not a 64-hex-char SHA-256 string at load time; this
+/// guard refuses them again at root-computation time, should a receipt ever
+/// reach this module without passing through `from_json` (e.g. a hand-built
+/// struct literal with a hand-set digest).
+#[derive(Debug)]
+pub enum DossierRootError {
+    /// A receipt's `digest` is not a 64-hex-char SHA-256 string, so its
+    /// first-32-byte head cannot be extracted.
+    InvalidDigestHead {
+        /// Canonical id of the offending court.
+        court_id: String,
+        /// What is wrong with the digest (with the offending value).
+        reason: String,
+    },
+    /// A receipt's stored `digest` does not match the digest recomputed over
+    /// the receipt's canonical fields (court, subject, verdict, metrics).
+    /// F5 law: the NATO root binds the receipt CONTENT, not the self-reported
+    /// digest — a metric injected into a receipt after `record()` computed
+    /// its digest cannot ride an unmodified root through emit + inspect.
+    DigestMismatch {
+        /// Canonical id of the offending court.
+        court_id: String,
+        /// The digest stored on the receipt.
+        stored: String,
+        /// The digest recomputed from the receipt's canonical content.
+        recomputed: String,
+    },
+}
+
+impl std::fmt::Display for DossierRootError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DossierRootError::InvalidDigestHead { court_id, reason } => {
+                write!(f, "invalid digest head for court {court_id}: {reason}")
+            }
+            DossierRootError::DigestMismatch { court_id, stored, recomputed } => {
+                write!(
+                    f,
+                    "digest mismatch for court {court_id}: stored {stored} does not match \
+                     recomputed {recomputed} (content tampered after record())"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for DossierRootError {}
+
+/// Whether `s` is exactly 64 hex chars (either case), i.e. a SHA-256 hex
+/// digest as minted by `canonical_digest`.
+fn is_sha256_hex(s: &str) -> bool {
+    s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
 /// Compute the dossier root over the receipts' canonical digests using the
 /// P13 Merkle primitives. Leaves sorted byte-lexicographically by court
 /// name; odd node PROMOTED, never duplicated; empty set ->
 /// `BLAKE3("P13-EMPTY")` (P13's `empty_root()`).
+///
+/// Guards each receipt's digest (see [`DossierRootError`]); prefer the
+/// checked [`dossier_root_checked`] on admission paths.
 pub fn dossier_root(receipts: &[CourtReceipt]) -> [u8; 32] {
+    dossier_root_checked(receipts).expect(
+        "dossier_root: receipt digest failed the 64-hex guard; \
+                 route untrusted receipts through CourtReceipt::from_json",
+    )
+}
+
+/// Checked variant of [`dossier_root`]: returns a typed error instead of
+/// panicking when a receipt's digest cannot yield a 32-byte head.
+pub fn dossier_root_checked(receipts: &[CourtReceipt]) -> Result<[u8; 32], DossierRootError> {
     let mut leaves: Vec<(&str, [u8; 32])> = receipts
         .iter()
         .map(|r| {
-            let name = CourtId::canonical(r.court_id);
-            let mut head = [0u8; 32];
-            head.copy_from_slice(&r.digest.as_bytes()[..32]);
-            (name, head)
+            let head = digest_head(r)?;
+            Ok((CourtId::canonical(r.court_id), head))
         })
-        .collect();
+        .collect::<Result<_, DossierRootError>>()?;
     leaves.sort_unstable();
     if leaves.is_empty() {
-        return *blake3::hash(b"P13-EMPTY").as_bytes();
+        return Ok(*blake3::hash(b"P13-EMPTY").as_bytes());
     }
     let mut level: Vec<[u8; 32]> =
         leaves.iter().map(|(name, head)| leaf_hash(name, head)).collect();
@@ -113,14 +181,46 @@ pub fn dossier_root(receipts: &[CourtReceipt]) -> [u8; 32] {
         }
         level = next;
     }
-    level[0]
+    Ok(level[0])
 }
 
-/// Head digest committed for a court: the canonical receipt digest bytes.
-fn receipt_head(receipt: &CourtReceipt) -> [u8; 32] {
+/// Head digest committed for a court: the first 32 bytes of the receipt's
+/// 64-hex-char digest, guarded (typed error, never a range panic).
+///
+/// F5 law (AS1): the root binds the receipt CONTENT, not the self-reported
+/// `digest` string. Before the head is taken, the stored digest is re-derived
+/// over the receipt's canonical fields (`court|subject|verdict|metrics`) and
+/// a mismatch is refused with [`DossierRootError::DigestMismatch`]. A metric
+/// injected into a receipt after [`CourtReceipt::record`] computed its digest
+/// therefore can never enter a root: emit refuses, it does not exit 0.
+fn digest_head(receipt: &CourtReceipt) -> Result<[u8; 32], DossierRootError> {
+    let court_id = CourtId::canonical(receipt.court_id).to_string();
+    if !is_sha256_hex(&receipt.digest) {
+        return Err(DossierRootError::InvalidDigestHead {
+            court_id,
+            reason: format!(
+                "digest must be 64 hex chars, got {} chars {:?}",
+                receipt.digest.len(),
+                receipt.digest
+            ),
+        });
+    }
+    let recomputed = canonical_digest(
+        CourtId::canonical(receipt.court_id),
+        &receipt.subject_sha,
+        receipt.verdict,
+        &receipt.metrics,
+    );
+    if receipt.digest != recomputed {
+        return Err(DossierRootError::DigestMismatch {
+            court_id,
+            stored: receipt.digest.clone(),
+            recomputed,
+        });
+    }
     let mut head = [0u8; 32];
     head.copy_from_slice(&receipt.digest.as_bytes()[..32]);
-    head
+    Ok(head)
 }
 
 /// The admission predicate: every receipt Pass AND every positive control
@@ -148,14 +248,17 @@ impl DossierCourt {
     }
 
     /// Compute the dossier root and seal it with the ML-DSA-65 signer.
-    /// Returns (root, signature); the signature is over the root digest,
-    /// context-fixed by `SIGN_CONTEXT` inside the signer.
+    /// Returns (root, signature); the signature is over the domain-separated
+    /// subject `dossier_subject(&root)` — the same subject the landed
+    /// sealer law (`crate::ledger::signing::sealer::verify_sealed`) requires —
+    /// with the signer's `SIGN_CONTEXT` applied inside the signer.
     pub fn compute_and_seal(
         &self,
     ) -> ([u8; 32], [u8; crate::ledger::signing::signer::SIGNATURE_LEN]) {
         let root = dossier_root(&self.receipts);
         let signer = Signer::from_seed(seed_from_root(&root));
-        (root, signer.sign(&root))
+        let subject = dossier_subject(&root);
+        (root, signer.sign(&subject))
     }
 }
 
@@ -249,7 +352,10 @@ pub(crate) fn sample_control_set() -> Vec<CourtReceipt> {
                 name: CourtId::canonical(court_id).to_string(),
                 subject_sha: "control-subject".to_string(),
                 verdict: Verdict::Pass,
-                metrics: Vec::new(),
+                // Must equal the metric list the digest above was computed
+                // over (F5 law): the root re-derives each receipt's digest
+                // from its content and refuses a mismatch.
+                metrics: vec![("k".to_string(), MetricValue::U64(i as u64))],
                 positive_control: ControlResult::MutantCaught {
                     mutant_id: format!("m-{i}"),
                     detection_channel: "control".to_string(),
@@ -294,6 +400,18 @@ fn court_id_from_number(n: u8) -> Option<CourtId> {
 mod tests {
     use super::*;
 
+    /// Heuristic classification of a persist `Io` failure message as
+    /// permission-denied (environmental -> skip) vs. other (data error ->
+    /// hard fail). `PersistError::Io` carries a formatted message string, so
+    /// we match on the OS-level permission markers rather than the error kind.
+    fn is_permission_error(message: &str) -> bool {
+        let lower = message.to_lowercase();
+        lower.contains("denied")
+            || lower.contains("permission")
+            || lower.contains("os error 13")
+            || lower.contains("read-only")
+    }
+
     #[test]
     fn control_set_is_20_and_admits() {
         let set = sample_control_set();
@@ -316,11 +434,29 @@ mod tests {
         }
 
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
-        let written = crate::nato::receipts::persist(&dir, &set)
-            .expect("persist dossier receipts to docs/receipts");
+        let written = match crate::nato::receipts::persist(&dir, &set) {
+            Ok(written) => written,
+            Err(crate::nato::receipts::PersistError::Io { path, message })
+                if is_permission_error(&message) =>
+            {
+                // Environmental (read-only docs/, unwritable parent, sandbox):
+                // skip with a printed reason rather than panic — AS2 Finding 2.
+                println!(
+                    "skipping dossier receipt emission: cannot write {} \
+                     (permission denied: {message}); \
+                     re-run with CTT_EMIT_RECEIPTS=1 on a writable tree",
+                    path.display()
+                );
+                return;
+            }
+            Err(e) => panic!(
+                "persist dossier receipts to {} failed (data error, not \
+                 environmental): {e}; check CTT_EMIT_RECEIPTS wiring",
+                dir.display()
+            ),
+        };
         assert_eq!(written.len(), COURT_COUNT);
-        let loaded = crate::nato::receipts::load_dir(&dir)
-            .expect("docs/receipts must parse back");
+        let loaded = crate::nato::receipts::load_dir(&dir).expect("docs/receipts must parse back");
         assert_eq!(loaded.len(), COURT_COUNT);
     }
 
@@ -359,12 +495,52 @@ mod tests {
         let a = dossier_root(&sample_control_set());
         let b = dossier_root(&sample_control_set());
         assert_eq!(a, b, "same receipts -> same root");
-        // Changing any receipt's canonical digest moves the root.
+        // Changing any receipt's canonical digest moves the root. The
+        // mutated receipt's digest is re-derived over its (mutated) content
+        // — the same law the ledger follows — so the root sees the change.
         let mut set = sample_control_set();
         set[5].subject_sha = "different-subject".to_string();
-        set[5].digest = canonical_digest("N06", "different-subject", Verdict::Pass, &[]);
+        set[5].digest =
+            canonical_digest("N06", "different-subject", Verdict::Pass, &set[5].metrics);
         let c = dossier_root(&set);
         assert_ne!(a, c, "changed receipt digest must move the root");
+    }
+
+    /// F5 regression: a metric injected into a receipt AFTER `record()`
+    /// computed its digest must be refused at root-computation time with the
+    /// typed `DigestMismatch` error — never silently accepted (emit must not
+    /// exit 0 on tampered evidence).
+    #[test]
+    fn metric_injected_post_record_is_refused_at_root_time() {
+        use crate::nato::court::run_court;
+        use crate::nato::court::CandidateRef;
+        let real = run_court(
+            &crate::nato::mils::MilSeparationCourt,
+            &CandidateRef("f5-tamper".into()),
+            "sha-f5",
+        );
+        assert_eq!(real.verdict, Verdict::Pass);
+        let mut tampered = real.clone();
+        // Inject a metric post-record: content changes, stored digest does not.
+        tampered.metrics.push(("injected".to_string(), MetricValue::U64(1)));
+        let err = dossier_root_checked(&[tampered]).expect_err("tampered receipt must be refused");
+        assert!(
+            matches!(err, DossierRootError::DigestMismatch { .. }),
+            "expected DigestMismatch, got {err:?}"
+        );
+        // The un-tampered receipt still roots cleanly.
+        let _ = dossier_root_checked(&[real]).expect("honest receipt roots");
+    }
+
+    /// F5 companion: a digest rewritten WITHOUT a content change is refused
+    /// by the same content-binding law (root must follow content, not the
+    /// self-reported digest field).
+    #[test]
+    fn rewritten_digest_without_content_change_is_refused() {
+        let mut set = sample_control_set();
+        set[9].digest = "0".repeat(64);
+        let err = dossier_root_checked(&set).expect_err("forged digest must be refused");
+        assert!(matches!(err, DossierRootError::DigestMismatch { .. }));
     }
 
     #[test]
@@ -417,8 +593,15 @@ mod tests {
         assert_eq!(sig_a.len(), 3309, "FIPS 204 signature length");
         let signer = Signer::from_seed(seed_from_root(&root_a));
         assert!(
-            Signer::verify(&signer.public_key(), &root_a, &sig_a),
-            "sealed dossier must verify under the derived key"
+            Signer::verify(&signer.public_key(), &dossier_subject(&root_a), &sig_a),
+            "sealed dossier must verify under the derived key over the \
+             domain-separated subject"
+        );
+        // And must NOT verify against the raw root (domain separation is
+        // load-bearing; the sealer law signs the subject, not the root).
+        assert!(
+            !Signer::verify(&signer.public_key(), &root_a, &sig_a),
+            "raw-root verification must fail: the seal is over dossier_subject(root)"
         );
         // A different receipt set seals differently. The canonical digest is
         // re-derived for the mutated receipt so the root sees the verdict.
@@ -453,12 +636,99 @@ mod tests {
         use crate::nato::court::{run_court, CandidateRef};
         let mut receipts = sample_control_set();
         receipts[3].verdict = Verdict::Fail;
+        // Re-derive the mutated receipt's digest over its content (F5 law:
+        // honest mutation rewrites the digest; only tampering leaves it stale).
+        receipts[3].digest = canonical_digest(
+            CourtId::canonical(receipts[3].court_id),
+            &receipts[3].subject_sha,
+            receipts[3].verdict,
+            &receipts[3].metrics,
+        );
         let court = DossierCourt::new(receipts, "subject-run");
         let receipt = run_court(&court, &CandidateRef("dossier".into()), "subject-run");
         assert_eq!(receipt.verdict, Verdict::Fail);
         assert!(
             receipt.positive_control.passed(),
             "court fails on evidence, not on a broken control"
+        );
+    }
+
+    /// Real-evidence leg: the dossier admits a 20-receipt set anchored by
+    /// receipts minted from REAL `Court::run` outputs — `run_court` over the
+    /// four landed pillar courts (N01-N04), each with its positive control
+    /// firing — instead of `sample_control_set()` synthetics. Partial real
+    /// sets refuse (COURT_COUNT law); a mutated real receipt refuses.
+    #[test]
+    fn dossier_admits_real_court_run_receipts() {
+        use crate::nato::bell_lapadula::BellLapadulaCourt;
+        use crate::nato::court::{run_court, CandidateRef};
+        use crate::nato::mils::MilSeparationCourt;
+        use crate::nato::orthogonality::OrthogonalityCourt;
+        use crate::nato::zero_ambient::ZeroAmbientCourt;
+
+        let subject = "sha-rv2-real-court-set";
+        let real: Vec<CourtReceipt> = [
+            &MilSeparationCourt as &dyn Court,
+            &OrthogonalityCourt as &dyn Court,
+            &BellLapadulaCourt as &dyn Court,
+            &ZeroAmbientCourt as &dyn Court,
+        ]
+        .iter()
+        .map(|court| run_court(*court, &CandidateRef("rv2-real".into()), subject))
+        .collect();
+
+        // Each landed court ran through the gate: positive control fired
+        // (MutantCaught) and the real census/scan passed.
+        for r in &real {
+            assert_eq!(r.verdict, Verdict::Pass, "{} must pass", r.name);
+            assert!(
+                matches!(r.positive_control, ControlResult::MutantCaught { .. }),
+                "{} positive control must fire, got {:?}",
+                r.name,
+                r.positive_control
+            );
+            assert!(!r.metrics.is_empty(), "{} must carry measured metrics", r.name);
+        }
+
+        // A partial set of only the 4 real receipts must NOT admit (the
+        // COURT_COUNT law) — the aggregator is not lenient toward fragments.
+        assert!(!dossier_admits(&real), "4 of 20 receipts must not admit");
+
+        // Fill the remaining 16 slots with control receipts for the courts
+        // the real runs did not cover, and the full set admits.
+        let mut set: Vec<CourtReceipt> = sample_control_set()
+            .into_iter()
+            .filter(|r| {
+                !matches!(r.court_id, CourtId::N01 | CourtId::N02 | CourtId::N03 | CourtId::N04)
+            })
+            .collect();
+        set.extend(real.clone());
+        assert_eq!(set.len(), COURT_COUNT, "4 real + 16 control = 20 receipts");
+        assert!(
+            dossier_admits(&set),
+            "a full 20-receipt set anchored by real run_court receipts must admit"
+        );
+
+        // The real receipts carry real evidence: flipping one real receipt
+        // (with its canonical digest re-derived, as the ledger would) to
+        // Verdict::Fail must refuse admission.
+        let mut flipped_real = real.clone();
+        flipped_real[2].verdict = Verdict::Fail;
+        flipped_real[2].digest = canonical_digest(
+            CourtId::canonical(flipped_real[2].court_id),
+            &flipped_real[2].subject_sha,
+            flipped_real[2].verdict,
+            &flipped_real[2].metrics,
+        );
+        let mut mutant_set = set.clone();
+        let pos = mutant_set
+            .iter()
+            .position(|r| r.receipt_id == set[16 + 2].receipt_id)
+            .expect("flipped receipt is in the set");
+        mutant_set[pos] = flipped_real[2].clone();
+        assert!(
+            !dossier_admits(&mutant_set),
+            "a real receipt flipped to Fail must refuse admission"
         );
     }
 }

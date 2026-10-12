@@ -263,6 +263,7 @@ fn skipped_tick_is_typed_violation_status_byte_with_non_negative_return() {
 // ─── 5. Seal ────────────────────────────────────────────────────────────────
 
 /// Reconstructs the 34-byte seal preimage from known replay facts.
+#[cfg(feature = "ledger")] // only the ledger-tier seal tests digest a preimage
 fn seal_preimage(steps: u32, events: u32, marking: u64, outcome: u8, violation: u8) -> [u8; 34] {
     let mut p = [0u8; 34];
     p[0..8].copy_from_slice(&u64::from(steps).to_le_bytes());
@@ -307,12 +308,15 @@ fn seal_digest_and_receipt_wire_pass_host_verification() {
     assert_eq!(&sealed[..DIGEST_LEN], expected.as_bytes());
 
     // Guest-produces / host-seals: the 352-byte receipt wire record built
-    // from the same guest-visible facts verifies on the host.
+    // from the same guest-visible facts verifies on the host. The replay
+    // completed, so the session/ABI outcome byte is 1 (Complete) — under the
+    // F1 outcome translation (`outcome_from_abi`) that is the receipt's
+    // `Pass`, NOT byte 0 (Incomplete → Skip).
     let receipt = guest_receipt(
         *blake3::hash(MODEL_DSL.as_bytes()).as_bytes(),
         3,
         3,
-        0, // Pass
+        1, // Complete (session/ABI lane) → CourtOutcome::Pass
         *expected.as_bytes(),
     );
     let wire = encode_receipt_wire(&receipt);
@@ -492,7 +496,7 @@ fn wire_format_refusals_are_individually_typed() {
 }
 
 /// An out-buffer below `STEP_STATUS_LEN` is `ERR_CAP_TOO_SMALL`, and an
-/// unattached session still steps to Complete over an empty trace.
+/// unattached session steps to a typed Violation (empty-stream trace law).
 #[test]
 fn cap_too_small_is_typed_and_zero_quota_completes_unattached_session() {
     let _guard = ABI_LOCK.lock().unwrap();
@@ -502,12 +506,13 @@ fn cap_too_small_is_typed_and_zero_quota_completes_unattached_session() {
     let code = unsafe { ctt_session_step(s.0, 1, tiny.as_mut_ptr(), tiny.len() as u32) };
     assert_eq!(code, ERR_CAP_TOO_SMALL);
 
-    // quota 0 on an Idle session: the loop body never runs, the trace is
-    // "exhausted", so the ABI reports Complete with a zeroed summary.
+    // quota 0 on an Idle session with no attached stream: the RS1 trace law
+    // (X2) latches Phase::Faulted(TraceMalformed) at step time and reports
+    // Violation — status byte 2 — never a vacuous Complete.
     let mut rec = [0u8; STEP_STATUS_LEN];
     let code = unsafe { ctt_session_step(s.0, 0, rec.as_mut_ptr(), rec.len() as u32) };
     assert_eq!(code, 0);
-    assert_eq!(rec[0], 1, "quota-0 on an idle session completes immediately");
+    assert_eq!(rec[0], 2, "quota-0 on an idle session violates (empty stream)");
     assert_eq!(rec_u32(&rec, 5), 0);
     assert_eq!(rec_u32(&rec, 9), 0);
 }

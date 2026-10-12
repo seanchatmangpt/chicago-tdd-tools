@@ -62,7 +62,9 @@ mod tests {
 
     test!(exec_error_paths, {
         // Arrange: Set up Docker and container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
@@ -85,7 +87,9 @@ mod tests {
 
     test!(exec_error_recovery, {
         // Arrange: Set up Docker and container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
@@ -112,7 +116,9 @@ mod tests {
 
     test!(exec_boundary_conditions, {
         // Arrange: Set up Docker and container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
@@ -155,7 +161,9 @@ mod tests {
     // before exec is called, preventing "container is not running" errors.
     // Pattern: Use with_command() for images that exit immediately.
     test!(container_lifecycle_stays_running_for_exec, {
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Arrange: Create container with command to keep it running
         // **Root Cause Prevention**: Use with_command() to ensure container stays running
@@ -202,7 +210,9 @@ mod tests {
     // **Root Cause Prevention**: This test verifies the entrypoint override workaround
     // works correctly for images like otel/weaver that have entrypoints that interfere.
     test!(container_entrypoint_override_works, {
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Arrange: Create container with entrypoint override (simulating weaver scenario)
         // Use alpine with entrypoint override to test the Docker CLI workaround
@@ -265,7 +275,9 @@ mod tests {
 
     test!(container_creation_boundaries, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act & Assert: Empty image name should fail
@@ -293,7 +305,9 @@ mod tests {
 
     test!(port_mapping_invalid_boundaries, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act & Assert: Maximum valid port (u16::MAX = 65535) should work
@@ -307,7 +321,9 @@ mod tests {
 
     test!(env_vars_special_characters, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act & Assert: Special characters in env vars should work
@@ -339,7 +355,9 @@ mod tests {
 
     test!(negative_test_empty_image_fails, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act: Attempt to create container with empty image (should fail)
@@ -358,7 +376,9 @@ mod tests {
 
     test!(negative_test_invalid_port_fails, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act: Test maximum valid port (u16::MAX = 65535)
@@ -374,7 +394,9 @@ mod tests {
 
     test!(negative_test_nonexistent_command_fails, {
         // Arrange: Set up Docker and container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
@@ -400,7 +422,9 @@ mod tests {
 
     test!(port_mapping_boundaries, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act & Assert: Single port (use nginx which exposes port 80)
@@ -429,7 +453,9 @@ mod tests {
 
     test!(env_vars_all_paths, {
         // Arrange: Set up Docker and client
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
 
         // Act & Assert: Empty env vars
@@ -460,7 +486,9 @@ mod tests {
 
     test!(wait_conditions, {
         // Arrange: Set up Docker, client, and imports
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         use std::net::TcpStream;
         use std::time::Duration;
         use testcontainers::core::WaitFor;
@@ -508,7 +536,9 @@ mod tests {
 
     test!(exec_result_structure, {
         // Arrange: Set up Docker and container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));
@@ -538,6 +568,10 @@ mod tests {
     // ========================================================================
 
     test!(container_client_boundaries, {
+        // Arrange: skip fast when Docker daemon is down (A121)
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         // Arrange: Create multiple clients
         let _client1 = ContainerClient::new();
         let _client2 = ContainerClient::new();
@@ -545,10 +579,8 @@ mod tests {
         let client4 = ContainerClient::new();
 
         // Act & Assert: Verify clients can be used
-        if docker_available() {
-            let _container1 = GenericContainer::with_command(client3.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
-            let _container2 = GenericContainer::with_command(client4.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
-        }
+        let _container1 = GenericContainer::with_command(client3.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
+        let _container2 = GenericContainer::with_command(client4.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None);
     });
 
     // ========================================================================
@@ -557,7 +589,9 @@ mod tests {
 
     test!(concurrent_container_creation, {
         // Arrange: Set up Docker, client, and imports
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         use std::sync::Arc;
         use std::thread;
         use std::time::SystemTime;
@@ -626,7 +660,9 @@ mod tests {
 
     test!(stress_concurrent_exec, {
         // Arrange: Set up Docker, client, container, and imports
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         use std::sync::Arc;
         use std::thread;
         use std::time::SystemTime;
@@ -696,7 +732,9 @@ mod tests {
 
     test!(stress_multiple_containers_concurrent_exec, {
         // Arrange: Set up Docker, client, and imports
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         use std::sync::Arc;
         use std::thread;
         use std::time::SystemTime;

@@ -30,3 +30,5 @@ pub mod import_json;
 pub mod import_xml;
 #[cfg(feature = "ocel-ingest")]
 pub mod ocel64_bridge;
+#[cfg(all(feature = "ocel-ingest-json", feature = "conformance"))]
+pub mod powl_fixture_bridge;

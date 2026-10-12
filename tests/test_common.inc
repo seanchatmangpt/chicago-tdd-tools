@@ -161,3 +161,50 @@ pub fn require_docker() {
     );
     // ✅ Docker is available, test can proceed
 }
+
+/// Skip-or-panic guard for Docker-dependent tests (A121 fix)
+///
+/// Returns `true` when the test should be skipped: Docker daemon is not
+/// reachable AND `WEAVER_ALLOW_SKIP=1` is set (same env convention as the
+/// weaver integration tests). Returns `false` when Docker is available and
+/// the test should proceed. Panics with the original hard-stop message when
+/// Docker is unavailable and `WEAVER_ALLOW_SKIP` is not set (contract
+/// unchanged).
+///
+/// Usage in a test body (callers in `tests/testcontainers/*.rs`):
+///
+/// ```rust,ignore
+/// if common::skip_if_no_docker() {
+///     return;
+/// }
+/// ```
+#[allow(missing_docs)]
+pub fn skip_if_no_docker() -> bool {
+    if docker_available() {
+        return false;
+    }
+
+    let allow_skip = matches!(
+        std::env::var("WEAVER_ALLOW_SKIP"),
+        Ok(ref value) if matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES")
+    );
+
+    if allow_skip {
+        eprintln!(
+            "⏭️  SKIPPED (typed): Docker-dependent test bypassed — \
+             Docker daemon not available (reason: daemon unreachable) \
+             [escape hatch: WEAVER_ALLOW_SKIP=1]"
+        );
+        true
+    } else {
+        panic!(
+            "🚨 Docker is required for this test but Docker daemon is not running.\n\
+             ⚠️  STOP: Cannot proceed with test\n\
+             💡 FIX: Start Docker Desktop or Docker daemon\n\
+             📋 macOS: Open Docker Desktop\n\
+             📋 Linux: sudo systemctl start docker\n\
+             📋 Windows: Start Docker Desktop\n\
+             💡 ALT: Set WEAVER_ALLOW_SKIP=1 to bypass intentionally"
+        );
+    }
+}

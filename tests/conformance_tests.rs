@@ -350,19 +350,22 @@ fn misordered_trace_refuses_and_is_not_conforming() {
         other => panic!("expected Skipped for misordered replay, got {other:?}"),
     }
     // Report-lane split: the latched session's own verdict is not conforming.
-    // Two open deviations: the mapped violation (Skipped has no report-side
-    // twin, so it surfaces as NotEnabled) plus the automatic Unfinished
-    // recorded because steps (1) < total_events (2).
+    // Two open deviations: the mapped violation (Skipped now carries its real
+    // step in the report vocabulary) plus the automatic Unfinished recorded
+    // because steps (1) < total_events (2).
     let session_report = s.conformance_report();
     assert_eq!(session_report.open_deviations(), 2);
+    assert!(
+        session_report
+            .deviations()
+            .iter()
+            .any(|d| matches!(d, Deviation::Skipped { step: 1 })),
+        "the Skipped violation must surface with its real step, got {session_report:?}"
+    );
     assert!(!session_report.is_conforming(), "tampered trace never conforms");
     // Same law on a directly built report.
-    let report = ConformanceReport::new(
-        1,
-        2,
-        vec![Deviation::NotEnabled { step: 1, tid: 0, marking: 0b0010 }],
-    );
-    // Same shape as the session report above: the NotEnabled deviation plus
+    let report = ConformanceReport::new(1, 2, vec![Deviation::Skipped { step: 1 }]);
+    // Same shape as the session report above: the Skipped deviation plus
     // the automatic Unfinished (steps 1 < total_events 2) = 2 open deviations.
     assert_eq!(report.open_deviations(), 2);
     assert!(!report.is_conforming(), "tampered trace never conforms");

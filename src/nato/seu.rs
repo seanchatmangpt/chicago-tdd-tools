@@ -17,7 +17,7 @@
 //!                   (fail-closed; the law's own refusal signal).
 //! - `LAWFUL-DEAD` — the law admits, but the committed word is exactly the
 //!                   lawful image of the corrupted word under an independent
-//!                   re-derivation of the spec law (see [`lawful_image`]):
+//!                   re-derivation of the spec law (see `lawful_image`):
 //!                   fault effect bounded to the flips themselves. Split into
 //!                   dead-equivalent (outcome equals the fault-free baseline)
 //!                   and lawful-but-different.
@@ -28,7 +28,7 @@
 //! - `HALT`        — structurally 0 (`step_branchless` is a total fn with no
 //!                   panicking path); disclosed, not assumed.
 //!
-//! The oracle [`lawful_image`] is an independent re-derivation from the
+//! The oracle `lawful_image` is an independent re-derivation from the
 //! [`crate::conformance::pn64`] getters — it NEVER calls
 //! [`crate::conformance::pn64::step_branchless`], so the court does not
 //! merely re-run the code under test.
@@ -43,8 +43,8 @@
 //! 500,000) with the SAME LCG seed, so the full stream's prefix is the fast
 //! stream — full subsumes fast.
 //!
-//! Positive controls (cfg(test) mutants): [`leaky_advance`] (drops the
-//! invariant predicate) and [`maskless_advance`] (drops the token predicate)
+//! Positive controls (cfg(test) mutants): `leaky_advance` (drops the
+//! invariant predicate) and `maskless_advance` (drops the token predicate)
 //! MUST classify SDC, proving the court non-vacuous.
 
 // Lint-scope note: NATO court-harness and ledger wire-format modules use

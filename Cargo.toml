@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "26.10.11"
+version = "26.10.12"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -29,8 +29,10 @@ exclude = [
     "templates/**",
     "weaver-reports/**",
     "registry/**",
-    # Coverage data
+    # Coverage data + generated receipts/dossiers (regenerable via just emit-dossier)
     "coverage.lcov",
+    "docs/receipts/**",
+    "docs/nato/**",
     "check_output.txt",
     # Playground
     "playground/**",
@@ -136,7 +138,6 @@ wasm4pm-compat = { version = "26.6.26", optional = true, features = ["formats"] 
 ml-dsa = { version = "0.1.1", optional = true, default-features = false, features = ["alloc", "getrandom", "zeroize"] }
 zeroize = { version = "1", optional = true }
 getrandom = { version = "0.3", optional = true }
-clap = { version = "4.5", optional = true, features = ["derive"] }
 # bcinr-powl = { version = "26.10.11", optional = true, default-features = false }
 blake3 = { version = "1", optional = true }
 dashmap = { version = "^6.0", optional = true }
@@ -160,7 +161,7 @@ trycmd = { version = "^1.2", optional = true }
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = { version = "26.10.11", path = "proc_macros" }
+chicago-tdd-tools-proc-macros = { version = "26.10.12", path = "proc_macros" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
@@ -221,16 +222,14 @@ ocel-ingest = ["ocel-generation"]
 ocel-ingest-json = ["ocel-ingest"]
 ocel-ingest-xml = ["ocel-ingest"]
 # Optional normative POWL 2.0 bridge (bcinr-powl; NOT wired by default).
-# Declared as an empty feature so `#[cfg(feature = "powl-bcinr")]` sites
-# (conformance/bcinr.rs, validate.rs, loader.rs) pass the unexpected_cfgs
-# check; the bcinr-powl dependency itself remains unwired (coordinator).
+# Declared as `["conformance"]` so `#[cfg(feature = "powl-bcinr")]` sites
+# (conformance/validate.rs only) pass the unexpected_cfgs check;
+# the bcinr-powl dependency itself remains unwired (coordinator).
 powl-bcinr = ["conformance"]
 # Ledger: strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws.
 ledger = ["dep:blake3", "receipt-validation"]
 # NATO assurance matrix: courts + ML-DSA-65 dossier sealing (implies ledger).
 nato = ["ledger", "conformance", "dep:ml-dsa", "dep:zeroize", "dep:getrandom"]
-# CLI for the pure-Rust receipt/dossier binary.
-ledger-cli = ["ledger", "nato", "dep:clap"]
 # Umbrella: full defense-assurance surface.
 all-assurance = ["conformance", "ledger", "nato"]
 # Hermetic WASM guest surface (temprun embed; PRD §1-4): zero-import ABI over
@@ -417,11 +416,9 @@ required-features = ["concurrency-testing"]
 name = "advanced_features"
 path = "examples/advanced_features.rs"
 
-# Build-lane note: examples/conformance_quickstart.rs imports
-# `chicago_tdd_tools::conformance`, a module that does not exist in src/ yet
-# (the module belongs to a pending src/ lane). Gating it on a not-yet-existing
-# feature keeps `cargo check`/`just check` green until that module lands.
-# REMOVE the required-features line when src/conformance is merged.
+# conformance_quickstart.rs imports `chicago_tdd_tools::conformance`, so the
+# example is feature-gated on `conformance` and skipped by bare
+# `cargo build --examples`.
 [[example]]
 name = "conformance_quickstart"
 path = "examples/conformance_quickstart.rs"
@@ -469,6 +466,7 @@ members = [
     "crates/chicago-tdd-mcp",
     "crates/chicago-claims",
     "crates/ctt-wasm-guest",
+    "crates/merger-guests",
 ]
 default-members = [
     ".",
@@ -497,18 +495,3 @@ required-features = ["weaver"]
 name = "otel_negative_run"
 path = "src/bin/otel_negative_run.rs"
 required-features = ["weaver"]
-
-# Build-lane note: src/bin/ctdd_ledger.rs imports `chicago_tdd_tools::ledger`
-# and `clap`, neither of which exists yet (pending ledger/clap lane). Gating it
-# on a not-yet-existing feature keeps clippy/dylint (`just lint`) green until
-# that lane lands. REMOVE the required-features line when the ledger module
-# and clap dependency are merged.
-[[bin]]
-name = "cq"
-path = "src/bin/cq.rs"
-required-features = ["ledger-cli"]
-
-[[bin]]
-name = "ctdd_ledger"
-path = "src/bin/ctdd_ledger.rs"
-required-features = ["ledger-cli"]

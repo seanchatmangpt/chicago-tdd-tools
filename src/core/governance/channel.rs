@@ -230,6 +230,7 @@ pub fn on_test_completed(test_name: &str, passed: bool) {
 
 pub fn set_channel_capacity(capacity: Option<usize>) {
     let mut state = get_state().lock().unwrap_or_else(|e| e.into_inner());
+    #[cfg(feature = "logging")]
     log::info!(
         "governance::channel: setting capacity to {:?} (previous: {:?})",
         capacity,

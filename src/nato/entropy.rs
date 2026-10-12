@@ -21,11 +21,14 @@
 //!
 //! Port note: strata's court injected failures through a parameterizable
 //! entropy seam trait. This crate's seam is the length check inside
-//! [`Signer::generate()`]; it is not (yet) parameterizable, so the failure
+//! `Signer::generate()`; it is not (yet) parameterizable, so the failure
 //! branch is exercised by a local harness that is byte-for-byte the same
-//! check, and the mismatch is recorded here for the coordinator: landing a
-//! `Signer::generate_from_entropy_source(source)` seam would let this court
-//! inject at the true seam instead of a replica.
+//! check, whose refusal digest is built by a byte-exact replica of the
+//! signer's hashed-cause construction (pinned by
+//! `replica_refusal_matches_signer_hashed_cause_pattern`), and the
+//! remaining mismatch is recorded as work order NATO-ENTROPY-SEAM-01:
+//! landing a `Signer::generate_from_entropy_source(source)` seam would let
+//! this court inject at the true seam instead of a replica.
 
 // Lint-scope note: NATO court-harness and ledger wire-format modules use
 // domain literals, metric casts, and court-assertion panics by design; the
@@ -88,32 +91,82 @@ const LIVE_TRIALS: usize = 1_000;
 /// The entropy seam, replicated exactly from `Signer::generate()`'s
 /// fail-closed branch: a candidate seed of a given length is accepted only
 /// when it is exactly [`SEED_LEN`] bytes; any other length is a typed
-/// refusal carrying a fresh opaque [`RefusalDigest`].
+/// refusal carrying a [`RefusalDigest`] built by the signer's hashed-cause
+/// construction (see [`refusal_digest_of`]).
 ///
 /// When the real seam becomes parameterizable, this function must be
 /// deleted and the tests below pointed at `Signer` directly.
 fn entropy_seam(candidate_len: usize) -> Result<[u8; SEED_LEN], SealError> {
     if candidate_len != SEED_LEN {
-        return Err(SealError::EntropyRefused(refusal_digest_fresh()));
+        // Same cause shape the signer uses ("ml-dsa seed length refused"),
+        // qualified with the concrete off-contract length so each distinct
+        // refusal cause yields a distinct, reproducible digest.
+        return Err(SealError::EntropyRefused(refusal_digest_of(&format!(
+            "ml-dsa seed length refused ({candidate_len})"
+        ))));
     }
     Ok([0u8; SEED_LEN])
 }
 
-/// Local stand-in for `RefusalDigest::fresh()` (the signer references a
-/// `fresh()` constructor that error.rs does not yet land — see the lane
-/// mismatch note). Deterministic per-call 32-byte digest derived from a
-/// process-local counter; opaque to callers.
-fn refusal_digest_fresh() -> RefusalDigest {
-    use std::sync::atomic::{AtomicU64, Ordering};
-    static COUNTER: AtomicU64 = AtomicU64::new(0x5EED_0000_0000_0001);
-    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
-    let mut bytes = [0u8; 32];
-    bytes[..8].copy_from_slice(&n.to_le_bytes());
-    // Spread the counter across the digest so fresh digests differ visibly.
-    for (i, b) in bytes.iter_mut().enumerate().skip(8) {
-        *b = (n >> (i % 8)) as u8 ^ (i as u8).wrapping_mul(0x9E);
-    }
-    RefusalDigest(bytes)
+/// Byte-exact local replica of the signer's refusal construction
+/// (`src/ledger/signing/signer.rs::refusal_digest_of`): SHA-256 over the
+/// signer-local domain tag + b": " + the concrete cause — the
+/// `keys::fresh_seed` pattern. The signer's helper is private to its
+/// module, so it cannot be called from here; this replica is asserted
+/// byte-for-byte equal to that construction by
+/// [`replica_refusal_matches_signer_hashed_cause_pattern`] below.
+///
+/// TEST DEBT (work order NATO-ENTROPY-SEAM-01): land a `pub(crate)`
+/// `refusal_digest_of` on the signer (or a `generate_from_entropy_source`
+/// seam) so this replica is deleted and the court injects at the true seam.
+fn refusal_digest_of(cause: &str) -> RefusalDigest {
+    use sha2::{Digest, Sha256};
+    const REFUSAL_DOMAIN: &[u8] = b"chicago-ledger-signer-refusal-v1";
+    let mut hasher = Sha256::new();
+    hasher.update(REFUSAL_DOMAIN);
+    hasher.update(b": ");
+    hasher.update(cause.as_bytes());
+    let digest = hasher.finalize();
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&digest);
+    RefusalDigest(out)
+}
+
+/// The replica's construction is pinned byte-for-byte against the signer's
+/// hashed-cause pattern: `SHA-256("chicago-ledger-signer-refusal-v1" ||
+/// ": " || cause)` — the exact preimage `signer.rs::refusal_digest_of`
+/// hashes (its law is pinned in signer's own `refusal_digest_is_hashed_
+/// cause_not_fresh_entropy` test: reproducible per cause, distinct across
+/// causes, never fresh entropy).
+#[test]
+fn replica_refusal_matches_signer_hashed_cause_pattern() {
+    use sha2::{Digest, Sha256};
+    let cause = "ml-dsa seed length refused (33)";
+    let expected = {
+        let mut h = Sha256::new();
+        h.update(b"chicago-ledger-signer-refusal-v1");
+        h.update(b": ");
+        h.update(cause.as_bytes());
+        let d = h.finalize();
+        let mut out = [0u8; 32];
+        out.copy_from_slice(&d);
+        out
+    };
+    let SealError::EntropyRefused(digest) = entropy_seam(33).err().expect("33 is off-contract")
+    else {
+        panic!("off-contract length must refuse");
+    };
+    assert_eq!(
+        digest.0, expected,
+        "replica refusal digest must equal the signer's hashed-cause construction"
+    );
+    // Signer law twin: reproducible per cause, distinct across causes.
+    assert_eq!(refusal_digest_of(cause), RefusalDigest(expected));
+    assert_ne!(
+        refusal_digest_of(cause),
+        refusal_digest_of("other cause"),
+        "distinct causes must produce distinct digests"
+    );
 }
 
 /// Fixed diagnostic vocabulary: the refusal's Display text must name the
@@ -169,14 +222,24 @@ fn injected_failure_trials_all_refuse_typed_with_opaque_digest() {
     );
 }
 
-/// Refusal digests are opaque and fresh: distinct injected trials carry
-/// distinct digests (no digest reuse across refusals).
+/// Refusal digests are cause-keyed and reproducible (the signer's law, not
+/// fresh entropy): the same cause reproduces the same digest; the injected
+/// off-contract lengths are distinct causes and so carry distinct digests
+/// (no digest reuse across distinct refusals).
 #[test]
-fn refusal_digests_are_fresh_per_trial() {
+fn refusal_digests_are_reproducible_and_distinct_per_cause() {
+    // Reproducible: same cause -> same digest.
+    assert_eq!(
+        refusal_digest_of("ml-dsa seed length refused (33)"),
+        refusal_digest_of("ml-dsa seed length refused (33)"),
+        "same cause must reproduce the same refusal digest"
+    );
+    // Distinct: the injected sweep's distinct causes never collide.
     let mut seen: Vec<[u8; 32]> = Vec::new();
-    for _ in 0..64 {
-        let r = refusal_digest_fresh();
-        assert!(!seen.contains(&r.0), "refusal digest reused across trials");
+    for trial in 0..64usize {
+        let cause = format!("ml-dsa seed length refused ({})", trial * 7 + 1);
+        let r = refusal_digest_of(&cause);
+        assert!(!seen.contains(&r.0), "refusal digest reused across distinct causes ({cause})");
         seen.push(r.0);
     }
 }
@@ -228,7 +291,7 @@ fn entropy_court_never_panics() {
     for len in 0..=64usize {
         let _ = entropy_seam(len); // must not panic for any input length
     }
-    for _ in 0..8 {
-        let _ = refusal_digest_fresh();
+    for i in 0..8 {
+        let _ = refusal_digest_of(&format!("never-panics probe {i}"));
     }
 }

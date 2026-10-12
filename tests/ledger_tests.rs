@@ -14,6 +14,10 @@
 //! 7. Empty dossier: root law `BLAKE3("P13-EMPTY")` + proof refusal.
 //! 8. Proof paths longer than `MAX_PROOF_STEPS` are rejected.
 //! 9. `ledger::exit_code` is total over every `LedgerError` variant.
+//! 10. Replay detection: an already-stored head is refused; wrong-parent
+//!     threading is refused; chains replay through stored hashes (RL2).
+//! 11. Receipt-name law: NAME_MAX refusals — too-long names rejected,
+//!     collisions distinguished, boundary length accepted.
 //!
 //! All items here are gated on the `ledger` feature — the ledger module is
 //! only compiled when that feature is active.
@@ -23,7 +27,7 @@
 // JUSTIFICATION: test code only — assertions on real collected state.
 #![allow(clippy::unwrap_used)]
 
-use chicago_tdd_tools::ledger::dossier::{DossierBuilder, DossierRoot};
+use chicago_tdd_tools::ledger::dossier::{CourtLedgerBuilder, DossierBuilder, DossierRoot};
 use chicago_tdd_tools::ledger::error::{LedgerError, NameError};
 use chicago_tdd_tools::ledger::proof::{
     empty_root, leaf_hash, node_hash, CourtProof, ProofStep, MAX_PROOF_STEPS,
@@ -71,7 +75,7 @@ fn sample_receipt(seed: u8) -> CourtReceiptV1 {
 #[test]
 fn law01_roundtrip_encode_from_bytes_verified_identity() {
     let receipt = sample_receipt(1);
-    let chained = ChainedCourtReceipt::from_receipt(&receipt);
+    let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("valid name");
     let bytes = chained.encode();
 
     let verified = VerifiedCourtReceipt::from_bytes_verified(&bytes)
@@ -93,7 +97,9 @@ fn law01_roundtrip_encode_from_bytes_verified_identity() {
 
 #[test]
 fn law02_tamper_matrix_every_single_byte_flip_is_rejected() {
-    let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(2)).encode();
+    let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(2))
+        .expect("valid name")
+        .encode();
     assert_eq!(
         bytes.len(),
         COURT_RECORD_LEN,
@@ -161,7 +167,7 @@ fn chained_records(n: usize) -> Vec<ChainedCourtReceipt> {
     for i in 0..n {
         let mut receipt = sample_receipt(i as u8);
         receipt.parent_receipt_hash = parent;
-        let chained = ChainedCourtReceipt::from_receipt(&receipt);
+        let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("valid name");
         parent = chained.stored_hash();
         records.push(chained);
     }
@@ -426,8 +432,195 @@ fn law09_exit_code_table_covers_every_error_variant() {
             LedgerError::DigestMismatch { offset: 5, stored: [0u8; 32], computed: [1u8; 32] },
             LedgerExitCode::Tampered as u8,
         ),
+        (
+            LedgerError::ChainDiscontinuity { expected_parent: [0u8; 32], actual: [1u8; 32] },
+            LedgerExitCode::ChainBroken as u8,
+        ),
     ];
     for (err, want) in cases {
         assert_eq!(exit_code(err), *want, "wrong exit code for {err}");
     }
+}
+
+// ─── Law 10: replay refusal + parent threading (B1) ─────────────────────────
+
+/// Receipt threaded onto an explicit parent (struct literal — exercises the
+/// encode-boundary validation path, not `new`).
+fn threaded_receipt(seed: u8, parent: [u8; 32]) -> ChainedCourtReceipt {
+    ChainedCourtReceipt::from_receipt(&CourtReceiptV1 {
+        subject_hash: head(seed),
+        parent_receipt_hash: parent,
+        metrics: ReceiptMetrics {
+            timestamp_ms: 1_700_000_000_000 + u64::from(seed),
+            run_id: u64::from(seed),
+            total_ticks: 9_999,
+            wall_ms: 123,
+            thermal: ThermalClass::Warm,
+            outcome: CourtOutcome::Pass,
+            budget_met: true,
+        },
+        positive_control: [0u8; 32],
+        metadata_digest: head(seed.wrapping_add(100)),
+        prev_self_hash: [0u8; 32],
+        name: "ledger-tests-sample".into(),
+        fail_closed: false,
+    })
+    .expect("test names are within NAME_MAX")
+}
+
+#[test]
+fn law10_replay_of_appended_receipt_is_refused() {
+    let mut ledger = CourtLedgerBuilder::new("ledger-tests-sample");
+    let r1 = threaded_receipt(1, [0u8; 32]);
+    ledger.append(r1.clone()).expect("first append");
+    let h1 = ledger.head();
+    assert_eq!(
+        ledger.append(r1),
+        Err(LedgerError::ChainDiscontinuity { expected_parent: h1, actual: [0u8; 32] }),
+        "byte-identical replay must be refused with the typed discontinuity"
+    );
+    assert_eq!(ledger.head(), h1, "refused replay must not advance head");
+}
+
+#[test]
+fn law10_wrong_parent_is_refused() {
+    let mut ledger = CourtLedgerBuilder::new("ledger-tests-sample");
+    ledger.append(threaded_receipt(1, [0u8; 32])).expect("genesis");
+    let h1 = ledger.head();
+    // Stale genesis parent at index 1.
+    assert!(matches!(
+        ledger.append(threaded_receipt(2, [0u8; 32])),
+        Err(LedgerError::ChainDiscontinuity { .. })
+    ));
+    // Fabricated parent.
+    let fabricated = threaded_receipt(2, [7u8; 32]);
+    assert_eq!(
+        ledger.append(fabricated),
+        Err(LedgerError::ChainDiscontinuity { expected_parent: h1, actual: [7u8; 32] })
+    );
+    assert_eq!(ledger.head(), h1, "refused append must not advance head");
+}
+
+#[test]
+fn law10_valid_threading_is_accepted_and_head_law_holds() {
+    let mut ledger = CourtLedgerBuilder::new("ledger-tests-sample");
+    let g = threaded_receipt(1, [0u8; 32]);
+    ledger.append(g.clone()).expect("genesis");
+    let mut hp = blake3::Hasher::new();
+    hp.update(&[0u8; 32]);
+    hp.update(&g.stored_hash());
+    let h1 = *hp.finalize().as_bytes();
+    let child = threaded_receipt(2, h1);
+    ledger.append(child.clone()).expect("threaded child");
+    let mut h = blake3::Hasher::new();
+    h.update(&[0u8; 32]);
+    h.update(&g.stored_hash());
+    let e1 = *h.finalize().as_bytes();
+    let mut h = blake3::Hasher::new();
+    h.update(&e1);
+    h.update(&child.stored_hash());
+    assert_eq!(ledger.head(), *h.finalize().as_bytes(), "head must follow BLAKE3(head||stored)");
+}
+
+// ─── Law 11: encode-boundary name validation (B2) ───────────────────────────
+
+#[test]
+fn law11_encode_refuses_name_over_name_max() {
+    use chicago_tdd_tools::ledger::receipt::NAME_MAX;
+    // NAME_MAX + 1 bytes, built by struct literal so `new`'s validation is
+    // bypassed — encode() itself must refuse.
+    let receipt = CourtReceiptV1 {
+        subject_hash: [0u8; 32],
+        parent_receipt_hash: [0u8; 32],
+        metrics: ReceiptMetrics {
+            timestamp_ms: 0,
+            run_id: 0,
+            total_ticks: 0,
+            wall_ms: 0,
+            thermal: ThermalClass::Warm,
+            outcome: CourtOutcome::Pass,
+            budget_met: true,
+        },
+        positive_control: [0u8; 32],
+        metadata_digest: [0u8; 32],
+        prev_self_hash: [0u8; 32],
+        name: "a".repeat(NAME_MAX + 1),
+        fail_closed: false,
+    };
+    assert_eq!(
+        receipt.encode().unwrap_err(),
+        LedgerError::InvalidName { offset: 204, reason: NameError::TooLong },
+        "encode must refuse (not clamp) an 85-byte name at body offset 204"
+    );
+    assert!(receipt.chain_hash().is_err());
+    assert!(
+        ChainedCourtReceipt::from_receipt(&receipt).is_err(),
+        "chaining must refuse the same receipt"
+    );
+}
+
+#[test]
+fn law11_distinct_over_max_names_cannot_collide() {
+    use chicago_tdd_tools::ledger::receipt::NAME_MAX;
+    let mk = |suffix: &str| CourtReceiptV1 {
+        subject_hash: [0u8; 32],
+        parent_receipt_hash: [0u8; 32],
+        metrics: ReceiptMetrics {
+            timestamp_ms: 0,
+            run_id: 0,
+            total_ticks: 0,
+            wall_ms: 0,
+            thermal: ThermalClass::Warm,
+            outcome: CourtOutcome::Pass,
+            budget_met: true,
+        },
+        positive_control: [0u8; 32],
+        metadata_digest: [0u8; 32],
+        prev_self_hash: [0u8; 32],
+        name: format!("{}-{suffix}", "x".repeat(NAME_MAX)),
+        fail_closed: false,
+    };
+    let a = mk("alpha");
+    let b = mk("beta");
+    assert_ne!(a.name, b.name, "two distinct over-max names");
+    // Before the fix both clamped to the same 84-byte prefix and encoded
+    // identically; now both are refused, so no collision is expressible.
+    assert!(a.encode().is_err());
+    assert!(b.encode().is_err());
+    assert_ne!(
+        a.encode().err(),
+        None,
+        "each over-max name must carry its own typed refusal, not a shared truncation"
+    );
+    assert!(ChainedCourtReceipt::from_receipt(&a).is_err());
+    assert!(ChainedCourtReceipt::from_receipt(&b).is_err());
+}
+
+#[test]
+fn law11_encode_accepts_exactly_name_max_boundary() {
+    use chicago_tdd_tools::ledger::receipt::NAME_MAX;
+    let name = "n".repeat(NAME_MAX);
+    let receipt = CourtReceiptV1 {
+        subject_hash: [1u8; 32],
+        parent_receipt_hash: [0u8; 32],
+        metrics: ReceiptMetrics {
+            timestamp_ms: 0,
+            run_id: 0,
+            total_ticks: 0,
+            wall_ms: 0,
+            thermal: ThermalClass::Warm,
+            outcome: CourtOutcome::Pass,
+            budget_met: true,
+        },
+        positive_control: [0u8; 32],
+        metadata_digest: [0u8; 32],
+        prev_self_hash: [0u8; 32],
+        name: name.clone(),
+        fail_closed: false,
+    };
+    let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("NAME_MAX name is lawful");
+    let bytes = chained.encode();
+    let verified =
+        VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("boundary record must verify");
+    assert_eq!(verified.receipt().name, name, "84-byte name must round-trip losslessly");
 }

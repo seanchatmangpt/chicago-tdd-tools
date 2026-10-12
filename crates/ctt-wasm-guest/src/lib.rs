@@ -41,8 +41,8 @@
 //! |--------------|-----------------------------------------------------------|
 //! | model        | opaque POWL model bytes produced by the parent's loader   |
 //! | session      | opaque ConformanceSession state bytes (parent-owned codec)|
-//! | event        | OCEL 2.0 event: activity `[0..2)`, src `[2..4)`, tgt `[4..6)`, qualifier `[6..7)`, tick `[7..8)`, aux `[8..len)` |
-//! | report       | out: verdict byte `[0]` (0=pass, 1=fail, 2=unknown), remaining bytes: report payload |
+//! | event        | flat LE `u64` OCEL64 event words: bits `[7:0]` activity, bits `[15:8]` tick (per `session.rs`); length must be a multiple of 8 |
+//! | report       | out: verdict byte `[0]` (0=Incomplete, 1=Complete, 2=Faulted), remaining bytes: report payload |
 //! | seal         | out: BLAKE3 chain receipt bytes (parent `ledger` codec)   |
 
 #![deny(warnings)]

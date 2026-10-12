@@ -431,6 +431,71 @@ mod tests {
         );
     }
 
+    /// cfg(test) mutant sequencer: the SAME chain law as `timed_chain`, but
+    /// one committed word mid-run is flipped (a corrupted-commit mutant —
+    /// the failure class the conservation court exists to catch). Not a
+    /// test-local tautology: the mutant output is judged by the court's own
+    /// detection channels (order-sensitive checksum + per-index identity).
+    fn timed_chain_with_midrun_corruption(n_transitions: u64, flip_index: u64) -> Vec<u64> {
+        let (_, _, mut seq) = timed_chain(n_transitions);
+        let i = (flip_index as usize).min(seq.len() - 1);
+        seq[i] ^= 0x8000_0000_0000_0001;
+        seq
+    }
+
+    /// The N07 positive control, in the same shape as the other NATO courts'
+    /// `*_positive_control` probes: a corrupted-sequencer mutant MUST diverge
+    /// under the conservation court's detection channels, and the clean run
+    /// MUST pass them. Returns false if either leg fails (court vacuous).
+    fn n07_cache_court_positive_control() -> bool {
+        let n = 1_000u64;
+        // Clean leg: two independent clean runs are bit-identical.
+        let (_, _, clean_a) = timed_chain(n);
+        let (_, _, clean_b) = timed_chain(n);
+        let clean_ok = clean_a == clean_b
+            && PassMeasurement::checksum(&clean_a) == PassMeasurement::checksum(&clean_b);
+        // Mutant leg: a mid-run committed-word flip must be DETECTED — by the
+        // checksum channel and by the per-index identity channel at the flip.
+        let reference = timed_chain(n).2;
+        let mutant = timed_chain_with_midrun_corruption(n, n / 2);
+        let checksum_caught =
+            PassMeasurement::checksum(&mutant) != PassMeasurement::checksum(&reference);
+        let index_caught = mutant
+            .iter()
+            .zip(reference.iter())
+            .enumerate()
+            .any(|(i, (&m, &r))| m != r && i == (n / 2) as usize);
+        clean_ok && checksum_caught && index_caught
+    }
+
+    #[test]
+    fn n07_positive_control_corrupted_sequencer_is_caught() {
+        // The real positive control: a flipped committed word MUST produce a
+        // conservation divergence the court detects, and the clean run MUST
+        // pass — else the conservation assertion is vacuous decoration.
+        assert!(
+            n07_cache_court_positive_control(),
+            "N07 positive control failed: a corrupted sequencer diverged undetected, \
+             or the clean run failed the conservation law"
+        );
+        // The mutant is the ONLY difference: un-flipping the flipped word
+        // restores bit-identity with the reference (proves the divergence is
+        // caused by exactly the injected corruption, nothing else).
+        let n = 1_000u64;
+        let reference = timed_chain(n).2;
+        let mut healed = timed_chain_with_midrun_corruption(n, n / 2);
+        healed[(n / 2) as usize] ^= 0x8000_0000_0000_0001;
+        assert_eq!(healed, reference, "healed mutant must be bit-identical");
+        // The clean run passes the full conservation assertion set.
+        let clean = timed_chain(n).2;
+        assert_eq!(
+            PassMeasurement::checksum(&clean),
+            PassMeasurement::checksum(&reference),
+            "clean run must pass the checksum conservation court"
+        );
+        assert!(clean.iter().zip(reference.iter()).all(|(&a, &b)| a == b));
+    }
+
     /// Full calibration: 1M chained transitions under a 4-thread 2x-L2
     /// eviction storm; liveness bounded; conservation absolute; latency
     /// ratio reported only.

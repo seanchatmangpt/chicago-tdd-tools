@@ -4,23 +4,24 @@
 //! surface (bin subcommands `seal` / `verify`) through the landed lib
 //! primitives the bin composes. Contract notes:
 //!
-//! - The bin is the only place the filesystem walk lives
-//!   (`build_dossier_root`); the domain layer is in-memory only. The emit
-//!   path below therefore RECONSTRUCTS the bin's algorithm from the lib
-//!   primitives it imports (`validate_receipt` → `CourtLedgerBuilder` →
+//! - The CLI filesystem walk (`build_dossier_root`) and process exit plumbing
+//!   were excised with the `ctdd_ledger` bin (V2); the CLI verbs are pending
+//!   affi (Phase D M2). The emit path below therefore RECONSTRUCTS the
+//!   bin's former algorithm from the lib primitives it used
+//!   (`validate_receipt` → `CourtLedgerBuilder` →
 //!   `DossierBuilder::seal` → `seal_dossier`), byte-for-byte the same
-//!   composition, and asserts the bin's documented wire output
+//!   composition, and asserts the documented wire output
 //!   (`sealer::encode` layout) by testing the pieces. What is NOT
 //!   process-tested here: the clap arg parsing, `KeyStore` custody at the
-//!   real key dir, and the process exit plumbing (IO→2, tamper→13) — those
-//!   live bin-side under `required-features = ["ledger-cli"]` and cannot be
-//!   spawned without a cargo build; every refusal class they map is instead
-//!   pinned at the domain layer (typed errors + `exit_code`).
+//!   real key dir, and the process exit plumbing (IO→2, tamper→13) — the
+//!   clap/exit plumbing re-landed as affi verbs (Phase D M2, ~/affidavit); every refusal class
+//!   it mapped is instead pinned at the domain layer (typed errors +
+//!   `exit_code`).
 //! - Signers here are deterministic `Signer::from_seed` instances (real
 //!   ML-DSA-65 keys, no mocks); `KeyStore` tempdir custody is covered by
 //!   `tests/ledger_sealing_tests.rs`.
 //!
-//! Run: `cargo test --test dossier_cli_tests --features ledger-cli`
+//! Run: `cargo test --test dossier_cli_tests --features ledger,nato`
 
 #![cfg(all(feature = "ledger", feature = "nato"))]
 #![allow(missing_docs)]
@@ -38,12 +39,14 @@ use chicago_tdd_tools::ledger::signing::sealer::{
 };
 use chicago_tdd_tools::ledger::signing::signer::Signer;
 use chicago_tdd_tools::ledger::{
-    exit_code, seal_dossier, validate_receipt, verify_sealed_file, LedgerExitCode, DossierRoot,
+    exit_code, seal_dossier, validate_receipt, verify_sealed_file, DossierRoot, LedgerExitCode,
 };
-use chicago_tdd_tools::nato::control::ControlResult;
-use chicago_tdd_tools::nato::court::{CourtId, CourtOutcome as NatoOutcome, MetricValue, Pillar, Verdict};
-use chicago_tdd_tools::nato::dossier_court::{dossier_admits, COURT_COUNT};
+use chicago_tdd_tools::nato::court::{
+    CourtId, CourtOutcome as NatoOutcome, MetricValue, Pillar, Verdict,
+};
 use chicago_tdd_tools::nato::disclosure::ScopingRecord;
+use chicago_tdd_tools::nato::dossier_court::{dossier_admits, COURT_COUNT};
+use chicago_tdd_tools::nato::receipt::ControlResult;
 use chicago_tdd_tools::nato::receipt::CourtReceipt;
 
 // ─── Ledger-side helpers ─────────────────────────────────────────────────────
@@ -73,7 +76,9 @@ fn receipt_bytes(court_id: &str, seed: u8) -> [u8; 352] {
         court_id,
     )
     .expect("well-formed receipt");
-    ChainedCourtReceipt::from_receipt(&receipt).encode()
+    ChainedCourtReceipt::from_receipt(&receipt)
+        .expect("test court ids fit NAME_MAX")
+        .encode()
 }
 
 fn subject(seed: u8) -> [u8; 32] {
@@ -93,15 +98,22 @@ fn court_names() -> Vec<String> {
     (0..20u8).map(|i| format!("court-{i:02}")).collect()
 }
 
-/// Write one 352-byte record per court into a tempdir receipts dir. File
-/// order on disk is controlled so file-order invariance is observable.
+/// Write one 352-byte record per court into a tempdir receipts dir. Each
+/// court's record bytes and file name are stable across calls; only the
+/// write order (hence observed readdir order) varies, so file-order
+/// invariance of the emit walk is observable without changing content.
 fn write_receipts_dir(dir: &std::path::Path, reversed: bool) {
     std::fs::create_dir_all(dir).expect("mkdir");
     let names = court_names();
-    let ordered: Vec<&String> = if reversed { names.iter().rev().collect() } else { names.iter().collect() };
-    for (slot, name) in ordered.iter().enumerate() {
-        let path = dir.join(format!("{slot:02}.ctrt"));
-        std::fs::write(&path, receipt_bytes(name, u8::try_from(slot).expect("fits u8"))).expect("write");
+    let ordered: Vec<(usize, &String)> = if reversed {
+        names.iter().enumerate().rev().collect()
+    } else {
+        names.iter().enumerate().collect()
+    };
+    for (i, name) in ordered {
+        let path = dir.join(format!("{i:02}.ctrt"));
+        std::fs::write(&path, receipt_bytes(name, u8::try_from(i).expect("fits u8")))
+            .expect("write");
     }
 }
 
@@ -117,20 +129,20 @@ fn emit(dir: &std::path::Path, sgn: &Signer) -> (DossierRoot, [u8; WIRE_LEN]) {
         .map(|e| e.path())
         .collect();
     paths.sort();
-    let mut courts: Vec<CourtLedgerBuilder> = Vec::in_different_order_placeholder();
+    let mut courts: Vec<CourtLedgerBuilder> = Vec::new();
     for p in paths {
         let bytes = std::fs::read(&p).expect("readable receipt");
         let verified = validate_receipt(&bytes).expect("every written receipt verifies");
         let receipt = verified.receipt();
         let court = receipt.name.clone();
-        let chained = ChainedCourtReceipt::from_receipt(&receipt);
+        let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("chainable receipt");
         match courts.iter_mut().find(|b| b.court_id() == court) {
             Some(b) => b.append(chained).expect("same-court append"),
             None => {
                 let mut b = CourtLedgerBuilder::new(court);
                 b.append(chained).expect("first append");
                 courts.push(b);
-    }
+            }
         }
     }
     let mut dossier = DossierBuilder::new();
@@ -144,20 +156,26 @@ fn emit(dir: &std::path::Path, sgn: &Signer) -> (DossierRoot, [u8; WIRE_LEN]) {
 
 /// Independent P13 reconstruction of the dossier root from the receipts dir
 /// (leaf_hash/node_hash, sorted, odd PROMOTED) — no DossierBuilder involved.
-fn independent_root(dir: &std::path::Path) -> [u8; 32] {
+fn independent_root(_dir: &std::path::Path) -> [u8; 32] {
     let mut leaves: Vec<(String, [u8; 32])> = court_names()
         .iter()
         .enumerate()
         .map(|(i, id)| {
             let bytes = receipt_bytes(id, u8::try_from(i).expect("fits u8"));
             let verified = validate_receipt(&bytes).expect("verifies");
-            let head = verified.as_bytes()[320..352] /* stored chain hash */;
-            (id.clone(), <[u8; 32]>::try_from(head).expect("32 bytes"))
+            let record = verified.as_bytes();
+            let stored =
+                <[u8; 32]>::try_from(&record[320..352] /* stored chain hash */).expect("32 bytes");
+            // Chain-head fold (law in `CourtLedgerBuilder::append`):
+            // head = blake3(prev_head ‖ stored); genesis head is zeroed.
+            let mut h = blake3::Hasher::new();
+            h.update(&[0u8; 32]);
+            h.update(&stored);
+            (id.clone(), *h.finalize().as_bytes())
         })
         .collect();
     leaves.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
-    let mut level: Vec<[u8; 32]> =
-        leaves.iter().map(|(id, head)| leaf_hash(id, head)).collect();
+    let mut level: Vec<[u8; 32]> = leaves.iter().map(|(id, head)| leaf_hash(id, head)).collect();
     while level.len() > 1 {
         let mut next = Vec::with_capacity(level.len() / 2 + 1);
         let mut i = 0;
@@ -196,16 +214,38 @@ fn nato_receipt(court: CourtId, verdict: Verdict, control: ControlResult) -> Cou
 /// The healthy 20-receipt control set: every court Pass + MutantCaught.
 fn control_set() -> Vec<CourtReceipt> {
     let ids = [
-        CourtId::N01, CourtId::N02, CourtId::N03, CourtId::N04, CourtId::N05,
-        CourtId::N06, CourtId::N07, CourtId::N08, CourtId::N09, CourtId::N10,
-        CourtId::N11, CourtId::N12, CourtId::N13, CourtId::N14, CourtId::N15,
-        CourtId::N16, CourtId::N17, CourtId::N18, CourtId::N19, CourtId::N20,
+        CourtId::N01,
+        CourtId::N02,
+        CourtId::N03,
+        CourtId::N04,
+        CourtId::N05,
+        CourtId::N06,
+        CourtId::N07,
+        CourtId::N08,
+        CourtId::N09,
+        CourtId::N10,
+        CourtId::N11,
+        CourtId::N12,
+        CourtId::N13,
+        CourtId::N14,
+        CourtId::N15,
+        CourtId::N16,
+        CourtId::N17,
+        CourtId::N18,
+        CourtId::N19,
+        CourtId::N20,
     ];
     ids.iter()
-        .map(|id| nato_receipt(*id, Verdict::Pass, ControlResult::MutantCaught {
-            mutant_id: format!("m-{}", id.id_number()),
-            detection_channel: "g4-court".to_string(),
-        }))
+        .map(|id| {
+            nato_receipt(
+                *id,
+                Verdict::Pass,
+                ControlResult::MutantCaught {
+                    mutant_id: format!("m-{}", id.id_number()),
+                    detection_channel: "g4-court".to_string(),
+                },
+            )
+        })
         .collect()
 }
 
@@ -218,7 +258,7 @@ fn emit_20_court_dossier_then_inspect_is_valid() {
     let sgn = signer(0x41);
     let (root, wire) = emit(tmp.path(), &sgn);
 
-    assert_eq!(wire.len(), 120 + 3309, "sealed wire length is root+key+alg+subject+ver+sig");
+    assert_eq!(wire.len(), WIRE_LEN, "sealed wire length is root+key+alg+subject+ver+sig");
     let sealed = sealer::decode(&wire).expect("wire decodes");
     assert_eq!(sealed.root, root.0, "wire commits the emit root");
     assert_eq!(sealed.envelope.format_version, FORMAT_VERSION);
@@ -235,7 +275,11 @@ fn emit_root_matches_independent_p13_reconstruction() {
     let tmp = tempfile::tempdir().expect("tempdir");
     write_receipts_dir(tmp.path(), false);
     let (root, _) = emit(tmp.path(), &signer(0x42));
-    assert_eq!(root.0, independent_root(tmp.path()), "emit root must equal the independent P13 reconstruction");
+    assert_eq!(
+        root.0,
+        independent_root(tmp.path()),
+        "emit root must equal the independent P13 reconstruction"
+    );
 }
 
 /// `--assert-merkle-root` law (domain carrier): a claimed root that differs
@@ -348,16 +392,21 @@ fn wrong_alg_string_and_version_are_refused() {
 fn tampered_receipt_file_is_typed_refusal() {
     let tmp = tempfile::tempdir().expect("tempdir");
     write_receipts_dir(tmp.path(), false);
-    // Flip one byte inside one receipt's body (subject hash).
+    // Flip one byte inside one record's stored chain hash (offset 320..352):
+    // the stored hash no longer matches the recomputed receipt digest.
     let victim = tmp.path().join("00.ctrt");
     let mut bytes = std::fs::read(&victim).expect("readable");
     assert_eq!(bytes.len(), 352);
-    bytes[20] ^= 0x01;
+    bytes[351] ^= 0x01;
     std::fs::write(&victim, &bytes).expect("rewrite");
 
     // The bin's emit path verifies every record before chaining: the walk
     // refuses at the tampered file with the typed decode error.
-    let mut paths: Vec<std::path::PathBuf> = std::fs::read_dir(tmp.path()).expect("dir").filter_map(Result::ok).map(|e| e.path()).collect();
+    let mut paths: Vec<std::path::PathBuf> = std::fs::read_dir(tmp.path())
+        .expect("dir")
+        .filter_map(Result::ok)
+        .map(|e| e.path())
+        .collect();
     paths.sort();
     let mut refusal: Option<LedgerError> = None;
     for p in &paths {
@@ -410,17 +459,25 @@ fn nato_dossier_admits_20_pass_mutant_caught_receipts() {
 #[test]
 fn nato_dossier_refuses_any_non_pass_receipt() {
     let mut set = control_set();
-    set[7] = nato_receipt(CourtId::N08, Verdict::Fail, ControlResult::MutantCaught {
-        mutant_id: "m-8".to_string(),
-        detection_channel: "g4-court".to_string(),
-    });
+    set[7] = nato_receipt(
+        CourtId::N08,
+        Verdict::Fail,
+        ControlResult::MutantCaught {
+            mutant_id: "m-8".to_string(),
+            detection_channel: "g4-court".to_string(),
+        },
+    );
     assert!(!dossier_admits(&set), "one Fail receipt must refuse the dossier");
 
     let mut set = control_set();
-    set[11] = nato_receipt(CourtId::N12, Verdict::Refused, ControlResult::MutantCaught {
-        mutant_id: "m-12".to_string(),
-        detection_channel: "g4-court".to_string(),
-    });
+    set[11] = nato_receipt(
+        CourtId::N12,
+        Verdict::Refused,
+        ControlResult::MutantCaught {
+            mutant_id: "m-12".to_string(),
+            detection_channel: "g4-court".to_string(),
+        },
+    );
     assert!(!dossier_admits(&set), "one Refused receipt must refuse the dossier");
 }
 
@@ -454,10 +511,14 @@ fn nato_control_set_root_is_deterministic_and_digest_bound() {
     let set = control_set();
     assert_eq!(root_of(&set), root_of(&set), "same receipts → same root");
     let mut other = control_set();
-    other[5] = nato_receipt(CourtId::N06, Verdict::Fail, ControlResult::MutantCaught {
-        mutant_id: "m-6".to_string(),
-        detection_channel: "g4-court".to_string(),
-    });
+    other[5] = nato_receipt(
+        CourtId::N06,
+        Verdict::Fail,
+        ControlResult::MutantCaught {
+            mutant_id: "m-6".to_string(),
+            detection_channel: "g4-court".to_string(),
+        },
+    );
     assert_ne!(root_of(&set), root_of(&other), "a non-Pass receipt moves the root");
 }
 

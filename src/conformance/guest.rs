@@ -134,15 +134,23 @@
 //! generation counter makes ABA reuse of a freed slot observable as
 //! `ERR_BAD_HANDLE` instead of a silent session swap.
 //!
+//! The generation counter is `u32` (incremented with `wrapping_add`), so
+//! ~2^32 drop-of-the-same-slot cycles wraps it back to a stale handle's
+//! expected value and resurrects that handle — measured at ~16.7h at
+//! ~14µs per drop cycle. ABI v2 work order: widen the generation to `u64`.
+//!
 //! # Handle-table storage choice (documented, per spec)
 //!
 //! Fixed-size slot array in a `static` with an occupancy bitmask: **no
 //! runtime allocation after init, ever.** A `OnceCell<Vec<_>>` was
 //! considered and rejected — it allocates lazily, making "table full" a
-//! late failure; the static array makes capacity a compile-time fact. Wasm
-//! guests are single-threaded, so a `static mut` reached only through the
-//! single `with_table` funnel is sound here; that helper is the only code
-//! that touches the table.
+//! late failure; the static array makes capacity a compile-time fact. The
+//! table sits in a `Mutex` reached only through the single `with_table`
+//! funnel: native builds of this module (feature `wasm-guest` has no
+//! `target_arch` gate; the ABI test suite drives it multi-threaded) are
+//! serialized by the lock, and single-threaded Wasm guests take the lock
+//! uncontended at negligible cost. That helper is the only code that
+//! touches the table.
 
 #![cfg(all(feature = "wasm-guest", feature = "conformance"))]
 // WASM guest ABI surface: `unsafe` + `#[no_mangle]` are the point of an
@@ -281,20 +289,24 @@ impl Table {
     }
 }
 
-static mut TABLE: Table = Table::new();
+static TABLE: std::sync::Mutex<Table> = std::sync::Mutex::new(Table::new());
 
-/// Runs `f` with exclusive `&mut` access to the table.
+/// Runs `f` with exclusive `&mut` access to the table, serializing
+/// concurrent callers through [`TABLE`]'s mutex.
 ///
-/// JUSTIFICATION (soundness): the guest runs under a single-threaded Wasm
-/// ABI; no code path can obtain `&Table` concurrently. All table access
-/// funnels through this function so the `static mut` has exactly one
-/// reader/writer shape.
+/// JUSTIFICATION (soundness): all table access funnels through this
+/// function, which holds the mutex for the duration of `f`, so no two
+/// callers can hold `&mut Table` concurrently — on the single-threaded
+/// Wasm ABI the lock is uncontended; on native multi-threaded builds (the
+/// host test surface) it enforces exclusivity that previously relied on an
+/// external test-side mutex. A poisoned lock (a panic inside some earlier
+/// `f`) is recovered with `into_inner`: the table's slot/generation
+/// invariants fail closed at the ABI boundary (`ERR_BAD_HANDLE` /
+/// `ERR_TABLE_FULL`) regardless, and `panic = "abort"` guest builds never
+/// observe poisoning.
 fn with_table<R>(f: impl FnOnce(&mut Table) -> R) -> R {
-    // JUSTIFICATION: single-threaded guest ABI; aliasing impossible.
-    #[allow(static_mut_refs)]
-    {
-        f(unsafe { &mut TABLE })
-    }
+    let mut guard = TABLE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    f(&mut guard)
 }
 // (clippy note: match/Option refactors below keep the ABI's fail-closed
 // branch structure explicit rather than collapsing it into map/or forms.)

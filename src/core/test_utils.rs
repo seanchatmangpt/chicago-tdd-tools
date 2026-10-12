@@ -411,7 +411,7 @@ mod tests {
         assert_ne!(uuid1, uuid2);
         #[cfg(feature = "uuid-v4")]
         assert_eq!(uuid1.len(), 36); // UUID format length
-        // Deterministic zero-ambient fallback: "id-" + 32 hex chars.
+                                     // Deterministic zero-ambient fallback: "id-" + 32 hex chars.
         #[cfg(not(feature = "uuid-v4"))]
         assert_eq!(uuid1.len(), 35);
     });

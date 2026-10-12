@@ -533,13 +533,12 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools"
-version = "26.10.11"
+version = "26.10.12"
 dependencies = [
  "arbitrary",
  "blake3",
  "chicago-tdd-tools-proc-macros",
  "chrono",
- "clap",
  "criterion",
  "dashmap",
  "fake",
@@ -580,7 +579,7 @@ dependencies = [
 
 [[package]]
 name = "chicago-tdd-tools-proc-macros"
-version = "26.10.11"
+version = "26.10.12"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -635,7 +634,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ddb117e43bbf7dacf0a4190fef4d345b9bad68dfc649cb349e7d17d28428e51"
 dependencies = [
  "clap_builder",
- "clap_derive",
 ]
 
 [[package]]
@@ -644,22 +642,8 @@ version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "714a53001bf66416adb0e2ef5ac857140e7dc3a0c48fb28b2f10762fc4b5069f"
 dependencies = [
- "anstream",
  "anstyle",
  "clap_lex",
- "strsim",
-]
-
-[[package]]
-name = "clap_derive"
-version = "4.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2ce8604710f6733aa641a2b3731eaa1e8b3d9973d5e3565da11800813f997a9"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
 ]
 
 [[package]]
@@ -865,7 +849,7 @@ dependencies = [
 
 [[package]]
 name = "ctt-wasm-guest"
-version = "26.10.11"
+version = "26.10.12"
 dependencies = [
  "chicago-tdd-tools",
  "uuid",
@@ -2307,6 +2291,13 @@ name = "memchr"
 version = "2.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4"
+
+[[package]]
+name = "merger-guests"
+version = "26.10.12"
+dependencies = [
+ "chicago-tdd-tools",
+]
 
 [[package]]
 name = "micromap"

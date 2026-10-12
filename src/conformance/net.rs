@@ -82,8 +82,8 @@ impl NetSpec {
 
     /// Compile the spec into packed transition masks.
     ///
-    /// Refuses: more than [`MAX_PLACES`] places, more than
-    /// [`MAX_TRANSITIONS`] transitions, duplicate place or transition names,
+    /// Refuses: more than `MAX_PLACES` places, more than
+    /// `MAX_TRANSITIONS` transitions, duplicate place or transition names,
     /// references to undeclared places, and self-loops (a transition with a
     /// place in both its pre and post sets).
     ///

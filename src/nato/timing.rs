@@ -87,7 +87,10 @@
     clippy::manual_midpoint,
     clippy::identity_op,
     clippy::format_collect,
-    clippy::trivially_copy_pass_by_ref
+    clippy::trivially_copy_pass_by_ref,
+    // The rep-scale computation floors the pilot estimate at a positive
+    // value before the cast; the sign can never be lost.
+    clippy::cast_sign_loss
 )]
 
 use std::time::{Duration, Instant};
@@ -165,8 +168,68 @@ impl BurstConfig {
     }
 }
 
-/// Minimum total-per-class for a court result to be admitted at all.
+/// Minimum total-per-class for a court result to be admitted at one calibration.
 pub const TOTAL_PER_CLASS_ADMISSION_MIN: u64 = 100_000;
+
+/// The burst-interval soundness floor multiplier used by [`measure`]: the
+/// fastest raw burst interval must exceed 20x the measured clock resolution.
+const RES_FLOOR_MULT: f64 = 20.0;
+/// Safety margin applied on top of the resolution floor when scaling the
+/// burst rep count ([`scale_reps_for_resolution`]): the scaled burst must
+/// clear the 20x floor by at least this factor, so a pilot burst that just
+/// grazes the floor (or a busier machine than the pilot's) still measures.
+const RES_SCALE_MARGIN: f64 = 4.0;
+
+/// Scale `cfg.reps` up (never down) so the timed burst interval provably
+/// clears the 20x-resolution soundness floor — with `RES_SCALE_MARGIN`
+/// margin — in BOTH compile profiles.
+///
+/// Why this exists: the N05 smoke bursts are 256 reps of a ~1 ns/call
+/// kernel, a ~200 ns burst. On Apple-Silicon-class hosts the release
+/// profile measures a ~40 ns clock-resolution upper bound
+/// ([`clock_resolution_ns`]), so the 20x floor is ~820 ns and the 256-rep
+/// burst falls BELOW it (`TimingWindowTooCoarse` at timing.rs:535/553).
+/// The honest fix is to measure more, not to relax the floor: a pilot
+/// burst of `cfg.reps` executions of the kernel under court estimates the
+/// per-rep cost, and `reps` is raised to the next power of two that clears
+/// `20x * resolution * 4` in one burst interval. Only ever raises reps, so
+/// `total_per_class()` only grows and the 100k/class admission gate still
+/// holds for the SMOKE calibration.
+///
+/// The pilot runs the kernel on the VALID class — the CHEAP twin (the
+/// refusal twin gates early and is never cheaper): the soundness floor
+/// binds on the FASTEST measured burst, which is a valid-class burst, so
+/// the scale must be set by the cheap class or the floor check fails on it
+/// even when scaled by the expensive twin's cost.
+#[must_use]
+pub fn scale_reps_for_resolution<F>(cfg: BurstConfig, resolution: f64, mut f: F) -> BurstConfig
+where
+    F: FnMut(u64, u64) -> u64,
+{
+    // Pilot: fastest of 8 bursts of cfg.reps executions on the VALID class
+    // — the CHEAP twin (refusal gates early). The soundness floor binds on
+    // the fastest measured burst, which is always a valid-class burst for
+    // this court's testcase family, so the scale must be set by it.
+    let mut min_ns = f64::INFINITY;
+    let mut acc = 0u64;
+    for _ in 0..8 {
+        let t0 = Instant::now();
+        for _ in 0..cfg.reps {
+            acc = std::hint::black_box(
+                acc ^ f(std::hint::black_box(PN_VALID), std::hint::black_box(OCEL_VALID)),
+            );
+        }
+        min_ns = min_ns.min(t0.elapsed().as_nanos() as f64);
+    }
+    let _ = sink(acc);
+    let per_rep = (min_ns / cfg.reps as f64).max(0.01);
+    // Raise reps to the next power of two clearing 20x * resolution * margin.
+    let needed =
+        ((RES_FLOOR_MULT * RES_SCALE_MARGIN * resolution) / per_rep).ceil().max(1.0) as u64;
+    BurstConfig { reps: cfg.reps.max(needed.next_power_of_two()), ..cfg }
+}
+
+// --- Fixed testcases ------------------------------------------------------
 
 // --- Fixed testcases ------------------------------------------------------
 
@@ -419,6 +482,11 @@ where
     F: FnMut(u64, u64) -> u64,
 {
     let resolution = clock_resolution_ns();
+    // Scale the burst rep count so one burst interval clears the 20x
+    // resolution floor in BOTH profiles (release optimizes the kernel to
+    // ~1 ns/call; a 256-rep smoke burst is ~200 ns, below the ~800 ns floor
+    // a ~40 ns-resolution host imposes). Only raises reps.
+    let cfg = scale_reps_for_resolution(cfg, resolution, &mut f);
     let mut attempts: Vec<f64> = Vec::new();
     let mut soundness = (f64::NAN, f64::NAN);
     for attempt in 0..4 {
@@ -502,22 +570,30 @@ mod tests {
     #[test]
     fn n05_leaky_refusal_control_diverges_by_construction() {
         // The control must be cheap on the valid class and expensive on the
-        // refusal class — otherwise it controls nothing.
+        // refusal class — otherwise it controls nothing. 10k iterations and
+        // min-of-3 per class: the valid-class window is ~1 ns/call, so a
+        // 1k-iteration single-shot interval is dominated by ambient load
+        // noise in release (the AS2 law — a wall-clock reading under
+        // unknown load measures the machine); the min over repeated trials
+        // is the load-robust statistic, and 10k iters puts both windows far
+        // above timer noise.
         let v = (PN_VALID, OCEL_VALID);
         let r = (PN_VALID, OCEL_REFUSAL);
-        let t0 = Instant::now();
         let mut acc = 0u64;
-        for _ in 0..1_000u64 {
-            acc ^= leaky_refusal(v.0, v.1);
-        }
-        let valid_ns = t0.elapsed().as_nanos() as f64;
-        acc = std::hint::black_box(acc);
-        let t1 = Instant::now();
-        for _ in 0..1_000u64 {
-            acc ^= leaky_refusal(r.0, r.1);
-        }
-        let refusal_ns = t1.elapsed().as_nanos() as f64;
-        std::hint::black_box(acc);
+        let mut class_min = |ocel: u64| -> f64 {
+            let mut best = f64::INFINITY;
+            for _ in 0..3 {
+                let t0 = Instant::now();
+                for _ in 0..10_000u64 {
+                    acc ^= leaky_refusal(v.0, ocel);
+                }
+                best = best.min(t0.elapsed().as_nanos() as f64);
+            }
+            best
+        };
+        let valid_ns = class_min(OCEL_VALID);
+        let refusal_ns = class_min(OCEL_REFUSAL);
+        std::hint::black_box(&mut acc);
         assert!(
             refusal_ns > valid_ns * 4.0,
             "leaky control not class-selective: valid {valid_ns} ns vs refusal {refusal_ns} ns"

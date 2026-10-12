@@ -6,7 +6,7 @@
 //!
 //! Ported from strata-protocol tests/nato/n11_torn_write_fuzz.rs @ strata
 //! 0de13a3 (Apache/MIT per strata LICENSE). Targets the subject port's
-//! [`slot::Slot`] seq/checksum interlock and [`ring::CasRing`] typed-recovery
+//! `Slot` seq/checksum interlock and `CasRing` typed-recovery
 //! surface. Three tiers:
 //!
 //! 1. MODEL-LEVEL (exhaustive): for every interleaving of the three stores
@@ -18,7 +18,7 @@
 //!    mid-sequence at random points (bus disconnect). Readers never observe
 //!    checksum-valid garbage; the slot recovers after each abort.
 //! 3. CASRING-LEVEL (typed refusals): writers abort mid-sequence on a real
-//!    [`ring::CasRing`] and recycle through the typed `abandon`; the drainer
+//!    `CasRing` and recycle through the typed `abandon`; the drainer
 //!    never observes garbage; stale/double/out-of-range abandon refuses
 //!    typed; zero torn words admitted.
 //!
@@ -84,7 +84,7 @@
     clippy::trivially_copy_pass_by_ref
 )]
 
-mod ring;
+pub(crate) mod ring;
 mod slot;
 
 use ring::{CasRing, ConsensusError, SlotId};

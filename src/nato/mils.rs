@@ -13,15 +13,15 @@
 //! - **Region A (unclassified tenant)** — `pn.marking [15:0]`,
 //!   `pn.pre [31:16]`, `pn.post [47:32]`, `pn.tid [55:48]`, and the
 //!   `ocel.activity` low byte that feeds the verb-match gate. `state_A` is
-//!   the resulting marking bits [15:0] plus the typed refusal flag.
+//!   the resulting marking bits `[15:0]` plus the typed refusal flag.
 //! - **Region B (secret tenant)** — payload bits the advance law never
 //!   reads: `pn.flags [63:56]` and the `ocel` bytes above the low byte
-//!   (`src`/`tgt`/`qual`/`tick` analogues, bits [63:8]).
+//!   (`src`/`tgt`/`qual`/`tick` analogues, bits ``[63:8]``).
 //!
 //! # Non-interference law (HARD FAIL on any violation)
 //!
 //! For every A-state and A-input, `state_A(B armed) == state_A(B zeroed)`:
-//! the marking bits [15:0] and the refusal verdict must not diverge under
+//! the marking bits ``[15:0]`` and the refusal verdict must not diverge under
 //! B's payload presence. This is checked exhaustively over ALL 2^16
 //! markings x 16 transition shapes x 3 activity regimes x 2 tick values,
 //! with armed-B payload combinations tiered per the P7 sampling law
@@ -35,7 +35,7 @@
 //!   sole authority is the typed refusal (bit-exact unchanged word) — it
 //!   can never write a marking bit. Pinned: gate decisions are identical
 //!   with B armed and B zeroed, and a closed gate never moves a marking.
-//! - **C2 (B-region orthogonality)**: the B bytes of `ocel` (bits [63:8])
+//! - **C2 (B-region orthogonality)**: the B bytes of `ocel` (bits ``[63:8]``)
 //!   and the whole `pn.flags` byte are pure payload — the advance outcome
 //!   is identical armed vs zeroed. This is the kernel-law pin replacing
 //!   strata's tick-predicate pin (the upstream `expected_tick_ok` surface
@@ -177,7 +177,7 @@ pub fn composite_pn(m: u16, pre: u16, post: u16, tid: u8, flags_b: u8) -> u64 {
 
 /// Build a composite ocel word: A's activity byte with B's src/tgt/qual
 /// armed (or zeroed). The low byte carries the activity (verb gate input);
-/// bits [63:8] are the B region.
+/// bits ``[63:8]`` are the B region.
 pub fn composite_ocel(activity: u16, tick: u8, b: (u16, u16, u8)) -> u64 {
     let _ = tick; // tick is a B-region payload byte in this kernel
     (activity as u64)
@@ -362,7 +362,7 @@ pub fn coupling_pin_violations() -> Vec<&'static str> {
         violations.push("C1: high activity byte flipped admission");
     }
 
-    // C2 pin: every B-region byte (ocel bits [63:8], pn.flags byte) is pure
+    // C2 pin: every B-region byte (ocel bits ``[63:8]``, pn.flags byte) is pure
     // payload — the advance outcome is identical armed vs zeroed with the
     // gate open. (Kernel-law pin replacing strata's tick-predicate pin; see
     // the scoping bound.)

@@ -1,0 +1,367 @@
+#![cfg(feature = "nato")]
+#![allow(dead_code)] // JUSTIFICATION: court items are consumed by its own cfg(test) courts and the N08 registry slot
+#![allow(unused_imports)]
+// JUSTIFICATION: ScopingRecord feeds only the cfg(test) courts; kept at module scope for doc-link resolution
+//! N08 — Hamming weight/distance profile court (NATO lane CP-N08).
+//!
+//! Ported from `strata_protocol` (commit 6023295 lineage,
+//! `tests/nato/n08_hamming_weight.rs`) per plan E-M18, adapted to the CTT
+//! 16-bit marking surface: the observed state word is the PN64 committed
+//! marking (`crate::conformance::pn64::step_branchless`), the payload-class
+//! fields are the OCEL64 object-id words `[31:16]` (src) and `[47:32]`
+//! (tgt) of the OCEL event word, exactly as on the strata surface.
+//!
+//! Spec mandate (NATO_N01_N20 N08): "Hamming weight/distance profile across
+//! successive states." The lane's adversarial question: is the state-word
+//! Hamming profile INPUT-INDEPENDENT? A payload-dependent divergence is a
+//! power-analysis signal (Hamming-weight leak through the branchless
+//! kernel).
+//!
+//! # Delivered court
+//!
+//! Deterministic chained kernel steps per payload class (LCG `u64`,
+//! Numerical-Recipes multiplier via `crate::nato::rng::Lcg`), two classes:
+//!
+//! * HIGH: OCEL64 object-id payload fields forced to `0xFFFF` (max weight).
+//! * LOW:  same fields forced to `0x0000` (zero weight).
+//!
+//! Both classes share the IDENTICAL LCG seed, so the payload fields are the
+//! only difference between the chains — any divergence is attributable to
+//! payload and nothing else. Each step draws a fresh PN64 transition whose
+//! `W-` is a subset of the current marking, so token availability always
+//! holds; the activity byte is `(LCG byte | tid)`, so the verb gate admits
+//! a realistic fraction of steps (non-fired steps surface as distance-0
+//! mass). We record (1) the Hamming weight of the 16-bit marking and (2)
+//! the Hamming distance between successive markings.
+//!
+//! Distributions are compared across classes two ways:
+//!
+//! 1. Welch's two-sample t-test (`crate::nato::timing::welch_t`), NaN-safe:
+//!    zero total variance with equal means is exact equality (maximal
+//!    input independence, treated as pass, mirroring `timing::passes`);
+//!    with unequal means it is maximal divergence (fires).
+//! 2. Exact binned-distribution comparison: weight and distance histograms
+//!    over `0..=16` must match class-vs-class within 1% of N per bin.
+//!
+//! Any payload-dependent divergence = FAIL (power-analysis signal).
+//!
+//! # Anti-vacuity
+//!
+//! A court that would pass anything carries no bits. The negative-control
+//! test re-runs the HIGH/LOW chains through a LEAKY observation transform —
+//! all 16 payload bits folded into the observed marking, exactly what a
+//! data-dependent kernel would emit — and asserts the Welch rule FIRES.
+//! The positive-control discipline holds at both tiers.
+//!
+//! # Tiering (E-M18)
+//!
+//! * Tier-1 (default `#[test]`): calibrated 10,000-sample prefix per class.
+//! * Tier-2 (`#[ignore]`, `--ignored` opt-in): full 100,000-sample court
+//!   at spec scale, both the main profile court and the negative control.
+//!
+//! Chicago discipline: real chained executions of the real kernel, no
+//! mocks; assertions on measured state (distributions), not call counts.
+//! Zero stdout: profile tables are omitted; every failure carries its
+//! statistics in the assertion message. Scoping is disclosed via
+//! `crate::nato::disclosure::ScopingRecord` (partial at Tier-1, full at
+//! Tier-2) and validated in-test.
+
+// Lint-scope note: NATO court-harness modules use domain literals, metric
+// casts, and court-assertion panics by design; the style-class lints below
+// are allowed at module scope with this justification rather than dozens of
+// inline permits.
+#![allow(
+    clippy::doc_markdown,
+    clippy::must_use_candidate,
+    clippy::use_self,
+    clippy::missing_const_for_fn,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_lossless,
+    clippy::cast_precision_loss,
+    clippy::too_long_first_doc_paragraph,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::expect_used,
+    clippy::unwrap_used,
+    clippy::panic,
+    clippy::explicit_iter_loop,
+    clippy::unusual_byte_groupings,
+    clippy::unreadable_literal,
+    clippy::similar_names,
+    clippy::many_single_char_names,
+    clippy::too_many_lines,
+    clippy::unused_self,
+    clippy::needless_pass_by_value,
+    clippy::uninlined_format_args,
+    clippy::needless_range_loop,
+    clippy::match_same_arms,
+    clippy::type_complexity,
+    clippy::identity_op,
+    clippy::trivially_copy_pass_by_ref
+)]
+
+use crate::conformance::pn64::step_branchless;
+use crate::nato::disclosure::ScopingRecord;
+use crate::nato::rng::Lcg;
+use crate::nato::timing::T_THRESHOLD;
+
+/// Tier-1 sample count: calibrated prefix per payload class (default run).
+const N_TIER1: usize = 10_000;
+
+/// Tier-2 sample count: full spec scale per payload class (`#[ignore]`).
+const N_TIER2: usize = 100_000;
+
+/// Max per-bin share divergence for the exact binned comparison.
+const BIN_TOL: f64 = 0.01;
+
+/// Shared seed for both classes: aligned LCG streams isolate payload as the
+/// only chain difference. ASCII "NATO" + N08 tag.
+const SEED: u64 = 0x4E41_544F_4E30_3807;
+
+/// Initial 16-bit PN64 marking for both chains.
+const INITIAL_MARKING: u64 = 0x0002;
+
+/// Welch decision rule, NaN-safe: NaN (zero total variance) with the
+/// means we never get to compare is treated as exact equality — pass;
+/// otherwise accept only when |t| is below the N05-mirrored threshold.
+fn accepts(t: f64) -> bool {
+    t.is_nan() || t.abs() < T_THRESHOLD
+}
+
+/// Fires = the rule rejects: finite t at or above the threshold.
+fn fires(t: f64) -> bool {
+    !t.is_nan() && t.abs() >= T_THRESHOLD
+}
+
+/// Collected profile for one payload class.
+struct Profile {
+    weights: Vec<f64>,
+    distances: Vec<f64>,
+    weight_hist: [u64; 17],
+    distance_hist: [u64; 17],
+}
+
+impl Profile {
+    fn new(n: usize) -> Self {
+        Profile {
+            weights: Vec::with_capacity(n),
+            distances: Vec::with_capacity(n),
+            weight_hist: [0; 17],
+            distance_hist: [0; 17],
+        }
+    }
+
+    fn push(&mut self, marking: u16, prev: u16) {
+        let w = marking.count_ones();
+        let d = (marking ^ prev).count_ones();
+        self.weights.push(f64::from(w));
+        self.distances.push(f64::from(d));
+        self.weight_hist[w as usize] += 1;
+        self.distance_hist[d as usize] += 1;
+    }
+}
+
+/// Run a real chained kernel sequence with the given OCEL64 payload class,
+/// collecting weight/distance samples and histograms.
+///
+/// The chain stays live by construction: each step draws a fresh PN64
+/// transition with `W- = r & state` (a subset of the current marking), so
+/// token availability always holds; the activity byte is `(LCG byte | tid)`
+/// so the verb gate (`(activity & 0xFF) == tid`) admits only a realistic
+/// fraction of steps (non-committed steps show up as distance-0). The
+/// kernel's committed marking is the observed state.
+/// `observe` is applied to the committed marking — the identity for the
+/// main court, a payload-leaking transform for the negative control.
+fn run_chain(
+    lcg_seed: u64,
+    payload_field: u64,
+    n: usize,
+    observe: impl Fn(u16, u64) -> u16,
+) -> Profile {
+    let mut lcg = Lcg::new(lcg_seed);
+    let mut profile = Profile::new(n);
+
+    let mut state: u64 = INITIAL_MARKING;
+
+    for _ in 0..n {
+        let r = lcg.next_u64();
+        let pre = r & state & 0xFFFF;
+        let post = (r >> 16) & 0xFFFF;
+        let tid = ((r >> 32) & 0xFF) | 1;
+        let pn = (tid << 48) | (post << 32) | (pre << 16) | state;
+        // OCEL64: activity low byte = (LCG byte | tid) — the verb gate
+        // admits only when the LCG byte is a subset of tid; object-id
+        // payload fields [31:16] and [47:32] forced to the class value;
+        // qualifier and tick left as LCG noise.
+        let ocel = (lcg.next_u64() & !(0xFFFF << 16) & !(0xFFFF << 32))
+            | (payload_field << 16)
+            | (payload_field << 32)
+            | tid;
+        let committed = (step_branchless(pn, ocel, 0) & 0xFFFF) as u16;
+        let next = observe(committed, payload_field);
+        profile.push(next, state as u16);
+        state = u64::from(next);
+    }
+    profile
+}
+
+/// Identity observation — the honest kernel surface.
+fn observe_clean(committed: u16, _payload: u64) -> u16 {
+    committed
+}
+
+/// Strong leak: a data-dependent kernel mixing the payload word into the
+/// observed marking. Even a weak single-bit leak is caught at these N
+/// (mean shift ~0.5 bits gives |t| ~ 40), but the word-wide leak makes the
+/// control's power unambiguous.
+fn observe_leaky(committed: u16, payload: u64) -> u16 {
+    committed | (payload as u16 & 0xFFFF)
+}
+
+/// Max per-bin share divergence between two histograms.
+fn max_bin_diff(hi: &[u64; 17], lo: &[u64; 17], n: usize) -> f64 {
+    let n = n as f64;
+    (0..17).map(|i| (hi[i] as f64 - lo[i] as f64).abs() / n).fold(0.0_f64, f64::max)
+}
+
+/// Tier-1 main court: the Hamming weight/distance profile of the committed
+/// 16-bit marking must be input-(payload-)independent.
+#[test]
+fn n08_hamming_profile_is_input_independent_tier1() {
+    let disclosure = ScopingRecord::partial(
+        "N08: Hamming weight/distance profile across successive states is input-independent",
+        "10,000-step chained kernel profile court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram comparison, plus firing negative control",
+        "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale",
+    );
+    disclosure.validate().expect("tier-1 scoping disclosure must validate");
+
+    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_clean);
+    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_clean);
+
+    assert_eq!(
+        hi.weights.len(),
+        N_TIER1,
+        "HIGH chain truncated: {} of {N_TIER1} samples",
+        hi.weights.len()
+    );
+    assert_eq!(
+        lo.weights.len(),
+        N_TIER1,
+        "LOW chain truncated: {} of {N_TIER1} samples",
+        lo.weights.len()
+    );
+
+    let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+    let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
+    let max_w_bin_diff = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER1);
+    let max_d_bin_diff = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER1);
+
+    // Anti-vacuity: the profile itself must be non-degenerate.
+    let populated =
+        |h: &[u64; 17]| h.iter().filter(|c| **c as f64 >= 0.01 * N_TIER1 as f64).count();
+    assert!(
+        populated(&hi.weight_hist) >= 3,
+        "VACUOUS COURT: weight histogram degenerate ({} bins >= 1% N); verdict carries no bits",
+        populated(&hi.weight_hist)
+    );
+    assert!(
+        hi.distances.iter().sum::<f64>() > 0.0,
+        "VACUOUS COURT: states never changed across the chain; distance profile is empty"
+    );
+
+    assert!(
+        accepts(t_w),
+        "POWER-ANALYSIS SIGNAL: state-word Hamming weight depends on payload class (t = {t_w:.4}, threshold |t| < {T_THRESHOLD})"
+    );
+    assert!(
+        accepts(t_d),
+        "POWER-ANALYSIS SIGNAL: successive-state Hamming distance depends on payload class (t = {t_d:.4}, threshold |t| < {T_THRESHOLD})"
+    );
+    assert!(
+        max_w_bin_diff <= BIN_TOL,
+        "POWER-ANALYSIS SIGNAL: weight distribution diverges per-bin by {max_w_bin_diff:.6} (tol {BIN_TOL})"
+    );
+    assert!(
+        max_d_bin_diff <= BIN_TOL,
+        "POWER-ANALYSIS SIGNAL: distance distribution diverges per-bin by {max_d_bin_diff:.6} (tol {BIN_TOL})"
+    );
+}
+
+/// Tier-1 negative control (anti-vacuity): the Welch decision rule must
+/// have POWER — a leaky-observer mutant MUST fire.
+#[test]
+fn n08_negative_control_court_has_power_tier1() {
+    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_leaky);
+    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_leaky);
+
+    let t_leak = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+    assert!(
+        fires(t_leak),
+        "VACUOUS COURT: Welch rule did not fire on an injected payload leak \
+         (t = {t_leak:.4}, threshold |t| >= {T_THRESHOLD})"
+    );
+}
+
+/// Tier-2 full-scale main court (opt-in via `--ignored`): the same profile
+/// court at spec scale, 100k samples per class.
+#[test]
+#[ignore = "Tier-2 full-scale N08: 100k samples per class; run with --ignored"]
+fn n08_hamming_profile_is_input_independent_tier2() {
+    let disclosure = ScopingRecord::full(
+        "N08: Hamming weight/distance profile across successive states is input-independent",
+        "100,000-step chained kernel profile court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram comparison",
+    );
+    disclosure.validate().expect("tier-2 scoping disclosure must validate");
+
+    let hi = run_chain(SEED, 0xFFFF, N_TIER2, observe_clean);
+    let lo = run_chain(SEED, 0x0000, N_TIER2, observe_clean);
+
+    assert_eq!(
+        hi.weights.len(),
+        N_TIER2,
+        "HIGH chain truncated: {} of {N_TIER2} samples",
+        hi.weights.len()
+    );
+    assert_eq!(
+        lo.weights.len(),
+        N_TIER2,
+        "LOW chain truncated: {} of {N_TIER2} samples",
+        lo.weights.len()
+    );
+
+    let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+    let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
+    let max_w_bin_diff = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER2);
+    let max_d_bin_diff = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER2);
+
+    // Anti-vacuity: the profile itself must be non-degenerate.
+    let populated =
+        |h: &[u64; 17]| h.iter().filter(|c| **c as f64 >= 0.01 * N_TIER2 as f64).count();
+    assert!(
+        populated(&hi.weight_hist) >= 3,
+        "VACUOUS COURT: weight histogram degenerate ({} bins >= 1% N); verdict carries no bits",
+        populated(&hi.weight_hist)
+    );
+    assert!(
+        hi.distances.iter().sum::<f64>() > 0.0,
+        "VACUOUS COURT: states never changed across the chain; distance profile is empty"
+    );
+
+    assert!(
+        accepts(t_w),
+        "POWER-ANALYSIS SIGNAL: state-word Hamming weight depends on payload class (t = {t_w:.4}, threshold |t| < {T_THRESHOLD})"
+    );
+    assert!(
+        accepts(t_d),
+        "POWER-ANALYSIS SIGNAL: successive-state Hamming distance depends on payload class (t = {t_d:.4}, threshold |t| < {T_THRESHOLD})"
+    );
+    assert!(
+        max_w_bin_diff <= BIN_TOL,
+        "POWER-ANALYSIS SIGNAL: weight distribution diverges per-bin by {max_w_bin_diff:.6} (tol {BIN_TOL})"
+    );
+    assert!(
+        max_d_bin_diff <= BIN_TOL,
+        "POWER-ANALYSIS SIGNAL: distance distribution diverges per-bin by {max_d_bin_diff:.6} (tol {BIN_TOL})"
+    );
+}

@@ -330,6 +330,36 @@ pub mod prelude {
         CliHarness, CliOutput, ReceiptAssertions, SabotageFixture, TempWorkspace,
     };
 
+    // Assurance surface (conformance kernel, court ledger, NATO courts)
+    #[cfg(feature = "conformance")]
+    pub use crate::conformance::{
+        ConformanceError, ConformanceReport, ConformanceSession, Deviation, Phase, ReplaySummary,
+        ReportOutcome, YieldStatus,
+    };
+
+    #[cfg(feature = "ledger")]
+    pub use crate::ledger::{DossierBuilder, DossierRoot, LedgerError, LedgerExitCode, SealError};
+    // Lane R2 cross-lane unblock (disclosed): SealVerdict/SealedDossier now
+    // come from `ledger::signing::sealer`, which `src/ledger/mod.rs` gates
+    // under `nato`; the prelude must match that gate.
+    #[cfg(feature = "ledger")]
+    pub use crate::ledger::receipt::{ChainedCourtReceipt, CourtReceiptV1};
+    #[cfg(feature = "nato")]
+    pub use crate::ledger::signing::keys::{key_id, KeyStore};
+    #[cfg(feature = "nato")]
+    pub use crate::ledger::{SealVerdict, SealedDossier};
+    // Lane R2 cross-lane unblock (disclosed): `pub mod signing` in
+    // src/ledger/mod.rs was re-gated from `ledger` to `nato`; this re-export
+    // must follow or `--features ...,ledger` without `nato` fails E0433.
+    #[cfg(feature = "nato")]
+    pub use crate::ledger::signing::signer::Signer;
+
+    #[cfg(feature = "nato")]
+    pub use crate::nato::{
+        run_court, ControlResult, Court, CourtId, CourtReceipt, Pillar, ScopingRecord, Verdict,
+        COURT_NAMES,
+    };
+
     // Hyper-advanced μ-kernel verification substrate (Track 1-6)
     // Track 1: Test Contracts as First-Class Types (already in core::*)
     // Track 2: τ-Aware Test Harness (already in validation::*)

@@ -1,6 +1,6 @@
 [package]
 name = "ctt-wasm-guest"
-version = "26.10.11"
+version = "26.10.12"
 edition = "2021"
 publish = false
 description = "WASM guest cdylib: re-exports the chicago-tdd-tools conformance guest ABI for temprun-hosted execution"

@@ -56,7 +56,9 @@ mod weaver_tests {
     // This is Chicago TDD: Real Collaborators (actual Docker container),
     // State Verification (weaver binary exists), Behavior Verification (weaver works)
     test!(weaver_container_available, {
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Arrange: Create Weaver container with entrypoint override to keep it running
         // **Root Cause Fix**: otel/weaver image has entrypoint [/weaver/weaver] that interferes with custom commands.
@@ -121,7 +123,9 @@ mod weaver_tests {
     // This is Chicago TDD: Behavior Verification (weaver command behavior),
     // Error Path Testing (80% of bugs)
     test!(weaver_container_registry_check, {
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Arrange: Create Weaver container with entrypoint override
         let client = ContainerClient::new();
@@ -168,7 +172,9 @@ mod weaver_tests {
     // This is Chicago TDD: Real Collaborators (actual Weaver container),
     // Working Capability Testing (verify Weaver works in containerized environment)
     test!(weaver_container_live_check_capability, {
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Arrange: Create Weaver container with entrypoint override
         let client = ContainerClient::new();

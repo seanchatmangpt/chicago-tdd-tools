@@ -130,7 +130,7 @@ pub fn encode(sealed: &SealedDossier) -> [u8; WIRE_LEN] {
 
 /// Decode error for [`decode`]: the input is not [`WIRE_LEN`] bytes.
 ///
-/// This is a distinct type rather than [`SealError`] reuse because a
+/// This is a distinct type rather than [`crate::ledger::error::SealError`] reuse because a
 /// wrong-length sealed file is a transport problem (truncated/corrupted
 /// storage), not a sealing-law refusal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -214,6 +214,9 @@ pub fn seal(
     let public_key = signer.public_key();
     let key_id = {
         let h = *blake3::hash(&public_key).as_bytes();
+        // JUSTIFICATION: 8-byte slice from 32-byte hash — the slice length is
+        // a compile-time constant strictly less than BLAKE3's 32-byte output,
+        // so `try_into` cannot fail.
         h[..8].try_into().expect("8-byte slice from 32-byte hash")
     };
     let subject = dossier_subject(root);

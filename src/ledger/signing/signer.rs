@@ -214,6 +214,10 @@ impl Signer {
     pub fn sign(&self, subject: &[u8; 32]) -> [u8; SIGNATURE_LEN] {
         let expanded = self.signing_key.expanded_key();
         // FIPS 204 deterministic ML-DSA.Sign; context fixed by this module.
+        // JUSTIFICATION: deterministic ML-DSA sign over a well-formed 32-byte
+        // subject and fixed-length context cannot fail per FIPS 204 — the
+        // error variant is unreachable for these inputs, so the expect is the
+        // loud-failure guard, not an error path.
         let sig = expanded
             .sign_deterministic(subject, SIGN_CONTEXT)
             .expect("deterministic ML-DSA sign cannot fail for well-formed input");

@@ -311,8 +311,21 @@ impl CourtReceiptV1 {
     /// [`Self::fail_closed`], so the output always satisfies the
     /// flag/control consistency check enforced by
     /// [`VerifiedCourtReceipt::from_bytes_verified`].
-    #[must_use]
-    pub fn encode(&self) -> [u8; COURT_RECEIPT_V1_LEN] {
+    ///
+    /// This is the validation boundary for struct-literal construction:
+    /// [`CourtReceiptV1`] has public fields, so a struct literal can bypass
+    /// [`Self::new`]'s name checks — but `encode` re-validates the name and
+    /// refuses over-[`NAME_MAX`] or NUL-containing names rather than
+    /// silently truncating them. Every chain entry point
+    /// ([`Self::chain_hash`], [`ChainedCourtReceipt::from_receipt`]) routes
+    /// through this check.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LedgerError::InvalidName`](crate::ledger::error::LedgerError::InvalidName) when `name` exceeds
+    /// [`NAME_MAX`] bytes or contains an interior NUL.
+    pub fn encode(&self) -> Result<[u8; COURT_RECEIPT_V1_LEN], crate::ledger::error::LedgerError> {
+        validate_name(&self.name)?;
         let mut out = [0u8; COURT_RECEIPT_V1_LEN];
         out[0..4].copy_from_slice(&MAGIC);
         out[4..6].copy_from_slice(&VERSION.to_le_bytes());
@@ -339,19 +352,27 @@ impl CourtReceiptV1 {
         body[B_PREV_SELF..B_PREV_SELF + 32].copy_from_slice(&self.prev_self_hash);
 
         let name_bytes = self.name.as_bytes();
+        // Post-`validate_name` the name is at most `NAME_MAX` usable bytes
+        // (which is `NAME_LEN - TRAILER_LEN`), so the copy below can never
+        // truncate.
         let usable = NAME_LEN - TRAILER_LEN;
-        let n = if name_bytes.len() < usable { name_bytes.len() } else { usable };
-        body[B_NAME..B_NAME + n].copy_from_slice(&name_bytes[..n]);
+        let _ = usable;
+        let n = name_bytes.len();
+        body[B_NAME..B_NAME + n].copy_from_slice(name_bytes);
         // Remaining name bytes and the zero trailer stay zero.
 
-        out
+        Ok(out)
     }
 
     /// Computes the BLAKE3 chain hash for this receipt:
     /// `BLAKE3(parent_receipt_hash ‖ encoded_bytes[0..304])`.
-    #[must_use]
-    pub fn chain_hash(&self) -> [u8; 32] {
-        chain_hash_for(&self.parent_receipt_hash, &self.encode())
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LedgerError::InvalidName`](crate::ledger::error::LedgerError::InvalidName) under the same conditions as
+    /// [`Self::encode`].
+    pub fn chain_hash(&self) -> Result<[u8; 32], crate::ledger::error::LedgerError> {
+        Ok(chain_hash_for(&self.parent_receipt_hash, &self.encode()?))
     }
 }
 
@@ -373,14 +394,20 @@ pub struct ChainedCourtReceipt {
 
 impl ChainedCourtReceipt {
     /// Chains a receipt: computes and stores its chain hash.
-    #[must_use]
-    pub fn from_receipt(receipt: &CourtReceiptV1) -> Self {
-        let encoded = receipt.encode();
-        Self {
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LedgerError::InvalidName`](crate::ledger::error::LedgerError::InvalidName) when the receipt's name fails
+    /// the [`CourtReceiptV1::encode`] validation boundary.
+    pub fn from_receipt(
+        receipt: &CourtReceiptV1,
+    ) -> Result<Self, crate::ledger::error::LedgerError> {
+        let encoded = receipt.encode()?;
+        Ok(Self {
             parent_receipt_hash: receipt.parent_receipt_hash,
             chain_hash: chain_hash_for(&receipt.parent_receipt_hash, &encoded),
             content: encoded,
-        }
+        })
     }
 
     /// Serializes to the fixed 352-byte chained record.
@@ -738,7 +765,7 @@ mod tests {
 
     /// Builds a valid 352-byte chained record.
     fn sample_chained() -> [u8; COURT_RECORD_LEN] {
-        ChainedCourtReceipt::from_receipt(&sample()).encode()
+        ChainedCourtReceipt::from_receipt(&sample()).expect("sample is valid").encode()
     }
 
     #[test]
@@ -752,7 +779,7 @@ mod tests {
     #[test]
     fn roundtrip_preserves_every_field() {
         let receipt = sample();
-        let chained = ChainedCourtReceipt::from_receipt(&receipt);
+        let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("valid");
         let bytes = chained.encode();
         let verified = VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies");
         assert_eq!(verified.as_bytes(), bytes);
@@ -762,7 +789,7 @@ mod tests {
     #[test]
     fn roundtrip_without_positive_control_sets_no_flag() {
         let receipt = sample();
-        let encoded = receipt.encode();
+        let encoded = receipt.encode().expect("sample is valid");
         assert_eq!(encoded[6] & FLAG_POSITIVE_CONTROL, 0);
         let verified =
             VerifiedCourtReceipt::from_bytes_verified(&sample_chained()).expect("verifies");
@@ -774,7 +801,7 @@ mod tests {
         let receipt = sample();
         let mut other = receipt.clone();
         other.parent_receipt_hash = [0x11; 32];
-        assert_ne!(receipt.chain_hash(), other.chain_hash());
+        assert_ne!(receipt.chain_hash().expect("valid"), other.chain_hash().expect("valid"));
     }
 
     #[test]
@@ -925,7 +952,7 @@ mod tests {
         // Flag cleared but control bytes present.
         let mut receipt = sample();
         receipt.positive_control = [0x77; 32];
-        let mut bytes = ChainedCourtReceipt::from_receipt(&receipt).encode();
+        let mut bytes = ChainedCourtReceipt::from_receipt(&receipt).expect("valid").encode();
         bytes[6] &= !FLAG_POSITIVE_CONTROL; // break consistency
         assert_eq!(
             VerifiedCourtReceipt::from_bytes_verified(&bytes).unwrap_err(),
@@ -998,13 +1025,13 @@ mod tests {
             g.parent_receipt_hash = [0u8; 32];
             g
         };
-        let entry = ChainedCourtReceipt::from_receipt(&genesis);
+        let entry = ChainedCourtReceipt::from_receipt(&genesis).expect("valid");
         // Two-entry chain: genesis parent is all-zero (the validator's
         // zeroed genesis), then the child threads the parent's stored hash.
         let mut child_receipt = genesis.clone();
         child_receipt.parent_receipt_hash = entry.stored_hash();
         child_receipt.prev_self_hash = entry.stored_hash();
-        let child = ChainedCourtReceipt::from_receipt(&child_receipt);
+        let child = ChainedCourtReceipt::from_receipt(&child_receipt).expect("valid");
         Blake3ChainValidator::assert_chain_valid(&[entry.clone(), child.clone()]);
         Blake3ChainValidator::assert_tamper_evident(&[entry, child]);
     }
@@ -1014,11 +1041,102 @@ mod tests {
         use crate::observability::receipt::Blake3ChainValidator;
         let mut genesis = sample();
         genesis.parent_receipt_hash = [0u8; 32];
-        let parent = ChainedCourtReceipt::from_receipt(&genesis);
+        let parent = ChainedCourtReceipt::from_receipt(&genesis).expect("valid");
         let mut child_receipt = sample();
         child_receipt.parent_receipt_hash = parent.stored_hash();
         child_receipt.prev_self_hash = parent.stored_hash();
-        let child = ChainedCourtReceipt::from_receipt(&child_receipt);
+        let child = ChainedCourtReceipt::from_receipt(&child_receipt).expect("valid");
         Blake3ChainValidator::assert_chain_valid(&[parent, child]);
+    }
+
+    /// Builds a receipt via struct literal, bypassing `new`'s validation
+    /// (the exact path `encode` must close).
+    fn literal_receipt(name: String) -> CourtReceiptV1 {
+        CourtReceiptV1 {
+            subject_hash: [0; 32],
+            parent_receipt_hash: [0; 32],
+            metrics: ReceiptMetrics {
+                timestamp_ms: 0,
+                run_id: 0,
+                total_ticks: 0,
+                wall_ms: 0,
+                thermal: ThermalClass::Cold,
+                outcome: CourtOutcome::Skip,
+                budget_met: false,
+            },
+            positive_control: [0; 32],
+            metadata_digest: [0; 32],
+            prev_self_hash: [0; 32],
+            name,
+            fail_closed: false,
+        }
+    }
+
+    #[test]
+    fn encode_refuses_name_over_name_max() {
+        // NAME_MAX + 1 bytes.
+        let receipt = literal_receipt("a".repeat(NAME_MAX + 1));
+        assert_eq!(
+            receipt.encode().unwrap_err(),
+            crate::ledger::error::LedgerError::InvalidName {
+                offset: B_NAME,
+                reason: crate::ledger::error::NameError::TooLong,
+            }
+        );
+        assert!(receipt.chain_hash().is_err(), "chain_hash refuses the same receipt");
+
+        // Far over the limit (would have been silently clamped before).
+        let receipt = literal_receipt("b".repeat(200));
+        assert!(matches!(
+            receipt.encode().unwrap_err(),
+            crate::ledger::error::LedgerError::InvalidName {
+                reason: crate::ledger::error::NameError::TooLong,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn encode_refuses_interior_nul_from_struct_literal() {
+        let receipt = literal_receipt("bad\0name".into());
+        assert_eq!(
+            receipt.encode().unwrap_err(),
+            crate::ledger::error::LedgerError::InvalidName {
+                offset: B_NAME,
+                reason: crate::ledger::error::NameError::InteriorNul,
+            }
+        );
+    }
+
+    #[test]
+    fn distinct_over_max_names_cannot_collide_via_truncation() {
+        // Two distinct names, each over NAME_MAX: before this fix both would
+        // have been clamped to the same first NAME_MAX bytes and encoded
+        // identically (a silent collision). Now both are refused, so no
+        // collision is even expressible.
+        let a = literal_receipt(format!("{}-alpha", "x".repeat(NAME_MAX)));
+        let b = literal_receipt(format!("{}-beta", "x".repeat(NAME_MAX)));
+        assert_ne!(a.name, b.name);
+        assert!(a.encode().is_err());
+        assert!(b.encode().is_err());
+        assert!(ChainedCourtReceipt::from_receipt(&a).is_err());
+        assert!(ChainedCourtReceipt::from_receipt(&b).is_err());
+    }
+
+    #[test]
+    fn encode_accepts_name_at_exactly_name_max() {
+        // 84 usable bytes exactly: the lawful boundary must encode and
+        // round-trip losslessly.
+        let name = "n".repeat(NAME_MAX);
+        let receipt = literal_receipt(name.clone());
+        let encoded = receipt.encode().expect("NAME_MAX-byte name is lawful");
+        let chained = ChainedCourtReceipt::from_receipt(&receipt).expect("chains");
+        let verified = VerifiedCourtReceipt::from_bytes_verified(&chained.encode())
+            .expect("boundary record verifies");
+        assert_eq!(verified.receipt().name, name);
+        // The 320-byte record's name field is fully occupied with no NUL.
+        let field = &encoded[HEADER_LEN + B_NAME..HEADER_LEN + B_NAME + NAME_LEN];
+        assert!(field[..NAME_MAX].iter().all(|&b| b == b'n'));
+        assert!(field[NAME_MAX..].iter().all(|&b| b == 0));
     }
 }

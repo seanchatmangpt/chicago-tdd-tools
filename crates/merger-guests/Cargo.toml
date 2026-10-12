@@ -1,0 +1,45 @@
+[package]
+name = "merger-guests"
+version = "26.10.12"
+edition = "2021"
+publish = false
+description = "WASM guest cdylib: merger-matrix leaf kernels behind the uniform mgi_* stateless ABI"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+chicago-tdd-tools = { path = "../..", default-features = false, features = [
+  "logging",
+  "conformance",
+] }
+
+# Mirrors the proven ctt-wasm-guest dependency set, reduced to the minimal
+# feature surface: the merger leaf kernels are pure fixed-point computation
+# over caller-provided linear memory (core+alloc only in leaf modules), so
+# the parent is consumed with only the `logging` feature enabled.
+
+# MG5 (disclosed cross-lane unblock, same-checkout fan-out rule 2): the
+# zero-import census court (tests/zero_import.rs) drives the landed
+# `chicago_tdd_tools::nato::guest_audit::guest_import_census`, which exists
+# only under the parent's `nato` feature. Dev-dependencies apply to test
+# builds only — the cdylib/wasm build surface stays at the minimal
+# dependency set above (the zero-import law is untouched).
+[dev-dependencies]
+chicago-tdd-tools = { path = "../..", default-features = false, features = [
+  "logging",
+  "conformance",
+  "nato",
+] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+codegen-units = 1
+strip = true
+
+# Workspace member: `crates/merger-guests` (coordinator owns the root
+# Cargo.toml `workspace.members` edit; this lane reports the line only).
+# No nested [workspace] table — multi-root breaks cargo -p.

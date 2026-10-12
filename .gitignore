@@ -50,6 +50,9 @@ vendors/
 # made `git status` perpetually report it as dirty/modified content.
 registry/
 
+# ggen working state (generated keys, caches) — never source
+.ggen/
+
 # Agent and temporary files
 .agents/
 check_output.txt
@@ -58,3 +61,7 @@ ORIGINAL_REQUEST.md
 spec-harness/CERTIFICATION.json
 
 vendors/
+
+# Coverage / generated reports
+*.lcov
+weaver-reports/

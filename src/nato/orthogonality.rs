@@ -445,14 +445,66 @@ mod tests {
     }
 
     #[test]
-    fn n02_mutant_spill_is_detectable_by_sentinel_diff() {
-        // Non-vacuity: a spilling pack word must be flagged by the same
-        // comparison the census uses.
+    fn n02_mutant_is_detected_via_positive_control_and_landed_gate() {
+        // Non-vacuity through the LANDED surfaces, not a self-built tautology:
+        //
+        // (1) The court's registered positive control must catch its own
+        //     spilling-pack mutant (same probe `run_court` executes).
+        assert!(
+            orthogonality_positive_control(),
+            "N02 positive control vacuous: the spilling pack mutant was not caught"
+        );
+        //
+        // (2) The SAME mutant shape, judged by the sentinel-diff detection
+        //     rule the census uses (bits flipped outside the written field's
+        //     bit range), must be flagged. The control spills flags bit 0
+        //     into the marking field, so with D4 (flags) as the written
+        //     field, the diff outside D4's mask is nonzero — detected.
+        let spilling_pack = |mark: u16, pre: u16, post: u16, tid: u8, flags: u8| -> u64 {
+            pn64::pack(mark, pre, post, tid, flags) ^ ((flags & 0x01) as u64)
+        };
         let sentinel = pn64::pack(0xA5A5, 0x5A5A, 0xA5A5, 0xC3, 0x3D);
-        let mutant = pn64::pack(0xA5A6, 0x5A5A, 0xA5A5, 0xC3, 0x3D);
-        let diff = mutant ^ sentinel;
-        assert_eq!(diff & !0xFFFF, 0, "control setup: mutation must be confined to D0");
-        assert_ne!(diff & 0xFFFF, 0, "injected D0 spill must be visible");
-        let _ = orthogonality_positive_control;
+        let mutant = spilling_pack(0xA5A5, 0x5A5A, 0xA5A5, 0xC3, 0x3D);
+        let written_field_mask: u64 = 0xFFu64 << 56; // D4 = flags placement
+        let outside = (mutant ^ sentinel) & !written_field_mask;
+        assert_ne!(
+            outside, 0,
+            "sentinel-diff law must flag the control mutant's spill outside the written field"
+        );
+        // Sanity: the true kernel pack against the same rule is silent.
+        let clean = pn64::pack(0xA5A5, 0x5A5A, 0xA5A5, 0xC3, 0x3D);
+        assert_eq!(
+            (clean ^ sentinel) & !written_field_mask,
+            0,
+            "control setup: clean pack must not trip the sentinel rule"
+        );
+        //
+        // (3) The landed gate: a real `run_court` pass over
+        //     `OrthogonalityCourt` — probe fires first, the census runs, and
+        //     the receipt records Pass + MutantCaught + zero spills (mirrors
+        //     the N01-N04 pinning in tests/nato_courts_tests.rs).
+        let receipt = crate::nato::court::run_court(
+            &OrthogonalityCourt,
+            &CandidateRef("lane-n2-positive-control".to_string()),
+            "sha-n02-positive-control",
+        );
+        assert_eq!(
+            receipt.verdict,
+            Verdict::Pass,
+            "N02 court verdict must pass via the landed gate"
+        );
+        assert!(
+            matches!(
+                receipt.positive_control,
+                crate::nato::receipt::ControlResult::MutantCaught { .. }
+            ),
+            "the landed gate must record a caught mutant, got {:?}",
+            receipt.positive_control
+        );
+        let spills = receipt.metrics.iter().find(|(k, _)| *k == "bit_spills");
+        assert!(
+            spills.is_some_and(|(_, v)| *v == MetricValue::U64(0)),
+            "bit_spills metric must be zero via the landed gate"
+        );
     }
 }

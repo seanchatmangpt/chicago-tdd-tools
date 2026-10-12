@@ -66,6 +66,8 @@ pub mod error;
 
 #[cfg(feature = "ledger")]
 pub mod dossier;
+#[cfg(feature = "nato")]
+pub mod dossier_wire;
 #[cfg(feature = "ledger")]
 pub mod proof;
 #[cfg(feature = "ledger")]
@@ -121,7 +123,7 @@ pub struct ChainReport {
 /// Replay a BLAKE3 receipt chain through the crate's single chain validator.
 ///
 /// The hash law lives in
-/// [`Blake3ChainValidator`](crate::observability::receipt::Blake3ChainValidator);
+/// [`Blake3ChainValidator`];
 /// this function is a mapping, not a second implementation.
 ///
 /// # Errors
@@ -210,6 +212,9 @@ pub enum LedgerExitCode {
     EmptyDossier = 17,
     /// A stored digest did not match the recomputed digest.
     DigestMismatch = 18,
+    /// A sealed dossier is structurally invalid (wrong format tag, receipt
+    /// count, or recomputed Merkle root disagrees with the stored root).
+    DossierInvalid = 19,
 }
 
 impl From<LedgerExitCode> for u8 {
@@ -227,6 +232,7 @@ impl From<LedgerExitCode> for u8 {
 /// | `TooShort`, `TrailingBytes`, `BadMagic`, `InvalidLength`, `BodyLenMismatch`, `ReservedNonzero`, `InvalidTag`, `InvalidEnum`, `InvalidName`, `ZeroTrailerViolation`, `ControlFlagMismatch` | MalformedReceipt | 10 |
 /// | `UnsupportedVersion` | SchemaVersionMismatch | 11 |
 /// | `ChainLinkMismatch` | ChainBroken | 12 |
+/// | `ChainDiscontinuity` | ChainBroken | 12 |
 /// | `DigestMismatch` | Tampered | 13 |
 /// | `CrossCourtAppend`, `EmptyChain` | NonMonotonic | 16 |
 ///
@@ -236,7 +242,9 @@ impl From<LedgerExitCode> for u8 {
 pub fn exit_code(err: &LedgerError) -> u8 {
     match err {
         LedgerError::UnsupportedVersion { .. } => LedgerExitCode::SchemaVersionMismatch as u8,
-        LedgerError::ChainLinkMismatch { .. } => LedgerExitCode::ChainBroken as u8,
+        LedgerError::ChainLinkMismatch { .. } | LedgerError::ChainDiscontinuity { .. } => {
+            LedgerExitCode::ChainBroken as u8
+        }
         LedgerError::DigestMismatch { .. } => LedgerExitCode::Tampered as u8,
         LedgerError::CrossCourtAppend { .. } | LedgerError::EmptyChain { .. } => {
             LedgerExitCode::NonMonotonic as u8
@@ -280,6 +288,10 @@ mod tests {
                 LedgerExitCode::MalformedReceipt as u8,
             ),
             (LedgerError::ChainLinkMismatch { index: 3 }, LedgerExitCode::ChainBroken as u8),
+            (
+                LedgerError::ChainDiscontinuity { expected_parent: [0u8; 32], actual: [1u8; 32] },
+                LedgerExitCode::ChainBroken as u8,
+            ),
             (
                 LedgerError::ControlFlagMismatch { offset: 7 },
                 LedgerExitCode::MalformedReceipt as u8,

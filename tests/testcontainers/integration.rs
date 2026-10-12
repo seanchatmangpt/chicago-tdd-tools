@@ -44,7 +44,9 @@ mod integration_tests {
 
     test!(container_cleanup_all_paths, {
         // Arrange: Set up Docker
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
 
         // Act & Assert: Test 1: Normal cleanup (container dropped at end of scope)
         {
@@ -82,7 +84,9 @@ mod integration_tests {
 
     test!(integration_real_container_exec, {
         // Arrange: Set up Docker and create real container
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let container = GenericContainer::with_command(client.client(), ALPINE_IMAGE, ALPINE_TAG, "sleep", &["infinity"], None)
             .unwrap_or_else(|e| panic!("Failed to create container: {}", e));

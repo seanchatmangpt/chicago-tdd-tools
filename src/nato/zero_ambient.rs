@@ -330,7 +330,10 @@ pub struct ZeroAmbientCourt;
 impl ZeroAmbientCourt {
     /// Court identifier.
     pub const ID: CourtId = CourtId::N04;
-    /// Capability pillar.
+    /// Capability pillar. The 5-value `Pillar` enum has no `Authority`
+    /// variant, so N04 (ambient-authority annihilation) is pinned to
+    /// `Pillar::Dossier` in-code — disclosed and pinned by
+    /// `tests/nato_courts_tests.rs::pillar_mapping_matches_the_matrix`.
     pub const PILLAR: Pillar = Pillar::Dossier;
 }
 

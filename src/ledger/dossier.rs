@@ -6,7 +6,7 @@
 //!
 //! - [`CourtLedgerBuilder`] maintains one court's BLAKE3 chain. The chain law
 //!   follows
-//!   [`Blake3ReceiptEntry`](crate::observability::receipt::Blake3ReceiptEntry):
+//!   [`Blake3ReceiptEntry`]:
 //!   `head(0) = [0u8; 32]` (zeroed genesis) and
 //!   `head(n+1) = BLAKE3(head(n) || receipt.stored_hash())`. Appending a
 //!   receipt belonging to a different court is refused
@@ -91,18 +91,34 @@ pub fn court_id_of(receipt: &ChainedCourtReceipt) -> String {
 /// advances `head <- BLAKE3(head || receipt.stored_hash())`, the
 /// [`Blake3ReceiptEntry`] law with the receipt's chain hash as the replayed
 /// content contribution.
+///
+/// Two append gates beyond the court check:
+///
+/// - **Replay refusal**: a receipt whose `stored_hash` was already appended
+///   to this builder is refused
+///   ([`LedgerError::ChainDiscontinuity`]).
+/// - **Parent threading**: the receipt's `parent_receipt_hash` must equal
+///   the builder's current head; genesis (all-zero parent) is lawful only as
+///   the first append, where it matches the zeroed genesis head. A mis-threaded
+///   receipt is refused with [`LedgerError::ChainDiscontinuity`].
 #[derive(Debug)]
 pub struct CourtLedgerBuilder {
     court_id: String,
     head: [u8; 32],
     receipts: Vec<ChainedCourtReceipt>,
+    stored_hashes: Vec<[u8; 32]>,
 }
 
 impl CourtLedgerBuilder {
     /// Create a builder for `court_id` with a zeroed genesis head.
     #[must_use]
     pub fn new(court_id: impl Into<String>) -> Self {
-        Self { court_id: court_id.into(), head: [0u8; 32], receipts: Vec::new() }
+        Self {
+            court_id: court_id.into(),
+            head: [0u8; 32],
+            receipts: Vec::new(),
+            stored_hashes: Vec::new(),
+        }
     }
 
     /// The court this builder owns.
@@ -122,6 +138,10 @@ impl CourtLedgerBuilder {
     /// # Errors
     /// - [`LedgerError::CrossCourtAppend`] if the receipt's court (its
     ///   validated `name` field) differs from this builder's court.
+    /// - [`LedgerError::ChainDiscontinuity`] if the receipt is a
+    ///   byte-identical replay of one already appended, or if its
+    ///   `parent_receipt_hash` does not equal the current head (genesis
+    ///   all-zero parent is lawful only at index 0).
     pub fn append(&mut self, receipt: ChainedCourtReceipt) -> Result<(), LedgerError> {
         let receipt_court = court_id_of(&receipt);
         if receipt_court != self.court_id {
@@ -130,10 +150,25 @@ impl CourtLedgerBuilder {
                 actual: receipt_court,
             });
         }
+        let stored = receipt.stored_hash();
+        let actual_parent = receipt.prev_hash();
+        if self.stored_hashes.contains(&stored) {
+            return Err(LedgerError::ChainDiscontinuity {
+                expected_parent: self.head,
+                actual: actual_parent,
+            });
+        }
+        if actual_parent != self.head {
+            return Err(LedgerError::ChainDiscontinuity {
+                expected_parent: self.head,
+                actual: actual_parent,
+            });
+        }
         let mut h = blake3::Hasher::new();
         h.update(&self.head);
-        h.update(&receipt.stored_hash());
+        h.update(&stored);
         self.head = *h.finalize().as_bytes();
+        self.stored_hashes.push(stored);
         self.receipts.push(receipt);
         Ok(())
     }
@@ -320,11 +355,12 @@ mod tests {
         leaves[0]
     }
 
-    /// A real ChainedCourtReceipt whose name (court id) is `court_id`.
-    fn receipt(court_id: &str, seed: u8) -> ChainedCourtReceipt {
+    /// A real ChainedCourtReceipt whose name (court id) is `court_id`,
+    /// threading `parent` as its parent hash.
+    fn threaded(court_id: &str, parent: [u8; 32], seed: u8) -> ChainedCourtReceipt {
         ChainedCourtReceipt::from_receipt(&CourtReceiptV1 {
             subject_hash: head(seed),
-            parent_receipt_hash: [0u8; 32],
+            parent_receipt_hash: parent,
             metrics: ReceiptMetrics {
                 timestamp_ms: 0,
                 run_id: u64::from(seed),
@@ -340,6 +376,12 @@ mod tests {
             name: court_id.to_owned(),
             fail_closed: false,
         })
+        .expect("test court ids are within NAME_MAX")
+    }
+
+    /// A genesis (zero-parent) receipt for `court_id`.
+    fn receipt(court_id: &str, seed: u8) -> ChainedCourtReceipt {
+        threaded(court_id, [0u8; 32], seed)
     }
 
     #[test]
@@ -514,7 +556,7 @@ mod tests {
         ledger.append(receipt("court-a", 1)).expect("same court");
         let h1 = ledger.head();
         assert_ne!(h1, [0u8; 32]);
-        ledger.append(receipt("court-a", 2)).expect("same court");
+        ledger.append(threaded("court-a", h1, 2)).expect("same court");
         assert_ne!(ledger.head(), h1, "head must advance per append");
     }
 
@@ -542,17 +584,80 @@ mod tests {
     fn court_chain_follows_blake3_prev_content_law() {
         let mut ledger = CourtLedgerBuilder::new("court-a");
         let r1 = receipt("court-a", 5);
-        let r2 = receipt("court-a", 6);
-        ledger.append(r1).expect("ok");
-        ledger.append(r2).expect("ok");
         let mut h = blake3::Hasher::new();
         h.update(&[0u8; 32]);
-        h.update(&receipt("court-a", 5).stored_hash());
+        h.update(&r1.stored_hash());
         let e1 = *h.finalize().as_bytes();
+        let r2 = threaded("court-a", e1, 6);
+        ledger.append(r1).expect("ok");
+        ledger.append(r2.clone()).expect("ok");
         let mut h = blake3::Hasher::new();
         h.update(&e1);
-        h.update(&receipt("court-a", 6).stored_hash());
+        h.update(&r2.stored_hash());
         let e2 = *h.finalize().as_bytes();
         assert_eq!(ledger.head(), e2);
+    }
+
+    #[test]
+    fn court_chain_refuses_byte_identical_replay() {
+        let mut ledger = CourtLedgerBuilder::new("court-a");
+        let r1 = receipt("court-a", 1);
+        ledger.append(r1.clone()).expect("first append of r1");
+        let head_after_first = ledger.head();
+        assert_eq!(
+            ledger.append(r1.clone()),
+            Err(LedgerError::ChainDiscontinuity {
+                expected_parent: head_after_first,
+                actual: [0u8; 32],
+            }),
+            "byte-identical replay of an appended receipt must be refused"
+        );
+        // A replay threaded onto the CURRENT head (freshly re-parented but
+        // otherwise identical content) is still a different stored hash, so
+        // it appends — the replay gate is on stored_hash identity.
+        ledger.append(threaded("court-a", head_after_first, 2)).expect("child appends");
+        assert_eq!(ledger.build().expect("nonempty").len(), 2);
+    }
+
+    #[test]
+    fn court_chain_refuses_wrong_parent_with_typed_error() {
+        let mut ledger = CourtLedgerBuilder::new("court-a");
+        ledger.append(receipt("court-a", 1)).expect("genesis appends");
+        let head1 = ledger.head();
+
+        // Stale parent (genesis zeros) at index 1.
+        assert_eq!(
+            ledger.append(receipt("court-a", 2)),
+            Err(LedgerError::ChainDiscontinuity { expected_parent: head1, actual: [0u8; 32] })
+        );
+        // Fabricated parent (never observed head).
+        let fabricated = threaded("court-a", head(200), 2);
+        assert_eq!(
+            ledger.append(fabricated),
+            Err(LedgerError::ChainDiscontinuity { expected_parent: head1, actual: head(200) })
+        );
+        assert_eq!(ledger.head(), head1, "refused appends must not advance head");
+        // Valid threading still accepted after refusals.
+        ledger.append(threaded("court-a", head1, 2)).expect("threaded child");
+        assert_ne!(ledger.head(), head1);
+    }
+
+    #[test]
+    fn court_chain_refuses_second_genesis_and_accepts_valid_threading() {
+        let mut ledger = CourtLedgerBuilder::new("court-a");
+        ledger.append(receipt("court-a", 1)).expect("genesis");
+        // A second all-zero-parent receipt after the head advanced is a
+        // discontinuity, not a new genesis.
+        assert!(matches!(
+            ledger.append(receipt("court-a", 2)),
+            Err(LedgerError::ChainDiscontinuity { .. })
+        ));
+        let h = ledger.head();
+        let mut h2 = blake3::Hasher::new();
+        h2.update(&h);
+        h2.update(&threaded("court-a", h, 2).stored_hash());
+        let expected_head = *h2.finalize().as_bytes();
+        ledger.append(threaded("court-a", h, 2)).expect("valid threading");
+        assert_eq!(ledger.head(), expected_head, "head law holds across a threaded append");
     }
 }

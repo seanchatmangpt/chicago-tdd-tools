@@ -31,6 +31,16 @@
 //!
 //! [`collision_risk`] exists so capacity planning can measure the real corpus
 //! instead of trusting the asymptotic bound.
+//!
+//! # Empirical collision data
+//!
+//! Empirical: sequential `o#####` names collide at 141 distinct objects
+//! (`blake3("o00140") == blake3("o00141")` — a 16-bit sentinel collision hit
+//! far below the ~302 random-name birthday bound, because sequential names
+//! are adversarial for the truncated digest, not random). The random-name
+//! birthday bound of ~302 still stands for non-sequential inputs. Practical
+//! hard limit: keep distinct named objects under ~100 at the packed tier, or
+//! use the full-fidelity `OcelLog` tier.
 #![cfg(feature = "ocel-ingest")]
 
 /// Typed refusal: two distinct names share a 16-bit blake3-truncated digest.
@@ -225,11 +235,11 @@ pub struct BridgeVocab {
 
 impl BridgeVocab {
     /// Build both maps, labeling each [`IdMapError`] with its field name and
-    /// refusing up front when either field exceeds [`MAX_ENTRIES`].
+    /// refusing up front when either field exceeds `MAX_ENTRIES`.
     ///
     /// # Errors
     ///
-    /// [`BridgeError::CapacityExceeded`] above [`MAX_ENTRIES`] and
+    /// [`BridgeError::CapacityExceeded`] above `MAX_ENTRIES` and
     /// [`BridgeError::Collision`] on a sentinel collision in either field.
     pub fn build(activity_names: &[&str], object_names: &[&str]) -> Result<Self, BridgeError> {
         // Capacity errors surface as typed refusals with the field label, so

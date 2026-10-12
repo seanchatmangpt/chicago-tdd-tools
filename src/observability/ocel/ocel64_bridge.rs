@@ -2,8 +2,8 @@
 //! OCEL64 bridge: `OcelLog` (rich, string-keyed) <-> packed `u64` event words.
 //!
 //! WORD LAYOUT: ocel64 word layout ported from strata-protocol
-//! `src/ocel64.rs @ 0de13a3` (activity [15:0], src [31:16], tgt [47:32],
-//! qualifier [55:48] u8, tick delta [63:56] u8). The era-wrap and
+//! `src/ocel64.rs @ 0de13a3` (activity `[15:0]`, src `[31:16]`, tgt
+//! `[47:32]`, qualifier `[55:48]` u8, tick delta `[63:56]` u8). The era-wrap and
 //! tick-delta semantics follow strata-protocol `src/rehydrate.rs @ 0de13a3`:
 //! the 8-bit tick field wraps at 256; upstream treats a 255 -> 0 wrap as
 //! caller-checkpoint duty. This bridge REFUSES instead: any per-case
@@ -69,35 +69,35 @@ use crate::observability::ocel::types::{OcelLog, TestActivity, TestObjectType, T
 
 // ── Vendored ocel64 word layout (ported from strata-protocol src/ocel64.rs) ──
 
-/// Activity id, bits [15:0].
+/// Activity id, bits `[15:0]`.
 #[inline]
 #[must_use]
 pub const fn activity(w: u64) -> u16 {
     (w & 0xFFFF) as u16
 }
 
-/// Source object id, bits [31:16].
+/// Source object id, bits `[31:16]`.
 #[inline]
 #[must_use]
 pub const fn src_obj(w: u64) -> u16 {
     ((w >> 16) & 0xFFFF) as u16
 }
 
-/// Target object id, bits [47:32].
+/// Target object id, bits `[47:32]`.
 #[inline]
 #[must_use]
 pub const fn tgt_obj(w: u64) -> u16 {
     ((w >> 32) & 0xFFFF) as u16
 }
 
-/// Relationship qualifier, bits [55:48].
+/// Relationship qualifier, bits `[55:48]`.
 #[inline]
 #[must_use]
 pub const fn qualifier(w: u64) -> u8 {
     ((w >> 48) & 0xFF) as u8
 }
 
-/// Monotonic tick delta, bits [63:56].
+/// Monotonic tick delta, bits `[63:56]`.
 #[inline]
 #[must_use]
 pub const fn tick(w: u64) -> u8 {

@@ -1,7 +1,7 @@
 //! Fail-closed `LangSec` loaders for the conformance subsystem.
 //!
 //! Parse, don't validate: every byte of input is either accepted into a typed
-//! [`PowlModel`]/[`PetriNet`] or rejected with a positioned
+//! [`PowlModel`]/[`PetriNet`](super::model::PetriNet) or rejected with a positioned
 //! [`ConformanceError`]. No regex dependency; a hand-rolled byte scanner
 //! tracks byte offsets, and a small `line_col` helper converts them to
 //! 1-based line/column so every rejection names its location.
@@ -33,6 +33,9 @@
 //! Nothing in this module panics; all failure is typed.
 
 use std::collections::BTreeMap;
+// JUSTIFICATION: `std::fs` is this module's single declared IO boundary —
+// file loading in `PowlModel::from_powl_file` below. All failure is typed via
+// `ConformanceError::Io`; no unwrap/panic on the IO result.
 use std::fs;
 use std::path::Path;
 
@@ -653,6 +656,9 @@ impl PowlModel {
     /// parse-time refusal of [`PowlModel::from_powl_str`].
     pub fn from_powl_file(path: impl AsRef<Path>) -> Result<Self, ConformanceError> {
         let path = path.as_ref();
+        // JUSTIFICATION: this file-load entry point is the module's declared
+        // IO boundary (the only `fs` use); failure is typed via
+        // `ConformanceError::Io`, never unwrapped or panicked.
         let src = fs::read_to_string(path).map_err(|e| ConformanceError::Io {
             path: path.display().to_string(),
             message: e.to_string(),
@@ -679,7 +685,9 @@ impl PowlModel {
 /// a minimal Place/Transition net with plain name-pair arcs.
 ///
 /// Deliberately distinct from [`super::model::PetriNet`], the validated
-/// lowering target with typed [`PlaceId`]/[`TransitionId`]-keyed arcs and an
+/// lowering target with typed
+/// [`PlaceId`](super::model::PlaceId)/[`TransitionId`](super::model::TransitionId)-keyed
+/// arcs and an
 /// initial marking.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParsedNet {

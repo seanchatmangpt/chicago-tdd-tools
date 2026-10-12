@@ -23,7 +23,9 @@ mod expert_tests {
 
     test!(warmup_image_pull, {
         // Arrange: Set up Docker and images to pull
-        require_docker();
+        if common::skip_if_no_docker() {
+            return Ok(());
+        }
         let client = ContainerClient::new();
         let images = vec![(ALPINE_IMAGE, ALPINE_TAG), (NGINX_IMAGE, NGINX_TAG)];
 

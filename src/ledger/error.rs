@@ -209,6 +209,22 @@ pub enum LedgerError {
         /// The court whose chain is empty.
         court_id: String,
     },
+
+    /// A receipt's `parent_receipt_hash` did not thread to the builder's
+    /// current head ([`crate::ledger::dossier::CourtLedgerBuilder::append`]),
+    /// or the receipt was a byte-identical replay of one already appended.
+    ///
+    /// Genesis (all-zero parent) is lawful only as the first append, where it
+    /// matches the builder's zeroed genesis head.
+    #[error(
+        "chain discontinuity: expected parent {expected_parent:02x?}, receipt threads {actual:02x?}"
+    )]
+    ChainDiscontinuity {
+        /// The parent hash the chain law required (the builder's head).
+        expected_parent: [u8; 32],
+        /// The parent hash the offered receipt actually carried.
+        actual: [u8; 32],
+    },
 }
 
 /// Renders the 4-byte magic as contiguous lowercase hex (`Display` helper
