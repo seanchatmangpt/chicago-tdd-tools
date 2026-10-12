@@ -172,6 +172,11 @@ remain strata-side. Pillar law is the landed `Court::PILLAR` consts, pinned by t
 (`docs/receipts/N{08,12,14,15}.json`) witness it for the four real-run
 courts — the other 17 persisted receipts are the synthetic control set
 (`sample_control_set()`), not pillar evidence.
+N06 specifically: the court probe adjudicates the real
+`scripts/n06_disasm_audit.sh` output and maps a typed skip to `Verdict::Fail`
++ disclosure, while `docs/receipts/N06.json` is the synthetic control receipt
+minted by `emit_dossier_receipts_when_opted_in` — the live run's actual receipt
+lands at `docs/lanes/N06_disasm.json` (or `$N06_OUT`), not in `docs/receipts/`.
 Where the spec pillar has no enum variant, the in-code mapping is disclosed
 in the row (N16 Resource->`Dossier`, N17/N18 Crypto->`Security`, per the N04
 Authority->`Dossier` precedent).
