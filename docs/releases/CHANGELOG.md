@@ -886,3 +886,36 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - Property-based testing
 - Mutation testing
 
+### Waves 21-27 addendum (2026-10-12, 20-lane audit + convergence)
+
+Fixed:
+- `conformance::net` — `NetSpec::compile` now refuses arcs referencing a
+  place index >= 16 with typed `TooManyPlaces{limit:16}` (was a debug
+  shift-overflow panic / release silent mask wrap).
+- `ledger::signing` — `Signer::from_seed` screens degenerate seeds
+  (all-zero/all-ones) with typed `EntropyRefused` before key expansion;
+  signature changed to `Result`.
+- `core::receipt` — `TestReceipt::sign/verify_signature` now cover all
+  receipt fields (was identity-fields-only); metadata-mutation court added.
+- `swarm::composition` — `OperationChain::advance` on an empty chain marks
+  completion instead of usize-underflow panicking (court added).
+- `core::invariant_properties` — tautological max-u64 assertion replaced
+  with a real `is_err()` refusal law; `testing::generator` /
+  `telemetry_capture` doc-truth corrections.
+- `tests/ocel_tests` uuid-v4 compile gate; `tests/dossier_cli_tests`
+  from_seed caller update; `tests/ledger_tests` cfg gates.
+- `Justfile` — test-assurance-integration extended (ledger_tests,
+  chicago_test_macro_tests, trybuild wired; star_toml_e2e leg moved to the
+  plain harness — compile-at-runtime suites cannot fit nextest per-test
+  timeouts); weaver_macro_tests wired into test-integration.
+
+Security/robustness notes:
+- Manual `Debug` for `Signer` (signing material never printed); KAT courts
+  carry justified `expect` allows over frozen non-degenerate seeds.
+- `tests/chicago_test_macro_tests` + compile-fail cases cover the
+  `#[chicago_test]` W8 refusals and ticket gate (previously zero coverage).
+
+Docs (waves 21-27): doc-truth sweeps across ~30 pages/modules (retired-tool
+references, stale counts/line cites, overclaimed laws narrowed to reality,
+ARCHITECTURE/README/API_REFERENCE coverage refreshed to declared-module
+truth); findings ledger W26/W27 register additions + closures.
