@@ -44,7 +44,8 @@ passing silently.
 
 ```bash
 cd /Users/sac/chicago-tdd-tools
-cargo test --test merger_conformance_tests -- phase7
+cargo test --test merger_conformance_tests \
+  --no-default-features --features conformance,ocel-ingest-json -- phase7
 ```
 
 Two tests run, and both pass:
@@ -161,7 +162,10 @@ match session.step_budget(atoms.len() as u32) {
 
 ## Checkpoint
 
-- `cargo test --test merger_conformance_tests -- phase7` → 2 passed.
+- `cargo test --test merger_conformance_tests --no-default-features
+  --features conformance,ocel-ingest-json -- phase7` → 2 passed. (The test
+  binary is gated behind the `conformance` and `ocel-ingest-json` features;
+  without them the filter matches 0 tests.)
 - You can name which of the two landed fixture files produces a conforming
   replay (neither as raw fixtures — both pin the loop-repetition law; the
   conforming path is the model-derived pipeline).
