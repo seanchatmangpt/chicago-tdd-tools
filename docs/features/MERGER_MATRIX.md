@@ -40,7 +40,7 @@ SHACL (`sh:closed true`).
 | `src/nato/thrash.rs` | N14 CAST-32A multi-core interference court |
 | `src/nato/liveness.rs` | N15 liveness court port |
 | `src/nato/registry.rs` | `COURT_NAMES` N01..N20 — registry complete, 20/20 CTT-side |
-| `tests/merger_conformance_tests.rs` | merger conformance suite (W1): contract pipeline + phase courts (all phase blocks landed; fresh run 25 passed / 0 failed / 0 ignored — every phase golden and violation replays through the fixture bridge) |
+| `tests/merger_conformance_tests.rs` | merger conformance suite (W1): contract pipeline + phase courts (all phase blocks landed; fresh run 26 passed / 0 failed / 0 ignored — every phase golden and violation replays through the fixture bridge) |
 | `src/conformance/` (loader, validate, session, pn64, net, report, guest, guest_seal, guest_telemetry, guest_yield, bcinr, state, model, error) | conformance kernel |
 | `src/ledger/` (dossier, proof, receipt, signing) | ledger |
 
@@ -151,7 +151,7 @@ Merger-specific Justfile recipes exist: `merger-guest-build` (wasm32 cdylib
 for `crates/merger-guests`), `merger-guest-test` (`cargo test -p
 merger-guests`), and `merger-conformance` (the W1 suite: `cargo test --test
 merger_conformance_tests --features conformance,ocel-ingest-json`; fresh run
-25 passed / 0 failed / 0 ignored — all phase blocks green). The fixtures themselves are additionally validated by
+26 passed / 0 failed / 0 ignored — all phase blocks green). The fixtures themselves are additionally validated by
 external validators (`pyshacl`, `eye`) per the example README.
 
 ## See Also
