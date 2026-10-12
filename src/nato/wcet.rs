@@ -126,6 +126,29 @@ const MAX_CORRUPTED_FRAC: f64 = 0.005;
 const CALIB_CHAIN: u64 = 4096;
 /// Calibration batches (median taken).
 const CALIB_BATCHES: usize = 401;
+/// Degenerate-fold floor for the tick-budget leg, in TIME not ticks: on
+/// aarch64 CNTVCT_EL0 ticks are wall ticks (1 ns at this host's 1 GHz
+/// CNTFRQ), not CPU cycles, so an op-derived *tick* floor is
+/// platform-invalid. The floor is batch wall time:
+/// `K_UNROLL * (BRANCHLESS_TOTAL/4 ops) * 0.1 ns/op`, where 0.1 ns/cycle is
+/// the same floor the calibration plausibility gate already refuses to go
+/// below (10 GHz — no credible core executes faster). Even under aggressive
+/// superscalar IPC a truly executed call cannot beat a quarter of its static
+/// op budget at 0.1 ns/cycle, so a batch below it is a constant-folded
+/// measurement, not a fast machine.
+const MIN_NS_PER_OP: f64 = 0.1;
+/// Static op budget fraction per call for the fold floor (ops/4, i.e. IPC 4).
+const MIN_OPS_PER_CALL: f64 = BRANCHLESS_TOTAL as f64 / 4.0;
+
+/// Timer tick period in nanoseconds. Both platforms use the calibrated
+/// ns-per-cycle (the calibration runs on the same clock the measured leg
+/// times with, so tick-period and cycle-period coincide for the floor's
+/// purposes). The earlier CNTFRQ_EL0 inline-asm read was removed: `asm!`
+/// is ambient authority and fails the N04 zero-ambient allowlist audit
+/// (court finding, 2026-10-12).
+fn tick_period_ns(ns_per_cycle: f64) -> f64 {
+    ns_per_cycle
+}
 
 // ---------------------------------------------------------------------------
 // 1. STATIC OP-COUNT TABLE (re-derived from step_branchless source structure)
@@ -579,10 +602,17 @@ fn n13_measured_worst_case_within_static_bound() {
     // tick instrumentation. Wording-honest: on x86_64 elapsed_ticks are
     // RDTSC cycles; on aarch64 they are CNTVCT_EL0 ticks (~1 ns wall), never
     // claimed as cycles there.
-    let (pn, ocel, mask) = corpus[0];
+    // Inputs are re-selected through black_box every iteration: binding
+    // `corpus[0]` to a tuple of constants lets LLVM constant-fold the fully
+    // inlined `step_branchless` body into a compile-time value, collapsing
+    // the batch to ~0 ticks (a measured leg that measures nothing).
+    // black_box keeps the operands runtime-opaque so the real dependency
+    // chain executes.
     let (digest, batch_ticks) = measure_ticks(|| {
+        let n = corpus.len() as u64;
         let mut acc = 0u64;
-        for _ in 0..K_UNROLL {
+        for k in 0..K_UNROLL {
+            let (pn, ocel, mask) = black_box(corpus[(k % n) as usize]);
             acc = acc.wrapping_add(pn64::step_branchless(pn, ocel, mask));
         }
         acc
@@ -592,6 +622,23 @@ fn n13_measured_worst_case_within_static_bound() {
         batch_ticks > 0,
         "TICK MEASUREMENT DEGENERATE: 0 ticks for a {}-call batch — timer did not advance",
         K_UNROLL
+    );
+    // Degenerate-fold floor, in batch wall TIME (see MIN_NS_PER_OP doc):
+    // batch_ns = batch_ticks * tick period must exceed
+    // K_UNROLL * (BRANCHLESS_TOTAL/4 ops) * 0.1 ns/op — a constant-folded
+    // loop cannot, a genuinely executed one can.
+    let batch_ns = batch_ticks as f64 * tick_period_ns(ns_per_cycle);
+    let floor_ns = K_UNROLL as f64 * MIN_OPS_PER_CALL * MIN_NS_PER_OP;
+    assert!(
+        batch_ns >= floor_ns,
+        "TICK MEASUREMENT DEGENERATE: {}-call batch measured {} ticks = {:.0} ns < floor {:.0} ns ({} calls x {} ops/4 x {} ns/op) — loop was constant-folded, not measured",
+        K_UNROLL,
+        batch_ticks,
+        batch_ns,
+        floor_ns,
+        K_UNROLL,
+        BRANCHLESS_TOTAL,
+        MIN_NS_PER_OP
     );
     assert!(
         batch_ticks <= K_UNROLL * TRAJECTORY_TICK_BUDGET,
@@ -605,6 +652,7 @@ fn n13_measured_worst_case_within_static_bound() {
     // The tick counter agrees with itself across a second reading (the
     // counter is live, not a frozen constant).
     let counter = TickCounter::start();
+    let (pn, ocel, mask) = corpus[0];
     let one = pn64::step_branchless(pn, ocel, mask);
     let delta = counter.elapsed_ticks();
     black_box((one, delta));
