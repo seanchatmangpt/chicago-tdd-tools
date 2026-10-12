@@ -6,7 +6,7 @@ Pin to a known-good registry version to avoid upstream validation errors:
 
 ```bash
 export WEAVER_REGISTRY_VERSION=v1.25.0
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 ## Configuration Options
@@ -17,7 +17,7 @@ Set `WEAVER_REGISTRY_VERSION` before running bootstrap:
 
 ```bash
 export WEAVER_REGISTRY_VERSION=v1.25.0
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 ### Configuration File
@@ -57,6 +57,13 @@ git ls-remote --tags https://github.com/open-telemetry/semantic-conventions.git
 **Solution**: Pin to a known-good version that has been tested and validated.
 
 ## How It Works
+
+> **AUDIT NOTE (W15):** the env var is read in `src/core/config/loading.rs`
+> (`WEAVER_REGISTRY_VERSION_ENV`); the bootstrap script reads only
+> `WEAVER_VERSION` (the tool release). Config-file pin support is now
+> implemented (see `src/core/config/loading.rs`); the "planned" caveat
+> below is stale.
+
 
 1. **Build-time** (`build.rs`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version
 2. **Runtime** (`weaver/mod.rs`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version if registry missing

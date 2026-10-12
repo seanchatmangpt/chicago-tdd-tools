@@ -514,7 +514,6 @@ mod tests {
     // same zero-bits class; real coverage: test_fixture_basic +
     // test_timeout_enforcement_works.)
 
-
     // Test fixture_test! macro expansion - verify it compiles and works
     // Note: This test verifies the macro expands correctly by using it directly
     fixture_test!(test_fixture_basic, fixture, {

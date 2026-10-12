@@ -38,7 +38,6 @@ fn bench_receipt_chain(c: &mut Criterion) {
     group.finish();
 }
 
-
 // ─── ChainedCourtReceipt (352B ledger records, the v26.10.x real chain) ───
 //
 // The group above measures the small synthetic RawReceiptEntry; the ledger
@@ -47,11 +46,11 @@ fn bench_receipt_chain(c: &mut Criterion) {
 // by roughly 5-8x on the hashing-dominated path. This group measures the
 // REAL surface. (Audit W11.)
 
+use chicago_tdd_tools::ledger::receipt::ThermalClass;
+use chicago_tdd_tools::ledger::receipt::COURT_RECORD_LEN;
 use chicago_tdd_tools::ledger::receipt::{
     ChainedCourtReceipt, CourtOutcome, CourtReceiptV1, ReceiptMetrics,
 };
-use chicago_tdd_tools::ledger::receipt::{COURT_RECORD_LEN};
-use chicago_tdd_tools::ledger::receipt::ThermalClass;
 
 /// Builds an n-long chain of 352B ChainedCourtReceipt records, each linking
 /// to its parent's chain hash (the ledger's real chaining shape).

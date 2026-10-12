@@ -72,7 +72,7 @@ _Removed_: Git hook installer has been retired; developers run cargo-make tasks 
 
 **15s for Security Audit**: Network operations (fetching advisories, querying crates.io), can take 5-10s on slow networks, non-blocking in pre-push (warning only).
 
-**20s for Documentation**: Documentation generation can take 10-20s, not part of normal iteration, only run for releases.
+**180s for Documentation (docs-build)**: Documentation generation can take 10-20s, not part of normal iteration, only run for releases.
 
 **30s for Coverage**: Coverage analysis computationally expensive, can take 10-30s for larger projects, manual task only, not part of commit/push verification.
 

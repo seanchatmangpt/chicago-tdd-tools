@@ -323,9 +323,7 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   scanned; timing/env-gated courts exempt by design (disclosed
   in zero_ambient.rs); extending to eligible pure modules queued.
 - **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
-  live-doc cites purged.
-- **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
-  live-doc cites purged.
+  live-doc cites purged (playground invocation included — W15).
 - **core::type_level markers** (DOCS-GRADE, W15 audit): ValidatedSize/
   ValidatedRange/ConstSizeValid/ConstRangeValid have zero production
   consumers (only prelude-surface test + doctests); docs honestly say

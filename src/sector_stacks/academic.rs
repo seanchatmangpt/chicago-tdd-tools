@@ -196,7 +196,7 @@ impl SectorOperation for AcademicOperation {
     /// AUDIT NOTE: `_status` is deliberately unused — receipts always mint
     /// `OperationStatus::Success` (the demo pipeline's decision result is
     /// carried in the decision payload, not the receipt status).
-fn generate_receipt(&self, _status: OperationStatus) -> OperationReceipt {
+    fn generate_receipt(&self, _status: OperationStatus) -> OperationReceipt {
         self.generate_decision_receipt()
     }
 }

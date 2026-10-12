@@ -65,6 +65,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   narrowed (phantom-repair fix — the 0b95042 message claimed it but the
   diff never landed); strata: FR-3b bridge traceability row +
   N09/N11 stale pin-SHA comments updated (`0e4846d`).
+- **Wave-18 closeout** (`6046d2c`/`bc75ac6`/`ff6ad48`/`99916a3`/
+  `ad3bab5`): docs-build CI timeout 20s -> 180s (cold all-features
+  build ~1m24s witnessed 3x; docs.yml runs this recipe) + both SLA rows
+  synced; N04 AUDITED-MODULES scope disclosed in-source (timing/
+  env-gated courts exempt by design), entropy.rs added to the scan
+  (eligible-pure, zero std::), coverage gap + NATO-ENTROPY-SEAM-01
+  registered; hallucinated `weaver_test_with_timeout!` cites purged
+  from all live docs; REGISTRY_VERSION_PINNING cargo-make + three-
+  location claims corrected; docs/analysis + docs/research marked
+  HISTORICAL; findings register: core::receipt partial-signature
+  surface + TempWorkspace drop-cleanup gap + type_level docs-grade
+  surface queued.
 - **Wave-17 closeout** (`991885e`/`e520f4f`/`27ed91b`, wave-12
   `b45c4fe`): audit repairs — swarm member/composition module docs
   corrected to passive-record truth; max_run_len/max_batch_size

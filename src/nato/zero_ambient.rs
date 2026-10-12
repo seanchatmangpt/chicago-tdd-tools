@@ -108,6 +108,9 @@ pub const AUDITED_MODULES: &[(&str, &str)] = &[
     ("orthogonality.rs", include_str!("orthogonality.rs")),
     ("bell_lapadula.rs", include_str!("bell_lapadula.rs")),
     ("transition_tables.rs", include_str!("transition_tables.rs")),
+    // W15: entropy.rs is eligible-pure (zero std:: references) — added to
+    // the scan per the AUDITED-MODULES coverage-gap register entry.
+    ("entropy.rs", include_str!("entropy.rs")),
 ];
 
 /// Ambient-authority symbols banned on every state path.

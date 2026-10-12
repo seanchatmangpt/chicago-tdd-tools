@@ -591,9 +591,9 @@ pub fn hot_path_tick_budget() -> u64 {
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
 #[must_use]
-    /// AUDIT NOTE (inert config): read from `[guards]` but no enforcement
-    /// path consumes it — `GuardValidator` uses its own `MAX_RUN_LEN`
-    /// constant. Configuring this key changes no behavior.
+/// AUDIT NOTE (inert config): read from `[guards]` but no enforcement
+/// path consumes it — `GuardValidator` uses its own `MAX_RUN_LEN`
+/// constant. Configuring this key changes no behavior.
 pub fn max_run_len() -> usize {
     read_config_value_usize("guards", "max_run_len", DEFAULT_MAX_RUN_LEN)
 }
