@@ -644,3 +644,16 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   channels (62/0). GETTING_STARTED Transition snippet moved to the
   typed channel (W49e). The only remaining src/ grep hits are 3 historical doc comments
   (governance/otel/weaver error types).
+- W50 SECURITY CLOSURE (3542aa4, dry-run probe): all in-repo-fixable audit
+  findings resolved. wasm4pm-compat lock-updated 26.6.29 → 26.8.7
+  (quick-xml 0.36 → 0.41; upstream-blessed fix, same version the upstream
+  wasm4pm 26.10.11 workspace pins); dead reqwest ^0.11 optional dep
+  DELETED (zero use sites) + dropped from the weaver feature — removes
+  h2 0.3.27 + rustls-pemfile from the weaver closure; h2 0.4.14 → 0.4.20;
+  rustls → 0.23.45 (RUSTSEC-2026-0285 closed). REMAINING (warnings, not
+  lock-fixable): unsafe-libyaml unmaintained (via deprecated serde_yaml —
+  migration work order); git2 0.20.4 RUSTSEC-2026-0183/0184 (git-hooks
+  feature; no patched 0.20.x — needs upstream fix or feature decision);
+  chacha20 yanked. Note: reqwest 0.12/0.13 remain in the lock via other
+  trees (chicago-tdd-mcp, jsonschema) — both are h2-0.4-based (patched),
+  not the vulnerable 0.3 line. release-validate-security: exit 0.
