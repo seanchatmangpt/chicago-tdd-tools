@@ -43,7 +43,6 @@ tests/
 ├── hyper_advanced_integration.rs       # Hyper advanced integration tests
 ├── ocel_tests.rs                       # OCEL 2.0 process mining tests
 ├── star_toml_e2e.rs                    # Star TOML end-to-end tests (snapshot-backed)
-├── teamwork_preview_integration.rs     # Teamwork preview integration tests
 ├── v1_3_0_integration.rs               # v1.3.0 integration tests
 ├── weaver_integration.rs               # Weaver integration tests
 ├── weaver_macro_tests.rs               # Weaver macro tests
