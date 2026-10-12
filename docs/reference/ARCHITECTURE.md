@@ -62,7 +62,8 @@ Modules are organized into capability groups for better discoverability and main
 
 **Quality & Validation** (`validation/`): Quality assurance and constraint validation.
 - `coverage`: Test coverage analysis (tracking, reports, CoveragePercentage, CoveredCount, TotalCount)
-- `guards`: Guard constraints (input validation, Chatman Constant ≤8, batch size limits)
+- `guards`: Guard constraints (input validation, Chatman module tree, batch size limits)
+  - validated: typestate guard module (src/validation/guards/validated.rs)
 - `jtbd`: Jobs To Be Done validation (scenario validation, real-world testing, ScenarioIndex)
 - `performance`: Performance validation (RDTSC, tick measurement, hot path budget, ValidatedTickBudget)
 - `advanced_phases`: Advanced phases 9–12 — distributed consensus, time-travel debugging, performance prophet, quality metrics dashboard
@@ -74,6 +75,8 @@ Modules are organized into capability groups for better discoverability and main
 - `ocel`: OCEL 2.0 process mining (Object-Centric Event Logs from test runs, `Raw → Admitted → Receipted` evidence lifecycle on `wasm4pm-compat`, requires `ocel-generation`; process discovery via `ocel-generation-discovery`)
 - `unified`: Unified observability testing API — single ergonomic API over OTEL + Weaver testing with RAII lifecycle management, auto-detection of Weaver binary/registry, and invalid-states-unrepresentable typing (re-exported as the main observability API)
 - `receipt`: BLAKE3 receipt chain validation (requires `receipt-validation`) — generic replay and tamper-evidence utilities for any project claiming BLAKE3 receipt chaining
+  - ocel: collector, discovery, idmap_bridge, import_json, import_xml, ocel64_bridge, powl_fixture_bridge, projections, types, wasm4pm
+  - fixtures: assertions, telemetry_capture, validation_results, weaver_fixture
 - `fixtures`: Weaver fixture and telemetry capture utilities (requires `weaver` + `otel`) — Chicago-aligned fixtures, telemetry capture helpers, and assertion adapters wiring live-check results into the assertion pipeline
 
 **Integration Testing** (`integration/`): External system integration.
@@ -92,8 +95,11 @@ Modules are organized into capability groups for better discoverability and main
 
 **Court & Evidence** (top-level, feature-gated):
 - `nato`: NATO court framework — pillar-classified adversarial courts with mandatory positive controls, receipted outcomes, and scoping disclosure (requires `nato` feature)
-- `ledger`: P15 ledger CLI-facing domain surface for court-receipt sealing and verification (requires `ledger` or `nato` feature)
+  - Submodules: bell_lapadula, cache, disasm, dossier_court, entropy, guest_audit, hamming, kat, liveness, mils, orthogonality, rng, seu, stackbound, thrash, torn, transition_tables, wcet, zero_ambient
+- `ledger`: P15 ledger domain surface for court-receipt sealing and verification (requires `ledger` or `nato` feature)
+  - Submodules: dossier_wire, proof, receipt, dossier, signing (keys/sealer/signer/subject)
 - `conformance`: POWL conformance subsystem — DSL loading, model validation, PN64 replay, structured verdict reporting, and reachability state-space analysis (requires `conformance` feature)
+  - Submodules: bcinr, guest_seal, guest_telemetry, guest_yield, loader, net, report, session
 
 **Proof & Domains** (top-level):
 - `cli_proof`: CLI proof testing — real boundary-crossing harness primitives (requires `cli-proof` feature)

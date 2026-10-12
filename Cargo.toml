@@ -32,6 +32,7 @@ exclude = [
     # Coverage data + generated receipts/dossiers (regenerable via just emit-dossier)
     "coverage.lcov",
     "docs/receipts/**",
+    "docs/jira/**",
     "docs/nato/**",
     "check_output.txt",
     # Playground

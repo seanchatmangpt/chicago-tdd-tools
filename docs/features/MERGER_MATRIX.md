@@ -1,6 +1,6 @@
 # Merger Matrix (Fortune-5 Validation Harness)
 
-Landed state as of 2026-10-11, post-Wave-2 (MX3-MX7 phase fixtures verified on
+Landed state as of 2026-10-11, post-Wave-2. DISCLOSURE (W28 probe): `examples/merger_matrix/conformance/master_trace.ocel.json` IS committed (first landed 6023295) — the design manifest's "materialized master is never committed" law was superseded by the landed fixture set; treat the committed file as the materialized master of record. Violation fixtures exist for phases 1-8; phases 9/10 reuse the embedded-negative law (no separate file). (MX3-MX7 phase fixtures verified on
 disk at write time; every cited file existence-checked).
 
 ## Status

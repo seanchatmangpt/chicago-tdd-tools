@@ -77,3 +77,6 @@ mutants.out/
 
 # mdbook build output (regenerable via just cookbook-build)
 cookbook/book/
+
+# ggen-v2 working state (same law as .ggen/ — generated receipts/state, never source)
+.ggen-v2/
