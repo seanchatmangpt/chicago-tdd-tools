@@ -75,7 +75,7 @@ Modules are organized into capability groups for better discoverability and main
 
 **Proof & Domains** (top-level):
 - `cli_proof`: CLI proof testing — real boundary-crossing harness primitives (requires `cli-proof` feature)
-- `sector_stacks`: Sector-grade reference stacks — production-grade Chatman Equation implementations per sector
+- `sector_stacks`: Sector reference stacks — demo-grade Chatman Equation worked examples per sector (synthetic data)
 - `bin/`: Standalone binaries (weaver_smoke, otel_production_run, otel_negative_run, git_hook_installer, check_dog_fooding, verify_lint_config, ctdd_combinatorial_plan)
 
 **Companion crate** (`crates/chicago-tdd-lsp/`): Editor guard built on lsp-max — emits `CTDD-DEV-001` when `chicago-tdd-tools` is placed in `[dependencies]` instead of `[dev-dependencies]`. Excluded from the root workspace build.

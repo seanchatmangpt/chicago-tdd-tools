@@ -49,7 +49,7 @@
 //!   `payment_elimination`, `settlement_prepare`, `settlement_commit`,
 //!   `settlement_seal`); no `intake_pacs008` name appears in the landed
 //!   fixture — that earlier claim was stale.
-//! * Master/placeholder phases 3, 6, 8-10 are NOT tested: their models are not
+//! * Master/placeholder phases 3, 6, 8 are NOT tested (phase 9/10 have dedicated courts): their models are not
 //!   landed (only `phase3_pending`/`phase6_pending`/`phase10_pending` marker
 //!   events inside `master_trace.ocel.json`).
 //!

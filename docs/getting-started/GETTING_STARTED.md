@@ -39,7 +39,7 @@ tokio = { version = "1.0", features = ["rt", "macros"] }
 
 **Note**: For GitHub users, use `chicago-tdd-tools = "1.2.0"` when published to crates.io.
 
-**Step 3**: Verify installation: `cargo make check`. If errors: verify path, Rust edition 2021, Tokio in dev-dependencies.
+**Step 3**: Verify installation: `just check`. If errors: verify path, Rust edition 2021, Tokio in dev-dependencies.
 
 ## Your First Test
 
@@ -57,7 +57,7 @@ test!(test_basic_example, {
 });
 ```
 
-**Run**: `cargo make test test_basic_example`. **Verify**: Test passes. AAA pattern: Arrange (input), Act (result), Assert (verify).
+**Run**: `just test test_basic_example`. **Verify**: Test passes. AAA pattern: Arrange (input), Act (result), Assert (verify).
 
 ## Common Patterns
 
@@ -263,17 +263,17 @@ Enable individual features as needed:
 
 1. **Bootstrap Weaver CLI + registry**
    ```bash
-   cargo make weaver-bootstrap
+   just weaver-bootstrap
    ```
    Downloads the Weaver binary to `target/<profile>/weaver` and clones the semantic convention registry into `registry/`.
 2. **Run smoke validation**
    ```bash
-   cargo make weaver-smoke
+   just weaver-smoke
    ```
    Verifies `weaver --version` and sends a telemetry span via the library, ensuring live-check works without Docker.
 3. **Run full integration (optional)**
    ```bash
-   cargo make test-integration         # Requires Docker + weaver feature
+   just test-integration         # Requires Docker + weaver feature
    ```
    Executes the container-based Weaver suite. Tests fail fast if prerequisites are missing unless `WEAVER_ALLOW_SKIP=1` is set.
 
@@ -419,7 +419,7 @@ async_test!(test_async_fixture, {
 
 ## Verify Installation
 
-**Run**: `cargo make test`. Runs all unit tests, integration tests, examples.
+**Run**: `just test`. Runs all unit tests, integration tests, examples.
 
 ## Next Steps
 
@@ -428,7 +428,7 @@ async_test!(test_async_fixture, {
 - **[API Reference](../reference/API_REFERENCE.md)** - Complete API documentation
 - **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
 - **[Pattern Cookbook](../../cookbook/src/README.md)** - Alexander-style patterns for testing, architecture, and design
-- **[Examples](../../examples/)** - Working code examples (`cargo make test-examples`)
+- **[Examples](../../examples/)** - Working code examples (`just test-examples`)
 
 ## Troubleshooting
 
@@ -482,9 +482,9 @@ async_test!(test_async_fixture, {
 
 ### Weaver Testing Notes
 
-- Integration checks require Docker plus `cargo make test-integration`.
+- Integration checks require Docker plus `just test-integration`.
 - Set `WEAVER_ALLOW_SKIP=1` to opt out of Weaver tests temporarily (CI should leave it unset).
-- Always re-run `cargo make weaver-smoke` after upgrading Weaver or OpenTelemetry dependencies.
+- Always re-run `just weaver-smoke` after upgrading Weaver or OpenTelemetry dependencies.
 
 ### Common Runtime Errors
 

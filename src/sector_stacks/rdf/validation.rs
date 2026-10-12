@@ -18,7 +18,8 @@ pub enum RdfValidationError {
         /// Sector where operation was expected
         sector: String,
     },
-    /// Operation violates guard constraint
+    /// Reserved for future guard evaluation (constraint strings are stored,
+    /// not yet interpreted); never constructed by the current validator.
     GuardViolation {
         /// Guard that was violated
         guard: String,

@@ -1,3 +1,5 @@
+//! Lint-config verifier: validates clippy deny configuration matches the
+//! documented quality gates (all warnings are errors).
 #![allow(
     warnings,
     clippy::all,
@@ -12,8 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-//! Verify lint task uses --lib not --all-targets
-//! This prevents regression to the configuration that hid production code warnings
 
 use std::fs;
 

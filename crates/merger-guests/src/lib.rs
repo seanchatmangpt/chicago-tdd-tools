@@ -44,7 +44,7 @@
 //! uniform signature above, and this file re-exports them unmodified —
 //! a duplicate `#[no_mangle]` symbol here would break the cdylib link.
 //!
-//! ```ignore
+//! ```text
 //! // After MG2/MG3 land, uncomment (module names per the landing lanes):
 //! // pub use crate::{alpha::*, beta::*}; // MG2 leaves
 //! // pub use crate::{gamma::*, delta::*}; // MG3 leaves

@@ -1,3 +1,5 @@
+//! Weaver smoke binary: bootstrap-check + live-check round trip against the
+//! vendored semantic conventions (see `just weaver-smoke`).
 #![allow(
     warnings,
     clippy::all,
@@ -12,15 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-//! Weaver smoke test binary
-//!
-//! This binary performs a basic smoke test of Weaver integration:
-//! 1. Checks Weaver binary exists and runs `--version`
-//! 2. Starts Weaver with test registry
-//! 3. Sends a test span to Weaver
-//! 4. Stops Weaver
-//!
-//! Requires `weaver` feature to be enabled.
 
 #[cfg(feature = "weaver")]
 /// Exit code used when a gate check fails (shell convention: 1).

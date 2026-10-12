@@ -9,7 +9,7 @@
 | # | Failure Mode | Root Cause | RPN Before | RPN After | Status | Mitigation |
 |---|--------------|-----------|-----------|----------|--------|-----------|
 | **CRITICAL RISK** |
-| 1 | Workflow only runs on main branch | No branch wildcard in trigger config | **560** | **14** | ✅ FIXED | Changed to `branches: ['**']` |
+| 1 | Workflow only runs on main branch | No branch wildcard in trigger config | **560** | **14** | ✅ FIXED | Changed to `branches: [main, master]` |
 | 2 | Matrix build missing (no multi-OS) | No matrix strategy in workflow | **315** | **14** | ✅ FIXED | Added matrix for ubuntu/macos/windows |
 | 3 | Test coverage not enforced | Coverage measured but no threshold check | **336** | **16** | ✅ FIXED | Added 70% coverage threshold + Codecov |
 | **HIGH RISK** |
@@ -38,7 +38,7 @@
 
 | Failure | Root Cause | Why It Happened | Impact | Fix |
 |---------|-----------|-----------------|--------|-----|
-| No multi-branch CI | No branch wildcard pattern | Cost optimization, thought only main mattered | Late feedback to developers | Added `branches: ['**']` |
+| No multi-branch CI | No branch wildcard pattern | Cost optimization, thought only main mattered | Late feedback to developers | Added `branches: [main, master]` |
 | No matrix testing | No multi-OS strategy | Assumed Linux-only was sufficient | Platform bugs reach users | Added OS matrix (3 platforms) |
 | Coverage not enforced | No threshold validation | Seen as "nice to have", not critical | Coverage gaps accumulate | Added 70% threshold + automation |
 | Cache corruption | No invalidation mechanism | No thought given to cache poisoning | Random build failures | Added manual cache clear workflow |

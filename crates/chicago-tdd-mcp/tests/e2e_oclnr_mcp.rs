@@ -8,6 +8,10 @@
 //!   cargo test -p chicago-tdd-mcp --features testing
 //! ```
 
+// The harness/assert APIs this file uses live behind the `testing` feature;
+// compile to nothing without it.
+#![cfg(feature = "testing")]
+
 use std::path::Path;
 
 use chicago_tdd_mcp::{McpServerHarnessBuilder, McpSession};

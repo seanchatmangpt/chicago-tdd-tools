@@ -1,9 +1,9 @@
 //! Sector-Grade Reference Stacks
 //!
-//! Worked sector examples of the Chatman Equation (demo-grade: synthetic
-//! data, deterministic pseudo-assignments — see per-module docs). in two sectors:
+//! Worked sector examples of the Chatman Equation in two sectors (demo-grade:
+//! synthetic data, deterministic pseudo-assignments — see per-module docs).
 //! 1. Academic Publishing: Complete paper review workflow
-//! 2. Enterprise Claims: Insurance claims processing with 100+ test cases
+//! 2. Enterprise Claims: Insurance claims processing (100 synthetic test cases)
 //!
 //! Both demonstrate:
 //! - Deterministic knowledge hooks
@@ -13,9 +13,10 @@
 //!
 //! ## RDF Integration
 //!
-//! The `rdf` module provides semantic web integration for loading and validating
-//! sector ontologies defined in TTL format. Use with `--features rdf` to enable
-//! RDF-driven operation validation.
+//! The `rdf` module provides stage-ordering/latency validation over in-memory
+//! sector models (no TTL parsing; RDF loading is delegated to an external
+//! playground project — the `GuardViolation` error variant is reserved for
+//! future guard evaluation).
 
 pub mod academic;
 pub mod claims;

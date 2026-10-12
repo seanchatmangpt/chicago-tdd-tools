@@ -55,18 +55,20 @@ impl McpAgentBridgeBuilder {
 
     /// Build the [`McpAgentBridge`].
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if no downstream was set via [`with_pipe`](Self::with_pipe) or
-    /// [`with_server`](Self::with_server).
-    #[must_use]
-    pub fn build(self) -> McpAgentBridge {
-        McpAgentBridge {
-            state: Arc::new(Mutex::new(BridgeState {
-                downstream: self.downstream.expect("downstream must be set before build()"),
-                recorded: Vec::new(),
-            })),
-        }
+    /// Returns [`McpTestError::Configuration`] if no downstream was set via
+    /// [`with_pipe`](Self::with_pipe) or [`with_server`](Self::with_server).
+    pub fn build(self) -> Result<McpAgentBridge, McpTestError> {
+        let downstream = self.downstream.ok_or_else(|| {
+            McpTestError::Configuration(
+                "downstream must be set before build() — call with_pipe() or with_server() first"
+                    .to_string(),
+            )
+        })?;
+        Ok(McpAgentBridge {
+            state: Arc::new(Mutex::new(BridgeState { downstream, recorded: Vec::new() })),
+        })
     }
 }
 

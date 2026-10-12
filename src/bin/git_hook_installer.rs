@@ -16,10 +16,10 @@
 //! Copies Rust binaries directly to .git/hooks/ (no bash wrappers)
 //! Ensures hooks are version-controlled and testable
 
-#[cfg(not(feature = "git-hooks"))]
 /// Exit code used when a gate check fails (shell convention: 1).
 const EXIT_FAILURE: i32 = 1;
 
+#[cfg(not(feature = "git-hooks"))]
 fn main() {
     eprintln!("Git hooks feature not enabled. Build with --features git-hooks");
     std::process::exit(EXIT_FAILURE);

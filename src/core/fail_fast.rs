@@ -269,7 +269,7 @@ impl StrictExecutionContext {
     ///
     /// # Errors
     ///
-    /// Returns `Err(UnrecoverableInvariantViolation)` if sample count is insufficient, prediction is out of range, or contains NaN/Inf.
+    /// Returns `Err(UnrecoverableInvariantViolation)` if sample count is insufficient or prediction is out of range (which also excludes NaN/Inf).
     pub fn phase_8_continuous_learning(
         &mut self,
         sample_count: usize,
@@ -283,17 +283,12 @@ impl StrictExecutionContext {
         }
 
         // Verify prediction is in valid range [0.0, 1.0]
+        // (the range check also excludes NaN/Inf: `contains` is false for NaN,
+        // and ±Inf falls outside the bound)
         if !(0.0..=1.0).contains(&prediction) {
             return Err(UnrecoverableInvariantViolation::LearnerMathCorrupted(format!(
                 "Invalid prediction probability: {prediction}"
             )));
-        }
-
-        // Check for NaN/Inf
-        if !prediction.is_finite() {
-            return Err(UnrecoverableInvariantViolation::LearnerMathCorrupted(
-                "Prediction contains NaN or Inf".to_string(),
-            ));
         }
 
         self.phases_completed.push(PhaseLabel::ContinuousLearning);
@@ -351,7 +346,7 @@ impl StrictExecutionContext {
     ///
     /// # Errors
     ///
-    /// Returns `Err(UnrecoverableInvariantViolation)` if predicted τ is zero, confidence is out of range, or contains NaN/Inf.
+    /// Returns `Err(UnrecoverableInvariantViolation)` if predicted τ is zero or confidence is out of range (which also excludes NaN/Inf).
     pub fn phase_11_performance_prophet(
         &mut self,
         predicted_tau: u64,
@@ -365,16 +360,12 @@ impl StrictExecutionContext {
         }
 
         // Verify confidence interval is valid
+        // (the range check also excludes NaN/Inf: `contains` is false for NaN,
+        // and ±Inf falls outside the bound)
         if !(0.0..=1.0).contains(&confidence) {
             return Err(UnrecoverableInvariantViolation::ProphetSelfCheckFailed(format!(
                 "Invalid confidence interval: {confidence}"
             )));
-        }
-
-        if !confidence.is_finite() {
-            return Err(UnrecoverableInvariantViolation::ProphetSelfCheckFailed(
-                "Confidence contains NaN or Inf".to_string(),
-            ));
         }
 
         self.phases_completed.push(PhaseLabel::PerformanceProphet);
@@ -536,5 +527,251 @@ mod tests {
         // No phases completed
         let result = ctx.finalize();
         assert!(result.is_err());
+    }
+
+    // ---- Phase 2: bound-exceeded Ok(Violation) path ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_2_bound_exceeded_returns_violation_not_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+
+        // τ within validator bounds (monotonic) but above the configured bound:
+        // must surface as Ok(PhaseResult::Violation), not Err.
+        let result = ctx.phase_2_thermal_testing(20_000, 10_000).unwrap(); // Test code
+        assert!(result.is_violation());
+        let err = result.into_result().unwrap_err(); // Test code
+        assert!(err.to_string().contains("Thermal bound exceeded"));
+        assert!(err.to_string().contains("20000"));
+    }
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_2_within_bound_is_ok() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        let result = ctx.phase_2_thermal_testing(500, 10_000).unwrap(); // Test code
+        assert!(result.is_ok());
+        assert!(result.into_result().is_ok());
+    }
+
+    // ---- Phase 3: Effects Tracking ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_3_effects_tracking_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        let declared = vec!["read_file".to_string(), "write_file".to_string()];
+        let observed = vec!["read_file".to_string()];
+        let result = ctx.phase_3_effects_tracking(declared, &observed);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_ok()); // Test code
+    }
+
+    #[test]
+    fn test_phase_3_effects_tracking_empty_declared_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let result = ctx.phase_3_effects_tracking(Vec::new(), &[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_phase_3_effects_tracking_unobserved_effect_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let declared = vec!["read_file".to_string()];
+        let observed = vec!["network_call".to_string()];
+        let result = ctx.phase_3_effects_tracking(declared, &observed);
+        assert!(result.is_err());
+        let err = result.expect_err("unobserved effect must fail"); // Test code
+        assert!(err.to_string().contains("Unobserved effect"));
+    }
+
+    // ---- Phase 4: State Machine ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_4_state_machine_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        let result = ctx.phase_4_state_machine(
+            "Idle".to_string(),
+            vec!["Idle".to_string(), "Running".to_string()],
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_phase_4_state_machine_initial_not_in_states_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let result = ctx.phase_4_state_machine(
+            "Paused".to_string(),
+            vec!["Idle".to_string(), "Running".to_string()],
+        );
+        assert!(result.is_err());
+        assert!(result
+            .expect_err("initial state outside state set must fail") // Test code
+            .to_string()
+            .contains("Contract malformed"));
+    }
+
+    // ---- Phase 6: Swarm Orchestration ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_6_swarm_orchestration_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        assert!(ctx.phase_6_swarm_orchestration(10, 10).is_ok());
+        // Executing more than scheduled is also acceptable
+        assert!(ctx.phase_6_swarm_orchestration(10, 12).is_ok());
+    }
+
+    #[test]
+    fn test_phase_6_swarm_orchestration_abandoned_test_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let result = ctx.phase_6_swarm_orchestration(10, 9);
+        assert!(result.is_err());
+        let err = result.expect_err("abandoned test must fail"); // Test code
+        assert!(err.to_string().contains("Abandoned test"));
+    }
+
+    // ---- Phase 7: Verification Pipeline ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_7_verification_pipeline_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        let _ = ctx.phase_1_contract_definition(12);
+        let expected = vec![PhaseLabel::ContractDefinition];
+        let result = ctx.phase_7_verification_pipeline(&expected);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_7_verification_pipeline_skipped_phase_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        // ReceiptGeneration never ran
+        let expected = vec![PhaseLabel::ContractDefinition, PhaseLabel::ReceiptGeneration];
+        let result = ctx.phase_7_verification_pipeline(&expected);
+        assert!(result.is_err());
+        let err = result.expect_err("skipped phase must fail"); // Test code
+        assert!(err.to_string().contains("Pipeline phase skipped"));
+    }
+
+    // ---- Phase 8: Continuous Learning ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_8_continuous_learning_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        assert!(ctx.phase_8_continuous_learning(5, 0.5).is_ok());
+        assert!(ctx.phase_8_continuous_learning(100, 0.0).is_ok());
+        assert!(ctx.phase_8_continuous_learning(100, 1.0).is_ok());
+    }
+
+    #[test]
+    fn test_phase_8_continuous_learning_insufficient_samples_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let result = ctx.phase_8_continuous_learning(4, 0.5);
+        assert!(result.is_err());
+        assert!(result
+            .expect_err("insufficient samples must fail") // Test code
+            .to_string()
+            .contains("Insufficient observations"));
+    }
+
+    #[test]
+    fn test_phase_8_continuous_learning_prediction_out_of_range_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        assert!(ctx.phase_8_continuous_learning(10, 1.5).is_err());
+        assert!(ctx.phase_8_continuous_learning(10, -0.1).is_err());
+        // NaN is outside [0.0, 1.0], so the range check rejects it too
+        assert!(ctx.phase_8_continuous_learning(10, f64::NAN).is_err());
+        assert!(ctx.phase_8_continuous_learning(10, f64::INFINITY).is_err());
+    }
+
+    // ---- Phase 10: Time-Travel Debugging ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_phase_10_time_travel_happy() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        assert!(ctx.phase_10_time_travel_debugging(7, 7).is_ok());
+    }
+
+    #[test]
+    fn test_phase_10_time_travel_version_mismatch_is_err() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).expect("valid"); // Test code
+        let result = ctx.phase_10_time_travel_debugging(2, 1);
+        assert!(result.is_err());
+        let err = result.expect_err("version mismatch must fail"); // Test code
+        assert!(err.to_string().contains("Snapshot schema version mismatch"));
+        assert!(err.to_string().contains("expected 1"));
+    }
+
+    // ---- PhaseResult helpers ----
+
+    #[test]
+    fn test_phase_result_is_violation_and_into_result() {
+        let ok = PhaseResult::Ok;
+        assert!(ok.is_ok());
+        assert!(!ok.is_violation());
+        assert!(ok.into_result().is_ok());
+
+        let bad =
+            PhaseResult::Violation(UnrecoverableInvariantViolation::Other("boom".to_string()));
+        assert!(bad.is_violation());
+        assert!(!bad.is_ok());
+        let err = bad.into_result().expect_err("violation converts to Err"); // Test code
+        assert!(err.to_string().contains("boom"));
+    }
+
+    // ---- assert_invariant ----
+
+    #[test]
+    fn test_assert_invariant() {
+        let ok = assert_invariant(
+            true,
+            UnrecoverableInvariantViolation::Other("should not fire".to_string()),
+        );
+        assert!(ok.is_ok());
+
+        let err = assert_invariant(
+            false,
+            UnrecoverableInvariantViolation::Other("fired".to_string()),
+        );
+        assert!(err.is_err());
+        assert!(err.expect_err("false condition must fail").to_string().contains("fired")); // Test code
+    }
+
+    // ---- finalize success path ----
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_finalize_success_after_required_phases() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        assert!(ctx.phase_1_contract_definition(12).is_ok());
+        assert!(ctx.phase_2_thermal_testing(100, 10_000).is_ok());
+        assert!(ctx.phase_5_receipt_generation(1, 0x1234, 0x1234).is_ok());
+        let expected = vec![
+            PhaseLabel::ContractDefinition,
+            PhaseLabel::ThermalTesting,
+            PhaseLabel::ReceiptGeneration,
+        ];
+        assert!(ctx.phase_7_verification_pipeline(&expected).is_ok());
+        assert!(ctx.finalize().is_ok());
+    }
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_finalize_fails_when_one_required_phase_missing() {
+        let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
+        assert!(ctx.phase_1_contract_definition(12).is_ok());
+        assert!(ctx.phase_2_thermal_testing(100, 10_000).is_ok());
+        // Skip ReceiptGeneration and VerificationPipeline
+        let result = ctx.finalize();
+        assert!(result.is_err());
+        assert!(result
+            .expect_err("missing required phase must fail") // Test code
+            .to_string()
+            .contains("Partial pipeline success"));
     }
 }

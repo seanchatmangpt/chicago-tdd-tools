@@ -172,3 +172,98 @@ impl WaveReceipt {
         self.phase_receipts.iter().flat_map(|p| &p.task_receipts).count()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::swarm::task::TaskStatus;
+
+    fn request(id: &str) -> TaskRequest {
+        TaskRequest::new(id.to_string(), "Academic".to_string(), "op".to_string(), "in".to_string())
+    }
+
+    fn receipt(task_id: &str, status: TaskStatus) -> TaskReceipt {
+        TaskReceipt::new(
+            task_id.to_string(),
+            "agent-1".to_string(),
+            vec!["Academic".to_string()],
+            status,
+            "result".to_string(),
+        )
+        .with_execution_time(7)
+    }
+
+    /// Deterministic async runtime: block_on is sufficient here because the
+    /// executor futures are immediately-resolved closures (no sleeps, no I/O).
+    fn block_on<F: std::future::Future>(fut: F) -> F::Output {
+        futures::executor::block_on(fut)
+    }
+
+    #[test]
+    fn test_execute_happy_path_all_tasks_pass() {
+        let mut wave = Wave::new("wave-1".to_string());
+        wave.add_phase("phase-a".to_string(), vec![request("t1"), request("t2")]);
+        wave.add_phase("phase-b".to_string(), vec![request("t3")]);
+
+        let r = block_on(wave.execute(|task| async move {
+            receipt(&task.id, TaskStatus::Completed)
+        }));
+
+        assert_eq!(wave.status, WaveStatus::Completed);
+        assert!(r.is_success());
+        assert_eq!(r.wave_id, "wave-1");
+        assert_eq!(r.phase_receipts.len(), 2);
+        assert_eq!(r.phase_receipts[0].phase_name, "phase-a");
+        assert_eq!(r.residual_classes.len(), 0);
+        assert_eq!(r.success_count(), 3);
+        assert_eq!(r.total_tasks(), 3);
+        assert_eq!(r.total_execution_time_ms, 21);
+    }
+
+    #[test]
+    fn test_execute_fail_fast_stops_subsequent_phases() {
+        let mut wave = Wave::new("wave-2".to_string());
+        wave.add_phase("phase-a".to_string(), vec![request("ok-1"), request("bad-1")]);
+        wave.add_phase("phase-b".to_string(), vec![request("never-run")]);
+
+        let r = block_on(wave.execute(|task| async move {
+            if task.id == "bad-1" {
+                receipt("bad-1", TaskStatus::Failed)
+            } else {
+                receipt(&task.id, TaskStatus::Completed)
+            }
+        }));
+
+        assert_eq!(wave.status, WaveStatus::Failed);
+        assert!(!r.is_success());
+        assert_eq!(r.status, WaveStatus::Failed);
+        // Second phase never executed.
+        assert_eq!(r.phase_receipts.len(), 1);
+        // Both tasks of the failing phase recorded; failing one classified.
+        assert_eq!(r.total_tasks(), 2);
+        assert_eq!(r.success_count(), 1);
+        assert_eq!(r.residual_classes.len(), 1);
+        let residual = &r.residual_classes[0];
+        assert_eq!(residual.code, "TASK_FAIL_bad-1");
+        assert_eq!(residual.severity, Severity::Andon);
+        assert!(!residual.description.is_empty());
+    }
+
+    #[test]
+    fn test_accessors_and_status_lifecycle() {
+        let mut wave = Wave::new("wave-3".to_string());
+        assert_eq!(wave.status, WaveStatus::Queued);
+        assert_eq!(wave.id, "wave-3");
+
+        wave.add_phase("only".to_string(), vec![request("t1")]);
+        assert_eq!(wave.phases.len(), 1);
+
+        let r = block_on(wave.execute(|task| async move {
+            receipt(&task.id, TaskStatus::Completed)
+        }));
+
+        assert_eq!(wave.status, WaveStatus::Completed);
+        assert_eq!(r.success_count(), r.total_tasks());
+        assert_eq!(r.total_tasks(), 1);
+    }
+}

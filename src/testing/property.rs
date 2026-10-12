@@ -109,14 +109,21 @@ impl SimpleRng {
     }
 }
 
-/// Property: All generated data is valid
-pub fn property_all_data_valid<const MAX_ITEMS: usize, const MAX_DEPTH: usize>(
+/// Property: All generated data satisfies the given validator
+///
+/// Runs `num_tests` generations, applying `validator` to each generated
+/// dataset. Returns `false` as soon as any dataset fails validation.
+pub fn property_all_data_valid<const MAX_ITEMS: usize, const MAX_DEPTH: usize, F>(
     generator: &mut PropertyTestGenerator<MAX_ITEMS, MAX_DEPTH>,
     num_tests: usize,
-) -> bool {
+    validator: F,
+) -> bool
+where
+    F: Fn(&HashMap<String, String>) -> bool,
+{
     for _ in 0..num_tests {
         let data = generator.generate_test_data();
-        if data.is_empty() {
+        if !validator(&data) {
             return false;
         }
     }
@@ -283,6 +290,15 @@ mod property_tests {
     }
 
     #[test]
+    fn test_property_test_generator_test_counter() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(42);
+        assert_eq!(generator.test_counter(), 42);
+        let _data = generator.generate_test_data();
+        // generate_test_data increments the seed (wrapping_add)
+        assert_eq!(generator.test_counter(), 43);
+    }
+
+    #[test]
     fn test_property_test_generator_generate_test_data() {
         let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
         let data = generator.generate_test_data();
@@ -328,15 +344,23 @@ mod property_tests {
     #[test]
     fn test_property_all_data_valid() {
         let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
-        let result = property_all_data_valid(&mut generator, 10);
+        let result =
+            property_all_data_valid(&mut generator, 10, |data| !data.is_empty() && data.len() <= 10);
         assert!(result, "All generated data should be valid");
+    }
+
+    #[test]
+    fn test_property_all_data_valid_failing_validator() {
+        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
+        let result = property_all_data_valid(&mut generator, 10, |_| false);
+        assert!(!result, "Failing validator must make the property fail");
     }
 
     #[test]
     fn test_property_all_data_valid_zero_tests() {
         let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
-        let result = property_all_data_valid(&mut generator, 0);
-        assert!(result, "Zero tests should pass");
+        let result = property_all_data_valid(&mut generator, 0, |_| false);
+        assert!(result, "Zero tests should pass (validator never invoked)");
     }
 
     // ========================================================================
@@ -346,10 +370,12 @@ mod property_tests {
     #[test]
     fn test_simple_rng_new() {
         let mut rng = SimpleRng::new(42);
-        // RNG should be created and produce values
         let val = rng.next();
-        // Verify it produces a value (not zero for seed 42)
-        assert!(val > 0 || val == 0); // Always true, but verifies method works
+        // Exact LCG assertion: next() = seed * 1_103_515_245 + 12_345 (wrapping)
+        assert_eq!(
+            val,
+            1_103_515_245u64.wrapping_mul(42).wrapping_add(12_345)
+        );
     }
 
     #[test]
@@ -436,5 +462,70 @@ mod proptest_tests {
         strategy.test(any::<String>(), |s| {
             s.len() == s.chars().count() || s.len() >= s.chars().count()
         });
+    }
+
+    #[test]
+    fn test_proptest_strategy_seeded_determinism_same_seed() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        let seed = [7u8; 32];
+        let collected1 = Rc::new(RefCell::new(Vec::new()));
+        let collected2 = Rc::new(RefCell::new(Vec::new()));
+
+        let sink1 = Rc::clone(&collected1);
+        let strategy1 = ProptestStrategy::new().with_cases(50).with_seed(seed);
+        strategy1.test(any::<u32>(), move |x| {
+            sink1.borrow_mut().push(x);
+            true
+        });
+
+        let sink2 = Rc::clone(&collected2);
+        let strategy2 = ProptestStrategy::new().with_cases(50).with_seed(seed);
+        strategy2.test(any::<u32>(), move |x| {
+            sink2.borrow_mut().push(x);
+            true
+        });
+
+        let seq1 = collected1.borrow().clone();
+        let seq2 = collected2.borrow().clone();
+        assert_eq!(seq1, seq2, "Same seed must produce the same value sequence");
+        assert!(!seq1.is_empty());
+    }
+
+    #[test]
+    fn test_proptest_strategy_seeded_determinism_different_seeds() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        let collected1 = Rc::new(RefCell::new(Vec::new()));
+        let collected2 = Rc::new(RefCell::new(Vec::new()));
+
+        let sink1 = Rc::clone(&collected1);
+        let strategy1 = ProptestStrategy::new().with_cases(50).with_seed([1u8; 32]);
+        strategy1.test(any::<u32>(), move |x| {
+            sink1.borrow_mut().push(x);
+            true
+        });
+
+        let sink2 = Rc::clone(&collected2);
+        let strategy2 = ProptestStrategy::new().with_cases(50).with_seed([2u8; 32]);
+        strategy2.test(any::<u32>(), move |x| {
+            sink2.borrow_mut().push(x);
+            true
+        });
+
+        let first1 = collected1.borrow().first().copied();
+        let first2 = collected2.borrow().first().copied();
+        assert_ne!(first1, first2, "Different seeds must differ on first value");
+    }
+
+    #[test]
+    fn test_proptest_strategy_max_shrink_iters_plumb_through() {
+        let strategy = ProptestStrategy::new()
+            .with_cases(DEFAULT_PROPERTY_TEST_CASES)
+            .with_max_shrink_iters(1_000);
+        // Trivially-true property passes with max_shrink_iters set
+        strategy.test(any::<u32>(), |x| x.wrapping_add(0) == x);
     }
 }

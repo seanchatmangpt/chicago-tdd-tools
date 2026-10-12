@@ -89,7 +89,7 @@ Every `machine_code()` implementation in the two crates, as it exists in code.
 | 0xE002 | `InvalidMagic([u8; 4])` — magic is not `CTRT` |
 | 0xE003 | `UnsupportedVersion(u16)` — version is not 1 |
 | 0xE004 | `InvalidVerdictStatus(u8)` — verdict byte > 3 |
-| 0xE005 | wire_ctrt | DigestMismatch | computed digest ≠ stored chain hash (deserialize_verified) |
+| 0xE005 | `DigestMismatch` — computed digest ≠ stored chain hash (`deserialize_verified`) |
 
 ### 0xE1xx — Replay nullifier (`/Users/sac/affidavit/src/replay_nullifier.rs`, `ReplayNullifierError`)
 
@@ -97,7 +97,7 @@ Every `machine_code()` implementation in the two crates, as it exists in code.
 |---|---|
 | 0xE101 | `ReplayDetected(String)` — nullifier already observed this epoch |
 | 0xE102 | `InvalidPersistenceStorage(String)` / `CorruptLedger(String)` |
-| 0xE103 | replay_nullifier | ReplayEpochMismatch | nullifier presented against a rotated epoch |
+| 0xE103 | `ReplayEpochMismatch` — nullifier presented against a rotated epoch |
 
 ### 0xE2xx — Trajectory folding (`/Users/sac/affidavit/src/trajectory_folding.rs`, `TrajectoryFoldError`)
 

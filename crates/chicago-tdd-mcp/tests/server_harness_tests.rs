@@ -1,5 +1,9 @@
 //! Integration tests for `McpServerHarness` and `McpSession` against the echo fixture.
 
+// The harness APIs used here live behind the `testing` feature; compile to
+// nothing without it.
+#![cfg(feature = "testing")]
+
 use std::path::PathBuf;
 use std::sync::OnceLock;
 

@@ -5,8 +5,22 @@
 
 use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::process::Command;
+use tokio::process::{Child, Command};
 use tokio::time::timeout;
+
+/// Take piped stdio handles from a spawned child, mapping a missing handle to
+/// a typed error instead of panicking.
+fn take_stdio(child: &mut Child) -> anyhow::Result<(tokio::process::ChildStdin, tokio::process::ChildStdout)> {
+    let stdin = child
+        .stdin
+        .take()
+        .ok_or_else(|| anyhow::anyhow!("child stdin was not piped (expected Stdio::piped())"))?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| anyhow::anyhow!("child stdout was not piped (expected Stdio::piped())"))?;
+    Ok((stdin, stdout))
+}
 
 /// JSON-RPC error codes covered by this module.
 pub mod codes {
@@ -33,8 +47,7 @@ pub async fn send_malformed_json(mut cmd: Command) -> anyhow::Result<Value> {
         .stderr(std::process::Stdio::null());
 
     let mut child = cmd.spawn()?;
-    let mut stdin = child.stdin.take().expect("piped stdin");
-    let stdout = child.stdout.take().expect("piped stdout");
+    let (mut stdin, stdout) = take_stdio(&mut child)?;
 
     stdin.write_all(b"not valid json\n").await?;
     stdin.flush().await?;
@@ -60,8 +73,7 @@ pub async fn send_invalid_request(mut cmd: Command) -> anyhow::Result<Value> {
         .stderr(std::process::Stdio::null());
 
     let mut child = cmd.spawn()?;
-    let mut stdin = child.stdin.take().expect("piped stdin");
-    let stdout = child.stdout.take().expect("piped stdout");
+    let (mut stdin, stdout) = take_stdio(&mut child)?;
 
     let bad_req = json!({"id": 1, "method": "tools/list"});
     stdin.write_all(format!("{bad_req}\n").as_bytes()).await?;
@@ -147,8 +159,7 @@ pub async fn call_before_initialize(mut cmd: Command) -> anyhow::Result<Option<V
         .stderr(std::process::Stdio::null());
 
     let mut child = cmd.spawn()?;
-    let mut stdin = child.stdin.take().expect("piped stdin");
-    let stdout = child.stdout.take().expect("piped stdout");
+    let (mut stdin, stdout) = take_stdio(&mut child)?;
 
     // Send tools/call without any initialize first
     let call_req = json!({

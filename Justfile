@@ -711,14 +711,14 @@ otel-weaver-live-start:
     target/debug/weaver registry live-check -r registry/model --otlp-grpc-port 4319 --admin-port 4321 --format json --output http &
 
 otel-production-run:
-    WEAVER_TEST_OTLP_PORT=4319 cargo run --quiet --bin otel_production_run --features weaver
+    WEAVER_TEST_OTLP_PORT=4319 timeout 300s cargo run --quiet --bin otel_production_run --features weaver
 
 otel-weaver-live-stop:
     curl -s -X POST http://127.0.0.1:4321/stop > weaver-reports/report.json || true
     pkill -f 'weaver registry live-check' || true
 
 otel-weaver-live-negative:
-    WEAVER_TEST_OTLP_PORT=4319 cargo run --quiet --bin otel_negative_run --features weaver
+    WEAVER_TEST_OTLP_PORT=4319 timeout 300s cargo run --quiet --bin otel_negative_run --features weaver
 
 otel-weaver-live:
     ./scripts/otel-workflow.sh

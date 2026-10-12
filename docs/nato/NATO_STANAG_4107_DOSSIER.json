@@ -212,31 +212,55 @@
     },
     {
       "court_id": "N08",
-      "digest": "31b209093baebbda54afe4921b7d9085add06714b6c63989abb65d3d8e22d335",
+      "digest": "e6c8d884e346e9e6c22518ee9400789ddbe8a7db7fe2781103033024929a372c",
       "metrics": [
         [
-          "k",
+          "n_per_class",
           {
-            "U64": 7
+            "U64": 10000
+          }
+        ],
+        [
+          "welch_t_weight",
+          {
+            "F64": 0.0
+          }
+        ],
+        [
+          "welch_t_distance",
+          {
+            "F64": 0.0
+          }
+        ],
+        [
+          "max_bin_diff_weight",
+          {
+            "F64": 0.0
+          }
+        ],
+        [
+          "max_bin_diff_distance",
+          {
+            "F64": 0.0
           }
         ]
       ],
       "name": "N08",
-      "pillar": "Proof",
+      "pillar": "Security",
       "positive_control": {
         "MutantCaught": {
-          "detection_channel": "control",
-          "mutant_id": "m-7"
+          "detection_channel": "welch_t",
+          "mutant_id": "observe_leaky"
         }
       },
-      "receipt_id": "cr-control-7",
+      "receipt_id": "cr-N08-e6c8d884e346e9e6",
       "scoping": {
-        "bound": "",
-        "delivered_evidence": "evidence",
-        "is_full_spec_scale": true,
-        "spec_mandate": "mandate"
+        "bound": "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale",
+        "delivered_evidence": "receipt minted from a real tier-1 run: 10,000-step chained kernel profile court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram comparison, plus the firing leaky-observer positive control",
+        "is_full_spec_scale": false,
+        "spec_mandate": "N08: Hamming weight/distance profile across successive states is input-independent"
       },
-      "subject_sha": "control-subject",
+      "subject_sha": "b92e311b8d24773c28065b8d4fe522204b9d081f280cfcb7323d44d95cdfa776",
       "timestamp_ms": 0,
       "verdict": "Pass"
     },
@@ -332,31 +356,55 @@
     },
     {
       "court_id": "N12",
-      "digest": "731cacbe2ae103614c83846183601e2ab3c8594036b1af14d0ae28070c41860a",
+      "digest": "91022bc14b2b2f2413f7b3b36b178ba6b72cf9f79cb81a6f2c71fca477a1fb16",
       "metrics": [
         [
-          "k",
+          "court1_chain_len",
           {
-            "U64": 11
+            "U64": 1000
+          }
+        ],
+        [
+          "court1_glitch_period",
+          {
+            "U64": 100
+          }
+        ],
+        [
+          "frozen_clock_liveness_bound",
+          {
+            "U64": 8
+          }
+        ],
+        [
+          "court4_backsteps_caught",
+          {
+            "U64": 7
+          }
+        ],
+        [
+          "court4_frozen_verdicts",
+          {
+            "U64": 25
           }
         ]
       ],
       "name": "N12",
-      "pillar": "Proof",
+      "pillar": "Resilience",
       "positive_control": {
         "MutantCaught": {
-          "detection_channel": "control",
-          "mutant_id": "m-11"
+          "detection_channel": "MonotonicGate strict-forward refusal",
+          "mutant_id": "BackstepClock"
         }
       },
-      "receipt_id": "cr-control-11",
+      "receipt_id": "cr-N12-91022bc14b2b2f24",
       "scoping": {
-        "bound": "",
-        "delivered_evidence": "evidence",
-        "is_full_spec_scale": true,
-        "spec_mandate": "mandate"
+        "bound": "no RDTSC/counter-register access through std on this host; no raw-cycle u64 wrap domain; pn64 is a transition law, not a modular byte-tick counter — donor courts 2a/2b out of scope",
+        "delivered_evidence": "wall-monotonic regression gate over Instant: strict-forward admission, typed TickError::Regression refusals, frozen-clock bounded liveness, pn64 ordering composition, positive controls",
+        "is_full_spec_scale": false,
+        "spec_mandate": "N12 clock-glitch resilience: hardware-counter tick law with wrap boundaries and ABI byte-tick guard"
       },
-      "subject_sha": "control-subject",
+      "subject_sha": "93c8cef96195b1cd1554aa876c11490ae4c2e1523a71c6e9e055e0571d8c3e8b",
       "timestamp_ms": 0,
       "verdict": "Pass"
     },
@@ -392,42 +440,78 @@
     },
     {
       "court_id": "N14",
-      "digest": "cbd97bda4c57cb50e8becb6e2ad6077f8075bad3c2b0ff8ee106895954e69129",
+      "digest": "c30dc8ca232cdf24da0a25ea708e784ac971bd47b02e8af60a549ee197285bbe",
       "metrics": [
         [
-          "k",
+          "transitions",
           {
-            "U64": 13
+            "U64": 50000
+          }
+        ],
+        [
+          "producers",
+          {
+            "U64": 4
+          }
+        ],
+        [
+          "consumers",
+          {
+            "U64": 4
+          }
+        ],
+        [
+          "conservation_checksum",
+          {
+            "U64": 11270591938261600133
           }
         ]
       ],
       "name": "N14",
-      "pillar": "Proof",
+      "pillar": "Resilience",
       "positive_control": {
         "MutantCaught": {
-          "detection_channel": "control",
-          "mutant_id": "m-13"
+          "detection_channel": "watchdog recv_timeout",
+          "mutant_id": "wedged-shim"
         }
       },
-      "receipt_id": "cr-control-13",
+      "receipt_id": "cr-N14-c30dc8ca232cdf24",
       "scoping": {
-        "bound": "",
-        "delivered_evidence": "evidence",
-        "is_full_spec_scale": true,
-        "spec_mandate": "mandate"
+        "bound": "tier-1 small prefix of the donor 1M-transition/16-thread tier-3 court; no wall-clock latency bound asserted at this tier (measures the machine, not the subject)",
+        "delivered_evidence": "receipt minted from a real tier-1 run: 50k-transition CasRing MPMC 4x4 pipeline under 4 evictors + 4 spinners; completion, typed-refusals-only (zero SDC), and conservation legs all asserted; wedged-shim positive control deadlock-detected",
+        "is_full_spec_scale": false,
+        "spec_mandate": "N14 CAST-32A: 16 adversarial threads vs sequencer; bounded max latency, zero deadlock"
       },
-      "subject_sha": "control-subject",
+      "subject_sha": "feeae7e18a9be2b36aac8af0d18a154cdee32300add6c42336385875eab8d6b6",
       "timestamp_ms": 0,
       "verdict": "Pass"
     },
     {
       "court_id": "N15",
-      "digest": "be76582a8146fe366dadbf8e6a074c4ab96aef1c89c867ab450240844c1608f4",
+      "digest": "2516ecf5ba62140f01cfae8fdd354244772d1b02715fb33d90788ee7a8b112a1",
       "metrics": [
         [
-          "k",
+          "reachable_markings",
           {
-            "U64": 14
+            "U64": 10
+          }
+        ],
+        [
+          "slack",
+          {
+            "U64": 128
+          }
+        ],
+        [
+          "total_steps",
+          {
+            "U64": 4096
+          }
+        ],
+        [
+          "control_starved_set",
+          {
+            "U64": 1
           }
         ]
       ],
@@ -435,18 +519,18 @@
       "pillar": "Proof",
       "positive_control": {
         "MutantCaught": {
-          "detection_channel": "control",
-          "mutant_id": "m-14"
+          "detection_channel": "StarvationMonitor enabled-streak >= SLACK",
+          "mutant_id": "unfair-scheduler"
         }
       },
-      "receipt_id": "cr-control-14",
+      "receipt_id": "cr-N15-2516ecf5ba62140f",
       "scoping": {
         "bound": "",
-        "delivered_evidence": "evidence",
+        "delivered_evidence": "exhaustive reachable-marking enumeration + round-robin fair-scheduler property-equivalent simulation with typed starvation monitor over the six-transition RONR admission surface (pn64-fired), plus an anti-vacuity unfair-scheduler counterexample; full interleaving liveness remains TLC's domain and is disclosed in the module header",
         "is_full_spec_scale": true,
-        "spec_mandate": "mandate"
+        "spec_mandate": "NATO_N01_N20.md N15: model-check (Erlang TLC or Elixir property equivalent) box-diamond-admitted under weak fairness"
       },
-      "subject_sha": "control-subject",
+      "subject_sha": "f7a7003646698e44e37ace5290dd537294e6f06929d38dc6e2dffcd216feeb44",
       "timestamp_ms": 0,
       "verdict": "Pass"
     },
@@ -603,7 +687,7 @@
   ],
   "format": "CTT-DOSSIER-v1",
   "key_id": "3cb89c06cf57991d",
-  "merkle_root": "783308d923d5fd308c93df83cc903cf7745921035bf928f0c72420097226671e",
-  "sealed_at": 1791782193,
-  "signature": "cc3b392bc668a7f6fe45cfb7156b2eb8cb23f5d0ec7610f7d7440533632e58c5708047c22cbadd5753dff847f4da853ff595b0c4105c22ad2653af43e3340fd853a7ea396e2eb1b4595aee659d5cda57cc0e5446d7e421356d8dc9d0753f4c672ffcd9bfadb9d913bb2223f1b94e060e4c2a26781a1384ff6af8a2b18f529e87c9088cd6aab47970273876ed27a293d9f863fb4c5bc690c7bba4efb6a920cd75acc22f51b7fb7dda186acb49257d5ede0d4694894f94e412fa59a886253b5a907fa6df81ceb800ac5b559d7e8698733d667fe6b6a13b848d3153a3b14b8f811847591ec30babcc468460d79d70c345f5d2dfb8c7546d2fb74f67d7a04101ac63a049e480cc40701f8abc81a824304621d0dfedda980cefc495215c646d8f366065d4a11ca7bf562af6dfb7d924a2f74187b85c05199cf4f7d29fa824235d8e6f0914d6e3c3bbfddad158ad40263d10fe8c8b229a30134f3d990bdc45d5d3018dc758204caeb01ab12afd48a695ea0fd804058f5df914ac8f95e61565fec5f0fc082cd686db445ff0421f5bee5ee34ed0e3def723237b0f956c212649bf1bee364c3d5c587c907d9883c8209689fe1711836878f95a32919e8252fa14de47005ed5fd372d99e580881d5fd26234f23c88a6addc5e0507378d193ba45e64ebacc953bd72406a0eb213469813cb5fc7d3a1049740d2a489f651782b0024bbd740a689a4781463888a0344b7138a4fa156ba34d318eebfba51bf961ac58a2c808719b0312596f491d2061bdca8812e9bde615dba61744ae924603d253e854eae42cdfa14a4effef8d22d6cbca5f2b25800771dec949d8eb8476a95b9d07e0f228d84678bb62c423283eeffa3caaf4fa780619e99b728605a7c33f0861566ab116219f536c54b34432f248a910c2e64c020aa5bba3bfac4f7a8b99856943db96b394d28677d223281b55bc8d1423a39a130dc0974356f0a47c0f3e6f304908d521d7ad5c21f76765ae4504c8967be7d9ff2a144e468997bd8e6c275f4d5392b11e30359054bf50bf906f11cb206bd29899d03d94cb0257e1d1c6e7e8db3b94f1d495ffb88497a078e4f80ce7c36df5c27561bd6aa0f07cffa198dbcd35989a2ce6c969cbdebdd0cdb33cea2bbf611a02ae95db4b271a6c3cd970665dabc13630bad4fe9e06b4d54d0f31e268ee43d6b216df8e82d95b68247a90a651d23db19352e5ccdd92f64efc57df7f13ba37661106c5ca270c74189eb4ee31a974b62cc72c0a02518f6a99cb0420dc2ba857d958499bc24886c32f133306b556681c7faf0a052fff2e155c864cdad836e4de63e9819a889affc6afc9b4dd83e61d4cf0df16cbc6695ff318931d2cd1baf7a8e7b111fb7a93aac7ef65d2a44f67964301b85c65869f71d1fae154d327814771f15bb6256bc4fe4745c6b64cbc39739f0ff9be942fc5bbab553c403282fa4f3ad92cdb87fa19acc7cefdd8e1a12e74356dd0ee8266f23eefadce009a4a84229ef5e953d9644ab788564f671fb5341d0122eb8c4f5d9ea2cdf67bb877c99f9241da9233ea45198b7fbbe063e99110eb772e3c6791dc7a6ab7d30625e8a311ee25ccd73b989343a981079a577fe8d7d8c0748768ee2c626c52a25a7ef89d1fed730f880634b3c56b9bb5b0474f86d1f23ce807378abb96d55e9b6dea14e11b05f013a09be0b54dff7f1490c3277d8c69c174eaf20b5b3b7385bf11a242e4f4b7c0d7c9b10337c064c7b557916f9fae193431dccea66d9d7e44d5905cc95196d998ae545529e2470de3efa31d8d5463ada884a13a009f42d00b0e7774afaaacd63bed74ba82fb8f6a68a8257bfbaab7e9759d737f0cb5ec744337356b7bd3b041acdc91715669887e7f2385b86cc62a407ec1086b98a8ef336b60ec0cbe6e293be468c47a4fabbf0e242759234120c053253113efaf9e1f243d51cb24a8d86fefb7d8acd0e71f8ee3b619e60ab3cbf8a8ea0a024b58304299ad8d1a282588a804a7313f01c198a9f7e509b009755c5ec6078f301d5d2de62e00d92fbff1927974cc41a736744dbf46f2d195e0be15d22379a632ccb875cfeaeb036d47966b263f36f85f7b475d0c7dcca8a5ac624d7fcede46223fe8e0e82adf946219db072c6ef54ace06339ad11bb1a25cd733f6fbc836e1f7e0e58308fee73caf8969de9991ab356d2b885731d64d8d4f25f0930ff03ff9742a6c120e78038a336266e2e457653323f442903c3ad3a7d1ff2b3f8c3d5a1234ee2e43ed052a5f03007d745521d9230a4072e2b680177f0c3578be425c23e64e8b35771e931383d14e8b54a6cee21d8935a186fe96a8e3d0af3a263be3ee6f15add8cea0cb9e079def648d6602ec3590b2944b5573f914a65de11ae55ad41b42a95b543fe2ac06342b48db50135738e16bde7a0276466c7d5d17bba65cfe50e42f9be34cdd20f21b30eaab8fb729e27947f044d2bb1072e824f619940536230afdeb8b78ab6dff388b3ebeb57a507437cf01e6d90442cbe0f0ac6ba44754cbb4e82959a68d3e9f53c41625276337e4746f78072c158de1becb2c040846d8e979abba201c8b42adb6c1c503d6cfa364adb10ead60ee4e765e8cd1343e1309226e4b1c14abe3625d3e2ae96306f6b46425d6971adf6d4897d630a0573d64d51b84665998cef22be118496f7247f9032e380912c440d5489126b19707a8268eeadc0238427aa3b6a9ce9ecc433df96ec97397f799c83e2e85233dda5da349358a1b3e45a81f126102bed39e6c166188a7733c2b3278172e45193330b223b686e1ed096920d9c904b736447f2a492f1b55fd6715853aba779bb7562beb60fcc4e447e5b62814ba25596182f129c4aa0585f9d6312a50ba43cfaa08c4bfe53af614d67dd63383497b34049cd69b9be4e360b574719eb9d54b28b5664101ae31ec443a2ae9a1aeb18ef33f613cea4ee78e651724615cf60da7d630eece1b29f80514cc68c7b6cfb86367ef2656f069d6c654b40c7b55581370ca4b498f5995a0bcae509aeff117faf4ec0084ebe79fcd1a85191e080bebc6c81b7d58fc55ef405d40f6739043d827f5e8f91947f8c06dd3b042ab8d4843e945a7bd45933ba2d8dfa4a9cf827ff7b81129f957e7451273a0051c81fe9053651f14229fb6b3a3392059465531bbf79eaaaf7e02c75f5208479f2dee3095f61f3ee1821253c65f8d6b9b055e589f4fc62b76406db1293fa1aa5d9b8485136718d9664a7a3b9f5e8adb937efc7d116852f4d96aff4ae3eedafdf049a18c542ba45a3774300891c832e704f09cb8bf04a32f266f0d5bab0081a27a0d2ad8a3ff548541b0b629b0ec7a6d2dfcd729d183bb7b71909cb1a3b831aae5a97f45a755649cce59d2eb60a3979742010590215eb758dc3adce8512f40d43fd18abdb755a3338c559ebc2ee4ce9aa0bd831de0f6ed247b9ba2d87447e2a1c79fe8a05ff825333a11e9f7490f2ec395c47d00b80cb854775cef74727905d58670f6080b69efe4e459bb9aa6ddaae230dec00ff62e8066bdd36e7df4b66e93cf50c5e6a1ae0cf9aca295ea6a428317cca80869079b485ebf4f476870feec3222ea7a66075a663e6d7975d9460ca702b7066729e0731b17310ed6a1c4fda20c6d8fd6b09839d20ef64239e5fcd2415f4f4121d3650f89e22cc1e3d6ffe0db4a4471f788fec26773fd62de10a3c2b6e21c95fbbc3562f9fa855d06f4c24756baf7bea7c8ef8db3f98ba8efdbd01ec0a732d8e97053e4a46f20c88abc6e3c2c65887b8e77ec4bd832404e4c778bf110fe127dfd602fd4a5caa4355c8072cf90ed29c61dabaf8681f5aa5814b2ce89f65c1fc557fbd1170cbef6722ee13c08d2e4a62f5051bda77ac135b5848835ead8df1061433e702395aeda0388e5a52ae0730a1f9012b219f1bc0a54924655508dc0aea03551ee2734608635a40628a651f82312e6104661703e66691f76c16d1dc4b59a454eea39cd1abcce5e070dd23385a2c9a0b46c5b4f8cb78efdb00a2b50b90496f2cdcac082858eff5f56b1aabb08bf91b0e92cf5cf674f8e3127372597f087dff33f3ecd17a6721b49ed63124fca4d5313543814966b906468e9a399ca0f682d941f28d7698b5e7182da197ff6e1270c013c8f2602767867ac76eac23666ad412f42c98999c013c99fafc31a5fb083f19f7957f702af1ef43baf92957247cd83d6bfc6bfe8f1f55e002ad2556b93b5df9ffdf8b47abab673481e6639a290c9c1f1e7c80bfb1dd87686d209e02b818bc0960a6c58606a7072b6d1b308a1323d86c902ffed895b7a4d70bc70c3a1a3f42f6292eb82b490ec7651e8622fd420562f57fb313ed8c1495a421543373fc3d7b1b1d8caeb2e17a0f6f4ba1012131d707b85d2ae012937fc2d7550b5c4d578814838c60ac9fd2f201f5acee8668aed148473187700799d880965cfacc0c79ff38f2cd835bc0821ca50ab318b360c95cc4c4be200904ae06f20d59e97a5a4fabc75bdf6a7f59334f9d971cb456af3bb304974d114822b1de520dc0da7e5d51261539cd49d9a67035641f434e01cc7f2bbbd914bcf93814cadc8378c525aba03fd514859c0e151c6dcbe9edfa252e3545c2dd0b4eb3c8dfe0f4ff091819454c984e6a6fb7db01353859869700000000000000000000000000000000080e161c2127"
+  "merkle_root": "e5db0211c2f2f393cf584d4557afe9b02f0e7b108fbc40627d568baa5af537e9",
+  "sealed_at": 1791784600,
+  "signature": "8bac307182ea05bb2dbfd049e3422bb89f035cb829a1251d3aaac97051cf0e199e41078310af4e22852f2474ac6a665d63e5eeb1fc273779d004647383fd8ba239be707f6bc18c8b2ca3ba28d7b00f2cc8002b76324ef57036795a6a2707175f766916650883617d3ee669d7e25ede1e8867f00dec14b4c366c9e78e5cc56da1eb3d3c0d29736ee9466c5479a7caad1d6daf8ac9fb43d8a827e921e593fbfd1bc0014931261507625c4f2a00f795f0936c9cce814d8b74848b6016faa62f07df0477db2d6e1a8ec3e652d441569336a9f90164a0856125de4a9f744b11e01bf0208f261080642ec61c8802060fe4afb4ce74025fa624d3bf9156ec0ad6b58f2587f54dfd10aeeba2eac618c11248907efd1b912102e6844b25b5ef5b467789c6ff98732f6f30b4cb3ba8398fac88f10d78b18bfb45c09d8811f0b640859dd42602ec5a3ae0cf446aa3d99a86baf2bb1d7773b39bacc2572a7f76b59b63fd4e4d80f9a6271bd88e4ef6714c01b6f543968784cf453c7f4348e9983b041ca2c1f6e302fc08bf4b60a301f0a35778c4b81706f6667cdc53ba6cb353524ce60684efd130dd5cea20efc2114e24be01f6098e7859763dff388e19f189834db8ba618fa8e0babc9f77f1ff1b3bc8558d69fbbd956207920cd08bbb56ad24c50d9412f0750cd79f8ff52d751c035239d09847f7bd29f5e430e4a24601ea06ca795eb2358da39339d535f4238b6f355f9a3f0e5350092dc0573c78c3d0c663d032cb161ff544f9608b9f6d970336fe538d139e0218b62b6dbd92850b6f734a10761a5edeaa7db2adf4da68500c2a89933d36a2a6d623b547dc87b7746dba195fcea7c033d098825d9b97a5392944c96c6a5e4ddc30140767c43c7dbb08a4b86b5023bd0904b415315f068f714526f076ef9d182d23a2eedf3354a5d5ff86ef59afa3f771b592dfa5cc42ec0a03c76dbef2d61aa85f0ddc293cc43f6c49a8ec38c4f4fb028fcab38d37a3b986dabfe342dd3c6b5b5778872f0ec6bed3a64ed6f3e01e481996f955994079d5701373c9e58c120329ba4265a9f03f1f2232a75e3b5e8b893a31a666638e40f4210b0c6aca739d4144d6dec92ac44deb6ad702dac06bffa7f2761aad87a51645bdd0713d06876c43d1a4064e03809a1a049055b41d831426e1b16a87567cf6b095972ce0a6cdf4dff37a4a4025467804f3f7bb91409e315cbec9da2cee3cbc540890fdd9f5e316d4f35ccdb285b51d52a8bd28045616758f532cce00be4ccfa9305c1b225e991b7b45dbebea06b1bd80a1dc46096eb584b997e7fd46a69bb5438b85bc80e51159577d36d58490cc985ffbfbfdc8346db4a42b8bcdaccd7506c534e62fceb1da7c84fabac6a15c7e3dc196bca3c9625f0b7b5e32afb90b9921aca972e45fbf244c5e1c79fe20bc47e626beed904a2ebe5f3c9f2d19ffb2c0a2f76ddfbb560d16f14e5c143511b6f24db3bb2dcf234b0fef0abe0d463c9bb9837b8bffad84e0f441df738930153594b7803cb2f30b6bbeb3bb999fbae2aadefaacefec67adeaa1f3f3f0f8179bb5810ceaecd97d995492f72cab81513555e437a3db014af10ef6f34f8ac5434035f68a40c53aafe8fa5aa254aede4fc291788a1f1443e5adf0df6ba780d4693ccf05060acceb4355ea6fbab3d9e39aa9c1f75ad292fe82ddc0d44094472fc4fe2f0eff73dd0643bb018e7201b78541af8d14aa11ff3d303301c1b56f48ccd29da33925bcf637ea2b4ee781e2717657a4d089f4e01ece257ed4a43206ee292fde84059ab9b6cbf6016ed45442af4cbc8b319fb240ad70b0ad38a6bef657bf4a90a4b19d0a06e9f0a3befc64564cb64fb818b184e2425483588c7f0bda8161e2546fc03cab0496daabf45b0357d97a9dd2f3dd184535fea6aea1a00e4dfd8caf38a576fe7cf74988a330be471f2889ec527f2d97b70d97baad936aff541c595fb58f521c29e0bde78349f42a9ece00e3d2cffa49d0ce977684135c7bb26d314e5e5d96dc0636eb17446fb0b99f9954e1ca0cf1fdbb432dbcb1b40e25061de2c37f7d36f36a80478a8b5b02103e22991a5f264349a4a1902f3959ecbb5e9a981b7334867281701bd06e70c10501069aaf0997acb23587cdadf64173e014583552fcb8f5a1480ee78ef4c01f92134142acf264003e71ac569b48ee06cc661f2020c529273882adb6bd6b4efb46aa3dbf73cdac120af52b61b8283e7bb65e60173abbd3f79944863af83327276dde6d293b3550f865c7eb344925617468a73682421bba1c1f112940e5c89e0d9e93e7dc64b9c84a750bc986d8afee32c6f6fac0cb4320d828becee996f4a1d6ca77dc9e657995e9e8b4a3ff181aa81e264ce7e09129d55e67186cdd4f28cc85a6fe63409214127c63a2cf822a6fabf1926b9dbb0dc9f155796d2662a7a908ea2c196632fcba8e55cf88b811d8d27952b6eb385dd7239b2e3c0cb3cf3190ab0ed9cf6d5e556d4fa2c043e04b8e15198e0ffce55a63b3537a65fef7f3fe0a6653e88b8414eecbe06bd44f56efcbb409e465291bebc220e6ed604b0b761011e0b34b1a1748c69a2171476b55dad8f95e91cf8b79527681ddd5284564b845123a17772b5bb0a9032f8ad217796eda78d2c44ee529ce68992d374b74ecb1ee088f2696e48643833d58caffbe1471650c48341b4f9ee898d2d90e8204c21fde028cfc4a51baa23c2aaa1f77095b6d87cff0d219349514ddec3b095723292a5e61d1d443d765c060404c9ad2aaa1e78ff8a291b5f8ad68e85c0bed014b0f1a927f12ce562ecd9e0c2423eb0a97ccafd221726d1ffc50ccfad2d9650a03ec7daefded12c10b1a9c8747afaccf75cbd1cca5ec8e9f39cb9217f4ab39055d73646f107c7bdd964beaa0deb19acb02d9caa41e6e18b163bfb29e311c89789ab55e3c402a52d960348524d8a8fc52ac900d743b081749da362a0387252f73391f8a964fba53b242a101e4cad65b8a491510d2eb81c79f031553c2dc0489a02438655af6df617dd1bc66863b056c868858378a1a01a9a8a3c0797241cbf1b61d47531480d879b649547521a838bf8e9ac7348f79acceb0b949fe709deafd5942b336b9d12d2d635ae686bf8575de346fc1f61c1dfed5f94284745ef388744e0baadb75702a29bd05ffcf890014b7da1b3c5c664f06fc52954f7c24982d165034b31dac69525a258e8db482cac95adfeb1399613696aa90bf56278b07ffd619052271bd3919c7985a85fafe51578b67123d4e41acadb72dd6a83d76dd49643dd99309383ff7660ff6c3dad80dd5ff7976104aef05e8b62d9a35edd34b66df2a2954e3087143483fdd69107f4673e90259ce218ec7b65738712554457245ec5deccd7bf72e840ceff74e99560e72744c38fb4af559f07155e4f218f84567d10f4899e16c0e2595ab8672b9a6c543dc1aa85748959e408e0f3968cf4b9a459635349949ba70358ff79df26549cf41e403224463de35256995d2a89e9453c8253469c5590b2db9539a1b9beca59bfc47597332f290864fa62680c7c075f112b1f4f9e06f89218f7fabb581eda69d4b1c43aa02c4679f8e9a7e7cd0854208cbaf1f73b05e03446a2d5c47be5a5688ed95df2bf4053fc2cadb8a2d25685cec88dafa9fa9262ebc2f82524c898813d83a6a1bc7b353a1f2c5c08c385301118dfb19b9bb9a4d1a954d64dd03848482b47d00ffb8e50b4e4a5c1940ce64dee6c6d5bcb60a7c4e6cef642b6f7c5cafdbdea34a7668adf70d4c2de7ef1f5128b8d1ffc122d93119e07a30505d8271bfe220ee6928aeae485de9b602598628d9bb8ec9af74e208ecacb72959088f6e0113a62a21f185b656c91ed7f785d3f0eb9c84cfc500187bc5c6a686546513e3505805dfc9665437681285e779d341ece9a1817b58aacf30de628a9a63de5caf25b55228c94116c3d1e5fb7bc6d793b5f929760850702c6fd07066fcfaf0e56984e5e527bee1aab0202e8905cef2141ddf3d17a025d0912b0ad7ab522f8ad3e488c022578d7fb070e4c1e42072126e5bf9048cea0695ce4544a063521e47b0ca0f0a5fc035645a1f846dc9f47c0bd58747d0424e55862848de7cf94c0412c537a5df5a755cc57b882ae3df38ca38dde0d38ed6d6b38f894c8c9b47d6eeb23e89a24af59892718b2cdf73f734e1d56f192553890acfffc8df6c1c3e2361f61c3e7ad9da5f8f394cf09429d42e1ee00b073d6c81e7ff05b4c3be99c0d24c68258e25efdb56b5da9b5bbebe656b80eeba95033adaf806dc93d8f06f20eb4d55d7cc9a489eefa5452eb2b658e97c3246a457419f48fa691090e98b005ab867a6d7064e329811f0a987dbe59ce8a1ab0048d960c8bf7404f57199c9e726214127e416d400166518a0adc75ebf6cab9e0b76a38e7ead06c4ec4f7501130ad88c90583a61fec4969ea01c9c2cb2e4e339c4c29861d0f45c1f2bce992e5cab885029643339bba396b8208d7a1c3db6d5e94bde0dcf9c59647426871abeda35a8b7d547927c138ba3ea78747860b533ef30961a81c774c1deeefa9f522b346385bec98b6d1bddb18e17539e31e33abc580086d5f11e28747a82b3eaf1ff52d4ef497d83f0fd2b2f4d95b0eff60e6f8b94df3b475989b3e40000000000000000000000000000000000000000090c11181d23"
 }

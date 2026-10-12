@@ -12,17 +12,20 @@
 //! // EchoServer is defined in tests with #[tool_router] + #[tool_handler]
 //! #[tokio::test]
 //! async fn two_hop_chain() {
-//!     // downstream: real EchoServer
-//!     // bridge: forwards any unknown tool to the downstream
-//!     let bridge = McpAgentBridge::builder()
+//!     // bridge: forwards any unknown tool to the downstream EchoServer
+//!     let bridge = match McpAgentBridge::builder()
 //!         .with_server(EchoServer::new())
-//!         .await
-//!         .unwrap()
-//!         .build();
+//!         .build()
+//!     {
+//!         Ok(b) => b,
+//!         Err(e) => panic!("bridge build failed: {e}"),
+//!     };
 //!
 //!     // orchestrator connects to the bridge via McpPipe
-//!     let mut pipe = McpPipe::new_in_process(bridge).await.unwrap();
-//!     let result = pipe.call_tool("echo", serde_json::json!({"message": "chain"})).await.unwrap();
+//!     let mut pipe = McpPipe::new_in_process(bridge).await;
+//!     let result = pipe
+//!         .call_tool("echo", serde_json::json!({"message": "chain"}))
+//!         .await;
 //!     assert!(!result.content.is_empty());
 //! }
 //! ```

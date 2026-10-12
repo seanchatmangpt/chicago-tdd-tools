@@ -98,7 +98,9 @@ pub struct SwarmCoordinator {
     pub membership: SwarmMembership,
     /// Task queue
     pub task_queue: TaskQueue,
-    /// Task-to-member assignments
+    /// Task-to-member assignments (bounded: entries are removed on task
+    /// completion via `record_completion` and on member removal via
+    /// `clear_assignments_for`)
     task_assignments: HashMap<String, String>,
     /// Consensus threshold (% of members that must agree)
     consensus_threshold: f32,
@@ -186,7 +188,27 @@ impl SwarmCoordinator {
             }
         }
 
+        // Release the task-to-member assignment: a completed task no longer
+        // holds a slot, keeping `task_assignments` bounded by in-flight work.
+        self.task_assignments.remove(&receipt.task_id);
+
         self.task_queue.record_receipt(receipt);
+    }
+
+    /// Remove all task assignments held by a member (e.g. on membership removal).
+    ///
+    /// Call this when a member leaves the swarm so its task IDs do not linger
+    /// in `task_assignments` indefinitely. Returns the number of entries removed.
+    pub fn clear_assignments_for(&mut self, member_id: &str) -> usize {
+        let before = self.task_assignments.len();
+        self.task_assignments.retain(|_, agent| agent != member_id);
+        before - self.task_assignments.len()
+    }
+
+    /// Number of currently tracked task-to-member assignments.
+    #[must_use]
+    pub fn assignment_count(&self) -> usize {
+        self.task_assignments.len()
     }
 
     /// Check swarm consensus on a result
@@ -245,8 +267,10 @@ pub struct SwarmStatus {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used)] // JUSTIFICATION: test module - in-test expects are permitted
 mod tests {
     use super::*;
+    use crate::swarm::task::TaskStatus;
 
     #[test]
     fn test_swarm_membership() {
@@ -348,5 +372,75 @@ mod tests {
 
         let academic_members = membership.members_for_sector("Academic");
         assert_eq!(academic_members.len(), 1);
+    }
+
+    #[test]
+    fn test_assignment_released_on_completion() {
+        let mut coordinator = SwarmCoordinator::new();
+
+        coordinator.register_member(
+            SwarmMember::new("agent-1".to_string(), "Agent".to_string())
+                .with_sector("Academic".to_string())
+                .with_capacity(10),
+        );
+
+        coordinator.submit_task(TaskRequest::new(
+            "task-1".to_string(),
+            "Academic".to_string(),
+            "op".to_string(),
+            "data".to_string(),
+        ));
+
+        let (task_id, member_id) =
+            coordinator.distribute_next_task().expect("distribution should succeed");
+        assert_eq!(coordinator.assignment_count(), 1);
+
+        coordinator.record_completion(TaskReceipt::new(
+            task_id,
+            member_id,
+            vec!["Academic".to_string()],
+            TaskStatus::Completed,
+            "done".to_string(),
+        ));
+
+        assert_eq!(coordinator.assignment_count(), 0);
+    }
+
+    #[test]
+    fn test_clear_assignments_for_member() {
+        let mut coordinator = SwarmCoordinator::new();
+
+        coordinator.register_member(
+            SwarmMember::new("agent-1".to_string(), "Agent".to_string())
+                .with_sector("Academic".to_string())
+                .with_capacity(10),
+        );
+        coordinator.register_member(
+            SwarmMember::new("agent-2".to_string(), "Agent 2".to_string())
+                .with_sector("Claims".to_string())
+                .with_capacity(10),
+        );
+
+        coordinator.submit_task(TaskRequest::new(
+            "task-a".to_string(),
+            "Academic".to_string(),
+            "op".to_string(),
+            "data".to_string(),
+        ));
+        coordinator.submit_task(TaskRequest::new(
+            "task-b".to_string(),
+            "Claims".to_string(),
+            "op".to_string(),
+            "data".to_string(),
+        ));
+
+        coordinator.distribute_next_task().expect("first distribution should succeed");
+        coordinator.distribute_next_task().expect("second distribution should succeed");
+        assert_eq!(coordinator.assignment_count(), 2);
+
+        assert_eq!(coordinator.clear_assignments_for("agent-1"), 1);
+        assert_eq!(coordinator.assignment_count(), 1);
+        // Clearing an unknown member removes nothing.
+        assert_eq!(coordinator.clear_assignments_for("agent-9"), 0);
     }
 }

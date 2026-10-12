@@ -27,6 +27,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/features/LEDGER.md`, `docs/features/MERGER_MATRIX.md` and
   `src/ledger/dossier_wire.rs` doc comments updated to the excised state.
 
+## [26.10.12] continued - 2026-10-11
+Endgame audit-wave convergence (`8ab234a` + `1fc1c72`): 20-lane adversarial
+audit with repairs, all with on-disk test receipts.
+
+### Added
+- **Prelude assert macros**: prelude gains 8 new assert macros
+  (`src/core/macros/`).
+- **Justfile hardening**: `AFFIDAVIT_DIR` override (A134);
+  `release-validate-version` now checks all 3 lockstep version sites and
+  fails on unread versions.
+- **T10b measured collision pins**: OCEL collision thresholds measured and
+  pinned (142/238/209, generators named); `powl_fixture_bridge` gains
+  `TraceTooLong(K>255)` plus 3 new tests; `import_json` "not lossless"
+  disclosure.
+- **NATO real-run receipts**: N08/N12/N14/N15 receipts re-minted from real
+  runs (byte-identical, real `subject_sha`, positive controls); dossier
+  emitter no longer clobbers them (persists 16 control-set courts only).
+- **Docs/table completions**: diataxis reference tables completed
+  (0xE005/0xE103 rows); line cites refreshed (CONFORMANCE/LEDGER/
+  beam-membrane/ARCH_REVIEW); docs index adds diataxis/nato/receipts + 6
+  files; ARCHITECTURE adds assurance modules; QG-05 + affi commands made
+  runnable.
+- **Tests**: validation/builders +16 tests (budget-exceeded error paths,
+  yaml/toml, fake-data builders); +2 guest-telemetry R44 tests; real
+  type-level arithmetic tests + `should_panic` bound test.
+
+### Changed
+- **Zero-import guest dep cleanup**: `ctt-wasm-guest` uuid "js" dependency
+  deleted (imports==[] census PASS); panic=abort disclosure corrected
+  (unwind kept for SEU `catch_unwind`).
+- **Cross-repo toolchain fix**: `ConstSizeValid` rewritten as a 2-param const
+  trait (no associated-const equality), compiles under affidavit's pinned
+  nightly — cross-repo edge unblocked.
+- **TempDir process-unique fallback** (`8ab234a`): the non-uuid fallback used
+  a constant name "id-0", so two parallel `TempDir::new` calls collided with
+  `AlreadyExists` (witnessed as a flaky `test_temp_dir_creation` panic); the
+  fallback now derives a monotonic per-process counter plus pid.
+  Receipt: `cargo test --lib --all-features core::test_utils` → 12 passed,
+  0 failed.
+- **Docs de-overclaim**: sector_stacks/CLAUDE.md/docs corrected
+  (production-grade, 100+, scaffold ggen claim, Admitted|Refused|NotRun
+  serialization); fabricated CTRT tokens corrected; bins gain module docs
+  and named `EXIT_FAILURE` consts.
+- **Debris removed**: `operator_registry.rs.backup`, `wip/`,
+  `check_output.txt`; `__pycache__/` gitignored.
+
+### Fixed
+- **Merger/guests errno ABI**: negative leaf codes remapped to positive ABI
+  errnos (`ERR_LENGTH`/`ERR_BAD_SCALE`/`ERR_NO_SOURCES`); `expect` replaced
+  with typed `ERR_TRUNCATED`; clippy clean.
+- **Guest telemetry R44 bounds**: `write_event_words` routed through the R44
+  `out_span_oob` law (`ERR_CAP_TOO_SMALL`).
+- **WCET sort comparators** use `total_cmp`.
+- Gates: `cargo test --lib --all-features` 1093 passed / 0 failed; `just
+  lint` clean; merger 25/0; ledger_tests 25/0; conformance_tests 23/0;
+  guest_abi 14/0; `just release-validate-version`: consistent 26.10.12
+  (3 sites).
+
+### Security
+- **Forgeable TaskReceipt embedded-key signature retired**: receipt
+  signatures are now HMAC-only with `validate_with_key`; keys larger than
+  255 bytes are refused. Migration note: any consumer verifying
+  `TaskReceipt` signatures via the retired embedded-key path must switch to
+  `validate_with_key` with a caller-held key.
+- **Key custody hardening** (`src/ledger/signing/keys.rs`): `fsync` on
+  (`sync_all` + parent-dir sync) and `Zeroizing` seed locals; `receipt.rs`
+  gains a compile-time const proof `COURT_RECORD_LEN` composition.
+
 ## [26.10.11] - 2026-10-11
 
 ### Added

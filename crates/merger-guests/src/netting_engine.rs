@@ -140,7 +140,7 @@ const fn fuel_cap(rows: usize) -> u64 {
 /// # Errors
 /// [`NettingError::Dim`] on an empty/oversize row set; [`NettingError::Overflow`]
 /// on checked-arithmetic overflow or conservation-invariant violation;
-/// [`NettingError::Fuel`] when [`fuel_cap`] is exhausted.
+/// [`NettingError::Fuel`] when `fuel_cap` is exhausted.
 pub fn compute_core(rows: &[Obligation], out: &mut NettingResult) -> Result<(), NettingError> {
     if rows.is_empty() || rows.len() > MAX_OBLIGATIONS {
         return Err(NettingError::Dim);

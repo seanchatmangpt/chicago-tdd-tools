@@ -1,3 +1,5 @@
+//! Dog-fooding checker: verifies the crate consumes its own tooling
+//! (hooks installed, lint config valid). See `just` recipes that wrap it.
 #![allow(
     warnings,
     clippy::all,
@@ -12,12 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-//! Check for dog fooding violations in test files
-//! Detects:
-//! 1. Standard assertions (assert!, assert_eq!, assert_ne!) in test files
-//! 2. #[test] and #[tokio::test] attributes in test files
-//!
-//! Exit code: 0 if no violations, 1 if violations found
 
 use std::fs;
 use std::path::{Path, PathBuf};

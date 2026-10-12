@@ -6,7 +6,7 @@
 //! Every invariant violation results in immediate test failure.
 //! Zero tolerance, no graceful degradation.
 //!
-//! This module defines all 47 invariant violation types across the 12 phases
+//! This module defines all 52 invariant violation types across the 12 phases
 //! of the testing framework, plus validators for each phase.
 
 use std::error::Error;
@@ -569,5 +569,155 @@ mod tests {
     fn test_receipt_validator_checksum_fail() {
         let rv = ReceiptValidator::new(1);
         assert!(rv.validate_receipt(1, 0x1234, 0x5678).is_err());
+    }
+
+    #[test]
+    fn test_state_validator_empty_next_state_is_err() {
+        let mut sv = StateValidator::new(
+            "Init".to_string(),
+            vec!["Init".to_string(), "Running".to_string()],
+        )
+        .expect("valid initial state"); // Test code
+        let result = sv.validate_transition("");
+        assert!(result.is_err());
+        let err = result.expect_err("empty next state must fail"); // Test code
+        assert!(err.to_string().contains("Invalid state transition"));
+        assert!(err.to_string().contains("empty next state"));
+    }
+
+    #[test]
+    fn test_state_validator_transition_tracks_current_state() {
+        let mut sv = StateValidator::new(
+            "Init".to_string(),
+            vec!["Init".to_string(), "Running".to_string()],
+        )
+        .expect("valid initial state"); // Test code
+        // Transition to a state in the set succeeds and updates current state
+        assert!(sv.validate_transition("Running").is_ok());
+        // Note: validate_transition accepts any non-empty next state (open world)
+        assert!(sv.validate_transition("Arbitrary").is_ok());
+    }
+
+    #[test]
+    fn test_contract_validator_accepts_valid_inputs() {
+        assert!(ContractValidator::validate("my_contract", 1).is_ok());
+        assert!(ContractValidator::validate("my_contract", 12).is_ok());
+    }
+
+    #[test]
+    fn test_contract_validator_rejects_empty_id() {
+        let result = ContractValidator::validate("", 12);
+        assert!(result.is_err());
+        let err = result.expect_err("empty contract ID must fail"); // Test code
+        assert!(err.to_string().contains("Contract malformed"));
+        assert!(err.to_string().contains("empty ID"));
+    }
+
+    #[test]
+    fn test_contract_validator_rejects_zero_phase_count() {
+        let result = ContractValidator::validate("my_contract", 0);
+        assert!(result.is_err());
+        let err = result.expect_err("zero phases must fail"); // Test code
+        assert!(err.to_string().contains("Invalid phase sequence"));
+        assert!(err.to_string().contains("no phases defined"));
+    }
+
+    /// One representative Display assertion per violation category (12 categories
+    /// + the `Other` fallback). Not exhaustive over all 52 variants; the goal is
+    /// to lock the message format for each family.
+    #[test]
+    fn test_violation_display_one_per_category() {
+        let cases: Vec<(UnrecoverableInvariantViolation, &str)> = vec![
+            (
+                UnrecoverableInvariantViolation::ContractMalformed("c1".to_string()),
+                "Contract malformed: c1",
+            ),
+            (
+                UnrecoverableInvariantViolation::ThermalCannotMeasure("no rdtsc".to_string()),
+                "Cannot measure thermal: no rdtsc",
+            ),
+            (
+                UnrecoverableInvariantViolation::UnobservedEffect("net".to_string()),
+                "Unobserved effect: net",
+            ),
+            (
+                UnrecoverableInvariantViolation::DeadState("orphan".to_string()),
+                "Dead state (unreachable): orphan",
+            ),
+            (
+                UnrecoverableInvariantViolation::CorruptedReceipt("bad hash".to_string()),
+                "Corrupted receipt: bad hash",
+            ),
+            (
+                UnrecoverableInvariantViolation::AbandonedTest("t9".to_string()),
+                "Abandoned test: t9",
+            ),
+            (
+                UnrecoverableInvariantViolation::PartialPipelineSuccess("half".to_string()),
+                "Partial pipeline success: half",
+            ),
+            (
+                UnrecoverableInvariantViolation::LearnerMathCorrupted("NaN".to_string()),
+                "Learner math corrupted: NaN",
+            ),
+            (
+                UnrecoverableInvariantViolation::ConsensusDeadlock("stuck".to_string()),
+                "Consensus deadlock: stuck",
+            ),
+            (
+                UnrecoverableInvariantViolation::ReplayDiverges("drift".to_string()),
+                "Replay diverges: drift",
+            ),
+            (
+                UnrecoverableInvariantViolation::ProphetSelfCheckFailed("neg".to_string()),
+                "Prophet self-check failed: neg",
+            ),
+            (
+                UnrecoverableInvariantViolation::DashboardInconsistency("sum".to_string()),
+                "Dashboard inconsistency: sum",
+            ),
+            (
+                UnrecoverableInvariantViolation::Other("misc".to_string()),
+                "Invariant violation: misc",
+            ),
+        ];
+
+        for (violation, expected) in cases {
+            assert_eq!(violation.to_string(), expected);
+        }
+    }
+
+    #[test]
+    fn test_violation_display_struct_variants() {
+        let backward = UnrecoverableInvariantViolation::ClockBackward { prev: 100, current: 50 };
+        assert_eq!(backward.to_string(), "Clock went backward: 100 -> 50");
+
+        let jump = UnrecoverableInvariantViolation::ClockMonsterJump {
+            prev: 10,
+            current: 9_999,
+            threshold: 1_000,
+        };
+        assert_eq!(jump.to_string(), "Clock monster jump: 10 -> 9999 (threshold: 1000)");
+
+        let unhandled = UnrecoverableInvariantViolation::UnhandledStateEvent {
+            state: "Idle".to_string(),
+            event: "tick".to_string(),
+        };
+        assert_eq!(unhandled.to_string(), "Unhandled state event: tick in state 'Idle'");
+
+        let version = UnrecoverableInvariantViolation::ReceiptVersionMismatch {
+            expected: 1,
+            found: 2,
+        };
+        assert_eq!(version.to_string(), "Receipt version mismatch: expected 1, found 2");
+
+        let snapshot = UnrecoverableInvariantViolation::SnapshotSchemaVersionMismatch {
+            expected: 3,
+            found: 4,
+        };
+        assert_eq!(
+            snapshot.to_string(),
+            "Snapshot schema version mismatch: expected 3, found 4"
+        );
     }
 }

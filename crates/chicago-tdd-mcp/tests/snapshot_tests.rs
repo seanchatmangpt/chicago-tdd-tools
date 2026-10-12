@@ -3,6 +3,11 @@
 //! Run `INSTA_UPDATE=always cargo test -p chicago-tdd-mcp --features snapshot-testing`
 //! to regenerate snapshots after intentional changes.
 
+// `McpServerHarnessBuilder`, `assert::schema`, and `insta` all live behind the
+// `snapshot-testing` feature (which implies `testing`). Gate the whole file so
+// `--features testing` builds don't hit unused-import/dead-code denials.
+#![cfg(feature = "snapshot-testing")]
+
 use std::path::PathBuf;
 use std::sync::OnceLock;
 

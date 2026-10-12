@@ -20,11 +20,14 @@ fn print_usage() {
     eprintln!("usage: ctdd_combinatorial_plan --list | <profile-id> [--external]");
 }
 
+/// Exit code for usage errors (shell convention: 2).
+const EXIT_USAGE: u8 = 2;
+
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
     let Some(first) = args.next() else {
         print_usage();
-        return ExitCode::from(2);
+        return ExitCode::from(EXIT_USAGE);
     };
 
     if first == "--list" {
@@ -58,7 +61,7 @@ fn main() -> ExitCode {
         Err(refusal) => {
             let code = refusal.code();
             eprintln!("refusal={code} detail={refusal:?}");
-            ExitCode::from(2)
+            ExitCode::from(EXIT_USAGE)
         }
     }
 }

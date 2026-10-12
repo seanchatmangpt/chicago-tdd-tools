@@ -1,6 +1,6 @@
 //! Phase 7: Verification Pipeline
 //!
-//! Unified pipeline orchestrating all 6 hyper-advanced tracks:
+//! Unified pipeline orchestrating all 7 hyper-advanced tracks:
 //! Contract → Thermal → Effects → State Machine → Receipt → Orchestration
 //!
 //! This module provides the complete A = μ(O) transformation pipeline.
@@ -131,7 +131,7 @@ impl PipelineConfig {
 
 /// Unified verification pipeline
 ///
-/// Orchestrates all 6 hyper-advanced tracks into a cohesive workflow:
+/// Orchestrates all 7 hyper-advanced tracks into a cohesive workflow:
 /// 1. Contract validation (Track 1)
 /// 2. Thermal testing (Track 2)
 /// 3. Effect validation (Track 3)
@@ -305,7 +305,11 @@ impl VerificationPipeline {
     fn run_phase4_state_machine(&mut self, contract: &TestContract) -> Result<(), String> {
         let mut missing: Vec<&'static str> = Vec::new();
         for prereq in contract.environment {
-            let env_key = prereq.to_uppercase().replace(['-', ' '], "_");
+            // ASCII-fold Greek mu so the key derivation is stable: the
+            // Unicode uppercase of 'μ' is 'Μ' (non-ASCII), which no real
+            // env var can carry.
+            let folded = prereq.replace(['μ', 'Μ'], "mu");
+            let env_key = folded.to_uppercase().replace(['-', ' '], "_");
             let present = std::env::var(&env_key)
                 .map(|v| matches!(v.to_lowercase().as_str(), "1" | "true" | "yes" | "available"))
                 .unwrap_or(false)

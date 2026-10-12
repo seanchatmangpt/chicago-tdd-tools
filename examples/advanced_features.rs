@@ -208,40 +208,40 @@ fn example_type_state_pattern() {
 // ============================================================================
 
 fn main() {
-    chicago_tdd_tools::alert_info!("Advanced Rust Features Examples");
-    chicago_tdd_tools::alert_info!("================================");
-    chicago_tdd_tools::alert_info!("");
-    chicago_tdd_tools::alert_info!("1. Type-Level Arithmetic and Const Generics");
+    println!("Advanced Rust Features Examples");
+    println!("================================");
+    println!("");
+    println!("1. Type-Level Arithmetic and Const Generics");
     example_type_level_arithmetic();
-    chicago_tdd_tools::alert_info!("   ✓ Size-validated array created successfully");
-    chicago_tdd_tools::alert_info!("");
-    chicago_tdd_tools::alert_info!("2. Type State Pattern");
+    println!("   ✓ Size-validated array created successfully");
+    println!("");
+    println!("2. Type State Pattern");
     example_type_state_pattern();
-    chicago_tdd_tools::alert_info!("   ✓ Type state pattern enforced compile-time guarantees");
-    chicago_tdd_tools::alert_info!("");
+    println!("   ✓ Type state pattern enforced compile-time guarantees");
+    println!("");
     #[cfg(feature = "async")]
     {
-        chicago_tdd_tools::alert_info!("3. Async Traits (requires async feature)");
-        chicago_tdd_tools::alert_info!(
+        println!("3. Async Traits (requires async feature)");
+        println!(
             "   Note: Async fixture examples are in src/core/async_fixture.rs tests"
         );
-        chicago_tdd_tools::alert_info!(
+        println!(
             "   Run with: cargo test --features async --lib async_fixture"
         );
     }
     #[cfg(not(feature = "async"))]
     {
-        chicago_tdd_tools::alert_info!("3. Async Traits");
-        chicago_tdd_tools::alert_info!("   Enable async feature to see async traits example");
+        println!("3. Async Traits");
+        println!("   Enable async feature to see async traits example");
     }
-    chicago_tdd_tools::alert_info!("");
-    chicago_tdd_tools::alert_info!("Summary: Advanced features maximize DX by:");
-    chicago_tdd_tools::alert_info!("  - Providing compile-time guarantees (catch errors early)");
-    chicago_tdd_tools::alert_info!("  - Reducing boilerplate (less code to write)");
-    chicago_tdd_tools::alert_info!(
+    println!("");
+    println!("Summary: Advanced features maximize DX by:");
+    println!("  - Providing compile-time guarantees (catch errors early)");
+    println!("  - Reducing boilerplate (less code to write)");
+    println!(
         "  - Improving error messages (type system guides correct usage)"
     );
-    chicago_tdd_tools::alert_info!("  - Zero-cost abstractions (no runtime overhead)");
+    println!("  - Zero-cost abstractions (no runtime overhead)");
 }
 
 #[cfg(test)]

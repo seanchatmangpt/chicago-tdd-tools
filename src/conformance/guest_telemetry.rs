@@ -384,11 +384,30 @@ mod tests {
 
     /// RAII guard restoring the installed linear-memory end, so a failing
     /// assertion cannot leak a bound into other tests on the shared static.
-    struct MemBoundGuard(usize);
+    /// The lock SERIALIZES all guard users: LINEAR_MEMORY_END is a
+    /// process-global, and parallel tests would otherwise clobber each
+    /// other's bound mid-test (Drop restoring a prior captured before a
+    /// concurrent install).
+    struct MemBoundGuard(
+        usize,
+        // Held for the guard's lifetime; never read directly.
+        std::sync::MutexGuard<'static, ()>,
+    );
+    fn bound_lock() -> &'static std::sync::Mutex<()> {
+        static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+        LOCK.get_or_init(|| std::sync::Mutex::new(()))
+    }
     impl MemBoundGuard {
         fn install(end: usize) -> Self {
+            // Capture the PRIOR bound before overwriting it, so Drop restores
+            // the original value (reading after the set leaks the test's own
+            // bound into later tests).
+            let lock = bound_lock()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let prior = guest_abi::linear_memory_end();
             guest_abi::set_linear_memory_end(end);
-            Self(guest_abi::linear_memory_end())
+            Self(prior, lock)
         }
     }
     impl Drop for MemBoundGuard {

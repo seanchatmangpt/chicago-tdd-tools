@@ -493,7 +493,7 @@ impl TaskReceipt {
     /// digest in `signature`. The key is never embedded.
     ///
     /// Returns a typed error for keys longer than
-    /// [`MAX_SIGNING_KEY_BYTES`] (255 bytes) instead of truncating.
+    /// `MAX_SIGNING_KEY_BYTES` (255 bytes) instead of truncating.
     pub fn sign(&mut self, secret: &str) -> Result<(), String> {
         if secret.len() > MAX_SIGNING_KEY_BYTES {
             return Err(format!(

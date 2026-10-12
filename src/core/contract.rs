@@ -505,6 +505,67 @@ mod tests {
     }
 
     #[test]
+    fn test_resource_envelope_new() {
+        let envelope = ResourceEnvelope::new(16, 8192, true, false, true);
+        assert_eq!(envelope.max_ticks, 16);
+        assert_eq!(envelope.max_memory_bytes, 8192);
+        assert!(envelope.requires_network);
+        assert!(!envelope.requires_storage);
+        assert!(envelope.requires_privileged);
+        // 16 ticks: warm band (8 < 16 < 1_000_000)
+        assert!(!envelope.is_hot_path());
+        assert!(envelope.is_warm_path());
+        assert!(!envelope.is_cold_path());
+        // Network without storage: Docker not required
+        assert!(!envelope.requires_docker());
+    }
+
+    #[test]
+    fn test_contract_covers_module_negative() {
+        const CONTRACT: TestContract = TestContract::hot_path("test_neg", &["core::a", "core::b"]);
+        assert!(CONTRACT.covers_module("core::a"));
+        assert!(!CONTRACT.covers_module("core::missing"));
+        assert!(!CONTRACT.covers_module(""));
+        assert!(!CONTRACT.covers_module("core::a::nested"));
+    }
+
+    #[test]
+    fn test_registry_tests_requiring_environment() {
+        const CONTRACTS: &[TestContract] = &[
+            TestContract::hot_path("test_hot", &["core::hot"]), // env: μ-kernel
+            TestContract::cold_path("test_cold_docker", &["integration"], &["Docker", "Weaver"]),
+            TestContract::cold_path("test_cold_bare", &["integration"], &[]),
+        ];
+
+        let registry = TestContractRegistry::new(CONTRACTS);
+
+        let kernel_tests = registry.tests_requiring_environment("μ-kernel");
+        assert_eq!(kernel_tests.len(), 1);
+        assert_eq!(kernel_tests[0].name, "test_hot");
+
+        let docker_tests = registry.tests_requiring_environment("Docker");
+        assert_eq!(docker_tests.len(), 1);
+        assert_eq!(docker_tests[0].name, "test_cold_docker");
+
+        // Weaver only on the docker contract
+        assert_eq!(registry.tests_requiring_environment("Weaver").len(), 1);
+
+        // Environment nobody declares
+        assert!(registry.tests_requiring_environment("OTEL").is_empty());
+    }
+
+    #[test]
+    fn test_registry_empty() {
+        const EMPTY: &[TestContract] = &[];
+        let registry = TestContractRegistry::new(EMPTY);
+        assert!(registry.is_empty());
+        assert_eq!(registry.len(), 0);
+        assert!(registry.hot_path_tests().is_empty());
+        assert!(registry.tests_covering_module("anything").is_empty());
+        assert!(registry.uncovered_invariants(&["no_panics"]).contains(&"no_panics"));
+    }
+
+    #[test]
     fn test_thermal_classification() {
         let hot = TestContract::hot_path("test", &[]);
         assert_eq!(hot.thermal_class(), TestThermalClass::Hot);

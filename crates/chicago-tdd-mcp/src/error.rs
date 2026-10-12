@@ -30,4 +30,8 @@ pub enum McpTestError {
     /// The requested tool was not found in the server's tool list.
     #[error("tool not found: {0}")]
     ToolNotFound(String),
+
+    /// A builder was used without a required component being configured.
+    #[error("builder misconfigured: {0}")]
+    Configuration(String),
 }

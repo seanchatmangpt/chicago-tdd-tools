@@ -1,8 +1,15 @@
-//! Swarm Protocol: Distributed Multi-Sector Coordination
+//! Swarm Protocol: In-Process Multi-Sector Coordination
 //!
-//! Enables multiple agents to coordinate across sectors, share knowledge hooks,
-//! and compose operations deterministically. The swarm operates without central
-//! control, using gossip and consensus mechanisms.
+//! Coordinates multiple logical agents within a single process: members
+//! register with a coordinator, tasks are queued and distributed by
+//! reputation/capacity, and completions produce receipts. This is plain
+//! in-process coordination (a membership `HashMap` and a task `Vec` queue) —
+//! there is no network transport, gossip protocol, or distributed consensus.
+//!
+//! The `check_consensus` method is a simple idle-fraction heuristic: it
+//! reports whether at least `consensus_threshold` of a sector's members are
+//! currently idle (`current_tasks == 0`). It is not a voting or agreement
+//! protocol.
 //!
 //! ## Architecture
 //!
@@ -13,7 +20,7 @@
 //!    ↓                        ↓                         ↓
 //! ─────────────────────── SwarmCoordinator ──────────────────────
 //!    ↓                        ↓                         ↓
-//! TaskQueue          KnowledgeComposition          Consensus
+//! TaskQueue          KnowledgeComposition     IdleFractionHeuristic
 //! ```
 
 pub mod composition;

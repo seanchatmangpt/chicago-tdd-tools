@@ -1,6 +1,6 @@
 # Hyper-Advanced μ-Kernel Verification Substrate
 
-**Version:** 1.3.0
+**Version:** 1.3.0 (originally published at v1.3.0; symbols refreshed 2026-10 against workspace 26.10.12)
 **Status:** Stable
 **Features:** Core (always enabled)
 
@@ -210,9 +210,6 @@ registry.add_receipt(receipt);
 let tau_violations = registry.tau_violations();
 assert!(tau_violations.is_empty());
 
-let production_receipts = registry.query_by_metadata("deploy_env", "production");
-assert_eq!(production_receipts.len(), 1);
-
 let failed_tests = registry.failed_receipts();
 assert!(failed_tests.is_empty());
 ```
@@ -263,11 +260,13 @@ let plan = TestPlan::new(
     },
 );
 
-orchestrator.submit(plan);
+orchestrator.submit_plan(plan);
 
-// Execute pending tests
-let results = orchestrator.execute_pending();
-assert_eq!(results.len(), 1);
+// Execute pending tests one at a time
+while let Some(plan) = orchestrator.next_plan() {
+    let result = orchestrator.execute_plan(&plan);
+    assert_eq!(result.summary.failed, 0);
+}
 
 // Agent suggests tests for code changes
 let suggested = orchestrator.suggest_tests_for_change(&["core::hot"]);
@@ -296,8 +295,8 @@ if gap.has_gaps() {
 
 **Thermal Filtering:**
 ```rust
-let hot_tests = planning_api.filter_by_thermal(TestThermalClass::Hot);
-let warm_tests = planning_api.filter_by_thermal(TestThermalClass::Warm);
+let hot_tests = planning_api.tests_by_thermal_class("hot");
+let warm_tests = planning_api.tests_by_thermal_class("warm");
 ```
 
 ## Complete Workflow Example
@@ -383,20 +382,22 @@ The μ-kernel substrate transforms raw observations (ticks, I/O, state) into cry
 
 ### Coverage Analysis
 ```rust
-let coverage = CoverageAnalysis::new();
-coverage.add_contract(&CONTRACT);
-let gap_report = coverage.generate_gap_report();
+let registry = TestContractRegistry::new(&[CONTRACT]);
+let uncovered = registry.uncovered_modules(&["workflow::critical"]);
+assert!(uncovered.is_empty());
 ```
 
 ### JTBD Validation
 ```rust
-let jtbd = JTBDValidator::new("Ensure critical path meets τ ≤ 8");
-jtbd.validate_with_receipt(&receipt)?;
+let mut jtbd = JtbdValidator::new();
+jtbd.register_scenario(scenario);
+let results = jtbd.validate_all();
+assert!(results.iter().all(|r| r.jtbd_success));
 ```
 
 ### OpenTelemetry
 ```rust
-receipt.add_span_id("otel-span-123");
+receipt.add_metadata("otel_span_id", "otel-span-123");
 receipt.add_metadata("trace_id", "trace-456");
 ```
 
