@@ -88,7 +88,7 @@ Cutting-edge Rust testing libraries, tools, and techniques for Chicago TDD Tools
 
 **cargo-deny** (Dependency Analysis): Dependency license/security checking. License checking, security advisories, dependency graph analysis. Integration value: High.
 
-**cargo-audit** (Security Auditing): Security vulnerability scanning. Security advisory checking, vulnerability reporting. Integration value: High (already in Makefile.toml).
+**cargo-audit** (Security Auditing): Security vulnerability scanning. Security advisory checking, vulnerability reporting. Integration value: High (not currently integrated; Makefile.toml is gone — the build system is the Justfile; this note is historical).
 
 ## Documentation Testing
 

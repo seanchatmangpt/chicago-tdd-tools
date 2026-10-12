@@ -15,9 +15,9 @@ that cannot meet the spec scale **says so** and delivers the strongest
 sound substitute (exhaustive small-domain + calibrated sampling + static
 analysis), **never a silent weakening**.
 
-Every receipt therefore carries three fields for scope: `spec_scale`
-(what the mandate asks), `delivered_scale` (what actually ran), and
-`follow_up` (documented path to full scale, or `null` when the delivered
+Every receipt therefore carries three fields for scope: `spec_mandate`
+(what the mandate asks), `delivered_evidence` (what actually ran), and
+`bound` (documented path to full scale, or `null` when the delivered
 court is itself exhaustive/complete for its claim).
 
 ## Court matrix (N01–N20)
@@ -86,7 +86,7 @@ Each court writes a `CourtReceipt` (see `src/nato/receipt.rs`) as JSON to
 `receipt_id`, `court_id`, `pillar`, `name`, `subject_sha`, `verdict`,
 `metrics`, `positive_control`, `scoping` (a `ScopingRecord`), `digest`,
 and `timestamp_ms`. `scoping` maps the spec mandate to the delivered
-evidence: `spec_mandate`, `delivered_evidence`, `is_full_spec_scale`,
+evidence: `spec_mandate`, `delivered_evidence`, `is_full_spec_mandate`,
 and `bound`.
 
 The positive-control field is one of:
@@ -147,7 +147,7 @@ A real emitted receipt, quoted verbatim from `docs/receipts/N08.json`:
   "scoping": {
     "spec_mandate": "N08: Hamming weight/distance profile across successive states is input-independent",
     "delivered_evidence": "receipt minted from a real tier-1 run: 10,000-step chained kernel profile court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram comparison, plus the firing leaky-observer positive control",
-    "is_full_spec_scale": false,
+    "is_full_spec_mandate": false,
     "bound": "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale"
   },
   "digest": "e6c8d884e346e9e6c22518ee9400789ddbe8a7db7fe2781103033024929a372c",

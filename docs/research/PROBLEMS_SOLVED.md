@@ -47,7 +47,7 @@ This document identifies the core problems that chicago-tdd-tools addresses and 
 **Solution**: Multi-layered timeout enforcement:
 - **Layer 1**: Test-level timeouts (`tokio::time::timeout`) for async tests (1s default)
 - **Layer 2**: Test runner timeouts (cargo-nextest profiles: 1s unit, 30s integration)
-- **Layer 3**: Process-level timeouts (Unix `timeout` command in Makefile.toml)
+- **Layer 3**: Process-level timeouts (Unix `timeout` wrappers in the Justfile recipes)
 - Defense in depth ensures tests never hang indefinitely
 
 **Evidence**: From `docs/TIMEOUT_ENFORCEMENT.md`: "Better to break fast than freeze forever" - Timeouts prevent infinite hangs and ensure fast feedback.
@@ -72,7 +72,7 @@ This document identifies the core problems that chicago-tdd-tools addresses and 
 - `cargo-make` build system standardizes all commands
 - Handles proc-macro crates correctly
 - Includes timeout enforcement automatically
-- Consistent workflow: `cargo make test`, `cargo make check`, `cargo make lint`
+- Consistent workflow: `just test`, `cargo make check`, `cargo make lint`
 
 **Evidence**: From `README.md`: "Always use `cargo make` commands (not `cargo test` directly). The build system handles proc-macro crates and includes timeouts."
 
