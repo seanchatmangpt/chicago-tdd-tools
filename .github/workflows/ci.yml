@@ -279,6 +279,9 @@ jobs:
         with:
           fetch-depth: 0 # Need full history for checking all files
 
+      - name: 📚 Documentation checks (backstop for the pre-commit docs gate)
+        run: just docs-check
+
       - name: 🎯 Check for unwrap/expect (critical signal)
         run: |
           echo "🔴 ANDON SIGNAL: Checking for production code panics..."
@@ -310,7 +313,7 @@ jobs:
             fi
 
             # Count unwrap/expect calls
-            UNWRAPS=$(grep -c '\.unwrap()' "$FILE" 2>/dev/null || echo "0")
+            UNWRAPS=$(grep -c '\.unwrap[(]' "$FILE" 2>/dev/null || echo "0")
             EXPECTS=$(grep -c '\.expect(' "$FILE" 2>/dev/null || echo "0")
 
             if [ "$UNWRAPS" -gt 0 ] || [ "$EXPECTS" -gt 0 ]; then

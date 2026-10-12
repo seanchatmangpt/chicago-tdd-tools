@@ -95,6 +95,12 @@ runtime, never returned by an ABI fn in v1).
 
 Codes 0..=16, no reserved slot.
 
+Disclosure (guest-abi-v1 shim ABI): the v2-only errnos 14/15/16
+(`ERR_OOB_READ`, `ERR_OOB_WRITE`, `ERR_DEFERRED_HEAP`) collapse to 11
+(`ERR_CAP_TOO_SMALL`) at the entry-point boundary under `guest-abi-v1`;
+code 11 keeps its genuine capacity meaning in both ABI states. At v2
+(default) all four are distinct, as tabulated.
+
 ### Cooperative-yield statuses (`guest_yield`)
 
 Distinct from the ABI errno table — these are the yield-protocol statuses
