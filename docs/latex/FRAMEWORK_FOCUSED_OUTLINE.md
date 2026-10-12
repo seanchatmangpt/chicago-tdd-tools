@@ -193,7 +193,7 @@ We show:
 
 ### D: Cargo Features
 - Core Features (always available)
-  - workflow-engine
+  - <!-- workflow-engine: flag removed (phantom; never existed in [features]) -->
   - mutation-testing
   - async
   - benchmarking
