@@ -185,11 +185,11 @@ impl ConformanceSession {
         let words = (0..n)
             .map(|i| {
                 pn64::pack(
-                    1u16 << i,       // pre-place mask; dead payload (overwritten with the live marking at step time)
-                    1u16 << i,       // W-: consume place i
+                    1u16 << i, // pre-place mask; dead payload (overwritten with the live marking at step time)
+                    1u16 << i, // W-: consume place i
                     1u16 << (i + 1), // W+: produce place i+1
-                    i as u8,         // tid = atom index
-                    0,               // flags unused
+                    i as u8,   // tid = atom index
+                    0,         // flags unused
                 )
             })
             .collect::<Vec<_>>();
