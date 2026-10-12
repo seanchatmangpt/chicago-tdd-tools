@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [26.10.12] - 2026-10-11
+
+### Dependency changes (2026-10-12, W50 security closure)
+
+- `wasm4pm-compat` lock-updated 26.6.29 → 26.8.7 (pulls quick-xml 0.41;
+  closes RUSTSEC-2026-0194/0195; matches the upstream wasm4pm 26.10.11
+  workspace pin).
+- `reqwest ^0.11` optional dependency removed (was dead — zero use
+  sites); `weaver` feature no longer carries it. Removes h2 0.3.27
+  (RUSTSEC-2026-0258) and rustls-pemfile (RUSTSEC-2025-0134) from the
+  weaver closure.
+- `h2` 0.4.14 → 0.4.20; `rustls` → 0.23.45 (closes RUSTSEC-2026-0285).
+- `git2` ^0.20 → ^0.21 (closes RUSTSEC-2026-0183/0184).
+- `serde_yaml` → `serde_yaml_ng` 0.10 (serde_yaml itself deprecated).
+- Remaining audit warnings (disclosed): unsafe-libyaml unmaintained
+  (RUSTSEC-2024-0449 — serde_yaml_ng depends on it too; yaml-driver
+  migration is a registered work order) and chacha20 yanked.
+
 ### Added
 - **Temprun guest bridge** (BEAM gen_statem worker + wasmi host bridge, landed
   in strata (host binary `temprun_step`; rebased to guest ABI v2 in strata `59ed80c`): 4-byte

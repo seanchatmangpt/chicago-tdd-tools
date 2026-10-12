@@ -155,8 +155,8 @@ rstest = { version = "^0.19", optional = true }
 trycmd = { version = "^1.2", optional = true }
 
 # Git hooks support (optional, git-hooks feature)
-# When to use: Installing Rust-based git hooks, version-controlled hooks
-# Enables: git_hook_installer binary, git2 dependency for repository operations
+# When to use: kept for dep wiring only — the git_hook_installer binary
+# was retired in wave-8; no code consumes git2
 git2 = { version = "^0.21", optional = true }
 
 # Procedural macros (internal)
@@ -262,8 +262,8 @@ parameterized-testing = ["dep:rstest"]
 cli-testing = ["dep:trycmd"]
 
 # Git hooks support (optional, git-hooks feature)
-# When to use: Installing Rust-based git hooks, version-controlled hooks
-# Enables: git_hook_installer binary, git2 dependency for repository operations
+# When to use: kept for dep wiring only — the git_hook_installer binary
+# was retired in wave-8; no code consumes git2
 git-hooks = ["dep:git2"]
 cli-proof = ["dep:tempfile"]
 
