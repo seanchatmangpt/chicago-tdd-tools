@@ -22,7 +22,7 @@ use proptest::test_runner::{Config, TestRunner};
 /// `MAX_ITEMS` and `MAX_DEPTH` are validated at compile time, providing
 /// zero runtime overhead for configuration.
 /// NOTE: `MAX_DEPTH` is currently unused by generation (advisory only; accessor exists) — disclosed per audit W26.
-$1<const MAX_ITEMS: usize = 10, const MAX_DEPTH: usize = 3> {
+pub struct PropertyTestGenerator<const MAX_ITEMS: usize = 10, const MAX_DEPTH: usize = 3> {
     /// Random seed for reproducibility
     seed: u64,
 }
