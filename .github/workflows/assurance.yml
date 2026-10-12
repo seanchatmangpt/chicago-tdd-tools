@@ -146,6 +146,40 @@ jobs:
       - name: 🎯 Run assurance integration suites
         run: just test-assurance-integration
 
+
+  # **Andon Signal: MEDIUM (Orange)** - Merger-matrix WASM guest assurance.
+  # Builds the merger-guests cdylib for wasm32-unknown-unknown (the artifact
+  # the zero-import court audits — without this job the court permanently
+  # typed-skips in CI) and runs its native tests.
+  merger-guest:
+    name: 🟠 Merger WASM Guest Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v7
+
+      - name: 🔧 Install Rust toolchain (wasm32-unknown-unknown)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: merger-guest-build
+
+      - name: 🔨 Install just
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: just
+
+      - name: 🎯 Merger guest build
+        run: just merger-guest-build
+
+      - name: 🎯 Merger guest tests
+        run: just merger-guest-test
+
   # **Andon Signal: MEDIUM (Orange)** - Full assurance tier (nightly)
   # Expensive full-court verification: NATO full courts, hermetic verification,
   # and dossier emission with uploaded receipts. Runs on schedule only.
