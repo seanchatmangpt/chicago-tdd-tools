@@ -26,6 +26,8 @@ on:
       - 'src/ledger/**'
       - 'tests/conformance*'
       - 'tests/ocel_ingest_tests.rs'
+      - 'tests/adversarial_as4.rs'
+      - 'tests/blake3_receipt_tests.rs'
       - 'tests/ledger*'
       - 'tests/nato*'
       - 'tests/compile_fail/**'
@@ -111,6 +113,38 @@ jobs:
 
       - name: 🎯 Mutation gate
         run: just check-mutation-gate
+
+      - name: 🎯 Assurance integration suites (as4 / blake3 / nato courts)
+        run: just test-assurance-integration
+
+  # **Andon Signal: CRITICAL (Red)** - Standalone assurance-integration job.
+  # Runs tests/adversarial_as4.rs, tests/blake3_receipt_tests.rs, and
+  # tests/nato_courts_tests.rs with their full required feature sets — these
+  # suites were previously local-invocation-only. Timeout-minutes 20 covers
+  # the recipe's 600s per-suite timeout with headroom.
+  assurance-integration:
+    name: 🔴 Assurance Integration Suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v7
+
+      - name: 🔧 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: assurance-integration
+
+      - name: 🔨 Install just
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: just
+
+      - name: 🎯 Run assurance integration suites
+        run: just test-assurance-integration
 
   # **Andon Signal: MEDIUM (Orange)** - Full assurance tier (nightly)
   # Expensive full-court verification: NATO full courts, hermetic verification,

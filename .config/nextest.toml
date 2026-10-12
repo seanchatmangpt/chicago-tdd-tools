@@ -50,6 +50,12 @@ slow-timeout = { period = "120s", terminate-after = 1 }
 filter = 'test(n06_branchless_disasm_census) or test(live_generate_trials_succeed_with_operational_keys) or test(test_check_docker_available_timeout_prevents_hang) or test(dossier_admits_real_court_run_receipts) or test(metric_injected_post_record_is_refused_at_root_time) or test(n05_positive_control_detects_leak_smoke)'
 slow-timeout = { period = "60s", terminate-after = 1 }
 
+# Assurance integration suites (just test-assurance-integration): the NATO
+# registry sweep runs all 20 courts and takes ~60s by design.
+[[profile.default.overrides]]
+filter = 'test(registry_sweep_runs_all_twenty_and_matches_real_receipts)'
+slow-timeout = { period = "120s", terminate-after = 1 }
+
 [profile.integration]
 # Slow profile for integration tests (30s timeout)
 # Used for testcontainers tests that require Docker

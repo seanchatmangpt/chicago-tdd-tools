@@ -1,5 +1,7 @@
 //! Universal BLAKE3 receipt chain validation tests.
 //!
+//! Run via `just test-assurance-integration` (feature receipt-validation).
+//!
 //! These tests validate the BLAKE3 receipt chain protocol used by bcinr-powl
 //! and any other project that claims BLAKE3 chaining. The doctrine is:
 //!

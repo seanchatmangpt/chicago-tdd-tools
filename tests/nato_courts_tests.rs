@@ -1,5 +1,7 @@
 //! NATO court suite — always-run (fast tier) surface.
 //!
+//! Run via `just test-assurance-integration` (feature nato).
+//!
 //! Every tier-3 (`#[ignore = "nato-tier3"]`) court body stays in `src/nato/`.
 //! This file asserts the ALWAYS-RUN surface: the positive-control gate law,
 //! receipt integrity, scoping validation, registry identity, the fast

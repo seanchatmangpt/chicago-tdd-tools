@@ -1,5 +1,9 @@
 //! AS4 adversarial ceiling attacks (v26.10.11 assurance surface).
 //!
+//! Run via `just test-assurance-integration` (requires the full 4-feature
+//! combo "nato,wasm-guest,ocel-ingest,ocel-ingest-json" — see the `#![cfg]`
+//! header below).
+//!
 //! Run:
 //!
 //! ```text

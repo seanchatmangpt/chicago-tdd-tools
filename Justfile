@@ -144,6 +144,21 @@ test-ocel-ingest:
 test-ledger:
     timeout 120s cargo nextest run --features ledger --lib ledger
 
+# Run all three assurance integration suites (tests/adversarial_as4.rs,
+# tests/blake3_receipt_tests.rs, tests/nato_courts_tests.rs), each with its
+# full required feature set. adversarial_as4 MUST use the 4-feature combo
+# "nato,wasm-guest,ocel-ingest,ocel-ingest-json" — its
+# #![cfg(all(feature = "nato", feature = "wasm-guest",
+# feature = "ocel-ingest-json"))] header makes --features nato alone a silent
+# 0-test run.
+# Full run: `just test-assurance-integration`
+test-assurance-integration:
+    timeout 600s cargo nextest run --test adversarial_as4 --features "nato,wasm-guest,ocel-ingest,ocel-ingest-json"
+    timeout 600s cargo nextest run --test blake3_receipt_tests --features receipt-validation
+    # NATO sweep timeout lives in .config/nextest.toml overrides
+    # (registry_sweep_runs_all_twenty alone takes ~60s).
+    timeout 600s cargo nextest run --test nato_courts_tests --features nato
+
 # NATO courts: fast tier (always-run courts; tier-3 via nato-courts-full)
 test-nato:
     timeout 300s cargo nextest run --lib --features nato nato::
