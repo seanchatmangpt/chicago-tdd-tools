@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (RUSTSEC-2026-0258) and rustls-pemfile (RUSTSEC-2025-0134) from the
   weaver closure.
 - `h2` 0.4.14 → 0.4.20; `rustls` → 0.23.45 (closes RUSTSEC-2026-0285).
-- `git2` ^0.20 → ^0.21 (closes RUSTSEC-2026-0183/0184).
+- `git2`/`git-hooks` feature REMOVED entirely (dead weight — zero consumers; the promised git_hook_installer binary was retired in wave-8). Removes git2 0.21 and its RUSTSEC-2026-0183/0184 advisories from the closure.
 - `serde_yaml` → `serde_yaml_ng` 0.10 (serde_yaml itself deprecated).
 - Remaining audit warnings (disclosed): unsafe-libyaml unmaintained
   (RUSTSEC-2024-0449 — serde_yaml_ng depends on it too; yaml-driver
