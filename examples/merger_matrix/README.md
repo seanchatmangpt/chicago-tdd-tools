@@ -81,6 +81,59 @@ hand.** Change the source (shapes/, rules/, deontic/) and regenerate. Files
 without that header — everything currently in this tree — are hand-authored
 sources of truth.
 
+## Open-Texture Limitations
+
+The merger deal is full of Hartian open-texture standards — "material adverse
+effect", "ordinary course", "material breach" — whose whole point is that
+reasonable readers can disagree at the margin. This fixture set flattens every
+one of them into a boolean. That is deliberate for conformance testing, but it
+means the fabric **resolves, it cannot abstain**: a contested condition is
+still forced to a bit, and (see below) the POWL session latches that bit
+permanently.
+
+### Standards modeled as booleans
+
+| Legal standard | Boolean encoding | Where |
+|----------------|------------------|-------|
+| Material adverse effect (MAE) | `ex:occurred` bit on `ex:MaeDefinition` | `materiality.shacl.ttl` |
+| Ordinary-course operation | unpredicated `lkif:Permission` | `merger-obligations.ttl` |
+| Breach / excuse | `ex:excused false` hard-coded per violation | `breach.ttl` |
+| 66.67% vote threshold | `votesCast = for + against`, abstentions vanish | `vote-threshold.n3` |
+
+Each encoding side-steps exactly the hard question. Whether a downturn is
+"material", whether interim operations were "ordinary", whether a breach is
+excused, and whether an abstention counts as a vote cast are precisely the
+disputes merger litigation is made of; here each is pre-answered.
+
+### Constructed indeterminate fact patterns
+
+The skeptic ensemble constructed three fact patterns that sit in the
+open-texture zone and that this fabric cannot represent as indeterminate:
+
+1. **Quantitative-vs-qualitative MAE** — a downturn that clears the
+   quantitative carve-out math but plausibly falls in the qualitative
+   exceptions. The `ex:occurred` bit must be set either way; the fabric has no
+   third value.
+2. **Vacuous ordinary-course** — BetaHoldings' business changed so completely
+   during the interim period that "ordinary course" has no referent. The
+   permission is unpredicated, so it is trivially satisfied.
+3. **Contested votes-cast** — the certificate is ambiguous on whether
+   abstentions count as votes cast. The N3 rule asserts
+   `votesCast = for + against`, so the denominator is fixed by the rule, not
+   by the disputed charter language.
+
+### No abstention path; the latch makes it permanent
+
+`ConformanceSession` (`src/conformance/session.rs`) is a latching state
+machine: the first fault latches the session into `Phase::Faulted`, and a
+completed trace latches `Phase::Complete` — in both cases the phase is
+terminal and cannot be revised. Combine that with the boolean encodings above
+and the behavior is: the fabric takes each contested legal question, forces it
+to a bit during replay, and the session then holds that resolution permanently.
+There is no representation for "this standard is indeterminate, withhold
+judgment" — a court that needs an abstention path must model it upstream of
+this fixture set.
+
 ## Closed world
 
 Shapes use `sh:closed true` with explicit `sh:property` allow-lists over the
