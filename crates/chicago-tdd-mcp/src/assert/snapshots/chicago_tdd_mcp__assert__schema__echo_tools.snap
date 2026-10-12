@@ -1,5 +1,6 @@
 ---
-source: crates/chicago-mcp/src/assert/schema.rs
+source: crates/chicago-tdd-mcp/src/assert/schema.rs
+assertion_line: 33
 expression: canonical
 ---
 [

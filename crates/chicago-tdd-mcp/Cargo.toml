@@ -1,5 +1,8 @@
 [package]
 name = "chicago-tdd-mcp"
+# NOTE (version): 26.7.1 is the last published-adjacent pin; the root workspace
+# moved to 26.10.x while these internal crates stayed (disclosed drift,
+# wave-26 audit — roll forward at the next internal release).
 version = "26.7.1"
 publish = false
 edition = "2021"
