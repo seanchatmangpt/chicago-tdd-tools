@@ -52,7 +52,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 **CI Pipeline**: ~120s expected total (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s). Task: `ci`. Note: Does not include integration tests (use `test-all` for full suite including 60s integration tests).
 
-**Release**: ~180s expected total (ci: 120s, docs-build: 20s). Task: `release`.
+**Release**: ~180s expected total (ci: 120s, docs-build: 180s). Task: `release`.
 
 **Development Workflow**: ~15s expected total (check: 5s, fmt: 5s, test-unit: 1s). Task: `dev`.
 
