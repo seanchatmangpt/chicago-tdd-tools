@@ -169,7 +169,7 @@ R-numbered receipts were not visible to this lane at write time.
 | SX10 | PARTIAL | SMT/hand recovery of fold constants trivially succeeds - REA resistance is cost-elevation only (delay, not impossibility); consistent with SK9. No correctness violation. | DESIGN (document as cost-elevation, not confidentiality) |
 
 Tally: SX3, SX4, SX6, SX7, SX8 FALSIFIED (SX8 FIXED); SX1
-FALSIFIED-BY-ABSENCE (fix in flight); SX2 FALSIFIED (vacuous); SX5
+FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED (vacuous); SX5
 UNSUPPORTED; SX9 HELD (kernel ALIVE); SX10 PARTIAL. No lane remains
 IN-PROGRESS.
 
@@ -181,7 +181,10 @@ IN-PROGRESS.
   mechanism; `Lease.admit` accepts the caller-supplied `attested: true` flag
   without any signature verification. Forged-lease run: 200 leases admitted
   in ~5ms.
-- **Disposition**: fix in flight (R35).
+- **Disposition**: FIXED (R35, strata commit 514308f — lease admission
+  fail-closed via injected verify_sig callback; unverified leases receive
+  honest `deferred_ctt_boundary` instead of `attested: true`). Burn/odometer
+  Sybil mechanisms remain OPEN/UNSUPPORTED (strata KG-SX1).
 
 ### SX2 - Ordering layer absent; MEV position held by in-path adversary
 
