@@ -6,11 +6,11 @@
 //! 1. **Size** — `node_count() <= MAX_MODEL_NODES` (`ModelTooLarge`).
 //! 2. **Structural** — Sequence/Xor/Parallel arity `>= 1`
 //!    (`ArityBelowMinimum`); loop termination bounds are a *type-level*
-//!    guarantee of [`super::loader::PowlNode`] (`Loop.max` is `u8`), and
-//!    activity references are resolved by the loader — W27 PROBE: true only
-//!    for the TEXT entry point; `from_powl_json` does NOT resolve them, so the
-//!    "neither re-checked here" guarantee below fails for the JSON path
-//!    (re-check work order registered).
+//!    guarantee of [`super::loader::PowlNode`] (`Loop.max` is `u8`); activity
+//!    references are resolved here at validate time against the declared
+//!    `activities` map, so the JSON path (`from_powl_json`) — which does not
+//!    resolve them at load — is refused with
+//!    [`ConformanceError::UnknownActivity`] (W27 work order, landed).
 //!
 //! The layering is fail-closed: any layer returning `Err` short-circuits.
 //!
@@ -20,7 +20,9 @@
 //!
 //! See Also: `crate::conformance::error::ConformanceError`
 
-use super::loader::{PowlModel, PowlNode, MAX_POWL_NODES};
+use std::collections::BTreeMap;
+
+use super::loader::{ActivityDecl, PowlModel, PowlNode, MAX_POWL_NODES};
 use super::model::{PetriNet, MAX_PETRI_PLACES};
 use crate::conformance::error::ConformanceError;
 
@@ -41,9 +43,11 @@ pub const MAX_NET_PLACES: usize = MAX_PETRI_PLACES as usize;
 ///
 /// # Errors
 ///
-/// [`ConformanceError::ModelTooLarge`] when the node budget is exceeded and
+/// [`ConformanceError::ModelTooLarge`] when the node budget is exceeded,
 /// [`ConformanceError::ArityBelowMinimum`] when a block constructor has no
-/// children (each layer short-circuits — see the module docs).
+/// children, and [`ConformanceError::UnknownActivity`] when an
+/// [`PowlNode::Activity`] leaf names an activity absent from the declared
+/// `activities` map (each layer short-circuits — see the module docs).
 pub fn validate(model: &PowlModel) -> Result<(), ConformanceError> {
     // Layer 1 — size.
     let found = model.node_count();
@@ -52,18 +56,25 @@ pub fn validate(model: &PowlModel) -> Result<(), ConformanceError> {
     }
 
     // Layer 2 — structural (constructor arity; loop bounds are a type-level
-    // guarantee of `PowlNode::Loop.max`, activity resolution a loader
-    // guarantee — see module docs).
-    walk(&model.root)?;
+    // guarantee of `PowlNode::Loop.max`) + activity-reference resolution
+    // against the declared `activities` map (the JSON loader does not resolve
+    // these — see module docs).
+    walk(&model.root, &model.activities)?;
 
     Ok(())
 }
 
 /// Recursive depth-first structural walk over the [`PowlNode`] tree.
 ///
-/// Enforces minimum arity 1 on every block constructor; loop bounds and
-/// leaf nodes carry no runtime check.
-fn walk(node: &PowlNode) -> Result<(), ConformanceError> {
+/// Enforces minimum arity 1 on every block constructor and resolves every
+/// [`PowlNode::Activity`] name against `activities`; loop bounds are a
+/// type-level guarantee (`Loop.max` is `u8`). Positional fields of the
+/// [`ConformanceError::UnknownActivity`] diagnostic are `0, 0`: the serde
+/// JSON path carries no source offsets.
+fn walk(
+    node: &PowlNode,
+    activities: &BTreeMap<String, ActivityDecl>,
+) -> Result<(), ConformanceError> {
     match node {
         PowlNode::Sequence(children) | PowlNode::Xor(children) | PowlNode::Parallel(children) => {
             if children.is_empty() {
@@ -74,20 +85,22 @@ fn walk(node: &PowlNode) -> Result<(), ConformanceError> {
                 });
             }
             for child in children {
-                walk(child)?;
+                walk(child, activities)?;
             }
             Ok(())
         }
-        // Loop termination is guaranteed by `max`'s type. W27 PROBE
-        // (runtime-verified): the TEXT loader resolves activity refs, but
-        // from_powl_json does NOT — an undeclared activity in JSON loads and
-        // passes validate. Re-check here is a registered work order; the
-        // fail-closed layering holds only for the text entry point.
         PowlNode::Loop { body, redo, .. } => {
-            walk(body)?;
-            walk(redo)
+            walk(body, activities)?;
+            walk(redo, activities)
         }
-        PowlNode::Activity(_) | PowlNode::Silent => Ok(()),
+        PowlNode::Activity(name) => {
+            if activities.contains_key(name) {
+                Ok(())
+            } else {
+                Err(ConformanceError::UnknownActivity { name: name.clone(), line: 0, col: 0 })
+            }
+        }
+        PowlNode::Silent => Ok(()),
     }
 }
 
@@ -245,9 +258,9 @@ mod tests {
         );
     }
 
-    // Loop termination and activity resolution are type/loader guarantees;
-    // the validator never re-observes them (module docs). A bounded loop
-    // over declared activities admits.
+    // Loop termination is a type-level guarantee (`Loop.max` is `u8`);
+    // activity references are resolved at validate time (module docs).
+    // A bounded loop over declared activities admits.
     #[test]
     fn bounded_loop_and_activities_admit() {
         let model = test_fixtures::bounded_loop_model();

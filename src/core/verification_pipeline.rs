@@ -4,9 +4,9 @@
 //! Effects -> State Machine -> Receipt -> Orchestration; `PipelinePhase` also
 //! carries a 7th Governance label). Sequencing is straight-line, NOT a state
 //! machine — phase values are output labels, not enforced transitions.
-//! AUDIT NOTE (wave-24): the error channel is String, not the typed
-//! `UnrecoverableInvariantViolation` vocabulary — typed-channel refactor is a
-//! registered follow-up work order.
+//! The fallible APIs return the typed [`PipelineError`] (Display +
+//! `std::error::Error`); the former wave-24 String error channel was replaced
+//! by this typed vocabulary.
 //!
 //! This module provides the complete A = μ(O) transformation pipeline.
 
@@ -17,6 +17,64 @@ use crate::swarm::test_orchestrator::{QoSClass, ResourceBudget, TestOrchestrator
 use crate::validation::thermal::{HotPathConfig, HotPathTest, ThermalTestError};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
+
+/// Typed error vocabulary for the verification pipeline.
+///
+/// Carries the failure classes previously encoded as formatted `String`
+/// messages in the fallible pipeline APIs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PipelineError {
+    /// A thermal run failed outright (non-tick-budget thermal error).
+    ThermalFailed {
+        /// Debug rendering of the underlying thermal error
+        source: String,
+    },
+    /// τ (tick budget) violation observed during the thermal phase.
+    TauViolation {
+        /// Actual ticks measured
+        actual: u64,
+        /// Configured tick budget
+        budget: u64,
+    },
+    /// Effect-validation invariants were violated.
+    EffectViolations {
+        /// Contract whose invariants were violated
+        contract: String,
+        /// The violated invariant strings
+        violations: Vec<&'static str>,
+    },
+    /// State-machine prerequisites are missing from the environment.
+    MissingPrerequisites {
+        /// Contract whose environment prerequisites were unmet
+        contract: String,
+        /// The missing prerequisite names
+        missing: Vec<&'static str>,
+    },
+}
+
+impl std::fmt::Display for PipelineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ThermalFailed { source } => {
+                write!(f, "Thermal test failed: {source}")
+            }
+            Self::TauViolation { actual, budget } => {
+                write!(f, "τ violation: {actual} > {budget}")
+            }
+            Self::EffectViolations { contract, violations } => {
+                write!(f, "Effect violations for '{contract}': {violations:?}")
+            }
+            Self::MissingPrerequisites { contract, missing } => {
+                write!(
+                    f,
+                    "State machine violation for '{contract}': missing prerequisites {missing:?}"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for PipelineError {}
 
 /// Verification pipeline phase
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -177,7 +235,7 @@ impl VerificationPipeline {
         &mut self,
         contract: &TestContract,
         test_fn: F,
-    ) -> Result<PipelineResult, String>
+    ) -> Result<PipelineResult, PipelineError>
     where
         F: FnOnce() -> T,
         T: Default,
@@ -197,12 +255,12 @@ impl VerificationPipeline {
             Ok(result) => result,
             Err(ThermalTestError::TickBudgetExceeded { actual, budget }) => {
                 if self.config.fail_on_tau_violation {
-                    return Err(format!("τ violation: {actual} > {budget}"));
+                    return Err(PipelineError::TauViolation { actual, budget });
                 }
                 // Continue with actual ticks in relaxed mode (value lost due to error)
                 (T::default(), actual)
             }
-            Err(e) => return Err(format!("Thermal test failed: {e:?}")),
+            Err(e) => return Err(PipelineError::ThermalFailed { source: format!("{e:?}") }),
         };
 
         // Update metrics
@@ -271,7 +329,7 @@ impl VerificationPipeline {
         &mut self,
         contract: &TestContract,
         ticks: u64,
-    ) -> Result<(), String> {
+    ) -> Result<(), PipelineError> {
         let mut violations: Vec<&'static str> = Vec::new();
         for invariant in contract.invariants {
             if let Some(budget_str) = invariant.strip_prefix("τ ≤ ") {
@@ -296,7 +354,10 @@ impl VerificationPipeline {
         }
         self.metrics.effect_violations += violations.len();
         if !violations.is_empty() && self.config.fail_on_effect_violation {
-            return Err(format!("Effect violations for '{}': {:?}", contract.name, violations));
+            return Err(PipelineError::EffectViolations {
+                contract: contract.name.to_string(),
+                violations,
+            });
         }
         alert_info!(
             "Phase 3: effect validation for '{}' — {} checked, {} violations",
@@ -307,7 +368,7 @@ impl VerificationPipeline {
         Ok(())
     }
 
-    fn run_phase4_state_machine(&mut self, contract: &TestContract) -> Result<(), String> {
+    fn run_phase4_state_machine(&mut self, contract: &TestContract) -> Result<(), PipelineError> {
         let mut missing: Vec<&'static str> = Vec::new();
         for prereq in contract.environment {
             // ASCII-fold Greek mu so the key derivation is stable: the
@@ -327,10 +388,10 @@ impl VerificationPipeline {
         }
         self.metrics.state_transitions += contract.environment.len();
         if !missing.is_empty() && self.config.fail_on_effect_violation {
-            return Err(format!(
-                "State machine violation for '{}': missing prerequisites {:?}",
-                contract.name, missing
-            ));
+            return Err(PipelineError::MissingPrerequisites {
+                contract: contract.name.to_string(),
+                missing,
+            });
         }
         alert_info!(
             "Phase 4: state machine for '{}' — {} checked, {} missing",
@@ -349,7 +410,7 @@ impl VerificationPipeline {
     pub fn execute_batch(
         &mut self,
         tests: Vec<(TestContract, Box<dyn FnOnce()>)>,
-    ) -> Result<Vec<PipelineResult>, String> {
+    ) -> Result<Vec<PipelineResult>, PipelineError> {
         let mut results = Vec::new();
 
         for (contract, test_fn) in tests {

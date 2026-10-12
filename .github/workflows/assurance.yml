@@ -216,7 +216,22 @@ jobs:
       - name: 🎯 Hermetic verification
         run: just verify-hermetic
 
+      - name: 📋 Checkout affidavit repo (pinned)
+        # `just emit-dossier` routes through the external affi binary, which
+        # resolves its data via AFFIDAVIT_DIR (Justfile defaults to
+        # /Users/sac/affidavit — absent on GitHub runners). Check out the
+        # affidavit repo at a pinned SHA into the workspace and point
+        # AFFIDAVIT_DIR at it. Checkout failure must fail the job loudly.
+        continue-on-error: false
+        uses: actions/checkout@v7
+        with:
+          repository: seanchatmangpt/affidavit
+          ref: b5112f321816837ee0c2594a00768a7f7d994d51  # pinned 2026-10-12 (origin/main at pin time; local 27cd80ae was unpushed)
+          path: affidavit
+
       - name: 🎯 Emit dossier
+        env:
+          AFFIDAVIT_DIR: ${{ github.workspace }}/affidavit
         run: just emit-dossier
 
       - name: 📤 Upload assurance receipts

@@ -509,7 +509,7 @@ let _network: Effects<NetworkRead> = Effects::new();
 
 ### State Machine Testing (Track 4)
 
-> **AUDIT NOTE (W28 probe correction):** the snippet below uses **illustrative type names** — `StateMachine` exists in the crate (`src/testing/state_machine.rs`) but is NOT prelude-exported, and `Init`/`Connected`/`Connect` do not exist anywhere; the snippet is un-compilable as written and kept for concept only. The landed, prelude-exported type-state surface is `TestState<Arrange/Act/Assert>` (`src/core/state.rs`).
+> **AUDIT NOTE (W28 probe correction):** the snippet below uses **illustrative type names** — `StateMachine` exists and IS prelude-exported (`src/testing/state_machine.rs:82`; prelude glob at src/lib.rs:383), but `Init`/`Connected`/`Connect` do not exist anywhere, so the snippet is un-compilable as written and kept for concept only. The landed, prelude-exported type-state surface is `TestState<Arrange/Act/Assert>` (`src/core/state.rs`).
 
 ```rust
 use chicago_tdd_tools::prelude::*;

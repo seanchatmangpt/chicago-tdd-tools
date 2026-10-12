@@ -1038,13 +1038,22 @@ mod tests {
     #[test]
     fn oversized_model_rejected_by_place_budget() {
         use super::super::loader::{PowlModel as M, PowlNode as N};
-        // 16 atoms need 17 places > MAX_PETRI_PLACES.
+        // 16 atoms need 17 places > MAX_PETRI_PLACES. Activities are
+        // declared so the activity-resolution check passes and the test
+        // isolates the place-budget refusal (landed with the JSON-path
+        // activity check).
         let atoms: Vec<N> = (0..16).map(|i| N::Activity(format!("a{i}"))).collect();
-        let model = M {
-            activities: BTreeMap::new(),
-            declaration_order: Vec::new(),
-            root: N::Sequence(atoms),
-        };
+        let mut activities = BTreeMap::new();
+        for i in 0..16 {
+            activities.insert(
+                format!("a{i}"),
+                super::super::loader::ActivityDecl {
+                    source: format!("src{i}"),
+                    event: format!("ev{i}"),
+                },
+            );
+        }
+        let model = M { activities, declaration_order: Vec::new(), root: N::Sequence(atoms) };
         assert!(matches!(
             ConformanceSession::from_model(&model),
             Err(ConformanceError::TooManyPlaces { limit: 16 })

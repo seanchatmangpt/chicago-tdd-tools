@@ -531,3 +531,64 @@ fn loop_with_zero_max_is_carried_not_rejected_by_loader() {
     };
     assert_eq!(max, 0);
 }
+
+// ---------------------------------------------------------------------------
+// W27 work order — JSON path activity-reference resolution (validate layer)
+// ---------------------------------------------------------------------------
+// `from_powl_json` deserializes verbatim and does NOT resolve
+// `PowlNode::Activity` names against the declared `activities` map (the DSL
+// refuses at parse time). The check now lives in `validate()`, so the JSON
+// path is refused with `UnknownActivity` (line/col 0,0 — no source offsets
+// on the serde path).
+
+#[test]
+fn json_model_with_declared_activities_validates() {
+    let json = r#"{
+        "activities": {
+            "handle": { "source": "log", "event": "handle" },
+            "fork": { "source": "robot", "event": "fork" }
+        },
+        "declaration_order": ["handle", "fork"],
+        "root": {
+            "kind": "sequence",
+            "children": [
+                { "kind": "activity", "name": "handle" },
+                { "kind": "xor", "children": [
+                    { "kind": "activity", "name": "fork" },
+                    { "kind": "silent" }
+                ]}
+            ]
+        }
+    }"#;
+    let model = PowlModel::from_powl_json(json).expect("valid JSON must deserialize");
+    assert_eq!(validate::validate(&model), Ok(()));
+}
+
+#[test]
+fn json_model_with_undeclared_activity_ref_is_refused() {
+    let json = r#"{
+        "activities": {
+            "handle": { "source": "log", "event": "handle" }
+        },
+        "declaration_order": ["handle"],
+        "root": {
+            "kind": "sequence",
+            "children": [
+                { "kind": "activity", "name": "handle" },
+                { "kind": "activity", "name": "ghost" }
+            ]
+        }
+    }"#;
+    let model = PowlModel::from_powl_json(json).expect("JSON must deserialize");
+    let err = match validate::validate(&model) {
+        Err(e) => e,
+        Ok(()) => panic!("undeclared JSON activity reference must be refused"),
+    };
+    match err {
+        ConformanceError::UnknownActivity { name, line, col } => {
+            assert_eq!(name, "ghost");
+            assert_eq!((line, col), (0, 0), "serde path carries no source offsets");
+        }
+        other => panic!("expected UnknownActivity, got {other:?}"),
+    }
+}

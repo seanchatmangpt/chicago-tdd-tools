@@ -118,6 +118,10 @@ impl HotPathConfig {
 
 /// Warm path test configuration
 ///
+/// Disclosure: the `500_000` / `1_000_000` tick values are engineering
+/// budgets (~125μs / ~250μs at 4GHz), not derived physical constants.
+/// "τ-law" phrasing elsewhere is shorthand for this configurable budget.
+///
 /// Enforced by this harness: the tick budget (`max_ticks`). The memory,
 /// network, and storage fields are configuration passthrough for the
 /// verification pipeline; memory/IO enforcement is not implemented here.

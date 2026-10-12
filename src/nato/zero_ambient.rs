@@ -111,6 +111,19 @@ pub const AUDITED_MODULES: &[(&str, &str)] = &[
     // W15: entropy.rs is eligible-pure (zero std:: references) — added to
     // the scan per the AUDITED-MODULES coverage-gap register entry.
     ("entropy.rs", include_str!("entropy.rs")),
+    // N04 extension (W13/W24 register, landed this wave): five further
+    // eligible-pure court modules (wcet.rs was already scanned). liveness/
+    // hamming carry no production
+    // std:: surface; seu/tick/thrash use only the allowlisted paths added
+    // below. Still excluded + disclosed: zero_ambient.rs (self),
+    // disasm/stackbound (ambient harnesses), cache.rs (std::process),
+    // reproducible.rs (production std::fs receipt locator), and the
+    // env-gated receipts/guest_audit/dossier_court.
+    ("liveness.rs", include_str!("liveness.rs")),
+    ("hamming.rs", include_str!("hamming.rs")),
+    ("seu.rs", include_str!("seu.rs")),
+    ("tick.rs", include_str!("tick.rs")),
+    ("thrash.rs", include_str!("thrash.rs")),
 ];
 
 /// Ambient-authority symbols banned on every state path.
@@ -128,6 +141,12 @@ pub const STD_ALLOWLIST: &[&str] = &[
     "std::hint",   // black_box measurement hygiene
     "std::thread", // idle-cooldown between timing attempts (documented)
     "std::str",    // core reexport (utf8 decode in the KAT loader)
+    // N04 extension allowlist additions, each justified:
+    "std::panic",      // seu.rs: catch_unwind classifies panic-under-fault as SDC
+    "std::cell",       // tick.rs: Cell tick-source injection state
+    "std::fmt",        // tick.rs: Debug/Display impls (boilerplate, no I/O)
+    "std::sync::mpsc", // thrash.rs: watchdog/adversary message channels
+    "std::sync::Arc",  // thrash.rs: shared adversary state across threads
 ];
 
 /// A single ambient/allowlist finding, `module:line` addressed.
@@ -421,11 +440,7 @@ mod tests {
     fn n04_audit_surface_is_not_vacuously_small() {
         // The audited set must cover the framework core + this lane's
         // courts; a shrunken enumeration would silently vacate the court.
-        assert!(
-            AUDITED_MODULES.len() >= 12,
-            "audited module set suspiciously small: {}",
-            AUDITED_MODULES.len()
-        );
+        assert_eq!(AUDITED_MODULES.len(), 20, "audited module set drifted from the extended set");
         for (name, src) in AUDITED_MODULES {
             assert!(!src.is_empty(), "audited module {name} embedded empty");
         }

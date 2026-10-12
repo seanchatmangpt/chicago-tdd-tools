@@ -131,3 +131,4 @@ Test files present on disk, previously unlisted:
 - `nato_courts_tests.rs`
 - `observability_fixtures_tests.rs`
 - `ocel_ingest_tests.rs`
+- `temp_workspace_tests.rs` (W30 coverage lane; feature `cli-proof`)
