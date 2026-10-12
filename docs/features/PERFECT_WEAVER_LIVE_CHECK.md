@@ -1,5 +1,21 @@
 # Perfect Weaver Live-Check Implementation Guide
 
+> **STATUS — partially aspirational.** This page describes the *target* ("perfect")
+> architecture, not the fully landed implementation. As of this writing:
+>
+> **Landed** (in `src/`): the poka-yoke constants and error variants, the
+> `RegistryState` type-state machine, and the `weaver_test!` macro.
+>
+> **Aspirational** (described here, not in `src/`):
+> - The 10-state process state machine — the landed implementation uses
+>   2 type-states (`Stopped`/`Running`).
+> - Exponential-backoff readiness polling — the landed implementation uses a
+>   fixed 5-second connect timeout.
+> - `WEAVER_STARTUP_TIMEOUT` / `WEAVER_SKIP_REGISTRY_VALIDATION` env vars —
+>   not read anywhere in `src/`.
+> - `NonZeroPort` / `PositiveTimeout` in the `WeaverValidator` — these types
+>   landed in the core config layer, not the weaver module.
+
 ## Overview
 
 This document describes the perfect implementation of Weaver live-check testing, ensuring reliable, type-safe, and error-resistant telemetry validation. The implementation follows Chicago TDD principles, elite Rust developer standards, and poka-yoke (error prevention) design patterns.
@@ -151,7 +167,7 @@ Perfect error handling provides clear, actionable error messages:
 1. **Pre-Start Errors**:
    - `BinaryNotFound` - Weaver binary not found
    - `RegistryNotFound` - Registry path invalid or missing
-   - Fix instructions: Run `cargo make weaver-bootstrap`, pin to known-good version
+   - Fix instructions: Run `just weaver-bootstrap`, pin to known-good version
 
 2. **Startup Errors**:
    - `ProcessStartFailed` - Process spawn failed
