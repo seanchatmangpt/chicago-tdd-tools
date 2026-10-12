@@ -41,16 +41,16 @@ Pinnacle of Chicago TDD methodology. Embodies all four Chicago TDD principles in
 1. **Bootstrap prerequisites**
    ```bash
    # Downloads weaver binary + semantic convention registry
-   cargo make weaver-bootstrap
+   just weaver-bootstrap
    ```
 2. **Run smoke validation**
    ```bash
    # Verifies weaver --version and sends a test span without Docker
-   cargo make weaver-smoke
+   just weaver-smoke
    ```
 3. **Execute integration (Docker required)**
    ```bash
-   cargo make test-integration    # Runs testcontainers + Weaver live-check suite
+   just test-integration          # Runs testcontainers + Weaver live-check suite
    ```
 
 > **Explicit skip only**: Set `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests temporarily (e.g., constrained CI runners). Without the flag, missing prerequisites panic to enforce dogfooding discipline.
