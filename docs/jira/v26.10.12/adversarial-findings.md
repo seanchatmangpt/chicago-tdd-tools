@@ -324,3 +324,17 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   in zero_ambient.rs); extending to eligible pure modules queued.
 - **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
   live-doc cites purged.
+- **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
+  live-doc cites purged.
+- **core::type_level markers** (DOCS-GRADE, W15 audit): ValidatedSize/
+  ValidatedRange/ConstSizeValid/ConstRangeValid have zero production
+  consumers (only prelude-surface test + doctests); docs honestly say
+  "documentation only, no actual validation" — ERRC candidate or
+  explicit by-design note, queued.
+- **core::receipt partial-signature** (SEE ABOVE) and **cli_proof
+  TempWorkspace drop-cleanup** (unwitnessed, tempfile-RAII-delegated).
+- **invariant_properties coverage** (W15 audit): 21 proptest properties
+  cover ~8 of 12 phases; phases 1/4/7/10 have unit tests only.
+- **nfr1_latency_slo_test** (strata, W14): timing-sensitive flake
+  witnessed once on cold fail-fast run, passed on retries — same class
+  as fr7_constant_time.
