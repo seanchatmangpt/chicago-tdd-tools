@@ -74,8 +74,8 @@ mod tests {
     });
 
     #[cfg(feature = "weaver")]
-    /// Example: weaver_test_with_timeout! macro with custom timeout
-    weaver_test_with_timeout!(test_weaver_timeout, 30, {
+    /// Example: weaver_test! macro (no timeout variant exists)
+    weaver_test!(test_weaver_timeout, {
         // Arrange: Create validator
         let registry_path = PathBuf::from("registry/");
         let validator = WeaverValidator::new(registry_path);

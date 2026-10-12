@@ -35,6 +35,10 @@ async fn bounded<F: std::future::Future>(fut: F) -> F::Output {
 }
 
 fn echo_bin() -> PathBuf {
+    // AUDIT NOTE (W15): this cargo build runs inside the first test's
+    // bounded(60s) window — under fan-out load the target-dir file lock
+    // alone can consume most of it, and the timeout message names the echo
+    // server when the real wait was the build lock.
     ECHO_BIN
         .get_or_init(|| {
             let output = std::process::Command::new("cargo")
