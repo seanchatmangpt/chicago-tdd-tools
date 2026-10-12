@@ -11,7 +11,7 @@ Complete API reference for Chicago TDD Tools, organized by module.
   - Expands to: `#[test] fn $name() -> Result<(), Box<dyn std::error::Error>> { /* trait conversion */ }`
   - Return types: Supports both `()` and `Result<(), E>` return types
   - Error handling: Use `?` operator for error propagation - errors are converted to panics
-  - Timeout: Relies on cargo-nextest profile timeout (1s for unit tests)
+  - Timeout: Relies on the nextest default-profile slow-timeout (5s per test, .config/nextest.toml); the 1s figure is async_test!'s tokio-level timeout, not nextest's
   - Example: `test!(test_with_result, { fallible_function()?; Ok(()) })`
 
 - **`async_test!(name, body)`**: Async tests with AAA pattern (1s timeout default)
