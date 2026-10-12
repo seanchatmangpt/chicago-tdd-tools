@@ -6,8 +6,9 @@
 *.exe
 *.dll
 
-# Test executables
-tests/chicago_*
+# Test executables (bin artifacts; test SOURCES are tracked — the old
+# tests/chicago_* rule silently ignored real test files, e.g.
+# tests/chicago_test_macro_tests.rs)
 tests/*_test
 tests/*_test.exe
 

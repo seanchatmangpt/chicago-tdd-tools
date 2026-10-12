@@ -1,0 +1,5 @@
+error: chicago_test! does not support async test fns
+ --> tests/compile_fail/chicago_test_async.rs:7:10
+  |
+7 | async fn rejects_async_fns() {
+  |          ^^^^^^^^^^^^^^^^^

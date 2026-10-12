@@ -1,0 +1,5 @@
+error: chicago_test! does not support parameterized test fns
+ --> tests/compile_fail/chicago_test_parameterized.rs:6:4
+  |
+6 | fn rejects_parameterized_fns(x: u32) {
+  |    ^^^^^^^^^^^^^^^^^^^^^^^^^
