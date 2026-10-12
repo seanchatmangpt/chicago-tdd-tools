@@ -452,7 +452,7 @@ mod tests {
 
     #[test]
     fn cap_refusal_is_typed_model_too_large() {
-        // A fan-out net: t_i moves p0 -> p_i for 20 distinct targets, so the
+        // A fan-out net: fanout_net builds 14 transitions, each consuming p0 and producing p_i (1+14 reachable states > cap 8), so the
         // reachable set is shared-preset fan-out (1 + N reachable states) — far past a tiny cap.
         let ss = StateSpace::new(fanout_net(), Marking64(0b1), 0)
             .expect("net is valid")

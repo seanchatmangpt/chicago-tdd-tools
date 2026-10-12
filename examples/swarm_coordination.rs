@@ -30,14 +30,14 @@
 //! ## Explanation: Concepts
 //!
 //! **Swarm Protocol**: Distributed multi-sector coordination without central control.
-//! Uses gossip and consensus mechanisms to coordinate operations across sectors.
+//! Single-node coordination only: no gossip protocol or distributed consensus (see src/swarm/mod.rs) to coordinate operations across sectors.
 //!
 //! **Swarm Members**: Agents that participate in the swarm. Each member:
 //! - Has sector capabilities (Academic, Claims, etc.)
 //! - Has capacity for concurrent tasks
 //! - Maintains reputation based on task completion
 //!
-//! **Task Receipts**: Cryptographic proof of work done by swarm agents.
+//! **Task Receipts**: Receipt records of task execution (what was done, by whom, when, result; not cryptographic attestation) done by swarm agents.
 //! Each receipt proves: what was done, by whom, when, and the result.
 //!
 //! **Knowledge Hooks**: Operations that can be composed across sectors.

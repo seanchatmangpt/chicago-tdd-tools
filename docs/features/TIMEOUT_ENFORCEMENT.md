@@ -38,7 +38,7 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 - Integration tests: `timeout 60s cargo nextest run ... --profile integration`
 - Unix `timeout` command kills entire process if it exceeds the timeout
 
-**Note**: Synchronous test macros (`test!`, `otel_test!`) rely on cargo-nextest profile timeouts rather than test-level timeouts. This allows cargo-nextest to apply the correct timeout based on the profile used (1s for unit tests, 30s for integration tests).
+**Note**: Synchronous test macros (`test!`, `otel_test!`) rely on cargo-nextest profile timeouts rather than test-level timeouts. This allows cargo-nextest to apply the correct timeout based on the profile used (5s for unit tests, 30s for integration tests).
 
 ## Benefits
 

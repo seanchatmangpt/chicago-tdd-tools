@@ -11,7 +11,7 @@
 //! per strata LICENSE), retargeted from the donor's sequencer onto the landed
 //! `CasRing` claim/commit/drain surface (claim/commit/abandon at
 //! ring.rs:167/:208/:232). Eviction-thread body mirrors N07's storm thread
-//! (crate::nato::cache.rs:245 `storm_thread`): LCG-strided mutating writes
+//! (crate::nato::cache.rs `storm_thread`, ~:254): LCG-strided mutating writes
 //! over a 2x-L2 buffer, 64 touches per stop-flag check.
 //!
 //! Spec (docs/nato/NATO_N01_N20.md, N14): "16 adversarial threads vs
@@ -237,7 +237,7 @@ impl ThrashConfig {
 }
 
 /// Knuth LCG over 2^64: full period; the stride covers every cache set at
-/// every level. Same shape as N07's `storm_thread` (cache.rs:245).
+/// every level. Same shape as N07's `storm_thread` (cache.rs:254).
 #[inline]
 fn lcg(x: u64) -> u64 {
     x.wrapping_mul(6_364_136_223_846_793_005)

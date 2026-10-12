@@ -47,7 +47,7 @@ SHACL (`sh:closed true`).
 ### In flight
 
 - merger-guests WASM artifact build — `crates/merger-guests` is landed as
-  source (workspace member, `Cargo.toml` `members` line 469); the wasm32
+  source (workspace member, `Cargo.toml` `members` line 463); the wasm32
   cdylib artifact itself is not built in this checkout.
 - temprun ABI re-base — merger-guests targets a uniform `mgi_*` stateless
   ABI; re-basing onto the temprun leaf ABI exercised by

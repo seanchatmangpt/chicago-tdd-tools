@@ -36,8 +36,8 @@
 //! cdylib (same pattern as `ctt-wasm-guest` re-exporting the parent's guest
 //! surface). The `pub use` lines below land with the leaf lanes:
 //!
-//! - **MG2**: 4 leaf kernels (first four `mgi_*` entry points)
-//! - **MG3**: 4 leaf kernels (last four `mgi_*` entry points)
+//! - **MG2**: 2 leaf kernels (ids 1-2: hhi_calc, netting_engine)
+//! - **MG3**: 2 leaf kernels (ids 3-4: simm_matrix, collateral_lp); **MG4** carries ids 7-10 (vote_reconciler, netting_settler, fractional_shares, pn64_audit) — see the ten-slot table below
 //!
 //! Each leaf module MUST define its entry points as
 //! `#[no_mangle] pub extern "C" fn mgi_<leaf>_compute(...)` matching the

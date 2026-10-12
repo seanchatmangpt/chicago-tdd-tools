@@ -29,7 +29,7 @@ impl SnapshotAssert {
     ///
     /// # Arguments
     ///
-    /// * `value` - The value to snapshot (must implement `Display` or `Debug`)
+    /// * `value` - The value to snapshot (must implement `Display` (for `Debug` values use `assert_debug_matches`))
     /// * `snapshot_name` - Name of the snapshot (used as filename)
     ///
     /// # Panics
