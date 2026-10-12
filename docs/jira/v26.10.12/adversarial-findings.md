@@ -621,12 +621,16 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   for BuilderError/ReceiptJsonError/DossierWireError (ledger-gated)/
   SwarmError. Remaining: DiagnosticSink::emit/close (blocks on a
   coordinated ocel-collector splice — registered).
-- DoD §2.3 — FULLY CLOSED (0c2375d, W49f/g): zero `Result<_, String>`
-  error slots in src/ production code at ALL visibilities (pub fn, trait
-  method, type alias, closure bound). Final 3: builders ValidationFn
-  alias + with_validation bound (BuilderError), effects
-  RequiresEffect::execute family (BuilderError::BuildFailure), weaver
-  download_weaver_runtime (WeaverError::Spawn, 10 sites). Prelude
+- DoD §2.3 — CLOSED WITH SCOPING (0c2375d, W49f/g; corrected by W49k):
+  the named-surface conversions landed exactly as listed (builders
+  ValidationFn + with_validation + run_validations, effects
+  RequiresEffect::execute family, weaver download_weaver_runtime with
+  **15** WeaverError::Spawn sites — the W49g message said 10, an
+  undercount). The W49g/W49h "zero at ALL visibilities" framing was an
+  overclaim: one PUBLIC fn retains a String Err with a different shape —
+  ocel/wasm4pm.rs:61 seal_run -> Result<(_, String), String> — plus
+  private-fn String channels (import_xml parse_variant, loader take).
+  Those are registered as the next conversion pass. Prelude
   DossierWireError gate corrected ledger→nato (the ledger-only gate was
   an E0432 — `cargo check --features ledger` and bare
   `cargo test -p ctt-wasm-guest` were broken by it); prelude surface
