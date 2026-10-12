@@ -1,4 +1,8 @@
 [toolchain]
+# DRIFT DISCLOSURE (audit W11): local dev pins this nightly (clippy
+# pedantic/nursery behavior is nightly-sensitive); CI (dtolnay stable/beta)
+# intentionally runs the broader channel matrix. Both must stay green —
+# a lint that passes only on one channel is a finding.
 channel = "nightly-2026-04-15"
 components = ["rustfmt", "clippy"]
 profile = "minimal"
