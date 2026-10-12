@@ -36,7 +36,7 @@ chicago-tdd-tools = { path = "../..", default-features = false, features = [
 #   target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
 #
 # NOTE: profile.release in a non-root workspace member is ignored by cargo
-# (profiles are root-only). Kept here to mirror pn_kernel's manifest intent.
+# (profiles are root-only). Formerly kept (deleted as inert in the W11 audit) to mirror pn_kernel's manifest intent.
 # panic = "abort" is NOT carried to the workspace root [profile.release]
 # deliberately: the NATO SEU courts (src/nato/seu.rs) depend on
 # catch_unwind to score SDC, and abort would disable unwinding
