@@ -1,4 +1,7 @@
 # Nextest configuration for chicago-tdd-tools
+# INERT FILE (audit W11): cargo-nextest reads .config/nextest.toml only —
+# this root-level copy is not consumed by any tool. Kept only because
+# cookbook/src/design-patterns/timeout-defense.md links to it as an example.
 # Reference: https://nexte.st/docs/configuration/
 
 [profile.default]

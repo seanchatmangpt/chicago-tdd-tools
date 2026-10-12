@@ -51,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-14 closeout** (`62eee62`..`1c7dbf4`): CI/local toolchain drift
+  disclosed (rust-toolchain pins nightly; CI runs the stable/beta
+  matrix; dead `continue-on-error: rust == nightly` line removed);
+  ineffective member `[profile.release]` blocks deleted with honest
+  artifact-property disclosure (guest artifacts build with cargo
+  release defaults); crate-doc module inventory refreshed (19
+  submodules + 7 top-level modules were unlisted); stale `probe == 1`
+  TODO fixed; API_REFERENCE `LoomModel` cites corrected;
+  INVARIANT_MATRIX marked HISTORICAL (60/47/52 count mismatch);
+  contract.rs coverage claim narrowed to per-registry analysis;
+  README coverage SLA 30s -> 600s; property_testing stanza
+  required-features added.
 - **Wave-12/13 closeout** (`211c5a7`/`dca26a2`/`8f3f21f`/`1fccd33`/
   `b8ff30c`/`ca3010b`): wave-8 audit repairs re-applied (proc-macro
   guards lost to a shared-tree checkout incident; spanned errors for

@@ -937,7 +937,7 @@ just install-hooks  # Install git hooks that prevent unwrap/expect in production
 - Lint: 300s (CI cold-start)
 - Unit tests: 1s per test
 - Integration tests: 30s with Docker
-- Coverage: 30s
+- Coverage: 600s
 
 ### Runtime Safety
 

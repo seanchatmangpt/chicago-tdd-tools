@@ -384,6 +384,7 @@ path = "examples/basic_test.rs"
 [[example]]
 name = "property_testing"
 path = "examples/property_testing.rs"
+required-features = ["property-testing"]
 
 [[example]]
 name = "mutation_testing"

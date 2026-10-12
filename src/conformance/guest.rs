@@ -408,7 +408,7 @@ pub(crate) fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
 /// external test-side mutex. A poisoned lock (a panic inside some earlier
 /// `f`) is recovered with `into_inner`: the table's slot/generation
 /// invariants fail closed at the ABI boundary (`ERR_BAD_HANDLE` /
-/// `ERR_TABLE_FULL`) regardless, and `panic = "abort"` guest builds never
+/// `ERR_TABLE_FULL`) regardless, and guest builds (panic strategy is unwind for in-workspace builds — see crates/ctt-wasm-guest/Cargo.toml audit note) never
 /// observe poisoning.
 fn with_table<R>(f: impl FnOnce(&mut Table) -> R) -> R {
     let mut guard = TABLE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);

@@ -1,4 +1,8 @@
 # Invariant Failure Matrix: Chicago TDD Tools Fail-Fast Hardening
+> **HISTORICAL (2026-10).** The counts in this matrix (60 enumerated rows,
+> "Total: 47") do not match the source of truth — `src/core/invariants.rs`
+> defines exactly 52 invariant violation types. Do not cite this page's
+> numbers; read the enum (and its 13 passing tests) instead.
 
 **Version:** 1.0.0 | **Date:** 2025-11-16 | **Scope:** Phases 1-12
 

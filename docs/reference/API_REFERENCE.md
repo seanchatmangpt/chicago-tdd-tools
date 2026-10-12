@@ -350,7 +350,7 @@ Concurrency testing. Thread model checking. Deterministic concurrency testing.
 - `new() -> Self` - Create model
 - `model(|| { /* concurrent code */ })` - Model concurrent code
 
-**Pattern**: `LoomModel::new().model(|| { /* concurrent code */ })`.
+**Pattern**: `ConcurrencyTest::new().run(|| { /* concurrent code */ })`.
 
 **Requirements**: `concurrency-testing` feature.
 

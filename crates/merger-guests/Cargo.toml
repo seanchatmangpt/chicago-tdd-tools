@@ -9,6 +9,11 @@ license = "MIT"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# AUDIT NOTE (W11): any [profile.release] here is IGNORED by cargo (this is
+# a non-root workspace member; the workspace root defines no profiles). The
+# real guest artifacts are built with cargo release defaults (opt-level 3,
+# lto off, panic=unwind, codegen-units 16) — panic=abort intentionally NOT
+# set at root because the NATO SEU courts depend on catch_unwind.
 [dependencies]
 chicago-tdd-tools = { path = "../..", default-features = false, features = [
   "logging",
@@ -33,12 +38,6 @@ chicago-tdd-tools = { path = "../..", default-features = false, features = [
   "nato",
 ] }
 
-[profile.release]
-opt-level = "z"
-lto = true
-panic = "abort"
-codegen-units = 1
-strip = true
 
 # Workspace member: `crates/merger-guests` (coordinator owns the root
 # Cargo.toml `workspace.members` edit; this lane reports the line only).

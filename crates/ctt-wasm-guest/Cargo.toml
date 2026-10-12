@@ -26,12 +26,6 @@ chicago-tdd-tools = { path = "../..", default-features = false, features = [
 # re-add a `js`-feature uuid here; it would pull wasm-bindgen imports into
 # the guest and break the empty-import-section census.
 
-[profile.release]
-opt-level = "z"
-lto = true
-panic = "abort"
-codegen-units = 1
-strip = true
 
 # Workspace member: root Cargo.toml members already includes "crates/ctt-wasm-guest"
 # (coordinator). No nested [workspace] table — multi-root breaks cargo -p.

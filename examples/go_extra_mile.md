@@ -3,7 +3,7 @@
 **Category:** Explanation
 **Level:** Intermediate to Advanced
 **Prerequisites:** Understanding of testing and type systems
-**Features Required:** `otel`, `weaver` (optional)
+**Features (optional, degrade gracefully):** `otel`, `weaver` (optional)
 
 ---
 
