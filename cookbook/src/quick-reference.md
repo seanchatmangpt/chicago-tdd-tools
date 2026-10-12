@@ -157,16 +157,3 @@ Each pattern encodes compile-time, build-time, or runtime guarantees using the P
 ---
 
 **Pro Tip:** Start with Pattern 1 (AAA). It's the foundation. Then add Patterns 2-5 as you build test confidence. Add Architecture patterns as teams grow. Add Design patterns when you hit performance/safety walls.
-
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |

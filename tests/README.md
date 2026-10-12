@@ -37,9 +37,7 @@ tests/
 │   └── star_toml_e2e__star_toml_default_config_snapshot.snap
 ├── test_common.inc                     # Shared snippet included by test files
 ├── blake3_receipt_tests.rs             # BLAKE3 receipt chain tests
-├── challenger_m1_2_tests.rs            # Challenger M1.2 tests
 ├── dependency_lock_guard.rs            # Dependency lock guard tests
-├── governance_tests.rs                 # Governance module tests
 ├── hyper_advanced_integration.rs       # Hyper advanced integration tests
 ├── ocel_tests.rs                       # OCEL 2.0 process mining tests
 ├── star_toml_e2e.rs                    # Star TOML end-to-end tests (snapshot-backed)
@@ -116,3 +114,20 @@ This consolidation:
 - Improved maintainability
 - Made test organization clearer
 - Reduced file count while maintaining test coverage
+
+## Wave-28 audit addendum (regenerated inventory)
+
+Test files present on disk, previously unlisted:
+
+- `adversarial_as4.rs`
+- `chicago_test_macro_tests.rs`
+- `conformance_loader_tests.rs`
+- `conformance_tests.rs`
+- `dossier_cli_tests.rs`
+- `guest_abi_tests.rs`
+- `ledger_sealing_tests.rs`
+- `ledger_tests.rs`
+- `merger_conformance_tests.rs`
+- `nato_courts_tests.rs`
+- `observability_fixtures_tests.rs`
+- `ocel_ingest_tests.rs`

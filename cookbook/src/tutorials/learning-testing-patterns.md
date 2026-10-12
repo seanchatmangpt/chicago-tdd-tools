@@ -421,16 +421,3 @@ If you answered yes to all, you've mastered Testing Patterns! 🎉
 ---
 
 **Congratulations!** You now understand the 5 fundamental testing patterns. Next, learn how to organize your code with Architecture Patterns.
-
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |

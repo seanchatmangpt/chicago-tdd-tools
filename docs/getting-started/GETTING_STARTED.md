@@ -37,7 +37,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools" }  # Or use git URL when pub
 tokio = { version = "1.0", features = ["rt", "macros"] }
 ```
 
-**Note**: For GitHub users, use `chicago-tdd-tools = "1.2.0"` when published to crates.io.
+**Note**: For GitHub users, use `chicago-tdd-tools = "26.10.12"` when published to crates.io.
 
 **Step 3**: Verify installation: `just check`. If errors: verify path, Rust edition 2021, Tokio in dev-dependencies.
 
@@ -256,7 +256,6 @@ Enable individual features as needed:
 - **`weaver`**: Weaver live validation (requires `otel`, auto-downloads Weaver CLI)
 - **`async`**: Async fixture providers (async traits, Rust 1.75+)
 - **`benchmarking`**: Criterion benchmarking support
-- **`workflow-engine`**: Workflow-specific features
 - **`logging`**: Standard log crate integration (enabled by default)
 
 ### Weaver Live-Check Setup (80/20 Quick Path)
@@ -511,9 +510,9 @@ async_test!(test_async_fixture, {
 
 **Linux**: Works out of box. RDTSC on x86_64. Docker for testcontainers. **macOS**: Works out of box. RDTSC on x86_64 (Intel). ARM uses `std::time::Instant` fallback. Docker Desktop for testcontainers. **Windows**: Works out of box. RDTSC on x86_64. Docker Desktop for testcontainers.
 
-## Hyper-Advanced μ-Kernel Verification (v1.3+)
+## Hyper-Advanced μ-Kernel Verification
 
-Chicago TDD Tools v1.3+ includes a **hyper-advanced μ-kernel verification substrate** that transforms the framework into a canonical verification substrate for **A = μ(O)** (Artifacts equal micro-operator of Observations).
+Chicago TDD Tools includes a **hyper-advanced μ-kernel verification substrate** that transforms the framework into a canonical verification substrate for **A = μ(O)** (Artifacts equal micro-operator of Observations).
 
 ### Quick Start: Hyper-Advanced Features
 

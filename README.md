@@ -937,7 +937,7 @@ just install-hooks  # Install git hooks that prevent unwrap/expect in production
 **Clippy enforcement**: All warnings treated as errors (`-D warnings`).
 
 **Timeout SLAs** enforced:
-- Quick checks: 5s (fmt, check)
+- Quick checks: 30s (fmt, check)
 - Compilation: 5-30s depending on profile
 - Lint: 300s (CI cold-start)
 - Unit tests: 1s per test

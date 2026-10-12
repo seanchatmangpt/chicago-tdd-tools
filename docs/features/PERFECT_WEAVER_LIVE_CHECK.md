@@ -344,7 +344,7 @@ Perfect type safety prevents entire classes of errors:
 
 ### Constants
 
-- `DEFAULT_WEAVER_STARTUP_TIMEOUT_SECONDS` - Default timeout (5 seconds)
+- ``DEFAULT_WEAVER_STARTUP_TIMEOUT_SECONDS` (aspirational — not landed; see status banner)` - Default timeout (5 seconds)
 - `DEFAULT_OTLP_GRPC_PORT` - OTLP gRPC port (4317)
 - `DEFAULT_ADMIN_PORT` - Admin HTTP port (4320)
 - `LOCALHOST` - Localhost address ("127.0.0.1")

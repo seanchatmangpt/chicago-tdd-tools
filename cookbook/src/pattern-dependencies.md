@@ -534,17 +534,3 @@ Every pattern comes with a **production guarantee**. Use this checklist before s
 
 **Want real-world examples?**
 - [Real-World Scenarios](real-world-scenarios.md) - 5 scenarios showing patterns combined (15 min)
-
-
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |

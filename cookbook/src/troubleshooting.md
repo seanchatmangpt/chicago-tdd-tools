@@ -215,44 +215,30 @@ RUST_LOG=debug cargo test test_with_timeout_defense_debug -- --nocapture
 ## Issue 4: "Fixture Metadata Not Tracking"
 
 ### Error:
-```rust
-let metadata = AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:;
-assert!(metadata.has_event("user.created"));  // Fails: no events tracked
-```
+<!-- AUDIT NOTE (W28 probe): TestFixture has NO emit_event/has_event surface — the real
+metadata surface is `metadata_ref()`/`metadata_mut()` (src/core/fixture.rs). The snippets
+below are pseudocode illustrating the track-what-you-tell-it pattern, not compilable API. -->
 
 ### Root Cause:
-Metadata tracking requires you to **emit events**. Fixture tracks what you tell it to.
+Metadata tracking records what you explicitly attach. The fixture does not infer events —
+you attach them via the metadata accessors.
 
 ### Solution:
 
 **❌ WRONG: Expecting automatic tracking**
 
-```rust
-#[test]
-fn test_tracking() {
-    let fixture = TestFixture::new()?;
-
-    // Manually create user (fixture doesn't know)
-    create_user("Alice");
-
-    // This fails: No events were captured
-    assert!(metadata.has_event("user.created")); // W27 PROBE: has_event is illustrative — never existed on TestFixture
-}
+```rust,ignore
+// PSEUDOCODE (illustrative): nothing records create_user for you.
+let metadata = fixture.metadata_ref();
+assert!(metadata.events_contain("user.created")); // Fails: nothing was attached
 ```
 
-**✅ RIGHT: Emit events explicitly**
+**✅ RIGHT: Attach explicitly via the landed accessors**
 
-```rust
-#[test]
-fn test_tracking() {
-    let mut fixture = TestFixture::new()?;
-
-    // Emit event
-    fixture.emit_event("user.created", "Alice");
-
-    // Now it's tracked
-    assert!(metadata.has_event("user.created")); // W27 PROBE: has_event is illustrative — never existed on TestFixture
-}
+```rust,ignore
+// PSEUDOCODE (illustrative): attach through metadata_mut(), then assert through metadata_ref().
+fixture.metadata_mut().record("user.created", "Alice");
+assert!(fixture.metadata_ref().events_contain("user.created"));
 ```
 
 **If you want automatic tracking:**

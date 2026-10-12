@@ -396,8 +396,10 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
 - PARTIAL (updated by W28 closing probe): the teamwork_preview_integration.rs
   clause is CLOSED — the test was deleted in 2c679bb and tests/README.md no
   longer lists it. STILL OPEN: ARCHITECTURE.md module tree omits ~15 modules
-  (core/testing/validation/observability/swarm submodules); swarm coordinator
-  find_best_member doc overstates sector semantics.
+  (core/testing/validation/observability/swarm submodules). CLOSED: the
+  find_best_member clause — the union-semantics doc correction landed in
+  e5b3b88 (src/swarm/coordinator.rs:158) and a further probe found the doc
+  makes no sector claim to overstate.
 
 ## W27 CONVERGENCE ADDITIONS
 - QUEUED: HasEffect trait unsealed (src/testing/effects.rs — in-source audit

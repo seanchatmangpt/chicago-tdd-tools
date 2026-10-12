@@ -24,7 +24,7 @@ Async fixtures: Async fixture creation with async traits (Rust 1.75+). Type-safe
 
 **Basic Usage**: `AsyncFixtureProvider` trait with `async fn create_fixture(&self) -> Result<Self::Fixture<'_>, Self::Error>`, `AsyncFixtureManager::new(provider).setup().await?` for setup, `manager.teardown().await?` for teardown.
 
-**Provider Pattern**: Implement `AsyncFixtureProvider` trait with sealed trait pattern. Define `Fixture<'a>` associated type (GAT), `Error` type. Implement `create_fixture()` async method. Must implement `chicago_tdd_tools::core::async_fixture::private::Sealed` trait.
+**Provider Pattern**: Implement `AsyncFixtureProvider` trait with sealed trait pattern. Define `Fixture<'a>` associated type (GAT), `Error` type. Implement `create_fixture()` async method. Cannot implement `AsyncFixtureProvider` externally — it is sealed via a private module (`mod private`, src/core/async_fixture.rs); AUDIT NOTE (W28 probe): the earlier instruction to implement `private::Sealed` was impossible (the module is not nameable outside the crate) trait.
 
 **Manager Pattern**: `AsyncFixtureManager::new(provider)` creates manager, `manager.setup().await?` creates fixture, `manager.teardown().await?` cleans up. Use in async tests with proper error handling.
 

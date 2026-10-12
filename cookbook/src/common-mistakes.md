@@ -510,16 +510,3 @@ macro_rules! async_test {
 | Design | Validating at runtime what could be compile-time | Use const generics, type system |
 
 **Golden Rule:** If you can enforce something at compile time, do it. It's free and impossible to bypass.
-
-
-## Quick Glance
-
-| Aspect | Details |
-|--------|---------|
-| Problem | Addressed by this pattern |
-| Solution | Core idea in 1-2 sentences |
-| When To Use | Typical scenarios |
-| When NOT To Use | Anti-patterns |
-| Trade-offs | What you gain/lose |
-| Complexity | Low/Medium/High |
-| Real-World Example | Link to actual code |
