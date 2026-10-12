@@ -495,3 +495,31 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   W30/W33. Historical message-only overclaim, recorded here.
 - Observed tag counts after W34: CLOSED 25 / QUEUED 24 / PARTIAL 14 /
   FALSIFIED 20 (substring counts).
+
+## W36–W37 REGISTER (2026-10-12, 20-lane wave 2: W-ABI2 substrate + skeptic repairs)
+
+- LANDED (70a42ef, plus 4c04eeb docs): guest-abi-v1 shim feature (ABI probe
+  1/2 cfg-selected; 34-byte legacy seal-preimage body under v1, digest
+  ignored + disclosed; errno remap NOT covered — scoped ~55-70 lines via
+  boundary mapping, follow-up); CTT_MODULE_DIGEST 32-byte zero static
+  (seal passes it by name; all-zero = "not yet attested", disclosed).
+  W-ABI2 items 2-substrate and 5-shim are closed; item 2's build-time
+  splice pipeline (extend guest_audit walk_sections; blake3 in lock;
+  length-preserving in-place patch; splice==recompute verify) is DESIGNED
+  and queued.
+- MERGER REPAIRS: the W34 commit message claimed the merger golden
+  is_conforming() repairs; they had NOT landed (script abort before those
+  edits — the string-replace-miss/message-overclaim class again). Now
+  actually landed: phase4/phase6 goldens + phase8 violation-skeleton
+  Complete arm assert conformance; header names the composed bridge.
+- QUICK_GUIDE mdbook claim corrected: 96ea408's "made mdbook-visible" was
+  overstated — QUICK_GUIDE.md is not in either mdbook's SUMMARY; the note
+  is accurate on disk and renders nowhere (book-exclusion is the residual,
+  disclosed here rather than re-adding the file to a book).
+- CI BLOCKER (operator): the nightly AFFIDAVIT_DIR fix is structurally
+  correct, but origin/main of affidavit (b5112f32, the pin) predates the
+  affi dossier verbs (local eeda22b, 22 commits unpushed) — nightly
+  emit-dossier will fail at CLI dispatch until the affidavit main is
+  pushed. Disclosed at assurance.yml:229.
+- Registered follow-ups: guest errno remap (v1 collapse 14/15/16→11);
+  ctt-splice-digest build pipeline; QUICK_GUIDE book placement decision.
