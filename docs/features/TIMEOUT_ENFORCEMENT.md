@@ -23,7 +23,7 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 
 **Layer 1: Test-Level Timeouts (tokio::time::timeout)**: 
 - `async_test!`, `fixture_test!`, and `weaver_test!` macros wrap test bodies with `tokio::time::timeout(Duration::from_secs(1))` for unit tests
-- Use `async_test_with_timeout!`, `fixture_test_with_timeout!`, or `weaver_test_with_timeout!` for custom timeouts (e.g., 30s for integration tests)
+- Use `async_test_with_timeout!`, `fixture_test_with_timeout!`, or `weaver_test!` (skip-gated, no timeout variant) for custom timeouts (e.g., 30s for integration tests)
 - Tokio's timeout cancels future if it doesn't complete within the specified duration
 
 **Layer 2: Test Runner Timeouts (cargo-nextest)**: 

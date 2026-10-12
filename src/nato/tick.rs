@@ -736,7 +736,15 @@ pub(crate) fn n12_positive_control() -> bool {
     let _ = mutant.tick();
     for _ in 1..=32 {
         let s = mutant.tick();
-        assert!(s.as_nanos() > 0, "mutant admits unconditionally");
+        // Law: the mutant admits every sample the gate refuses. Pin the
+        // sample to the source's domain {a, b} — an `> 0` guard would
+        // misfire on a lawfully-zero first epoch sample (a == 0 is legal
+        // when the first monotonic read lands on the process-start
+        // instant; the gate's own b < a ordering is what matters).
+        assert!(
+            s.as_nanos() == a || s.as_nanos() == b,
+            "mutant source returned a sample outside its declared domain"
+        );
         mutant_admits += 1;
     }
     assert_eq!(

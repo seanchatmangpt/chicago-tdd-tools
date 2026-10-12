@@ -161,6 +161,18 @@ test-assurance-integration:
     # hyper_advanced integration (contract/Receipt/swarm): 19 tests, ~30ms —
     # cheap enough to gate here rather than rot locally.
     timeout 600s cargo nextest run --test hyper_advanced_integration
+    # remaining always-compiled / cheap feature suites (audit W9 inventory)
+    timeout 600s cargo nextest run --test prelude_surface_tests
+    timeout 600s cargo nextest run --test dependency_lock_guard --features receipt-validation
+    timeout 600s cargo nextest run --test cli_proof_tests --features cli-proof
+    timeout 600s cargo nextest run --test ocel_tests --features ocel-generation,ocel-generation-discovery
+    timeout 600s cargo nextest run --test observability_fixtures_tests --features weaver,otel
+    timeout 600s cargo nextest run --test star_toml_e2e --features property-testing,snapshot-testing,uuid-v4
+    timeout 600s cargo nextest run --test go_extra_mile_tests --features property-testing,snapshot-testing
+    # v1_3_0_integration NOT gated: legacy v1.3.0-era suite — its stored
+    # snapshot expects redaction placeholders ([TIMESTAMP]/[UUID]/...) the
+    # current redaction path no longer emits; re-minting is a legacy-decision
+    # for the operator, not a CI gate. Local-only, disclosed.
     # ledger sealing + dossier-lib courts (entropy_court_lite needs ~7s,
     # so these use cargo test, not nextest's 5s default timeout)
     timeout 600s cargo test --features ledger,nato --test ledger_sealing_tests

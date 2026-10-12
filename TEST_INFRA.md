@@ -50,8 +50,8 @@ System behavior is checked under representative, realistic operational scenarios
 
 The test infrastructure covers the following 9 core features of the governance framework:
 
-1. **Admission Law Macro** (`assert_admitted!`, `assert_partially_admitted!`): Ensures target modules compile and initialize only when meeting defined admission metadata and credentials.
-2. **Lineage Law Macro** (`assert_lineage_intact!`, `assert_crown_receipt!`): Validates the historical dependency lineage at compile-time to prevent broken links or modifications.
+1. **Admission Law Macro** (`[retired] assert_admitted!`, `assert_partially_admitted!`): Ensures target modules compile and initialize only when meeting defined admission metadata and credentials.
+2. **Lineage Law Macro** (`assert_lineage_intact!`, `[retired] assert_crown_receipt!`): Validates the historical dependency lineage at compile-time to prevent broken links or modifications.
 3. **Drift Law Macro** (`assert_no_drift!`, `assert_drift_within!`): Enforces boundary limits on configuration parameters, metrics, or execution times relative to baseline tolerances.
 4. **Anti-Circumvention Macro** (`assert_no_bypass!`): Scans compiler AST structures to block bypass attempts, such as redefining or bypassing the official diagnostic emission paths.
 5. **Diagnostic Emission Channel & Sink**: A thread-safe queue and sink system that buffers and writes diagnostics to log destinations or telemetry channels without blocking hot paths.
@@ -229,7 +229,7 @@ The following tables define the 104 test cases required to achieve compliance.
 
 | Test ID | Test Name | Features Exercised | Description | Expected Outcome |
 |---|---|---|---|---|
-| **T3_CF_01** | `test_admission_and_lineage` | Admission Law & Lineage Law | Verifies `assert_admitted!` macro fails if the associated lineage asserted by `assert_lineage_intact!` is corrupted. | Compilation fails on lineage corruption |
+| **T3_CF_01** | `test_admission_and_lineage` | Admission Law & Lineage Law | Verifies `[retired] assert_admitted!` macro fails if the associated lineage asserted by `assert_lineage_intact!` is corrupted. | Compilation fails on lineage corruption |
 | **T3_CF_02** | `test_drift_triggers_sink` | Drift Law & Emission Sink | Verifies that a drift check breach outputs a diagnostic that traverses the channel and writes to the sink. | Drift diagnostic is written to the sink |
 | **T3_CF_03** | `test_bypass_translated_to_lsp` | Anti-Circumvention & LSP Provider | Verifies bypass attempts trigger a compile diagnostic mapped to the exact LSP character range of the violation. | LSP diagnostic highlights the bypass line |
 | **T3_CF_04** | `test_lsp_uses_registry` | LSP Provider & Code Registry | Verifies mapped LSP diagnostic descriptions are enriched with official details looked up from the central Registry. | LSP diagnostic text contains official description |

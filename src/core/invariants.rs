@@ -296,19 +296,7 @@ macro_rules! ensure_invariant {
     };
 }
 
-/// Helper macro to convert a custom error into an `InvariantViolation`.
-/// Ensures no unwrap/expect escape in invariant-critical paths.
-#[macro_export]
-macro_rules! invariant_context {
-    ($result:expr, $fallback:expr) => {
-        match $result {
-            Ok(v) => v,
-            Err(e) => return Err($fallback(e.to_string())),
-        }
-    };
-}
-
-// ============================================================================
+/// ============================================================================
 // Phase-Specific Validators
 // ============================================================================
 
