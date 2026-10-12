@@ -20,7 +20,7 @@
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | QUEUED |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | QUEUED |
-| SK7 | HELD | No falsification sustained on this lane's surface; original claim stands as stated. | NONE |
+| SK7 | FALSIFIED | port write-path has no backpressure (64MiB frame queued in driver memory, 23ms, never-reading bridge); bridge process inherits full env, no rlimits, unsandboxed — zero-ambient falsified at the OS boundary |  NONE  |
 | SK8 | FALSIFIED | Word-identity sentinel misclassifies lawful self-loop firings (`W- == W+` leaves the marking bit-exact unchanged) as refusals; PN64 OR-coalescing makes this reachable on ordinary nets. | FIXED (post-tag, see below) |
 | SK9 | PARTIAL | REA starvation is real but is a cost-elevation effect (starved transitions are delayed, not unschedulable); no correctness violation, bounded liveness preserved. | DOCUMENTED |
 | SK10 | FALSIFIED | Open-texture predicates admit boolean-forcing; N19 receipt is dual-subject (binds source SHA and artifact set without a binding between them); DoS latch via unbounded replay of expensive checks. | PARTIALLY QUEUED (N19 dual-subject documented in `docs/releases/RELEASE_NOTES_v26.10.11.md:52` as 3-host NOT-RUN; boolean-forcing + DoS latch queued) |
