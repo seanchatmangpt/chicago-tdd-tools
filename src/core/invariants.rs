@@ -110,7 +110,10 @@ pub enum UnrecoverableInvariantViolation {
 
     /// Phase 7: Pipeline claims success but not all phases executed
     PartialPipelineSuccess(String),
-    /// Phase 7: Attempted to use removed "relaxed" or invalid pipeline config
+    /// Phase 7: Invalid pipeline config. NOTE (wave-24 audit): the "removed
+    /// relaxed" reading is stale — PipelineConfig::relaxed() is a SUPPORTED
+    /// live constructor; this variant is currently constructed only in
+    /// fail_fast.rs tests, reserved for a future relaxed-refusal policy.
     PipelineConfigInvalid(String),
     /// Phase 7: Contract phase defined but pipeline skipped it
     PipelinePhaseSkipped(String),

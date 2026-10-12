@@ -1,7 +1,12 @@
 //! Phase 7: Verification Pipeline
 //!
-//! Unified pipeline orchestrating all 7 hyper-advanced tracks:
-//! Contract → Thermal → Effects → State Machine → Receipt → Orchestration
+//! Unified pipeline for the hyper-advanced tracks (Contract -> Thermal ->
+//! Effects -> State Machine -> Receipt -> Orchestration; PipelinePhase also
+//! carries a 7th Governance label). Sequencing is straight-line, NOT a state
+//! machine — phase values are output labels, not enforced transitions.
+//! AUDIT NOTE (wave-24): the error channel is String, not the typed
+//! UnrecoverableInvariantViolation vocabulary — typed-channel refactor is a
+//! registered follow-up work order.
 //!
 //! This module provides the complete A = μ(O) transformation pipeline.
 
