@@ -15,11 +15,11 @@
 | Lane | Verdict | Finding (one line) | Disposition |
 |------|---------|--------------------|-------------|
 | SK1 | FALSIFIED | PN64 fold is non-associative and `fire` panics outside the 1-safe domain; conservation only holds on the restricted 1-safe sub-domain. | DOCUMENTED (domain precondition now stated at `src/conformance/pn64.rs:16-24`; conservation guard test landed) |
-| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e; F1 module digest placeholder until build-time splice) (doc correction: relabel claim as constant-flow) |
-| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide and `SigningKey::from_seed` is publicly reachable (`src/ledger/signing/keys.rs:158`), bypassing key-id admission. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e; F1 module digest placeholder until build-time splice) |
+| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | QUEUED - relabel the claim constant-flow-not-constant-time |
+| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide and `SigningKey::from_seed` is publicly reachable (`src/ledger/signing/keys.rs:158`), bypassing key-id admission. | QUEUED |
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | QUEUED |
-| SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | QUEUED |
+| SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e: out-pointer bounds + errnos 14-16; F1 module digest placeholder until build-time splice) |
 | SK7 | FALSIFIED | port write-path has no backpressure (64MiB frame queued in driver memory, 23ms, never-reading bridge); bridge process inherits full env, no rlimits, unsandboxed — zero-ambient falsified at the OS boundary | QUEUED (port backpressure ack-gate + env-allowlist/rlimit work order, strata-side) |
 | SK8 | FALSIFIED | Word-identity sentinel misclassifies lawful self-loop firings (`W- == W+` leaves the marking bit-exact unchanged) as refusals; PN64 OR-coalescing makes this reachable on ordinary nets. | FIXED (post-tag, see below) |
 | SK9 | PARTIAL | REA starvation is real but is a cost-elevation effect (starved transitions are delayed, not unschedulable); no correctness violation, bounded liveness preserved. | DOCUMENTED |
@@ -138,7 +138,7 @@ plus the domain/identity doc edits in the shared working tree):
 - SK8: sentinel replacement + regression tests (`src/conformance/session.rs`,
   `tests/conformance_tests.rs`).
 
-Queued (no code change in this session): SK2, SK3, SK4, SK5, SK6, SK10.
+Queued (no code change in this session): SK2, SK3, SK4, SK5, SK10. SK6/SX6: PARTIAL (see rows).
 
 Note on fix IDs: the coordinator's R29-R34 batch corresponds to the landed
 set above; per-R mapping is not reproduced in this receipt because the
@@ -162,7 +162,7 @@ R-numbered receipts were not visible to this lane at write time.
 | SX3 | FALSIFIED | Affidavit fold layer: UTF-8 identity instability (NFC/NFD renders yield different chain_hash/court_id); Skip>Fail fold erases Fail byte-identically; outcome 255 decodes unvalidated; CTT `receipt.rs` range-checks but `unwrap_or(Error)` silently reclasses (`:634`). | QUEUED (fix: NFC pin + severity-lattice fold + validated outcome; CTT format-law unification) |
 | SX4 | FALSIFIED | R31's in-memory fix witnessed, but persistence re-opens the amnesty: `to_bytes` omits `nullifier_history` (empty rebuild after save/load); production `handlers.rs` flat-log admits cross-process replay (FULL amnesty); AFRN snapshot is unauthenticated plaintext (generation forgery accepted). | FIXED (R38, commit 1e2e840 — AFRN v2 + HMAC-sealed snapshots, fail-closed persistence) |
 | SX5 | UNSUPPORTED | Dual-verify claim unsupported - no runtime libcrux anywhere, oracle-consensus API takes caller-supplied booleans; R32 degenerate-seed screening landed ES256-only (ml-dsa/slh-dsa `from_seed` still infallible). ml-dsa verify fuzz HELD (0/12373 accept-on-malformed). | FIXED (R37, commit 1a16e25 — 0xE305 screening on both PQC paths) + doc retracted (UNSUPPORTED verdict stands) |
-| SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | QUEUED (V5 work order: bind module hash into seal preimage) |
+| SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | PARTIAL (V5 envelope landed 2c80a9e — 32B module digest slot + M2 falsifier; placeholder until build-time splice; out-pointer re-verify landed 532f38a) |
 | SX7 | FALSIFIED | ash_graphlaw membrane: contradictory covenants admitted silently (both `priorityOf` and `notPriorityOf` derived from the same fact, no conflict court); authority triples (`authorizedSigner`/`actuationAuthority`) on untargeted classes pass SHACL conform:true; cycle divergence HELD (typed `:resource_limit` refusal). | QUEUED (deontic conflict court + authority-vocabulary SHACL coverage; ash_graphlaw work orders, not CTT code defects) |
 | SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. Tid truncation/boundary class HELD (closed). | FIXED (commit 8b92c3e, SX8-F1) |
 | SX9 | HELD (ALIVE) | `deserialize_ct` survives SK2's exact methodology: thrash run 178/192 \|t\|<4.5, the 14 excursions flip sign between same-path classes (noise, not leak); branch-free below the public length gate, verdict table compiled to csel. Caveat: single-run cold Welch is drift-sensitive; future verification uses thrash/interleaved. | VERIFIED (R34; methodology note recorded) |

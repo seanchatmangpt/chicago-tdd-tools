@@ -167,7 +167,11 @@ Numbering note: all 20 courts N01–N20 are delivered CTT-side
 (`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
 thrash (`src/nato/thrash.rs`), and N15 liveness (`src/nato/liveness.rs`)
 landed CTT-side as test-court lanes; the Erlang/OTP tiers of those four
-remain strata-side. Pillar assignments follow the emitter-minted receipts
+remain strata-side. Pillar law is the landed `Court::PILLAR` consts, pinned by the
+`pillar_mapping_matches_the_matrix` test; the emitter-carve-out receipts
+(`docs/receipts/N{08,12,14,15}.json`) witness it for the four real-run
+courts — the other 17 persisted receipts are the synthetic control set
+(`sample_control_set()`), not pillar evidence.
 (`docs/receipts/N*.json`) and the landed `Court::PILLAR` consts; where the
 spec pillar has no enum variant, the in-code mapping is disclosed in the row
 (N16 Resource->`Dossier`, N17/N18 Crypto->`Security`, per the N04

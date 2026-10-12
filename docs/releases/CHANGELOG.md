@@ -166,8 +166,9 @@ adversarial audit with repairs, all with on-disk test receipts.
   `just lint` clean; guest suite 662/0 deterministic; merger 25/0; mcp
   testing suite green (no hang); spec-harness 21/0 + all-targets compile;
   test-conformance 46/0; test-nato 139/0; doctests 117/0.
-- Gates: `cargo test --lib --all-features` 1093 passed / 0 failed; `just
-  lint` clean; merger 25/0; ledger_tests 25/0; conformance_tests 23/0;
+- Gates (at `5189603`): `cargo test --lib --all-features` 1093 passed / 0
+  failed; `just lint` clean; merger 25/0; ledger_tests 25/0;
+  conformance_tests 23/0;
   guest_abi 14/0; `just release-validate-version`: consistent 26.10.12
   (3 sites).
 - Wave-5 gates (`451f4a8`): nato lib 853/0; nato_courts_tests 15/0; blake3
