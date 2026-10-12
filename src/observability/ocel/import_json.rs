@@ -12,15 +12,19 @@
 //!   `ocel:type`) → [`ImportError::MissingField`] carrying the field name
 //! * non-JSON input → [`ImportError::MalformedJson`]
 //!
-//! The published `wasm4pm-compat` OCEL structs (`OcelLog`/`TestOcelEvent`,
-//! re-exported from this module) ARE serde-derived, so the wire format
-//! deserializes through them directly; this module hand-maps
-//! `serde_json::Value` into them on top of the serde layer, validating
-//! version and required fields (the wasm4pm-compat *builder* type is a
-//! different type and is not part of this import path). The mapping is NOT
-//! lossless: unknown `ocel:` shapes (e.g. `ocel:ovmap`) are dropped and
-//! event attributes are not reconstructed — this import is a projection,
-//! not a lossless conversion.
+//! WIRE-FORMAT NOTE (E2 correction, W28 probe): the IN-CRATE serde types
+//! ([`super::types::OcelLog`] / `TestOcelEvent`, defined in
+//! `super::types` — NOT re-exported from this module) are serde-derived and
+//! are what this module hand-maps `serde_json::Value` into. The PUBLISHED
+//! `wasm4pm-compat` crate has a different surface: `OcelLog` there is
+//! builder-based and NON-serde (`#[derive(Debug, Clone)]` only), while its
+//! serde-enabled types are the standard-OCEL `OCEL`/`OCELEvent`/`OCELObject`
+//! family. The in-crate wire format (map-keyed `ocel:events`, u64-ns
+//! `ocel:timestamp`, enum `ocel:activity`) is a test-domain projection that
+//! is NOT shape-compatible with standard OCEL 2.0 — hence the hand-mapping.
+//! The mapping is NOT lossless: unknown `ocel:` shapes (e.g. `ocel:ovmap`)
+//! are dropped and event attributes are not reconstructed — this import is
+//! a projection, not a lossless conversion.
 
 #![cfg(feature = "ocel-ingest-json")]
 

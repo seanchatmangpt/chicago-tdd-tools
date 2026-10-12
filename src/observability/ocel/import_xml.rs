@@ -2,7 +2,10 @@
 //!
 //! **Roundtrip-first reader: accepts exactly the shape the ocel-xml export
 //! emits; anything else is refused ([`XmlImportError::MalformedXml`]), NOT a
-//! general OCEL 2.0 XML parser — disclosed scope.**
+//! general OCEL 2.0 XML parser — disclosed scope.** The published
+//! wasm4pm-compat crate DOES expose a serde-enabled standard-OCEL 2.0
+//! surface (`OCEL`/`OCELEvent`/`OCELObject`); the envelope accepted here is
+//! the strata-protocol roundtrip shape, not that standard surface.
 //!
 //! Accepted envelope (mirroring the exporter in
 //! `strata_protocol/src/ocel_xml.rs` — events with `id`/`timestamp`/`activity`
