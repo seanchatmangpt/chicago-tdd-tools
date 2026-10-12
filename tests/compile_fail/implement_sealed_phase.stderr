@@ -3,6 +3,10 @@ error[E0432]: unresolved import `chicago_tdd_tools::state::Sealed`
   |
 8 | use chicago_tdd_tools::state::{Arrange, Sealed};
   |                                         ^^^^^^ no `Sealed` in `core::state`
+  |
+  = help: consider importing one of these traits instead:
+          wasm4pm_compat::interop::graduation_seal::Sealed
+          wasm4pm_compat::state::sealed::Sealed
 
 error[E0433]: cannot find type `TestState` in this scope
   --> tests/compile_fail/implement_sealed_phase.rs:15:13

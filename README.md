@@ -1016,7 +1016,6 @@ chicago-tdd-tools = {
         "concurrency-testing",       # loom-backed concurrency tests
         "parameterized-testing",     # parameterized test macro support
         "cli-testing",               # CLI harness testing (rstest/trycmd; the CLI Testing Guide portal link)
-        "git-hooks",                 # git2 optional dependency (hook-installer binary retired in wave-8; feature kept for dep wiring)
     ]
 }
 ```

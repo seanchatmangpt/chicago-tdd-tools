@@ -154,10 +154,6 @@ rstest = { version = "^0.19", optional = true }
 # Note: Uses golden files (.trycmd) for CLI output comparison
 trycmd = { version = "^1.2", optional = true }
 
-# Git hooks support (optional, git-hooks feature)
-# When to use: kept for dep wiring only — the git_hook_installer binary
-# was retired in wave-8; no code consumes git2
-git2 = { version = "^0.21", optional = true }
 
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { version = "26.10.12", path = "proc_macros" }
@@ -261,10 +257,6 @@ parameterized-testing = ["dep:rstest"]
 # Enables: testing::cli module, CliTest API, trycmd integration
 cli-testing = ["dep:trycmd"]
 
-# Git hooks support (optional, git-hooks feature)
-# When to use: kept for dep wiring only — the git_hook_installer binary
-# was retired in wave-8; no code consumes git2
-git-hooks = ["dep:git2"]
 cli-proof = ["dep:tempfile"]
 
 # Observability features

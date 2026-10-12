@@ -82,6 +82,16 @@ fn run_bin(args: &[&str], envs: &[(&str, &str)]) -> (i32, String, String) {
 
 // --- F1: TOML Loading and Parsing (5 tests) ---
 
+// W50: cross-process fixture collisions on shared /tmp names caused flaky
+// FileNotFound failures when two test binaries raced. Every fixture file
+// now carries a per-process suffix.
+fn unique_suffix(name: &str) -> String {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+    format!("{name}_p{}_n{n}.toml", std::process::id())
+}
+
 chicago_tdd_tools::test!(test_f1_load_valid_toml_file, {
     let (code, stdout, _) = run_bin(&["--config", "examples/star-toml/samples/default.toml"], &[]);
     assert_eq!(code, 0);
@@ -105,7 +115,7 @@ chicago_tdd_tools::test!(test_f1_load_multiple_configs, {
 chicago_tdd_tools::test!(test_f1_parse_syntax_error, {
     // Generate a temporary file with syntax errors
     let temp_dir = std::env::temp_dir();
-    let syntax_err_path = temp_dir.join("syntax_error.toml");
+    let syntax_err_path = temp_dir.join(&unique_suffix("syntax_error"));
     std::fs::write(&syntax_err_path, "name = unquoted_value").unwrap();
 
     let (code, _, stderr) = run_bin(&["--config", syntax_err_path.to_str().unwrap()], &[]);
@@ -227,7 +237,7 @@ chicago_tdd_tools::test!(test_f3_validate_valid_config, {
 
 chicago_tdd_tools::test!(test_f3_validate_missing_required_field, {
     let temp_dir = std::env::temp_dir();
-    let missing_field_path = temp_dir.join("missing_field.toml");
+    let missing_field_path = temp_dir.join(&unique_suffix("missing_field"));
     std::fs::write(&missing_field_path, "workers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 8080")
         .unwrap();
 
@@ -419,7 +429,7 @@ chicago_tdd_tools::test!(test_b2_empty_toml, {
 
 chicago_tdd_tools::test!(test_b2_whitespace_only_toml, {
     let temp_dir = std::env::temp_dir();
-    let ws_path = temp_dir.join("ws.toml");
+    let ws_path = temp_dir.join(&unique_suffix("ws"));
     std::fs::write(&ws_path, "   \n\n   \n").unwrap();
     let (code, _, stderr) = run_bin(&["--config", ws_path.to_str().unwrap()], &[]);
     assert_ne!(code, 0);
@@ -429,7 +439,7 @@ chicago_tdd_tools::test!(test_b2_whitespace_only_toml, {
 
 chicago_tdd_tools::test!(test_b2_port_lower_boundary_zero, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("zero_port.toml");
+    let path = temp_dir.join(&unique_suffix("zero_port"));
     std::fs::write(&path, "name = \"app\"\nworkers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 0")
         .unwrap();
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
@@ -442,7 +452,7 @@ chicago_tdd_tools::test!(test_b2_port_lower_boundary_zero, {
 
 chicago_tdd_tools::test!(test_b2_port_upper_boundary_65536, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("large_port.toml");
+    let path = temp_dir.join(&unique_suffix("large_port"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 65536",
@@ -456,7 +466,7 @@ chicago_tdd_tools::test!(test_b2_port_upper_boundary_65536, {
 
 chicago_tdd_tools::test!(test_b2_workers_lower_boundary_zero, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("zero_workers.toml");
+    let path = temp_dir.join(&unique_suffix("zero_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 0\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -472,7 +482,7 @@ chicago_tdd_tools::test!(test_b2_workers_lower_boundary_zero, {
 
 chicago_tdd_tools::test!(test_b2_workers_upper_boundary_1025, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("too_many_workers.toml");
+    let path = temp_dir.join(&unique_suffix("too_many_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 1025\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -488,7 +498,7 @@ chicago_tdd_tools::test!(test_b2_workers_upper_boundary_1025, {
 
 chicago_tdd_tools::test!(test_b2_workers_exact_max_1024, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("max_workers.toml");
+    let path = temp_dir.join(&unique_suffix("max_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 1024\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -501,7 +511,7 @@ chicago_tdd_tools::test!(test_b2_workers_exact_max_1024, {
 
 chicago_tdd_tools::test!(test_b2_workers_exact_min_1, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("min_workers.toml");
+    let path = temp_dir.join(&unique_suffix("min_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 1\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -514,7 +524,7 @@ chicago_tdd_tools::test!(test_b2_workers_exact_min_1, {
 
 chicago_tdd_tools::test!(test_b2_missing_key_delimiters, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("bad_delimiters.toml");
+    let path = temp_dir.join(&unique_suffix("bad_delimiters"));
     std::fs::write(&path, "name \"app\"\nworkers = 4").unwrap();
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
     assert_ne!(code, 0);
@@ -524,7 +534,7 @@ chicago_tdd_tools::test!(test_b2_missing_key_delimiters, {
 
 chicago_tdd_tools::test!(test_b2_unclosed_string, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("unclosed.toml");
+    let path = temp_dir.join(&unique_suffix("unclosed"));
     std::fs::write(&path, "name = \"app\nworkers = 4").unwrap();
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
     assert_ne!(code, 0);
@@ -539,7 +549,7 @@ chicago_tdd_tools::test!(test_b2_unclosed_string, {
 
 chicago_tdd_tools::test!(test_b2_non_utf8_toml, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("non_utf8.toml");
+    let path = temp_dir.join(&unique_suffix("non_utf8"));
     std::fs::write(&path, &[0xFF, 0xFE, 0x00, 0x00, 0x61, 0x62, 0x63]).unwrap(); // Invalid UTF-8
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
     assert_ne!(code, 0);
@@ -586,7 +596,7 @@ chicago_tdd_tools::test!(test_b2_multiple_same_key_overrides, {
 
 chicago_tdd_tools::test!(test_b2_float_instead_of_integer, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("float_workers.toml");
+    let path = temp_dir.join(&unique_suffix("float_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 4.5\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -602,7 +612,7 @@ chicago_tdd_tools::test!(test_b2_float_instead_of_integer, {
 
 chicago_tdd_tools::test!(test_b2_boolean_instead_of_integer, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("bool_workers.toml");
+    let path = temp_dir.join(&unique_suffix("bool_workers"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = true\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -618,7 +628,7 @@ chicago_tdd_tools::test!(test_b2_boolean_instead_of_integer, {
 
 chicago_tdd_tools::test!(test_b2_special_characters_app_name, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("special_chars.toml");
+    let path = temp_dir.join(&unique_suffix("special_chars"));
     std::fs::write(
         &path,
         "name = \"🚀✨-app-👻\"\nworkers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 8080",
@@ -679,7 +689,7 @@ chicago_tdd_tools::test!(test_b2_directory_path_as_file, {
 
 chicago_tdd_tools::test!(test_b2_port_advisory_boundary_1023, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("port_1023.toml");
+    let path = temp_dir.join(&unique_suffix("port_1023"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 1023",
@@ -698,7 +708,7 @@ chicago_tdd_tools::test!(test_b2_port_advisory_boundary_1023, {
 
 chicago_tdd_tools::test!(test_b2_port_advisory_boundary_1024, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("port_1024.toml");
+    let path = temp_dir.join(&unique_suffix("port_1024"));
     std::fs::write(
         &path,
         "name = \"app\"\nworkers = 4\n[server]\nhost = \"127.0.0.1\"\nport = 1024",
@@ -717,7 +727,7 @@ chicago_tdd_tools::test!(test_b2_port_advisory_boundary_1024, {
 
 chicago_tdd_tools::test!(test_b2_log_level_case_sensitivity, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("caps_log.toml");
+    let path = temp_dir.join(&unique_suffix("caps_log"));
     std::fs::write(&path, "name = \"app\"\nworkers = 4\nlog_level = \"INFO\"\n[server]\nhost = \"127.0.0.1\"\nport = 8080").unwrap();
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
     // Case sensitivity: log_level must be lowercase one_of. So "INFO" is invalid.
@@ -730,7 +740,7 @@ chicago_tdd_tools::test!(test_b2_log_level_case_sensitivity, {
 
 chicago_tdd_tools::test!(test_b2_mixing_array_and_table, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("mixed_types.toml");
+    let path = temp_dir.join(&unique_suffix("mixed_types"));
     std::fs::write(&path, "name = \"app\"\nworkers = 4\nserver = [1, 2, 3]").unwrap(); // server should be a table
     let (code, _, stderr) = run_bin(&["--config", path.to_str().unwrap()], &[]);
     assert_ne!(code, 0);
@@ -742,7 +752,7 @@ chicago_tdd_tools::test!(test_b2_mixing_array_and_table, {
 
 chicago_tdd_tools::test!(test_b2_large_file_parsing, {
     let temp_dir = std::env::temp_dir();
-    let path = temp_dir.join("large_config.toml");
+    let path = temp_dir.join(&unique_suffix("large_config"));
     let mut content = String::from("name = \"app\"\nworkers = 4\n");
     for i in 0..5000 {
         content.push_str("unrelated_key_");
@@ -796,10 +806,10 @@ chicago_tdd_tools::test!(test_c3_merge_env_override_invalid, {
 chicago_tdd_tools::test!(test_c3_merge_tls_components, {
     // default.toml has disabled TLS. We merge it with a config enabling TLS and another supplying certs.
     let temp_dir = std::env::temp_dir();
-    let tls_enable_path = temp_dir.join("tls_enable.toml");
+    let tls_enable_path = temp_dir.join(&unique_suffix("tls_enable"));
     std::fs::write(&tls_enable_path, "[server.tls]\nenabled = true").unwrap();
 
-    let tls_certs_path = temp_dir.join("tls_certs.toml");
+    let tls_certs_path = temp_dir.join(&unique_suffix("tls_certs"));
     std::fs::write(
         &tls_certs_path,
         "[server.tls]\ncert_path = \"/path/to/cert\"\nkey_path = \"/path/to/key\"",
@@ -901,7 +911,7 @@ chicago_tdd_tools::test!(test_r4_development_profile, {
 chicago_tdd_tools::test!(test_r4_local_override_flow, {
     // Simulates developer running locally with overrides.
     let temp_dir = std::env::temp_dir();
-    let local_override = temp_dir.join("local.toml");
+    let local_override = temp_dir.join(&unique_suffix("local"));
     std::fs::write(&local_override, "name = \"my-local-app\"\n[server]\nport = 9000").unwrap();
 
     let (code, stdout, _) = run_bin(
@@ -928,7 +938,7 @@ chicago_tdd_tools::test!(test_r4_ci_environment_strict, {
 chicago_tdd_tools::test!(test_r4_microservice_scaling, {
     // Dynamic scale configuration by merging base and environment-specific nodes
     let temp_dir = std::env::temp_dir();
-    let scale_config = temp_dir.join("scale.toml");
+    let scale_config = temp_dir.join(&unique_suffix("scale"));
     std::fs::write(&scale_config, "workers = 64").unwrap();
 
     let (code, stdout, _) = run_bin(
