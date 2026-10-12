@@ -152,14 +152,14 @@ impl State for Authenticated {}
 
 // Define valid transitions
 impl Transition<Init, Connected> for () {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Connect logic
         Ok(())
     }
 }
 
 impl Transition<Connected, Authenticated> for () {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Auth logic
         Ok(())
     }

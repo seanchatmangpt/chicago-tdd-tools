@@ -344,28 +344,28 @@ struct Disconnect;
 
 // Define valid transitions
 impl Transition<Init, Connected> for Connect {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Connect logic
         Ok(())
     }
 }
 
 impl Transition<Connected, Authenticated> for Authenticate {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Auth logic
         Ok(())
     }
 }
 
 impl Transition<Authenticated, Active> for Activate {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Activate logic
         Ok(())
     }
 }
 
 impl Transition<Active, Init> for Disconnect {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Disconnect logic
         Ok(())
     }

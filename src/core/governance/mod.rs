@@ -380,8 +380,8 @@ impl Diagnostic {
 }
 
 pub trait DiagnosticSink: Send + Sync {
-    fn emit(&self, diagnostic: Diagnostic) -> Result<(), String>;
-    fn close(&self, summary: RunSummary) -> Result<(), String>;
+    fn emit(&self, diagnostic: Diagnostic) -> Result<(), GovernanceError>;
+    fn close(&self, summary: RunSummary) -> Result<(), GovernanceError>;
 }
 
 // ─── TaskReceipt ─────────────────────────────────────────────────────────────

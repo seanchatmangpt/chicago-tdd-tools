@@ -1,7 +1,8 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 use crate::core::governance::{
-    ContributionKind, Diagnostic, DiagnosticSink, RunId, RunSummary, SubstrateDelta,
+    ContributionKind, Diagnostic, DiagnosticSink, GovernanceError, RunId, RunSummary,
+    SubstrateDelta,
 };
 use crate::observability::ocel::types::{TestActivity, TestObjectType, TestOcelEvent};
 use crate::observability::ocel::wasm4pm::{seal_run, TestSuiteWitness};
@@ -38,7 +39,7 @@ impl OcelCollector {
 }
 
 impl DiagnosticSink for OcelCollector {
-    fn emit(&self, diagnostic: Diagnostic) -> Result<(), String> {
+    fn emit(&self, diagnostic: Diagnostic) -> Result<(), GovernanceError> {
         let mut objects = Vec::new();
         let mut attributes = HashMap::new();
 
@@ -76,7 +77,10 @@ impl DiagnosticSink for OcelCollector {
         let raw = Evidence::<TestOcelEvent, Raw, TestSuiteWitness>::from_boundary(event);
         match self.admit_event(&raw) {
             Ok(admitted) => {
-                let mut events = self.events.lock().map_err(|e| e.to_string())?;
+                let mut events = self
+                    .events
+                    .lock()
+                    .map_err(|e| GovernanceError::Lock(e.to_string()))?;
                 events.push(admitted);
             }
             Err(refusal) => {
@@ -86,13 +90,14 @@ impl DiagnosticSink for OcelCollector {
         Ok(())
     }
 
-    fn close(&self, summary: RunSummary) -> Result<(), String> {
-        let (receipted_log, digest_hex) = seal_run(self, summary.run_id.clone())?;
+    fn close(&self, summary: RunSummary) -> Result<(), GovernanceError> {
+        let (receipted_log, digest_hex) =
+            seal_run(self, summary.run_id.clone()).map_err(GovernanceError::Seal)?;
 
         if let Some(path) = &self.ocel_output_path {
-            let log_json =
-                serde_json::to_string_pretty(receipted_log.inner()).map_err(|e| e.to_string())?;
-            std::fs::write(path, log_json).map_err(|e| e.to_string())?;
+            let log_json = serde_json::to_string_pretty(receipted_log.inner())
+                .map_err(|e| GovernanceError::Serialization(e.to_string()))?;
+            std::fs::write(path, log_json).map_err(|e| GovernanceError::Io(e.to_string()))?;
         }
 
         let _delta = SubstrateDelta {

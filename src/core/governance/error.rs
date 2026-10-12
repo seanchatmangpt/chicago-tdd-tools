@@ -25,6 +25,18 @@ pub enum GovernanceError {
     /// The diagnostic channel was in an invalid state for the operation.
     #[error("governance channel state error: {0}")]
     ChannelState(String),
+    /// A sink mutex was poisoned (a prior panicked holder).
+    #[error("governance lock error: {0}")]
+    Lock(String),
+    /// OCEL log sealing failed.
+    #[error("governance seal error: {0}")]
+    Seal(String),
+    /// JSON serialization of the sealed log failed.
+    #[error("governance serialization error: {0}")]
+    Serialization(String),
+    /// Filesystem write of the sealed log failed.
+    #[error("governance io error: {0}")]
+    Io(String),
 }
 
 #[cfg(test)]
