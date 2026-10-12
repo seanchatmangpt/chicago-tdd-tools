@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-15 closeout** (`00e2236`): stray `///` doc-comment banner above
+  the `// Phase-Specific Validators` header in `src/core/invariants.rs`
+  removed — fixes the `empty_line_after_doc_comments` clippy violation
+  that surfaced when the wave-14 lint gate ran on the current
+  toolchain.
 - **Wave-14 closeout** (`62eee62`..`1c7dbf4`): CI/local toolchain drift
   disclosed (rust-toolchain pins nightly; CI runs the stable/beta
   matrix; dead `continue-on-error: rust == nightly` line removed);
