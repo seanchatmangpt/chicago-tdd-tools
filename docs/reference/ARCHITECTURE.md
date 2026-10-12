@@ -179,7 +179,7 @@ All fallible operations return `Result<T, E>`. No `unwrap()` in production. Use 
 
 **Pattern**: `pub enum FixtureError { CreationFailed(String), OperationFailed(String) }`.
 
-**Error Types**: `FixtureError`, `FixtureResult<T>`, `TestcontainersError`, `OtelValidationError`, `WeaverValidationError`, `WeaverValidationResult<T>`, `GuardConstraintError`, `PerformanceValidationError`, `JtbdValidationResult`.
+**Error Types**: `FixtureError`, `FixtureResult<T>`, `TestcontainersError`, `OtelValidationError`, `WeaverValidationError`, `WeaverValidationResult<T>`, `GovernanceError` (governance), `WeaverError` (weaver typed channel, distinct from `WeaverValidationError`), `OtelError`, `SwarmError`, `StateMachineError`, `BuilderError`, `ReceiptJsonError`, `DossierWireError` (ledger-gated), `PipelineError`, `GuardConstraintError`, `PerformanceValidationError`, `JtbdValidationResult`.
 
 ## Performance
 
