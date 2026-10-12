@@ -74,3 +74,6 @@ __pycache__/
 # live run output stays out of the receipts boundary.
 docs/lanes/*.json
 mutants.out/
+
+# mdbook build output (regenerable via just cookbook-build)
+cookbook/book/

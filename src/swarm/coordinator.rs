@@ -155,7 +155,7 @@ impl SwarmCoordinator {
     fn find_best_member(&self, task: &TaskRequest) -> Result<String, String> {
         let mut candidates = vec![];
 
-        // Find members that can handle all required sectors
+        // Find members that can handle at least one of the required sectors (union semantics — no intersection check; audit W27 doc correction)
         for sector in &task.sectors {
             let sector_members = self.membership.members_for_sector(sector);
             for member in sector_members {
