@@ -1,6 +1,6 @@
 [pack]
 name    = "chicago-tdd-tools"
-version = "26.6.29"
+version = "26.10.11"
 
 [pack.outputs]
 templates = "pack/templates"
