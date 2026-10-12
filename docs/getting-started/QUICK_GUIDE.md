@@ -276,8 +276,6 @@ test!(test_equality_assertions, {
     let expected = 42;
     // Assert: Enhanced equality assertions
     assert_eq_msg!(actual, expected, "Values should match");
-    assert_eq_enhanced!(actual, expected);
-    assert_eq_enhanced!(actual, expected, "Custom message");
 });
 ```
 

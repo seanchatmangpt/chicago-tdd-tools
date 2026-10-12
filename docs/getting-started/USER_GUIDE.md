@@ -74,7 +74,6 @@ Test macros: AAA pattern enforcement. Zero-boilerplate tests. Assertion macros. 
 - **`assert_within_tick_budget!(ticks)`** / **`assert_within_tick_budget!(ticks, message)`**: Validate performance constraints (≤8 ticks)
 - **`assert_in_range!(value, min, max)`** / **`assert_in_range!(value, min, max, message)`**: Assert value is within range with detailed messages
 - **`assert_eq_msg!(actual, expected, message)`**: Assert equality with custom message
-- **`assert_eq_enhanced!(actual, expected)`** / **`assert_eq_enhanced!(actual, expected, message)`**: Enhanced equality assertion with automatic type inference
 - **`assert_guard_constraint!(condition, constraint_name)`**: Validate guard constraints
 
 ### Alert Macros
@@ -165,7 +164,7 @@ Concurrency testing: Thread model checking. Deterministic concurrency testing.
 
 **When to Use**: Detecting concurrency bugs, verifying thread safety, deterministic concurrency testing. **Requires**: `concurrency-testing` feature. **Avoid**: Simple unit tests, no concurrency.
 
-**Basic Usage**: `LoomModel::new().model(|| { /* concurrent code */ })` for deterministic concurrency testing.
+**Basic Usage**: `ConcurrencyTest::new().run(|| { /* concurrent code */ })` for deterministic concurrency testing.
 
 **Patterns**: Thread model checking (loom), deterministic testing (exhaustive exploration), concurrency bug detection.
 
