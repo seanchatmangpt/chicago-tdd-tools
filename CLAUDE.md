@@ -38,7 +38,7 @@ src/
 │   ├── state_machine.rs # Typestate state machines
 │   └── continuous_learning.rs
 ├── validation/        # Quality assurance
-│   ├── coverage/      # Coverage analysis
+│   ├── coverage.rs    # Coverage analysis
 │   ├── guards/        # Constraint enforcement
 │   ├── jtbd.rs        # Jobs to be done
 │   ├── performance.rs # Tick/RDTSC measurement
