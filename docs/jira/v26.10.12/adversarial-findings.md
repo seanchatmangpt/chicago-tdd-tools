@@ -669,3 +669,16 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   cargo audit: 0 vulnerabilities, 2 warnings-only. release-validate:
   EXIT 0. The W50c commit message's "unsafe-libyaml gone" claim is
   FALSE — corrected here per the skeptic's cargo-tree evidence.
+- W50c COMMIT-MESSAGE CORRECTION (W49m-witness chain audit): the 958cb34
+  subject's "unsafe-libyaml gone" is FALSE — serde_yaml_ng 0.10.0 depends
+  on unsafe-libyaml itself (verified via cargo tree), so the advisory
+  line survives. The migration still resolves the deprecated serde_yaml
+  facade. Also: the lock delta included closure-cascade moves (aws-lc-*,
+  windows-sys re-points) the message didn't enumerate — harmless.
+  Artifacts-leg fix landed (8acef28): the "Release notes missing"
+  warning was a stale hardcoded v1.1.0 check — now templated to
+  RELEASE_NOTES_v${VERSION}.md, and RELEASE_NOTES_v26.10.12.md added.
+- REMAINING WORK ORDERS from the audit closure: yaml-driver migration
+  (serde_yaml_ng still carries unsafe-libyaml); git-hooks feature is
+  dead weight (comment claims a retired binary; nothing consumes git2 —
+  removal candidate); chacha20 yanked (no substitution available).
