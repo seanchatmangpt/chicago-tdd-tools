@@ -3,7 +3,7 @@
 //! Procedural Macros for Chicago TDD Tools
 //!
 //! Provides procedural macros for zero-boilerplate test generation,
-//! compile-time AAA pattern validation, and automatic fixture management.
+//! lifecycle-guard test wrapping (AAA validation is the core TestState types' job, not the macro's), and automatic fixture management.
 
 mod chicago_test;
 mod path_resolver;
@@ -18,10 +18,10 @@ use syn::{parse_macro_input, Data, DeriveInput, Fields, ItemFn};
 /// Procedural macro for TDD tests.
 ///
 /// Automatically:
-/// - Detects AAA sections via AST analysis
+/// - Wraps the body in a lifecycle guard (on_test_started / TestGuard / on_test_completed) under #[test]
 /// - Generates test metadata and tracing
-/// - Validates AAA pattern at compile time
-/// - Auto-generates test names from function names
+/// - NOTE (audit W27): this macro does NOT validate AAA patterns — the compile-time AAA state machine lives in the core TestState types, not here
+/// - Passes the function name through unchanged
 ///
 /// # Examples
 ///
