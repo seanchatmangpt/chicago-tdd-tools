@@ -509,30 +509,11 @@ mod tests {
     // a test function with the same name, causing conflicts.
     // These tests verify the macro expansion works correctly.
 
-    #[test]
-    fn test_test_macro_expansion() {
-        // Verify macro expands to valid test function
-        // This is tested by compilation success
-        let _ = stringify! {
-            test!(test_basic, {
-                let x = 1;
-                let y = x + 1;
-                assert_eq!(y, 2);
-            });
-        };
-    }
+    // (AUDIT NOTE W14 follow-up: the two remaining stringify!-wrapped
+    // "expansion" tests for test!/async_test! were retired here too —
+    // same zero-bits class; real coverage: test_fixture_basic +
+    // test_timeout_enforcement_works.)
 
-    #[test]
-    fn test_async_test_macro_expansion() {
-        // Verify macro expands to valid async test function
-        let _ = stringify! {
-            async_test!(test_async_basic, {
-                let x = 1;
-                let y = x + 1;
-                assert_eq!(y, 2);
-            });
-        };
-    }
 
     // Test fixture_test! macro expansion - verify it compiles and works
     // Note: This test verifies the macro expands correctly by using it directly
@@ -592,7 +573,7 @@ mod tests {
         );
     }
 
-    // AUDIT NOTE (W10): three former "macro expansion" tests here wrapped
+    // AUDIT NOTE (W10): five former "macro expansion" tests here wrapped
     // macro invocations in stringify! — tokens are captured, never parsed
     // or expanded, so those tests carried zero bits (one even cited a
     // never-defined weaver_test_with_timeout!). Retired under ERRC; the
