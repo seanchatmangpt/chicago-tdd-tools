@@ -69,7 +69,7 @@ Once issue is filed, update documentation:
 ### XPath Validation Error
 - **Issue**: `Invalid XPath `` detected while validating semantic convention spec`
 - **Status**: Upstream issue
-- **Workaround**: Use `WEAVER_SKIP_REGISTRY_VALIDATION=1` or pin to older version
+- **Workaround**: Use `AUDIT NOTE (W27 probe): `WEAVER_SKIP_REGISTRY_VALIDATION` is read by NO code at HEAD — the workaround below is a no-op; kept pending either wiring or removal. Original text referenced: WEAVER_SKIP_REGISTRY_VALIDATION=1` or pin to older version
 - **GitHub Issue**: [Link when filed]
 
 ### Missing Note Fields
