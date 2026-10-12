@@ -237,10 +237,10 @@ impl Default for Schedule {
     }
 }
 
-/// Schedule generator: generates all possible interleavings
+/// Schedule generator (W27 AUDIT NOTE: emits exactly ≤2 hard-coded schedules — empty + one linear path clamped to min(max_depth, 2); does NOT generate interleavings)
 ///
 /// Given a set of concurrent actors and their possible transitions,
-/// generates all admissible schedules within a bounded depth.
+/// emits its fixed ≤2 schedules (bounded by min(max_depth, 2); see the module-header note).
 pub struct ScheduleGenerator {
     max_depth: usize,
 }
@@ -302,7 +302,7 @@ impl ScheduleGenerator {
 
 /// Model checker: verifies state machine properties
 ///
-/// Checks invariants across all possible schedules.
+/// Checks invariants across the same fixed ≤2 generated schedules (W27 AUDIT NOTE: not all interleavings).
 pub struct ModelChecker {
     generator: ScheduleGenerator,
 }

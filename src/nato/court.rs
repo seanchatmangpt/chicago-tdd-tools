@@ -82,7 +82,7 @@ pub enum Pillar {
 }
 
 impl Pillar {
-    /// Stable machine name used in receipts and JSON.
+    /// Stable machine name (AUDIT NOTE W27 probe: NOT used by receipts — Pillar serializes via derived serde as the PascalCase variant name, e.g. "Security"; this lowercase string has zero production call sites. Kept for display/tests.)
     pub fn as_str(self) -> &'static str {
         match self {
             Pillar::Security => "security",

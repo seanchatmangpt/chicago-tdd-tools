@@ -210,7 +210,7 @@ This guide shows how patterns combine to solve actual problems you'll encounter.
 4. **Pattern 20: Macro Enforcement**
    - `test!` injects AAA comments and timeouts
    - Using macro guarantees compliance with patterns
-   - `property_test!` requires `property-testing` feature
+   - AUDIT NOTE (W27 probe): there is no `property_test!` macro in the crate — the feature-gated entry point is the `PropertyTestGenerator` type; the enforcement claim below is illustrative:
 
 5. **Pattern 9: Single Source of Truth**
    ```rust

@@ -216,7 +216,7 @@ RUST_LOG=debug cargo test test_with_timeout_defense_debug -- --nocapture
 
 ### Error:
 ```rust
-let metadata = fixture.metadata();
+let metadata = AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:;
 assert!(metadata.has_event("user.created"));  // Fails: no events tracked
 ```
 
@@ -236,7 +236,7 @@ fn test_tracking() {
     create_user("Alice");
 
     // This fails: No events were captured
-    assert!(fixture.metadata().has_event("user.created"));
+    assert!(AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:.has_event("user.created"));
 }
 ```
 
@@ -251,7 +251,7 @@ fn test_tracking() {
     fixture.emit_event("user.created", "Alice");
 
     // Now it's tracked
-    assert!(fixture.metadata().has_event("user.created"));
+    assert!(AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:.has_event("user.created"));
 }
 ```
 
