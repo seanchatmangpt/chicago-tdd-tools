@@ -4,7 +4,7 @@
 
 A Rust testing framework that enforces Chicago-style TDD (Classicist approach) through compile-time guarantees. The core principle: **if it compiles, correctness follows**. Quality is not an afterthought—it's encoded in the type system.
 
-**Stats:** ~64,000 LOC (src/) | Rust 2021+ | MIT License | 1,000+ unit tests (all features) | Zero production panics
+**Stats:** ~68,000 LOC (src/) | Rust 2021+ | MIT License | 1,000+ unit tests (all features) | Zero production panics
 
 ## Core Philosophy: Poka-Yoke Design
 
@@ -48,6 +48,10 @@ src/
 ├── sector_stacks/     # Production-grade workflows
 ├── swarm/             # Distributed coordination
 ├── operator_registry.rs  # YAWL workflow patterns
+├── cli_proof/         # CLI harness + sabotage fixtures
+├── conformance/       # POWL/PN64 conformance kernel (feature)
+├── ledger/            # CTRT wire + ML-DSA-65 sealing (feature)
+├── nato/              # 20-court NATO assurance matrix (feature)
 └── lib.rs             # Root exports + prelude
 ```
 
@@ -407,7 +411,7 @@ See `CHANGELOG.md` for full history.
 
 ---
 
-**Version:** 26.10.12 | **Updated:** 2026-10-11 | **Principle:** Compile-time prevention > runtime detection
+**Version:** 26.10.12 | **Updated:** 2026-10-12 | **Principle:** Compile-time prevention > runtime detection
 
 ## Annealing Doctrine (repo clauses)
 

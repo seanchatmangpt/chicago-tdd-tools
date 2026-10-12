@@ -51,6 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-16 closeout** (`2e256b9`..`73c8609`): docs audit repairs —
+  API_REFERENCE concurrency section corrected to the real
+  `ConcurrencyTest` surface + assurance modules documented (`63e4b73`);
+  diataxis `ct_timing_invariance` line count refreshed (`2e256b9`);
+  merger-guest build+test CI job added (the zero-import court had been
+  permanently typed-skipped in CI, `73c8609`); ledger bench truth —
+  new `chained_court_receipt` group measures the real 352B chain
+  (7caaab7); LEDGER.md DossierInvalid row + cite refreshes; settlement
+  diataxis stale forbidden-mask claims corrected; CONFORMANCE.md ~19
+  session.rs cites re-minted; snapshot replace-only law pinned by test;
+  otel zero-trace-id branch tested; contract.rs coverage claim
+  narrowed (phantom-repair fix — the 0b95042 message claimed it but the
+  diff never landed); strata: FR-3b bridge traceability row +
+  N09/N11 stale pin-SHA comments updated (`0e4846d`).
 - **Wave-15 closeout** (`00e2236`): stray `///` doc-comment banner above
   the `// Phase-Specific Validators` header in `src/core/invariants.rs`
   removed — fixes the `empty_line_after_doc_comments` clippy violation

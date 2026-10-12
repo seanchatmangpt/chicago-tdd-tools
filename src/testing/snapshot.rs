@@ -847,7 +847,22 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "snapshot-testing")]
+    /// The replace-only law (audit W12): redacting an ABSENT field must not
+    /// insert a phantom key — the pre-a2f61b5 insert semantics made snapshots
+    /// nondeterministic and stale-fixture-prone.
+    fn redact_absent_field_inserts_nothing() {
+        let mut map = serde_json::Map::new();
+        map.insert("alpha".to_string(), serde_json::json!("one"));
+        map.insert("beta".to_string(), serde_json::json!("two"));
+        let mut value = serde_json::Value::Object(map);
+        SnapshotAssert::set_json_path(&mut value, &["missing"], serde_json::json!("[REDACTED]"));
+        let obj = value.as_object().expect("object");
+        assert_eq!(obj.len(), 2, "absent-field redaction must insert nothing");
+        assert!(!obj.contains_key("missing"));
+        assert_eq!(obj["alpha"], serde_json::json!("one"));
+    }
+
+    #[test]
     fn test_redaction_reaches_into_array_elements_by_field_name() {
         // Arrange: an array of objects that each carry a secret under the
         // same field name, redacted via a single dot-path selector

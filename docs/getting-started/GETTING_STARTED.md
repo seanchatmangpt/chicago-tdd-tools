@@ -223,7 +223,7 @@ test!(test_enhanced_assertions, {
     // Act & Assert
     assert_in_range!(value, 0, 10);
     assert_eq_msg!(value, 5, "Value should be 5");
-    assert_eq_enhanced!(value, 5);
+    assert_eq_msg!(value, 5, "value must round-trip");
 });
 ```
 

@@ -7,7 +7,7 @@
 //! - Expected Q constraints (e.g. τ ≤ 8, "no panics", "no blocking IO")
 //!
 //! Test contracts exist before any test executes, enabling:
-//! - Static verification that all invariants have coverage
+//! - Per-registry coverage analysis (no canonical registry of this repo's own contracts exists; the mechanism is demonstrated on caller-supplied registries)
 //! - Static verification that all capabilities have tests
 //! - Contract queries without running tests
 //! - Building test ontology Σₜ for reasoning

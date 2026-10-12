@@ -512,6 +512,26 @@ mod tests {
 
     #[cfg(feature = "otel")]
     #[test]
+    fn test_span_validator_zero_trace_id() {
+        // Audit W12: the zero-trace-id rejection branch was the one
+        // untested validator arm.
+        let validator = SpanValidator::new();
+        let span = Span::new_completed(
+            SpanContext::root(TraceId(0), SpanId(777), 1), // Zero trace ID
+            "test.span".to_string(),
+            1000,
+            2000,
+            Default::default(),
+            Vec::new(),
+            SpanStatus::Ok,
+        )
+        .unwrap();
+
+        assert!(validator.validate(&span).is_err());
+    }
+
+    #[cfg(feature = "otel")]
+    #[test]
     fn test_span_validator_zero_span_id() {
         let validator = SpanValidator::new();
         let span = Span::new_completed(
