@@ -1,4 +1,8 @@
 # nomrg DFLSS Charter: Machine-Readable Specification
+> **STATUS: DRAFT / UNSUPPORTED — specification only.** This charter describes a
+> `nomrg` merge μ-kernel that has **no implementation in this repository** (no
+> binary, CLI, or code at HEAD). Do not cite it as a shipped capability. If the
+> charter's commands (e.g. `merge propose`) appear in tooling, they are not real.
 
 **Version**: 1.0.0  
 **Status**: Draft  

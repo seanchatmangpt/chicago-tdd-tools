@@ -47,7 +47,7 @@ Goal-focused guides to accomplish specific tasks:
 - **[Conformance Checking](features/CONFORMANCE.md)** - POWL model replay against event streams with classified deviations
 - **[Hyper-Advanced μ-Kernel](features/HYPER_ADVANCED_MICROKERNEL.md)** - μ-kernel verification substrate (v1.3.0, stable)
 - **[Merger Matrix](features/MERGER_MATRIX.md)** - Fortune-5 merger validation harness (Wave-2 phase fixtures)
-- **[nomrg DFLSS Charter](features/NOMRG_DFLSS_CHARTER.md)** - Machine-readable specification charter
+- **[nomrg DFLSS Charter](features/NOMRG_DFLSS_CHARTER.md)** - DRAFT/UNSUPPORTED: unimplemented merge μ-kernel spec (no code in tree)
 
 ### Testing Guides
 - **[CLI Testing](testing/cli-testing-guide.md)** - Command-line testing patterns
