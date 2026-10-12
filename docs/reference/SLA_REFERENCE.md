@@ -60,7 +60,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Git Hook SLAs
 
-_Removed_: Git hook installer has been retired; developers run cargo-make tasks directly (`pre-commit`, `check`, `lint`, `audit`, etc.).
+_Removed_: Git hook installer has been retired; developers run `just` tasks directly (`pre-commit`, `check`, `lint`, `audit`, etc.).
 
 ## Rationale
 

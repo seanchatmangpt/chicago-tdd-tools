@@ -139,7 +139,7 @@ chicago-tdd-tools = { version = "1.2.0", features = ["feature-name"] }
 
 ## Build Commands
 
-### Standard: Always Use `cargo make`
+### Standard: Always Use `just`
 
 **Correct**:
 ```bash
@@ -156,13 +156,13 @@ cargo build
 ```
 
 ### Rationale
-- `cargo make` handles proc-macro crates correctly
+- `just` handles proc-macro crates correctly
 - Includes timeouts to prevent hanging
 - Ensures consistency across environments
 - Enforces quality gates
 
 ### Exceptions
-- When documenting cargo-make itself
+- When documenting the build system itself (historical cargo-make docs excepted)
 - When showing fallback commands (with explanation)
 
 ## Cross-References
@@ -234,7 +234,7 @@ All major documentation should include:
 - [ ] Heading hierarchy limited to 4 levels
 - [ ] Code examples match format for document type
 - [ ] Version numbers are current (1.2.0)
-- [ ] Build commands use `cargo make`
+- [ ] Build commands use `just`
 - [ ] Cross-references included (Quick Navigation + See Also)
 - [ ] Terminology is consistent
 - [ ] Examples are runnable
@@ -319,7 +319,7 @@ Run with `cargo test`.  // Wrong command
 
 **Terminology**: Consistent terms, backticks for code, current version (1.2.0)
 
-**Commands**: Always `cargo make`, never direct `cargo` commands
+**Commands**: Always `just`, never direct `cargo` commands
 
 **Cross-References**: Quick Navigation + See Also sections required
 

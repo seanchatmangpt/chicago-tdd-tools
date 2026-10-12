@@ -80,7 +80,7 @@ LLMs embed knowledge, abilities, and concepts in latent space. This latent space
   - Use `unwrap_or_default()` for types implementing Default
 - **In tests**: Use `assert_ok!(result)` or `assert_err!(result)` macros (better error messages)
 - **Allowed**: Only in tests, examples, benches, with `#[allow(clippy::unwrap_used)]` + justification
-- **Setup**: Run `cargo make install-hooks` to install pre-commit hooks
+- **Setup**: Run `just install-hooks` to install pre-commit hooks
 
 ## SPR Consolidation Process
 

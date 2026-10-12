@@ -1003,6 +1003,13 @@ chicago-tdd-tools = {
         "nato",                      # NATO assurance courts + ML-DSA-65 dossier sealing (implies ledger)
         "wasm-guest",                # zero-import cdylib WASM guest (implies conformance; guest telemetry also needs ocel-ingest)
         "all-assurance",             # umbrella: conformance + ledger + nato
+        "ocel-ingest-json",          # + OCEL 2.0 JSON import (implies ocel-ingest)
+        "ocel-ingest-xml",           # + roundtrip-first OCEL XML reader (implies ocel-ingest)
+        "receipt-validation",        # BLAKE3 receipt-chain validation (implied by ledger)
+        "cli-proof",                 # CLI harness + sabotage fixtures
+        "mutation-testing",          # mutation-scoring types (reported metric, not an enforced gate)
+        "concurrency-testing",       # loom-backed concurrency tests
+        "parameterized-testing",     # parameterized test macro support
     ]
 }
 ```

@@ -55,7 +55,7 @@ pub const HOT_PATH_TICK_BUDGET: u64 = 8;
 /// Tick counter using RDTSC (Read Time-Stamp Counter)
 ///
 /// On `x86_64`, uses `rdtsc` instruction for cycle counting.
-/// On other platforms, uses `std::time::Instant` as fallback.
+/// On other platforms, uses `std::time::SystemTime` nanos as fallback.
 pub struct TickCounter {
     /// Start tick count
     start_ticks: u64,
@@ -148,7 +148,9 @@ impl TickCounter {
 
 /// Compile-time validated tick budget
 ///
-/// **Poka-Yoke**: This type enforces tick budget validation at compile time using const generics.
+/// **Poka-Yoke**: The budget is a const generic — known at compile time, but NOT
+/// validated there (no trait bound constrains it, unlike `ValidatedRun`'s
+/// `AssertRunLen`); violation detection happens at runtime in `validate()`.
 /// Use this for known tick budgets to prevent errors at compile time.
 ///
 /// # Example
@@ -183,7 +185,8 @@ pub struct ValidatedTickBudget<const BUDGET: u64> {
 impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     /// Create a new validated tick budget
     ///
-    /// The budget is validated at compile time through the const generic parameter.
+    /// The budget is a compile-time-known const generic, validated at runtime in
+/// `validate()` — no compile-time trait bound constrains it.
     #[must_use]
     pub const fn new() -> Self {
         Self { _inner: Validated::new(BUDGET) }
@@ -234,7 +237,7 @@ impl<const BUDGET: u64> Default for ValidatedTickBudget<BUDGET> {
 ///
 /// assert_eq!(result, 42);
 /// // Note: ticks may vary - very fast operations may have 0 ticks
-/// assert!(ticks >= 0);
+/// assert!(ticks < u64::MAX); // ticks is a u64 — bound it to a real check
 /// ```
 pub fn measure_ticks<F, T>(f: F) -> (T, u64)
 where
@@ -261,7 +264,7 @@ where
 /// }).await;
 ///
 /// assert_eq!(result, 42);
-/// assert!(ticks >= 0);
+/// assert!(ticks < u64::MAX); // ticks is a u64 — bound it to a real check
 /// # }
 /// ```
 #[cfg(feature = "async")]
