@@ -223,7 +223,12 @@ fn reproducible_build_receipt_schema_court() {
             );
         }
         ReproVerdict::Skipped { reason } => {
-            println!("[nato-repro-court] TYPED SKIP: {reason}");
+            // JUSTIFICATION: court-harness skip notice; stdout is the court's
+            // disclosure channel (no log subscriber in court runs).
+            #[allow(clippy::print_stdout)]
+            {
+                println!("[nato-repro-court] TYPED SKIP: {reason}");
+            }
         }
     }
 }

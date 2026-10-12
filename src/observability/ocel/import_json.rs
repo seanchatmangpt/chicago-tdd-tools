@@ -17,7 +17,10 @@
 //! deserializes through them directly; this module hand-maps
 //! `serde_json::Value` into them on top of the serde layer, validating
 //! version and required fields (the wasm4pm-compat *builder* type is a
-//! different type and is not part of this import path).
+//! different type and is not part of this import path). The mapping is NOT
+//! lossless: unknown `ocel:` shapes (e.g. `ocel:ovmap`) are dropped and
+//! event attributes are not reconstructed — this import is a projection,
+//! not a lossless conversion.
 
 #![cfg(feature = "ocel-ingest-json")]
 

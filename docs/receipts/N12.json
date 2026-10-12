@@ -1,30 +1,54 @@
 {
-  "receipt_id": "cr-control-11",
+  "receipt_id": "cr-N12-91022bc14b2b2f24",
   "court_id": "N12",
-  "pillar": "Proof",
+  "pillar": "Resilience",
   "name": "N12",
-  "subject_sha": "control-subject",
+  "subject_sha": "93c8cef96195b1cd1554aa876c11490ae4c2e1523a71c6e9e055e0571d8c3e8b",
   "verdict": "Pass",
   "metrics": [
     [
-      "k",
+      "court1_chain_len",
       {
-        "U64": 11
+        "U64": 1000
+      }
+    ],
+    [
+      "court1_glitch_period",
+      {
+        "U64": 100
+      }
+    ],
+    [
+      "frozen_clock_liveness_bound",
+      {
+        "U64": 8
+      }
+    ],
+    [
+      "court4_backsteps_caught",
+      {
+        "U64": 7
+      }
+    ],
+    [
+      "court4_frozen_verdicts",
+      {
+        "U64": 25
       }
     ]
   ],
   "positive_control": {
     "MutantCaught": {
-      "mutant_id": "m-11",
-      "detection_channel": "control"
+      "mutant_id": "BackstepClock",
+      "detection_channel": "MonotonicGate strict-forward refusal"
     }
   },
   "scoping": {
-    "spec_mandate": "mandate",
-    "delivered_evidence": "evidence",
-    "is_full_spec_scale": true,
-    "bound": ""
+    "spec_mandate": "N12 clock-glitch resilience: hardware-counter tick law with wrap boundaries and ABI byte-tick guard",
+    "delivered_evidence": "wall-monotonic regression gate over Instant: strict-forward admission, typed TickError::Regression refusals, frozen-clock bounded liveness, pn64 ordering composition, positive controls",
+    "is_full_spec_scale": false,
+    "bound": "no RDTSC/counter-register access through std on this host; no raw-cycle u64 wrap domain; pn64 is a transition law, not a modular byte-tick counter — donor courts 2a/2b out of scope"
   },
-  "digest": "731cacbe2ae103614c83846183601e2ab3c8594036b1af14d0ae28070c41860a",
+  "digest": "91022bc14b2b2f2413f7b3b36b178ba6b72cf9f79cb81a6f2c71fca477a1fb16",
   "timestamp_ms": 0
 }

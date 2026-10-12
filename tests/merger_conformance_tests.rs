@@ -69,7 +69,9 @@ use chicago_tdd_tools::conformance::session::ConformanceSession;
 use chicago_tdd_tools::conformance::session::YieldStatus;
 use chicago_tdd_tools::observability::ocel::import_json::import_ocel_json;
 use chicago_tdd_tools::observability::ocel::ocel64_bridge::{from_ocel64, to_ocel64};
-use chicago_tdd_tools::observability::ocel::powl_fixture_bridge::session_words_for_atoms;
+use chicago_tdd_tools::observability::ocel::powl_fixture_bridge::{
+    merger_fixture_to_session_words, session_words_for_atoms,
+};
 
 // ---------------------------------------------------------------------------
 // Fixture roots
@@ -141,10 +143,31 @@ fn fixture_names(stem: &str) -> Vec<String> {
 }
 
 /// `session_word[i] = tid_i | (i+1) << 8` over explicit names via the RM3
-/// bridge (contract-wire streams whose names ride the rich log's
-/// `attributes["powl"]`).
+/// bridge. USED ONLY for the contract-wire remap path in
+/// `run_contract_pipeline`: there the POWL names ride the rich OCEL log's
+/// `attributes["powl"]` field, which the composed entry point
+/// `merger_fixture_to_session_words` structurally cannot serve — its route A
+/// and route B both read the packed tier's `ocel:activity` field and never
+/// see `ocel:attributes`. Every landed-fixture (raw `ocel:activity`) stream
+/// goes through the composed entry instead (`composed_words` below).
 fn session_words(names: &[String], atoms: &[String]) -> Vec<u64> {
     session_words_for_atoms(names, atoms).unwrap_or_else(|e| panic!("session-word mapping: {e}"))
+}
+
+/// The LANDED composed entry point (`merger_fixture_to_session_words`) over
+/// the real on-disk fixture: model from `models/{model_stem}.powl`, fixture
+/// text from `conformance/{fixture_stem}.ocel.json`. This is the acceptance
+/// bar — happy-path tests must drive the bridge's composed surface, not
+/// re-compose `fixture_activity_names` + `session_words` in-test. The model
+/// and fixture stems are separate because violation fixtures replay against
+/// the NORMATIVE BASE model (no `*_violation.powl` exists).
+fn composed_words(model_stem: &str, fixture_stem: &str) -> Vec<u64> {
+    let model = PowlModel::from_powl_file(&model_path(model_stem))
+        .unwrap_or_else(|e| panic!("{model_stem}: model must load: {e}"));
+    let text = std::fs::read_to_string(fixture_path(fixture_stem))
+        .unwrap_or_else(|e| panic!("read {fixture_stem}: {e}"));
+    merger_fixture_to_session_words(&model, &text)
+        .unwrap_or_else(|e| panic!("{fixture_stem}: fixture bridge: {e}"))
 }
 
 /// Contract wire form: `ocel:activity` is a `TestActivity` variant name; the
@@ -201,7 +224,12 @@ fn run_contract_pipeline(stem: &str, case: &str) {
         );
     }
 
-    // Remap reads the RICH log (attributes survive only there).
+    // Remap reads the RICH log (attributes survive only there). This is the
+    // one in-test composition exception: the bridge's route A/B both read
+    // `ocel:activity` on the packed tier and never reach
+    // `ocel:attributes["powl"]`, so `merger_fixture_to_session_words`
+    // structurally cannot serve this contract-wire path — hence the
+    // explicit-names `session_words` helper (see its doc).
     let mut rows: Vec<(String, u64, String)> = log
         .events
         .values()
@@ -236,20 +264,17 @@ fn run_contract_pipeline(stem: &str, case: &str) {
 }
 
 /// Replay a raw (name, tick) stream and assert the exact violation variant,
-/// the `Phase::Faulted` latch, and the frozen post-latch state.
+/// the `Phase::Faulted` latch, and the frozen post-latch state. The words are
+/// bridged through the LANDED composed entry point against the NORMATIVE BASE
+/// model (no `*_violation.powl` exists — RM2 Fix 4, operator v26.10.12 §4).
 fn assert_violation(
     stem: &str,
-    atoms: &[String],
-    names: &[String],
     expected: &ConformanceError,
     expected_marking: u64,
     expected_steps: u32,
 ) {
-    let words = session_words(names, atoms);
-    // RM2 Fix 4 (operator v26.10.12 spec §4): violation fixtures replay
-    // against the NORMATIVE BASE model — no *_violation.powl exists; the
-    // court is (base model, violation trace).
     let base_stem = stem.strip_suffix("_violation").unwrap_or(stem);
+    let words = composed_words(base_stem, stem);
     let mut session = ConformanceSession::from_powl_file(&model_path(base_stem))
         .unwrap_or_else(|e| panic!("{base_stem}: session compile: {e}"));
     session.attach_stream(&words).unwrap_or_else(|e| panic!("{stem}: attach: {e}"));
@@ -367,7 +392,7 @@ fn phase4_golden_pipeline_and_landed_golden_complete() {
     assert_eq!(names, atoms, "phase4 landed golden == full DFS atom sequence");
     let mut session = ConformanceSession::from_powl_file(&model_path("phase4_novation"))
         .unwrap_or_else(|e| panic!("phase4 session compile: {e}"));
-    let words = session_words(&names, &atoms);
+    let words = composed_words("phase4_novation", "phase4_novation");
     session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
     match session.step_budget(words.len() as u32) {
         YieldStatus::Complete(report) => {
@@ -383,12 +408,8 @@ fn phase4_golden_pipeline_and_landed_golden_complete() {
 /// latches frozen.
 #[test]
 fn phase4_violation_skipped_latches_frozen() {
-    let atoms = phase_atoms("phase4_novation");
-    let names = fixture_names("phase4_novation_violation");
     assert_violation(
         "phase4_novation_violation",
-        &atoms,
-        &names,
         &ConformanceError::Skipped { step: 2 },
         1 << 2, // two atoms committed
         2,
@@ -408,12 +429,8 @@ fn phase5_golden_pipeline_completes() {
 /// law.
 #[test]
 fn phase5_landed_golden_loop_repetition_faults_skipped() {
-    let atoms = phase_atoms("phase5_syndicated_debt");
-    let names = fixture_names("phase5_syndicated_debt");
     assert_violation(
         "phase5_syndicated_debt",
-        &atoms,
-        &names,
         &ConformanceError::Skipped { step: 4 },
         1 << 4,
         4,
@@ -425,12 +442,8 @@ fn phase5_landed_golden_loop_repetition_faults_skipped() {
 /// not enabled at the cursor -> `Skipped` at step 5, latched frozen.
 #[test]
 fn phase5_violation_skipped_latches_frozen() {
-    let atoms = phase_atoms("phase5_syndicated_debt");
-    let names = fixture_names("phase5_syndicated_debt_violation");
     assert_violation(
         "phase5_syndicated_debt_violation",
-        &atoms,
-        &names,
         &ConformanceError::Skipped { step: 5 },
         1 << 5,
         5,
@@ -453,10 +466,9 @@ fn phase7_golden_pipeline_completes() {
 /// exists on disk; the honest fault is `Skipped { step: 1 }`.)
 #[test]
 fn phase7_landed_fixtures_loop_repetition_faults_skipped() {
-    let atoms = phase_atoms("phase7_settlement");
     for stem in ["phase7_settlement", "phase7_settlement_violation"] {
-        let names = fixture_names(stem);
-        let words = session_words(&names, &atoms);
+        // LANDED composed entry point: bridge(model, fixture) -> words.
+        let words = composed_words("phase7_settlement", stem);
         let mut session = ConformanceSession::from_powl_file(&model_path("phase7_settlement"))
             .unwrap_or_else(|e| panic!("phase7 session compile: {e}"));
         session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
@@ -704,7 +716,7 @@ fn untestable_phase_violation_fixtures_exist() {
 /// Golden replays to Complete; the violation (CET1 gate skipped) faults
 /// `Skipped` at the gate's step and latches frozen.
 mod phase3 {
-    use super::{assert_violation, fixture_names, model_path, phase_atoms, session_words};
+    use super::{assert_violation, composed_words, fixture_names, model_path, phase_atoms};
     use chicago_tdd_tools::conformance::error::ConformanceError;
     use chicago_tdd_tools::conformance::session::ConformanceSession;
     use chicago_tdd_tools::conformance::session::YieldStatus;
@@ -727,7 +739,7 @@ mod phase3 {
 
         let mut session = ConformanceSession::from_powl_file(&model_path("phase3_capital"))
             .unwrap_or_else(|e| panic!("phase3 session compile: {e}"));
-        let words = session_words(&names, &atoms);
+        let words = composed_words("phase3_capital", "phase3_capital");
         session.attach_stream(&words).unwrap_or_else(|e| panic!("phase3 attach: {e}"));
         match session.step_budget(words.len() as u32) {
             YieldStatus::Complete(report) => {
@@ -751,8 +763,6 @@ mod phase3 {
         assert_eq!(names.len(), P3_ATOMS - 1, "violation drops exactly the gate");
         assert_violation(
             "phase3_capital_violation",
-            &atoms,
-            &names,
             &ConformanceError::Skipped { step: CET1_GATE_STEP as u32 },
             1 << CET1_GATE_STEP, // three atoms committed
             CET1_GATE_STEP as u32,
@@ -804,7 +814,7 @@ fn phase8_landed_golden_replays_complete_one_shot_cert() {
         "one-shot certificate: exactly one cert_issue event"
     );
 
-    let words = session_words(&names, &atoms);
+    let words = composed_words("phase8_statutory", "phase8_statutory");
     let mut session = ConformanceSession::from_powl_file(&model_path("phase8_statutory"))
         .unwrap_or_else(|e| panic!("phase8 session compile: {e}"));
     session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
@@ -869,8 +879,9 @@ fn phase8_violation_over_issuance_pins_structural_equality() {
     let golden_names = fixture_names("phase8_statutory");
     let violation_names = fixture_names("phase8_statutory_violation");
     assert_eq!(golden_names, violation_names, "violation keeps the golden skeleton");
-    let atoms = phase_atoms("phase8_statutory");
-    let words = session_words(&violation_names, &atoms);
+    // LANDED composed entry point for the word stream; the fixture names above
+    // stay on `fixture_names` because the court asserts the names themselves.
+    let words = composed_words("phase8_statutory", "phase8_statutory_violation");
     let mut session = ConformanceSession::from_powl_file(&model_path("phase8_statutory"))
         .unwrap_or_else(|e| panic!("phase8 session compile: {e}"));
     session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
@@ -901,7 +912,7 @@ fn phase6_landed_golden_completes() {
     assert_eq!(names, atoms, "phase6 landed golden == full DFS atom sequence");
     let mut session = ConformanceSession::from_powl_file(&model_path("phase6_treasury"))
         .unwrap_or_else(|e| panic!("phase6 session compile: {e}"));
-    let words = session_words(&names, &atoms);
+    let words = composed_words("phase6_treasury", "phase6_treasury");
     session.attach_stream(&words).unwrap_or_else(|e| panic!("attach: {e}"));
     match session.step_budget(words.len() as u32) {
         YieldStatus::Complete(report) => {
@@ -917,12 +928,8 @@ fn phase6_landed_golden_completes() {
 /// and latches frozen. The gate can never be bypassed silently (A05).
 #[test]
 fn phase6_violation_lcr_gate_skipped_latches_frozen() {
-    let atoms = phase_atoms("phase6_treasury");
-    let names = fixture_names("phase6_treasury_violation");
     assert_violation(
         "phase6_treasury_violation",
-        &atoms,
-        &names,
         &ConformanceError::Skipped { step: 5 },
         1 << 5, // five atoms committed, frozen before the gate
         5,

@@ -465,4 +465,86 @@ mod tests {
         }
         cur & DISPOSITION != 0
     }
+
+    /// Real-receipt emission for the N15 dossier slot (opt-in via
+    /// `CTT_EMIT_RECEIPTS=1`): runs the box-diamond + starvation court for
+    /// real — exhaustive reachable-marking enumeration, the round-robin
+    /// fair-scheduler law from every reachable marking, and the unfair-
+    /// scheduler starvation counterexample (the positive control) — then
+    /// mints and persists `docs/receipts/N15.json` from that run. Fully
+    /// deterministic: single-threaded pure-net simulation, no LCG, no wall
+    /// clock. Replaces the synthetic `control-subject` placeholder.
+    #[test]
+    fn emit_receipt_when_opted_in() {
+        use crate::nato::court::{CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
+        use crate::nato::receipt::{ControlResult, CourtReceipt};
+        use sha2::{Digest, Sha256};
+
+        if std::env::var("CTT_EMIT_RECEIPTS").ok().as_deref() != Some("1") {
+            return;
+        }
+
+        // Positive control: the unfair-scheduler adversary MUST trip the
+        // starvation monitor on previous_question — panics otherwise.
+        let start: u16 = ronr::N_MAIN_MOTION | ronr::N_SECONDED | ronr::N_DEBATABLE; // 0x000C
+        assert!(!can_reach(start, DISPOSITION, &admission_surface()[0..4]));
+        let (starved, dispositioned) = run_schedule(admission_surface(), start, false);
+        assert!(!dispositioned);
+        assert_eq!(starved, vec![4usize], "control: previous_question must be seen starved");
+        let control = ControlResult::MutantCaught {
+            mutant_id: "unfair-scheduler".to_string(),
+            detection_channel: "StarvationMonitor enabled-streak >= SLACK".to_string(),
+        };
+
+        // Real court run: exhaustive box-diamond + starvation-freedom under
+        // the round-robin scheduler (panics on any violation).
+        let markings = reachable(M0, admission_surface());
+        assert!(!markings.is_empty());
+        for &m in &markings {
+            let (starved, dispositioned) = run_schedule(admission_surface(), m, true);
+            assert!(dispositioned, "marking {m:#06x} did not reach adoption");
+            assert!(starved.is_empty(), "marking {m:#06x} starved {starved:?}");
+        }
+
+        let outcome = CourtOutcome {
+            verdict: Verdict::Pass,
+            metrics: vec![
+                ("reachable_markings", MetricValue::U64(markings.len() as u64)),
+                ("slack", MetricValue::U64(SLACK as u64)),
+                ("total_steps", MetricValue::U64(TOTAL as u64)),
+                ("control_starved_set", MetricValue::U64(starved.len() as u64)),
+            ],
+            scoping: crate::nato::liveness::scoping(),
+        };
+        let receipt = CourtReceipt::record(
+            CourtId::N15,
+            Pillar::Proof,
+            "N15",
+            // Deterministic subject identity: SHA-256 over the canonical
+            // court name plus the exact subject the court adjudicates.
+            &{
+                let mut h = Sha256::new();
+                h.update(
+                    b"N15|src/nato/liveness.rs|box-diamond-admitted + starvation-freedom under \
+                      the round-robin fair scheduler over the six-transition RONR admission \
+                      surface (pn64-fired, exhaustive reachable-marking enumeration)",
+                );
+                h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+            },
+            outcome,
+            control,
+        );
+
+        let json = receipt.to_json().expect("serialize N15 receipt");
+        let back = CourtReceipt::from_json(&json).expect("receipt must parse back");
+        assert_eq!(back.verdict, Verdict::Pass);
+        assert!(back.positive_control.passed());
+        assert_ne!(back.subject_sha, "control-subject");
+
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
+        let path = dir.join("N15.json");
+        if let Err(e) = std::fs::write(&path, json) {
+            println!("skipping N15 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
 }

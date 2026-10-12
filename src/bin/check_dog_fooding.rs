@@ -22,10 +22,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Exit code used when a gate check fails (shell convention: 1).
+const EXIT_FAILURE: i32 = 1;
+
 fn main() {
     let violations = check_dog_fooding();
     if violations > 0 {
-        std::process::exit(1);
+        std::process::exit(EXIT_FAILURE);
     }
 }
 

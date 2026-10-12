@@ -42,9 +42,13 @@
 //! hard limit: keep distinct named objects under ~100 at the packed tier, or
 //! use the full-fidelity `OcelLog` tier.
 //!
-//! Measured adversarial thresholds (2026-10-11): sequential `o#####` 142,
-//! 16-char shared-prefix 152, unicode/case-variant 239 — the ~100 guidance is
-//! under-protective for structured names.
+//! Measured adversarial thresholds (2026-10-11, pinned by
+//! `t10b_measured_collision_thresholds_hold`): sequential `o#####` 142,
+//! shared-prefix `activity_type_{:04}` 238, unicode/case-variant
+//! (`café_{:03}` / `cafe\u{301}_{:03}` alternation) 209 — the ~100 guidance
+//! is under-protective for structured names. Thresholds are generator-specific
+//! (the earlier unreceipted 152/239 figures could not be reproduced with
+//! documented generators; these values are the reproducible ones).
 #![cfg(feature = "ocel-ingest")]
 
 /// Typed refusal: two distinct names share a 16-bit blake3-truncated digest.
@@ -435,6 +439,63 @@ mod tests {
                 assert_eq!(b, bound);
             }
             other => panic!("expected CapacityExceeded, got {other:?}"),
+        }
+    }
+
+    /// T10b receipt: pins the MEASURED adversarial collision thresholds from
+    /// the module doc's empirical section. For each family, the count of
+    /// distinct names supplied when `IdMap::build` first refuses with
+    /// [`IdMapError::Collision`]. The blake3-truncated sentinel is
+    /// deterministic, so exact counts hold; the sentinel-scan first-collision
+    /// index is by construction the same point where `build` refuses.
+    #[test]
+    fn t10b_measured_collision_thresholds_hold() {
+        use std::collections::HashSet;
+        // Count of names at first sentinel collision == first build refusal.
+        let first_refusal = |fam: &[String]| -> usize {
+            let mut seen: HashSet<u16> = HashSet::new();
+            for (n, name) in fam.iter().enumerate() {
+                if !seen.insert(sentinel(name.as_bytes())) {
+                    return n + 1;
+                }
+            }
+            0
+        };
+        // Family 1 — sequential `o#####` names (documented adversarial class).
+        let seq: Vec<String> = (0..600).map(|i| format!("o{i:05}")).collect();
+        // Family 2 — shared-prefix activity names, 4-digit suffix.
+        let prefix: Vec<String> = (0..600).map(|i| format!("activity_type_{i:04}")).collect();
+        // Family 3 — unicode/case-variant pairs (é vs combining e-acute).
+        let uni: Vec<String> = (0..600)
+            .map(|i| {
+                if i % 2 == 0 {
+                    format!("caf\u{e9}_{i:03}")
+                } else {
+                    format!("cafe\u{301}_{i:03}")
+                }
+            })
+            .collect();
+        for (label, fam, documented) in [
+            ("sequential o#####", &seq, 142),
+            ("shared-prefix", &prefix, 238),
+            ("unicode/case-variant", &uni, 209),
+        ] {
+            let measured = first_refusal(fam);
+            assert_eq!(
+                measured, documented,
+                "{label}: measured {measured}, documented {documented}"
+            );
+            // Cross-check: build really refuses at that count (typed
+            // Collision), and accepts one fewer name.
+            let refs_ok: Vec<&str> = fam[..measured - 1].iter().map(|s| s.as_str()).collect();
+            assert!(
+                IdMap::build(&refs_ok).is_ok(),
+                "{label}: {n} names must build cleanly",
+                n = measured - 1
+            );
+            let refs_bad: Vec<&str> = fam[..measured].iter().map(|s| s.as_str()).collect();
+            let err = IdMap::build(&refs_bad).expect_err("measured threshold must refuse");
+            assert!(matches!(err, IdMapError::Collision { .. }), "{label}");
         }
     }
 

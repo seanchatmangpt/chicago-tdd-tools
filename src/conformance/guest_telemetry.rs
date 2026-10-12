@@ -25,6 +25,7 @@
 //! owned by `guest.rs` (`ERR_*` 0..=13). No ambient reads: every byte
 //! exported comes from the caller's arguments.
 
+use super::guest::{out_span_oob, ERR_CAP_TOO_SMALL};
 use super::guest_yield::{STATUS_E_INVALID, STATUS_E_NOMEM, STATUS_OK};
 use crate::observability::ocel::ocel64_bridge::pack;
 
@@ -146,7 +147,11 @@ pub fn trajectory_digest(words: &[u64]) -> [u8; 32] {
 /// ABI-style: returns a status code — [`STATUS_OK`] (the canonical ABI
 /// success code, `guest::OK`) on success, [`STATUS_E_NOMEM`] when `out_cap`
 /// is too small for all `words.len() * 8` bytes, [`STATUS_E_INVALID`] for a
-/// null or non-8-byte-aligned `out`. Note these refusal codes are
+/// null or non-8-byte-aligned `out`, and the canonical `guest::ERR_CAP_TOO_SMALL`
+/// when the `[out, out+out_cap)` span falls at/past the installed
+/// linear-memory bound (same R44 span law as `guest::ctt_session_step` /
+/// `ctt_session_seal`, enforced via `guest::out_span_oob`). Note these
+/// refusal codes are
 /// `guest_yield`'s yield-scheduling statuses, NOT the canonical `guest.rs`
 /// ABI errno table (`ERR_*` 0..=13); their numeric values do overlap
 /// `ERR_*` 2/3, but the surfaces are distinct namespaces — they must not be
@@ -172,6 +177,12 @@ pub unsafe fn write_event_words(words: &[u64], out: *mut u8, out_cap: u32) -> i3
     // errno is deterministic regardless of argument evaluation order.
     if out.is_null() || !(out as usize).is_multiple_of(8) {
         return STATUS_E_INVALID;
+    }
+    // R44 linear-memory span law (same helper as `ctt_session_step` /
+    // `ctt_session_seal`): a lawful-shaped out-pointer at/past the installed
+    // guest linear-memory end is a typed errno, never a store trap.
+    if out_span_oob(out, need) {
+        return ERR_CAP_TOO_SMALL;
     }
     // SAFETY: capacity checked above; caller contract per # Safety.
     let buf = unsafe { std::slice::from_raw_parts_mut(out, need) };
@@ -365,5 +376,60 @@ mod tests {
         let words = emit_trajectory(&sample_summary(), &[]);
         assert_eq!(words.len(), 1);
         assert_eq!(words[0], pack(0xFFFF, 3, 0, 2, 0));
+    }
+
+    // ── R44 linear-memory span law (guest::out_span_oob) ─────────────────────
+
+    use crate::conformance::guest as guest_abi;
+
+    /// RAII guard restoring the installed linear-memory end, so a failing
+    /// assertion cannot leak a bound into other tests on the shared static.
+    struct MemBoundGuard(usize);
+    impl MemBoundGuard {
+        fn install(end: usize) -> Self {
+            guest_abi::set_linear_memory_end(end);
+            Self(guest_abi::linear_memory_end())
+        }
+    }
+    impl Drop for MemBoundGuard {
+        fn drop(&mut self) {
+            guest_abi::set_linear_memory_end(self.0);
+        }
+    }
+
+    #[test]
+    fn bounded_write_refuses_out_span_past_installed_memory_end() {
+        let words = emit_trajectory(&sample_summary(), &sample_events());
+        let need = words.len() * 8;
+        // Real allocation far below the installed bound: the pointer value is
+        // synthetic (past `end`), never dereferenced on the refusal path.
+        let mut buf = vec![0u8; need];
+        let _guard = MemBoundGuard::install(buf.as_ptr() as usize);
+        // SAFETY: refusal path — `out_span_oob` fires before any write, so the
+        // past-the-bound pointer is never used as a destination.
+        let st = unsafe { write_event_words(&words, buf.as_mut_ptr(), need as u32) };
+        assert_eq!(
+            st, guest_abi::ERR_CAP_TOO_SMALL,
+            "out-pointer at/past the installed linear-memory end must be a typed errno"
+        );
+        assert!(
+            buf.iter().all(|&b| b == 0),
+            "refused call must leave the buffer untouched"
+        );
+    }
+
+    #[test]
+    fn bounded_write_in_bounds_happy_path_still_works_under_installed_bound() {
+        let words = emit_trajectory(&sample_summary(), &sample_events());
+        let mut buf = vec![0u8; words.len() * 8];
+        // Install a bound comfortably above the real allocation: same bytes,
+        // same digest, bound installed and enforced but not violated.
+        let _guard = MemBoundGuard::install(buf.as_ptr() as usize + 0x1_0000);
+        // SAFETY: live, word-aligned allocation of exactly `need` bytes.
+        let st = unsafe { write_event_words(&words, buf.as_mut_ptr(), buf.len() as u32) };
+        assert_eq!(st, STATUS_OK);
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(&buf);
+        assert_eq!(<[u8; 32]>::from(hasher.finalize()), trajectory_digest(&words));
     }
 }

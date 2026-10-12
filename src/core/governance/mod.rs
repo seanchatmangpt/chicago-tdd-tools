@@ -394,16 +394,69 @@ pub struct TaskReceipt {
 const MAX_PAYLOAD_BYTES: usize = 1024 * 1024;
 /// Maximum seconds a receipt timestamp may be in the future.
 const MAX_FUTURE_OFFSET_MS: u64 = 300_000;
+/// Maximum signing-key length accepted by [`TaskReceipt::sign`], in bytes.
+///
+/// The HMAC construction hashes keys longer than the 64-byte block, so any
+/// length is mathematically fine; the cap exists because the *retired*
+/// embedded-key wire format length-prefixed the key with a single byte.
+const MAX_SIGNING_KEY_BYTES: usize = 255;
 
 impl TaskReceipt {
-    /// Validate this receipt.
+    /// Validate this receipt's structural integrity only.
     ///
     /// Checks:
     /// 1. ID must be non-empty and contain no null bytes.
     /// 2. Payload must contain no null bytes and must not exceed `MAX_PAYLOAD_BYTES`.
     /// 3. Timestamp must not be more than `MAX_FUTURE_OFFSET_MS` in the future.
-    /// 4. If a signature is present it must be valid hex and must verify against the canonical message.
+    ///
+    /// # Signature verification — migration note
+    ///
+    /// This method **no longer verifies signatures**. The previous scheme
+    /// embedded the signing key inside the `signature` field
+    /// (`{key_len}{key_hex}{hmac}`), which made the HMAC authenticate nothing:
+    /// anyone could forge a "valid" receipt because the key shipped with it.
+    ///
+    /// Use [`TaskReceipt::validate_with_key`] to verify a signature with the
+    /// caller-supplied secret. If a signature is present, this method returns
+    /// a typed refusal directing the caller to `validate_with_key`.
     pub fn validate(&self) -> Result<(), String> {
+        self.validate_structural()?;
+        if self.signature.is_some() {
+            return Err(
+                "signature present but no verifying key supplied: embedded-key signatures are \
+                 retired (forgeable); use TaskReceipt::validate_with_key"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
+
+    /// Validate this receipt, verifying its signature with `key`.
+    ///
+    /// Performs all structural checks from [`TaskReceipt::validate`], then
+    /// recomputes the HMAC-SHA256 over the canonical message
+    /// `"{id}:{timestamp_ms}:{payload}"` with `key` and compares it to the
+    /// stored `signature`. A receipt signed with a different key (a forged
+    /// signature) fails with `Invalid signature`.
+    ///
+    /// A receipt with no signature at all still passes the structural checks;
+    /// signatures are optional by design.
+    pub fn validate_with_key(&self, key: &str) -> Result<(), String> {
+        self.validate_structural()?;
+        let Some(sig) = &self.signature else {
+            return Ok(());
+        };
+        if sig.len() % 2 != 0 || !sig.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err("Invalid signature".to_string());
+        }
+        let expected = self.hmac_hex(key.as_bytes());
+        if expected != *sig {
+            return Err("Invalid signature".to_string());
+        }
+        Ok(())
+    }
+
+    fn validate_structural(&self) -> Result<(), String> {
         // 1. ID checks
         let trimmed_id = self.id.trim();
         if trimmed_id.is_empty() {
@@ -429,68 +482,34 @@ impl TaskReceipt {
         if self.timestamp_ms > now_ms + MAX_FUTURE_OFFSET_MS {
             return Err("Timestamp is in the far future".to_string());
         }
-
-        // 4. Signature check
-        if let Some(sig) = &self.signature {
-            // Must be valid hex
-            if sig.len() % 2 != 0 || !sig.chars().all(|c| c.is_ascii_hexdigit()) {
-                return Err("Invalid signature".to_string());
-            }
-            // The stored sig must match a fresh hmac over current fields
-            let expected = self.compute_hmac_hex(&self.extract_key_from_sig(sig));
-            if expected != *sig {
-                return Err("Invalid signature".to_string());
-            }
-        }
-
         Ok(())
     }
 
     /// Sign this receipt with the given secret key.
     ///
-    /// Computes HMAC-SHA256 over the canonical message `"{id}:{timestamp_ms}:{payload}"`
-    /// using a simple XOR-based pseudo-HMAC (avoids a heavy crypto dependency).
-    pub fn sign(&mut self, secret: &str) {
-        let hex = self.compute_hmac_hex(secret.as_bytes());
-        self.signature = Some(hex);
+    /// Computes HMAC-SHA256 over the canonical message
+    /// `"{id}:{timestamp_ms}:{payload}"` using an XOR-pad HMAC construction
+    /// (avoids a heavy crypto dependency) and stores **only** the 64-char hex
+    /// digest in `signature`. The key is never embedded.
+    ///
+    /// Returns a typed error for keys longer than
+    /// [`MAX_SIGNING_KEY_BYTES`] (255 bytes) instead of truncating.
+    pub fn sign(&mut self, secret: &str) -> Result<(), String> {
+        if secret.len() > MAX_SIGNING_KEY_BYTES {
+            return Err(format!(
+                "signing key exceeds maximum length of {MAX_SIGNING_KEY_BYTES} bytes"
+            ));
+        }
+        self.signature = Some(self.hmac_hex(secret.as_bytes()));
+        Ok(())
     }
 
     fn canonical_message(&self) -> Vec<u8> {
         format!("{}:{}:{}", self.id, self.timestamp_ms, self.payload).into_bytes()
     }
 
-    /// Derive the key back from the stored signature by encoding the secret.
-    /// Because we store a deterministic HMAC, we need the key for re-verification.
-    /// The secret is embedded as the first 32 bytes of the HMAC key material.
-    /// For validation we re-derive from the signature itself using a round-trip approach:
-    /// store a HMAC keyed by secret; validate by re-computing with the same secret embedded
-    /// as a prefix in the hex (length-prefixed).
-    ///
-    /// In practice: the signature is `{key_len_hex2}{key_hex}{hmac_hex}` so we can
-    /// extract the key from the signature itself for self-contained verification.
-    fn extract_key_from_sig<'a>(&self, sig: &'a str) -> Vec<u8> {
-        // Format: first 2 hex chars = key length in bytes, then key hex, then HMAC
-        if sig.len() < 4 {
-            return vec![];
-        }
-        let key_len_hex = &sig[0..2];
-        let key_len = usize::from_str_radix(key_len_hex, 16).unwrap_or(0);
-        let key_hex_len = key_len * 2;
-        if sig.len() < 2 + key_hex_len {
-            return vec![];
-        }
-        let key_hex = &sig[2..2 + key_hex_len];
-        (0..key_hex.len())
-            .step_by(2)
-            .filter_map(|i| u8::from_str_radix(&key_hex[i..i + 2], 16).ok())
-            .collect()
-    }
-
-    /// Compute HMAC-SHA256 and return as hex string.
-    ///
-    /// Format: `{key_len_hex2}{key_hex}{sha256_xor_hmac_hex}`
-    /// This self-contained format allows key recovery during validation.
-    fn compute_hmac_hex(&self, key: &[u8]) -> String {
+    /// Compute the keyed HMAC-SHA256 over the canonical message, hex-encoded.
+    fn hmac_hex(&self, key: &[u8]) -> String {
         let msg = self.canonical_message();
         // XOR-based HMAC construction (avoids `hmac`/`sha2` crate dependency)
         // ipad = key XOR 0x36, opad = key XOR 0x5C
@@ -506,11 +525,86 @@ impl TaskReceipt {
         let inner_hash = sha256_simple(&inner_input);
         let outer_input: Vec<u8> = opad.iter().chain(inner_hash.iter()).copied().collect();
         let hmac = sha256_simple(&outer_input);
-        // Build self-contained hex: key_len(1 byte hex) + key_hex + hmac_hex
-        let key_len_hex = format!("{:02x}", key.len().min(0xFF));
-        let key_hex: String = key.iter().map(|b| format!("{b:02x}")).collect();
-        let hmac_hex: String = hmac.iter().map(|b| format!("{b:02x}")).collect();
-        format!("{key_len_hex}{key_hex}{hmac_hex}")
+        hmac.iter().map(|b| format!("{b:02x}")).collect()
+    }
+}
+
+#[cfg(test)]
+mod task_receipt_tests {
+    use super::TaskReceipt;
+
+    fn receipt() -> TaskReceipt {
+        TaskReceipt {
+            id: "task-1".to_string(),
+            timestamp_ms: 1_700_000_000_000,
+            payload: "payload-body".to_string(),
+            signature: None,
+        }
+    }
+
+    #[test]
+    fn test_sign_then_validate_with_correct_key_passes() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        assert!(r.validate_with_key("secret-key").is_ok());
+    }
+
+    #[test]
+    fn test_forged_signature_with_wrong_key_fails() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        let err = r.validate_with_key("attacker-key").unwrap_err();
+        assert!(err.contains("Invalid signature"), "got: {err}");
+    }
+
+    #[test]
+    fn test_signature_no_longer_embeds_key() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        let sig = r.signature.as_deref().unwrap_or_default();
+        assert_eq!(sig.len(), 64, "signature must be bare 32-byte HMAC hex");
+        assert!(sig.chars().all(|c| c.is_ascii_hexdigit()));
+        assert!(!sig.to_lowercase().contains("secret"), "key material leaked");
+    }
+
+    #[test]
+    fn test_validate_refuses_signed_receipt_without_key() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        let err = r.validate().unwrap_err();
+        assert!(err.contains("validate_with_key"), "got: {err}");
+    }
+
+    #[test]
+    fn test_validate_passes_unsigned_receipt() {
+        let r = receipt();
+        assert!(r.validate().is_ok());
+    }
+
+    #[test]
+    fn test_sign_refuses_oversized_key() {
+        let mut r = receipt();
+        let big_key = "k".repeat(256);
+        let err = r.sign(&big_key).unwrap_err();
+        assert!(err.contains("255"), "got: {err}");
+        assert!(r.signature.is_none(), "failed sign must not leave a signature");
+    }
+
+    #[test]
+    fn test_sign_at_255_byte_boundary_accepted() {
+        let mut r = receipt();
+        let key = "k".repeat(255);
+        r.sign(&key).unwrap_or_else(|e| panic!("sign failed: {e}"));
+        assert!(r.validate_with_key(&key).is_ok());
+    }
+
+    #[test]
+    fn test_tampered_payload_fails_validation() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        r.payload.push_str("-tampered");
+        let err = r.validate_with_key("secret-key").unwrap_err();
+        assert!(err.contains("Invalid signature"), "got: {err}");
     }
 }
 

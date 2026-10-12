@@ -156,16 +156,20 @@ where
 
     /// Teardown fixture asynchronously
     ///
-    /// Performs cleanup operations. Override for custom cleanup logic.
+    /// Hook point for future trait-based cleanup providers. `AsyncFixtureManager`
+    /// performs no automatic async cleanup: this method is currently a no-op that
+    /// always returns `Ok(())`. It is not overridable — there is no override
+    /// mechanism, and dropping the fixture value returned by `setup` is the only
+    /// cleanup that occurs.
     ///
     /// # Errors
     ///
-    /// Returns an error if teardown fails.
+    /// Never returns an error in the current implementation.
     #[allow(clippy::unused_async)] // Part of async trait API - implementations may need async
     #[allow(clippy::future_not_send)] // Async trait API - Send bound not required for default implementation
     pub async fn teardown(&self) -> FixtureResult<()> {
-        // Default: no-op cleanup
-        // Override in implementations for custom cleanup
+        // No automatic cleanup: this is a no-op reserved as a hook point for
+        // future trait-based teardown providers.
         Ok(())
     }
 }

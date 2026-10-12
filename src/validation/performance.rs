@@ -591,6 +591,83 @@ mod tests {
     }
 
     #[test]
+    fn test_assert_within_budget_error_on_zero_budget() {
+        // Arrange: counter with guaranteed nonzero elapsed ticks (nanosecond clock,
+        // but spin to make the violation deterministic across platforms)
+        let counter = TickCounter::start();
+        let mut spins: u64 = 0;
+        while counter.elapsed_ticks() == 0 {
+            std::hint::black_box(&spins);
+            spins = spins.wrapping_add(1);
+        }
+        let (result, ticks) = measure_ticks(|| {
+            std::hint::black_box(spins);
+            spins
+        });
+
+        // Act: assert against a budget of 0 (elapsed is guaranteed nonzero)
+        let outcome = counter.assert_within_budget(0);
+
+        // Assert: TickBudgetExceeded(elapsed, 0)
+        match outcome {
+            Err(PerformanceValidationError::TickBudgetExceeded(elapsed, budget)) => {
+                assert_eq!(budget, 0);
+                assert!(elapsed > 0);
+            }
+            other => panic!("expected TickBudgetExceeded, got {:?}", other.is_ok()),
+        }
+        assert!(result == spins || result == 0);
+        assert!(ticks < u64::MAX);
+    }
+
+    #[test]
+    fn test_exceeds_budget_both_branches() {
+        // Arrange
+        let counter = TickCounter::start();
+        let mut spins: u64 = 0;
+        while counter.elapsed_ticks() == 0 {
+            std::hint::black_box(&spins);
+            spins = spins.wrapping_add(1);
+        }
+
+        // Act & Assert: true branch (budget exhausted)
+        assert!(counter.exceeds_budget(0));
+        // Act & Assert: false branch (max budget can never be exceeded)
+        assert!(!counter.exceeds_budget(u64::MAX));
+    }
+
+    #[test]
+    fn test_validated_tick_budget_construction_and_violation() {
+        // Arrange: compile-time validated budget of 8 (hot path)
+        let budget = ValidatedTickBudget::<8>::new();
+
+        // Act & Assert: budget() reflects the const generic
+        assert_eq!(budget.budget(), 8);
+
+        // Within a large budget → Ok (8-tick budget with generous counter headroom)
+        let counter = TickCounter::start();
+        std::hint::black_box(42);
+        let within = ValidatedTickBudget::<{ u64::MAX }>::new();
+        assert!(within.assert_within_budget(&counter).is_ok());
+        assert_eq!(ValidatedTickBudget::<{ u64::MAX }>::default().budget(), u64::MAX);
+
+        // Violation: zero-budget validated budget must refuse any elapsed ticks
+        let mut spins: u64 = 0;
+        while counter.elapsed_ticks() == 0 {
+            std::hint::black_box(&spins);
+            spins = spins.wrapping_add(1);
+        }
+        let zero = ValidatedTickBudget::<0>::new();
+        match zero.assert_within_budget(&counter) {
+            Err(PerformanceValidationError::TickBudgetExceeded(elapsed, 0)) => {
+                assert!(elapsed > 0);
+            }
+            other => panic!("expected TickBudgetExceeded, got ok={}", other.is_ok()),
+        }
+        let _ = budget; // hot-path budget instance exercised via budget()
+    }
+
+    #[test]
     fn test_tick_measurer() {
         let measurer = TickMeasurer::new(|| 42);
         let (result, ticks) = measurer.measure();

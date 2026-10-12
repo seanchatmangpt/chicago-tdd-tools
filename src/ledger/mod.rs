@@ -341,8 +341,9 @@ mod tests {
             LedgerExitCode::NonMonotonic as u8,
             LedgerExitCode::EmptyDossier as u8,
             LedgerExitCode::DigestMismatch as u8,
+            LedgerExitCode::DossierInvalid as u8,
         ];
-        let expected: [u8; 10] = [0, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+        let expected: [u8; 11] = [0, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
         assert_eq!(observed, expected, "exit-code table drifted from the CLI contract");
     }
 

@@ -22,7 +22,7 @@
 # - Haircut-floor safety (A08) and LcrBreach ratio math live in the E-M15
 #   invariants module as typed refusals; this net stays pure structure.
 #
-# Node budget: 13 / 64 (MAX_POWL_NODES, loader.rs:47); 13 atoms linear ->
+# Node budget: 14 / 64 (MAX_POWL_NODES, loader.rs:47); 13 atoms + root seq ->
 # 14 places, inside the 16-place linear-net budget.
 
 activity act_ingest_collateral      = collateral.schedule_ingest    # t_ingest_collateral (1)   -> p_collateral_schedule_ingested

@@ -1,30 +1,48 @@
 {
-  "receipt_id": "cr-control-13",
+  "receipt_id": "cr-N14-c30dc8ca232cdf24",
   "court_id": "N14",
-  "pillar": "Proof",
+  "pillar": "Resilience",
   "name": "N14",
-  "subject_sha": "control-subject",
+  "subject_sha": "feeae7e18a9be2b36aac8af0d18a154cdee32300add6c42336385875eab8d6b6",
   "verdict": "Pass",
   "metrics": [
     [
-      "k",
+      "transitions",
       {
-        "U64": 13
+        "U64": 50000
+      }
+    ],
+    [
+      "producers",
+      {
+        "U64": 4
+      }
+    ],
+    [
+      "consumers",
+      {
+        "U64": 4
+      }
+    ],
+    [
+      "conservation_checksum",
+      {
+        "U64": 11270591938261600133
       }
     ]
   ],
   "positive_control": {
     "MutantCaught": {
-      "mutant_id": "m-13",
-      "detection_channel": "control"
+      "mutant_id": "wedged-shim",
+      "detection_channel": "watchdog recv_timeout"
     }
   },
   "scoping": {
-    "spec_mandate": "mandate",
-    "delivered_evidence": "evidence",
-    "is_full_spec_scale": true,
-    "bound": ""
+    "spec_mandate": "N14 CAST-32A: 16 adversarial threads vs sequencer; bounded max latency, zero deadlock",
+    "delivered_evidence": "receipt minted from a real tier-1 run: 50k-transition CasRing MPMC 4x4 pipeline under 4 evictors + 4 spinners; completion, typed-refusals-only (zero SDC), and conservation legs all asserted; wedged-shim positive control deadlock-detected",
+    "is_full_spec_scale": false,
+    "bound": "tier-1 small prefix of the donor 1M-transition/16-thread tier-3 court; no wall-clock latency bound asserted at this tier (measures the machine, not the subject)"
   },
-  "digest": "cbd97bda4c57cb50e8becb6e2ad6077f8075bad3c2b0ff8ee106895954e69129",
+  "digest": "c30dc8ca232cdf24da0a25ea708e784ac971bd47b02e8af60a549ee197285bbe",
   "timestamp_ms": 0
 }

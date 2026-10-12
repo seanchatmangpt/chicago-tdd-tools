@@ -23,6 +23,9 @@
 //! Requires `weaver` feature to be enabled.
 
 #[cfg(feature = "weaver")]
+/// Exit code used when a gate check fails (shell convention: 1).
+const EXIT_FAILURE: i32 = 1;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     use chicago_tdd_tools::observability::weaver::{
         send_test_span_to_weaver, WeaverValidationError, WeaverValidator,
@@ -80,5 +83,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(not(feature = "weaver"))]
 fn main() {
     eprintln!("Weaver feature not enabled. Build with --features weaver");
-    std::process::exit(1);
+    std::process::exit(EXIT_FAILURE);
 }

@@ -73,7 +73,7 @@ Source: `/Users/sac/affidavit/src/wire_ctrt.rs` (`serialize`/`deserialize`, `CTR
 | 150 | 1 | verdict_status | 0 = Refused, 1 = Accepted, 2 = Pending, 3 = Inconclusive |
 | 151..352 | 201 | payload | [u8; 201] (`CTRT_PAYLOAD_SIZE`) |
 
-Decode is branchless in the hot path: magic/version/verdict checks accumulate into a single `error_sink` mask with one return point; verdict variants are arithmetic-selected from `VERDICT_TABLE[(raw & 0x03)]`. Digest: `digest() = BLAKE3(serialize())`. A full 352-byte tamper matrix (1-bit and 0xFF inversion at every offset) asserts every mutation either fails decode or changes the digest.
+Decode is constant-flow in the hot path: magic/version/verdict validity is checked by a constant-time mask predicate (`ct_validate_verdict_status`), the verdict rides as a raw `u8` (`verdict_raw`) validated by the return code and decoded into `VerdictStatus`. Digest: `digest() = BLAKE3(serialize())`. A full 352-byte tamper matrix (1-bit and 0xFF inversion at every offset) asserts every mutation either fails decode or changes the digest.
 
 Spec divergence: Layout B is the receipt emitted by `affi receipt emit --format ctrt`; Layout A is the ledger chain record behind the NATO dossier. Both claim the `CTRT` magic and 352-byte size but are not interchangeable — no cross-layout decoder exists and none should be assumed.
 
@@ -89,6 +89,7 @@ Every `machine_code()` implementation in the two crates, as it exists in code.
 | 0xE002 | `InvalidMagic([u8; 4])` — magic is not `CTRT` |
 | 0xE003 | `UnsupportedVersion(u16)` — version is not 1 |
 | 0xE004 | `InvalidVerdictStatus(u8)` — verdict byte > 3 |
+| 0xE005 | wire_ctrt | DigestMismatch | computed digest ≠ stored chain hash (deserialize_verified) |
 
 ### 0xE1xx — Replay nullifier (`/Users/sac/affidavit/src/replay_nullifier.rs`, `ReplayNullifierError`)
 
@@ -96,6 +97,7 @@ Every `machine_code()` implementation in the two crates, as it exists in code.
 |---|---|
 | 0xE101 | `ReplayDetected(String)` — nullifier already observed this epoch |
 | 0xE102 | `InvalidPersistenceStorage(String)` / `CorruptLedger(String)` |
+| 0xE103 | replay_nullifier | ReplayEpochMismatch | nullifier presented against a rotated epoch |
 
 ### 0xE2xx — Trajectory folding (`/Users/sac/affidavit/src/trajectory_folding.rs`, `TrajectoryFoldError`)
 

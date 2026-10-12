@@ -113,27 +113,27 @@ the canonical `CompiledNet` is `net::CompiledNet` (mod.rs:13-14).
 |---|---|---|
 | `ConformanceResult<T>` | `Result<T, ConformanceError>` | session.rs:47 |
 | `Marking64 = u64` alias | distinct from `state::Marking64` | session.rs:58 |
-| `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:143 |
-| `from_model(&PowlModel)` | from an already-loaded model | session.rs:153 |
-| `set_forbidden_mask(u64)` | masked to 0xFFFF, pre-first-step only | session.rs:203 |
-| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:220 (refusal :225) |
-| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:241 |
-| `resume(u32)` | continue after a yield | session.rs:289 |
-| `phase()` | `&Phase` | session.rs:295 |
-| `steps_done()` | `u32` | session.rs:301 |
-| `remaining_events()` | `usize` | session.rs:307 |
-| `marking()` | `Marking64` | session.rs:313 |
-| `initial_marking()` | `Marking64` | session.rs:319 |
-| `net()` | `&CompiledNet` | session.rs:325 |
-| `finish()` | `-> ReplaySummary` | session.rs:332 |
-| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:349 |
+| `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:156 |
+| `from_model(&PowlModel)` | from an already-loaded model | session.rs:166 |
+| `set_forbidden_mask(u64)` | masked to 0xFFFF, pre-first-step only | session.rs:219 |
+| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:236 (refusal :241) |
+| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:257 |
+| `resume(u32)` | continue after a yield | session.rs:305 |
+| `phase()` | `&Phase` | session.rs:311 |
+| `steps_done()` | `u32` | session.rs:317 |
+| `remaining_events()` | `usize` | session.rs:323 |
+| `marking()` | `Marking64` | session.rs:329 |
+| `initial_marking()` | `Marking64` | session.rs:335 |
+| `net()` | `&CompiledNet` | session.rs:348 |
+| `finish()` | `-> ReplaySummary` | session.rs:355 |
+| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:378 |
 
 ### Event-Word Layout and Tick Law
 
 Event words: activity id in bits [7:0], tick in bits [15:8]
 (session.rs:28-29 module docs). Ticks must advance exactly `prev + 1 (mod 256)`
-(session.rs:386-394; tests/conformance_tests.rs:8-9). Classification order
-(`classify_and_commit`, session.rs:382, classified inline :384-405), each class
+(session.rs:421-434; tests/conformance_tests.rs:8-9). Classification order
+(`classify_and_commit`, session.rs:417, classified inline :421-434), each class
 checked explicitly, never inferred from a silent PN64 refusal:
 
 1. Tick order: `OutOfOrder` when `tick == prev`, `Skipped` when not
@@ -142,7 +142,7 @@ checked explicitly, never inferred from a silent PN64 refusal:
 3. `ForbiddenBit` (marking bit set in the forbidden mask).
 
 Violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation`
-(session.rs:241).
+(session.rs:287-289).
 
 ## Report Types
 
@@ -308,10 +308,10 @@ hand-rolled scanner, no XML crate (:26-27). `XmlImportError` :41
 From the Justfile on disk:
 
 ```text
-just test-conformance     # Justfile:125-126
-just test-ocel-ingest     # Justfile:129-130
-just verify-hermetic      # Justfile:182-186 (locked + offline build/test matrix over conformance/ledger/nato)
-just check-mutation-gate  # Justfile:190-191
+just test-conformance     # Justfile:136-137
+just test-ocel-ingest     # Justfile:140-141
+just verify-hermetic      # Justfile:196-201 (locked + offline build/test matrix over conformance/ledger/nato)
+just check-mutation-gate  # Justfile:204-205
 ```
 
 Runnable pipeline:
@@ -323,12 +323,13 @@ examples/conformance_quickstart.rs:33-36).
 
 ## Known Boundaries (honest disclosures)
 
-- **BCINR bridge NOT wired**: the `powl-bcinr` feature does not exist in
-  Cargo.toml; `src/conformance/bcinr.rs` is fully
-  `#[cfg(feature = "powl-bcinr")]`-gated (bcinr.rs:44) and contributes zero
-  items under default features; `validate_bcinr` (validate.rs:166-169) is a
-  stub returning `Ok(())` until the optional dependency is wired. Documenting
-  `to_bcinr_powl2` / `validate_bcinr` as functional would be an overclaim.
+- **BCINR bridge UNWIRED**: the `powl-bcinr` feature DOES exist
+  (Cargo.toml:225, declared as `powl-bcinr = ["conformance"]`), but the bridge
+  is compiled out: `src/conformance/bcinr.rs` is `#[cfg(any())]`-gated
+  (bcinr.rs:44), so enabling the feature contributes zero items;
+  `validate_bcinr` (validate.rs:166) remains a stub returning `Ok(())`.
+  Documenting `to_bcinr_powl2` / `validate_bcinr` as functional would be an
+  overclaim.
 - No `conformance-ocel` aggregation feature exists; none is cited.
 - Session's `stream` field is private: there is no public `stream()` getter,
   and `attach_stream` on a `Complete`/`Faulted` session stays frozen

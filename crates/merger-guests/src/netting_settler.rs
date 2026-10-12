@@ -45,16 +45,20 @@ pub enum SettleError {
 }
 
 impl SettleError {
-    /// Wire code: shared `ERR_DIM`/`ERR_LENGTH` where applicable, else a
-    /// leaf-local code.
+    /// Wire code. Per the ABI law (`lib.rs`), every code returned through
+    /// `run()` is a documented shared errno — negatives are reserved for the
+    /// host transport and never cross the leaf boundary. A domain-violating
+    /// instruction is a payload-framing mismatch (`ERR_LENGTH`); a
+    /// zero-sum violation means no feasible settlement exists
+    /// (`ERR_NO_SOLUTION`).
     #[must_use]
     pub const fn code(self) -> i32 {
         match self {
             Self::Dim => crate::errno::ERR_DIM,
             // ERR_LENGTH: short caller buffer = whole-call refusal.
             Self::Length => crate::errno::ERR_LENGTH,
-            Self::Instruction(_) => -4201,
-            Self::NotZeroSum => -4202,
+            Self::Instruction(_) => crate::errno::ERR_LENGTH,
+            Self::NotZeroSum => crate::errno::ERR_NO_SOLUTION,
         }
     }
 }
@@ -193,12 +197,12 @@ fn run(in_buf: &[u8], out_buf: &mut [u8]) -> Result<(), i32> {
     };
     ohdr.encode(out_buf);
     out_buf[16..20].copy_from_slice(&(n_parties as u32).to_le_bytes());
-    for i in 0..n_parties {
+    for (i, w) in ws.iter().enumerate().take(n_parties) {
         let o = 20 + 16 * i;
         out_buf[o..o + 8].copy_from_slice(&(i as u64).to_le_bytes());
         // Adversarial inputs can push a party net past i64 even though the
         // i128 scratch never overflows; refuse rather than truncate.
-        let net: i64 = i64::try_from(ws[i]).map_err(|_| errno::ERR_OVERFLOW)?;
+        let net: i64 = i64::try_from(*w).map_err(|_| errno::ERR_OVERFLOW)?;
         out_buf[o + 8..o + 16].copy_from_slice(&net.to_le_bytes());
     }
     Ok(())

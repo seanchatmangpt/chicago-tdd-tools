@@ -18,6 +18,7 @@ Step-by-step guides to learn Chicago TDD Tools:
 - **[Getting Started](getting-started/GETTING_STARTED.md)** - Installation, first test, troubleshooting
 - **[Quick Guide](getting-started/QUICK_GUIDE.md)** - Essential patterns (80% of use cases)
 - **[User Guide](getting-started/USER_GUIDE.md)** - Comprehensive usage guide
+- **[Hyper-Advanced Guide](getting-started/HYPER_ADVANCED_GUIDE.md)** - Complete guide to the hyper-advanced μ-kernel verification substrate (v1.3+)
 
 ### Examples
 - **[Examples Quick Reference](../EXAMPLES.md)** - All examples with quick commands
@@ -43,6 +44,10 @@ Goal-focused guides to accomplish specific tasks:
 - **[Upstream Issue Reporting](features/UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues
 - **[NATO Courts](features/NATO_COURTS.md)** - NATO assurance matrix and positive-control gate law
 - **[Ledger](features/LEDGER.md)** - Evidence lifecycle for court receipts (sealing and verification)
+- **[Conformance Checking](features/CONFORMANCE.md)** - POWL model replay against event streams with classified deviations
+- **[Hyper-Advanced μ-Kernel](features/HYPER_ADVANCED_MICROKERNEL.md)** - μ-kernel verification substrate (v1.3.0, stable)
+- **[Merger Matrix](features/MERGER_MATRIX.md)** - Fortune-5 merger validation harness (Wave-2 phase fixtures)
+- **[nomrg DFLSS Charter](features/NOMRG_DFLSS_CHARTER.md)** - Machine-readable specification charter
 
 ### Testing Guides
 - **[CLI Testing](testing/cli-testing-guide.md)** - Command-line testing patterns
@@ -60,6 +65,7 @@ Complete technical reference documentation:
 - **[API Reference](reference/API_REFERENCE.md)** - All modules, functions, types
 - **[Architecture](reference/ARCHITECTURE.md)** - Design principles, patterns, decisions
 - **[SLA Reference](reference/SLA_REFERENCE.md)** - Service level agreements, quality standards
+- **[Invariant Matrix](reference/INVARIANT_MATRIX.md)** - Invariant failure matrix for fail-fast hardening (Phases 1-12)
 
 ---
 
@@ -159,7 +165,10 @@ docs/
 ├── latex/               # LaTeX formalization docs
 ├── archive/             # Historical documents and milestones
 ├── releases/            # Release documentation
-└── diagrams/            # PlantUML diagrams
+├── diagrams/            # PlantUML diagrams
+├── diataxis/            # Cross-product Diátaxis suite (20 docs, 5 topics × 4 types)
+├── nato/                # NATO STANAG 4107 dossier
+└── receipts/            # Court-receipt JSONs (N01–N20)
 ```
 
 ## Quick Navigation by Topic

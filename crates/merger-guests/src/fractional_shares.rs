@@ -52,16 +52,21 @@ pub enum ProrateError {
 }
 
 impl ProrateError {
-    /// Wire code: shared `ERR_DIM`/`ERR_LENGTH` where applicable, else
-    /// leaf-local.
+    /// Wire code. Per the ABI law (`lib.rs`), every code returned through
+    /// `run()` is a documented shared errno — negatives are reserved for the
+    /// host transport and never cross the leaf boundary. An out-of-domain
+    /// holder is a payload-framing mismatch (`ERR_LENGTH`); a malformed
+    /// exchange ratio is a malformed scale-like ratio (`ERR_BAD_SCALE`); a
+    /// conservation failure means no feasible proration exists
+    /// (`ERR_NO_SOLUTION`).
     #[must_use]
     pub const fn code(self) -> i32 {
         match self {
             Self::Dim => crate::errno::ERR_DIM,
             Self::Length => crate::errno::ERR_LENGTH,
-            Self::Holder(_) => -4301,
-            Self::Ratio => -4302,
-            Self::Conservation => -4303,
+            Self::Holder(_) => crate::errno::ERR_LENGTH,
+            Self::Ratio => crate::errno::ERR_BAD_SCALE,
+            Self::Conservation => crate::errno::ERR_NO_SOLUTION,
         }
     }
 }

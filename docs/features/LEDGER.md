@@ -188,7 +188,7 @@ because a truncated file is a transport problem, not a sealing-law refusal.
 `SealedDossier` is currently an in-memory struct (`root`, `envelope`, `signature`);
 `sealer::encode` / `sealer::decode` give it a deterministic 3399-byte wire form
 (see below). Both `key_id` laws — the sealer's envelope law and
-`keys::key_id` (keys.rs:272-284) — are unified on BLAKE3: first 8 bytes of
+`keys::key_id` (keys.rs:287) — are unified on BLAKE3: first 8 bytes of
 BLAKE3 over the encoded public key (lane R8 reconcile).
 
 ### Key custody (`keys.rs`)
@@ -292,7 +292,8 @@ just verify-ledger SOURCE
 ```
 
 which runs the `affi` binary (`cargo run --manifest-path /Users/sac/affidavit/Cargo.toml
---bin affi --format json receipt validate "<SOURCE>"`).
+--features ctdd --bin affi -- --format json receipt validate "<SOURCE>"`,
+matching the Justfile recipe at Justfile:159-161).
 
 ### In-flight seams (honesty notes)
 
@@ -301,9 +302,9 @@ which runs the `affi` binary (`cargo run --manifest-path /Users/sac/affidavit/Ca
   `ledger::{validate_receipt, chain_verify, seal_dossier, verify_sealed_file,
   exit_code}` — remains landed in `src/ledger/mod.rs` (`verify_sealed_file` at
   mod.rs:184).
-- `mod.rs` documents an error→exit-code table referencing variants (`ControlFlagMismatch`,
-  `ReservedNonzero`) whose exact spelling differs from the ones `receipt.rs` decodes
-  with (`FlagControlMismatch`, `ReservedNonZero`); the reconciliation is in flight.
+- The error→exit-code table in `mod.rs` and the decode paths in `receipt.rs`
+  use the same variant spellings (`ControlFlagMismatch`, `ReservedNonzero`);
+  the earlier spelling mismatch has been reconciled.
 
 ## See Also
 

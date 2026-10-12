@@ -324,15 +324,15 @@ pub fn linear_memory_end() -> usize {
 /// True when the `[ptr, ptr+cap)` span falls at/past the installed
 /// linear-memory bound (or the span computation overflows). With no bound
 /// installed (`0`, native host tier) no span can be out of bounds.
-fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
+pub(crate) fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
     let end = LINEAR_MEMORY_END.load(std::sync::atomic::Ordering::SeqCst);
     if end == 0 {
         return false;
     }
-    match (ptr as usize).checked_add(cap) {
-        None => true,
-        Some(span_end) => span_end > end,
-    }
+    // (is_none_or: None (overflow) stays out-of-bounds.)
+    (ptr as usize)
+        .checked_add(cap)
+        .is_none_or(|span_end| span_end > end)
 }
 
 /// Runs `f` with exclusive `&mut` access to the table, serializing

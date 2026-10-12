@@ -4,8 +4,10 @@
 //! `examples/merger_matrix/conformance/*.ocel.json` family) into the PN64
 //! session-word stream a [`crate::conformance::session::ConformanceSession`] replays: every fixture
 //! event's `ocel:activity` is mapped to its DFS atom index in the POWL model
-//! and packed as `tid | tick << 8` with ticks advancing `prev + 1 (mod 256)`
-//! per the word law in `crate::conformance::session`.
+//! and packed as `tid | tick << 8` with ticks advancing `prev + 1`
+//! per the word law in `crate::conformance::session`; traces longer than
+//! 255 events are refused ([`FixtureBridgeError::TraceTooLong`]) rather
+//! than wrapping the `u8` tick.
 //!
 //! # Two routes, one word stream
 //!
@@ -32,6 +34,8 @@
 //! * an activity name that is not a DFS activity leaf of the model →
 //!   [`FixtureBridgeError::UnknownActivity`], carrying the name and its
 //!   position in the sorted trace; nothing partial is ever emitted.
+//! * a trace longer than 255 events → [`FixtureBridgeError::TraceTooLong`]
+//!   (the `u8` session tick byte would wrap and alias earlier words)
 
 #![cfg(feature = "ocel-ingest-json")]
 #![cfg(feature = "conformance")]
@@ -72,6 +76,14 @@ pub enum FixtureBridgeError {
     /// downstream by [`ConformanceSession::attach_stream`](crate::conformance::session::ConformanceSession::attach_stream), so it is refused
     /// here too rather than handed on vacuously.
     EmptyTrace,
+    /// The trace carried more than 255 events. The session tick byte is a
+    /// `u8` advancing `prev + 1`; a 256th event would wrap the tick back to
+    /// 0 and silently alias earlier words, so the trace is refused before
+    /// any word is produced.
+    TraceTooLong {
+        /// The offending trace length.
+        len: usize,
+    },
 }
 
 impl core::fmt::Display for FixtureBridgeError {
@@ -88,6 +100,10 @@ impl core::fmt::Display for FixtureBridgeError {
                 write!(f, "unknown activity {name:?} at trace position {position}")
             }
             Self::EmptyTrace => write!(f, "fixture declares no ocel:events"),
+            Self::TraceTooLong { len } => write!(
+                f,
+                "trace length {len} exceeds the 255-event session tick-byte budget"
+            ),
         }
     }
 }
@@ -219,7 +235,10 @@ fn route_b_events(fixture_json: &str) -> Result<Vec<NamedEvent>, FixtureBridgeEr
 /// DFS atom sequence.
 ///
 /// `session_word[i] = tid_i | (i+1) << 8`. A name outside the atom sequence
-/// is a typed [`FixtureBridgeError::UnknownActivity`].
+/// is a typed [`FixtureBridgeError::UnknownActivity`]. A stream longer than
+/// 255 events is a typed [`FixtureBridgeError::TraceTooLong`] refusal — the
+/// tick byte is a `u8` and a 256th event would wrap it back to 0, silently
+/// aliasing earlier words.
 ///
 /// This is the entry point for streams whose names were extracted upstream
 /// (e.g. the contract wire form's `attributes["powl"]` field, which lives in
@@ -228,11 +247,15 @@ fn route_b_events(fixture_json: &str) -> Result<Vec<NamedEvent>, FixtureBridgeEr
 /// # Errors
 ///
 /// [`FixtureBridgeError::UnknownActivity`] for a name not in the model's
-/// DFS atoms.
+/// DFS atoms; [`FixtureBridgeError::TraceTooLong`] for a stream longer than
+/// 255 events.
 pub fn session_words_for_atoms(
     names: &[String],
     atoms: &[String],
 ) -> Result<Vec<u64>, FixtureBridgeError> {
+    if names.len() > 255 {
+        return Err(FixtureBridgeError::TraceTooLong { len: names.len() });
+    }
     let mut tick: u8 = 0;
     let mut words = Vec::with_capacity(names.len());
     for (position, name) in names.iter().enumerate() {
@@ -309,14 +332,20 @@ pub fn fixture_activity_names(fixture_json: &str) -> Result<Vec<String>, Fixture
 
 /// Pack the sorted named events into session words: `tid | tick << 8` with
 /// `tid` = the activity's first DFS atom index and ticks advancing
-/// `prev + 1 (mod 256)` starting from 1 (the session admits any first tick;
-/// 1 is the canonical start).
+/// `prev + 1` starting from 1 (the session admits any first tick;
+/// 1 is the canonical start). Traces longer than 255 events are refused
+/// with [`FixtureBridgeError::TraceTooLong`] before any word is produced —
+/// the tick byte is a `u8` and a 256th event would wrap it back to 0,
+/// silently aliasing earlier words; there is no mod-256 wrap on this path.
 fn words_from_named_events(
     model: &PowlModel,
     events: &[NamedEvent],
 ) -> Result<Vec<u64>, FixtureBridgeError> {
     if events.is_empty() {
         return Err(FixtureBridgeError::EmptyTrace);
+    }
+    if events.len() > 255 {
+        return Err(FixtureBridgeError::TraceTooLong { len: events.len() });
     }
     let atom_names = dfs_atom_names(&model.root);
     let mut words = Vec::with_capacity(events.len());
@@ -524,5 +553,81 @@ mod tests {
             merger_fixture_to_session_words(&model, empty),
             Err(FixtureBridgeError::EmptyTrace)
         ));
+    }
+
+    /// Fail-closed: a 256-event trace would wrap the u8 session tick byte
+    /// back to 0, silently aliasing earlier words — refused with the typed
+    /// length. 255 events (the exact budget) still map.
+    #[test]
+    fn trace_longer_than_255_is_refused() {
+        let atoms = vec!["a".to_string(), "b".to_string()];
+
+        // Strict mapper: exactly at budget succeeds with ticks 1..=255.
+        let ok_names: Vec<String> =
+            (0..255).map(|i| atoms[i % 2].to_string()).collect();
+        let words = session_words_for_atoms(&ok_names, &atoms)
+            .unwrap_or_else(|e| panic!("255 events must map: {e}"));
+        assert_eq!(words.len(), 255);
+        assert_eq!(word_tick(words[254]), 255, "last tick is the u8 ceiling");
+
+        // One more event wraps the tick — refused before any word is made.
+        let too_long: Vec<String> = (0..256).map(|i| atoms[i % 2].to_string()).collect();
+        assert_eq!(
+            session_words_for_atoms(&too_long, &atoms),
+            Err(FixtureBridgeError::TraceTooLong { len: 256 })
+        );
+
+        // The bridge's internal packer enforces the same law: a synthesized
+        // 256-event fixture document through route B is refused.
+        let events: String = (0..256)
+            .map(|i| {
+                format!(
+                    r#""e{i:03}": {{"ocel:activity": "ingest_isda_csa", "ocel:timestamp": {i}}}"#
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        let doc = format!(r#"{{"ocel:version": "2.0", "ocel:events": {{{events}}}}}"#);
+        let model = load_model("phase4_novation");
+        assert_eq!(
+            merger_fixture_to_session_words(&model, &doc),
+            Err(FixtureBridgeError::TraceTooLong { len: 256 })
+        );
+    }
+
+    /// `session_words_for_atoms` refusal law: a name absent from the atom
+    /// sequence is the typed variant carrying the offending name and its
+    /// 0-based position in the input stream.
+    #[test]
+    fn session_words_for_atoms_unknown_activity_is_typed() {
+        let atoms = vec!["a".to_string(), "b".to_string()];
+        let names: Vec<String> = ["a", "b", "not_an_atom", "b"].iter().map(|s| s.to_string()).collect();
+        assert_eq!(
+            session_words_for_atoms(&names, &atoms),
+            Err(FixtureBridgeError::UnknownActivity {
+                name: "not_an_atom".to_string(),
+                position: 2,
+            })
+        );
+    }
+
+    /// Relaxed mapper contract: a name outside the atom sequence encodes
+    /// the non-declared activity byte `0xFF` at its position (the NET
+    /// reports the divergence) while declared names keep their DFS tid and
+    /// the tick law advances through unknowns unchanged.
+    #[test]
+    fn relaxed_mapper_encodes_unknown_names_as_0xff() {
+        let atoms = vec!["a".to_string(), "b".to_string()];
+        let names: Vec<String> =
+            ["a", "not_an_atom", "b", "also_missing"].iter().map(|s| s.to_string()).collect();
+        let words = session_words_for_atoms_relaxed(&names, &atoms);
+        assert_eq!(words.len(), 4, "one word per name, nothing partial dropped");
+        assert_eq!(word_tid(words[0]), 0, "declared name keeps its DFS tid");
+        assert_eq!(word_tid(words[1]), 0xFF, "undeclared name encodes 0xFF");
+        assert_eq!(word_tid(words[2]), 1);
+        assert_eq!(word_tid(words[3]), 0xFF);
+        for (i, word) in words.iter().enumerate() {
+            assert_eq!(word_tick(*word), (i + 1) as u8, "tick law at {i}");
+        }
     }
 }

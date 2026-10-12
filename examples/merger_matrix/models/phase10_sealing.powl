@@ -33,7 +33,7 @@
 # Case-id convention (E-M09 master-trace namespacing): phase-local case ids in
 # the OCEL fixture are namespaced `p10-<case>` (e.g. p10-seal-1).
 #
-# Node budget: 22 / 64 (MAX_POWL_NODES, loader.rs:47) — 18 declared
+# Node budget: 21 / 64 (MAX_POWL_NODES, loader.rs:47) — 18 declared
 # activities + root sequence + 2 parallel blocks.
 
 activity dossier_chapter_c01   = dossier.chapter_01_ingestion    # Stage A: chapter 1 ingested

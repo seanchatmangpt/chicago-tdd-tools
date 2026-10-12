@@ -77,8 +77,13 @@ assert!(chicago_tdd_tools::nato::timing::passes(outcome.final_t()?));
 from the affidavit checkout:
 
 ```sh
-cargo test -p affidavit --test ct_timing_invariance -- --nocapture
+cd ~/affidavit
+cargo test --release --features crypto-trust --test ct_timing_invariance -- --nocapture
 ```
+
+The `crypto-trust` feature gates the suite (without it the filter matches
+0 tests — a silent no-op); the default sample count takes minutes, so use
+`--release`, or set `QG05_SAMPLES` to shrink it.
 
 ## Audit branchless codegen with the disassembly census (N06)
 
@@ -142,7 +147,7 @@ RE-hygiene step, verified separately (e.g. `wasm-objdump -h` before/after).
 | Does the compiled code branch on secret-dependent data? | N06 disasm census | `scripts/n06_disasm_audit.sh` |
 | Do valid and refusal classes time identically, statistically? | N05 dudect court | `cargo test --features nato --lib nato::timing` |
 | Did the harness itself detect a known leak? | N05 positive control | `n05_positive_control_detects_leak_smoke` (runs in the default suite) |
-| Same laws, affidavit-side records (CTRT decode, ML-DSA-65 sign)? | QG05 twin court | `cargo test -p affidavit --test ct_timing_invariance` |
+| Same laws, affidavit-side records (CTRT decode, ML-DSA-65 sign)? | QG05 twin court | `cd ~/affidavit && cargo test --release --features crypto-trust --test ct_timing_invariance` |
 
 Run the disasm census and the timing court together before signing off any constant-time
 claim: the census proves the code shape, the dudect court proves the measured behavior, and

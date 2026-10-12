@@ -12,7 +12,7 @@
 //! - **Macros**: AAA pattern enforcement and test helpers
 //! - **Property-Based Testing**: QuickCheck-style random test generation
 //! - **Mutation Testing**: Test quality validation through mutations
-//! - **Coverage Analysis**: Test coverage reporting and analysis
+//! - **Coverage Analysis**: Manual coverage tallies (`CoverageReport`); tool-driven measurement ships via external `cargo llvm-cov` (see `just coverage`)
 //!
 //! ## Chicago TDD Principles
 //!
@@ -65,7 +65,7 @@
 //! - `generator`: Test code generation
 //!
 //! ### Quality & Validation (`validation`)
-//! - `coverage`: Test coverage analysis
+//! - `coverage`: Manual coverage report tallies (measurement via external `cargo llvm-cov`)
 //! - `guards`: Guard constraint enforcement (`MAX_RUN_LEN` ≤ 8, `MAX_BATCH_SIZE`)
 //! - `jtbd`: Jobs To Be Done validation framework (validates code accomplishes intended purpose)
 //! - `performance`: RDTSC benchmarking and tick measurement
@@ -279,8 +279,10 @@ pub mod prelude {
     pub use crate::core::state::*;
     // Re-export macros in prelude for use without manual root import
     pub use crate::{
-        alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_eq_msg,
-        assert_err, assert_fail, assert_guard_constraint, assert_in_range, assert_ok,
+        alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_approx_eq,
+        assert_contains, assert_eq_enhanced, assert_eq_msg, assert_err, assert_fail,
+        assert_guard_constraint, assert_in_range, assert_json_eq, assert_matches,
+        assert_not_contains, assert_ok, assert_subset, assert_superset,
         assert_within_tick_budget, async_test, fixture_test, performance_test, source_location,
         test,
     };

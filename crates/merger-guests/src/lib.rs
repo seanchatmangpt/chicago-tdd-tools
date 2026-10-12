@@ -108,6 +108,10 @@ impl Mgi1Header {
     }
 
     /// Byte encoding.
+    // JUSTIFICATION: `to_bytes` keeps `&self` (a cheap fixed-size copy out of
+    // the header, matching the C-style guest ABI surface); `self` by value
+    // would force a move at every wire-encode call site.
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut b = [0u8; Self::SIZE];
         self.encode(&mut b);

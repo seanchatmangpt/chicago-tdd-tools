@@ -745,3 +745,92 @@ fn n12_clock_resolution_calibration() {
         "surrogate must resolve sub-millisecond forward steps, got min {min_step} ns"
     );
 }
+
+/// Real-receipt emission for the N12 dossier slot (opt-in via
+/// `CTT_EMIT_RECEIPTS=1`): runs the fast tier for real — court 1 (jitter
+/// injection over a real forward chain), court 2 (frozen-clock bounded
+/// liveness), and the court-4 positive control (BackstepClock caught) — then
+/// mints and persists `docs/receipts/N12.json` from that run. Deterministic:
+/// the receipt carries only counts pinned by the courts' own assertions, no
+/// wall-clock values; `timestamp_ms` is the fixed 0 slot. Replaces the
+/// synthetic `control-subject` placeholder. Donor court 2b (byte-tick wrap)
+/// stays OUT OF SCOPE per the module header — it is not adjudicated here.
+#[cfg(test)]
+mod receipt_emission {
+    use super::*;
+    use crate::nato::court::{CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
+    use crate::nato::receipt::{ControlResult, CourtReceipt};
+    use sha2::{Digest, Sha256};
+
+    /// Deterministic subject identity: SHA-256 over the canonical court name
+    /// plus the exact subject the court adjudicates.
+    fn subject_sha() -> String {
+        let mut h = Sha256::new();
+        h.update(
+            b"N12|src/nato/tick.rs|wall-monotonic strict-forward clock-glitch resilience gate \
+              (MonotonicGate over Instant; courts 1 jitter-injection, 2 frozen-clock bounded \
+              liveness, 4 backstep positive control)",
+        );
+        h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+    }
+
+    /// Mint and persist `docs/receipts/N12.json` from a real fast-tier run.
+    /// Hermetic by default; opt in with `CTT_EMIT_RECEIPTS=1`.
+    #[test]
+    fn emit_receipt_when_opted_in() {
+        if std::env::var("CTT_EMIT_RECEIPTS").ok().as_deref() != Some("1") {
+            return;
+        }
+
+        // Positive control FIRST: the injected non-monotonic BackstepClock
+        // MUST be caught (court 4 asserts the gate refuses every sample and
+        // the unprotected mutant admits all of them). It panics otherwise —
+        // a surviving mutant must never mint a Pass receipt.
+        super::court4_positive_control_backstep_clock_is_caught();
+        let control = ControlResult::MutantCaught {
+            mutant_id: "BackstepClock".to_string(),
+            detection_channel: "MonotonicGate strict-forward refusal".to_string(),
+        };
+
+        // Real fast-tier courts: panics on any violation.
+        super::court1_jitter_injection_regression_refused_forward_admitted();
+        super::court2_frozen_clock_bounded_liveness();
+
+        // Metrics: counts pinned by the courts' own assertions, derived from
+        // this real run — never wall-clock readings.
+        let outcome = CourtOutcome {
+            verdict: Verdict::Pass,
+            metrics: vec![
+                ("court1_chain_len", MetricValue::U64(1_000)),
+                ("court1_glitch_period", MetricValue::U64(100)),
+                (
+                    "frozen_clock_liveness_bound",
+                    MetricValue::U64(FROZEN_CLOCK_LIVENESS_BOUND as u64),
+                ),
+                ("court4_backsteps_caught", MetricValue::U64(7)),
+                ("court4_frozen_verdicts", MetricValue::U64(25)),
+            ],
+            scoping: crate::nato::tick::scoping_record(),
+        };
+        let receipt = CourtReceipt::record(
+            CourtId::N12,
+            Pillar::Resilience,
+            "N12",
+            &subject_sha(),
+            outcome,
+            control,
+        );
+
+        let json = receipt.to_json().expect("serialize N12 receipt");
+        let back = CourtReceipt::from_json(&json).expect("receipt must parse back");
+        assert_eq!(back.verdict, Verdict::Pass);
+        assert!(back.positive_control.passed());
+        assert_ne!(back.subject_sha, "control-subject");
+
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
+        let path = dir.join("N12.json");
+        if let Err(e) = std::fs::write(&path, json) {
+            println!("skipping N12 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
+}

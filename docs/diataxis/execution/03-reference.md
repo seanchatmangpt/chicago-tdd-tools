@@ -92,7 +92,7 @@ offset  size  field
 
 The three outcomes correspond exactly to `YieldStatus::Yielded { remaining_events }`,
 `YieldStatus::Complete(ReplaySummary)`, and `YieldStatus::Violation(ConformanceError)`
-(`src/conformance/report.rs:111`). On `Violation`, the violation's classified detail travels
+(`src/conformance/report.rs:113`). On `Violation`, the violation's classified detail travels
 via the sealed summary's violation code, not the step record.
 
 ### Other wire records

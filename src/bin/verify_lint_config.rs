@@ -17,10 +17,13 @@
 
 use std::fs;
 
+/// Exit code used when a gate check fails (shell convention: 1).
+const EXIT_FAILURE: i32 = 1;
+
 fn main() {
     if let Err(e) = verify_lint_config() {
         eprintln!("{}", e);
-        std::process::exit(1);
+        std::process::exit(EXIT_FAILURE);
     }
     println!("✅ Lint configuration verified: uses --lib only with -D warnings");
 }

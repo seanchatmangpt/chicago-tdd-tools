@@ -68,6 +68,16 @@ Modules are organized into capability groups for better discoverability and main
 **Workflow Patterns** (crate root):
 - `operator_registry`: All 43 YAWL workflow control patterns (`OperatorRegistry`, `GuardType`, `global_registry()`)
 
+**Court & Evidence** (top-level, feature-gated):
+- `nato`: NATO court framework — pillar-classified adversarial courts with mandatory positive controls, receipted outcomes, and scoping disclosure (requires `nato` feature)
+- `ledger`: P15 ledger CLI-facing domain surface for court-receipt sealing and verification (requires `ledger` or `nato` feature)
+- `conformance`: POWL conformance subsystem — DSL loading, model validation, PN64 replay, structured verdict reporting, and reachability state-space analysis (requires `conformance` feature)
+
+**Proof & Domains** (top-level):
+- `cli_proof`: CLI proof testing — real boundary-crossing harness primitives (requires `cli-proof` feature)
+- `sector_stacks`: Sector-grade reference stacks — production-grade Chatman Equation implementations per sector
+- `bin/`: Standalone binaries (weaver_smoke, otel_production_run, otel_negative_run, git_hook_installer, check_dog_fooding, verify_lint_config, ctdd_combinatorial_plan)
+
 **Companion crate** (`crates/chicago-tdd-lsp/`): Editor guard built on lsp-max — emits `CTDD-DEV-001` when `chicago-tdd-tools` is placed in `[dependencies]` instead of `[dev-dependencies]`. Excluded from the root workspace build.
 
 **Backward Compatibility**: All modules are re-exported at the crate root. Existing code using `chicago_tdd_tools::fixture::*` continues to work. New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
@@ -80,7 +90,7 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 ## Feature Flags
 
-**default**: Core framework with `logging` feature enabled. **Core features**: `workflow-engine`, `mutation-testing`, `async`, `benchmarking`. **Testing features**: `property-testing`, `snapshot-testing`, `fake-data`, `concurrency-testing`, `parameterized-testing`, `cli-testing`. **Observability features**: `otel`, `weaver` (requires otel). **Integration features**: `testcontainers`. **Feature groups**: `testing-extras` (property-testing, snapshot-testing, fake-data), `testing-full` (all testing features), `observability-full` (otel, weaver), `integration-full` (testcontainers, weaver).
+**default**: Core framework with `logging` feature enabled. **Core features**: `mutation-testing`, `async`, `benchmarking`. **Testing features**: `property-testing`, `snapshot-testing`, `fake-data`, `concurrency-testing`, `parameterized-testing`, `cli-testing`. **Observability features**: `otel`, `weaver` (requires otel). **Integration features**: `testcontainers`. **Feature groups**: `testing-extras` (property-testing, snapshot-testing, fake-data), `testing-full` (all testing features), `observability-full` (otel, weaver), `integration-full` (testcontainers, weaver).
 
 **Rationale**: Users include only what they need. Reduces compile time, binary size.
 

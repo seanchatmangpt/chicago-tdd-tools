@@ -297,7 +297,7 @@ Located in `proc_macros/` crate. Critical macros:
 - `#[chicago_test]` — Zero-boilerplate test macro
 - `#[fixture]` — Automatic fixture setup/teardown
 - `#[derive(TestBuilder)]` — Fluent builder generation
-- `#[scaffold(...)]` — Code generation (ggen-backed)
+- `scaffold!{...}` — Ticket-presence gate + runtime pending marker (function-like macro; not ggen-backed code generation)
 
 These are re-exported from `chicago_tdd_tools` and available in the prelude.
 

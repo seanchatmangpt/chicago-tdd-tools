@@ -4,7 +4,7 @@
 //! Complete pipeline: Submission → Validation → Fraud Detection →
 //! Entitlements → Settlement → Payment → Receipt
 //!
-//! Validates with 100+ synthetic claims, proving determinism,
+//! Validates with 100 synthetic claims (deterministic double-run receipt), proving determinism,
 //! guard effectiveness, and audit trail completeness.
 
 use crate::sector_stacks::{OperationReceipt, OperationStatus, SectorOperation};

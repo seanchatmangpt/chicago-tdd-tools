@@ -434,7 +434,21 @@ mod tests {
         }
 
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
-        let written = match crate::nato::receipts::persist(&dir, &set) {
+        // N08/N12/N14/N15 mint their own real-run receipts via their module
+        // emitters (CTT_EMIT_RECEIPTS=1, same recipe); persisting the control
+        // set's synthetic stand-ins here would clobber them. Skip those four.
+        let synthetic_control = [
+            crate::nato::court::CourtId::N08,
+            crate::nato::court::CourtId::N12,
+            crate::nato::court::CourtId::N14,
+            crate::nato::court::CourtId::N15,
+        ];
+        let to_persist: Vec<crate::nato::receipt::CourtReceipt> = set
+            .iter()
+            .filter(|r| !synthetic_control.contains(&r.court_id))
+            .cloned()
+            .collect();
+        let written = match crate::nato::receipts::persist(&dir, &to_persist) {
             Ok(written) => written,
             Err(crate::nato::receipts::PersistError::Io { path, message })
                 if is_permission_error(&message) =>
@@ -455,7 +469,8 @@ mod tests {
                 dir.display()
             ),
         };
-        assert_eq!(written.len(), COURT_COUNT);
+        // 16 persisted here; the other four come from their own court emitters.
+        assert_eq!(written.len(), COURT_COUNT - 4);
         let loaded = crate::nato::receipts::load_dir(&dir).expect("docs/receipts must parse back");
         assert_eq!(loaded.len(), COURT_COUNT);
     }

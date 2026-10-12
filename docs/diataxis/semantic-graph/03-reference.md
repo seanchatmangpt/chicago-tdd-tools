@@ -194,7 +194,7 @@ Same module shape; request/response fields declared in its
 for exact fields — this doc cites the file rather than restating a field list
 that only the registry owns.
 
-### Other modules in `lib/ash_graphlaw/capability/`
+### Other modules in `lib/ash_graphlaw/capability/` (including `capabilities.ex`, registry order 1)
 
 `Api, CanonicalJson, Canonical, Coerce, Convert, Datalog, Decode, Entail,
 Hooks, Law, Limits, N3, Parse, Policy, Registry, Shacl, Shex, Sniff, Sparql`.

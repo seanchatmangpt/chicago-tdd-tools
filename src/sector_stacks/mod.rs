@@ -1,6 +1,7 @@
 //! Sector-Grade Reference Stacks
 //!
-//! Production-grade implementations of the Chatman Equation in two sectors:
+//! Worked sector examples of the Chatman Equation (demo-grade: synthetic
+//! data, deterministic pseudo-assignments — see per-module docs). in two sectors:
 //! 1. Academic Publishing: Complete paper review workflow
 //! 2. Enterprise Claims: Insurance claims processing with 100+ test cases
 //!

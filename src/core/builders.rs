@@ -1387,4 +1387,168 @@ mod tests {
             })
             .build();
     }
+
+    // ========================================================================
+    // N. SERIALIZATION HAPPY PATHS - build_yaml / build_toml
+    // ========================================================================
+
+    test!(test_build_yaml_contains_set_fields, {
+        // Arrange: builder with known vars
+        let builder = TestDataBuilder::new()
+            .with_var("key", "value")
+            .with_order_data("order-123", "100.00");
+
+        // Act: Build YAML
+        let yaml = builder.build_yaml();
+
+        // Assert: serialization succeeds and contains set fields
+        assert!(yaml.is_ok());
+        let yaml = yaml.unwrap();
+        assert!(yaml.contains("key"), "yaml missing 'key': {yaml}");
+        assert!(yaml.contains("value"), "yaml missing 'value': {yaml}");
+        assert!(yaml.contains("order_id"), "yaml missing 'order_id': {yaml}");
+        assert!(yaml.contains("order-123"), "yaml missing 'order-123': {yaml}");
+        assert!(yaml.contains("total_amount"), "yaml missing 'total_amount': {yaml}");
+        assert!(yaml.contains("100.00"), "yaml missing '100.00': {yaml}");
+    });
+
+    test!(test_build_toml_contains_set_fields, {
+        // Arrange: builder with known vars
+        let builder = TestDataBuilder::new()
+            .with_var("key", "value")
+            .with_customer_data("customer-456");
+
+        // Act: Build TOML
+        let toml_str = builder.build_toml();
+
+        // Assert: serialization succeeds and contains set fields
+        assert!(toml_str.is_ok());
+        let toml_str = toml_str.unwrap();
+        assert!(toml_str.contains("key"), "toml missing 'key': {toml_str}");
+        assert!(toml_str.contains("value"), "toml missing 'value': {toml_str}");
+        assert!(toml_str.contains("customer_id"), "toml missing 'customer_id': {toml_str}");
+        assert!(toml_str.contains("customer-456"), "toml missing 'customer-456': {toml_str}");
+        assert!(
+            toml_str.contains("customer@example.com"),
+            "toml missing 'customer@example.com': {toml_str}"
+        );
+    });
+
+    // ========================================================================
+    // N+1. FAKE DATA GENERATOR - int / float / string primitives
+    // ========================================================================
+
+    #[cfg(feature = "fake-data")]
+    test!(test_fake_data_generator_int_in_range, {
+        // Arrange
+        let gen = FakeDataGenerator::new();
+
+        // Act & Assert: int always within [min, max) across many draws
+        for _ in 0..100 {
+            let n = gen.int(5, 25);
+            assert!((5..25).contains(&n), "int {n} out of [5, 25)");
+        }
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_fake_data_generator_float_in_range, {
+        // Arrange
+        let gen = FakeDataGenerator::new();
+
+        // Act & Assert: float always within [min, max) across many draws
+        for _ in 0..100 {
+            let f = gen.float(1.5, 9.5);
+            assert!((1.5..9.5).contains(&f), "float {f} out of [1.5, 9.5)");
+        }
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_fake_data_generator_string_len_and_alnum, {
+        // Arrange
+        let gen = FakeDataGenerator::new();
+
+        // Act
+        let s = gen.string(12);
+
+        // Assert: exact char count (chars, not bytes — Faker may emit multibyte),
+        // non-empty for len > 0
+        assert_eq!(s.chars().count(), 12);
+        assert!(!s.is_empty());
+        // Zero-length edge case
+        assert_eq!(gen.string(0).chars().count(), 0);
+    });
+
+    // ========================================================================
+    // N+2. BUILDER FAKE-DATA METHODS - with_fake_* populate plausible fields
+    // ========================================================================
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_email, {
+        // Act
+        let data = TestDataBuilder::new().with_fake_email().build();
+
+        // Assert: email field present, non-empty, plausible format
+        let email = data.get("email").expect("email field missing");
+        assert!(!email.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_name, {
+        let data = TestDataBuilder::new().with_fake_name().build();
+        let name = data.get("name").expect("name field missing");
+        assert!(!name.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_uuid, {
+        let data = TestDataBuilder::new().with_fake_uuid().build();
+        let uuid = data.get("uuid").expect("uuid field missing");
+        assert!(!uuid.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_phone, {
+        let data = TestDataBuilder::new().with_fake_phone().build();
+        let phone = data.get("phone").expect("phone field missing");
+        assert!(!phone.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_address, {
+        let data = TestDataBuilder::new().with_fake_address().build();
+        let address = data.get("address").expect("address field missing");
+        assert!(!address.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_company, {
+        let data = TestDataBuilder::new().with_fake_company().build();
+        let company = data.get("company").expect("company field missing");
+        assert!(!company.is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_order_data, {
+        // Act
+        let data = TestDataBuilder::new().with_fake_order_data().build();
+
+        // Assert: all four order fields present and plausible
+        assert!(!data.get("order_id").expect("order_id missing").is_empty());
+        let amount = data.get("total_amount").expect("total_amount missing");
+        assert!(!amount.is_empty());
+        assert_eq!(data.get("currency"), Some(&"USD".to_string()));
+        assert!(!data.get("order_status").expect("order_status missing").is_empty());
+    });
+
+    #[cfg(feature = "fake-data")]
+    test!(test_builder_with_fake_customer_data, {
+        // Act
+        let data = TestDataBuilder::new().with_fake_customer_data().build();
+
+        // Assert: all three customer fields present and non-empty
+        assert!(!data.get("customer_id").expect("customer_id missing").is_empty());
+        let email = data.get("customer_email").expect("customer_email missing");
+        assert!(!email.is_empty());
+        assert!(!data.get("customer_name").expect("customer_name missing").is_empty());
+    });
 }

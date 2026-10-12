@@ -1,30 +1,48 @@
 {
-  "receipt_id": "cr-control-14",
+  "receipt_id": "cr-N15-2516ecf5ba62140f",
   "court_id": "N15",
   "pillar": "Proof",
   "name": "N15",
-  "subject_sha": "control-subject",
+  "subject_sha": "f7a7003646698e44e37ace5290dd537294e6f06929d38dc6e2dffcd216feeb44",
   "verdict": "Pass",
   "metrics": [
     [
-      "k",
+      "reachable_markings",
       {
-        "U64": 14
+        "U64": 10
+      }
+    ],
+    [
+      "slack",
+      {
+        "U64": 128
+      }
+    ],
+    [
+      "total_steps",
+      {
+        "U64": 4096
+      }
+    ],
+    [
+      "control_starved_set",
+      {
+        "U64": 1
       }
     ]
   ],
   "positive_control": {
     "MutantCaught": {
-      "mutant_id": "m-14",
-      "detection_channel": "control"
+      "mutant_id": "unfair-scheduler",
+      "detection_channel": "StarvationMonitor enabled-streak >= SLACK"
     }
   },
   "scoping": {
-    "spec_mandate": "mandate",
-    "delivered_evidence": "evidence",
+    "spec_mandate": "NATO_N01_N20.md N15: model-check (Erlang TLC or Elixir property equivalent) box-diamond-admitted under weak fairness",
+    "delivered_evidence": "exhaustive reachable-marking enumeration + round-robin fair-scheduler property-equivalent simulation with typed starvation monitor over the six-transition RONR admission surface (pn64-fired), plus an anti-vacuity unfair-scheduler counterexample; full interleaving liveness remains TLC's domain and is disclosed in the module header",
     "is_full_spec_scale": true,
     "bound": ""
   },
-  "digest": "be76582a8146fe366dadbf8e6a074c4ab96aef1c89c867ab450240844c1608f4",
+  "digest": "2516ecf5ba62140f01cfae8fdd354244772d1b02715fb33d90788ee7a8b112a1",
   "timestamp_ms": 0
 }

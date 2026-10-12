@@ -175,13 +175,22 @@ fn run(in_buf: &[u8], out_buf: &mut [u8]) -> Result<(), i32> {
         return Err(errno::ERR_TRAILING);
     }
     let pre = if in_buf.len() == pre_end { Some(&in_buf[post_end..pre_end]) } else { None };
-    let read_shares = |bytes: &[u8]| -> Vec<Fix> {
+    // Slices are exact 8-byte chunks by construction; the error arm is
+    // unreachable but the conversion stays typed (no-expect law).
+    let read_shares = |bytes: &[u8]| -> Result<Vec<Fix>, i32> {
         (0..d)
-            .map(|i| Fix::from_le_bytes(bytes[8 * i..8 * i + 8].try_into().expect("8-byte chunk")))
+            .map(|i| {
+                Ok(Fix::from_le_bytes(
+                    bytes[8 * i..8 * i + 8].try_into().map_err(|_| errno::ERR_TRUNCATED)?,
+                ))
+            })
             .collect()
     };
-    let shares = read_shares(&in_buf[16..post_end]);
-    let pre_shares = pre.map(read_shares);
+    let shares = read_shares(&in_buf[16..post_end])?;
+    let pre_shares = match pre.map(read_shares) {
+        Some(r) => Some(r?),
+        None => None,
+    };
     // Fuel stub: one step per share, fixed cap, deterministic.
     let fuel_cap: u64 = (MAX_SHARES as u64) * 2 + 16;
     let mut steps: u64 = 0;

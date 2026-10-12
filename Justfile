@@ -7,6 +7,11 @@
 
 set shell := ["bash", "-uc"]
 
+# Affidavit checkout used by the affi-routed recipes (PRD P15: affi is the
+# sovereign CLI). Overridable so CI/other machines are not pinned to one
+# absolute path (A134).
+AFFIDAVIT_DIR := env_var_or_default("AFFIDAVIT_DIR", "/Users/sac/affidavit")
+
 # Default: show available recipes
 default:
     @just --list
@@ -95,7 +100,7 @@ lint-clippy:
 
 # chicago-lints via dylint — no_raw_test, no_println, unused_result_silenced, no_direct_log, no_async_raw_test, assert_without_message
 lint-dylint:
-    cargo dylint --all
+    timeout 300s cargo dylint --all
 
 clippy: lint
 
@@ -152,7 +157,7 @@ nato-courts-full:
 # stdin. JSON court receipts under docs/receipts/ are the dossier-emit input
 # format, not CTRT wire — use `just dossier-verify` for the emitted dossier.
 verify-ledger SOURCE:
-    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features ctdd --bin affi -- --format json receipt validate "{{SOURCE}}"
+    timeout 300s cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml --features ctdd --bin affi -- --format json receipt validate "{{SOURCE}}"
 
 # WASM guest: build the hermetic ctt guest artifact (wasm32; PRD temprun embed)
 guest-build:
@@ -185,15 +190,15 @@ test-compile-fail:
 
 # One-time stderr seeding for the compile-fail suite (commit the generated .stderr files)
 seed-trybuild:
-    TRYBUILD=overwrite cargo test --test trybuild
+    TRYBUILD=overwrite timeout 300s cargo test --test trybuild
 
 # Hermetic verification matrix (locked + offline; PRD NFR hermetic toolchain)
 verify-hermetic:
-    CARGO_NET_OFFLINE=true cargo build --locked --offline
-    CARGO_NET_OFFLINE=true cargo build --locked --offline --features conformance
-    CARGO_NET_OFFLINE=true cargo build --locked --offline --features ledger
-    CARGO_NET_OFFLINE=true cargo build --locked --offline --features nato
-    CARGO_NET_OFFLINE=true cargo test --locked --offline --features conformance --no-run
+    CARGO_NET_OFFLINE=true timeout 600s cargo build --locked --offline
+    CARGO_NET_OFFLINE=true timeout 600s cargo build --locked --offline --features conformance
+    CARGO_NET_OFFLINE=true timeout 600s cargo build --locked --offline --features ledger
+    CARGO_NET_OFFLINE=true timeout 600s cargo build --locked --offline --features nato
+    CARGO_NET_OFFLINE=true timeout 600s cargo test --locked --offline --features conformance --no-run
 
 # Mutation gate: zero killable survivors in the assurance modules (PRD)
 check-mutation-gate:
@@ -219,14 +224,14 @@ test-nato-tier2:
 # step; `dossier-emit` refuses with a typed error when --receipts-dir is empty.
 emit-dossier:
     CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
-    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --format json
+    timeout 300s cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml --features crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --format json
 
 # Verify the emitted dossier: PQC (ML-DSA-65) signature + Merkle-root assertion
 dossier-verify:
-    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
+    timeout 300s cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml --features crypto-trust --bin affi -- dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
 
 dossier-inspect FILE:
-    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier inspect "{{FILE}}" --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
+    timeout 300s cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml --features crypto-trust --bin affi -- dossier inspect "{{FILE}}" --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check
@@ -567,12 +572,19 @@ release-validate-version:
     set -uo pipefail
     VERSION=$(grep '^version' Cargo.toml 2>/dev/null | cut -d'"' -f2 || echo '')
     PROC_VERSION=$(grep '^version' proc_macros/Cargo.toml 2>/dev/null | cut -d'"' -f2 || echo '')
+    INLINE_PIN=$(grep 'chicago-tdd-tools-proc-macros = ' Cargo.toml 2>/dev/null | cut -d'"' -f2 || echo '')
     if [ -z "$VERSION" ]; then echo '🚨 CRITICAL: Cannot read version from Cargo.toml'; exit 1; fi
-    if [ -n "$PROC_VERSION" ] && [ "$VERSION" != "$PROC_VERSION" ]; then
+    if [ -z "$PROC_VERSION" ]; then echo '🚨 CRITICAL: Cannot read version from proc_macros/Cargo.toml'; exit 1; fi
+    if [ "$VERSION" != "$PROC_VERSION" ]; then
       echo "🚨 CRITICAL: Version mismatch - Cargo.toml: $VERSION, proc_macros/Cargo.toml: $PROC_VERSION"
       exit 1
     fi
-    echo "✅ Version consistent: $VERSION"
+    if [ -z "$INLINE_PIN" ]; then echo '🚨 CRITICAL: Cannot read inline proc-macros pin from Cargo.toml'; exit 1; fi
+    if [ "$VERSION" != "$INLINE_PIN" ]; then
+      echo "🚨 CRITICAL: Version mismatch - Cargo.toml: $VERSION, inline proc-macros pin: $INLINE_PIN"
+      exit 1
+    fi
+    echo "✅ Version consistent: $VERSION (root, proc_macros, inline pin)"
 
 release-validate-compilation:
     timeout 180s cargo build --release --all-features
@@ -589,7 +601,7 @@ release-validate-testcontainers:
     #!/usr/bin/env bash
     set -uo pipefail
     if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-      if cargo test --features testcontainers --test testcontainers 2>&1 | grep -q 'test result: ok'; then
+      if timeout 300s cargo test --features testcontainers --test testcontainers 2>&1 | grep -q 'test result: ok'; then
         echo '✅ Testcontainers tests pass'
       else
         echo '⚠️  WARNING: Testcontainers tests failed (not blocking if Docker unavailable)'
@@ -664,7 +676,7 @@ spec: timeout-check
 spec-check: timeout-check
     #!/usr/bin/env bash
     echo '🔍 Checking spec harness theorem coverage...'
-    cargo test --manifest-path spec-harness/Cargo.toml --lib -- --nocapture 2>&1 | grep -E '^test result:' || (echo '❌ Spec harness tests failed'; exit 1)
+    timeout 300s cargo test --manifest-path spec-harness/Cargo.toml --lib -- --nocapture 2>&1 | grep -E '^test result:' || (echo '❌ Spec harness tests failed'; exit 1)
     echo '✅ Spec conformance verified: 100% theorem coverage'
 
 spec-view:

@@ -87,6 +87,7 @@ use std::path::{Path, PathBuf};
 
 use ml_dsa::{Keypair as _, MlDsa65, Seed, SigningKey};
 use sha2::{Digest, Sha256};
+use zeroize::Zeroizing;
 
 use crate::ledger::error::SealError;
 
@@ -153,16 +154,17 @@ impl KeyStore {
                 len = raw.len()
             )));
         }
-        let mut seed_bytes = [0u8; SEED_LEN];
+        let mut seed_bytes = Zeroizing::new([0u8; SEED_LEN]);
         seed_bytes.copy_from_slice(&raw);
-        Ok(SigningKey::<MlDsa65>::from_seed(&Seed::from(seed_bytes)))
+        Ok(SigningKey::<MlDsa65>::from_seed(&Seed::from(*seed_bytes)))
         // `SuperSigner` (sealer lane) is constructed from this signing key;
         // keys.rs never names sibling types so both lanes compile in
         // isolation.
     }
 
     /// Load or create the raw 32-byte seed, enforcing the custody law.
-    fn load_or_create_seed(&self) -> Result<Vec<u8>, SealError> {
+    /// `Zeroizing` so the plain seed buffer is scrubbed on drop.
+    fn load_or_create_seed(&self) -> Result<Zeroizing<Vec<u8>>, SealError> {
         let path = self.seed_path();
 
         if path.exists() {
@@ -182,13 +184,13 @@ impl KeyStore {
                     bytes.len()
                 )));
             }
-            return Ok(bytes);
+            return Ok(Zeroizing::new(bytes));
         }
 
         // Absent: fresh entropy, then atomic persist. A concurrent creator
         // racing us is fine — whoever's rename lands second is the winner and
         // both sides converge on the persisted bytes on next load.
-        let seed = Self::fresh_seed()?;
+        let seed = Zeroizing::new(Self::fresh_seed()?);
         self.persist_bytes(&self.seed_path(), &seed)?;
         Ok(seed)
     }
@@ -209,14 +211,12 @@ impl KeyStore {
         Ok(raw.to_vec())
     }
 
-    /// Atomically write the seed (temp file + rename) with restrictive
-    /// permissions, creating the key dir (0700) as needed.
-    fn persist_seed(&self, seed: &[u8]) -> Result<(), SealError> {
-        self.persist_bytes(&self.seed_path(), seed)
-    }
-
-    /// Atomic write: create dir (0700), write temp sibling, set 0600, rename.
+    /// Atomic write: create dir (0700), write temp sibling, fsync file (and
+    /// best-effort fsync the parent dir), set 0600, rename. The `sync_all`
+    /// before rename matches `dossier_wire::write_output`: without it a crash
+    /// can land the rename over an unflushed (possibly zero-length) seed.
     fn persist_bytes(&self, path: &Path, bytes: &[u8]) -> Result<(), SealError> {
+        use std::io::Write as _;
         let dir = path
             .parent()
             .ok_or_else(|| SealError::KeyCustody("seed path has no parent dir".into()))?;
@@ -227,10 +227,20 @@ impl KeyStore {
 
         let mut tmp = dir.join(SEED_FILE);
         tmp.set_extension("tmp");
-        fs::write(&tmp, bytes).map_err(|e| {
+        let mut f = fs::File::create(&tmp).map_err(|e| {
             SealError::KeyCustody(format!("cannot write temp seed {}: {e}", tmp.display()))
         })?;
+        f.write_all(bytes).map_err(|e| {
+            let _ = fs::remove_file(&tmp);
+            SealError::KeyCustody(format!("cannot write temp seed {}: {e}", tmp.display()))
+        })?;
+        f.sync_all().map_err(|e| {
+            let _ = fs::remove_file(&tmp);
+            SealError::KeyCustody(format!("cannot flush temp seed {}: {e}", tmp.display()))
+        })?;
+        drop(f);
         restrict_file_perms(&tmp);
+        sync_dir_best_effort(dir);
         fs::rename(&tmp, path).map_err(|e| {
             let _ = fs::remove_file(&tmp);
             SealError::KeyCustody(format!(
@@ -252,11 +262,11 @@ impl KeyStore {
     /// [`SealError::EntropyRefused`] when the OS entropy source fails;
     /// [`SealError::KeyCustody`] when the atomic persist fails.
     pub fn rotate(&self) -> Result<[u8; 8], SealError> {
-        let seed = Self::fresh_seed()?;
-        self.persist_seed(&seed)?;
-        let mut seed_bytes = [0u8; SEED_LEN];
+        let seed = Zeroizing::new(Self::fresh_seed()?);
+        self.persist_bytes(&self.seed_path(), &seed)?;
+        let mut seed_bytes = Zeroizing::new([0u8; SEED_LEN]);
         seed_bytes.copy_from_slice(&seed);
-        let sk = SigningKey::<MlDsa65>::from_seed(&Seed::from(seed_bytes));
+        let sk = SigningKey::<MlDsa65>::from_seed(&Seed::from(*seed_bytes));
         Ok(key_id(&sk.verifying_key().encode()[..]))
     }
 }
@@ -307,6 +317,19 @@ fn restrict_dir_perms(path: &Path) {
 #[cfg(not(unix))]
 fn restrict_dir_perms(_path: &Path) {
     // Non-unix: best-effort no-op (see restrict_file_perms).
+}
+
+/// Best-effort parent-directory fsync so the rename itself is durable.
+/// Failure is ignored (documented limitation: some filesystems refuse to
+/// fsync directories); the file-level `sync_all` in [`KeyStore::persist_bytes`]
+/// remains the primary durability guarantee.
+fn sync_dir_best_effort(dir: &Path) {
+    #[cfg(unix)]
+    if let Ok(d) = fs::File::open(dir) {
+        let _ = d.sync_all();
+    }
+    #[cfg(not(unix))]
+    let _ = dir;
 }
 
 #[cfg(test)]

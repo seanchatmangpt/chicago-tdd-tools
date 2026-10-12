@@ -17,9 +17,12 @@
 //! Ensures hooks are version-controlled and testable
 
 #[cfg(not(feature = "git-hooks"))]
+/// Exit code used when a gate check fails (shell convention: 1).
+const EXIT_FAILURE: i32 = 1;
+
 fn main() {
     eprintln!("Git hooks feature not enabled. Build with --features git-hooks");
-    std::process::exit(1);
+    std::process::exit(EXIT_FAILURE);
 }
 
 #[cfg(feature = "git-hooks")]
@@ -59,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !build_output.status.success() {
         eprintln!("❌ ERROR: Failed to build hook binaries");
         eprintln!("{}", String::from_utf8_lossy(&build_output.stderr));
-        std::process::exit(1);
+        std::process::exit(EXIT_FAILURE);
     }
 
     // Determine binary path (release or debug)

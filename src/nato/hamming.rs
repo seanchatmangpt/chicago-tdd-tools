@@ -303,6 +303,110 @@ fn n08_negative_control_court_has_power_tier1() {
     );
 }
 
+/// Real-receipt emission for the N08 dossier slot (opt-in via
+/// `CTT_EMIT_RECEIPTS=1`): runs the tier-1 fast tier for real — the main
+/// profile court at the calibrated 10k prefix plus the firing leaky-observer
+/// negative control — then mints and persists `docs/receipts/N08.json` from
+/// that run. Deterministic: fixed LCG seed, every metric derived from the
+/// seeded run, `timestamp_ms` pinned at the fixed 0 slot. Replaces the
+/// synthetic `control-subject` placeholder.
+#[cfg(test)]
+mod receipt_emission {
+    use super::*;
+    use crate::nato::court::{CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
+    use crate::nato::receipt::{ControlResult, CourtReceipt};
+    use sha2::{Digest, Sha256};
+
+    /// Deterministic subject identity: SHA-256 over the canonical court name
+    /// plus the exact subject the court adjudicates. No wall clock, no
+    /// environment — byte-identical across runs and machines.
+    fn subject_sha() -> String {
+        let mut h = Sha256::new();
+        h.update(
+            b"N08|src/nato/hamming.rs|hamming weight/distance profile of the pn64 16-bit \
+              committed marking across successive chained kernel states (HIGH 0xFFFF vs \
+              LOW 0x0000 OCEL64 payload classes)",
+        );
+        h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+    }
+
+    /// Run the real tier-1 court and its positive control, and mint the
+    /// receipt. Panics if the court fails or the control does not fire —
+    /// a failing court must never mint a Pass receipt.
+    fn mint() -> CourtReceipt {
+        let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_clean);
+        let lo = run_chain(SEED, 0x0000, N_TIER1, observe_clean);
+        let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+        let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
+        let w_bin = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER1);
+        let d_bin = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER1);
+        assert!(
+            accepts(t_w) && accepts(t_d) && w_bin <= BIN_TOL && d_bin <= BIN_TOL,
+            "receipt-tier court run must pass; got t_w={t_w} t_d={t_d} \
+             w_bin={w_bin} d_bin={d_bin}"
+        );
+
+        // Positive control: the leaky-observer mutant MUST fire.
+        let hi_leak = run_chain(SEED, 0xFFFF, N_TIER1, observe_leaky);
+        let lo_leak = run_chain(SEED, 0x0000, N_TIER1, observe_leaky);
+        let t_leak = crate::nato::timing::welch_t(&hi_leak.weights, &lo_leak.weights);
+        assert!(fires(t_leak), "positive control must fire on the injected leak (t = {t_leak})");
+
+        let outcome = CourtOutcome {
+            verdict: Verdict::Pass,
+            metrics: vec![
+                ("n_per_class", MetricValue::U64(N_TIER1 as u64)),
+                ("welch_t_weight", MetricValue::F64(t_w)),
+                ("welch_t_distance", MetricValue::F64(t_d)),
+                ("max_bin_diff_weight", MetricValue::F64(w_bin)),
+                ("max_bin_diff_distance", MetricValue::F64(d_bin)),
+            ],
+            scoping: ScopingRecord::partial(
+                "N08: Hamming weight/distance profile across successive states is input-independent",
+                "receipt minted from a real tier-1 run: 10,000-step chained kernel profile \
+                 court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin \
+                 histogram comparison, plus the firing leaky-observer positive control",
+                "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale",
+            ),
+        };
+        CourtReceipt::record(
+            CourtId::N08,
+            Pillar::Security,
+            "N08",
+            &subject_sha(),
+            outcome,
+            ControlResult::MutantCaught {
+                mutant_id: "observe_leaky".to_string(),
+                detection_channel: "welch_t".to_string(),
+            },
+        )
+    }
+
+    /// Mint and persist `docs/receipts/N08.json` from a real tier-1 run.
+    /// Hermetic by default; opt in with `CTT_EMIT_RECEIPTS=1`.
+    #[test]
+    fn emit_receipt_when_opted_in() {
+        if std::env::var("CTT_EMIT_RECEIPTS").ok().as_deref() != Some("1") {
+            return;
+        }
+        let receipt = mint();
+
+        // Verify before persisting: honest verdict, firing control, real
+        // subject identity, digest-consistent parse-back.
+        let json = receipt.to_json().expect("serialize N08 receipt");
+        let back = CourtReceipt::from_json(&json).expect("receipt must parse back");
+        assert_eq!(back.verdict, Verdict::Pass);
+        assert!(back.positive_control.passed());
+        assert_ne!(back.subject_sha, "control-subject");
+
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
+        let path = dir.join("N08.json");
+        if let Err(e) = std::fs::write(&path, json) {
+            println!("skipping N08 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
+}
+
 /// Tier-2 full-scale main court (opt-in via `--ignored`): the same profile
 /// court at spec scale, 100k samples per class.
 #[test]

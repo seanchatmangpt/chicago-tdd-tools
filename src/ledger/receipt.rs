@@ -99,6 +99,13 @@ pub const COURT_RECORD_LEN: usize = 352;
 /// Length of the BLAKE3 chain hash appended to the receipt.
 pub const CHAIN_HASH_LEN: usize = 32;
 
+// Compile-time proof that the wire constants compose to the record length
+// (the const_assert law exercised on its primary consumer).
+const _: () = crate::core::const_assert::const_assert_msg(
+    COURT_RECORD_LEN == COURT_RECEIPT_V1_LEN + CHAIN_HASH_LEN,
+    "COURT_RECORD_LEN must equal receipt + chain hash",
+);
+
 /// Header length in bytes.
 const HEADER_LEN: usize = 16;
 /// Body length in bytes (must equal the stored `body_len` field).

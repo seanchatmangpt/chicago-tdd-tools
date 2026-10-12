@@ -622,3 +622,104 @@ fn n14_positive_control_wedged_shim_deadlock_detected() {
     let err = run_wedged_shim(wedge_bound).expect_err("wedged shim must deadlock-detect");
     assert_eq!(err, ThrashCourtError::DeadlockBound { bound: wedge_bound });
 }
+
+/// Real-receipt emission for the N14 dossier slot (opt-in via
+/// `CTT_EMIT_RECEIPTS=1`): runs the tier-1 small court for real (50k
+/// transitions, 4+4 adversaries, MPMC 4x4 — completion + typed-refusal +
+/// conservation legs all asserted inside `run_court`), plus the wedged-shim
+/// positive control, then mints and persists `docs/receipts/N14.json` from
+/// that run. Deterministic: the only per-run values in the receipt are the
+/// conservation checksum over the SORTED drained stream (interleaving-
+/// independent by the disjoint-range law) and fixed counts; no wall-clock
+/// latencies enter the receipt. Replaces the synthetic `control-subject`
+/// placeholder.
+#[cfg(test)]
+mod receipt_emission {
+    use super::*;
+    use crate::nato::court::{CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
+    use crate::nato::disclosure::ScopingRecord;
+    use crate::nato::receipt::{ControlResult, CourtReceipt};
+    use sha2::{Digest, Sha256};
+
+    /// Deterministic subject identity: SHA-256 over the canonical court name
+    /// plus the exact subject the court adjudicates.
+    fn subject_sha() -> String {
+        let mut h = Sha256::new();
+        h.update(
+            b"N14|src/nato/thrash.rs|CAST-32A multi-core interference court over the CasRing \
+              MPMC 4x4 claim/commit/drain surface (tier-1 small: 50k transitions, 4 evictors \
+              + 4 spinners, 120 s watchdog bound)",
+        );
+        h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+    }
+
+    /// Mint and persist `docs/receipts/N14.json` from a real tier-1 run.
+    /// Hermetic by default; opt in with `CTT_EMIT_RECEIPTS=1`.
+    #[test]
+    fn emit_receipt_when_opted_in() {
+        if std::env::var("CTT_EMIT_RECEIPTS").ok().as_deref() != Some("1") {
+            return;
+        }
+
+        // Positive control FIRST: the watchdog-less wedged shim (all slots
+        // leaked, producer structurally stuck) MUST deadlock-detect — it
+        // panics otherwise. A surviving control must never mint a Pass.
+        let wedge_bound = Duration::from_millis(250);
+        let err = run_wedged_shim(wedge_bound).expect_err("wedged shim must deadlock-detect");
+        assert_eq!(err, ThrashCourtError::DeadlockBound { bound: wedge_bound });
+        let control = ControlResult::MutantCaught {
+            mutant_id: "wedged-shim".to_string(),
+            detection_channel: "watchdog recv_timeout".to_string(),
+        };
+
+        // Real tier-1 court run (completion + typed-refusal + conservation
+        // legs asserted inside run_court; panics on any violation).
+        let summary = run_court(ThrashConfig::small()).expect("tier-1 court run within bound");
+        assert!(
+            summary.max_latency_ns < MAX_TRANSITION_NS_CEILING,
+            "LATENCY STALL: max transition latency {} ns",
+            summary.max_latency_ns
+        );
+
+        let outcome = CourtOutcome {
+            verdict: Verdict::Pass,
+            metrics: vec![
+                ("transitions", MetricValue::U64(TRANSITIONS_SMALL)),
+                ("producers", MetricValue::U64(PRODUCERS)),
+                ("consumers", MetricValue::U64(CONSUMERS as u64)),
+                ("conservation_checksum", MetricValue::U64(summary.conservation_checksum)),
+            ],
+            scoping: ScopingRecord::partial(
+                "N14 CAST-32A: 16 adversarial threads vs sequencer; bounded max latency, \
+                 zero deadlock",
+                "receipt minted from a real tier-1 run: 50k-transition CasRing MPMC 4x4 \
+                 pipeline under 4 evictors + 4 spinners; completion, typed-refusals-only \
+                 (zero SDC), and conservation legs all asserted; wedged-shim positive \
+                 control deadlock-detected",
+                "tier-1 small prefix of the donor 1M-transition/16-thread tier-3 court; \
+                 no wall-clock latency bound asserted at this tier (measures the machine, \
+                 not the subject)",
+            ),
+        };
+        let receipt = CourtReceipt::record(
+            CourtId::N14,
+            Pillar::Resilience,
+            "N14",
+            &subject_sha(),
+            outcome,
+            control,
+        );
+
+        let json = receipt.to_json().expect("serialize N14 receipt");
+        let back = CourtReceipt::from_json(&json).expect("receipt must parse back");
+        assert_eq!(back.verdict, Verdict::Pass);
+        assert!(back.positive_control.passed());
+        assert_ne!(back.subject_sha, "control-subject");
+
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
+        let path = dir.join("N14.json");
+        if let Err(e) = std::fs::write(&path, json) {
+            println!("skipping N14 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
+}

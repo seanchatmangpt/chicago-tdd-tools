@@ -60,9 +60,11 @@ On each `affi receipt emit --format ctrt`:
 ## Diagnosing a replay refusal
 
 ```console
-$ affi receipt emit build artifact-1 '{}' --format ctrt
+$ cargo run --manifest-path ~/affidavit/Cargo.toml --features crypto-trust --bin affi -- receipt emit build artifact-1 '{}' --format ctrt
 emitted CTRT wire receipt -> receipt_1f2a3b4c5d6e7f80.ctrt (nullifier: 1f2a…)
-$ affi receipt emit build artifact-1 '{}' --format ctrt
+$ cargo run --manifest-path ~/affidavit/Cargo.toml --features crypto-trust --bin affi -- receipt emit build artifact-1 '{}' --format ctrt
+emitted CTRT wire receipt -> receipt_1f2a3b4c5d6e7f80.ctrt (nullifier: 1f2a…)
+$ cargo run --manifest-path ~/affidavit/Cargo.toml --features crypto-trust --bin affi -- receipt emit build artifact-1 '{}' --format ctrt
 Error: Anti-replay refusal: ReplayDetected: 1f2a3b4c…
 ```
 

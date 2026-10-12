@@ -205,6 +205,15 @@ fn undeclared_activity_refuses_as_undeclared() {
         }
         other => panic!("expected Undeclared, got {other:?}"),
     }
+    // Latch + frozen-state law: the session is Faulted and its cursor,
+    // steps, and marking are frozen bit-exact after the refusal.
+    assert!(matches!(s.phase(), Phase::Faulted(_)));
+    assert_eq!(s.steps_done(), 1);
+    let marking_after = s.marking();
+    let phase_after = s.phase().clone();
+    let _ = s.step_budget(16);
+    assert_eq!(s.marking(), marking_after);
+    assert_eq!(s.phase(), &phase_after);
 }
 
 // ---------------------------------------------------------------------------

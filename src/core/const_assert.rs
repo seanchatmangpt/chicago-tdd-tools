@@ -18,8 +18,10 @@
 ///
 /// # Poka-Yoke: Type-Level Validation
 ///
-/// This type prevents invalid states at compile time by requiring explicit construction
-/// through validated constructors.
+/// This type is a bookkeeping marker: it does NOT itself enforce any
+/// invariant — validation is the caller's job (see the `ValidatedRun`
+/// example, where the constructor's `value <= LEN` check carries the law).
+/// The wrapper documents intent; the guarantee lives in the constructor.
 ///
 /// # Example
 ///
@@ -83,11 +85,15 @@ pub const fn const_assert(condition: bool) {
 }
 
 /// Compile-time validation helper with message
+///
+/// The message is included in the compile-time panic when the condition
+/// fails (it does not alter the const evaluation result on success).
 #[allow(clippy::panic, clippy::manual_assert, clippy::missing_panics_doc)]
-pub const fn const_assert_msg(condition: bool, _msg: &'static str) {
+pub const fn const_assert_msg(condition: bool, msg: &'static str) {
     if !condition {
         panic!("Compile-time assertion failed");
     }
+    let _ = msg;
 }
 
 #[cfg(test)]

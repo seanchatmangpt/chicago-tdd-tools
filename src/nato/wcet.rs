@@ -346,7 +346,7 @@ fn calibrate_ns_per_cycle() -> f64 {
         black_box(x);
         samples.push(dt / CALIB_CHAIN as f64);
     }
-    samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    samples.sort_by(f64::total_cmp);
     samples[CALIB_BATCHES / 2]
 }
 
@@ -386,7 +386,7 @@ fn time_kernel(corpus: &[(u64, u64, u64)], kernel: impl Fn(u64, u64, u64) -> u64
 /// descheduled mid-batch and are discarded — counted and bounded, never
 /// silently dropped. Returns (max over uncorrupted batches, corrupted frac).
 fn summarize(mut samples: Vec<f64>) -> (f64, f64) {
-    samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    samples.sort_by(f64::total_cmp);
     let median = samples[samples.len() / 2];
     let thresh = median * CORRUPTION_FACTOR;
     let corrupted = samples.iter().filter(|s| **s > thresh).count();

@@ -65,3 +65,6 @@ vendors/
 # Coverage / generated reports
 *.lcov
 weaver-reports/
+
+# python bytecode residue
+__pycache__/

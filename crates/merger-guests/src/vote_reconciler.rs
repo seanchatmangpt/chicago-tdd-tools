@@ -84,14 +84,18 @@ pub enum VoteError {
 }
 
 impl VoteError {
-    /// Wire code: `ERR_DIM` for dimension faults, else a leaf-local code.
+    /// Wire code. Per the ABI law (`lib.rs`), every code returned through
+    /// `run()` is a documented shared errno — negatives are reserved for the
+    /// host transport and never cross the leaf boundary. A domain-violating
+    /// row is a payload-framing mismatch (`ERR_LENGTH`); a malformed
+    /// threshold fraction is a malformed scale-like ratio (`ERR_BAD_SCALE`).
     #[must_use]
     pub const fn code(self) -> i32 {
         match self {
             // ERR_DIM is the shared dimension cap code.
             Self::Dim | Self::Empty => crate::errno::ERR_DIM,
-            Self::Row => -4101,
-            Self::Threshold => -4102,
+            Self::Row => crate::errno::ERR_LENGTH,
+            Self::Threshold => crate::errno::ERR_BAD_SCALE,
         }
     }
 }

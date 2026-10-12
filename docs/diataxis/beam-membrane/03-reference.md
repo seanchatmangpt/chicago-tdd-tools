@@ -19,10 +19,10 @@ The framing is hand-rolled because the BEAM `{:packet, 4}` port option is
 **big-endian** and the bridge speaks little-endian framing. The port is
 therefore opened in raw stream mode with no `:packet` option —
 `Port.open({:spawn_executable, path}, [:binary, :exit_status, :eof])`
-(worker.ex:512-523) — and both sides read/write the u32 LE prefix in
+(worker.ex:562) — and both sides read/write the u32 LE prefix in
 hand-rolled codec functions: `with_frames/3` / `extract_frames/3` on the
-BEAM side (worker.ex:374-406), `send_frame/1` packing
-`<<byte_size(payload)::little-32, payload::binary>>` (worker.ex:525-529),
+BEAM side (worker.ex:418-448), `send_frame/1` packing
+`<<byte_size(payload)::little-32, payload::binary>>` (worker.ex:570),
 and the equivalent reader in `temprun_step.rs` (header comment, lines
 10-15).
 
@@ -45,11 +45,11 @@ Requests (host → guest) and replies (guest → host) share one tag space.
 (`Sealed` note: `temprun_step.rs` line 50 documents the digest field as
 34 bytes total — `u16 LE len(=32) || BLAKE3 digest`; the BEAM decoder
 reads `dlen` generically and accepts `rest` of `<<>>` or exactly 352
-bytes, worker.ex:444-447.)
+bytes, worker.ex:454-460.)
 
 ## The 21-byte step record
 
-Carried in every `Stepped` reply (worker.ex:470-481):
+Carried in every `Stepped` reply (worker.ex:444-452):
 
 ```
 offset  size  field
@@ -97,7 +97,7 @@ Any `Error` frame is fail-closed at the BEAM layer: refusal
 ## Stream-decode rules
 
 The BEAM side accumulates raw stream bytes in `buf` and extracts frames
-incrementally (worker.ex:379-406):
+incrementally (worker.ex:418-448):
 
 - fewer than 4 bytes: held for the next `{:data, bytes}` delivery.
 - length prefix present but body incomplete: held.

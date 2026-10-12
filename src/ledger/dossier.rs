@@ -4,13 +4,15 @@
 //!
 //! Two builders:
 //!
-//! - [`CourtLedgerBuilder`] maintains one court's BLAKE3 chain. The chain law
-//!   follows
-//!   [`Blake3ReceiptEntry`]:
+//! - [`CourtLedgerBuilder`] maintains one court's BLAKE3 chain. The per-entry
+//!   hash law matches [`Blake3ReceiptEntry`] (BLAKE3 over
+//!   `prev_hash || content`), but the LINK rule is a builder fold, distinct
+//!   from the validator's `prev = prior stored_hash` law:
 //!   `head(0) = [0u8; 32]` (zeroed genesis) and
-//!   `head(n+1) = BLAKE3(head(n) || receipt.stored_hash())`. Appending a
-//!   receipt belonging to a different court is refused
-//!   ([`LedgerError::CrossCourtAppend`]).
+//!   `head(n+1) = BLAKE3(head(n) || receipt.stored_hash())`. Builder chains
+//!   are consumed via `head()` into the Merkle dossier, never replayed
+//!   through `validate_chain`. Appending a receipt belonging to a different
+//!   court is refused ([`LedgerError::CrossCourtAppend`]).
 //! - [`DossierBuilder`] collects `(court_id, head)` leaves, sorts them
 //!   byte-lexicographically by `court_id`, and seals a Merkle root with the
 //!   domain-separated leaf/node hashes documented in
@@ -90,9 +92,10 @@ pub fn court_id_of(receipt: &ChainedCourtReceipt) -> String {
 /// Maintains one court's BLAKE3 receipt chain and its running head.
 ///
 /// Zeroed genesis: a fresh builder's `head()` is `[0u8; 32]`; every append
-/// advances `head <- BLAKE3(head || receipt.stored_hash())`, the
-/// [`Blake3ReceiptEntry`] law with the receipt's chain hash as the replayed
-/// content contribution.
+/// advances `head <- BLAKE3(head || receipt.stored_hash())` — a builder fold
+/// law distinct from the [`Blake3ReceiptEntry`] validator's link rule (the
+/// receipt's chain hash is the content contribution, never the threaded
+/// prev-hash for n >= 1).
 ///
 /// Two append gates beyond the court check:
 ///

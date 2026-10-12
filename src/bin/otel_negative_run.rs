@@ -1,3 +1,4 @@
+//! OTEL negative-path smoke binary: drives the failure-mode sequence (unreachable endpoint, malformed export) and asserts typed refusals (see `just otel-weaver-live-negative`).
 #![allow(warnings)]
 #[cfg(feature = "weaver")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {

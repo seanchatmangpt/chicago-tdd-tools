@@ -851,7 +851,6 @@ name = "ctt-wasm-guest"
 version = "26.10.12"
 dependencies = [
  "chicago-tdd-tools",
- "uuid",
 ]
 
 [[package]]

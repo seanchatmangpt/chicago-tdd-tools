@@ -17,17 +17,14 @@ chicago-tdd-tools = { path = "../..", default-features = false, features = [
   "logging",
 ] }
 
-# WASM32 RNG source for the parent crate's unconditional `uuid` v4 usage
-# (src/swarm/coordinator.rs, src/observability/ocel/collector.rs compile
-# uuid::Uuid::new_v4() into every feature combination; uuid refuses to
-# compile on wasm32-unknown-unknown without a randomness source). Feature
-# union with the parent's uuid = { features = ["v4"] } — wasm32-only scope,
-# so host builds are untouched. DISCLOSURE: this does not achieve the
-# zero-import law by itself; the honest fix is making `uuid` optional in the
-# root manifest and gating the two call sites, which is outside this lane's
-# file scope.
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-uuid = { version = "1", default-features = false, features = ["v4", "js"] }
+# Zero-import law: no wasm32 target dependencies. The parent crate's `uuid`
+# usage (src/swarm/coordinator.rs, src/observability/ocel/collector.rs) is
+# gated behind the optional `uuid-v4` feature (root Cargo.toml: `uuid` is
+# `optional = true`), which this guest does NOT enable — so `uuid` (and its
+# getrandom/wasm-bindgen JS backend) never compiles into the wasm artifact.
+# Nothing in crates/ctt-wasm-guest/src or tests uses uuid directly. Do not
+# re-add a `js`-feature uuid here; it would pull wasm-bindgen imports into
+# the guest and break the empty-import-section census.
 
 [profile.release]
 opt-level = "z"
@@ -45,6 +42,10 @@ strip = true
 #   target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
 #
 # NOTE: profile.release in a non-root workspace member is ignored by cargo
-# (profiles are root-only). Kept here to mirror pn_kernel's manifest intent;
-# the coordinator should carry these into the root [profile.release] if the
-# gate requires opt-level "z" + strip for the .wasm artifact.
+# (profiles are root-only). Kept here to mirror pn_kernel's manifest intent.
+# panic = "abort" is NOT carried to the workspace root [profile.release]
+# deliberately: the NATO SEU courts (src/nato/seu.rs) depend on
+# catch_unwind to score SDC, and abort would disable unwinding
+# workspace-wide. In-workspace guest builds therefore keep unwind (a guest
+# panic still traps at the wasm boundary); abort applies only to a
+# standalone build of this crate.
