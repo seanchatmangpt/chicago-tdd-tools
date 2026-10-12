@@ -49,6 +49,10 @@ build process, preventing incorrect sequences.
 
 ---
 
+## Chapter 3
+
+> **NOTE (W27 probe): only 2 theorem environments exist in chapter 03 (Type State Pattern for AAA, No Invalid Test States). Rows citing Thm-3.1..3.6 are PATTERN-LEVEL test mappings, not theorem citations — the pre-re-anchor table is retained for test coverage traceability.
+
 ## Chapter 3: Type-Level Safety
 
 | Theorem ID | Coverage Area | Test Path | Test Type | Status |

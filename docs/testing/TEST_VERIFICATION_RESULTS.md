@@ -19,7 +19,7 @@ All 3 high-priority issues have been resolved:
 - **Issue:** Unused import warnings causing compilation failures
 - **Fix:** Added `#[allow(unused_imports)]` annotations
 - **Commit:** ddfdb1c - "fix: add allow pragmas for property and orchestrator test code"
-- **Verification:** All 18 examples now compile successfully
+- **Verification:** All 19 examples now compile successfully
 
 ### 2. ✅ Test Isolation Issue (Fixed)
 - **File:** `src/core/config/loading.rs:1288`
@@ -109,7 +109,7 @@ All examples now compile without errors or warnings:
 
 **Examples:**
 - ✅ "18 complete, runnable examples, all tested" - Verified accurate
-- ✅ All 18 examples compile and run successfully
+- ✅ All 19 examples compile and run successfully
 
 **Observability:**
 - ✅ "Test OpenTelemetry (OTEL) instrumentation with Weaver live-check" - Verified accurate
@@ -184,7 +184,7 @@ All examples now compile without errors or warnings:
 
 **Achievements:**
 - ✅ **100% test pass rate** (612/612 tests)
-- ✅ **All 18 examples compile** and run successfully
+- ✅ **All 19 examples compile** and run successfully
 - ✅ **Complete README accuracy** - all claims verified
 - ✅ **Robust test isolation** using RAII guard patterns
 - ✅ **Graceful error handling** for Docker unavailability
