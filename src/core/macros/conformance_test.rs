@@ -5,9 +5,9 @@
 //! the macros assert two boolean-ish results and panic with the deviation list
 //! on failure; they own no session or receipt logic themselves.
 //!
-//! **Contract (as of this file's writing)**: there is no `session.rs` in
-//! `src/conformance/` yet — `ConformanceSession` is an expected type from the
-//! conformance lane, not a defined one. The macros therefore assert on a
+//! **Contract**: W27 probe correction — `session.rs` HAS since landed and
+//! `TestReceipt::is_algebraically_closed()` exists (`src/core/receipt.rs:342`);
+//! the "not yet wired" text below is historical. The seam is still duck-typed. The macros therefore assert on a
 //! `conformance_report()` accessor, which is the documented seam:
 //!
 //! - `$session.conformance_report()` must yield a value with
@@ -15,10 +15,9 @@
 //!   `is_empty()` reflects the deviations list; the panic message renders
 //!   `Debug` of the report).
 //! - `$receipt.is_algebraically_closed() -> bool` must exist on the receipt
-//!   expression. The current `TestReceipt` (`src/core/receipt.rs`) does not
-//!   yet expose `is_algebraically_closed()`; wiring that method into
-//!   `TestReceipt` (or a wrapper) is the responsibility of the lane that owns
-//!   the receipt integration, not of this macro.
+//!   expression. (W27 probe: `TestReceipt::is_algebraically_closed()` now
+//!   exists at src/core/receipt.rs:342 — the wiring the original text called
+//!   for has landed; the duck-typed seam stands.)
 
 /// Conformance test wrapper.
 ///

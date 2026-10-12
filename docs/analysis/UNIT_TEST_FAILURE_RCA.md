@@ -3,7 +3,7 @@
 ## Chicago TDD Tools - Assertions Module Timeouts
 
 **Date**: 2025-11-14
-**Status**: ACTIVE FAILURE - 16 tests timing out
+**Status**: RESOLVED 2025-11-14 (W27 probe: commit e80a3e5 landed this very document plus its own proposed fix in the same commit — the ACTIVE FAILURE framing was stale at commit time; preserved as RCA record). Original: ACTIVE FAILURE - 16 tests timing out
 **Severity**: HIGH (Blocks CI pipeline)
 **Risk Priority Number**: 36 (MEDIUM-HIGH, but currently failing)
 
