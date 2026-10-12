@@ -121,7 +121,13 @@ const TIMER_MARGIN: f64 = 64.0;
 /// never silently dropped.
 const CORRUPTION_FACTOR: f64 = 25.0;
 /// Max tolerated corrupted-batch fraction.
-const MAX_CORRUPTED_FRAC: f64 = 0.005;
+/// Tolerance for the fraction of timing batches discarded by the 25x-median
+/// interference filter. 2% absorbs single-batch scheduler jitter under
+/// parallel test load (witnessed: one batch in ~170 tips 0.5% under
+/// full-workspace load) while still failing sustained interference, which
+/// discards far more. The discarded batches are excluded from the verdict
+/// either way — this sentinel only checks the *measurement environment*.
+const MAX_CORRUPTED_FRAC: f64 = 0.02;
 /// Dependent-ALU-chain length for the ns/cycle calibration.
 const CALIB_CHAIN: u64 = 4096;
 /// Calibration batches (median taken).
