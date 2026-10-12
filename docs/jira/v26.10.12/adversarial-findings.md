@@ -129,8 +129,8 @@ Tally: 8 FALSIFIED, 1 PARTIAL, 1 HELD.
 
 ## Landed post-tag (working tree, this session) vs queued
 
-Landed in the working tree at receipt time (uncommitted fix batch on top of
-4d451c7; verified by `git diff`):
+Landed at receipt time on top of 4d451c7 (SK8 fix-forward commit 4d26c84
+plus the domain/identity doc edits in the shared working tree):
 
 - SK1: 1-safe domain precondition doc + conservation guard (`src/conformance/pn64.rs`).
 - SK6-adjacent / model-relative identity: trajectory identity documented as
