@@ -16,7 +16,7 @@ use serde_json::{self, Value};
 
 use crate::observability::{ObservabilityError, ObservabilityResult};
 
-/// Filtered projection of `live_check.json` — only `live_check_result` and `/// advice_level_counts` lines are kept; other Weaver artefacts are discarded /// (W27 probe corrected the "complete set" claim).
+/// Filtered projection of `live_check.json` — only `live_check_result` and `advice_level_counts` entries are kept; other Weaver artefacts are discarded (W27 probe corrected the "complete set" claim).
 #[derive(Debug, Clone)]
 pub struct ValidationResults {
     advices: Vec<LiveCheckAdvice>,

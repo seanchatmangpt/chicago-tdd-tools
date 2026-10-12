@@ -38,7 +38,7 @@ pub struct DomainFixture {
 impl DomainFixture {
     pub fn new(config: DomainConfig) -> Self {
         Self {
-            base: TestFixture::new()? // W27 probe: new() returns FixtureResult<Self>,
+            base: TestFixture::new()?, // W27 probe: new() returns FixtureResult<Self>,
             context: DomainContext::from(config),
         }
     }
