@@ -77,7 +77,7 @@ pub mod observability; // Telemetry, observability
 ## Real-World Example
 
 - **Code location**: [src/lib.rs](file:///Users/sac/chicago-tdd-tools/src/lib.rs)
-- **Explanation**: Organizes the codebase into 5 capability-focused modules, making features easily discoverable.
+- **Explanation**: Organizes the codebase into 12 top-level public modules (W27 probe corrected the stale 5-module claim), making features easily discoverable.
 
 ## Related Patterns
 

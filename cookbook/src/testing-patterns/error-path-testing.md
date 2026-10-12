@@ -77,7 +77,7 @@ test!(test_good_error, {
 ## Real-World Example
 
 - **Code location**: [tests/go_extra_mile_tests.rs](file:///Users/sac/chicago-tdd-tools/tests/go_extra_mile_tests.rs)
-- **Explanation**: Demonstrates error path testing for fixture setup and resource cleanup failures, ensuring specific error variants and context strings are matched.
+- **Explanation**: W27 probe: that file's 11 tests are builder/OTEL happy-path — it does NOT demonstrate error-path testing. Corrected:
 
 ## Related Patterns
 

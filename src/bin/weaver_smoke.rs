@@ -1,5 +1,5 @@
 //! Weaver smoke binary: bootstrap-check + live-check round trip against the
-//! vendored semantic conventions (see `just weaver-smoke`).
+//! runtime-cloned semantic conventions — registry/ is gitignored, cloned by `just weaver-bootstrap` (W27 probe: not vendored).
 #![allow(
     warnings,
     clippy::all,

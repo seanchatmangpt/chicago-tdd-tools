@@ -72,8 +72,8 @@ graph LR
     MacroFail -->|Emit Diagnostic| EmitDiag
     RuntimeValidation -->|Emit Diagnostic| EmitDiag
 
-    EmitDiag -->|Queue Enabled| Queue
-    EmitDiag -->|Capacity = 0| CustomSinks
+    EmitDiag -->|unconditional queue push (W27 probe)| Queue
+    EmitDiag -->|queue push (no capacity check — W27 probe)| CustomSinks
 
     Queue -->|On Close| CloseChan
     CloseChan -->|Summarize| RunSummary

@@ -18,7 +18,7 @@
 | SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | CLOSED - relabel landed (Diataxis reference pages now say constant-flow; `docs/features/CONFORMANCE.md` carries no CT claim) |
 | SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide on the admission predicate. The keys.rs raw `from_seed` surface was reworked in 1fc1c72; only `Signer::from_seed` remains publicly reachable (`src/ledger/signing/signer.rs:141`), bypassing key-id admission. | QUEUED (re-scoped: signer.rs:141 sliver only) |
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
-| SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | PARTIAL |
+| SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:264`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | PARTIAL |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e: out-pointer bounds + errnos 14-16; F1 module digest placeholder until build-time splice) |
 | SK7 | FALSIFIED | port write-path has no backpressure (64MiB frame queued in driver memory, 23ms, never-reading bridge); bridge process inherits full env, no rlimits, unsandboxed — zero-ambient falsified at the OS boundary | QUEUED (port backpressure ack-gate + env-allowlist/rlimit work order, strata-side) |
 | SK8 | FALSIFIED | Word-identity sentinel misclassifies lawful self-loop firings (`W- == W+` leaves the marking bit-exact unchanged) as refusals; PN64 OR-coalescing makes this reachable on ordinary nets. | FIXED (post-tag, see below) |
@@ -78,7 +78,7 @@ Tally: 9 FALSIFIED, 1 PARTIAL (SK9), 0 HELD.
 ### SK5 - Rotation replay amnesty + fail-open persistence
 
 - **Claim falsified**: that rotation invalidates all pre-rotation receipts.
-- **Repro**: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`); a receipt
+- **Repro**: `KeyStore::rotate` (`src/ledger/signing/keys.rs:264`); a receipt
   sealed under the pre-rotation key id still verifies after rotation
   (replay amnesty), and a failed seed rewrite leaves the store in the old
   state with success reported (fail-open).

@@ -38,7 +38,7 @@ pub struct DomainFixture {
 impl DomainFixture {
     pub fn new(config: DomainConfig) -> Self {
         Self {
-            base: TestFixture::new(),
+            base: TestFixture::new()? // W27 probe: new() returns FixtureResult<Self>,
             context: DomainContext::from(config),
         }
     }
@@ -75,7 +75,7 @@ use chicago_tdd_tools::core::fixture::TestFixture;
 
 pub fn setup_domain() -> DomainFixture {
     // Uses base fixture internally
-    DomainFixture::new(TestFixture::new())
+    DomainFixture::new(TestFixture::new()?)
 }
 ```
 
