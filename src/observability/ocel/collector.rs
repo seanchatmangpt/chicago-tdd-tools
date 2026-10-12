@@ -60,7 +60,7 @@ impl DiagnosticSink for OcelCollector {
         #[cfg(feature = "uuid-v4")]
         let event_id = uuid::Uuid::new_v4().to_string();
         #[cfg(not(feature = "uuid-v4"))]
-        let event_id = String::new(); // zero-ambient fallback; host assigns ids
+        let event_id = String::new(); // zero-ambient fallback (W27 probe: the host never assigns the event_id FIELD — seal_run ids HashMap keys only; the field stays empty)
         let event = TestOcelEvent {
             event_id,
             case_id: diagnostic.run_id.clone(),

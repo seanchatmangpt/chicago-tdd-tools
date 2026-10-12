@@ -239,6 +239,9 @@ pub fn on_test_completed(test_name: &str, passed: bool) {
     emit_diagnostic(&diag);
 }
 
+/// AUDIT NOTE (W27 probe): `state.capacity` is WRITE-ONLY — nothing reads it
+/// (emit_diagnostic never checks it), so this knob has no behavioral effect.
+/// Reserved for a future bounded-queue enforcement.
 pub fn set_channel_capacity(capacity: Option<usize>) {
     let mut state = get_state().lock().unwrap_or_else(|e| e.into_inner());
     #[cfg(feature = "logging")]

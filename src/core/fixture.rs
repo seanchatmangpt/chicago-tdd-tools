@@ -35,7 +35,7 @@ pub type FixtureResult<T> = Result<T, FixtureError>;
 ///
 /// Fixture metadata for introspection and debugging.
 ///
-/// **New in v1.3.0**: Track fixture creation time and state snapshots.
+/// **(introduced v1.3.0-era)**: Track fixture creation time and state snapshots.
 ///
 /// # Examples
 ///
@@ -99,7 +99,7 @@ impl Default for FixtureMetadata {
 ///
 /// Scoped metadata that automatically expires when dropped.
 ///
-/// **New in v1.3.0**: RAII-based metadata that cleans up automatically.
+/// **(introduced v1.3.0-era)**: RAII-based metadata that cleans up automatically.
 ///
 /// # Examples
 ///
@@ -203,7 +203,7 @@ pub struct TestFixture<T: ?Sized = ()> {
     test_counter: u64,
     /// Test metadata
     metadata: HashMap<String, String>,
-    /// Fixture metadata for introspection (v1.3.0)
+    /// Fixture metadata for introspection (v1.3.0-era)
     fixture_metadata: FixtureMetadata,
 }
 
@@ -302,7 +302,7 @@ impl<T> TestFixture<T> {
         Ok(())
     }
 
-    /// Get reference to fixture metadata (v1.3.0)
+    /// Get reference to fixture metadata (v1.3.0-era)
     ///
     /// Access creation timestamp and state snapshots for debugging.
     ///
@@ -320,7 +320,7 @@ impl<T> TestFixture<T> {
         &self.fixture_metadata
     }
 
-    /// Get mutable reference to fixture metadata (v1.3.0)
+    /// Get mutable reference to fixture metadata (v1.3.0-era)
     ///
     /// Capture state snapshots for debugging.
     ///
@@ -339,7 +339,7 @@ impl<T> TestFixture<T> {
         &mut self.fixture_metadata
     }
 
-    /// Create scoped metadata that expires when dropped (v1.3.0)
+    /// Create scoped metadata that expires when dropped (v1.3.0-era)
     ///
     /// RAII-based metadata management for test phases.
     ///
@@ -588,7 +588,7 @@ mod tests {
     });
 
     // ========================================================================
-    // 5. FIXTURE METADATA (v1.3.0) - Test introspection features
+    // 5. FIXTURE METADATA (v1.3.0-era) - Test introspection features
     // ========================================================================
 
     test!(test_fixture_metadata_creation, {

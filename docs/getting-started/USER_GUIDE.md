@@ -175,7 +175,7 @@ CLI testing: Command-line tool testing. Golden files.
 
 **When to Use**: Testing CLI tools, verifying command output, golden file testing. **Requires**: `cli-testing` feature. **Avoid**: Non-CLI code.
 
-**Basic Usage**: `CliTest::new().run_command(cmd, args).assert_output(expected)` for CLI testing. Uses golden files (`.trycmd`) for output comparison.
+**Basic Usage**: `AUDIT NOTE (W27 probe): the line below named a non-existent API; the real surface is `CliTest` (unit struct) + `run_tests(test_dir)` + the static `CliAssertions::assert_output_*` helpers.` for CLI testing. Uses golden files (`.trycmd`) for output comparison.
 
 **Patterns**: CLI output verification (golden files), command execution testing (trycmd), regression testing (output comparison).
 
@@ -201,7 +201,7 @@ Guard constraints: Chatman Constant (≤8). Batch size limits. Input validation.
 
 **When to Use**: Input validation, constraint enforcement, guard validation. **Always use**: Prevents invalid data at ingress.
 
-**Guard Validation**: `GuardValidator::new().validate_run_length(length)?`, `validate_batch_size(size)?`. Use `MAX_RUN_LEN = 8`, `MAX_BATCH_SIZE = 1000`.
+**Guard Validation**: `GuardValidator::new().validate_run_len(length)?`, `validate_batch_size(size)?`. Use `MAX_RUN_LEN = 8`, `MAX_BATCH_SIZE = 1000`.
 
 **Patterns**: Input validation (guard constraints), constraint enforcement (MAX_RUN_LEN), guard validation (all ingress points).
 
