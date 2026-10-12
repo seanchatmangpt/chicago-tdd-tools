@@ -113,20 +113,20 @@ the canonical `CompiledNet` is `net::CompiledNet` (mod.rs:13-14).
 |---|---|---|
 | `ConformanceResult<T>` | `Result<T, ConformanceError>` | session.rs:54 |
 | `Marking64 = u64` alias | distinct from `state::Marking64` | session.rs:65 |
-| `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:156 |
-| `from_model(&PowlModel)` | from an already-loaded model | session.rs:166 |
+| `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:158 |
+| `from_model(&PowlModel)` | from an already-loaded model | session.rs:168 |
 | `set_forbidden_mask(u64)` | masked to 0xFFFF; read on every step | session.rs:223 |
-| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:240 (refusal :244-245) |
-| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:268 |
-| `resume(u32)` | continue after a yield | session.rs:316 |
+| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:242 (refusal :244-245) |
+| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:270 |
+| `resume(u32)` | continue after a yield | session.rs:318 |
 | `phase()` | `&Phase` | session.rs:322 |
 | `steps_done()` | `u32` | session.rs:328 |
 | `remaining_events()` | `usize` | session.rs:334 |
 | `marking()` | `Marking64` | session.rs:340 |
 | `initial_marking()` | `Marking64` | session.rs:346 |
 | `net()` | `&CompiledNet` | session.rs:359 |
-| `finish()` | `-> ReplaySummary` | session.rs:366 |
-| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:389 |
+| `finish()` | `-> ReplaySummary` | session.rs:368 |
+| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:391 |
 
 ### Event-Word Layout and Tick Law
 
@@ -157,11 +157,11 @@ re-exports them for path stability.
 | `Phase` | `Idle \| Running \| Yielded \| Complete \| Faulted(ConformanceError)` | report.rs:125 |
 | `Deviation` | `VerbMismatch{step,tid,expected} :20, NotEnabled{step,tid,marking} :29, ForbiddenBit{step,marking} :38, OutOfOrder{step,prev_tick,tick} :45, Unfinished{steps_done,total_events} :54` | report.rs:18-60 |
 | `ConformanceReport` | private fields + accessor law (report.rs:141-143) | report.rs:144 |
-| `ConformanceReport::new(steps, total_events, deviations)` | auto-records `Unfinished` when `steps < total_events` | report.rs:163 |
+| `ConformanceReport::new(steps, total_events, deviations)` | auto-records `Unfinished` when `steps < total_events` | report.rs:165 |
 | `steps()` / `total_events()` / `deviations()` | accessors | report.rs:174 / 180 / 186 |
 | `open_deviations()` | counts unexplained deviations | report.rs:192 |
-| `explain(usize)` | mark a deviation explained; out-of-range refuses | report.rs:205 |
-| `is_conforming()` | trajectory finished AND zero open deviations; explaining `Unfinished` cannot un-truncate | report.rs:222 (test :281-302) |
+| `explain(usize)` | mark a deviation explained; out-of-range refuses | report.rs:207 |
+| `is_conforming()` | trajectory finished AND zero open deviations; explaining `Unfinished` cannot un-truncate | report.rs:224 (test :281-302) |
 
 ## pn64 Primitives
 
@@ -205,7 +205,7 @@ Crate-root `#[macro_export]` macros (no `#[macro_use]`; lib.rs:206):
   BOTH legs: `$session.conformance_report().is_conforming()` AND
   `$receipt.is_algebraically_closed()`
   (`core::receipt::TestReceipt::is_algebraically_closed()`,
-  src/core/receipt.rs:319). A conformance claim counts only when the trajectory
+  src/core/receipt.rs:342). A conformance claim counts only when the trajectory
   conforms AND the receipt is algebraically closed. Never cite
   `assert_conforms!` as a single-leg assert.
 
@@ -336,7 +336,7 @@ examples/conformance_quickstart.rs:33-36).
 - No `conformance-ocel` aggregation feature exists; none is cited.
 - Session's `stream` field is private: there is no public `stream()` getter,
   and `attach_stream` on a `Complete`/`Faulted` session stays frozen
-  (session.rs:240-242) — attaching does not unfreeze a terminal phase.
+  (session.rs:242-242) — attaching does not unfreeze a terminal phase.
 - `session::CompiledNet` and `session::Marking64` are distinct on purpose from
   the canonical `net::CompiledNet` and `state::Marking64` (mod.rs:13-14).
 - The POWL DSL is not a general Petri-net text format; the separate

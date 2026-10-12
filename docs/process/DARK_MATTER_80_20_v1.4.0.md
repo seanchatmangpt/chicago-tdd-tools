@@ -334,7 +334,7 @@ fn process_payment(amount: f64, limit: f64) {
 
 **Implementation:**
 ```rust
-use chicago_tdd_tools::spec_harness::*;
+AUDIT NOTE (W27 probe: `spec_harness` is a separate crate, not a module of the main crate — the import below cannot resolve as written): use chatman_spec_harness::*;
 use chicago_tdd_tools::operator_registry::*;
 use chicago_tdd_tools::core::fail_fast::*;
 use chicago_tdd_tools::sector_stacks::academic::*;
@@ -809,7 +809,7 @@ use chicago_tdd_tools::sector_stacks::rdf::*;
 use chicago_tdd_tools::swarm::*;
 use chicago_tdd_tools::operator_registry::*;
 use chicago_tdd_tools::testing::snapshot::*;
-use chicago_tdd_tools::spec_harness::*;
+AUDIT NOTE (W27 probe: `spec_harness` is a separate crate, not a module of the main crate — the import below cannot resolve as written): use chatman_spec_harness::*;
 
 /// Complete example: All v1.4.0 features addressing dark matter/energy
 fn comprehensive_dark_matter_elimination() -> Result<(), Box<dyn std::error::Error>> {

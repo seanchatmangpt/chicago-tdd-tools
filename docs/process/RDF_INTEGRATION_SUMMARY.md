@@ -36,7 +36,7 @@ RDF File (TTL)
     ↓
 Oxigraph Store
     ↓
-OntologyLoader.load_from_file()
+AUDIT NOTE (W27 probe: `OntologyLoader` does not exist in the crate — the real surface is `SectorOntology`; signatures below are historical) OntologyLoader.load_from_file()
     ↓
 SectorOntology (in-memory representation)
     ↓

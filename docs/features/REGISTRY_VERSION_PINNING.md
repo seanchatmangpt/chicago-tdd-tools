@@ -45,7 +45,7 @@ git ls-remote --tags https://github.com/open-telemetry/semantic-conventions.git
 
 **Latest version**: May have validation errors - use pinning for stability.
 
-**Note**: Even pinned versions may have some validation errors. Different versions may have different errors. Use `WEAVER_SKIP_REGISTRY_VALIDATION=1` as workaround if needed.
+**Note**: Even pinned versions may have some validation errors. Different versions may have different errors. Use `AUDIT NOTE (W27 probe: `WEAVER_SKIP_REGISTRY_VALIDATION` is read by NO code at HEAD — dead advice): original text referenced WEAVER_SKIP_REGISTRY_VALIDATION=1` as workaround if needed.
 
 ## Why Pin?
 
@@ -80,7 +80,7 @@ var (or the TOML key) and re-run `just weaver-bootstrap`.
 
 **Registry still has errors after pinning**:
 - Some validation errors may persist across versions (e.g., XPath errors)
-- Use `WEAVER_SKIP_REGISTRY_VALIDATION=1` as workaround
+- Use `AUDIT NOTE (W27 probe: `WEAVER_SKIP_REGISTRY_VALIDATION` is read by NO code at HEAD — dead advice): original text referenced WEAVER_SKIP_REGISTRY_VALIDATION=1` as workaround
 - Report upstream issues to OpenTelemetry semantic conventions repository
 
 **Version not found**:
@@ -91,7 +91,7 @@ var (or the TOML key) and re-run `just weaver-bootstrap`.
 
 **Tests still fail**:
 - Weaver validates registry during startup (can't be skipped)
-- Even with `WEAVER_SKIP_REGISTRY_VALIDATION=1`, Weaver itself validates
+- Even with `AUDIT NOTE (W27 probe: `WEAVER_SKIP_REGISTRY_VALIDATION` is read by NO code at HEAD — dead advice): original text referenced WEAVER_SKIP_REGISTRY_VALIDATION=1`, Weaver itself validates
 - Pin to older version or wait for upstream fixes
 
 ## See Also
