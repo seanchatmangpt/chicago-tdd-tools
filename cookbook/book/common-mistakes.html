@@ -514,7 +514,7 @@ impl TestState&lt;Act&gt; {
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>async_test!(test_good, fixture, {
-    let db = fixture.get_database().await?;
+    let db = fixture.database().await?; // illustrative; see src/integration/testcontainers
     let result = db.query().await?;
     assert_eq!(result, 42);  // Cleanup happens regardless
     Ok(())

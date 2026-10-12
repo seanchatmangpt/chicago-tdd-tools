@@ -196,7 +196,7 @@
 <h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
 <p>Runtime validation adds overhead and can be bypassed in rarely tested code paths. An invariant violation might only surface in production under specific conditions, making debugging difficult.</p>
 <h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
-<p>Encode invariants as types and constants. Use const generics to parameterize limits. Use type-level markers to track state. Use <code>const_assert!</code> to validate at compile time. Move as much validation as possible to compile time where the compiler enforces it.</p>
+<p>Encode invariants as types and constants. Use const generics to parameterize limits. Use type-level markers to track state. Use <code>const_assert</code>/<code>const_assert_msg</code> (const fns, invoked as <code>const _: () = const_assert_msg(cond, "msg");</code> — see <code>src/core/const_assert.rs</code>) to validate at compile time. Move as much validation as possible to compile time where the compiler enforces it.</p>
 <h2 id="essential-code-example"><a class="header" href="#essential-code-example">Essential Code Example</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -211,7 +211,7 @@ pub struct ValidatedArray&lt;const SIZE: usize, const MAX: usize&gt; {
 // This fails to compile if SIZE &gt; MAX
 impl&lt;const SIZE: usize, const MAX: usize&gt; ValidatedArray&lt;SIZE, MAX&gt; {
     pub const fn new() -&gt; Self {
-        const_assert!(SIZE &lt;= MAX);
+        const _: () = crate::core::const_assert::const_assert_msg(SIZE &lt;= MAX, "SIZE must not exceed MAX");
         Self {
             data: [0u8; SIZE],
             _marker: std::marker::PhantomData,
@@ -251,7 +251,7 @@ pub fn process&lt;T&gt;(data: T, max_size: usize) {
 
 // ✅ RIGHT: Compile-time validation
 pub fn process&lt;T, const MAX: usize&gt;(data: T) {
-    const_assert!(std::mem::size_of::&lt;T&gt;() &lt;= MAX);  // Compile error if violated
+    const _: () = assert!(std::mem::size_of::&lt;T&gt;() &lt;= MAX, "T exceeds the MAX-size budget"); // Compile error if violated
 }
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Why</strong>: Compile-time validation is zero-cost and impossible to bypass.</p>

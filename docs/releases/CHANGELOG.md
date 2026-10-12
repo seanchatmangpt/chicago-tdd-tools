@@ -65,6 +65,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   narrowed (phantom-repair fix — the 0b95042 message claimed it but the
   diff never landed); strata: FR-3b bridge traceability row +
   N09/N11 stale pin-SHA comments updated (`0e4846d`).
+- **Wave-17 closeout** (`991885e`/`e520f4f`/`27ed91b`, wave-12
+  `b45c4fe`): audit repairs — swarm member/composition module docs
+  corrected to passive-record truth; max_run_len/max_batch_size
+  disclosed as inert config; async_fixture Sealed example discloses
+  out-of-crate unimplementability; NATO_COURTS/CONFORMANCE See Also
+  sections (docs-check cross-ref warnings -> 0); cargo make -> just
+  sweep in docs/process; README quickstart tokio dev-dependency line
+  added (fresh-crate sim: documented quickstart did not compile);
+  findings register SK5 -> PARTIAL; nextest star_toml_e2e slow-timeout
+  override (witnessed 16/63 flake under load); mutants.out/ removed
+  from tree + gitignored; wave-12: snapshot replace-only law pinned by
+  test, phantom contract.rs repair landed for real, otel
+  zero-trace-id branch tested.
 - **Wave-15 closeout** (`00e2236`): stray `///` doc-comment banner above
   the `// Phase-Specific Validators` header in `src/core/invariants.rs`
   removed — fixes the `empty_line_after_doc_comments` clippy violation

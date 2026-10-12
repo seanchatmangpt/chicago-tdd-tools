@@ -205,8 +205,11 @@ use chicago_tdd_tools::integration::testcontainers::*;
 
 fixture_test_with_timeout!(test_postgres_query, fixture, 30, {
     // Arrange
-    let container = fixture.postgres_container().await?;
-    let client = container.client();
+    // Illustrative: the real container API is
+    // src/integration/testcontainers (ContainerClient::new/with_env/start/
+    // exec/get_host_port/stop). Substitute your project's container handle.
+    let container = fixture.container().await?;
+    let client = container.connect().await?;
 
     // Act
     let rows = client.query("SELECT 1").await?;
