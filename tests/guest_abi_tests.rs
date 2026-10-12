@@ -44,6 +44,10 @@
 
 use std::sync::Mutex;
 
+// JUSTIFICATION: under `guest-abi-v1` the OOB errnos are named only by the
+// cfg-selected expectation helpers / pins, so the import is cfg-conditional
+// by state.
+#[cfg_attr(feature = "guest-abi-v1", allow(unused_imports))]
 use chicago_tdd_tools::conformance::guest::{
     ctt_guest_abi_version, ctt_session_attach, ctt_session_drop, ctt_session_new, ctt_session_seal,
     ctt_session_step, linear_memory_end, set_linear_memory_end, DIGEST_LEN, ERR_BAD_HANDLE,
@@ -59,6 +63,59 @@ use chicago_tdd_tools::conformance::loader::PowlModel;
 /// The guest ABI's slot table is a process-global `static`, so tests that
 /// touch it serialize on this mutex.
 static ABI_LOCK: Mutex<()> = Mutex::new(());
+
+// ─── v1/v2 errno expectation helpers ────────────────────────────────────────
+//
+// The compiled surface applies the boundary errno map (see `abi_map` in
+// `src/conformance/guest.rs`): under `guest-abi-v1` the v2-only OOB errnos
+// collapse into `ERR_CAP_TOO_SMALL`; at v2 they stay distinct. Behavioral
+// tests assert on the observed surface, so expectations are cfg-selected.
+// (The map itself is private to the crate; these helpers mirror its
+// observable contract.)
+
+/// Expected surface value for a refused out-span (v2 `ERR_OOB_WRITE`).
+#[cfg(feature = "guest-abi-v1")]
+fn expect_oob_write() -> i32 {
+    ERR_CAP_TOO_SMALL
+}
+#[cfg(not(feature = "guest-abi-v1"))]
+fn expect_oob_write() -> i32 {
+    ERR_OOB_WRITE
+}
+
+/// Expected surface value for a refused in-span (v2 `ERR_OOB_READ`).
+#[cfg(feature = "guest-abi-v1")]
+fn expect_oob_read() -> i32 {
+    ERR_CAP_TOO_SMALL
+}
+#[cfg(not(feature = "guest-abi-v1"))]
+fn expect_oob_read() -> i32 {
+    ERR_OOB_READ
+}
+
+/// Test-side mirror of the crate's boundary errno map (the real map is
+/// private): under `guest-abi-v1`, 14/15/16 collapse to 11.
+fn abi_map(code: i32) -> i32 {
+    #[cfg(feature = "guest-abi-v1")]
+    {
+        match code {
+            14 | 15 | 16 => 11,
+            other => other,
+        }
+    }
+    #[cfg(not(feature = "guest-abi-v1"))]
+    {
+        let _ = code;
+        code
+    }
+}
+
+/// True when `code` shares the mapped value 11 under the v1 remap (the
+/// overload class the distinctness sweep must accept as the sole collision).
+#[cfg(feature = "guest-abi-v1")]
+fn abi_map_overload_class(code: i32) -> bool {
+    matches!(code, 11 | 14 | 15 | 16)
+}
 
 /// Drop guard: frees the session even if an assertion fires mid-test.
 struct Session(u64);
@@ -151,10 +208,14 @@ fn attach(handle: u64, words: &[u64]) -> i32 {
 
 // ─── 1. ABI version const ────────────────────────────────────────────────────
 
-/// The ABI revision is the stable documented constant (2) and the exported
-/// symbol agrees with the crate-visible const.
+/// The ABI revision is the stable documented constant for the compiled
+/// feature state (2 at v2, 1 under the `guest-abi-v1` shim) and the
+/// exported symbol agrees with the crate-visible const.
 #[test]
 fn abi_version_const_is_stable() {
+    #[cfg(feature = "guest-abi-v1")]
+    assert_eq!(ctt_guest_abi_version(), 1);
+    #[cfg(not(feature = "guest-abi-v1"))]
     assert_eq!(ctt_guest_abi_version(), 2);
     assert_eq!(ctt_guest_abi_version(), chicago_tdd_tools::conformance::guest::ABI_VERSION);
     // Fixed record lengths are part of the ABI contract.
@@ -163,6 +224,9 @@ fn abi_version_const_is_stable() {
     assert_eq!(SEAL_PREIMAGE_LEN, 34, "v1 length pinned for the shim tier");
     assert_eq!(DIGEST_LEN, 32);
     assert_eq!(MODULE_DIGEST_LEN, 32);
+    #[cfg(feature = "guest-abi-v1")]
+    assert_eq!(chicago_tdd_tools::conformance::guest::ABI_VERSION, 1);
+    #[cfg(not(feature = "guest-abi-v1"))]
     assert_eq!(chicago_tdd_tools::conformance::guest::ABI_VERSION, 2);
 }
 
@@ -433,44 +497,45 @@ fn out_pointer_past_linear_memory_end_is_typed_err_oob_write() {
 
     let _bound = BoundGuard::install(FAKE_MEM_BASE + FAKE_MEM_LEN);
 
-    // Read-span law: an input span at/past the end is ERR_OOB_READ.
+    // Read-span law: an input span at/past the end is ERR_OOB_READ (v2) /
+    // the v1 ERR_CAP_TOO_SMALL overload (see the expectation helpers).
     let at_end_ro = (FAKE_MEM_BASE + FAKE_MEM_LEN) as *const u8;
     let mut handle = 0u64;
     let code = unsafe { ctt_session_new(at_end_ro, 16, &mut handle) };
-    assert_eq!(code, ERR_OOB_READ, "net buf at memory end must be ERR_OOB_READ");
+    assert_eq!(code, expect_oob_read(), "net buf at memory end must be ERR_OOB_READ");
     let code = unsafe { ctt_session_attach(s.0, at_end_ro, 8) };
-    assert_eq!(code, ERR_OOB_READ, "stream ptr at memory end must be ERR_OOB_READ");
+    assert_eq!(code, expect_oob_read(), "stream ptr at memory end must be ERR_OOB_READ");
 
     // Exactly at the end: no byte of the record fits.
     let at_end = (FAKE_MEM_BASE + FAKE_MEM_LEN) as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, at_end, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_OOB_WRITE, "out ptr at memory end must be typed, not trap");
+    assert_eq!(code, expect_oob_write(), "out ptr at memory end must be typed, not trap");
 
     // Straddling the end: 8 bytes inside, the rest past it.
     let straddle = (FAKE_MEM_BASE + FAKE_MEM_LEN - 8) as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, straddle, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_OOB_WRITE, "straddling span must be typed, not trap");
+    assert_eq!(code, expect_oob_write(), "straddling span must be typed, not trap");
 
     // Span arithmetic overflow (ptr + cap wraps usize) is OOB, not ok.
     let near_max = usize::MAX as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, near_max, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_OOB_WRITE, "overflowing span must be typed, not trap");
+    assert_eq!(code, expect_oob_write(), "overflowing span must be typed, not trap");
 
     // Seal digest buffer past the end.
     let mut sealed_len = 0u32;
     let code = unsafe { ctt_session_seal(s.0, at_end, 64, &mut sealed_len) };
-    assert_eq!(code, ERR_OOB_WRITE, "seal out_buf past memory end must be typed");
+    assert_eq!(code, expect_oob_write(), "seal out_buf past memory end must be typed");
 
     // Seal `out_len` word past the end (digest buffer in-bounds at base).
     let out_len_past = (FAKE_MEM_BASE + FAKE_MEM_LEN - 2) as *mut u32;
     let code = unsafe { ctt_session_seal(s.0, FAKE_MEM_BASE as *mut u8, 64, out_len_past) };
-    assert_eq!(code, ERR_OOB_WRITE, "seal out_len past memory end must be typed");
+    assert_eq!(code, expect_oob_write(), "seal out_len past memory end must be typed");
 
     // The handle was never consumed by any refused call: still live.
     assert_ne!(linear_memory_end(), 0);
     let mut rec = [0u8; STEP_STATUS_LEN];
     let code = unsafe { ctt_session_step(s.0, 16, rec.as_mut_ptr(), rec.len() as u32) };
-    assert_eq!(code, ERR_OOB_WRITE, "in-bounds host buffer vs installed bound: still refused");
+    assert_eq!(code, expect_oob_write(), "in-bounds host buffer vs installed bound: still refused");
     drop(_bound);
 
     // With the bound removed (native tier default), the same call runs.
@@ -549,15 +614,24 @@ fn status_code_table_every_documented_errno_distinct() {
     assert_eq!(E0, 0, "OK must be zero");
     assert_eq!(E8, ERR_TABLE_FULL);
     assert_eq!(E12, ERR_SEAL_UNAVAILABLE);
+    // Raw-const pins stay version-independent: the constants keep their
+    // documented v2 numeric values in both compiled states.
     assert_eq!(E14, 14, "ERR_OOB_READ pinned at 14");
     assert_eq!(E15, 15, "ERR_OOB_WRITE pinned at 15");
     assert_eq!(E16, 16, "ERR_DEFERRED_HEAP pinned at 16");
+    // The distinctness sweep runs over MAPPED surface values: at v2 the map
+    // is the identity; under the v1 remap the overload class {11, 14, 15, 16}
+    // legitimately shares the value 11 — the only permitted collision.
     for i in 0..codes.len() {
         for j in (i + 1)..codes.len() {
-            assert_ne!(codes[i], codes[j], "errno collision at indices {i},{j}");
+            let (ma, mb) = (abi_map(codes[i]), abi_map(codes[j]));
+            #[cfg(feature = "guest-abi-v1")]
+            if ma == mb && abi_map_overload_class(codes[i]) && abi_map_overload_class(codes[j]) {
+                continue;
+            }
+            assert_ne!(ma, mb, "errno collision at indices {i},{j}");
         }
     }
-    assert_eq!(codes.iter().collect::<std::collections::BTreeSet<_>>().len(), codes.len());
 }
 
 /// Wire-format refusals are individually typed: null pointer, bad magic,

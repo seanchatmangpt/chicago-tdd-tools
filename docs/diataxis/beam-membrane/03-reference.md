@@ -43,22 +43,17 @@ Requests (host → guest) and replies (guest → host) share one tag space.
 | `0x04` | host → guest | `Drop` | `handle::little-64` |
 | `0x01` | guest → host | `Newed` | `handle::little-64` |
 | `0x02` | guest → host | `Stepped` | `handle::little-64, status::u8, record::21 bytes` |
-| `0x03` | guest → host | `Sealed` | `handle::little-64, status::u8, dlen::little-16, digest::dlen bytes, wire::352 bytes?` |
+| `0x03` | guest → host | `Sealed` | `handle::little-64, status::u8, digest::bytes(32)` (ABI v2 rebased) |
 | `0x04` | guest → host | `Dropped` | `handle::little-64, status::u8` |
 | `0xFF` | guest → host | `Error` | `errno::little-32` |
 
-(`Sealed` note: `temprun_step.rs` line 50 documents the digest field as
-34 bytes total — `u16 LE len(=32) || BLAKE3 digest`; the BEAM decoder
-reads `dlen` generically and accepts `rest` of `<<>>` or exactly 352
-bytes, worker.ex:454-460. ABI v2 note: the ctt guest's seal preimage is
-now 58 bytes, not 34 — the v1-exact 26-byte prefix is unchanged and the
-32-byte module digest occupies `26..58` (consuming the v1 zero-reserved
-field). The wire digest itself is still 32 bytes of BLAKE3, so `dlen=32`
-is unchanged; the 34-byte figure described the v1 *preimage* only. The
-strata temprun bridge consumes the v1 layout until its rebase —
-v1 `reserved == 0` parsers fail closed on v2 preimages, so the rebase is
-mandatory before binding a v2 guest; the version discriminator is the
-`ctt_guest_abi_version()` probe, which returns 2.)
+(`Sealed` note, post-rebase: the strata bridge rebased to ABI v2
+(worker.ex:56-64 "Guest ABI v2 (rebased — W-ABI2)") — the `Sealed` frame is
+now `<<handle, status::8, digest::bytes(32)>>`; the v1 `dlen`/352-byte wire
+form is deleted. The seal preimage is 58 bytes (v1-exact 26-byte prefix; the
+32-byte module digest occupies `26..58`, consuming the v1 zero-reserved
+field); the wire digest is 32 bytes of BLAKE3. Version discriminator is the
+`ctt_guest_abi_version()` probe — 2 by default, 1 under `guest-abi-v1`.)
 
 ## The 21-byte step record
 

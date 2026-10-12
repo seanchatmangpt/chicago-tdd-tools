@@ -463,6 +463,7 @@ members = [
     "crates/chicago-claims",
     "crates/ctt-wasm-guest",
     "crates/merger-guests",
+    "crates/ctt-splice-digest",
 ]
 default-members = [
     ".",

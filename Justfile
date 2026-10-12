@@ -207,6 +207,14 @@ guest-build:
 guest-audit:
     timeout 60s cargo test --features nato --lib nato::guest_audit -- --nocapture
 
+# WASM guest: splice CTT_MODULE_DIGEST into the built guest wasm (W-ABI2 §2)
+guest-splice:
+    timeout 60s cargo run -q -p ctt-splice-digest -- target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
+
+# WASM guest: verify the spliced CTT_MODULE_DIGEST (recompute must match)
+guest-verify:
+    timeout 60s cargo run -q -p ctt-splice-digest -- --verify target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
+
 # WASM guest: native-ABI contract + fault-injection suites
 guest-test:
     timeout 300s cargo test -p ctt-wasm-guest --features chicago-tdd-tools/wasm-guest

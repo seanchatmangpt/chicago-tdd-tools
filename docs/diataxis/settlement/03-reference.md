@@ -89,7 +89,7 @@ on these). Codes 14-19 are merger-guest extensions appended in the next free
 range.
 
 > **ABI v2 collision (open, code-owned).** The `ctt_*` guest ABI is now v2
-> (`src/conformance/guest.rs`, probe returns 2), which defines `ERR_OOB_READ = 14` and
+> (`src/conformance/guest.rs`; probe returns 2 by default — the `guest-abi-v1` shim tier returns 1), which defines `ERR_OOB_READ = 14` and
 > `ERR_OOB_WRITE = 15` — numeric values this merger-guest extension range already occupies
 > (`ERR_BAD_SCALE`/`ERR_DIM`). Also at v2, `ERR_CAP_TOO_SMALL` (11) is **pure capacity**
 > again: the v1 out-span OOB overload moved to codes 14/15, so this table's row 11 below is

@@ -132,14 +132,17 @@ the canonical `CompiledNet` is `net::CompiledNet` (mod.rs:13-14).
 
 Event words: activity id in bits [7:0], tick in bits [15:8]
 (session.rs:28-29 module docs). Ticks must advance exactly `prev + 1 (mod 256)`
-(session.rs:421-434; tests/conformance_tests.rs:8-9). Classification order
-(`classify_and_commit`, session.rs:417, classified inline :421-434), each class
-checked explicitly, never inferred from a silent PN64 refusal:
+(session.rs:416-447; tests/conformance_tests.rs:8-9). Classification order
+(`classify_and_commit`, doc block session.rs:416-429, fn at :430, classified
+inline :434-474) is a FOUR-step law, each class checked explicitly, never
+inferred from a silent PN64 refusal:
 
 1. Tick order: `OutOfOrder` when `tick == prev`, `Skipped` when not
    `prev + 1 (mod 256)` — the tick law is checked first.
-2. `Undeclared` (activity id not in the model's activity dictionary).
+2. `Undeclared` (activity id not in the model's activity dictionary; the JSON path resolves references at validate time and refuses with `UnknownActivity { line: 0, col: 0 }` — serde carries no source offsets).
 3. `ForbiddenBit` (marking bit set in the forbidden mask).
+4. `Skipped` — declared and lawful-bitwise but not enabled at the cursor
+   (final not-enabled check).
 
 Violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation`
 (session.rs:287-289).

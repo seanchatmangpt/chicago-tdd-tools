@@ -406,7 +406,7 @@ receipt.add_metadata("trace_id", "trace-456");
 ## Frequently Asked Questions
 
 **Q: Why τ ≤ 8?**
-A: The Chatman Constant (τ ≤ 8) represents the maximum sustainable cognitive load for hot paths. It's derived from empirical analysis of μ-kernel timing constraints and ensures operations complete within ~8 CPU ticks for deterministic real-time behavior.
+A: The Chatman Constant (τ ≤ 8) represents the maximum sustainable cognitive load for hot paths. The value 8 is an engineering budget (HOT_PATH_TICK_BUDGET, performance.rs) chosen so hot-path operations complete deterministically within ~8 CPU ticks — a configurable budget, not a derived physical constant (see the τ note above).
 
 **Q: Can I use relaxed configs in production?**
 A: No. Relaxed configs are for test environments only to account for measurement overhead. Production code should use strict τ ≤ 8 enforcement via `HotPathTest::default()`.

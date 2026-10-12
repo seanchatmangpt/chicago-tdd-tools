@@ -259,8 +259,37 @@ pub const ERR_DEFERRED_HEAP: i32 = 16;
 /// 34-byte seal preimage, digest parameter ignored); default is v2.
 #[cfg(feature = "guest-abi-v1")]
 pub const ABI_VERSION: u32 = 1;
+/// v2 (default): distinct OOB errnos, 58-byte digest-bound seal preimage.
 #[cfg(not(feature = "guest-abi-v1"))]
 pub const ABI_VERSION: u32 = 2;
+
+/// Boundary errno map applied at the extern entry points (W-ABI2 item 5,
+/// remap tier). Under the v1 shim tier (`guest-abi-v1`) the v2-only errnos
+/// 14/15/16 collapse into the v1 `ERR_CAP_TOO_SMALL` (11) overload, matching
+/// the legacy surface the shim emulates; every other code passes through
+/// unchanged. At v2 (default) the map is the identity.
+#[cfg(feature = "guest-abi-v1")]
+const fn abi_map(code: i32) -> i32 {
+    match code {
+        ERR_OOB_READ | ERR_OOB_WRITE | ERR_DEFERRED_HEAP => ERR_CAP_TOO_SMALL,
+        other => other,
+    }
+}
+#[cfg(not(feature = "guest-abi-v1"))]
+const fn abi_map(code: i32) -> i32 {
+    code
+}
+
+/// True when `code` is one of the errnos that share the mapped value 11
+/// under the v1 remap (the overload class). Test-only helper for the
+/// distinctness sweeps, which must accept the documented v1 collapse.
+#[cfg(all(test, feature = "guest-abi-v1"))]
+const fn abi_map_overload_class(code: i32) -> bool {
+    code == ERR_CAP_TOO_SMALL
+        || code == ERR_OOB_READ
+        || code == ERR_OOB_WRITE
+        || code == ERR_DEFERRED_HEAP
+}
 
 // ---------------------------------------------------------------------------
 // Fixed record lengths
@@ -284,6 +313,7 @@ pub const MODULE_DIGEST_LEN: usize = 32;
 /// the 58-byte v2 record otherwise.
 #[cfg(feature = "guest-abi-v1")]
 pub const SEAL_PREIMAGE_ACTIVE_LEN: usize = SEAL_PREIMAGE_LEN;
+/// v2 (default): the active preimage is the digest-bound 58-byte record.
 #[cfg(not(feature = "guest-abi-v1"))]
 pub const SEAL_PREIMAGE_ACTIVE_LEN: usize = SEAL_PREIMAGE_V2_LEN;
 
@@ -577,12 +607,14 @@ const fn seal_preimage(
 // ---------------------------------------------------------------------------
 
 /// ABI revision of this guest surface.
-// W-ABI2 item 5, shim tier (LANDED): the `guest-abi-v1` feature compiles
-// the version probe (-> 1) and the legacy 34-byte seal preimage (digest
-// parameter ignored, reserved `26..34` zero). It does NOT remap the errno
-// table: under v1 the distinct v2 errnos `ERR_OOB_READ`/`ERR_OOB_WRITE`/
-// `ERR_DEFERRED_HEAP` keep their v2 numeric values rather than collapsing
-// into the v1 `ERR_CAP_TOO_SMALL` overload. Related pin:
+// W-ABI2 item 5, shim + remap tier (LANDED): the `guest-abi-v1` feature
+// compiles the version probe (-> 1), the legacy 34-byte seal preimage
+// (digest parameter ignored, reserved `26..34` zero), AND the errno remap:
+// the extern entry points run their returns through [`abi_map`], collapsing
+// the v2-only errnos `ERR_OOB_READ`/`ERR_OOB_WRITE`/`ERR_DEFERRED_HEAP`
+// (14/15/16) into the v1 `ERR_CAP_TOO_SMALL` (11) overload. The capacity
+// meaning of 11 (out_cap below the record length) is unchanged in both
+// states. Related pin:
 // crates/ctt-wasm-guest/src/lib.rs asserts probe == 2 (ABI v2) (cross-crate
 // migration, outside this lane).
 #[no_mangle]
@@ -600,6 +632,16 @@ pub const extern "C" fn ctt_guest_abi_version() -> u32 {
 /// to one writable `u64`. Host obligations under the ABI.
 #[no_mangle]
 pub unsafe extern "C" fn ctt_session_new(
+    net_buf: *const u8,
+    net_len: u32,
+    out_handle: *mut u64,
+) -> i32 {
+    abi_map(ctt_session_new_impl(net_buf, net_len, out_handle))
+}
+
+/// Body of [`ctt_session_new`] (v2 errno values; the extern wrapper applies
+/// the [`abi_map`] boundary map). Pointer reads unchanged.
+unsafe fn ctt_session_new_impl(
     net_buf: *const u8,
     net_len: u32,
     out_handle: *mut u64,
@@ -670,6 +712,15 @@ pub unsafe extern "C" fn ctt_session_attach(
     stream_ptr: *const u8,
     stream_len: u32,
 ) -> i32 {
+    abi_map(ctt_session_attach_impl(handle, stream_ptr, stream_len))
+}
+
+/// Body of [`ctt_session_attach`] (v2 errno values; see [`ctt_session_new_impl`]).
+unsafe fn ctt_session_attach_impl(
+    handle: u64,
+    stream_ptr: *const u8,
+    stream_len: u32,
+) -> i32 {
     if stream_ptr.is_null() {
         return ERR_NULL_PTR;
     }
@@ -717,6 +768,16 @@ pub unsafe extern "C" fn ctt_session_attach(
 /// `out_cap >= STEP_STATUS_LEN` is required.
 #[no_mangle]
 pub unsafe extern "C" fn ctt_session_step(
+    handle: u64,
+    quota: u32,
+    out_status: *mut u8,
+    out_cap: u32,
+) -> i32 {
+    abi_map(ctt_session_step_impl(handle, quota, out_status, out_cap))
+}
+
+/// Body of [`ctt_session_step`] (v2 errno values; see [`ctt_session_new_impl`]).
+unsafe fn ctt_session_step_impl(
     handle: u64,
     quota: u32,
     out_status: *mut u8,
@@ -798,6 +859,16 @@ pub unsafe extern "C" fn ctt_session_step(
 /// one writable `u32`.
 #[no_mangle]
 pub unsafe extern "C" fn ctt_session_seal(
+    handle: u64,
+    out_buf: *mut u8,
+    out_cap: u32,
+    out_len: *mut u32,
+) -> i32 {
+    abi_map(ctt_session_seal_impl(handle, out_buf, out_cap, out_len))
+}
+
+/// Body of [`ctt_session_seal`] (v2 errno values; see [`ctt_session_new_impl`]).
+unsafe fn ctt_session_seal_impl(
     handle: u64,
     out_buf: *mut u8,
     out_cap: u32,
@@ -957,9 +1028,19 @@ mod tests {
             codes.iter().all(|&c| c >= 0),
             "ABI fns never return negatives; traps are the negative case"
         );
+        // Distinctness is asserted over the MAPPED surface values (the same
+        // values a caller observes through the extern entry points). At v2
+        // abi_map is the identity; under the v1 remap the overload class
+        // {11, 14, 15, 16} legitimately shares the value 11 — the only
+        // collision permitted.
         for (i, &a) in codes.iter().enumerate() {
             for &b in &codes[i + 1..] {
-                assert_ne!(a, b, "duplicate status code {a}");
+                let (ma, mb) = (abi_map(a), abi_map(b));
+                #[cfg(feature = "guest-abi-v1")]
+                if ma == mb && abi_map_overload_class(a) && abi_map_overload_class(b) {
+                    continue;
+                }
+                assert_ne!(ma, mb, "duplicate mapped status code {a} -> {ma}");
             }
         }
     }

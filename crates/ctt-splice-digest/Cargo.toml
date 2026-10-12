@@ -1,0 +1,9 @@
+[package]
+name = "ctt-splice-digest"
+version = "26.10.12"
+edition = "2021"
+publish = false
+description = "Splice the CTT_MODULE_DIGEST (BLAKE3 of the slot-zeroed artifact) into the guest wasm data section"
+
+[dependencies]
+blake3 = "1"

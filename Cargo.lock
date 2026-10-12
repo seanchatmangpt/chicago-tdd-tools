@@ -847,6 +847,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctt-splice-digest"
+version = "26.10.12"
+dependencies = [
+ "blake3",
+]
+
+[[package]]
 name = "ctt-wasm-guest"
 version = "26.10.12"
 dependencies = [

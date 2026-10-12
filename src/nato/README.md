@@ -27,10 +27,10 @@ section of `/Users/sac/strata/docs/nato/NATO_N01_N20.md`.
 
 | Court | Name | Pillar | Delivered scope |
 |---|---|---|---|
-| N01 | MILS non-interference | isolation | Bounded 2^16 exhaustive small-domain + 10^7 dual-tenant sweep proving `dState(TA)/dInput(TB) == 0`. Full Kani/Z3 2^64 NOT-SHIPPED; documented follow-up. |
-| N02 | Coordinate orthogonality | isolation | Spec-exact: exhaustive bit-spill census — every field write perturbs no neighbor field. |
-| N03 | Bell-LaPadula / Biba lattice | isolation | Exhaustive over the 25x65,536-entry transition-table space: no-write-down, no-read-up. |
-| N04 | Zero ambient authority | authority | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). |
+| N01 | MILS non-interference | security | Bounded 2^16 exhaustive small-domain + 10^7 dual-tenant sweep proving `dState(TA)/dInput(TB) == 0`. Full Kani/Z3 2^64 NOT-SHIPPED; documented follow-up. |
+| N02 | Coordinate orthogonality | proof | Spec-exact: exhaustive bit-spill census — every field write perturbs no neighbor field. |
+| N03 | Bell-LaPadula / Biba lattice | security | Exhaustive over the 25x65,536-entry transition-table space: no-write-down, no-read-up. |
+| N04 | Zero ambient authority | dossier | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). |
 | N05 | dudect timing | timing | Two tiers: smoke (small calibrated N in CI) and full (Welch t-test, `|t| < 4.5`, valid-vs-refusal timing; spec 10M, delivered calibrated-N disclosed). |
 | N06 | Branchless disassembly | timing | `.s`/objdump census over the compiled artifact: zero conditional branches on state paths; unmatched symbols recorded as typed skips, never silent passes. |
 | N07 | Cache side-channel | timing | Prime+Probe-style concurrent eviction vs sequencer; latency invariance is **reported, not gated** (host-noise floor disclosed in receipt). |
@@ -42,11 +42,11 @@ section of `/Users/sac/strata/docs/nato/NATO_N01_N20.md`.
 | N13 | WCET | timing | Static per-opcode table + calibrated measurement. Units are `ticks≈ns on aarch64` — never "cycles"; the measured table is published in the receipt. |
 | N14 | CAST-32A thrash | resilience | 4-producer/4-consumer MPMC pipeline vs storm/spinner adversaries on the landed 64B CAS ring; typed `ConsensusError` refusals only (zero SDC, zero loss), watchdog liveness leg, run-to-run conservation determinism. Tier-1 small legs + tier-3 `n14_cast32a_thrash_full` (`--ignored`). `src/nato/thrash.rs`. |
 | N15 | TLC liveness | proof | Starvation-freedom of the RONR admission surface: exhaustive reachable-marking enumeration + round-robin fair scheduler with typed `StarvationMonitor` (enabled-then-fired within TOTAL/32); unfair-scheduler counterexample must fire. TLC/Erlang itself NOT-SHIPPED (disclosed in `ScopingRecord`). `src/nato/liveness.rs`. |
-| N16 | Stack bound | resource | Zero-recursion proof (call-graph analysis) + 32KiB ladder: depth-tiered deepest-frame bound, total <= 32KiB. |
-| N17 | ML-DSA-65 KAT | crypto | PIPELINE-KAT: known-answer tests against the signer. **NOT the official ACVP corpus**; the drop-in path to official vectors is documented in the receipt. |
-| N18 | Zero-entropy diagnostics | crypto | Entropy refusal court: Shannon entropy of all emitted error strings == 0 bits about internal state; strings that leak state are refused at construction. |
-| N19 | Reproducible build | supply chain | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
-| N20 | Dossier generator | supply chain | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
+| N16 | Stack bound | dossier | Zero-recursion proof (call-graph analysis) + 32KiB ladder: depth-tiered deepest-frame bound, total <= 32KiB. |
+| N17 | ML-DSA-65 KAT | security | PIPELINE-KAT: known-answer tests against the signer. **NOT the official ACVP corpus**; the drop-in path to official vectors is documented in the receipt. |
+| N18 | Zero-entropy diagnostics | security | Entropy refusal court: Shannon entropy of all emitted error strings == 0 bits about internal state; strings that leak state are refused at construction. |
+| N19 | Reproducible build | proof | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
+| N20 | Dossier generator | dossier | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
 
 Note on numbering (E-M18): all 20 courts are delivered CTT-side and the
 matrix is 20/20 (`src/nato/registry.rs` `COURT_NAMES`). N08

@@ -45,7 +45,7 @@ reference over 200,000 pseudorandom words plus structured corners (`pn64.rs` tes
 
 > **Divergence note (explicit).** An earlier operator spec described a return-word scheme in
 > which the guest communicates outcome in return words 0-3. That is the **superseded E13
-> design**. The landed ABI (`src/conformance/guest.rs`, `ABI_VERSION = 2`) is different: every
+> design**. The landed ABI (`src/conformance/guest.rs`; `ABI_VERSION = 2` by default — the `guest-abi-v1` feature compiles the shim tier, `ABI_VERSION = 1`) is different: every
 > ABI function returns an `i32` status (0 = ok, positive = guest errno), and bulk results
 > travel through out-parameters written into linear memory (the 21-byte step status record,
 > the 32-byte seal digest, the `u64` handle out-parameter). The ABI functions themselves never
@@ -87,7 +87,7 @@ asserts every code is non-negative.
 > (`26..34`) is consumed by the 32-byte module digest (`26..58`). The v1 `reserved == 0` law
 > and the v2 digest law are mutually exclusive on those bytes — a v1 parser validating
 > `reserved == 0` fails closed on a v2 preimage. The authoritative version discriminator is
-> the `ctt_guest_abi_version()` probe (returns 2); a host MUST call it before the first
+> the `ctt_guest_abi_version()` probe (returns 2 by default; 1 under `guest-abi-v1`); a host MUST call it before the first
 > `ctt_session_new`.
 
 ### Step status record v1 (out-buffer of `ctt_session_step`)
