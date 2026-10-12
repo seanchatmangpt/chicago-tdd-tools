@@ -632,5 +632,5 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   `cargo test -p ctt-wasm-guest` were broken by it); prelude surface
   test extended with size_of nameability assertions for the four typed
   channels (62/0). GETTING_STARTED Transition snippet moved to the
-  typed channel (W49e). The lone remaining src/ grep hit is the
-  historical doc comment on GovernanceError.
+  typed channel (W49e). The only remaining src/ grep hits are 3 historical doc comments
+  (governance/otel/weaver error types).
