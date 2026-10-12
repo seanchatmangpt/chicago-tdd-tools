@@ -29,16 +29,21 @@ src/
 │   ├── alert.rs       # Structured logging
 │   └── macros/        # Test/assertion macros
 ├── testing/           # Advanced techniques
-│   ├── property/      # Property-based testing
-│   ├── mutation/      # Mutation testing
-│   ├── snapshot/      # Snapshot testing
-│   ├── concurrency/   # Concurrency testing (loom)
-│   └── cli/           # CLI testing (trycmd)
+│   ├── property.rs    # Property-based testing
+│   ├── mutation.rs    # Mutation testing
+│   ├── snapshot.rs    # Snapshot testing
+│   ├── concurrency.rs # Concurrency testing (loom)
+│   ├── cli.rs         # CLI testing (trycmd)
+│   ├── effects.rs     # Effect tracking/validation
+│   ├── state_machine.rs # Typestate state machines
+│   └── continuous_learning.rs
 ├── validation/        # Quality assurance
 │   ├── coverage/      # Coverage analysis
 │   ├── guards/        # Constraint enforcement
-│   ├── jtbd/          # Jobs to be done
-│   └── performance/   # Tick/RDTSC measurement
+│   ├── jtbd.rs        # Jobs to be done
+│   ├── performance.rs # Tick/RDTSC measurement
+│   ├── advanced_phases.rs
+│   └── thermal.rs
 ├── observability/     # OTEL & Weaver
 │   ├── otel/          # OTEL validation
 │   ├── weaver/        # Weaver live-check

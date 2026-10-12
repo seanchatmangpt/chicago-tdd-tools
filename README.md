@@ -1014,6 +1014,8 @@ chicago-tdd-tools = {
         "mutation-testing",          # mutation-scoring types (reported metric, not an enforced gate)
         "concurrency-testing",       # loom-backed concurrency tests
         "parameterized-testing",     # parameterized test macro support
+        "cli-testing",               # CLI harness testing (rstest/trycmd; the CLI Testing Guide portal link)
+        "git-hooks",                 # git2-backed hook installer support
     ]
 }
 ```
