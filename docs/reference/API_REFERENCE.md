@@ -610,10 +610,12 @@ Agent governance loop — diagnostic/severity primitives and routing for compile
 - `SectorStack` (trait), `MergeStrategy`, `ProcessIntelligenceSector` (sectors)
 
 **Methods/Functions**:
-- `DiagnosticCode::new(domain, category, ordinal)` / `::parse(s) -> Result<Self, String>`
-- `Diagnostic::validate() -> Result<(), String>`
+- `DiagnosticCode::new(domain, category, ordinal)` / `::parse(s) -> Result<Self, GovernanceError>`
+- `Diagnostic::validate() -> Result<(), GovernanceError>`
 - `TaskReceipt::validate()` / `::sign(secret)`
-- Channel: `register_sink`, `register_domain`, `set_run_id`, `emit_diagnostic`, `on_test_started`/`on_test_completed`, `close_channel() -> Result<RunSummary, String>`
+- Channel: `register_sink`, `register_domain`, `set_run_id`, `emit_diagnostic`, `on_test_started`/`on_test_completed`, `close_channel() -> Result<RunSummary, GovernanceError>`
+
+**Error channels** (typed; crate-root re-exports where noted): `GovernanceError`, `WeaverError`, `OtelError`, `StateMachineError` (module paths), plus crate-root `BuilderError`, `ReceiptJsonError`, `SwarmError`, and `DossierWireError` (ledger-gated) — see `src/lib.rs` "Typed error channels".
 
 **Pattern**: register a `DiagnosticSink`, set the run id, emit `Diagnostic`s through the global channel, then `close_channel()` for a `RunSummary`.
 

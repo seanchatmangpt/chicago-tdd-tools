@@ -293,6 +293,10 @@ pub mod prelude {
     // Re-export core struct contents for backward compatibility and sub-crate compilation
     pub use crate::core::assertions::*;
     pub use crate::core::builders::*;
+pub use crate::core::receipt::ReceiptJsonError;
+pub use crate::swarm::SwarmError;
+#[cfg(feature = "ledger")]
+pub use crate::ledger::dossier_wire::DossierWireError;
     pub use crate::core::fixture::*;
     pub use crate::core::governance::*;
     pub use crate::core::state::*;

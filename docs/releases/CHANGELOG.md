@@ -959,8 +959,8 @@ truth); findings ledger W26/W27 register additions + closures.
 - W48 (this addendum): typed-error wave part 2 — GovernanceError (5
   variants; parse/validate/validate_with_key/sign/close_channel/sector
   validate_artifact), WeaverError + OtelError (9 fns), testing/effects/
-  reproducible/loader conversion; crate-root re-exports for all typed
-  error channels (feature-gated for ledger). Operator-queue consolidation
+  reproducible/loader conversion; crate-root re-exports for the W47-era typed
+  error channels (GovernanceError/WeaverError/OtelError/StateMachineError remain module-path) (feature-gated for ledger). Operator-queue consolidation
   in the findings ledger (CTT push + strata push were unregistered).
 
 ### Waves 38-45 addendum (2026-10-12, errno remap + splice tool + DoD certification)

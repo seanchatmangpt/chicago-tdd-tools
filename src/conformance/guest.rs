@@ -308,7 +308,7 @@ pub const SEAL_PREIMAGE_V2_LEN: usize = 58;
 pub const DIGEST_LEN: usize = 32;
 /// Length of the module digest carried in the v2 seal preimage.
 pub const MODULE_DIGEST_LEN: usize = 32;
-/// Length of the seal preimage produced by [`seal_preimage`] for the
+/// Length of the seal preimage produced by `seal_preimage` for the
 /// compiled ABI: the legacy 34-byte v1 record under `guest-abi-v1`,
 /// the 58-byte v2 record otherwise.
 #[cfg(feature = "guest-abi-v1")]
