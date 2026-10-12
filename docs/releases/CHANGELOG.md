@@ -51,6 +51,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-12/13 closeout** (`211c5a7`/`dca26a2`/`8f3f21f`/`1fccd33`/
+  `b8ff30c`/`ca3010b`): wave-8 audit repairs re-applied (proc-macro
+  guards lost to a shared-tree checkout incident; spanned errors for
+  async/parameterized chicago_test! fns, inert cargo:: directives
+  removed); nextest install added to the CI assurance-integration
+  job; N12 registry-sweep flake ROOT-CAUSED (first monotonic sample of
+  a process can lawfully be 0; guard replaced with the sample-domain
+  law); test-assurance-integration extended to 16 suites (all
+  previously local-only tests now CI-gated; v1_3_0_integration
+  deliberately excluded — legacy snapshot expects retired redaction
+  placeholders, re-mint is an operator decision); ERRC: 3 orphan bins,
+  3 zero-use macros, check-dog-fooding.sh retired; NOMRG charter marked
+  DRAFT/UNSUPPORTED; TEST_INFRA.md marked HISTORICAL; OCEL discovery
+  claim narrowed to the real surface; SLA_REFERENCE brought to ground
+  truth; ledger_sealing + dossier_cli + hyper suites wired into CI.
 - **Wave-11 closeout** (`5656ef7`/`aba8a5f`): three local-only
   assurance suites (adversarial_as4 4-feature combo — the cfg header
   makes `--features nato` alone a silent 0-test run — blake3_receipt
