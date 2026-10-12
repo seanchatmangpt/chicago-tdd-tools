@@ -373,9 +373,12 @@ Full surface: docs/features/LEDGER.md.
 sealed-dossier JSON wire format (`CTT-DOSSIER-v1`).
 - `DossierJson` (format, court_receipts, merkle_root, key_id, signature, sealed_at)
 - `ChainRecord` (prev / content / trailer / stored digests; `ChainRecord::of(&VerifiedCourtReceipt)`), `TRAILER_LEN`
-- `validate_dossier_chain(records) -> Result<(), String>`,
-  `decode_receipts(values) -> Result<Vec<CourtReceipt>, String>`,
-  `dossier_json(receipts, merkle_root, key_id, signature) -> Result<serde_json::Value, String>`
+- `DossierWireError` (typed errors: `TrailerTampered`, `Chain`, `ReceiptDecode`,
+  `ClockBeforeEpoch`, `ReceiptSerialize`, `RootHex`/`RootLength`,
+  `KeyIdHex`/`KeyIdLength`, `SignatureHex`/`SignatureLength`, `Write`)
+- `validate_dossier_chain(records) -> Result<(), DossierWireError>`,
+  `decode_receipts(values) -> Result<Vec<CourtReceipt>, DossierWireError>`,
+  `dossier_json(receipts, merkle_root, key_id, signature) -> Result<serde_json::Value, DossierWireError>`
 - Constants: `DOSSIER_FORMAT`, `DEFAULT_DOSSIER_OUT`, `SIGNATURE_LEN`
 
 ## nato (feature-gated; implies ledger+conformance)

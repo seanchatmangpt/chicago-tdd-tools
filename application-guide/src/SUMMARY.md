@@ -16,6 +16,7 @@
 # API Reference
 
 - [TestFixture API](reference/fixtures-api.md)
+- [Quick Guide (Macro Reference)](reference/quick-guide.md)
 
 # Core Testing Patterns
 

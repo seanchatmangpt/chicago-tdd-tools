@@ -33,6 +33,32 @@ impl std::fmt::Display for MemberState {
     }
 }
 
+/// Typed error for swarm task-assignment channels (DoD §2.3)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SwarmError {
+    /// Member is at its task capacity
+    AtCapacity,
+    /// Member is not in the `Alive` state (carries the actual state)
+    MemberNotAlive(MemberState),
+    /// No tasks are queued for distribution
+    NoTasksQueued,
+    /// No member with capacity can handle the task's sectors
+    NoCandidate,
+}
+
+impl std::fmt::Display for SwarmError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AtCapacity => write!(f, "Member at capacity"),
+            Self::MemberNotAlive(state) => write!(f, "Member is {state}"),
+            Self::NoTasksQueued => write!(f, "No tasks queued"),
+            Self::NoCandidate => write!(f, "No available members for task"),
+        }
+    }
+}
+
+impl std::error::Error for SwarmError {}
+
 /// A member of the swarm
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SwarmMember {
@@ -122,13 +148,14 @@ impl SwarmMember {
     ///
     /// # Errors
     ///
-    /// Returns `Err(String)` if the member is at capacity or not in the Alive state.
-    pub fn assign_task(&mut self) -> Result<(), String> {
+    /// Returns [`SwarmError::AtCapacity`] if the member is at capacity or
+    /// [`SwarmError::MemberNotAlive`] if it is not in the Alive state.
+    pub fn assign_task(&mut self) -> Result<(), SwarmError> {
         if !self.has_capacity() {
-            return Err("Member at capacity".to_string());
+            return Err(SwarmError::AtCapacity);
         }
         if self.state != MemberState::Alive {
-            return Err(format!("Member is {}", self.state));
+            return Err(SwarmError::MemberNotAlive(self.state));
         }
         self.current_tasks += 1;
         if self.current_tasks >= self.capacity {

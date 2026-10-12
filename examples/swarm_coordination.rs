@@ -64,7 +64,7 @@
 //! - `SwarmCoordinator::new() -> Self`
 //! - `SwarmCoordinator::register_member(member: SwarmMember)`
 //! - `SwarmCoordinator::submit_task(task: TaskRequest)`
-//! - `SwarmCoordinator::distribute_next_task() -> Result<(String, String), String>`
+//! - `SwarmCoordinator::distribute_next_task() -> Result<(String, String), SwarmError>`
 
 use chicago_tdd_tools::swarm::*;
 

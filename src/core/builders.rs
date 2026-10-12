@@ -57,6 +57,32 @@ fn generate_span_id() -> SpanId {
 /// Presets are composable - you can chain multiple presets together.
 type PresetFn = Box<dyn Fn(TestDataBuilder) -> TestDataBuilder + Send + Sync>;
 
+/// Typed failure of [`TestDataBuilder`] preset and build operations.
+#[derive(Debug, thiserror::Error)]
+pub enum BuilderError {
+    /// The preset registry lock was poisoned by a panicked writer.
+    #[error("Failed to lock preset registry: {0}")]
+    LockPoisoned(String),
+    /// The requested preset was never registered.
+    #[error("Preset '{name}' not found")]
+    UnknownPreset {
+        /// Name that was looked up.
+        name: String,
+    },
+    /// A required variable was absent at build time.
+    #[error("Missing required field '{field}'")]
+    MissingField {
+        /// The absent variable's key.
+        field: String,
+    },
+    /// A validation hook rejected the built data.
+    #[error("Validation failed: {detail}")]
+    BuildFailure {
+        /// The validation hook's failure message.
+        detail: String,
+    },
+}
+
 /// Global preset registry
 ///
 /// Thread-safe registry for storing and retrieving builder presets.
@@ -96,6 +122,7 @@ pub struct TestDataBuilder {
     data: HashMap<String, String>,
     #[allow(clippy::type_complexity)] // Validation functions are inherently complex
     validations: Vec<ValidationFn>,
+    required: Vec<String>,
 }
 
 // Custom Debug implementation since ValidationFn doesn't implement Debug
@@ -112,7 +139,7 @@ impl TestDataBuilder {
     /// Create a new test data builder
     #[must_use]
     pub fn new() -> Self {
-        Self { data: HashMap::new(), validations: Vec::new() }
+        Self { data: HashMap::new(), validations: Vec::new(), required: Vec::new() }
     }
 
     /// Register a named preset for reusable test data configurations
@@ -146,14 +173,14 @@ impl TestDataBuilder {
     /// # Errors
     ///
     /// Returns an error if the preset registry lock is poisoned.
-    pub fn register_preset<F>(name: impl Into<String>, preset_fn: F) -> Result<(), String>
+    pub fn register_preset<F>(name: impl Into<String>, preset_fn: F) -> Result<(), BuilderError>
     where
         F: Fn(Self) -> Self + Send + Sync + 'static,
     {
         let registry = preset_registry();
         {
             let mut registry_guard =
-                registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+                registry.lock().map_err(|e| BuilderError::LockPoisoned(e.to_string()))?;
             registry_guard.insert(name.into(), Box::new(preset_fn));
         }
         Ok(())
@@ -186,14 +213,14 @@ impl TestDataBuilder {
     /// # Errors
     ///
     /// Returns an error if the preset is not found or if the registry lock is poisoned.
-    pub fn preset(name: impl AsRef<str>) -> Result<Self, String> {
+    pub fn preset(name: impl AsRef<str>) -> Result<Self, BuilderError> {
         let registry = preset_registry();
         let registry_guard =
-            registry.lock().map_err(|e| format!("Failed to lock preset registry: {e}"))?;
+            registry.lock().map_err(|e| BuilderError::LockPoisoned(e.to_string()))?;
 
         let preset_fn = registry_guard
             .get(name.as_ref())
-            .ok_or_else(|| format!("Preset '{}' not found", name.as_ref()))?;
+            .ok_or_else(|| BuilderError::UnknownPreset { name: name.as_ref().to_string() })?;
 
         let builder = Self::new();
         let result = preset_fn(builder);
@@ -351,9 +378,15 @@ impl TestDataBuilder {
     /// # Errors
     ///
     /// Returns the first validation error encountered.
-    fn run_validations(&self) -> Result<(), String> {
+    fn run_validations(&self) -> Result<(), BuilderError> {
+        for key in &self.required {
+            if !self.data.contains_key(key) {
+                return Err(BuilderError::MissingField { field: key.clone() });
+            }
+        }
         for validation in &self.validations {
-            validation(&self.data)?;
+            validation(&self.data)
+                .map_err(|detail| BuilderError::BuildFailure { detail })?;
         }
         Ok(())
     }
@@ -468,9 +501,32 @@ impl TestDataBuilder {
     ///
     /// assert!(result.is_err());
     /// ```
-    pub fn try_build(self) -> Result<HashMap<String, String>, String> {
+    pub fn try_build(self) -> Result<HashMap<String, String>, BuilderError> {
         self.run_validations()?;
         Ok(self.data)
+    }
+
+    /// Require a variable to be present when building
+    ///
+    /// Registers a validation hook that fails with
+    /// [`BuilderError::MissingField`] if the named variable was never added.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use chicago_tdd_tools::builders::TestDataBuilder;
+    ///
+    /// let result = TestDataBuilder::new()
+    ///     .with_var("order_id", "ORD-001")
+    ///     .require_var("order_id")
+    ///     .try_build();
+    ///
+    /// assert!(result.is_ok());
+    /// ```
+    #[must_use]
+    pub fn require_var(mut self, key: impl Into<String>) -> Self {
+        self.required.push(key.into());
+        self
     }
 }
 

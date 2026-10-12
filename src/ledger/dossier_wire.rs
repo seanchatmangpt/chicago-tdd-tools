@@ -19,6 +19,104 @@
 use crate::ledger::receipt::VerifiedCourtReceipt;
 use crate::nato::receipt::CourtReceipt;
 use crate::observability::receipt::Blake3ReceiptEntry;
+use thiserror::Error;
+
+/// Typed errors for the CTT-DOSSIER-v1 wire surface. Every public function in
+/// this module returns `Result<_, DossierWireError>` — no `String` errors.
+#[derive(Debug, Error)]
+pub enum DossierWireError {
+    /// A record's unhashed zero trailer (`record[304..320]`) was tampered
+    /// with (T7 law, [`validate_dossier_chain`]).
+    #[error(
+        "record {index}: zero trailer (record[304..320]) tampered — non-zero byte in unhashed receipt tail"
+    )]
+    TrailerTampered {
+        /// Zero-based index of the tampered record.
+        index: usize,
+    },
+
+    /// Chain replay through the domain
+    /// [`Blake3ChainValidator`](crate::observability::receipt::Blake3ChainValidator)
+    /// failed. (`ChainError` predates the typed-error surface and carries
+    /// `Display` but not `std::error::Error`, so no `#[from]`.)
+    #[error("chain replay: {0}")]
+    Chain(crate::observability::receipt::ChainError),
+
+    /// An embedded receipt JSON object failed to decode through
+    /// [`CourtReceipt::from_json`](crate::nato::receipt::CourtReceipt::from_json).
+    #[error("embedded court receipt: {message}")]
+    ReceiptDecode {
+        /// Single-line decoder message for the first malformed receipt.
+        message: String,
+    },
+
+    /// The system clock was before the Unix epoch when sealing a dossier.
+    #[error("system clock before epoch: {0}")]
+    ClockBeforeEpoch(#[from] std::time::SystemTimeError),
+
+    /// A receipt failed JSON serialization while embedding.
+    #[error("receipt {name}: {message}")]
+    ReceiptSerialize {
+        /// Name of the receipt that failed to serialize.
+        name: String,
+        /// Serialization error message.
+        message: String,
+    },
+
+    /// The `merkle_root` field was not valid hex.
+    #[error("merkle_root hex: {0}")]
+    RootHex(#[from] hex::FromHexError),
+
+    /// The `merkle_root` field was valid hex but the wrong byte length.
+    #[error("merkle_root must be 64 hex chars, got {got}")]
+    RootLength {
+        /// Actual decoded byte count.
+        got: usize,
+    },
+
+    /// The `key_id` field was not valid hex.
+    #[error("key_id hex: {0}")]
+    KeyIdHex(hex::FromHexError),
+
+    /// The `key_id` field was valid hex but the wrong byte length.
+    #[error("key_id must be 16 hex chars, got {got}")]
+    KeyIdLength {
+        /// Actual decoded byte count.
+        got: usize,
+    },
+
+    /// The `signature` field was not valid hex.
+    #[error("signature hex: {0}")]
+    SignatureHex(hex::FromHexError),
+
+    /// The `signature` field was valid hex but the wrong byte length.
+    #[error("signature must be {} bytes hex, got {got}", SIGNATURE_LEN)]
+    SignatureLength {
+        /// Actual decoded byte count.
+        got: usize,
+    },
+
+    /// An atomic output write failed. The real output path never holds a
+    /// partial file; the tmp file is removed before this error is returned.
+    #[error("{path}: {source}{}", tmp_cleanup_note(.cleanup))]
+    Write {
+        /// Output path the write was targeting.
+        path: String,
+        /// The underlying IO failure.
+        source: std::io::Error,
+        /// Present when deleting the tmp file also failed.
+        cleanup: Option<String>,
+    },
+}
+
+/// Display helper rendering the tmp-cleanup suffix for
+/// [`DossierWireError::Write`].
+fn tmp_cleanup_note(cleanup: &Option<String>) -> String {
+    cleanup
+        .as_deref()
+        .map(|c| format!(" (tmp cleanup also failed: {c})"))
+        .unwrap_or_default()
+}
 
 /// Wire-format discriminator of a CTT-DOSSIER-v1 document.
 pub const DOSSIER_FORMAT: &str = "CTT-DOSSIER-v1";
@@ -126,32 +224,33 @@ impl Blake3ReceiptEntry for ChainRecord {
 /// before the chain replay, for every record.
 ///
 /// # Errors
-/// `Err(String)` naming the first record whose trailer is non-zero, or the
-/// domain [`ChainError`](crate::observability::receipt::ChainError) display
-/// for any chain-replay failure.
-pub fn validate_dossier_chain(records: &[ChainRecord]) -> Result<(), String> {
+/// [`DossierWireError::TrailerTampered`] naming the first record whose
+/// trailer is non-zero, or [`DossierWireError::Chain`] for any chain-replay
+/// failure.
+pub fn validate_dossier_chain(records: &[ChainRecord]) -> Result<(), DossierWireError> {
     for (i, r) in records.iter().enumerate() {
         if r.trailer != [0u8; TRAILER_LEN] {
-            return Err(format!(
-                "record {i}: zero trailer (record[304..320]) tampered — non-zero byte in unhashed receipt tail"
-            ));
+            return Err(DossierWireError::TrailerTampered { index: i });
         }
     }
-    crate::observability::receipt::Blake3ChainValidator::validate_chain(records)
-        .map_err(|e| e.to_string())
+    Ok(crate::observability::receipt::Blake3ChainValidator::validate_chain(records).map_err(DossierWireError::Chain)?)
 }
 
 /// Decode embedded receipt JSON values through the domain
 /// [`CourtReceipt::from_json`](crate::nato::receipt::CourtReceipt::from_json).
 ///
 /// # Errors
-/// `Err(String)` naming the first malformed embedded receipt.
-pub fn decode_receipts(values: &[serde_json::Value]) -> Result<Vec<CourtReceipt>, String> {
+/// [`DossierWireError::ReceiptDecode`] naming the first malformed embedded
+/// receipt.
+pub fn decode_receipts(
+    values: &[serde_json::Value],
+) -> Result<Vec<CourtReceipt>, DossierWireError> {
     values
         .iter()
         .map(|v| {
-            CourtReceipt::from_json(&v.to_string())
-                .map_err(|e| format!("embedded court receipt: {}", one_line(e)))
+            CourtReceipt::from_json(&v.to_string()).map_err(|e| DossierWireError::ReceiptDecode {
+                message: one_line(e),
+            })
         })
         .collect()
 }
@@ -159,21 +258,26 @@ pub fn decode_receipts(values: &[serde_json::Value]) -> Result<Vec<CourtReceipt>
 /// Build the dossier JSON value (CTT-DOSSIER-v1).
 ///
 /// # Errors
-/// `Err(String)` if the system clock is before the Unix epoch or a receipt
-/// fails JSON serialization.
+/// [`DossierWireError::ClockBeforeEpoch`] if the system clock is before the
+/// Unix epoch, or [`DossierWireError::ReceiptSerialize`] if a receipt fails
+/// JSON serialization.
 pub fn dossier_json(
     receipts: &[CourtReceipt],
     root: &[u8; 32],
     kid: &[u8; 8],
     signature: &[u8; SIGNATURE_LEN],
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, DossierWireError> {
     let sealed_at = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| format!("system clock before epoch: {e}"))?
+        .duration_since(std::time::UNIX_EPOCH)?
         .as_secs();
     let receipts_json: Vec<serde_json::Value> = receipts
         .iter()
-        .map(|r| serde_json::to_value(r).map_err(|e| format!("receipt {}: {e}", r.name)))
+        .map(|r| {
+            serde_json::to_value(r).map_err(|e| DossierWireError::ReceiptSerialize {
+                name: r.name.clone(),
+                message: e.to_string(),
+            })
+        })
         .collect::<Result<_, _>>()?;
     Ok(serde_json::json!({
         "format": DOSSIER_FORMAT,
@@ -188,36 +292,37 @@ pub fn dossier_json(
 /// Parse a 64-char hex Merkle root.
 ///
 /// # Errors
-/// `Err(String)` on bad hex or wrong length.
-pub fn parse_root(s: &str) -> Result<[u8; 32], String> {
-    let bytes = hex::decode(s.trim()).map_err(|e| format!("merkle_root hex: {e}"))?;
-    let out: [u8; 32] = bytes
-        .try_into()
-        .map_err(|b: Vec<u8>| format!("merkle_root must be 64 hex chars, got {}", b.len()))?;
+/// [`DossierWireError::RootHex`] on bad hex or [`DossierWireError::RootLength`]
+/// on the wrong length.
+pub fn parse_root(s: &str) -> Result<[u8; 32], DossierWireError> {
+    let bytes = hex::decode(s.trim())?;
+    let out: [u8; 32] =
+        bytes.try_into().map_err(|b: Vec<u8>| DossierWireError::RootLength { got: b.len() })?;
     Ok(out)
 }
 
 /// Parse a 16-char hex key id.
 ///
 /// # Errors
-/// `Err(String)` on bad hex or wrong length.
-pub fn parse_key_id(s: &str) -> Result<[u8; 8], String> {
-    let bytes = hex::decode(s.trim()).map_err(|e| format!("key_id hex: {e}"))?;
-    let out: [u8; 8] = bytes
-        .try_into()
-        .map_err(|b: Vec<u8>| format!("key_id must be 16 hex chars, got {}", b.len()))?;
+/// [`DossierWireError::KeyIdHex`] on bad hex or [`DossierWireError::KeyIdLength`]
+/// on the wrong length.
+pub fn parse_key_id(s: &str) -> Result<[u8; 8], DossierWireError> {
+    let bytes = hex::decode(s.trim()).map_err(DossierWireError::KeyIdHex)?;
+    let out: [u8; 8] =
+        bytes.try_into().map_err(|b: Vec<u8>| DossierWireError::KeyIdLength { got: b.len() })?;
     Ok(out)
 }
 
 /// Parse a 6618-char hex ML-DSA-65 signature.
 ///
 /// # Errors
-/// `Err(String)` on bad hex or wrong length.
-pub fn parse_signature(s: &str) -> Result<[u8; SIGNATURE_LEN], String> {
-    let bytes = hex::decode(s.trim()).map_err(|e| format!("signature hex: {e}"))?;
-    let out: [u8; SIGNATURE_LEN] = bytes.try_into().map_err(|b: Vec<u8>| {
-        format!("signature must be {} bytes hex, got {}", SIGNATURE_LEN, b.len())
-    })?;
+/// [`DossierWireError::SignatureHex`] on bad hex or
+/// [`DossierWireError::SignatureLength`] on the wrong length.
+pub fn parse_signature(s: &str) -> Result<[u8; SIGNATURE_LEN], DossierWireError> {
+    let bytes = hex::decode(s.trim()).map_err(DossierWireError::SignatureHex)?;
+    let out: [u8; SIGNATURE_LEN] = bytes
+        .try_into()
+        .map_err(|b: Vec<u8>| DossierWireError::SignatureLength { got: b.len() })?;
     Ok(out)
 }
 
@@ -231,15 +336,11 @@ pub fn parse_signature(s: &str) -> Result<[u8; SIGNATURE_LEN], String> {
 /// truncated artifact is then `.tmp`-suffixed, never at the real output path.
 ///
 /// # Errors
-/// `Err(String)` carrying the output path on any IO failure.
-pub fn write_output(path: &str, bytes: &[u8]) -> Result<(), String> {
+/// [`DossierWireError::Write`] carrying the output path and the underlying
+/// [`std::io::Error`] on any IO failure (plus the tmp-cleanup failure, if the
+/// tmp delete also failed).
+pub fn write_output(path: &str, bytes: &[u8]) -> Result<(), DossierWireError> {
     let tmp = format!("{path}.tmp");
-    let cleanup = |e: String| -> String {
-        match std::fs::remove_file(&tmp) {
-            Ok(()) => e,
-            Err(cleanup_err) => format!("{e} (tmp cleanup also failed: {cleanup_err})"),
-        }
-    };
     let result = (|| -> std::io::Result<()> {
         use std::io::Write;
         let mut f = std::fs::File::create(&tmp)?;
@@ -248,11 +349,19 @@ pub fn write_output(path: &str, bytes: &[u8]) -> Result<(), String> {
         drop(f);
         std::fs::rename(&tmp, path)?;
         Ok(())
-    })()
-    .map_err(|e| cleanup(format!("{path}: {e}")));
-    // On success the tmp path no longer exists (renamed); on error cleanup
-    // already removed it. Nothing to do here either way.
-    result
+    })();
+    match result {
+        Ok(()) => Ok(()),
+        Err(source) => {
+            let cleanup = match std::fs::remove_file(&tmp) {
+                Ok(()) => None,
+                Err(cleanup_err) => Some(cleanup_err.to_string()),
+            };
+            // On success the tmp path no longer exists (renamed); on error
+            // cleanup already removed it. Nothing to do here either way.
+            Err(DossierWireError::Write { path: path.to_string(), source, cleanup })
+        }
+    }
 }
 
 /// Lowercase hex of a 32-byte digest (stdout/wire rendering only).

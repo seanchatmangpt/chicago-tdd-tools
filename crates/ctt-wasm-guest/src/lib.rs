@@ -60,7 +60,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn abi_version_is_stable_v2() {
+    fn abi_version_matches_feature_state() {
+        // mirrors the cfg-selected ABI_VERSION in the parent crate: the
+        // guest-abi-v1 shim tier compiles probe -> 1; the default is v2.
+        #[cfg(feature = "guest-abi-v1")]
+        assert_eq!(ctt_guest_abi_version(), 1);
+        #[cfg(not(feature = "guest-abi-v1"))]
         assert_eq!(ctt_guest_abi_version(), 2);
     }
 }

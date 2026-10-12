@@ -938,6 +938,28 @@ truth); findings ledger W26/W27 register additions + closures.
   `CTT_MODULE_DIGEST` build-time splice — doc-promised, implementation
   sequenced with V5.
 
+### Waves 38-45 addendum (2026-10-12, errno remap + splice tool + DoD certification)
+
+- W43 (d016764): guest-abi-v1 errno remap landed (abi_map boundary fn,
+  14/15/16 -> 11 under v1; four entry points wrapped); ctt-splice-digest
+  tool + workspace member + guest-splice/guest-verify recipes; nato README
+  pillar column aligned to the in-code Pillar enum (9 rows); CONFORMANCE.md
+  4-step classification law; diataxis probe/Sealed/exit-class refresh.
+- W44 (d329535): standing 10k-iteration CTRT wire-mutation loop
+  (wire_fuzz_10k...) — every single-byte mutation of a lawful 352B record
+  must be refused typed; the digest law leaves no don't-care byte.
+- W45 (beaa93f): DoD certification register for SYSTEM SPECIFICATION
+  v26.10.12 — GREEN items cited, gaps disclosed (String-typed public
+  surface, nullifier windows RED-NOT-LANDED, variance = reported-not-gated).
+- Skeptic corrections: the W43 message's ArityBelowMinimum claim was
+  pre-existing work (claimed-but-absent class); the d016764 gitignore
+  rationalization was self-contradictory until W44 removed the stray
+  proc_macros lock; DoD-2a's "12 failures" were 11 by-design
+  fixture-self-test oracles (--all-features turns on the feature whose
+  failing oracles ARE the mutation-killing demonstration; disclosed at
+  crates/chicago-claims/Cargo.toml:27-36) + 1 real cross-crate ABI pin,
+  now cfg-mirrored.
+
 ### Waves 36-37 addendum (2026-10-12, W-ABI2 substrate + merger repairs)
 
 - guest-abi-v1 shim landed (70a42ef): ABI probe cfg-selected 1/2; 34-byte

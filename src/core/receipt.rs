@@ -35,6 +35,17 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// Typed failure of [`TestReceipt::to_json`] / [`TestReceipt::from_json`].
+#[derive(Debug, thiserror::Error)]
+pub enum ReceiptJsonError {
+    /// JSON serialization of the receipt failed.
+    #[error("Serialization error: {0}")]
+    Serialize(#[from] serde_json::Error),
+    /// JSON deserialization of the receipt failed.
+    #[error("Deserialization error: {0}")]
+    Deserialize(#[from] serde_json::Error),
+}
+
 /// Test receipt: cryptographically verifiable record of test execution
 ///
 /// Receipts provide:
@@ -358,18 +369,18 @@ impl TestReceipt {
     ///
     /// # Errors
     ///
-    /// Returns error if serialization fails.
-    pub fn to_json(&self) -> Result<String, String> {
-        serde_json::to_string_pretty(self).map_err(|e| format!("Serialization error: {e}"))
+    /// Returns [`ReceiptJsonError::Serialize`] if serialization fails.
+    pub fn to_json(&self) -> Result<String, ReceiptJsonError> {
+        serde_json::to_string_pretty(self).map_err(ReceiptJsonError::Serialize)
     }
 
     /// Deserialize from JSON
     ///
     /// # Errors
     ///
-    /// Returns error if deserialization fails.
-    pub fn from_json(json: &str) -> Result<Self, String> {
-        serde_json::from_str(json).map_err(|e| format!("Deserialization error: {e}"))
+    /// Returns [`ReceiptJsonError::Deserialize`] if deserialization fails.
+    pub fn from_json(json: &str) -> Result<Self, ReceiptJsonError> {
+        serde_json::from_str(json).map_err(ReceiptJsonError::Deserialize)
     }
 }
 

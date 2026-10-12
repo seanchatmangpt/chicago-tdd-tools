@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools-playground"
-version = "26.6.11"
+version = "26.10.12"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -29,7 +29,7 @@ chatman = [
 praxis-graphlaw = { path = "/Users/sac/praxis/crates/praxis-graphlaw", optional = true }
 
 # Chicago TDD Tools with ALL features enabled
-chicago-tdd-tools = { path = "..", version = "26.6.11", features = [
+chicago-tdd-tools = { path = "..", version = "26.10.12", features = [
     # Feature groups (convenience bundles)
     "testing-full",       # All testing features: property, snapshot, mutation, concurrency, parameterized, cli, fake-data
     "observability-full", # Complete observability: otel, weaver

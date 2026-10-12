@@ -43,7 +43,13 @@ can be proven to host it (the `pn_kernel` precedent). Verify with
 cargo build --target wasm32-unknown-unknown --release -p ctt-wasm-guest
 ```
 
-Artifact: `target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm`
+Artifact: `target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
+
+**Module digest (W-ABI2 §2):** the built artifact's `CTT_MODULE_DIGEST` slot is
+all-zero — "module identity not yet attested". After building, run
+`just guest-splice` (splices BLAKE3 of the zero-slotted artifact into the slot,
+length-preserving) and `just guest-verify` (recompute must match; fails typed
+on an unspliced or tampered artifact).`
 
 ## ABI surface (default v2: `ctt_guest_abi_version() == 2`; `guest-abi-v1` feature compiles the shim tier, probe -> 1)
 

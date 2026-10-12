@@ -4,6 +4,7 @@
 //! deterministic consensus across the swarm.
 
 use super::member::SwarmMember;
+use super::member::SwarmError;
 use super::task::{TaskQueue, TaskReceipt, TaskRequest};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -132,10 +133,11 @@ impl SwarmCoordinator {
     ///
     /// # Errors
     ///
-    /// Returns `Err(String)` if no tasks are queued or no available members can handle the task.
-    pub fn distribute_next_task(&mut self) -> Result<(String, String), String> {
+    /// Returns [`SwarmError::NoTasksQueued`] if no tasks are queued or
+    /// [`SwarmError::NoCandidate`] if no available members can handle the task.
+    pub fn distribute_next_task(&mut self) -> Result<(String, String), SwarmError> {
         let Some(task) = self.task_queue.dequeue() else {
-            return Err("No tasks queued".to_string());
+            return Err(SwarmError::NoTasksQueued);
         };
 
         // Find best member for task
@@ -152,7 +154,7 @@ impl SwarmCoordinator {
     }
 
     /// Find the best member for a task
-    fn find_best_member(&self, task: &TaskRequest) -> Result<String, String> {
+    fn find_best_member(&self, task: &TaskRequest) -> Result<String, SwarmError> {
         let mut candidates = vec![];
 
         // Find members that can handle at least one of the required sectors (union semantics — no intersection check; audit W27 doc correction)
@@ -166,7 +168,7 @@ impl SwarmCoordinator {
         }
 
         if candidates.is_empty() {
-            return Err("No available members for task".to_string());
+            return Err(SwarmError::NoCandidate);
         }
 
         // Sort by reputation (highest first) and return best

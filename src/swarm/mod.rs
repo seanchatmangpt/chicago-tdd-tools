@@ -32,7 +32,7 @@ pub mod wave;
 
 pub use composition::{ComposedOperation, OperationChain};
 pub use coordinator::{SwarmCoordinator, SwarmMembership};
-pub use member::SwarmMember;
+pub use member::{SwarmError, SwarmMember};
 pub use task::{TaskReceipt, TaskRequest, TaskStatus};
 pub use test_orchestrator::{
     QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
