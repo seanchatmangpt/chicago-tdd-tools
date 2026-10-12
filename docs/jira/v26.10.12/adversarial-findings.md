@@ -627,10 +627,16 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   RequiresEffect::execute family, weaver download_weaver_runtime with
   **15** WeaverError::Spawn sites — the W49g message said 10, an
   undercount). The W49g/W49h "zero at ALL visibilities" framing was an
-  overclaim: one PUBLIC fn retains a String Err with a different shape —
-  ocel/wasm4pm.rs:61 seal_run -> Result<(_, String), String> — plus
+  overclaim: one PUBLIC fn retained a String Err with a different shape —
+  ocel/wasm4pm.rs seal_run -> Result<(_, String), String> — plus
   private-fn String channels (import_xml parse_variant, loader take).
-  Those are registered as the next conversion pass. Prelude
+  UPDATE (W49m, a385aa4): seal_run is now typed — new wasm4pm-local
+  `SealError` (single Lock variant; the Ok-String is the digest payload),
+  collector caller mapped. The docs.yml drift guard was also found to be
+  a silent CI no-op (ran BEFORE checkout) — moved after Checkout. The
+  playground phantom workflow-engine feature reference was removed.
+  REMAINING (private-fn only): import_xml parse_variant, loader take —
+  next conversion pass. Prelude
   DossierWireError gate corrected ledger→nato (the ledger-only gate was
   an E0432 — `cargo check --features ledger` and bare
   `cargo test -p ctt-wasm-guest` were broken by it); prelude surface
