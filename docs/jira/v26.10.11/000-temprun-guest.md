@@ -42,6 +42,12 @@ Strata-side deliverables (landed):
 
 Strata-side deliverables (remaining):
 - Guest-ABI re-base in `temprun_step.rs` — REOPENED (doc-vs-code divergence,
+
+> CLOSED-STRATA-SIDE (W27 probe, cross-repo verified): the strata bridge has since
+> re-based to the landed i32 out-buffer ABI (temprun_step.rs:602/:660 get_typed_func
+> signatures + EXPORT_ABI_VERSION gate at :499); no errno<<56 / ptr<<32 unpack code
+> remains. The divergence described below is historical — see also CHANGELOG
+> "rebased to guest ABI v2 in strata 59ed80c, pending merge to strata main".
   witnessed this lane 2026-10-11): the file's own ABI-mapping doc-comment
   table (`/Users/sac/strata/temprun/src/bin/temprun_step.rs:86-92`) claims
   the new i32 out-buffer ABI (`ctt_session_step(handle, quota, out_status,
