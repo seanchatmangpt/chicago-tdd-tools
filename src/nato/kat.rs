@@ -65,7 +65,6 @@
     clippy::doc_lazy_continuation,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
-    clippy::expect_used,
     clippy::unwrap_used,
     clippy::panic,
     clippy::explicit_iter_loop,

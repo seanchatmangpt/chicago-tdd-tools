@@ -21,9 +21,9 @@ use std::fmt::{self, Display};
 /// # Examples
 ///
 /// ```rust
-/// use chicago_tdd_tools::core::invariants::UnrecoverableInvariantViolation;
+/// use chicago_tdd_tools::core::invariants::`UnrecoverableInvariantViolation`;
 ///
-/// let violation = UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string());
+/// let violation = `UnrecoverableInvariantViolation`::ContractMalformed("empty ID".to_string());
 /// assert!(format!("{}", violation).contains("Contract malformed"));
 /// ```
 #[derive(Debug, Clone)]
@@ -111,9 +111,9 @@ pub enum UnrecoverableInvariantViolation {
     /// Phase 7: Pipeline claims success but not all phases executed
     PartialPipelineSuccess(String),
     /// Phase 7: Invalid pipeline config. NOTE (wave-24 audit): the "removed
-    /// relaxed" reading is stale — PipelineConfig::relaxed() is a SUPPORTED
-    /// live constructor; this variant is currently constructed only in
-    /// fail_fast.rs tests, reserved for a future relaxed-refusal policy.
+    /// relaxed" reading is stale — `PipelineConfig::relaxed()` is a SUPPORTED
+    /// live constructor; this `UnrecoverableInvariantViolation` variant is currently constructed only in
+    /// `fail_fast.rs` tests, reserved for a future relaxed-refusal policy.
     PipelineConfigInvalid(String),
     /// Phase 7: Contract phase defined but pipeline skipped it
     PipelinePhaseSkipped(String),

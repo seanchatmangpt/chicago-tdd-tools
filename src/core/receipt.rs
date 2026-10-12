@@ -274,7 +274,8 @@ impl TestReceipt {
     /// Struct field order is fixed, so `serde_json` output is deterministic;
     /// metadata order is significant (it is a `Vec`, not a map).
     fn signature_payload(&self) -> String {
-        let unsigned = TestReceipt { signature: None, ..self.clone() };
+        let mut unsigned = self.clone();
+        unsigned.signature = None;
         serde_json::to_string(&unsigned)
             .unwrap_or_else(|_| {
                 // Serde serialization of this plain-data struct cannot fail

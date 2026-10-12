@@ -65,7 +65,7 @@ Complete technical reference documentation:
 - **[API Reference](reference/API_REFERENCE.md)** - All modules, functions, types
 - **[Architecture](reference/ARCHITECTURE.md)** - Design principles, patterns, decisions
 - **[SLA Reference](reference/SLA_REFERENCE.md)** - Service level agreements, quality standards
-- **[Invariant Matrix](reference/INVARIANT_MATRIX.md)** - Invariant failure matrix for fail-fast hardening (Phases 1-12)
+- **[Invariant Matrix](reference/INVARIANT_MATRIX.md)** - Invariant failure matrix for fail-fast hardening (Phases 1-12) (HISTORICAL — counts superseded by `src/core/invariants.rs`)
 
 ---
 
@@ -81,14 +81,14 @@ Background, context, and understanding of how/why things work:
 - **[Documentation Style Guide](process/DOCUMENTATION_STYLE_GUIDE.md)** - Documentation standards
 
 ### Quality & Process
-- **[FMEA: Tests, Build, Actions](process/FMEA_TESTS_BUILD_ACTIONS.md)** - Failure Mode and Effects Analysis
+- **[FMEA: Tests, Build, Actions](process/FMEA_TESTS_BUILD_ACTIONS.md)** - Failure Mode and Effects Analysis (historical snapshot — retired cargo-make era)
 - **[Test Isolation Guide](process/TEST_ISOLATION_GUIDE.md)** - Test isolation patterns and practices
 - **[Poka-Yoke Weaver Registry](process/POKA_YOKE_WEAVER_REGISTRY.md)** - Type-level error prevention
-- **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver
+- **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver (historical snapshot — retired cargo-make era)
 - **[Dog Fooding](process/DOG_FOODING.md)** - Using Chicago TDD Tools to test itself
-- **[CI/Unit Test Fixes Summary](process/CI_FIXES_SUMMARY.md)** - Final status of CI/Unit test fixes
+- **[CI/Unit Test Fixes Summary](process/CI_FIXES_SUMMARY.md)** - Final status of CI/Unit test fixes (historical snapshot, 2025-11-14)
 - **[GitHub Actions Improvements Summary](process/GITHUB_ACTIONS_SUMMARY.md)** - Comprehensive CI/CD overhaul
-- **[Kaizen Improvement Plan](process/KAIZEN_IMPROVEMENT_PLAN.md)** - Plan for error message consistency
+- **[Kaizen Improvement Plan](process/KAIZEN_IMPROVEMENT_PLAN.md)** - Plan for error message consistency (historical snapshot — retired cargo-make era)
 - **[RDF Integration Summary](process/RDF_INTEGRATION_SUMMARY.md)** - Core data structures for semantic workflows
 
 ### Analysis & Research
@@ -126,7 +126,7 @@ Background, context, and understanding of how/why things work:
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
 - **[Release Notes v26.10.12](releases/RELEASE_NOTES_v26.10.11.md)** - Release notes for the v26.10.11 → v26.10.12 train (current)
-- **[Announcement v26.10.11](releases/ANNOUNCEMENT_v26.10.11.md)** - Release announcement for v26.10.11 (current)
+- **[Announcement v26.10.11](releases/ANNOUNCEMENT_v26.10.11.md)** - Release announcement for v26.10.11 (DRAFT)
 - **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Release notes for v26.6.121 (historical)
 - **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121 (historical)
 - **[Latest Release Notes](releases/)** - See the newest release documentation

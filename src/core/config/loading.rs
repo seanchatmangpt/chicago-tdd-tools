@@ -23,7 +23,7 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-/// **Kaizen improvement**: Default configuration values extracted to named constants.
+/// **`Kaizen` improvement**: Default configuration values extracted to named constants.
 /// Makes code more readable, easier to change, and self-documenting.
 /// Pattern: Use named constants instead of magic numbers for configuration defaults.
 /// Default unit test timeout in seconds
@@ -553,7 +553,7 @@ fn read_config_value_u16(section: &str, key: &str, default: u16) -> u16 {
 
 /// Get unit test timeout from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn unit_test_timeout_seconds() -> u64 {
     read_config_value("test", "unit_timeout_seconds", DEFAULT_UNIT_TEST_TIMEOUT_SECONDS)
@@ -561,7 +561,7 @@ pub fn unit_test_timeout_seconds() -> u64 {
 
 /// Get integration test timeout from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn integration_test_timeout_seconds() -> u64 {
     read_config_value(
@@ -573,7 +573,7 @@ pub fn integration_test_timeout_seconds() -> u64 {
 
 /// Get property test cases from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn property_test_cases() -> u32 {
     read_config_value_u32("property", "default_test_cases", DEFAULT_PROPERTY_TEST_CASES)
@@ -581,7 +581,7 @@ pub fn property_test_cases() -> u32 {
 
 /// Get hot path tick budget from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn hot_path_tick_budget() -> u64 {
     read_config_value("performance", "hot_path_tick_budget", DEFAULT_HOT_PATH_TICK_BUDGET)
@@ -589,7 +589,7 @@ pub fn hot_path_tick_budget() -> u64 {
 
 /// Get max run length from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 /// AUDIT NOTE (inert config): read from `[guards]` but no enforcement
 /// path consumes it — `GuardValidator` uses its own `MAX_RUN_LEN`
@@ -600,7 +600,7 @@ pub fn max_run_len() -> usize {
 
 /// Get max batch size from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 /// AUDIT NOTE (inert config): read from `[guards]` but no enforcement
 /// path consumes it — `GuardValidator` uses its own `MAX_BATCH_SIZE`
@@ -615,7 +615,7 @@ pub fn max_batch_size() -> usize {
 
 /// Get container wait timeout from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -629,7 +629,7 @@ pub fn max_batch_size() -> usize {
 ///     .expect("Config should provide valid timeout > 0");
 /// ```
 ///
-/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
+/// See the repo README's Poka-Yoke section (`docs/POKA_YOKE_GUIDE.md` does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_container_wait_timeout_seconds() -> u64 {
     read_config_value(
@@ -641,7 +641,7 @@ pub fn testcontainers_container_wait_timeout_seconds() -> u64 {
 
 /// Get HTTP connection timeout from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -674,7 +674,7 @@ pub fn testcontainers_http_connection_timeout_seconds() -> u64 {
 
 /// Get default HTTP port from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -693,7 +693,7 @@ pub fn testcontainers_http_connection_timeout_seconds() -> u64 {
 /// // port.get() is guaranteed > 0
 /// ```
 ///
-/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
+/// See the repo README's Poka-Yoke section (`docs/POKA_YOKE_GUIDE.md` does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_default_http_port() -> u16 {
     read_config_value_u16("testcontainers", "default_http_port", DEFAULT_HTTP_PORT)
@@ -701,7 +701,7 @@ pub fn testcontainers_default_http_port() -> u16 {
 
 /// Get default HTTPS port from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -715,7 +715,7 @@ pub fn testcontainers_default_http_port() -> u16 {
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///
-/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
+/// See the repo README's Poka-Yoke section (`docs/POKA_YOKE_GUIDE.md` does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_default_https_port() -> u16 {
     read_config_value_u16("testcontainers", "default_https_port", DEFAULT_HTTPS_PORT)
@@ -723,7 +723,7 @@ pub fn testcontainers_default_https_port() -> u16 {
 
 /// Get default HTTP alternate port from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -752,7 +752,7 @@ pub fn testcontainers_default_http_alt_port() -> u16 {
 
 /// Get concurrent containers count from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -777,7 +777,7 @@ pub fn testcontainers_concurrent_containers_count() -> usize {
 
 /// Get concurrent commands count from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -802,7 +802,7 @@ pub fn testcontainers_concurrent_commands_count() -> usize {
 
 /// Get multi-container count from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -827,7 +827,7 @@ pub fn testcontainers_multi_container_count() -> usize {
 
 /// Get commands per container from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -856,7 +856,7 @@ pub fn testcontainers_commands_per_container() -> usize {
 
 /// Get Weaver OTLP gRPC port from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 ///
 /// # Returns
 ///
@@ -870,7 +870,7 @@ pub fn testcontainers_commands_per_container() -> usize {
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///
-/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
+/// See the repo README's Poka-Yoke section (`docs/POKA_YOKE_GUIDE.md` does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn weaver_otlp_grpc_port() -> u16 {
     read_config_value_u16("observability.weaver", "otlp_grpc_port", DEFAULT_OTLP_GRPC_PORT)
@@ -878,7 +878,7 @@ pub fn weaver_otlp_grpc_port() -> u16 {
 
 /// Get Weaver startup wait time from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn weaver_startup_wait_milliseconds() -> u64 {
     read_config_value(
@@ -890,7 +890,7 @@ pub fn weaver_startup_wait_milliseconds() -> u64 {
 
 /// Get Weaver telemetry processing wait time from config (with fallback to constant)
 ///
-/// **Kaizen improvement**: Uses named constant instead of magic number.
+/// **`Kaizen` improvement**: Uses named constant instead of magic number.
 #[must_use]
 pub fn weaver_telemetry_processing_wait_milliseconds() -> u64 {
     read_config_value(

@@ -20,6 +20,15 @@ const MAX_PLACES: usize = 64;
 /// Maximum transitions supported by the compiled word vector.
 const MAX_TRANSITIONS: usize = 256;
 
+/// Maximum place index addressable by the packed pre/post `u16` masks.
+///
+/// `MAX_PLACES = 64` governs the *total* place count (marking width); this is
+/// a separate, stricter law: each transition's pre/post sets pack into the low
+/// and high 16 bits of one `u64` word, so any arc referencing a place at
+/// index >= 16 would shift out of range (panic in debug, silent wrap in
+/// release). Compile refuses it instead.
+const MAX_PACKED_PLACE_INDEX: usize = 16;
+
 /// A declared place in a [`NetSpec`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlaceDef {
@@ -89,8 +98,9 @@ impl NetSpec {
     ///
     /// Refuses: more than `MAX_PLACES` places, more than
     /// `MAX_TRANSITIONS` transitions, duplicate place or transition names,
-    /// references to undeclared places, and self-loops (a transition with a
-    /// place in both its pre and post sets).
+    /// references to undeclared places, self-loops (a transition with a
+    /// place in both its pre and post sets), and any arc referencing a
+    /// place at index >= 16 (the packed pre/post `u16` window).
     ///
     /// # Errors
     /// Returns [`ConformanceError`] describing the first structural violation.
@@ -187,6 +197,13 @@ impl NetSpec {
                 side: "place",
                 id: format!("{name} (referenced by transition '{transition}')"),
             })?;
+            // JUSTIFICATION: `bit` comes from the index map whose values are
+            // place positions; the cap below bounds it before the shift.
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let bit = usize::try_from(*bit).unwrap_or(usize::MAX);
+            if bit >= MAX_PACKED_PLACE_INDEX {
+                return Err(ConformanceError::TooManyPlaces { limit: MAX_PACKED_PLACE_INDEX });
+            }
             mask |= 1u16 << bit;
         }
         Ok(mask)
@@ -368,6 +385,34 @@ mod tests {
             .build();
         let err = spec.compile().expect_err("must refuse");
         assert!(err.to_string().contains("self-loop"), "unexpected error: {err:?}");
+    }
+
+    /// An arc targeting a place at index >= 16 is refused with a typed
+    /// error, not a shift-overflow panic: the pre/post masks pack into
+    /// `u16` halves (MAX_PLACES=64 still governs total place count).
+    #[test]
+    fn compile_refuses_arc_beyond_packed_window() {
+        let mut builder = NetSpec::builder();
+        for i in 0..=17 {
+            builder = builder.place(format!("p{i}"));
+        }
+        let spec =
+            builder.transition("t_far", "act").add_pre("p0").add_post("p17").build();
+        let err = spec.compile().expect_err("must refuse, not panic");
+        assert_eq!(err, ConformanceError::TooManyPlaces { limit: 16 });
+    }
+
+    /// A net may still declare > 16 places as long as no arc touches
+    /// index >= 16 (the window is per-arc, not per-net).
+    #[test]
+    fn compile_admits_many_unreferenced_places_beyond_window() {
+        let mut builder = NetSpec::builder();
+        for i in 0..20 {
+            builder = builder.place(format!("p{i}"));
+        }
+        let compiled =
+            builder.transition("t0", "act").add_pre("p0").add_post("p1").build().compile();
+        assert!(compiled.is_ok(), "expected Ok, got {compiled:?}");
     }
 
     /// Initial marking sets one bit per declared place.

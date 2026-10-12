@@ -369,12 +369,29 @@ CTRT 352-byte court-receipt wire + BLAKE3 chains + ML-DSA-65 sealing:
 `DossierBuilder`, `Signer`, `KeyStore`, `LedgerExitCode` (10-19).
 Full surface: docs/features/LEDGER.md.
 
+**Submodule `ledger::dossier_wire`** (src/ledger/dossier_wire.rs):
+sealed-dossier JSON wire format (`CTT-DOSSIER-v1`).
+- `DossierJson` (format, court_receipts, merkle_root, key_id, signature, sealed_at)
+- `ChainRecord` (prev / content / trailer / stored digests; `ChainRecord::of(&VerifiedCourtReceipt)`), `TRAILER_LEN`
+- `validate_dossier_chain(records) -> Result<(), String>`,
+  `decode_receipts(values) -> Result<Vec<CourtReceipt>, String>`,
+  `dossier_json(receipts, merkle_root, key_id, signature) -> Result<serde_json::Value, String>`
+- Constants: `DOSSIER_FORMAT`, `DEFAULT_DOSSIER_OUT`, `SIGNATURE_LEN`
+
 ## nato (feature-gated; implies ledger+conformance)
 
 20-court NATO assurance matrix: `Court` trait, `COURT_REGISTRY`
 (N01-N20), `run_court` positive-control gate, `CourtReceipt`,
 pillar taxonomy, dossier sealing. Full surface:
 docs/features/NATO_COURTS.md.
+
+**Submodule `nato::guest_audit`** (src/nato/guest_audit.rs):
+zero-import WASM guest audit (import/section census of a guest artifact).
+- `guest_import_census(artifact_path) -> Result<GuestImportReceipt, GuestAuditError>`
+- `section_census(artifact_path) -> Result<(SectionCensus, u32), GuestAuditError>`
+- `GuestImportReceipt` (artifact, imports, sections_checked, status, tool),
+  `SectionCensus` (types/imports/functions/memory/exports counts),
+  `GuestAuditStatus`, `SkipKind`, `GuestAuditError`, `DEFAULT_GUEST_ARTIFACT`
 
 ## testing::cli
 
@@ -569,6 +586,13 @@ OCEL 2.0 process mining. Turns test execution into Object-Centric Event Logs and
 
 **Pattern**: events are admitted via `Admission::new(event).into_evidence()` (validates case IDs, timestamp monotonicity, object references), then `seal_run(...)` yields a digest to pin in CI.
 
+**Submodule `observability::ocel::powl_fixture_bridge`** (src/observability/ocel/powl_fixture_bridge.rs):
+converts merger-matrix fixture JSON into POWL conformance session inputs.
+- `merger_fixture_to_session_words(...) -> Result<..., FixtureBridgeError>` - Fixture JSON → session words
+- `session_words_for_atoms(names, atoms) -> Vec<u64>` / `session_words_for_atoms_relaxed(names, atoms) -> Vec<u64>` - Atom-list → session words (strict / relaxed)
+- `fixture_activity_names(fixture_json) -> Result<Vec<String>, FixtureBridgeError>` - Extract activity names
+- `FixtureBridgeError` (error taxonomy)
+
 **Requirements**: `ocel-generation` feature (`ocel-generation-discovery` adds process discovery).
 
 ## core::governance
@@ -619,6 +643,63 @@ The 43 YAWL workflow control patterns, each characterized by its control-flow la
 - `global_registry() -> &'static OperatorRegistry`
 
 **Pattern**: `global_registry().get_operator(hook_id)` to look up a pattern's properties and guards.
+
+## cli_proof (feature-gated: `cli-proof`)
+
+CLI proof harness + sabotage fixtures for receipt-emitting CLI binaries
+(src/cli_proof/).
+
+**Re-exports**: `CliHarness`, `CliOutput`, `ReceiptAssertions`,
+`SabotageFixture`, `TempWorkspace`.
+
+**Types**:
+- `CliHarness` (src/cli_proof/harness.rs) - Builder for running a CLI binary:
+  `cargo_bin(name)`, `from_path(path)`, `args(...)`, `env(key, value)`,
+  `workspace(&TempWorkspace)`, `current_dir(path)`, `run() -> Result<CliOutput, CliHarnessError>`
+- `CliOutput` - `assert_success`, `assert_failure`, `assert_exit_code(n)`,
+  `assert_stdout_contains` / `assert_stdout_not_contains`,
+  `assert_stderr_empty` / `assert_stderr_contains`, `assert_stdout_json_field(key, value)`
+- `CliHarnessError` - harness error taxonomy (`From<std::io::Error>`)
+- `TempWorkspace` (src/cli_proof/workspace.rs) - temp dir RAII:
+  `new()`, `with_fixture(name)`, `path()`, `resolve(rel)`, `write_file`,
+  `append_file`, `corrupt_file(rel, f)`, `read_file`, `read_json`,
+  `assert_file_exists` / `assert_file_absent` / `assert_file_contains` / `assert_dir_count`
+- `SabotageFixture` (src/cli_proof/sabotage.rs) - corruption operators:
+  `write_garbage`, `bit_flip`, `truncate`, `remove`, `corrupt_json(path, f)`
+- `ReceiptAssertions` (src/cli_proof/receipt.rs) - assertions over a receipt
+  directory: `from_dir(dir)`, `assert_count(n)`, `assert_latest_is_valid`,
+  `assert_latest_signature_nonempty`, `assert_latest_has_input(pred)`,
+  `assert_chain_linked`, `assert_receipt_hash_changed`
+
+**Submodules**: `harness`, `receipt`, `sabotage`, `workspace`.
+
+## sector_stacks
+
+Production-grade multi-sector reference stacks (src/sector_stacks/):
+shared receipt model plus insurance-claims and academic peer-review sectors.
+
+**Re-exports** (crate root): `OperationReceipt`, `OperationStatus`,
+`SectorOperation`, `academic`, `claims`.
+
+**Types**:
+- `OperationReceipt` (src/sector_stacks/mod.rs) - id, sector, operation,
+  status, result, merkle_root, timestamp
+- `OperationStatus` - `Success` / `PartialSuccess` / `Failed` / `PendingReview`
+- `SectorOperation` (trait) - `sector_name()`, `description()`,
+  `is_deterministic()`, `generate_receipt(status)`
+- `ClaimsOperation` (src/sector_stacks/claims.rs) - insurance claim pipeline:
+  `new(ClaimSubmission)`, `should_approve()`,
+  `generate_settlement_receipt() -> OperationReceipt`; supporting types
+  `ClaimSubmission`, `FraudScore`, `Settlement::calculate(...)`,
+  `EntitlementsResult`, `ValidationResult`, `SyntheticClaimsGenerator::generate(count)`
+- `AcademicOperation` (src/sector_stacks/academic.rs) - peer-review pipeline:
+  `new(PaperSubmission, Vec<Review>)`, `assign_reviewers()`,
+  `generate_decision_receipt() -> OperationReceipt`; supporting types
+  `PaperSubmission`, `ReviewerAssignment`, `Review`, `ReviewRecommendation`,
+  `Decision::from_reviews(...)`
+- `sector_stacks::rdf` (src/sector_stacks/rdf/) - `SectorOntology`,
+  `WorkflowStage`, `GuardConstraint`, `KnowledgeHook`,
+  `RdfOperationValidator` (+ `RdfValidationError`/`RdfValidationResult`)
 
 ## prelude
 
