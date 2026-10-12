@@ -20,12 +20,12 @@
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | QUEUED |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | QUEUED |
-| SK7 | FALSIFIED | port write-path has no backpressure (64MiB frame queued in driver memory, 23ms, never-reading bridge); bridge process inherits full env, no rlimits, unsandboxed — zero-ambient falsified at the OS boundary |  NONE  |
+| SK7 | FALSIFIED | port write-path has no backpressure (64MiB frame queued in driver memory, 23ms, never-reading bridge); bridge process inherits full env, no rlimits, unsandboxed — zero-ambient falsified at the OS boundary | QUEUED (port backpressure ack-gate + env-allowlist/rlimit work order, strata-side) |
 | SK8 | FALSIFIED | Word-identity sentinel misclassifies lawful self-loop firings (`W- == W+` leaves the marking bit-exact unchanged) as refusals; PN64 OR-coalescing makes this reachable on ordinary nets. | FIXED (post-tag, see below) |
 | SK9 | PARTIAL | REA starvation is real but is a cost-elevation effect (starved transitions are delayed, not unschedulable); no correctness violation, bounded liveness preserved. | DOCUMENTED |
 | SK10 | FALSIFIED | Open-texture predicates admit boolean-forcing; N19 receipt is dual-subject (binds source SHA and artifact set without a binding between them); DoS latch via unbounded replay of expensive checks. | PARTIALLY QUEUED (N19 dual-subject documented in `docs/releases/RELEASE_NOTES_v26.10.11.md:52` as 3-host NOT-RUN; boolean-forcing + DoS latch queued) |
 
-Tally: 8 FALSIFIED, 1 PARTIAL, 1 HELD.
+Tally: 9 FALSIFIED, 1 PARTIAL (SK9), 0 HELD.
 
 ## Falsifications
 
@@ -159,17 +159,19 @@ R-numbered receipts were not visible to this lane at write time.
 |------|---------|--------------------|-------------|
 | SX1 | FALSIFIED-BY-ABSENCE | No burn/odometer/blind-nullifier mechanism exists anywhere in the tree; `Lease.admit` trusts `attested: true` without verifying a signature - 200 forged leases admitted in 5ms. | FIX IN FLIGHT (R35) |
 | SX2 | FALSIFIED (vacuous) | No ordering layer exists to falsify directly: split-brain is the default, the wire format carries no seq/nonce, and an in-path adversary holds the MEV position. | QUEUED |
-| SX3 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX4 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX5 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX6 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX7 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. | FIXED (commit 8b92c3e, SX8-F1) |
-| SX9 | IN-PROGRESS | Report not landed at receipt time. | - |
-| SX10 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX3 | FALSIFIED | Affidavit fold layer: UTF-8 identity instability (NFC/NFD renders yield different chain_hash/court_id); Skip>Fail fold erases Fail byte-identically; outcome 255 decodes unvalidated; CTT `receipt.rs` range-checks but `unwrap_or(Error)` silently reclasses (`:634`). | QUEUED (fix: NFC pin + severity-lattice fold + validated outcome; CTT format-law unification) |
+| SX4 | FALSIFIED | R31's in-memory fix witnessed, but persistence re-opens the amnesty: `to_bytes` omits `nullifier_history` (empty rebuild after save/load); production `handlers.rs` flat-log admits cross-process replay (FULL amnesty); AFRN snapshot is unauthenticated plaintext (generation forgery accepted). | FIX IN FLIGHT (R38) |
+| SX5 | UNSUPPORTED | Dual-verify claim unsupported - no runtime libcrux anywhere, oracle-consensus API takes caller-supplied booleans; R32 degenerate-seed screening landed ES256-only (ml-dsa/slh-dsa `from_seed` still infallible). ml-dsa verify fuzz HELD (0/12373 accept-on-malformed). | FIX IN FLIGHT (R37: forward-port seed screening) + doc retract/rework for dual-verify |
+| SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | QUEUED (V5 work order: bind module hash into seal preimage) |
+| SX7 | FALSIFIED | ash_graphlaw membrane: contradictory covenants admitted silently (both `priorityOf` and `notPriorityOf` derived from the same fact, no conflict court); authority triples (`authorizedSigner`/`actuationAuthority`) on untargeted classes pass SHACL conform:true; cycle divergence HELD (typed `:resource_limit` refusal). | QUEUED (deontic conflict court + authority-vocabulary SHACL coverage; ash_graphlaw work orders, not CTT code defects) |
+| SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. Tid truncation/boundary class HELD (closed). | FIXED (commit 8b92c3e, SX8-F1) |
+| SX9 | HELD (ALIVE) | `deserialize_ct` survives SK2's exact methodology: thrash run 178/192 \|t\|<4.5, the 14 excursions flip sign between same-path classes (noise, not leak); branch-free below the public length gate, verdict table compiled to csel. Caveat: single-run cold Welch is drift-sensitive; future verification uses thrash/interleaved. | VERIFIED (R34; methodology note recorded) |
+| SX10 | PARTIAL | SMT/hand recovery of fold constants trivially succeeds - REA resistance is cost-elevation only (delay, not impossibility); consistent with SK9. No correctness violation. | DESIGN (document as cost-elevation, not confidentiality) |
 
-Tally so far: 2 FALSIFIED (1 FIXED), 1 FALSIFIED-BY-ABSENCE (fix in flight),
-7 IN-PROGRESS.
+Tally: SX3, SX4, SX6, SX7, SX8 FALSIFIED (SX8 FIXED); SX1
+FALSIFIED-BY-ABSENCE (fix in flight); SX2 FALSIFIED (vacuous); SX5
+UNSUPPORTED; SX9 HELD (kernel ALIVE); SX10 PARTIAL. No lane remains
+IN-PROGRESS.
 
 ### SX1 - No conservation mechanism; unsigned lease admission
 
@@ -189,6 +191,100 @@ Tally so far: 2 FALSIFIED (1 FIXED), 1 FALSIFIED-BY-ABSENCE (fix in flight),
   number or nonce; any in-path adversary occupies the MEV position by
   construction.
 - **Disposition**: QUEUED.
+
+### SX3 - Affidavit fold layer: identity instability + liability erasure
+
+- **Claim falsified**: that the affidavit fold is a lossless, identity-stable
+  aggregation of court outcomes.
+- **Repro**: (1) NFC/NFD renders of the same court identity produce different
+  `chain_hash`/`court_id` (no normalization anywhere - a court re-registered
+  under different normalization is a different court). (2) `Skip(2) > Fail(1)`
+  under `max()`: a chain with `Fail@12 + Skip@13` folds byte-identical to a
+  never-failed chain - liability erasure (SK8's misclassification class
+  resurfacing at the fold layer). (3) outcome byte 255 decodes unvalidated and
+  masks even `Refused`. CTT `receipt.rs` range-checks outcomes (stricter) but
+  `unwrap_or(Error)` silently reclasses at `:634` - C14-class N-implementation
+  drift between the two 352B formats.
+- **Disposition**: QUEUED - pin NFC at name ingestion (both formats);
+  severity-lattice fold (or OR-of-seen-tags: associative and lossless);
+  range-check outcome in `from_bytes`; CTT to refuse unvalidated outcomes and
+  adopt one canonical format law.
+
+### SX4 - Persistence re-opens the replay amnesty (R31 incomplete)
+
+- **Claim falsified**: that R31's nullifier fix closed double-spend replay.
+- **Repro**: (A) `to_bytes` omits `nullifier_history` entirely - `load`
+  rebuilds empty, so cross-generation replay succeeds after every save/load.
+  (B) production `handlers.rs` still uses the flat 32-byte log with a constant
+  `[0x26; 32]` key and a wire-layer-only check - FULL cross-process replay
+  amnesty (every CLI re-run admits). (E) AFRN snapshot is unauthenticated
+  plaintext (generation forgery `u64::MAX` accepted; epoch key exfiltratable).
+  HELD: 0xE101 FP DoS refuted (0/50k), truncation fail-closed at the registry
+  layer, gen wraparound refuted.
+- **Disposition**: FIX IN FLIGHT (R38) - serialize `nullifier_history` +
+  version-bump AFRN; route handlers to AFRN snapshots + `with_generated_key`;
+  HMAC the snapshot. Priority HIGH.
+
+### SX5 - Dual-verify UNSUPPORTED; seed screening ES256-only
+
+- **Claim falsified**: the "dual-verified against the F* oracle" claim.
+- **Repro**: no runtime libcrux use anywhere in the tree; the 0xE303
+  oracle-consensus API takes caller-supplied booleans (a comparison utility,
+  not an oracle). R32's degenerate-seed screening landed on ES256 only -
+  `ml_dsa65_from_seed`/`slh_dsa128s_from_seed` remain infallible (all-zero/
+  all-ones/near-degenerate seeds reproduce valid keys, runtime-proven).
+  HELD: ml-dsa verify 12,373-case fuzz, 0 accept-on-malformed.
+- **Disposition**: FIX IN FLIGHT (R37: forward-port `seed_is_degenerate` to
+  both PQC `from_seed` paths); dual-verify claim to be reworked (feature-gated
+  runtime verify-vs-verify over KAT vectors) or retracted in docs.
+
+### SX6 - Module-identity-blind seal preimage; out-pointer trust
+
+- **Claim falsified**: that a seal binds the module that produced it.
+- **Repro**: seal preimage contains no module identity (SK6's finding
+  confirmed at the seal layer); out-pointers are dereferenced and trusted on
+  read without re-verification; trap bytes are indistinguishable from live
+  data.
+- **Disposition**: QUEUED - V5 work order: bind module hash into the seal
+  preimage; re-verify out-pointers at replay.
+
+### SX7 - Contradictory covenants admitted; authority bypasses SHACL
+
+- **Claim falsified**: that the graphlaw membrane refuses incoherent
+  authority graphs.
+- **Repro**: (1) contradictory covenants admitted silently - both
+  `priorityOf` and `notPriorityOf` derived from the same fact with no conflict
+  court. (2) authority-carrying triples (`authorizedSigner`/
+  `actuationAuthority`) on untargeted classes pass SHACL `conform:true` -
+  validation-conforms is not authority-checked. (3) HELD: cycle divergence
+  yields a typed `:resource_limit` refusal (`n3_max_iterations=4000`,
+  engine-side; minor inverted message "70 > 4000"). Continuous-condition vs
+  latching law noted as the temporal variant of SK10's open texture.
+- **Disposition**: QUEUED - deontic conflict court over N3 derived output
+  (pair-predicate registry to typed refusal); shapes must cover the
+  actuation-authority vocabulary, fail-closed on untargeted classes.
+  ash_graphlaw/strata work orders - not CTT code defects.
+
+### SX9 - deserialize_ct ALIVE under SK2's methodology
+
+- **Claim tested**: that R34's `deserialize_ct` core leaks via timing.
+- **Repro**: thrash run under SK2's exact methodology - 178/192 samples
+  `|t| < 4.5`; the 14 excursions flip sign between same-path classes (noise,
+  not leak). Codegen is branch-free below the public length gate, zero
+  variable-latency ops, verdict table compiled to `csel` (Spectre premise
+  structurally absent).
+- **Disposition**: VERIFIED (R34). Caveat recorded: single-run cold Welch is
+  drift-sensitive - future verification uses thrash/interleaved methodology.
+
+### SX10 - Constant recovery trivially succeeds; REA = cost elevation
+
+- **Claim falsified (partially)**: that fold-constant opacity resists an
+  adversary.
+- **Repro**: SMT and by-hand recovery of the fold constants both trivially
+  succeed - REA resistance is cost-elevation only (delay, not impossibility),
+  consistent with SK9.
+- **Disposition**: DESIGN - document the property as cost-elevation, not
+  confidentiality.
 
 ### SX8 - Prefix exhaustion vacuously conforming (SX8-F1)
 
