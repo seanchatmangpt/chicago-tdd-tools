@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [26.10.12] - 2026-10-11
 
+### Waves 49-50 addendum (2026-10-12, typed-error completion + hygiene)
+
+- W49 (a-h): typed-error wave COMPLETED — DoD §2.3 closed at all
+  visibilities (the "String-typed public surface" gap disclosed in the
+  38-45 addendum is superseded). DiagnosticSink splice, last 3 String
+  slots eliminated, prelude/crate-root re-exports, seal_run typed
+  (SealError), DossierWireError prelude gate corrected to nato.
+- W50: star_toml_e2e fixture race fixed (per-process unique suffixes —
+  flaky FileNotFound failures eliminated); wasm4pm-compat 26.8.7 stderr
+  rebless; release-validate-artifacts templated to the actual version
+  (was hardcoded v1.1.0); RELEASE_NOTES_v26.10.12.md added; git2/
+  git-hooks dead feature removed (see Dependency changes above);
+  commit-message corrections registered in the findings ledger
+  (unsafe-libyaml claim false — it survives via serde_yaml_ng's own
+  driver; yaml-driver migration is a registered work order).
+
 ### Dependency changes (2026-10-12, W50 security closure)
 
 - `wasm4pm-compat` lock-updated 26.6.29 → 26.8.7 (pulls quick-xml 0.41;
