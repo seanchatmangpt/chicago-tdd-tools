@@ -641,11 +641,7 @@ pub unsafe extern "C" fn ctt_session_new(
 
 /// Body of [`ctt_session_new`] (v2 errno values; the extern wrapper applies
 /// the [`abi_map`] boundary map). Pointer reads unchanged.
-unsafe fn ctt_session_new_impl(
-    net_buf: *const u8,
-    net_len: u32,
-    out_handle: *mut u64,
-) -> i32 {
+unsafe fn ctt_session_new_impl(net_buf: *const u8, net_len: u32, out_handle: *mut u64) -> i32 {
     if net_buf.is_null() || out_handle.is_null() {
         return ERR_NULL_PTR;
     }
@@ -716,11 +712,7 @@ pub unsafe extern "C" fn ctt_session_attach(
 }
 
 /// Body of [`ctt_session_attach`] (v2 errno values; see [`ctt_session_new_impl`]).
-unsafe fn ctt_session_attach_impl(
-    handle: u64,
-    stream_ptr: *const u8,
-    stream_len: u32,
-) -> i32 {
+unsafe fn ctt_session_attach_impl(handle: u64, stream_ptr: *const u8, stream_len: u32) -> i32 {
     if stream_ptr.is_null() {
         return ERR_NULL_PTR;
     }
@@ -777,12 +769,7 @@ pub unsafe extern "C" fn ctt_session_step(
 }
 
 /// Body of [`ctt_session_step`] (v2 errno values; see [`ctt_session_new_impl`]).
-unsafe fn ctt_session_step_impl(
-    handle: u64,
-    quota: u32,
-    out_status: *mut u8,
-    out_cap: u32,
-) -> i32 {
+unsafe fn ctt_session_step_impl(handle: u64, quota: u32, out_status: *mut u8, out_cap: u32) -> i32 {
     if out_status.is_null() {
         return ERR_NULL_PTR;
     }

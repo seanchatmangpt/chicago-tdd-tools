@@ -98,7 +98,7 @@ pub enum DossierWireError {
 
     /// An atomic output write failed. The real output path never holds a
     /// partial file; the tmp file is removed before this error is returned.
-    #[error("{path}: {source}{}", tmp_cleanup_note(.cleanup))]
+    #[error("{path}: {source}{}", tmp_cleanup_note(cleanup.as_deref()))]
     Write {
         /// Output path the write was targeting.
         path: String,
@@ -111,11 +111,8 @@ pub enum DossierWireError {
 
 /// Display helper rendering the tmp-cleanup suffix for
 /// [`DossierWireError::Write`].
-fn tmp_cleanup_note(cleanup: &Option<String>) -> String {
-    cleanup
-        .as_deref()
-        .map(|c| format!(" (tmp cleanup also failed: {c})"))
-        .unwrap_or_default()
+fn tmp_cleanup_note(cleanup: Option<&str>) -> String {
+    cleanup.map(|c| format!(" (tmp cleanup also failed: {c})")).unwrap_or_default()
 }
 
 /// Wire-format discriminator of a CTT-DOSSIER-v1 document.
@@ -233,7 +230,8 @@ pub fn validate_dossier_chain(records: &[ChainRecord]) -> Result<(), DossierWire
             return Err(DossierWireError::TrailerTampered { index: i });
         }
     }
-    Ok(crate::observability::receipt::Blake3ChainValidator::validate_chain(records).map_err(DossierWireError::Chain)?)
+    crate::observability::receipt::Blake3ChainValidator::validate_chain(records)
+        .map_err(DossierWireError::Chain)
 }
 
 /// Decode embedded receipt JSON values through the domain
@@ -248,9 +246,8 @@ pub fn decode_receipts(
     values
         .iter()
         .map(|v| {
-            CourtReceipt::from_json(&v.to_string()).map_err(|e| DossierWireError::ReceiptDecode {
-                message: one_line(e),
-            })
+            CourtReceipt::from_json(&v.to_string())
+                .map_err(|e| DossierWireError::ReceiptDecode { message: one_line(e) })
         })
         .collect()
 }
@@ -267,9 +264,7 @@ pub fn dossier_json(
     kid: &[u8; 8],
     signature: &[u8; SIGNATURE_LEN],
 ) -> Result<serde_json::Value, DossierWireError> {
-    let sealed_at = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)?
-        .as_secs();
+    let sealed_at = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_secs();
     let receipts_json: Vec<serde_json::Value> = receipts
         .iter()
         .map(|r| {
@@ -296,8 +291,9 @@ pub fn dossier_json(
 /// on the wrong length.
 pub fn parse_root(s: &str) -> Result<[u8; 32], DossierWireError> {
     let bytes = hex::decode(s.trim())?;
-    let out: [u8; 32] =
-        bytes.try_into().map_err(|b: Vec<u8>| DossierWireError::RootLength { got: b.len() })?;
+    let out: [u8; 32] = bytes
+        .try_into()
+        .map_err(|b: Vec<u8>| DossierWireError::RootLength { got: b.len() })?;
     Ok(out)
 }
 
@@ -308,8 +304,9 @@ pub fn parse_root(s: &str) -> Result<[u8; 32], DossierWireError> {
 /// on the wrong length.
 pub fn parse_key_id(s: &str) -> Result<[u8; 8], DossierWireError> {
     let bytes = hex::decode(s.trim()).map_err(DossierWireError::KeyIdHex)?;
-    let out: [u8; 8] =
-        bytes.try_into().map_err(|b: Vec<u8>| DossierWireError::KeyIdLength { got: b.len() })?;
+    let out: [u8; 8] = bytes
+        .try_into()
+        .map_err(|b: Vec<u8>| DossierWireError::KeyIdLength { got: b.len() })?;
     Ok(out)
 }
 
@@ -432,9 +429,10 @@ mod tests {
         std::fs::set_permissions(&dir, perms).unwrap();
 
         let err = result.expect_err("write into read-only dir must fail");
+        let msg = err.to_string();
         assert!(
-            err.contains(out.to_string_lossy().as_ref()) || err.contains("tmp"),
-            "typed error must name the path: {err}"
+            msg.contains(out.to_string_lossy().as_ref()) || msg.contains("tmp"),
+            "typed error must name the path: {msg}"
         );
         assert!(!out.exists(), "no output file may appear on failure");
         assert!(!dir.join("dossier.bin.tmp").exists(), "no .tmp residue on failure");
@@ -643,7 +641,8 @@ mod tests {
             "precondition: the domain validator alone misses a trailer tamper on the last record"
         );
         let err = validate_dossier_chain(&chain).expect_err("trailer tamper must be refused");
-        assert!(err.contains("zero trailer"), "typed trailer error: {err}");
+        let msg = err.to_string();
+        assert!(msg.contains("zero trailer"), "typed trailer error: {msg}");
     }
 
     #[test]
@@ -651,7 +650,8 @@ mod tests {
         let mut chain = wire_chain();
         chain[0].trailer[15] ^= 0x80;
         let err = validate_dossier_chain(&chain).expect_err("mid-chain trailer tamper refused");
-        assert!(err.contains("record 0"), "error names the tampered record: {err}");
+        let msg = err.to_string();
+        assert!(msg.contains("record 0"), "error names the tampered record: {msg}");
     }
 
     #[test]

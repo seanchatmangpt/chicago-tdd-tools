@@ -565,10 +565,39 @@ GAPS (disclosed, not certifiable at HEAD):
 - DoD §3.4: anti-replay nullifier windows RED-NOT-LANDED (epoch-scoped
   keyed-BLAKE3 set + LedgerError::ReplayDetected = spec item V3,
   sequenced after RL2; closest analog = stored_hash replay refusal).
-- DoD §4.3: benchmark VARIANCE ≤2.5% has no standing variance court
-  (benches compile; no gate asserts the ceiling).
+- DoD §4.3 (DESCOPED per lane design, variance REPORTED not GATED):
+  criterion reports per-bench std-dev/CI (madr) in target/criterion; the
+  ≤2.5% ceiling is a release-runbook comparison against
+  benches/receipts/receipt_chain-v26.9.26.json on a quiet machine. The
+  only automated bound is the deliberate ~100x-headroom tripwire
+  (<2s debug, tests/dependency_lock_guard.rs:391) — a tick-variance gate
+  would be the nfr1 flake class (aarch64 ticks ARE wall-clock,
+  performance.rs:16-19). No standing variance court by design.
 OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   (current NATO_STANAG_4107_DOSSIER.json sealed 06:44, predates HEAD —
   re-run just emit-dossier after affidavit main push); v26.10.12 seal
   tag (existing tag points at 4d451c7, NOT HEAD); crates.io publish
   (proc_macros first); affidavit main push (unblocks nightly CI).
+
+## W46 REGISTER (2026-10-12, waves-38-45 window + typed-error wave)
+
+- LANDED: CHANGELOG waves-38-45 addendum (with skeptic corrections: the W43
+  message's ArityBelowMinimum-claim was pre-existing work — recorded here as
+  the fourth instance of the claimed-vs-landed class; the d016764 gitignore
+  rationalization was self-contradictory until W44); QUICK_GUIDE placed in
+  the Application Guide (reference/quick-guide.md copy + SUMMARY entry,
+  canonical source noted — drift check is a registered follow-up);
+  cross-crate ABI pin cfg-mirrored (the one REAL DoD-2a defect; the other 11
+  "failures" were by-design fixture-self-test oracles, disclosed at
+  crates/chicago-claims/Cargo.toml:27-36); spec-harness/playground pins
+  bumped to 26.10.12; guest README Build section gains the splice steps;
+  CI guest job gains guest-splice + guest-verify before guest-audit (the
+  uploaded artifact is now attested, and the audit inspects the spliced
+  artifact); Cargo.toml guest-abi-v1 comment corrected (remap IS covered —
+  the "no errno remap" text contradicted landed code).
+- TYPED-ERROR WAVE (DoD §2.3): swarm done (SwarmError, 43/0);
+  dossier_wire done (DossierWireError 14 variants, 9/0 + 14/0);
+  receipt/builders lane in flight. Remaining Result<_,String> surface
+  (governance, otel/weaver, testing, reproducible, loader) = next wave.
+- Application-guide tracked book/ artifact deleted (29.5k lines of build
+  output out of the repo).

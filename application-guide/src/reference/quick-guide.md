@@ -2,13 +2,13 @@
 
 > NOTE: canonical source is `docs/getting-started/QUICK_GUIDE.md`; this copy is the mdbook-rendered edition (added to the Application Guide SUMMARY).
 
-Essential patterns for 80% of common use cases. See [User Guide](USER_GUIDE.md) for comprehensive coverage.
+Essential patterns for 80% of common use cases. See User Guide (`docs/getting-started/USER_GUIDE.md`) for comprehensive coverage.
 
 **Quick Navigation**:
-- **New user?** Start with [Getting Started](GETTING_STARTED.md)
-- **Need API details?** See [API Reference](../reference/API_REFERENCE.md)
-- **Want architecture?** See [Architecture](../reference/ARCHITECTURE.md)
-- **Complete guide?** See [User Guide](USER_GUIDE.md)
+- **New user?** Start with Getting Started (`docs/getting-started/GETTING_STARTED.md`)
+- **Need API details?** See [API Reference](../../../docs/reference/API_REFERENCE.md)
+- **Want architecture?** See [Architecture](../../../docs/reference/ARCHITECTURE.md)
+- **Complete guide?** See User Guide (`docs/getting-started/USER_GUIDE.md`)
 
 ## Test Macros
 
@@ -548,15 +548,15 @@ orchestrator.submit_plan(plan);
 let suggested = orchestrator.suggest_tests_for_change(&["module::changed"]);
 ```
 
-**See**: [Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md) for complete documentation.
+**See**: [Hyper-Advanced Guide](../../../docs/features/HYPER_ADVANCED_MICROKERNEL.md) for complete documentation.
 
 ## Next Steps
 
-- **[User Guide](USER_GUIDE.md)** - Complete usage guide
-- **[API Reference](../reference/API_REFERENCE.md)** - Full API documentation
-- **[Getting Started](GETTING_STARTED.md)** - Quick start guide
-- **[Architecture](../reference/ARCHITECTURE.md)** - Design principles and patterns
-- **[Examples](../../examples/)** - Working code examples
-- **[Hyper-Advanced Guide](../features/HYPER_ADVANCED_MICROKERNEL.md)** - Complete μ-kernel verification substrate
+- **User Guide (`docs/getting-started/USER_GUIDE.md`)** - Complete usage guide
+- **[API Reference](../../../docs/reference/API_REFERENCE.md)** - Full API documentation
+- **Getting Started (`docs/getting-started/GETTING_STARTED.md`)** - Quick start guide
+- **[Architecture](../../../docs/reference/ARCHITECTURE.md)** - Design principles and patterns
+- **[Examples](../../../examples/)** - Working code examples
+- **[Hyper-Advanced Guide](../../../docs/features/HYPER_ADVANCED_MICROKERNEL.md)** - Complete μ-kernel verification substrate
 
 > **Short-term skip?** Export `WEAVER_ALLOW_SKIP=1` to bypass Weaver tests explicitly. Without it, missing prerequisites cause a panic to enforce dogfooding.

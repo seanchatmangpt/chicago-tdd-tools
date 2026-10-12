@@ -158,7 +158,8 @@ fn law02b_trailer_tamper_on_last_record_is_refused_by_dossier_chain_validation()
         "precondition: trait-level chain replay misses trailer tamper on the last record"
     );
     let err = validate_dossier_chain(&records).expect_err("trailer tamper must be refused");
-    assert!(err.contains("zero trailer"), "typed trailer error: {err}");
+    let msg = err.to_string();
+    assert!(msg.contains("zero trailer"), "typed trailer error: {msg}");
 }
 
 #[test]
@@ -168,7 +169,8 @@ fn law02b_mid_chain_trailer_tamper_names_the_tampered_record() {
     let mut records = chain_records_of(3);
     records[0].trailer[15] ^= 0x80;
     let err = validate_dossier_chain(&records).expect_err("mid-chain trailer tamper refused");
-    assert!(err.contains("record 0"), "error names the tampered record: {err}");
+    let msg = err.to_string();
+    assert!(msg.contains("record 0"), "error names the tampered record: {msg}");
 }
 
 #[test]
@@ -818,9 +820,7 @@ fn wire_fuzz_10k_single_byte_mutations_all_refused_typed() {
             "fuzz-court",
         )
         .unwrap();
-        ChainedCourtReceipt::from_receipt(&body)
-            .expect("chain record")
-            .encode()
+        ChainedCourtReceipt::from_receipt(&body).expect("chain record").encode()
     }
 
     let lawful = build_lawful_record();

@@ -3,8 +3,8 @@
 //! Coordinates swarm members, manages task distribution, and ensures
 //! deterministic consensus across the swarm.
 
-use super::member::SwarmMember;
 use super::member::SwarmError;
+use super::member::SwarmMember;
 use super::task::{TaskQueue, TaskReceipt, TaskRequest};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

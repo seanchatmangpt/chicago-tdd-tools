@@ -33,7 +33,7 @@ impl std::fmt::Display for MemberState {
     }
 }
 
-/// Typed error for swarm task-assignment channels (DoD §2.3)
+/// Typed error for swarm task-assignment channels (`DoD` §2.3)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SwarmError {
     /// Member is at its task capacity

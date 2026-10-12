@@ -105,29 +105,23 @@ fn read_leb128_u32(bytes: &[u8], pos: usize) -> Option<(u32, usize)> {
 /// Locates every data section (id 11) body range in the wasm binary.
 fn find_data_sections(bytes: &[u8]) -> Result<Vec<(usize, usize)>, SpliceError> {
     if bytes.len() < 8 || bytes[..4] != WASM_MAGIC {
-        return Err(SpliceError::NotWasm {
-            reason: "missing \\0asm magic".into(),
-        });
+        return Err(SpliceError::NotWasm { reason: "missing \\0asm magic".into() });
     }
     if &bytes[4..8] != &[0x01, 0x00, 0x00, 0x00] {
-        return Err(SpliceError::NotWasm {
-            reason: "unsupported wasm version".into(),
-        });
+        return Err(SpliceError::NotWasm { reason: "unsupported wasm version".into() });
     }
     let mut sections = Vec::new();
     let mut pos = 8usize;
     while pos < bytes.len() {
-        let (id, after_id) =
-            read_leb128_u32(bytes, pos).ok_or(SpliceError::Unparseable { reason: "truncated section id".into() })?;
+        let (id, after_id) = read_leb128_u32(bytes, pos)
+            .ok_or(SpliceError::Unparseable { reason: "truncated section id".into() })?;
         let (size, after_size) = read_leb128_u32(bytes, after_id)
             .ok_or(SpliceError::Unparseable { reason: "truncated section size".into() })?;
         let start = after_size;
         let end = start
             .checked_add(size as usize)
             .filter(|&e| e <= bytes.len())
-            .ok_or(SpliceError::Unparseable {
-                reason: format!("section id {id} overruns file"),
-            })?;
+            .ok_or(SpliceError::Unparseable { reason: format!("section id {id} overruns file") })?;
         if id as u8 == SECTION_DATA {
             sections.push((start, end));
         }
@@ -138,32 +132,39 @@ fn find_data_sections(bytes: &[u8]) -> Result<Vec<(usize, usize)>, SpliceError> 
 
 /// Parses active data segments of one data section body, returning
 /// `(file_offset_of_payload, payload)` pairs.
-fn active_segment_payloads(bytes: &[u8], body: (usize, usize)) -> Result<Vec<(usize, &[u8])>, SpliceError> {
+fn active_segment_payloads(
+    bytes: &[u8],
+    body: (usize, usize),
+) -> Result<Vec<(usize, &[u8])>, SpliceError> {
     let (mut pos, end) = body;
     let (count, after) = read_leb128_u32(bytes, pos)
         .ok_or(SpliceError::Unparseable { reason: "truncated segment count".into() })?;
     pos = after;
     let mut payloads = Vec::new();
     for seg in 0..count {
-        let (flags, after) = read_leb128_u32(bytes, pos)
-            .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: truncated flags") })?;
+        let (flags, after) = read_leb128_u32(bytes, pos).ok_or(SpliceError::Unparseable {
+            reason: format!("segment {seg}: truncated flags"),
+        })?;
         pos = after;
         // Active with flat memory index (0) or explicit memidx (2). Passive
         // (1) and other forms carry no static slot; skip their bodies safely.
         if flags == 0 {
             // offset expr follows directly
         } else if flags == 2 {
-            let (_memidx, after) = read_leb128_u32(bytes, pos)
-                .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: truncated memidx") })?;
+            let (_memidx, after) = read_leb128_u32(bytes, pos).ok_or(SpliceError::Unparseable {
+                reason: format!("segment {seg}: truncated memidx"),
+            })?;
             pos = after;
         } else {
             // Passive/declarative: payload length-prefixed, not static data.
-            let (len, after) = read_leb128_u32(bytes, pos)
-                .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: truncated passive length") })?;
-            pos = after
-                .checked_add(len as usize)
-                .filter(|&p| p <= end)
-                .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: passive payload overruns section") })?;
+            let (len, after) = read_leb128_u32(bytes, pos).ok_or(SpliceError::Unparseable {
+                reason: format!("segment {seg}: truncated passive length"),
+            })?;
+            pos = after.checked_add(len as usize).filter(|&p| p <= end).ok_or(
+                SpliceError::Unparseable {
+                    reason: format!("segment {seg}: passive payload overruns section"),
+                },
+            )?;
             continue;
         }
         // Minimal const-expr parse: i32.const/i64.const <sleb> end, or
@@ -188,8 +189,10 @@ fn active_segment_payloads(bytes: &[u8], body: (usize, usize)) -> Result<Vec<(us
                 pos = i;
             }
             0x23 => {
-                let (_, after) = read_leb128_u32(bytes, pos)
-                    .ok_or(SpliceError::UnsupportedSegment { reason: format!("segment {seg}: truncated global index") })?;
+                let (_, after) =
+                    read_leb128_u32(bytes, pos).ok_or(SpliceError::UnsupportedSegment {
+                        reason: format!("segment {seg}: truncated global index"),
+                    })?;
                 pos = after;
             }
             other => {
@@ -207,13 +210,13 @@ fn active_segment_payloads(bytes: &[u8], body: (usize, usize)) -> Result<Vec<(us
             });
         }
         pos += 1;
-        let (len, after) = read_leb128_u32(bytes, pos)
-            .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: truncated data length") })?;
+        let (len, after) = read_leb128_u32(bytes, pos).ok_or(SpliceError::Unparseable {
+            reason: format!("segment {seg}: truncated data length"),
+        })?;
         let payload_start = after;
-        let payload_end = payload_start
-            .checked_add(len as usize)
-            .filter(|&p| p <= end)
-            .ok_or(SpliceError::Unparseable { reason: format!("segment {seg}: payload overruns section") })?;
+        let payload_end = payload_start.checked_add(len as usize).filter(|&p| p <= end).ok_or(
+            SpliceError::Unparseable { reason: format!("segment {seg}: payload overruns section") },
+        )?;
         payloads.push((payload_start, &bytes[payload_start..payload_end]));
         pos = payload_end;
     }
@@ -291,7 +294,8 @@ fn splice(path: &str, bytes: &[u8]) -> Result<String, SpliceError> {
 /// `BLAKE3(artifact with w zeroed) == w` holds. A corrupted or unspliced
 /// artifact therefore refuses typed (no matching window) instead of passing.
 fn verify(path: &str, spliced_len_before: usize) -> Result<String, SpliceError> {
-    let bytes = fs::read(path).map_err(|source| SpliceError::ArtifactRead { path: path.to_string(), source })?;
+    let bytes = fs::read(path)
+        .map_err(|source| SpliceError::ArtifactRead { path: path.to_string(), source })?;
     if find_slot(&bytes).is_ok() {
         // An exact-32 zero run still present: the artifact was never spliced.
         return Err(SpliceError::ZeroDigest);
@@ -425,7 +429,8 @@ mod tests {
         let zeroed = zeroed_copy(&wasm, 8 + 1 + 1 + 1 + 1 + 1 + 1 + 2 + 2);
         let zpath = dir.join("zeroed.wasm");
         fs::write(&zpath, &zeroed).unwrap(); // JUSTIFICATION: test code only
-        match verify(zpath.to_str().unwrap(), zeroed.len()) { // JUSTIFICATION: test code only
+        match verify(zpath.to_str().unwrap(), zeroed.len()) {
+            // JUSTIFICATION: test code only
             Err(SpliceError::ZeroDigest) => {}
             other => panic!("expected ZeroDigest, got {other:?}"),
         }

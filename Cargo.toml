@@ -188,7 +188,7 @@ default = ["logging"]
 mutation-testing = [] # Enable mutation testing (no external dependencies)
 async = ["dep:tokio"] # Enable async performance measurement utilities (tokio runtime)
 benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
-guest-abi-v1 = [] # Conformance guest: legacy ABI v1 surface (probe -> 1, 34-byte seal preimage; no errno remap)
+guest-abi-v1 = [] # Conformance guest: legacy ABI v1 surface (probe -> 1, 34-byte seal preimage; errno remap 14/15/16 -> 11)
 
 # Individual testing features
 # Property-based testing: Random test generation, finding edge cases

@@ -65,18 +65,19 @@ else
 fi
 echo "" >&2
 
-# Step 2: Validate build commands
+# Step 2: Validate build commands (docs/archive/ is HISTORICAL — exempt)
 echo "2️⃣  Checking build commands..." >&2
 BUILD_ERRORS=0
 while IFS= read -r file; do
+  case "$file" in *docs/archive/*) continue ;; esac
   # Check for direct cargo commands in code blocks (should use just)
   # Look for cargo test, cargo check, cargo build, cargo run, cargo publish in code blocks
-  if grep -qE '```(bash|sh|shell|text|toml).*\ncargo (test|check|build|run|publish)' "$file" 2>/dev/null; then
+  if awk '/^```(bash|sh|shell)/{infence=1;next}/^```/{infence=0}infence && /(^|[[:space:]])cargo (test|check|build|run|publish)([[:space:]]|$)/{found=1}END{exit !found}' "$file" 2>/dev/null; then
     # Allow exceptions: cargo doc, cargo audit, cargo outdated, cargo install
     # Also allow in comments explaining what NOT to do
     if ! grep -qE '(just |cargo (doc|audit|outdated|install)|should use|do not use|incorrect|wrong)' "$file" 2>/dev/null; then
       # Check if it's actually in a code example (not just mentioned)
-      if grep -qE '```(bash|sh|shell).*\ncargo (test|check|build|run|publish)' "$file" 2>/dev/null; then
+      if awk '/^```(bash|sh|shell)/{infence=1;next}/^```/{infence=0}infence && /(^|[[:space:]])cargo (test|check|build|run|publish)([[:space:]]|$)/{found=1}END{exit !found}' "$file" 2>/dev/null; then
         error "Direct cargo command in $file: should use 'just' instead"
         BUILD_ERRORS=$((BUILD_ERRORS + 1))
       fi

@@ -1006,6 +1006,7 @@ chicago-tdd-tools = {
         "ledger",                    # strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws
         "nato",                      # NATO assurance courts + ML-DSA-65 dossier sealing (implies ledger)
         "wasm-guest",                # zero-import cdylib WASM guest (implies conformance; guest telemetry also needs ocel-ingest)
+        "guest-abi-v1",              # legacy ABI v1 shim (probe -> 1, 34-byte seal preimage, errno 14/15/16 -> 11)
         "all-assurance",             # umbrella: conformance + ledger + nato
         "ocel-ingest-json",          # + OCEL 2.0 JSON import (implies ocel-ingest)
         "ocel-ingest-xml",           # + roundtrip-first OCEL XML reader (implies ocel-ingest)

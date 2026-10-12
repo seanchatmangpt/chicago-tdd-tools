@@ -40,10 +40,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub enum ReceiptJsonError {
     /// JSON serialization of the receipt failed.
     #[error("Serialization error: {0}")]
-    Serialize(#[from] serde_json::Error),
+    Serialize(serde_json::Error),
     /// JSON deserialization of the receipt failed.
     #[error("Deserialization error: {0}")]
-    Deserialize(#[from] serde_json::Error),
+    Deserialize(serde_json::Error),
 }
 
 /// Test receipt: cryptographically verifiable record of test execution

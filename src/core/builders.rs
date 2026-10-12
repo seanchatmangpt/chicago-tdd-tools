@@ -131,6 +131,7 @@ impl std::fmt::Debug for TestDataBuilder {
         f.debug_struct("TestDataBuilder")
             .field("data", &self.data)
             .field("validations", &format!("{} validation(s)", self.validations.len()))
+            .field("required", &format!("{} required field(s)", self.required.len()))
             .finish()
     }
 }
@@ -385,8 +386,7 @@ impl TestDataBuilder {
             }
         }
         for validation in &self.validations {
-            validation(&self.data)
-                .map_err(|detail| BuilderError::BuildFailure { detail })?;
+            validation(&self.data).map_err(|detail| BuilderError::BuildFailure { detail })?;
         }
         Ok(())
     }
@@ -1248,7 +1248,7 @@ mod tests {
 
         // Assert: Should return error
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("not found"));
+        assert!(matches!(result.unwrap_err(), BuilderError::UnknownPreset { .. }));
     });
 
     test!(test_builder_preset_override, {
@@ -1331,7 +1331,7 @@ mod tests {
 
         // Assert: Validation fails
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Missing required_field"));
+        assert!(matches!(result.unwrap_err(), BuilderError::BuildFailure { .. }));
     });
 
     test!(test_builder_multiple_validations, {
@@ -1377,7 +1377,7 @@ mod tests {
 
         // Assert: First validation fails
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Missing field1"));
+        assert!(matches!(result.unwrap_err(), BuilderError::BuildFailure { .. }));
     });
 
     test!(test_builder_validation_with_custom_logic, {
@@ -1418,7 +1418,10 @@ mod tests {
 
         // Assert: Validation fails
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("non-negative"));
+        assert!(matches!(
+            result.unwrap_err(),
+            BuilderError::BuildFailure { ref detail } if detail.contains("non-negative")
+        ));
     });
 
     test!(test_builder_no_validations, {

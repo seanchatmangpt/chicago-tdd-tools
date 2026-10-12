@@ -9,6 +9,9 @@ license = "MIT"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+guest-abi-v1 = ["chicago-tdd-tools/guest-abi-v1"]
+
 [dependencies]
 chicago-tdd-tools = { path = "../..", default-features = false, features = [
   "wasm-guest",

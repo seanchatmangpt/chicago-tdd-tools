@@ -44,6 +44,7 @@ passing silently.
 
 ```bash
 cd /Users/sac/chicago-tdd-tools
+# NOTE: this suite has no just recipe (feature-specific filter); run via cargo:
 cargo test --test merger_conformance_tests \
   --no-default-features --features conformance,ocel-ingest-json -- phase7
 ```

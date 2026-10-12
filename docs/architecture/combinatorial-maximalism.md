@@ -7,6 +7,7 @@ The source of truth is `ontology.ttl`, `O.star.toml`, `ggen.toml`, and `template
 The read-only CLI adapter is:
 
 ```bash
+# NOTE: generated-projection runner (no just recipe); run via cargo:
 cargo run --bin ctdd_combinatorial_plan -- --list
 cargo run --bin ctdd_combinatorial_plan -- profile.core-local
 cargo run --bin ctdd_combinatorial_plan -- profile.external-integration --external
