@@ -41,6 +41,10 @@
 //! birthday bound of ~302 still stands for non-sequential inputs. Practical
 //! hard limit: keep distinct named objects under ~100 at the packed tier, or
 //! use the full-fidelity `OcelLog` tier.
+//!
+//! Measured adversarial thresholds (2026-10-11): sequential `o#####` 142,
+//! 16-char shared-prefix 152, unicode/case-variant 239 — the ~100 guidance is
+//! under-protective for structured names.
 #![cfg(feature = "ocel-ingest")]
 
 /// Typed refusal: two distinct names share a 16-bit blake3-truncated digest.
