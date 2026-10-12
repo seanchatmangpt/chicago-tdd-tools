@@ -376,3 +376,24 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
 - CLOSED (W26): weaver_macro_tests wired into test-integration;
   teamwork_preview_integration.rs deleted (tautological self-test); 3 orphan
   scripts deleted; mcp stale pre-rename snapshot regenerated.
+
+## W27 REGISTER ADDITIONS (wave-27)
+- CLOSED (W27): net.rs packed pre/post window (16 places) now refused typed
+  at compile — was a debug panic / release silent-wrap (d4ee667).
+- CLOSED (W27): docs/README 6 mis-statuses; API_REFERENCE missing
+  cli_proof/sector_stacks sections + 3 submodule entries (d4ee667).
+- CLOSED (W27): strata-side Erlang N08/N12/N14/N15 claim corrected
+  (19de2bc). CHANGELOG/RELEASE_NOTES/API_REFERENCE "diverges from the
+  declared model" discovery overclaim still open (audit W27).
+- CLOSED (W27): docs/OCEL.md ".ocel.jsonl export" claim removed — no such
+  exporter exists (XML exporter lives in strata_protocol).
+- NOTE (W27): commit d4ee667 additionally removed the tracked
+  cookbook/book/ mdbook build artifacts (80 files, regenerable via
+  `just cookbook-build`) — disclosed here; not in that commit's message.
+- QUEUED (operator): docs/latex/chicago-tdd-tools-formalization.tex
+  \includes 4 nonexistent chapters + a nonexistent appendix/ dir — the
+  paper does not compile; regenerate-paper.yml is an admitted stub.
+- QUEUED (small): tests/README.md:46 still lists the deleted
+  teamwork_preview_integration.rs; ARCHITECTURE.md module tree omits
+  ~15 modules (core/testing/validation/observability/swarm submodules);
+  swarm coordinator find_best_member doc overstates sector semantics.
