@@ -238,8 +238,9 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   `ml_dsa65_from_seed`/`slh_dsa128s_from_seed` remain infallible (all-zero/
   all-ones/near-degenerate seeds reproduce valid keys, runtime-proven).
   HELD: ml-dsa verify 12,373-case fuzz, 0 accept-on-malformed.
-- **Disposition**: FIXED (R37, commit 1a16e25) - forward-port
-  both PQC `from_seed` paths); dual-verify claim to be reworked (feature-gated
+- **Disposition**: FIXED (R37, commit `1a16e25` in `/Users/sac/affidavit`) -
+  forward-port degenerate-seed screening to both PQC `from_seed` paths;
+  dual-verify claim to be reworked (feature-gated
   runtime verify-vs-verify over KAT vectors) or retracted in docs.
 
 ### SX6 - Module-identity-blind seal preimage; out-pointer trust
@@ -251,7 +252,7 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   data.
 - **Disposition**: PARTIAL - V5 envelope landed `2c80a9e` (32B module-digest
   slot + M2 falsifier; placeholder until build-time splice); out-pointer
-  re-verify landed `532f38a`.; re-verify out-pointers at replay.
+  re-verify landed `532f38a`; re-verify out-pointers at replay.
 
 ### SX7 - Contradictory covenants admitted; authority bypasses SHACL
 
