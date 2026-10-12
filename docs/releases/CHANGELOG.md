@@ -298,7 +298,7 @@ W-ABI2); strata rebase (`59ed80c`); 5 (`451f4a8`); 6 (`b8dac24` +
   ns-per-cycle (same clock the measured leg times with). Receipts: nato
   lib 853/0, nato-courts-full 18/0, clippy clean.
 - **Merger/guests errno ABI**: negative leaf codes remapped to positive ABI
-  errnos (`ERR_LENGTH`/`ERR_BAD_SCALE`/`ERR_NO_SOURCES`); `expect` replaced
+  errnos (`ERR_LENGTH`/`ERR_BAD_SCALE`/`ERR_NO_SOLUTION`); `expect` replaced
   with typed `ERR_TRUNCATED`; clippy clean.
 - **Guest telemetry R44 bounds**: `write_event_words` routed through the R44
   `out_span_oob` law (`ERR_CAP_TOO_SMALL`).
