@@ -36,7 +36,7 @@ In Chicago TDD, observability is part of **observable behavior**. Pattern 5 (Rea
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["observability-full"] }
 ```
 
 This enables:

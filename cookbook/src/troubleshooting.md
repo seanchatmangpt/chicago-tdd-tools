@@ -442,21 +442,21 @@ Using features without enabling them in Cargo.toml.
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.3.0", features = ["testing-extras"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["testing-extras"] }
 ```
 
 **If test uses Pattern 5 (Real Collaborators):**
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.3.0", features = ["testing-full"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["testing-full"] }
 ```
 
 **If test uses observability:**
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["observability-full"] }
 ```
 
 **Always test both ways:**

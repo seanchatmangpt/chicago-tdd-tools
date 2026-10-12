@@ -222,7 +222,7 @@ impl OrderBuilder {
 // src/core/macros/test.rs
 const TIMEOUT_SECS: u64 = 30;
 
-// src/validation/guards.rs (forgot this uses same timeout)
+// the guards validation layer (src/validation/guards/) (forgot this uses same timeout)
 const TIMEOUT_SECS: u64 = 30;  // Will diverge!
 ```
 
@@ -231,7 +231,7 @@ const TIMEOUT_SECS: u64 = 30;  // Will diverge!
 // src/core/macros/test.rs (single source)
 pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
-// src/validation/guards.rs (imports)
+// the guards validation layer (src/validation/guards/) (imports)
 use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 ```
 
