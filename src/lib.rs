@@ -70,6 +70,10 @@
 //! - `jtbd`: Jobs To Be Done validation framework (validates code accomplishes intended purpose)
 //! - `performance`: RDTSC benchmarking and tick measurement
 //!
+//! Assurance surface (feature-gated): `conformance` (POWL/PN64 replay),
+//! `ledger` (CTRT wire + ML-DSA-65 sealing), `nato` (20-court matrix).
+//! Also: `cli_proof`, `swarm`, `sector_stacks`, `operator_registry`.
+//!
 //! ### Telemetry & Observability (`observability`)
 //! - `otel`: OTEL span/metric validation (requires `otel` feature)
 //! - `weaver`: Weaver live validation integration (requires `weaver` feature)

@@ -539,7 +539,7 @@ const fn seal_preimage(
 // TODO(plan W-ABI2 item 5, shim tier): a `guest-abi-v1` feature compiling
 // the v1 layout/errno semantics (probe -> 1) is not yet wired; until it is,
 // v1 consumers must migrate or consume the shim tier. Related pin:
-// crates/ctt-wasm-guest/src/lib.rs still asserts probe == 1 (cross-crate
+// crates/ctt-wasm-guest/src/lib.rs asserts probe == 2 (ABI v2) (cross-crate
 // migration, outside this lane).
 #[no_mangle]
 #[must_use]
