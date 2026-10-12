@@ -97,9 +97,13 @@ impl OperationChain {
     /// Move to next step
     #[allow(clippy::missing_const_for_fn)] // Cannot be const: mutates self
     pub fn advance(&mut self) -> bool {
-        if self.steps.len() == 0 || self.current_step < self.steps.len().checked_sub(1).unwrap_or(0)
-        {
-            // empty chain: nothing to advance (W27 underflow fix)
+        if self.steps.is_empty() {
+            // W27 fix: an empty chain is vacuously complete — advancing must
+            // mark completion and return false (was a usize underflow panic).
+            self.is_completed = true;
+            return false;
+        }
+        if self.current_step < self.steps.len() - 1 {
             self.current_step += 1;
             true
         } else {
