@@ -80,8 +80,8 @@ let exec_result = result.expect("Exec result should be available after assert_ok
 
 ### Verification Plan
 
-1. **Compilation**: `cargo make check` - Should compile successfully
-2. **Tests**: `cargo make test` - All tests should pass
+1. **Compilation**: `just check` - Should compile successfully
+2. **Tests**: `just test` - All tests should pass
 3. **Improvement**: Error message is more descriptive and consistent
 
 ---
@@ -106,7 +106,7 @@ let exec_result = result.expect("Exec result should be available after assert_ok
 
 ### Step 4: Check (Verify) - COMPLETED
 
-1. ✅ **Compilation**: `cargo make check` - Compiles successfully
+1. ✅ **Compilation**: `just check` - Compiles successfully
 2. ✅ **Linting**: No linter errors
 3. ✅ **Improvement**: Error message is more descriptive and consistent
    - Before: `"Exec should succeed"` (generic)

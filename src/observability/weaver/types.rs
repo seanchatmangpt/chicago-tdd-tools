@@ -10,7 +10,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found in PATH
-    #[error("🚨 Weaver binary not found: {0}\n   ⚠️  STOP: Cannot proceed with Weaver operations\n   💡 FIX: Run cargo make weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
+    #[error("🚨 Weaver binary not found: {0}\n   ⚠️  STOP: Cannot proceed with Weaver operations\n   💡 FIX: Run just weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound(String),
     /// Weaver health check failed
     #[error("⚠️  Weaver health check failed: {0}\n   ⚠️  WARNING: Weaver may not be responding correctly")]
@@ -161,7 +161,7 @@ impl WeaverLiveCheck {
             {
                 if let Err(e) = Self::download_weaver_runtime() {
                     return Err(WeaverValidationError::BinaryNotFound(format!(
-                        "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases ({e})."
+                        "Weaver binary not found. Run just weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases ({e})."
                     )));
                 }
                 // Retry after download
@@ -170,7 +170,7 @@ impl WeaverLiveCheck {
             #[cfg(not(feature = "weaver"))]
             {
                 Err(WeaverValidationError::BinaryNotFound(
-                    "Weaver binary not found. Run cargo make weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases".to_string()
+                    "Weaver binary not found. Run just weaver-bootstrap. Manual fallback: cargo install weaver or download from https://github.com/open-telemetry/weaver/releases".to_string()
                 ))
             }
         }
@@ -218,7 +218,7 @@ impl WeaverLiveCheck {
         // Check 1: Path exists
         if !registry_path.exists() {
             return Err(format!(
-                "🚨 Registry path does not exist: {}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run cargo make weaver-bootstrap",
+                "🚨 Registry path does not exist: {}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run just weaver-bootstrap",
                 registry_path.display()
             ));
         }
@@ -545,7 +545,7 @@ impl WeaverLiveCheck {
         cmd.spawn()
             .map_err(|e| {
                 if e.kind() == std::io::ErrorKind::NotFound {
-                    "🚨 Weaver binary not found in PATH. Run cargo make weaver-bootstrap (installs CLI locally) or cargo install weaver".to_string()
+                    "🚨 Weaver binary not found in PATH. Run just weaver-bootstrap (installs CLI locally) or cargo install weaver".to_string()
                 } else {
                     format!("Failed to start Weaver live-check: {e}. Ensure Weaver is installed and in PATH.")
                 }

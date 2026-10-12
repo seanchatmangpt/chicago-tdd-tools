@@ -88,14 +88,14 @@ Status: ✅ CI PASSING
 **Weaver**: `src/observability/weaver/mod.rs` - Skip by default, opt-in with `WEAVER_REQUIRE_TEST=1`  
 **Features**: Feature flags skip test modules (`testcontainers`, `weaver`, etc.)
 
-**Tasks**: `cargo make test-unit` (always safe) | `cargo make test-integration` (needs Docker) | `cargo make test-all`
+**Tasks**: `just test-unit` (always safe) | `just test-integration` (needs Docker) | `just test-all`
 
 ---
 
 ## How to Run Tests
 
-- **CI/Standard**: `cargo make test-unit` → 289/289 tests pass (no external deps)
-- **Integration**: `cargo make test-integration` → Requires Docker
+- **CI/Standard**: `just test-unit` → 289/289 tests pass (no external deps)
+- **Integration**: `just test-integration` → Requires Docker
 - **Weaver**: `WEAVER_REQUIRE_TEST=1 cargo test` → Opt-in for weaver tests
 - **Default**: `cargo test` → Weaver tests skip gracefully
 
@@ -111,7 +111,7 @@ Status: ✅ CI PASSING
 - ✅ Cross-platform ready (Linux, macOS, Windows)
 
 ### Local Development
-- ✅ `cargo make test-unit` always works
+- ✅ `just test-unit` always works
 - ✅ `cargo test` skips integration tests
 - ✅ Optional: `WEAVER_REQUIRE_TEST=1 cargo test` for full suite
 - ✅ Clear messages when tests are skipped

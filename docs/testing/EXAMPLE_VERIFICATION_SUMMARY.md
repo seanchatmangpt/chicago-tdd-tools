@@ -102,11 +102,11 @@ cargo run --example go_extra_mile --features otel,weaver
 1. ✅ Fixed all compilation errors
 2. ✅ Fixed runtime issues (testcontainers port mapping)
 3. ✅ Verified all examples work
-4. ✅ Added automated compilation check (`cargo make check-examples`)
+4. ✅ Added automated compilation check (`just check-examples`)
 
 **Prevention**: 
-- `cargo make check-examples` verifies compilation before running tests
-- `cargo make test-examples` depends on compilation check
+- `just check-examples` verifies compilation before running tests
+- `just test-examples` depends on compilation check
 - All examples now compile and run successfully
 
 ---
@@ -115,14 +115,14 @@ cargo run --example go_extra_mile --features otel,weaver
 
 **Check All Examples Compile**:
 ```bash
-cargo make check-examples
+just check-examples
 # or
 cargo check --examples --all-features
 ```
 
 **Run Example Tests**:
 ```bash
-cargo make test-examples
+just test-examples
 # or
 cargo test --examples --all-features
 ```

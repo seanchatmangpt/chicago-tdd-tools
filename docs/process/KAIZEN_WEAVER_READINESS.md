@@ -42,8 +42,8 @@ pub const DEFAULT_WEAVER_STARTUP_TIMEOUT_SECONDS: u64 = 5;
 ```
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Constant follows existing pattern
 
 ### Step 5: Act (Standardize)
@@ -100,8 +100,8 @@ pub fn is_running(&mut self) -> bool {
 **Note**: Must change signature from `&self` to `&mut self` to call `try_wait()`. This is acceptable because checking process state may mutate internal state.
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Behavior verified: Returns `false` if process exited
 
 ### Step 5: Act (Standardize)
@@ -165,8 +165,8 @@ self.process = Some(process);
 **Note**: Capturing stderr from `Child` requires more complex handling. For now, return error with exit code. Can be improved in later Kaizen.
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Behavior verified: Detects process exit immediately
 
 ### Step 5: Act (Standardize)
@@ -221,8 +221,8 @@ fn check_admin_port_ready(admin_port: u16) -> bool {
 ```
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Helper function works correctly
 
 ### Step 5: Act (Standardize)
@@ -322,8 +322,8 @@ fn wait_for_weaver_ready(
 ```
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Behavior verified: Waits for Weaver to be ready
 
 ### Step 5: Act (Standardize)
@@ -370,8 +370,8 @@ self.process = Some(process);
 ```
 
 ### Step 4: Check (Verify)
-- ✅ Code compiles (`cargo make check`)
-- ✅ Tests pass (`cargo make test`)
+- ✅ Code compiles (`just check`)
+- ✅ Tests pass (`just test`)
 - ✅ Behavior verified: Waits for Weaver before returning
 
 ### Step 5: Act (Standardize)

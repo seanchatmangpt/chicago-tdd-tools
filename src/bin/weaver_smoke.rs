@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let registry_path = PathBuf::from("registry");
     if !registry_path.exists() {
         return Err(Box::new(WeaverValidationError::RegistryNotFound(format!(
-            "{} (run cargo make weaver-bootstrap)",
+            "{} (run just weaver-bootstrap)",
             registry_path.display()
         ))));
     }

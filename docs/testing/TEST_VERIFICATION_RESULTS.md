@@ -41,7 +41,7 @@ All 3 high-priority issues have been resolved:
 
 ## Test Results
 
-### Unit Tests (cargo make test-unit)
+### Unit Tests (just test-unit)
 - ✅ **612 tests passing** (100%)
 - ✅ **0 tests failing**
 - ✅ **All tests stable and consistent**
@@ -123,7 +123,7 @@ All examples now compile without errors or warnings:
 - No changes needed ✅
 
 **Weaver Bootstrap:**
-- README correctly documents `cargo make weaver-bootstrap` requirement
+- README correctly documents `just weaver-bootstrap` requirement
 - Tests properly fail with clear error messages when not bootstrapped
 - No changes needed ✅
 

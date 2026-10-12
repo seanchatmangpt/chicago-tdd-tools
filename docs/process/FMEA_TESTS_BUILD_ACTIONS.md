@@ -108,7 +108,7 @@
 **Recommended Actions**:
 1. Add CI environment matrix (test on multiple OSes)
 2. Document required CI environment variables
-3. Add pre-CI local check: `cargo make ci-local` that simulates CI
+3. Add pre-CI local check: `just ci-local` that simulates CI
 4. Use Docker containers for local development (match CI environment)
 5. Add environment validation task to CI
 
@@ -372,8 +372,8 @@
 - `#[allow]` attributes missing where needed
 
 **Current Controls**:
-- Clippy runs in pre-commit (`cargo make pre-commit`)
-- CI enforces clippy (`cargo make lint`)
+- Clippy runs in pre-commit (`just pre-commit`)
+- CI enforces clippy (`just lint`)
 - `-D warnings` treats warnings as errors (Poka-Yoke)
 - Documentation of SPR lint standards
 

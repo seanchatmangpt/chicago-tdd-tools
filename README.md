@@ -824,7 +824,7 @@ Merkle dossier laws:
 - Typed exit codes (`LedgerExitCode`): `Ok = 0`, then per-class codes 10–19
   (`MalformedReceipt = 10`, `SchemaVersionMismatch = 11`, `ChainBroken = 12`,
   `Tampered = 13`, `AdmissionRefused = 14`, `DanglingObject = 15`,
-  `NonMonotonic = 16`, `EmptyDossier = 17`, `DigestMismatch = 18`).
+  `NonMonotonic = 16`, `EmptyDossier = 17`, `DigestMismatch = 18`, `DossierInvalid = 19`).
 
 The ledger domain surface is a pure library (typed exit codes, chain/Merkle
 laws, dossier sealing); CLI verbs live in the external `affi` binary
@@ -1209,7 +1209,7 @@ just build-release   # Optimized binary
 **Conformance, Ledger & NATO Assurance (v26.10.11)**:
 
 - 📋 **POWL Conformance Checking** (`conformance`) — fail-closed POWL model loading, cooperative `step_budget` replay over OCEL64 event words, and typed deviation reports (`VerbMismatch`, `NotEnabled`, `ForbiddenBit`, `OutOfOrder`, `Unfinished`).
-- 🧾 **Court-Receipt Ledger** (`ledger`) — strict 320/352-byte wire records with BLAKE3 chain + Merkle dossier laws, with typed exit codes 10–18 (pure library; CLI verbs live in the external
+- 🧾 **Court-Receipt Ledger** (`ledger`) — strict 320/352-byte wire records with BLAKE3 chain + Merkle dossier laws, with typed exit codes 10–19 (pure library; CLI verbs live in the external
 `affi` binary per the sovereignty split).
 - 🛡️ **NATO Court Matrix** (`nato`) — 20 positive-control-gated courts (N01–N20) with ML-DSA-65 dossier sealing and required `ScopingRecord` honest-scoping receipts. Emitted assurance dossier: `docs/nato/NATO_STANAG_4107_DOSSIER.json` (generated artifact; run `just emit-dossier`).
 

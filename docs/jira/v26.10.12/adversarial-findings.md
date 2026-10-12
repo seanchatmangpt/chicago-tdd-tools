@@ -406,3 +406,19 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   traceability link.
 - CLOSED: probe-B doc fixes (generator ident caveat, telemetry flush-on-drop)
   landed after being found missing from d03b4f7's diff.
+
+## W27-CLOSING (wave-27 closing repairs)
+- CLOSED: coverage.rs `add_item` duplicate-name drift — disclosed in-source
+  (afb14e2); the behavior itself is kept and documented, not changed.
+- CLOSED: continuous_learning modules-field semantics — AUDIT NOTE landed
+  (5652fbb); a keyspace rename is the follow-up if ever productized.
+- CLOSED: observability/receipt.rs tamper-law doc corrected (afb14e2 —
+  third attempt, verified on disk).
+- CLOSED: `#[fixture]` generated-path defect — the generated doctest path
+  referenced the uncompilable `chicago_tdd_tools::fixture::` module; fixed
+  to `core::fixture` (afb14e2).
+- CLOSED: swarm_coordination.rs cryptographic-receipts residual.
+- QUEUED (operator): README quick-start example missing_docs deny
+  interaction — the rewritten assertion compiles, but a fresh-copy user may
+  still hit `missing_docs` on the test file (probe finding; needs either a
+  doc comment in the example or a documented allow).

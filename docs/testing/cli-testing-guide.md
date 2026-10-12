@@ -377,7 +377,7 @@ error: unresolved import `chicago_tdd_tools::cli`
 **Solution**: Run with `--test-generate` to create baseline:
 
 ```bash
-cargo make test test_name -- --test-generate
+just test test_name -- --test-generate
 ```
 
 ### Environment Variable Conflicts

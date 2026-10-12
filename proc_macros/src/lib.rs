@@ -144,7 +144,7 @@ pub fn tdd_test(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// Automatically:
 /// - Generates fixture setup/teardown code
 /// - Provides type-safe fixture state management
-/// - Wraps fixture setup with a runtime assertion on the FixtureResult (AUDIT NOTE W27: validation is at runtime, not compile time)
+/// - Wraps fixture setup with a runtime assertion on the `FixtureResult` (AUDIT NOTE W27: validation is at runtime, not compile time)
 ///
 /// # Examples
 ///

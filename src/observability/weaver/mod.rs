@@ -245,7 +245,7 @@ pub mod lifecycle {
 #[derive(Error, Debug)]
 pub enum WeaverValidationError {
     /// Weaver binary not found
-    #[error("🚨 Weaver binary not found in PATH\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Run cargo make weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
+    #[error("🚨 Weaver binary not found in PATH\n   ⚠️  STOP: Cannot proceed with Weaver validation\n   💡 FIX: Run just weaver-bootstrap\n   📋 Manual: cargo install weaver\n   📋 Download: https://github.com/open-telemetry/weaver/releases")]
     BinaryNotFound,
     /// Docker daemon is not running or unavailable
     #[error("🚨 Docker daemon is not running or unavailable: {0}\n   ⚠️  STOP: Cannot proceed with Weaver integration\n   💡 FIX: Start Docker Desktop or Docker daemon\n   📋 macOS: Open Docker Desktop\n   📋 Linux: sudo systemctl start docker\n   📋 Windows: Start Docker Desktop")]
@@ -414,7 +414,7 @@ impl WeaverValidator {
             // Try to clone registry at runtime (matching Weaver binary runtime download pattern)
             if let Err(err) = Self::clone_registry_runtime(self.registry_path.as_path()) {
                 return Err(WeaverValidationError::RegistryNotFound(format!(
-                    "{}\n   💡 FIX: Registry will be cloned automatically during build, or run: cargo make weaver-bootstrap\n   Details: {err}",
+                    "{}\n   💡 FIX: Registry will be cloned automatically during build, or run: just weaver-bootstrap\n   Details: {err}",
                     self.registry_path.display()
                 )));
             }
@@ -866,7 +866,7 @@ mod tests {
             panic!(
                 "🚨 Weaver binary not available\n\
                  ⚠️  STOP: Cannot proceed with Weaver validation test\n\
-                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 💡 FIX: Run just weaver-bootstrap\n\
                  📋 This test verifies Weaver system is working - binary must be available"
             );
         }
@@ -889,7 +889,7 @@ mod tests {
                 panic!(
                     "🚨 Weaver binary not available during start()\n\
                      ⚠️  STOP: Weaver system is not working\n\
-                     💡 FIX: Run cargo make weaver-bootstrap\n\
+                     💡 FIX: Run just weaver-bootstrap\n\
                      📋 This indicates Weaver binary became unavailable between new() and start()"
                 );
             }
@@ -903,7 +903,7 @@ mod tests {
                 log::info!(
                     "ℹ️  Docker unavailable - skipping Docker-dependent validation\n\
                      📋 This is acceptable for unit tests\n\
-                     📋 Full integration tests require Docker (cargo make test-integration)"
+                     📋 Full integration tests require Docker (just test-integration)"
                 );
             }
             Err(e) => {
@@ -939,7 +939,7 @@ mod tests {
             panic!(
                 "🚨 Registry path does not exist: {:?}\n\
                  ⚠️  STOP: Cannot proceed with Weaver validator test\n\
-                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 💡 FIX: Run just weaver-bootstrap\n\
                  📋 This test verifies Weaver system is working - registry must be available",
                 registry_path
             );
@@ -950,7 +950,7 @@ mod tests {
             panic!(
                 "🚨 Weaver binary not available\n\
                  ⚠️  STOP: Cannot proceed with Weaver validator test\n\
-                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 💡 FIX: Run just weaver-bootstrap\n\
                  📋 This test verifies Weaver system is working - binary must be available"
             );
         }

@@ -79,7 +79,7 @@ use chicago_tdd_tools::core::builders::TestDataBuilder;
 
 ## Prevention Measures
 
-1. **Example Compilation Check**: Added `cargo make check-examples` task to verify all examples compile before tests run
+1. **Example Compilation Check**: Added `just check-examples` task to verify all examples compile before tests run
 2. **CI Integration**: Examples compilation is checked in CI pipeline
 3. **Documentation**: Examples should use explicit imports for clarity and to avoid prelude glob import issues
 

@@ -546,7 +546,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(_e) => {
                 chicago_tdd_tools::alert_info!("⚠ Weaver not available");
-                chicago_tdd_tools::alert_info!("  Bootstrap with: cargo make weaver-bootstrap");
+                chicago_tdd_tools::alert_info!("  Bootstrap with: just weaver-bootstrap");
             }
         }
     }

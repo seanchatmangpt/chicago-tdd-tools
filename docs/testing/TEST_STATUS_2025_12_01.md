@@ -51,11 +51,11 @@ Three issues were identified and fixed to achieve 100% test pass rate:
 
 ```bash
 # Unit tests (fast, no Docker required)
-cargo make test-unit
+just test-unit
 # Result: 612 passed; 0 failed ✅
 
 # All tests (requires Docker)
-cargo make test-all
+just test-all
 # Result: Unit tests pass, integration tests require Docker
 
 # Example compilation
@@ -88,7 +88,7 @@ cargo check --examples --all-features
 
 ### Optional (for integration tests)
 - Docker (for testcontainers and Weaver integration tests)
-- Weaver binary (run `cargo make weaver-bootstrap`)
+- Weaver binary (run `just weaver-bootstrap`)
 
 ---
 
@@ -96,15 +96,15 @@ cargo check --examples --all-features
 
 ```bash
 # Pre-commit verification (always run before commit)
-cargo make pre-commit
+just pre-commit
 # Runs: fmt + lint + test-unit (~20 seconds)
 
 # Full CI simulation
-cargo make ci-local
+just ci-local
 # Simulates GitHub Actions CI pipeline
 
 # Release validation
-cargo make release-validate
+just release-validate
 # Comprehensive checks before release
 ```
 
@@ -117,7 +117,7 @@ cargo make release-validate
    - Unit tests: ✅ Pass without Docker
    - Integration tests: Require Docker
 
-2. **Weaver tests** - Require `cargo make weaver-bootstrap` to be run first
+2. **Weaver tests** - Require `just weaver-bootstrap` to be run first
    - Creates: `target/debug/weaver` binary
    - Clones: OpenTelemetry semantic conventions registry
    - Status: Bootstrapped and working ✅

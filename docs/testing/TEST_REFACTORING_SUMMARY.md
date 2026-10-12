@@ -25,7 +25,7 @@ All ignored/skipped tests have been refactored to run unconditionally and fail c
 **Error Messages**: Clear panic messages with:
 - 🚨 Problem description
 - ⚠️ STOP indicator
-- 💡 FIX instructions (run `cargo make weaver-bootstrap`)
+- 💡 FIX instructions (run `just weaver-bootstrap`)
 - 📋 Context about why the test requires these prerequisites
 
 ### 2. Weaver Integration Tests (`tests/weaver_integration.rs`)
@@ -93,7 +93,7 @@ All refactored tests use consistent error message format:
 ```
 🚨 Weaver binary not available
 ⚠️  STOP: Cannot proceed with Weaver validation test
-💡 FIX: Run cargo make weaver-bootstrap
+💡 FIX: Run just weaver-bootstrap
 📋 This test verifies Weaver system is working - binary must be available
 ```
 
@@ -128,7 +128,7 @@ WEAVER_REQUIRE_TEST=1 cargo test
 cargo test
 
 # If Weaver is not available, test fails with clear error message
-# Fix: Run cargo make weaver-bootstrap
+# Fix: Run just weaver-bootstrap
 ```
 
 ### For CI/CD
@@ -147,8 +147,8 @@ cargo test
 ## Test Requirements
 
 ### Weaver Tests
-- **Registry Path**: Must exist at `registry/` (created by `cargo make weaver-bootstrap`)
-- **Weaver Binary**: Must be available in PATH (downloaded by `cargo make weaver-bootstrap`)
+- **Registry Path**: Must exist at `registry/` (created by `just weaver-bootstrap`)
+- **Weaver Binary**: Must be available in PATH (downloaded by `just weaver-bootstrap`)
 
 ### Testcontainers Tests
 - **Docker**: Must be running and accessible (checked by `require_docker()`)

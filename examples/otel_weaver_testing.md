@@ -41,7 +41,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["otel", "weaver
 
 **For Weaver:**
 ```bash
-cargo make weaver-bootstrap  # Install Weaver CLI and registry
+just weaver-bootstrap  # Install Weaver CLI and registry
 ```
 
 ---
@@ -325,7 +325,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["otel"] }
 
 **Fix:**
 ```bash
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 ### Validation Fails

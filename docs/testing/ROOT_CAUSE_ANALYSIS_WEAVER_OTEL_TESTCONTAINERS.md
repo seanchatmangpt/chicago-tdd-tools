@@ -117,7 +117,7 @@
 6. ✅ Add example smoke tests to CI
 7. ✅ Document example prerequisites (Docker, Weaver, etc.)
 8. ✅ Add example verification to release checklist
-9. ✅ Add example compilation to `cargo make test-examples`
+9. ✅ Add example compilation to `just test-examples`
 10. ✅ Verify all examples in CI before release
 
 ---
