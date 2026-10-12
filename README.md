@@ -11,7 +11,7 @@ If it compiles, correctness follows. Type system encodes invariants. Quality is 
 
 ## Use As a Dependency
 
-`chicago-tdd-tools` is published to crates.io (`version = "26.10.11"` and later — see
+`chicago-tdd-tools` is published to crates.io (`version = "26.10.12"` and later — see
 [Cargo.toml](Cargo.toml) for the current version) and is also consumable directly from this
 repo via a `path`/`git` dependency for sibling projects in the same workspace tree. All three
 forms are real and in active use:
@@ -19,7 +19,7 @@ forms are real and in active use:
 ```toml
 # From crates.io (what ggen's crates use in production):
 [dev-dependencies]
-chicago-tdd-tools = { version = "26.10.11", features = ["testing-extras"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["testing-extras"] }
 
 # From a sibling checkout on disk (what this repo's own examples/ and castle use):
 [dev-dependencies]
@@ -27,7 +27,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["testing-extras
 
 # From git, pinned to a tag/rev, when neither of the above fits:
 [dev-dependencies]
-chicago-tdd-tools = { git = "https://github.com/seanchatmangpt/chicago-tdd-tools", tag = "v26.10.11" }
+chicago-tdd-tools = { git = "https://github.com/seanchatmangpt/chicago-tdd-tools", tag = "v26.10.12" }
 ```
 
 Only `core`/`prelude` (the `test!`/`fixture_test!`/`async_test!` macros, builders, assertions)
@@ -821,18 +821,23 @@ Merkle dossier laws:
   `Tampered = 13`, `AdmissionRefused = 14`, `DanglingObject = 15`,
   `NonMonotonic = 16`, `EmptyDossier = 17`, `DigestMismatch = 18`).
 
-A `ctdd_ledger` binary (`validate` / `chain-verify` / `seal` / `verify` /
-`dossier-emit` / `dossier-inspect`, feature `ledger-cli`) validates receipts,
-replays chains across a directory of records, seals/verifies dossiers, and
-emits/inspects the `CTT-DOSSIER-v1` JSON compliance dossier:
+The ledger domain surface is a pure library (typed exit codes, chain/Merkle
+laws, dossier sealing); CLI verbs live in the external `affi` binary
+(`~/affidavit`; Phase D M2 landed: receipt validate/chain-verify, dossier
+seal/verify + the dossier emit/inspect cluster behind the `ctdd` feature)
+per the sovereignty split — the former `ctdd_ledger` binary
+and its `ledger-cli` feature were excised in v26.10.11:
 
-- `just emit-dossier` — run the NATO court gate, then
-  `ctdd_ledger dossier-emit --receipts-dir docs/receipts --out
-  docs/nato/NATO_STANAG_4107_DOSSIER.json --json`. Refuses unless all 20
-  court receipts are present and `Pass` + `MutantCaught`.
-- `just dossier-verify` —
-  `ctdd_ledger dossier-inspect docs/nato/NATO_STANAG_4107_DOSSIER.json
-  --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json`.
+- `just emit-dossier` (Justfile:218) — run the NATO court gate
+  (`CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture`),
+  then `cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features
+  crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out
+  docs/nato/NATO_STANAG_4107_DOSSIER.json --format json`. Refuses unless all
+  20 court receipts are present and `Pass` + `MutantCaught`.
+- `just dossier-verify` (Justfile:223) — `cargo run --manifest-path
+  /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi --
+  dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json
+  --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json`.
 
 The assurance dossier lives at
 `docs/nato/NATO_STANAG_4107_DOSSIER.json` (generated artifact; run
@@ -995,6 +1000,7 @@ chicago-tdd-tools = {
         "ocel-ingest",               # OCEL -> OCEL64 word packing bridge (implies ocel-generation)
         "ledger",                    # strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws
         "nato",                      # NATO assurance courts + ML-DSA-65 dossier sealing (implies ledger)
+        "wasm-guest",                # zero-import cdylib WASM guest (implies conformance; crates/ctt-wasm-guest)
         "all-assurance",             # umbrella: conformance + ledger + nato
     ]
 }
@@ -1008,6 +1014,10 @@ chicago-tdd-tools = {
 - **Conformance checking**: `["conformance"]` (POWL DSL in, structured verdict out)
 - **Defense assurance**: `["all-assurance"]` (conformance + ledger + NATO courts)
 - **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async", "ocel-generation-discovery", "all-assurance"]`
+
+> **Ledger note**: the ledger surface is library-only; the former `ctdd_ledger`
+> binary was excised in v26.10.11 and CLI verbs route through the external
+> `affi` binary (`~/affidavit`, Phase D M2 landed behind the `ctdd` feature).
 
 > **Process mining** (`ocel-generation`) builds on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) `26.6.26` crate, which supplies the one-way `Evidence` lifecycle (`Raw → Admitted → Receipted`) and OCEL 2.0 standard types. See [Process Mining (OCEL)](#process-mining-ocel) below.
 
@@ -1180,7 +1190,8 @@ just build-release   # Optimized binary
 **Conformance, Ledger & NATO Assurance (v26.10.11)**:
 
 - 📋 **POWL Conformance Checking** (`conformance`) — fail-closed POWL model loading, cooperative `step_budget` replay over OCEL64 event words, and typed deviation reports (`VerbMismatch`, `NotEnabled`, `ForbiddenBit`, `OutOfOrder`, `Unfinished`).
-- 🧾 **Court-Receipt Ledger** (`ledger`) — strict 320/352-byte wire records with BLAKE3 chain + Merkle dossier laws, and a `ctdd_ledger` CLI with typed exit codes 10–18.
+- 🧾 **Court-Receipt Ledger** (`ledger`) — strict 320/352-byte wire records with BLAKE3 chain + Merkle dossier laws, with typed exit codes 10–18 (pure library; CLI verbs live in the external
+`affi` binary per the sovereignty split).
 - 🛡️ **NATO Court Matrix** (`nato`) — 20 positive-control-gated courts (N01–N20) with ML-DSA-65 dossier sealing and required `ScopingRecord` honest-scoping receipts. Emitted assurance dossier: `docs/nato/NATO_STANAG_4107_DOSSIER.json` (generated artifact; run `just emit-dossier`).
 
 **Multi-Agent Swarm & High-Integrity Coordination**:

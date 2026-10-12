@@ -125,12 +125,12 @@ No migration needed. All existing code continues to work. New features are opt-i
 
 ## Documentation
 
-- [Quick Guide](../getting-started/QUICK_GUIDE.md)
-- [Getting Started](../getting-started/GETTING_STARTED.md)
-- [User Guide](../getting-started/USER_GUIDE.md)
-- [Architecture](../reference/ARCHITECTURE.md)
-- [Dog Fooding](../process/DOG_FOODING.md)
-- [Coverage Strategy](../coverage/v1.2.0-coverage-strategy.md)
+- [Quick Guide](../../getting-started/QUICK_GUIDE.md)
+- [Getting Started](../../getting-started/GETTING_STARTED.md)
+- [User Guide](../../getting-started/USER_GUIDE.md)
+- [Architecture](../../reference/ARCHITECTURE.md)
+- [Dog Fooding](../../process/DOG_FOODING.md)
+- [Coverage Strategy](../../coverage/v1.2.0-coverage-strategy.md)
 
 ## Test Results
 

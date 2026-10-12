@@ -481,35 +481,35 @@ Every pattern comes with a **production guarantee**. Use this checklist before s
 - ✅ No `.unwrap()` in error paths (Clippy -D unwrap_used)
 - ✅ No `.expect()` in production code (Clippy -D expect_used)
 - ✅ All errors propagate via `?` operator or explicit match
-- ✅ Run: `cargo make lint` (catches all violations)
+- ✅ Run: `just lint` (catches all violations)
 
 **Test Isolation (Pattern 1 + Pattern 4):**
 - ✅ Tests use AAA pattern (Arrange-Act-Assert)
 - ✅ Tests clean up resources via Drop (no manual teardown)
 - ✅ Tests run in parallel without flakiness
-- ✅ Run: `cargo make test-unit && cargo make test-all`
+- ✅ Run: `just test-unit && just test-all`
 
 **Type Safety (Pattern 14 + Pattern 15):**
 - ✅ Invalid states impossible to construct
 - ✅ Wrong call order = compile error (not runtime bug)
 - ✅ Sealed traits prevent unsafe downstream code
-- ✅ Run: `cargo make check` (catches all violations)
+- ✅ Run: `just check` (catches all violations)
 
 **Real Collaborators (Pattern 5):**
 - ✅ Integration tests use actual services (not mocks)
 - ✅ Docker container tests in CI (testcontainers feature)
 - ✅ Catching integration bugs before production
-- ✅ Run: `cargo make test-integration`
+- ✅ Run: `just test-integration`
 
 **Resource Safety (Pattern 4 + Pattern 16):**
 - ✅ Fixtures guarantee cleanup even on panic
 - ✅ No resource leaks detected
 - ✅ Timeout defense prevents hanging tests
-- ✅ Run: `cargo make test-all` with `RUST_BACKTRACE=1`
+- ✅ Run: `just test-all` with `RUST_BACKTRACE=1`
 
 **Production Readiness (Full Pipeline):**
-- ✅ `cargo make pre-commit` passes (format + lint + unit tests)
-- ✅ `cargo make ci-local` passes (simulates GitHub Actions)
+- ✅ `just pre-commit` passes (format + lint + unit tests)
+- ✅ `just ci-local` passes (simulates GitHub Actions)
 - ✅ All clippy warnings fixed or justified with `#[allow(...)]`
 - ✅ Code review checklist passed (see CODE_REVIEW_CHECKLIST.md)
 

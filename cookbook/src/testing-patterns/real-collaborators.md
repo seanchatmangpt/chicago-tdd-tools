@@ -47,7 +47,7 @@ fixture_test_with_timeout!(test_postgres_query, fixture, 30, {
 ## Implementation Checklist
 
 - [ ] Integration tests use real containers/services, not mocks
-- [ ] Tests run with `cargo make test-integration` (separate from unit tests)
+- [ ] Tests run with `just test-integration` (separate from unit tests)
 - [ ] Docker is required; test fails clearly if unavailable
 - [ ] Resource cleanup happens automatically (fixture or scope)
 - [ ] Timeout is set (30-60 seconds typical)

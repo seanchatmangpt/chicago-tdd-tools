@@ -4,7 +4,7 @@
 
 A Rust testing framework that enforces Chicago-style TDD (Classicist approach) through compile-time guarantees. The core principle: **if it compiles, correctness follows**. Quality is not an afterthought—it's encoded in the type system.
 
-**Stats:** ~38,000 LOC | Rust 2021+ | MIT License | 520+ unit tests | Zero production panics
+**Stats:** ~64,000 LOC (src/) | Rust 2021+ | MIT License | 1,000+ unit tests (all features) | Zero production panics
 
 ## Core Philosophy: Poka-Yoke Design
 
@@ -396,15 +396,15 @@ just coverage                # Coverage report
 
 ## Recent Highlights
 
-- **v26.8.9**: Current workspace version
+- **v26.10.12**: Current workspace version — conformance kernel (pn64/POWL), court-receipt ledger (BLAKE3/Merkle/ML-DSA-65), 20-court NATO assurance matrix, zero-import WASM guest, merger-matrix fixtures
 - **v26.9.x**: Signing-key rotation + dependabot hardening (see `docs/releases/`)
+- **v26.6.121**: OCEL 2.0 process mining, governance module, wave orchestration, 43 YAWL patterns
 - **v26.6.30**: Proc macros exposed in public API
 - **v26.6.29**: Track E feedback loop with Weaver integration
 - **v26.6.24**: BLAKE3 receipt chain validation + OCEL utilities
-- **v26.6.121**: OCEL 2.0 process mining, governance module, wave orchestration, 43 YAWL patterns
 
 See `CHANGELOG.md` for full history.
 
 ---
 
-**Version:** 26.8.9 | **Updated:** 2026-10-11 | **Principle:** Compile-time prevention > runtime detection
+**Version:** 26.10.12 | **Updated:** 2026-10-11 | **Principle:** Compile-time prevention > runtime detection

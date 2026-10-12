@@ -9,7 +9,7 @@
 
 **PASADENA, Calif. — October 11, 2026** — Strata today announced the general release of `temprun` (v26.10.11), an ephemeral, fail-closed computation leaf designed to eliminate ambient authority and unmetered execution across high-assurance distributed systems.
 
-Positioned as the successor to the Docker- and gVisor-based prototype `clnrm`, `temprun` discards local container daemons, root-equivalent Unix sockets, and mutable container registries. Instead, workloads run as WebAssembly guests under the `temprun_step` host binary, reached from the BEAM node over a `packet: 4` length-prefixed Erlang Port bridge (a subprocess boundary, with no NIFs or linked-in drivers; a legacy `wasmtime`-CLI wrapper path also exists). Designed as the single-shot computation engine for Ash Reactor and the `ash_graphlaw` semantic membrane, `temprun` is built so that untrusted, transient workloads execute with strictly zero ambient capabilities, enforced reduction budgets, and inductive trajectory proofs.
+Positioned as the successor to the Docker- and gVisor-based prototype `clnrm`, `temprun` discards local container daemons, root-equivalent Unix sockets, and mutable container registries. Instead, workloads run as WebAssembly guests under the `temprun_step` host binary, reached from the BEAM node over a raw-stream Erlang Port with a hand-rolled 4-byte little-endian length prefix (the BEAM `:packet, 4` option is big-endian, so the prefix is framed in the worker) (a subprocess boundary, with no NIFs or linked-in drivers; a legacy `wasmtime`-CLI wrapper path also exists). Designed as the single-shot computation engine for Ash Reactor and the `ash_graphlaw` semantic membrane, `temprun` is built so that untrusted, transient workloads execute with strictly zero ambient capabilities, enforced reduction budgets, and inductive trajectory proofs.
 
 ## The Problem: The Ambient Authority Trap
 
@@ -53,8 +53,8 @@ Furthermore, conventional execution engines evaluate task success using terminal
 `temprun` v26.10.11 is available across the Strata ecosystem. It integrates natively with `chicago-tdd-tools` (v26.10.11) via the `conformance` and `nato` feature gates; Hex.pm publication of `temprun` and `ash_graphlaw` availability on Hex are planned, not yet confirmed.
 
 - **Repository:** https://github.com/seanchatmangpt/temprun
-- **Documentation:** https://hexdocs.pm/temprun
-- **Assurance Dossier:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts are emitted under `docs/receipts/N{01..20}.json`; a consolidated `NATO_STANAG_4107_DOSSIER.json` projection is on the roadmap)
+- **Documentation:** https://hexdocs.pm/temprun (live after Hex publication — currently PLANNED per the claim ledger below)
+- **Assurance Dossier:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts emitted under `docs/receipts/N01..N20.json` (N19 reproducible-build identity + N20 dossier-generator receipts landed post-train; N19 narrative record: `docs/nato/N19_BUILD_RECEIPT.md`); a consolidated `NATO_STANAG_4107_DOSSIER.json` projection is on the roadmap)
 
 ## Media Contact
 
@@ -73,10 +73,10 @@ PR1-audited (2026-10-11); body wording above corrected to landed truth. Per-clai
 | 2,000-step reduction budget, cooperative yield | BACKED | `src/conformance/guest_yield.rs` (`DEFAULT_REDUCTION_QUOTA = 2000`, yield protocol; BEAM owns termination) |
 | OCEL 2.0 trajectory + branchless pn64 verification | BACKED | `src/observability/ocel/ocel64_bridge.rs`, `src/conformance/pn64.rs` + `session.rs` |
 | ML-DSA-65 / FIPS 204 receipts | BACKED (host-side seal) | `src/ledger/signing/` (guest produces, host seals) |
-| Execution story: `temprun_step` wasmi host bin via `packet: 4` BEAM Port bridge + wasmtime-CLI legacy path | BACKED (as reworded) | stratus worker.ex:13-15; temprun/src/bin/temprun_step.rs; default_arena.ex:158-171 |
+| Execution story: `temprun_step` wasmi host bin via raw-stream BEAM Port (hand-rolled 4-byte LE length prefix) + wasmtime-CLI legacy path | BACKED (as reworded) | stratus worker.ex:13-15; temprun/src/bin/temprun_step.rs; default_arena.ex:158-171 |
 | `Temprun.run_one_shot/1` facade | ROADMAP (marked inline) | Landed surface is `Stratus.Temprun.Worker` (gen_statem) + `temprun_step` port bridge |
 | In-memory synthetic VFS & ggen actors | ROADMAP (marked inline) | No implementation in either repo |
 | Signed-Git source admission | ROADMAP (marked inline); Merkle-chained receipts + N19 reproducible-build receipt BACKED | strata/src/cas.rs, docs/nato/N19_BUILD_RECEIPT.md; no signature verification landed |
-| Assurance dossier pointer | CORRECTED | Points to `DOSSIER.md` + `.sig`; per-court JSON at `docs/receipts/N{01..20}.json`; consolidated JSON projection on roadmap |
+| Assurance dossier pointer | CORRECTED | Points to `DOSSIER.md` + `.sig`; per-court JSON at `docs/receipts/N01..N20.json` (N19/N20 landed post-train); consolidated JSON projection on roadmap |
 | Hex availability (temprun, ash_graphlaw) | PLANNED (marked inline) | No publish receipts found |
 | temprun v26.10.11 released | PARTIAL | strata VERSION is 26.10.10; CHANGELOG wave-2 at 26.10.11; not published |

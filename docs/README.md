@@ -117,6 +117,8 @@ Background, context, and understanding of how/why things work:
 
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
+- **[Release Notes v26.10.12](releases/RELEASE_NOTES_v26.10.11.md)** - Release notes for the v26.10.11 → v26.10.12 train (current)
+- **[Announcement v26.10.11](releases/ANNOUNCEMENT_v26.10.11.md)** - Release announcement for v26.10.11 (current)
 - **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Release notes for v26.6.121 (historical)
 - **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121 (historical)
 - **[Latest Release Notes](releases/)** - See the newest release documentation

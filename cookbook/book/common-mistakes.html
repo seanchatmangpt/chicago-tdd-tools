@@ -176,6 +176,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="common-mistakes-across-all-patterns"><a class="header" href="#common-mistakes-across-all-patterns">Common Mistakes Across All Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>COMMON MISTAKES ACROSS ALL PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>This guide aggregates "The Gotcha" from each pattern and shows how to avoid it.</p>
 <blockquote>
 <p><strong>Want to learn patterns in order?</strong> See <a href="pattern-dependencies.html">Pattern Dependencies &amp; Learning Order</a> for recommended learning paths. <strong>Want a quick lookup?</strong> See <a href="quick-reference.html">Quick Reference Card</a>.</p>
@@ -376,10 +379,10 @@ const TIMEOUT_SECS: u64 = 30;  // Will diverge!
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// src/core/macros/test.rs (single source)
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs (imports)
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Why It Matters:</strong> "Same value" isn't "same source." Copies diverge when someone forgets to update both.</p>
 <hr />
@@ -614,7 +617,17 @@ observability-full = ["otel", "weaver"]
 </tbody></table>
 </div>
 <p><strong>Golden Rule:</strong> If you can enforce something at compile time, do it. It's free and impossible to bypass.</p>
-
+<h2 id="quick-glance"><a class="header" href="#quick-glance">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">

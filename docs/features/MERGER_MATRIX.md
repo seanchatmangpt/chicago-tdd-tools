@@ -1,10 +1,11 @@
 # Merger Matrix (Fortune-5 Validation Harness)
 
-DRAFT — grounded only in files verified on disk 2026-10-11.
+Landed state as of 2026-10-11, post-Wave-2 (MX3-MX7 phase fixtures verified on
+disk at write time; every cited file existence-checked).
 
 ## Status
 
-Phase B in progress. Three tiers: landed / in flight / roadmap.
+Post-Wave-2. Three tiers: landed / in flight / roadmap.
 
 ### Landed
 
@@ -31,29 +32,31 @@ SHACL (`sh:closed true`).
 | `examples/merger_matrix/loans/portfolio.ttl` | loan portfolio |
 | `examples/merger_matrix/capital/structures.ttl` | capital structures |
 | `examples/merger_matrix/analytics/hhi.ttl`, `analytics/simm-outputs.ttl` | analytics |
-
-The fixtures bind to landed kernels: the conformance kernel
-(`src/conformance/` — loader, validate, session, pn64, net, report, guest,
-guest_seal, guest_telemetry, guest_yield, bcinr, state, model, error), the
-ledger (src/ledger/ — dossier, proof, receipt, signing), and the NATO courts
-(`src/nato/`).
+| `examples/merger_matrix/models/master.powl` + `phase{1..10}_*.powl` (11 files) | POWL phase models, all 10 phases |
+| `examples/merger_matrix/conformance/*.ocel.json` (19 files) | OCEL64 streams: phases 1-8 positive+violation pairs, phase 9 audit + phase 10 seal (positive-only), master trace |
+| `crates/merger-guests/` | hermetic WASM guest crate: 8 leaf kernels behind a uniform `mgi_*` stateless ABI |
+| `src/nato/hamming.rs` | N08 Hamming weight/distance profile court (port; partial-scale honest disclosure) |
+| `src/nato/tick.rs` | N12 clock-glitch resilience court (wall-monotonic surrogate; partial-scale disclosure) |
+| `src/nato/thrash.rs` | N14 CAST-32A multi-core interference court |
+| `src/nato/liveness.rs` | N15 liveness court port |
+| `src/nato/registry.rs` | `COURT_NAMES` N01..N20 — registry complete, 20/20 CTT-side |
+| `tests/merger_conformance_tests.rs` | merger conformance suite (W1): contract pipeline + phase courts (all phase blocks landed; fresh run 25 passed / 0 failed / 0 ignored — every phase golden and violation replays through the fixture bridge) |
+| `src/conformance/` (loader, validate, session, pn64, net, report, guest, guest_seal, guest_telemetry, guest_yield, bcinr, state, model, error) | conformance kernel |
+| `src/ledger/` (dossier, proof, receipt, signing) | ledger |
 
 ### In flight
 
-Not present on disk as of 2026-10-11; cited for scoping only.
-
-- Phase POWL models for the merger phases (signing → closing → integration);
-  the kernel consumer exists (`src/conformance/session.rs`:
-  `ConformanceSession::from_powl_file`), the merger phase models do not.
-- Merger OCEL fixtures (OCEL64 streams; bridge modules landed at
-  `src/observability/ocel/ocel64_bridge.rs`, merger-specific streams do not).
-- A merger-guests crate (the hermetic guest crate that exists is
-  `crates/ctt-wasm-guest` — general, not merger-specific).
-- BEAM agents driving the sagas (only doc-level BEAM references landed:
-  `src/conformance/guest_yield.rs` cooperative-yield protocol vs. BEAM
-  scheduler; no BEAM agent code in this repo).
-- N08/N12/N14/N15 court ports into `src/nato/` (module list verified; the
-  ports are not present).
+- merger-guests WASM artifact build — `crates/merger-guests` is landed as
+  source (workspace member, `Cargo.toml` `members` line 469); the wasm32
+  cdylib artifact itself is not built in this checkout.
+- temprun ABI re-base — merger-guests targets a uniform `mgi_*` stateless
+  ABI; re-basing onto the temprun leaf ABI exercised by
+  `crates/ctt-wasm-guest` (`just guest-build`/`guest-audit`/`guest-test`) is
+  not landed.
+- BEAM live-court execution — BEAM-side agents driving the sagas; only
+  doc-level BEAM references landed (`src/conformance/guest_yield.rs`
+  cooperative-yield protocol vs. BEAM scheduler); no BEAM agent code in this
+  repo.
 
 ### Roadmap
 
@@ -68,8 +71,8 @@ Each arrow annotated with landing status (E-M16 probe).
 Turtle RDF (examples/merger_matrix/**.ttl/.n3)        [LANDED]
   → graphlaw membrane (graphlaw.wasm, external pinned artifact; no graphlaw code in this repo)  [EXTERNAL, PINNED per E-M16]
   → pplan sagas (no pplan code in this repo)          [EXTERNAL / IN FLIGHT]
-  → temprun leaves (crates/ctt-wasm-guest; built via `just guest-build`)  [LANDED]
-  → CTT conformance (src/conformance/, replayed against OCEL64 via ConformanceSession)  [LANDED]
+  → temprun leaves (crates/ctt-wasm-guest; built via `just guest-build`; merger-specific leaves in crates/merger-guests, artifact build in flight)  [LANDED / IN FLIGHT]
+  → CTT conformance (src/conformance/, replayed against OCEL64 via ConformanceSession; merger suite at tests/merger_conformance_tests.rs)  [LANDED]
   → sealed dossier (src/ledger/dossier.rs seal_dossier / verify_sealed_file; emitted via `just emit-dossier`)  [LANDED]
 ```
 
@@ -81,19 +84,24 @@ Arrow-by-arrow:
    in-repo.
 2. **graphlaw → pplan sagas** — saga orchestration is external (ash_pplan);
    in-repo, nothing consumes the fixtures as sagas yet. IN FLIGHT.
-3. **pplan → temprun leaves** — the WASM guest
+3. **pplan → temprun leaves** — the general WASM guest
    (`crates/ctt-wasm-guest`) is landed and exercised by `guest-build`,
    `guest-audit` (zero-import audit court, `src/nato/guest_audit.rs`), and
-   `guest-test` (native-ABI contract + fault-injection suites). The a2a lease
-   is the SagaControl epoch per E-M16 (external to this repo).
+   `guest-test` (native-ABI contract + fault-injection suites). The
+   merger-specific guest crate `crates/merger-guests` is landed as source with
+   8 leaf kernels; its wasm32 artifact build is in flight. The a2a lease is
+   the SagaControl epoch per E-M16 (external to this repo).
 4. **temprun leaves → CTT conformance** — `src/conformance/` compiles POWL
    models and replays them against OCEL64 streams
-   (`ConformanceSession::from_powl_file`). Landed kernel, in-flight merger
-   models/streams.
+   (`ConformanceSession::from_powl_file`). Kernel landed; all 10 merger phase
+   models and their OCEL fixtures landed post-Wave-2; the W1 suite
+   (`tests/merger_conformance_tests.rs`) drives the pipeline.
 5. **CTT conformance → sealed dossier** — `just emit-dossier` gates on green
    courts, emits `docs/nato/NATO_STANAG_4107_DOSSIER.json` via
-   `ctdd_ledger dossier-emit`; verified by
-   `ctdd_ledger dossier-inspect ... --verify-pqc-signature ML-DSA-65 --assert-merkle-root`.
+   the `affi` `dossier emit` verb (landed in `~/affidavit`, Phase D M2;
+   routed via `just emit-dossier`); verified by
+   `affi dossier inspect ... --verify-pqc-signature ML-DSA-65 --assert-merkle-root`
+   (`just dossier-verify`).
 
 ## The execution equation (ΔS + Φ ≡ R)
 
@@ -112,6 +120,19 @@ Landed enforcement points:
   courts). v2 (not landed here): lease/epoch verification (SagaControl epoch
   per E-M16) inside the conformance kernel itself; no lease/epoch code exists
   in `src/ledger/` or `src/conformance/guest_seal.rs` as of 2026-10-11.
+- **Honest fixture scoping (W1, asserted as typed courts)**: the landed OCEL
+  fixtures carry POWL names in `ocel:activity` with no
+  `attributes["powl"]`, so `import_ocel_json` refuses them with a typed
+  `ImportError::MissingField` — pinned by `import_refuses_landed_fixtures_typed`;
+  phases 1 and 2 exceed the linear net's 16-place budget (`TooManyPlaces`),
+  so no golden replay exists for them (the refusal is the court); phase 5's
+  landed golden double-fires loop atoms and faults mid-trace (the
+  model-derived golden is the conforming trajectory); phase 7's fixtures use
+  activity names absent from the model's declaration block (first replayed
+  event `Undeclared`); phases 9 and 10 landed positive-only (no violation
+  fixtures yet). The W1 suite's phase-block coverage was written against the
+  pre-Wave-2 fixture set; the post-Wave-2 phase 3/6/8/9/10 fixtures are not
+  yet covered by suite courts.
 
 ## Commands that exist
 
@@ -119,17 +140,19 @@ All recipes verified in `Justfile`:
 
 | Command | What it does |
 |---|---|
-| `just emit-dossier` | court tests → receipts → `dossier-emit` (typed refusal on empty receipts dir) |
-| `just dossier-verify` | `dossier-inspect` with PQC (ML-DSA-65) + Merkle-root assertion |
-| `just ctdd-ledger` | builds the `ctdd_ledger` release binary |
-| `just verify-ledger SOURCE` | `ctdd_ledger validate` on a source |
+| `just emit-dossier` | court tests → receipts → `affi dossier-emit` (typed refusal on empty receipts dir) |
+| `just dossier-verify` | `affi dossier-inspect` with PQC (ML-DSA-65) + Merkle-root assertion |
+| `just verify-ledger SOURCE` | `affi validate` on a source |
 | `just guest-build` | builds the WASM guest (wasm32-unknown-unknown) |
 | `just guest-audit` | zero-import audit court over the built artifact |
 | `just guest-test` | native-ABI contract + fault-injection suites |
 
-No merger-specific commands exist yet. Nothing in the Justfile consumes
-`examples/merger_matrix/` — the fixtures are validated by external validators
-(`pyshacl`, `eye`) per the example README until the in-flight items land.
+Merger-specific Justfile recipes exist: `merger-guest-build` (wasm32 cdylib
+for `crates/merger-guests`), `merger-guest-test` (`cargo test -p
+merger-guests`), and `merger-conformance` (the W1 suite: `cargo test --test
+merger_conformance_tests --features conformance,ocel-ingest-json`; fresh run
+25 passed / 0 failed / 0 ignored — all phase blocks green). The fixtures themselves are additionally validated by
+external validators (`pyshacl`, `eye`) per the example README.
 
 ## See Also
 

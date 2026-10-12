@@ -65,7 +65,7 @@ Capabilities declared in RDF are projected outward as protocol-compliant agent s
 
 ### 3. Ephemeral, Zero-Ambient-Authority Execution (`temprun`)
 
-`temprun` is positioned as the successor to container-based test harnesses and runtimes (including the prototype `clnrm`). By discarding the local Docker daemon, root-level sockets (`/var/run/docker.sock`), and gVisor kernel interception, `temprun` executes Wasm guests under the `temprun_step` host binary, reached from the BEAM node over a `packet: 4` length-prefixed Erlang Port bridge — a subprocess boundary with no NIFs or linked-in drivers (a legacy `wasmtime`-CLI wrapper path also exists):
+`temprun` is positioned as the successor to container-based test harnesses and runtimes (including the prototype `clnrm`). By discarding the local Docker daemon, root-level sockets (`/var/run/docker.sock`), and gVisor kernel interception, `temprun` executes Wasm guests under the `temprun_step` host binary, reached from the BEAM node over a raw-stream Erlang Port with a hand-rolled 4-byte little-endian length prefix — a subprocess boundary with no NIFs or linked-in drivers (a legacy `wasmtime`-CLI wrapper path also exists):
 
 - **Zero Ambient Authority (`imports == ∅`):** The guest imports no operating system syscalls, no host filesystem access, and no wall-clock time.
 - **Preemptive Reduction Slicing:** Workloads run under an explicit reduction budget (e.g., 2,000 steps), yielding cooperatively back to the BEAM process scheduler to prevent thread starvation.
@@ -78,7 +78,7 @@ Capabilities declared in RDF are projected outward as protocol-compliant agent s
 
 ### 5. Defense-Grade Certification Matrix (`feature = "nato"`)
 
-The platform codifies defense assurance standards (NATO STANAG 4107, AQAP-2210, DO-178C Level A, DO-254, FIPS 140-3 Level 4, Common Criteria EAL7) into a **20-court verification suite (N01–N20)** whose verification pipeline is compiled to native Rust (`ctdd_ledger`); measurement harnesses retain shell scripts (e.g. the N06 disassembly audit, reproducible-build tooling). The courts enforce:
+The platform codifies defense assurance standards (NATO STANAG 4107, AQAP-2210, DO-178C Level A, DO-254, FIPS 140-3 Level 4, Common Criteria EAL7) into a **20-court verification suite (N01–N20)** whose verification pipeline is compiled to native Rust (the `src/ledger` + `src/nato` libraries; the former `ctdd_ledger` CLI was excised post-train, verbs pending the external `affi` binary); measurement harnesses retain shell scripts (e.g. the N06 disassembly audit, reproducible-build tooling). The courts enforce:
 
 - **MILS Non-Interference (N01–N04):** Mathematical spatial isolation and total ambient authority annihilation.
 - **Side-Channel Immunity (N05–N08):** Welch t-test timing invariance (|t| < 4.5), zero conditional branches on hot paths, and cache-eviction storm resilience.
@@ -86,7 +86,7 @@ The platform codifies defense assurance standards (NATO STANAG 4107, AQAP-2210, 
 - **Deterministic Bounds (N13–N16):** Static call-graph stack ceilings (≤ 32 KiB) and multi-core CAST-32A contention ceilings.
 - **Hermetic Provenance & KAT (N17–N20):** PIPELINE-KAT verification against self-pinned test vectors (official NIST ACVP ML-DSA-65 corpus integration documented as a drop-in upgrade path), reproducible byte-identical compilation under `--locked` and `--offline`, and automated sealing of the compliance dossier with ML-DSA-65 post-quantum digital signatures (FIPS 204).
 
-Landing scope: N01–N07 and N09–N11, N13, N16–N20 are implemented in `chicago-tdd-tools`; N08, N12, N14, and N15 run as strata-side courts (disclosed in `src/nato/README.md`).
+Landing scope: all 20 courts (N01–N20) are implemented in `chicago-tdd-tools` — registry 20/20; N08 (Hamming profile), N12 (clock-glitch), N14 (CAST-32A thrash), and N15 (liveness) are post-train ports landed in `src/nato/`.
 
 ### 6. Git as the Immutable Merkle Ledger
 
@@ -108,8 +108,8 @@ The runtime rejects pre-compiled binaries and unverified package registries. Lan
 ## Availability and Ecosystem Registry
 
 **Hex.pm (publication planned, not yet confirmed):** `ash_graphlaw` (~> 26.10.8) · `temprun` (~> 26.10.11) · `ash_pplan` (~> 26.10.8-1) & `ash_a2a` (~> 26.10.8)
-**crates.io:** `wasm4pm` & `wasm4pm-conform` (26.10.11) · `bcinr-powl` & `bcinr-cmca` (26.10.11) · `chicago-tdd-tools` (26.10.11 — publication pending the workspace version bump from 26.8.9, queued in this release train)
-**Compliance Dossiers:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts under `docs/receipts/N{01..20}.json`; a consolidated `NATO_STANAG_4107_DOSSIER.json` projection is on the roadmap)
+**crates.io:** `wasm4pm` & `wasm4pm-conform` (26.10.11) · `bcinr-powl` & `bcinr-cmca` (26.10.11) · `chicago-tdd-tools` (26.10.11 — workspace bump landed (a166e25); crates.io publication pending)
+**Compliance Dossiers:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts under `docs/receipts/N{01..20}.json` are opt-in — emitted only when `CTT_EMIT_RECEIPTS=1`; a consolidated `NATO_STANAG_4107_DOSSIER.json` projection is on the roadmap)
 
 ## Media & Architecture Inquiries
 
@@ -124,13 +124,13 @@ press@strata.systems | https://strata.systems
 | --- | --- | --- |
 | `imports == ∅`, 2,000-step quota, OCEL 2.0 + pn64, ML-DSA-65 receipts | BACKED | guest.rs / guest_yield.rs / ocel64_bridge.rs + pn64.rs / signing/* |
 | wasm4pm 26.10.11 + wasm4pm-conform crate exists; graphlaw.wasm WASI engine | BACKED | PR1 table 2 |
-| temprun execution story — reworded to `temprun_step` wasmi host bin via `packet: 4` Port bridge + wasmtime-CLI legacy | BACKED (as reworded) | worker.ex:13-15; temprun/src/bin/temprun_step.rs; default_arena.ex:158-171 |
+| temprun execution story — reworded to `temprun_step` wasmi host bin via raw-stream Port (hand-rolled 4-byte LE length prefix) + wasmtime-CLI legacy | BACKED (as reworded) | worker.ex:13-15; temprun/src/bin/temprun_step.rs; default_arena.ex:158-171 |
 | Ecosystem versions — corrected: ash_pplan 26.10.8-1, ash_a2a 26.10.8, bcinr-cmca naming | BACKED (as reworded) | mix.exs files; bcinr-powl/Cargo.toml:22 |
 | Hex publication of ash_*/temprun | PLANNED (marked inline) | no publish receipts found |
-| NATO courts — reworded: N01–N07, N09–N11, N13, N16–N20 CTT-side; N08/N12/N14/N15 strata-side | BACKED (as reworded) | src/nato/README.md:47-48 |
+| NATO courts — updated post-convergence: N01–N20 all CTT-side (registry 20/20); N08/N12/N14/N15 ported to src/nato/ | BACKED | src/nato/registry.rs COURT_NAMES; src/nato/{hamming,tick,thrash,liveness}.rs |
 | N17 — reworded to PIPELINE-KAT with drop-in official-ACVP upgrade path | BACKED (as reworded) | src/nato/kat.rs:10-27 |
-| "verification pipeline compiled to native Rust (ctdd_ledger); measurement harnesses retain shell scripts" | BACKED (as reworded) | src/bin/ctdd_ledger.rs; scripts/n06_disasm_audit.sh, bin/nato_reproducible_build.sh remain by design |
+| "verification pipeline compiled to native Rust (ctdd_ledger); measurement harnesses retain shell scripts" | BACKED (as reworded) | `src/ledger/` (+ `src/conformance/guest.rs`, `crates/ctt-wasm-guest`); `src/bin/ctdd_ledger.rs` excised post-train — CLI verbs pending via `affi`; scripts/n06_disasm_audit.sh, bin/nato_reproducible_build.sh remain by design |
 | Dossier pointer — corrected to DOSSIER.md + .sig; consolidated JSON projection on roadmap | BACKED (as reworded) | strata/docs/nato/; N20 emits docs/receipts/N{01..20}.json |
 | `Temprun.run_one_shot/1` facade / ggen synthetic actors | ROADMAP (marked inline) | no implementation; future work orders |
 | Signed-Git source admission | ROADMAP (marked inline); Merkle receipts + N19 receipt BACKED | strata/src/cas.rs, docs/nato/N19_BUILD_RECEIPT.md |
-| chicago-tdd-tools 26.10.11 on crates.io | PARTIAL | workspace at 26.8.9; bump queued in this release train (coordinator step) |
+| chicago-tdd-tools 26.10.11 on crates.io | PARTIAL | bump landed (a166e25); crates.io publication pending (operator act) |

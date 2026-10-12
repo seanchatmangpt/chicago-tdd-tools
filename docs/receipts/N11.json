@@ -1,0 +1,30 @@
+{
+  "receipt_id": "cr-control-10",
+  "court_id": "N11",
+  "pillar": "Proof",
+  "name": "N11",
+  "subject_sha": "control-subject",
+  "verdict": "Pass",
+  "metrics": [
+    [
+      "k",
+      {
+        "U64": 10
+      }
+    ]
+  ],
+  "positive_control": {
+    "MutantCaught": {
+      "mutant_id": "m-10",
+      "detection_channel": "control"
+    }
+  },
+  "scoping": {
+    "spec_mandate": "mandate",
+    "delivered_evidence": "evidence",
+    "is_full_spec_scale": true,
+    "bound": ""
+  },
+  "digest": "3ab35438abe1e6b3460c4c342f188ef3074391ca0037e6ffd34745f32698b0b7",
+  "timestamp_ms": 0
+}

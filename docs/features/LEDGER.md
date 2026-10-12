@@ -18,8 +18,10 @@ Lifecycle: **Raw → Admitted → Receipted → Sealed dossier.**
   with an ML-DSA-65 `Signer`; `verify_sealed` is fail-closed.
 
 All code cited below is in `src/ledger/` (`receipt.rs`, `dossier.rs`, `proof.rs`,
-`error.rs`, `mod.rs`, `signing/{mod,signer,subject,sealer,keys}.rs`) and
-`src/bin/ctdd_ledger.rs`.
+`error.rs`, `mod.rs`, `dossier_wire.rs`,
+`signing/{mod,signer,subject,sealer,keys}.rs`). The `ctdd_ledger` CLI binary
+(`src/bin/ctdd_ledger.rs`) and the `ledger-cli` feature were excised in the V2
+cleanup; the CLI verbs landed in the external `affi` binary (Phase D M2, `~/affidavit`: receipt validate/chain-verify, dossier seal/verify behind the `ctdd` feature).
 
 ## Receipt wire format
 
@@ -211,15 +213,16 @@ BLAKE3 over the encoded public key (lane R8 reconcile).
 - Entropy failure is a typed `SealError::EntropyRefused(RefusalDigest)` carrying an
   opaque 32-byte digest — never a panic, never a partial key.
 
-## CLI
+## CLI (`affi`, Phase D M2 — landed in `~/affidavit`)
 
-Binary: `src/bin/ctdd_ledger.rs`, built by `just ctdd-ledger`
-(`cargo build --release --bin ctdd_ledger --features ledger,ledger-cli`). It is a
-thin clap front-end: all parsing, hashing, and admission decisions happen in-binary
-via `chicago_tdd_tools::ledger`; no subprocess/shell-out. `--json` emits a single
-JSON object (`cmd`, `ok`, `refusal`, `detail`, `receipts`, `digest`) on stdout.
+The `ctdd_ledger` binary and the `ledger-cli` feature were removed in the V2
+cleanup. The subcommand surface below is pending re-landing as `affi` verbs
+(Phase D M2); the domain logic lives in the library (`src/ledger/`, notably
+`dossier_wire.rs`) and `just verify-ledger`, `just emit-dossier`,
+`just dossier-verify`, `just dossier-inspect` already route through the
+`affi` binary at `/Users/sac/affidavit`.
 
-Subcommands:
+Former subcommands → `affi` verb mapping:
 
 | subcommand | args | behavior |
 |---|---|---|
@@ -232,8 +235,9 @@ Subcommands:
 
 ### Dossier JSON schema (`CTT-DOSSIER-v1`)
 
-Emitted by `dossier-emit` (writer: `dossier_json` in `src/bin/ctdd_ledger.rs`;
-reader: `DossierJson` in the same file — the two share one field set):
+Emitted by `affi dossier emit` (Phase D M2, landed in `~/affidavit`; formerly the
+`ctdd_ledger` bin's `dossier_json`/`DossierJson` — the field set now lives in
+`src/ledger/dossier_wire.rs`):
 
 | field | type | content |
 |---|---|---|
@@ -247,15 +251,17 @@ reader: `DossierJson` in the same file — the two share one field set):
 ### Dossier emit/verify via just
 
 ```bash
-just emit-dossier     # build ctdd_ledger, run nato::dossier_court, then dossier-emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --json
-just dossier-verify   # dossier-inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json
+just emit-dossier     # run nato::dossier_court courts, then affi dossier emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --json
+just dossier-verify   # affi dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json
 ```
 
 `docs/nato/NATO_STANAG_4107_DOSSIER.json` is a generated artifact (run
 `just emit-dossier`); it is not checked in. `emit-dossier` is gated on the
 `nato::dossier_court` courts passing first, and `dossier-emit` refuses with a
 typed error when `docs/receipts/N01..N20.json` are absent — court-receipt
-persistence to `docs/receipts` is a prerequisite that is not yet wired in
+persistence to `docs/receipts` is wired via the opt-in court test
+(`emit_dossier_receipts_when_opted_in`, gated on `CTT_EMIT_RECEIPTS=1`;
+permission errors skip typed, never panic) — it is a prerequisite and
 `src/nato/dossier_court.rs` (see the honesty note in the Justfile and
 `src/nato/README.md` "Receipt contract").
 
@@ -285,17 +291,16 @@ End-to-end one-shot verification is wired in the Justfile:
 just verify-ledger SOURCE
 ```
 
-which rebuilds the release binary and runs
-`./target/release/ctdd_ledger validate "<SOURCE>" --json` (Justfile lines 148-150).
+which runs the `affi` binary (`cargo run --manifest-path /Users/sac/affidavit/Cargo.toml
+--bin affi --format json receipt validate "<SOURCE>"`).
 
 ### In-flight seams (honesty notes)
 
-- `ctdd_ledger.rs` carries an explicit SEAM NOTE: it was coded against the
-  coordinator-fixed contract `ledger::{validate_receipt, chain_verify, seal_dossier,
-  verify_sealed_file, exit_code, LedgerExitCode}`. The landed `mod.rs` now provides
-  all of these — `verify_sealed_file` at mod.rs:183 — except `LedgerExitCode::Io`,
-  which does not exist (the enum spells its variants `Ok`, `MalformedReceipt`, …);
-  the import block and four call sites in `run` are the designated retarget points.
+- The `ctdd_ledger` bin was excised (V2 cleanup); the CLI verbs are re-landed in affi
+  affi (Phase D M2). The domain contract it consumed —
+  `ledger::{validate_receipt, chain_verify, seal_dossier, verify_sealed_file,
+  exit_code}` — remains landed in `src/ledger/mod.rs` (`verify_sealed_file` at
+  mod.rs:184).
 - `mod.rs` documents an error→exit-code table referencing variants (`ControlFlagMismatch`,
   `ReservedNonzero`) whose exact spelling differs from the ones `receipt.rs` decodes
   with (`FlagControlMismatch`, `ReservedNonZero`); the reconciliation is in flight.
@@ -304,4 +309,4 @@ which rebuilds the release binary and runs
 
 - `docs/features/NATO_COURTS.md`
 - `src/ledger/receipt.rs` (wire-format module doc reproduces the full layout)
-- `Justfile` recipes: `test-ledger`, `ctdd-ledger`, `verify-ledger`
+- `Justfile` recipes: `test-ledger`, `verify-ledger`

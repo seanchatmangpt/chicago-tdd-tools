@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.10.12] - 2026-10-11
+### Added
+- **Temprun guest bridge** (BEAM gen_statem worker + wasmi host bridge, landed
+  in strata @ 1ac493d as host binary `temprun_step`): 4-byte little-endian
+  framed port protocol with cooperative reduction yields; CTT-side the guest
+  ABI surface (`src/conformance/guest.rs`) and `crates/ctt-wasm-guest/` are
+  part of this train. Tracked in `docs/jira/v26.10.11/000-temprun-guest.md`.
+### Removed
+- **`ctdd_ledger` / `cq` CLI binaries** (`src/bin/ctdd_ledger.rs`, `src/bin/cq.rs`)
+  and the `ledger-cli` feature + clap dependency, excised in the V2 cleanup.
+  The domain surface remains in the library (`src/ledger/`, notably
+  `dossier_wire.rs`); the CLI verbs are re-landed in the external `affi` binary (Phase D M2: `receipt validate`, `receipt chain-verify`, `dossier seal`,
+  `dossier verify` behind the `ctdd` feature), and the
+  Justfile dossier recipes (`verify-ledger`, `emit-dossier`, `dossier-verify`,
+  `dossier-inspect`) route through the `affi` binary.
+### Changed
+- `tests/dossier_cli_tests.rs` is a library-only court
+  (`--features ledger,nato`); stale bin/feature references in
+  `docs/features/LEDGER.md`, `docs/features/MERGER_MATRIX.md` and
+  `src/ledger/dossier_wire.rs` doc comments updated to the excised state.
+
 ## [26.10.11] - 2026-10-11
 
 ### Added
@@ -18,7 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **NATO guest-import audit court** (`src/nato/guest_audit.rs`): W4 zero-import census parsing the guest artifact's wasm import section directly from the binary (no `wasm-tools`/`wasm-objdump`, no `std::process`), with honest `Skipped`/`ArtifactMissing` status per the N06 law.
 - **Guest ABI consolidation**: canonical ABI errno table (`ERR_*` 0..=13, `src/conformance/guest.rs`) is the single source for yield-status vs errno separation; `guest_telemetry::write_event_words` is a never-truncating unsafe ABI writer with deterministic errno on refusal; `key_id` unified to the first 8 bytes of BLAKE3 over the signer public key (`src/ledger/signing/sealer.rs`).
-- **Release docs (v26.10.11, DRAFT)**: `docs/releases/ANNOUNCEMENT_v26.10.11.md`, `docs/releases/ANNOUNCEMENT_FORWARD_DEPLOYMENT_OS_v26.10.11.md`, and the temprun-guest integration ticket `docs/jira/v26.10.11/000-temprun-guest.md`.
+- **Release docs (v26.10.11, DRAFT)**: `docs/releases/ANNOUNCEMENT_v26.10.11.md`, `docs/releases/ANNOUNCEMENT_FORWARD_DEPLOYMENT_OS_v26.10.11.md`, `docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md`, and the temprun-guest integration ticket `docs/jira/v26.10.11/000-temprun-guest.md`.
+- **NATO court ports N08/N12/N14/N15** (`src/nato/`): the registry is now complete at 20/20 CTT-side (`registry.rs` `COURT_NAMES`) — `hamming.rs` (N08 Hamming weight/distance profile, partial-scale honest disclosure), `tick.rs` (N12 clock-glitch resilience, wall-monotonic surrogate), `thrash.rs` (N14 CAST-32A multi-core interference), `liveness.rs` (N15 liveness).
+- **Merger-guests crate** (`crates/merger-guests/`): hermetic WASM guest crate with 8 leaf kernels behind a uniform `mgi_*` stateless ABI (wasm32 artifact build in flight).
+- **Merger conformance suite** (`tests/merger_conformance_tests.rs`): W1 contract pipeline + phase courts over the landed merger-matrix fixtures (fresh run: 25 passed / 0 failed / 0 ignored — all phase blocks green).
+- **Merger Justfile recipes**: `merger-guest-build`, `merger-guest-test`, `merger-conformance`.
 
 ### Changed
 - **Docs wave**: 15 dated plan/verification docs archived to `docs/archive/2026-10/` and `cookbook/archive/`; fabricated-API claims removed from docs; `cargo make` → `just` migrations; stale counts corrected.
@@ -193,7 +218,7 @@ This release extends the μ-kernel verification substrate with production-grade 
 - [Phase 3 Summary](../archive/PHASE_3_SUMMARY.md)
 - [Phase 4 Summary](../archive/PHASE_4_SUMMARY.md)
 - [RDF Integration Summary](../process/RDF_INTEGRATION_SUMMARY.md)
-- [Release Notes](RELEASE_NOTES_v1.4.0.md)
+- [Release Notes](archive/releases-v1x/RELEASE_NOTES_v1.4.0.md)
 
 ## [1.3.0] - 2025-11-16
 
@@ -300,7 +325,7 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - [Feature Documentation](../features/HYPER_ADVANCED_MICROKERNEL.md)
 - [Integration Tests](../../tests/hyper_advanced_integration.rs)
 - [Example Program](../../examples/hyper_advanced_microkernel.rs)
-- [Release Notes](RELEASE_NOTES_v1.3.0.md)
+- [Release Notes](archive/releases-v1x/RELEASE_NOTES_v1.3.0.md)
 
 ## [1.2.0] - 2025-11-14
 

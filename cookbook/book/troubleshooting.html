@@ -395,15 +395,21 @@ fn test_tracking() {
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[test]
-fn test_with_automatic_tracking() {
-    let weaver = WeaverTestFixture::new()?;
+fn test_with_automatic_tracking() -&gt; observability::ObservabilityResult&lt;()&gt; {
+    let mut weaver = WeaverTestFixture::new()?;
 
-    // Code that emits spans automatically
-    create_user_with_instrumentation("Alice");
+    // Instrument the code under test with a tracer that exports to Weaver
+    let tracer = weaver.tracer("user_service", "test-suite")?;
+    create_user_with_instrumentation(&amp;tracer, "Alice");
 
-    // Weaver captured the spans
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "user.created"));
+    // Flush telemetry, run live-check, and parse validation results
+    let results = weaver.finish()?;
+
+    // Assert on real validation state: no semantic convention violations,
+    // and the user.created span was actually observed
+    assert!(!results.has_violations(), "{}", results.violations_summary());
+    assert!(results.advices().any(|a| a.signal_name.as_deref() == Some("user.created")));
+    Ok(())
 }
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -420,7 +426,7 @@ fn test_with_automatic_tracking() {
 chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
 </code></pre>
 <p><strong>Step 2: Download Weaver</strong></p>
-<pre><code class="language-bash">cargo make weaver-bootstrap
+<pre><code class="language-bash">just weaver-bootstrap
 </code></pre>
 <p>This downloads the Weaver binary and registry.</p>
 <p><strong>Step 3: Verify Docker running</strong></p>
@@ -428,7 +434,7 @@ chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
 </code></pre>
 <p>If error: Start Docker Desktop / daemon</p>
 <p><strong>Step 4: Run Weaver smoke test</strong></p>
-<pre><code class="language-bash">cargo make weaver-smoke
+<pre><code class="language-bash">just weaver-smoke
 </code></pre>
 <p>If this passes, Weaver is ready.</p>
 <p><strong>Step 5: If tests still fail, allow skip</strong></p>

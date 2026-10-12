@@ -131,6 +131,6 @@ cargo make check-examples
 
 For issues or questions about this release, please:
 - Check the [documentation](../README.md)
-- Review the [CHANGELOG](CHANGELOG.md)
+- Review the [CHANGELOG](../../releases/CHANGELOG.md)
 - Open an issue on GitHub
 

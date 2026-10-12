@@ -177,6 +177,9 @@
                     <main>
                         <h1 id="pattern-9-single-source-of-truth"><a class="header" href="#pattern-9-single-source-of-truth">Pattern 9: Single Source of Truth</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 9: SINGLE SOURCE OF TRUTH</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance"><a class="header" href="#pattern-at-a-glance">Pattern at a Glance</a></h2>
@@ -238,10 +241,10 @@ const TIMEOUT_SECS: u64 = 30;  // Same value, will diverge!
 
 // ✅ RIGHT: Single definition
 // src/core/macros/test.rs
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Why</strong>: "Same value" isn't the same source. Accidental changes to one copy create bugs in unexpected places.</p>
 <h2 id="real-world-example"><a class="header" href="#real-world-example">Real-World Example</a></h2>

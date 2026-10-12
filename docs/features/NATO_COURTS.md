@@ -130,8 +130,8 @@ Per the receipt contract in `src/nato/README.md`, each court writes its
 court — and `verdict` in that serialized form is one of
 `Admitted` | `Refused` | `NotRun`. A missing receipt file degrades the N20
 dossier to `Refused`, never a silent pass. (`docs/receipts/` is populated
-by court runs under the `nato` feature; it is not checked in as static
-content.)
+by court runs under the `nato` feature **and** the opt-in gate
+`CTT_EMIT_RECEIPTS=1`; it is not checked in as static content.)
 
 ## The N01–N20 court matrix
 
@@ -144,24 +144,30 @@ including the honest scoping wording.
 | N01 | MILS non-interference | isolation | Bounded 2^16 exhaustive small-domain + 10^7 dual-tenant sweep proving `dState(TA)/dInput(TB) == 0`. Full Kani/Z3 2^64 NOT-SHIPPED; documented follow-up. |
 | N02 | Coordinate orthogonality | isolation | Spec-exact: exhaustive bit-spill census — every field write perturbs no neighbor field. |
 | N03 | Bell-LaPadula / Biba lattice | isolation | Exhaustive over the 25x65,536-entry transition-table space: no-write-down, no-read-up. |
-| N04 | Zero ambient authority | authority | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). |
+| N04 | Zero ambient authority | authority | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). In-code pillar: `Pillar::Dossier` (the 5-value enum has no Authority variant; pinned by `pillar_mapping_matches_the_matrix`). |
 | N05 | dudect timing | timing | Two tiers: smoke (small calibrated N in CI) and full (Welch t-test, `\|t\| < 4.5`, valid-vs-refusal timing; spec 10M, delivered calibrated-N disclosed). |
 | N06 | Branchless disassembly | timing | `.s`/objdump census over the compiled artifact: zero conditional branches on state paths; unmatched symbols recorded as typed skips, never silent passes. |
 | N07 | Cache side-channel | timing | Prime+Probe-style concurrent eviction vs sequencer; latency invariance is **reported, not gated** (host-noise floor disclosed in receipt). |
+| N08 | Hamming weight/distance profile | timing | Test-court lane (`src/nato/hamming.rs`, cfg(test) adjudication — no dyn `Court` impl): HIGH (`0xFFFF`) vs LOW (`0x0000`) payload-class kernel chains over the PN64 committed marking, identical LCG seed so payload is the only variable. Tier-1 bin-diff gate plus tier-2 100k-samples-per-class run (`--ignored`); input-independent Hamming profile = no power-analysis leak. |
 | N09 | SEU single-bit | resilience | Prefix-stream tiers: bounded randomized single-bit flips during ALU exec; 100.000% fail-closed-or-halt, 0% SDC on the executed prefix; calibrated-N disclosed. |
 | N10 | SEU double-bit | resilience | Adjacent-lane double flips vs forbidden-bit check; same prefix-stream tiering as N09. |
 | N11 | Torn-write / bus-disconnect | resilience | Fuzz over the ported 64B CAS ring: every torn write recovers to a valid prior state. |
+| N12 | Clock-glitch | timing | Hardware-tick law (`src/nato/tick.rs`): `HwTick::mono_checked` monotonicity over jittered/stuck/huge-jump tick sources. Jitter-injection regression is refused while forward chains admit; frozen clock gives bounded liveness; PN64 transition ordering law holds; wedged backstep clock is caught by positive control (honest host note: no counter register on this host). Tier-3 `n12_clock_resolution_calibration` is `--ignored` calibration. |
 | N13 | WCET | timing | Static per-opcode table + calibrated measurement. Units are `ticks≈ns on aarch64` — never "cycles"; the measured table is published in the receipt. |
+| N14 | CAST-32A thrash | timing | Multi-core interference on the landed 64B CAS ring (`src/nato/thrash.rs`): 4-producer/4-consumer MPMC pipeline vs storm/spinner adversary threads. Three legs — typed `ConsensusError` refusals only (zero SDC, zero loss), liveness under watchdog deadlock bound, run-to-run conservation determinism. Tier-1 small-config legs plus `--ignored` tier-3 donor-verbatim `n14_cast32a_thrash_full`; positive control is a wedged shim that must hit `DeadlockBound`. |
+| N15 | TLC liveness | proof | Starvation-freedom of the RONR admission surface (`src/nato/liveness.rs`), property-equivalent per the spec's own "Elixir property equivalent" sanction: exhaustive reachable-marking enumeration + round-robin fair-scheduler simulation with an explicit typed `StarvationMonitor` (enabled-then-fired within `TOTAL/32`), unfair-scheduler starvation counterexample, adoption-absorbing diamond, tier-3 full-net trap-pinning. TLC/Erlang itself NOT-SHIPPED (disclosed in the `ScopingRecord`). |
 | N16 | Stack bound | resource | Zero-recursion proof (call-graph analysis) + 32KiB ladder: depth-tiered deepest-frame bound, total <= 32KiB. |
 | N17 | ML-DSA-65 KAT | crypto | PIPELINE-KAT: known-answer tests against the signer. **NOT the official ACVP corpus**; the drop-in path to official vectors is documented in the receipt. |
 | N18 | Zero-entropy diagnostics | crypto | Entropy refusal court: Shannon entropy of all emitted error strings == 0 bits about internal state; strings that leak state are refused at construction. |
 | N19 | Reproducible build | supply chain | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
 | N20 | Dossier generator | supply chain | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
 
-Numbering note (from `src/nato/README.md`): N08, N12, N14, N15 remain
-strata-side lanes (Hamming profile, clock-glitch, CAST-32A thrash, TLC
-liveness) and are not part of this module's delivered set; receipts exist
-only for the courts listed above.
+Numbering note: all 20 courts N01–N20 are delivered CTT-side
+(`src/nato/registry.rs` `COURT_NAMES` is 20/20). N08 Hamming profile
+(`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
+thrash (`src/nato/thrash.rs`), and N15 liveness (`src/nato/liveness.rs`)
+landed CTT-side as test-court lanes; the Erlang/OTP tiers of those four
+remain strata-side.
 
 ## Files on disk (src/nato/)
 
@@ -174,8 +180,9 @@ Court pillar files landing in this release (file present on disk):
 
 - `mils.rs` (N01), `orthogonality.rs` (N02), `bell_lapadula.rs` (N03),
   `zero_ambient.rs` (N04), `timing.rs` (N05), `disasm.rs` (N06),
-  `cache.rs` (N07), `seu.rs` (N09/N10), `torn/` (N11: `ring.rs`, `slot.rs`),
-  `wcet.rs` (N13), `stackbound.rs` (N16), `kat.rs` (N17),
+  `cache.rs` (N07), `hamming.rs` (N08), `seu.rs` (N09/N10),
+  `torn/` (N11: `ring.rs`, `slot.rs`), `tick.rs` (N12), `wcet.rs` (N13),
+  `thrash.rs` (N14), `liveness.rs` (N15), `stackbound.rs` (N16), `kat.rs` (N17),
   `entropy.rs` (N18), `reproducible.rs` (N19), `dossier_court.rs` (N20),
   `guest_audit.rs` (guest-wasm import audit lane), `transition_tables.rs`
   (RONR + DAO transition-table substrate for the N02/N03 courts).
@@ -212,7 +219,7 @@ the delivered contract, not caveats.
 | Tier | Command (verified in `Justfile`) | When |
 |---|---|---|
 | tier-1 | `just test-nato` | Every commit — `cargo nextest run --lib --features nato nato::` (300s timeout) |
-| tier-2 | `just test-nato-tier2` | Explicit invocation — `cargo nextest run --lib --features nato -- --ignored nato_tier2` (120s) |
+| tier-2 | `just test-nato-tier2` | Explicit invocation — `two explicit tier-2 test filters: n16_workload_100k_transitions_on_32kib_thread + n07_conservation_under_eviction_storm_full` (120s) |
 | tier-3 | `just nato-courts-full` | Release gate — `cargo test --release --lib --features nato -- --ignored nato::` (600s) |
 
 Related recipes also present in the `Justfile`: the `nato` feature offline

@@ -177,6 +177,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="chicago-tdd-tools-pattern-cookbook"><a class="header" href="#chicago-tdd-tools-pattern-cookbook">Chicago TDD Tools Pattern Cookbook</a></h1>
+<blockquote>
+<p>🔧 <strong>CHICAGO TDD TOOLS PATTERN COOKBOOK</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>Welcome to the Chicago TDD Tools Pattern Cookbook. This mdBook captures the living pattern language behind the framework. Inspired by Christopher Alexander's "A Pattern Language," each pattern documents a recurring problem and the high-leverage solution encoded in the framework. Patterns are organized across testing, architecture, and design themes so you can quickly discover what fits your current context.</p>
 <p>Every pattern includes:</p>
 <ul>
@@ -189,6 +192,9 @@
 </ul>
 <p>Use this cookbook as a field guide while building and testing Rust systems with Chicago TDD Tools.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<blockquote>
+<p>🔧 <strong>INTRODUCTION</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>💡 Explanation | Introduction to the pattern language of Chicago TDD Tools</p>
 </blockquote>
@@ -288,7 +294,20 @@
 <li><strong><a href="architecture-patterns/">Architecture Patterns</a></strong> - Learn to organize code</li>
 <li><strong><a href="design-patterns/">Design Patterns</a></strong> - Learn advanced safety and design</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-reference-card-all-20-patterns"><a class="header" href="#quick-reference-card-all-20-patterns">Quick Reference Card: All 20 Patterns</a></h1>
+<h2 id="quick-glance"><a class="header" href="#quick-glance">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="quick-reference-card-all-20-patterns"><a class="header" href="#quick-reference-card-all-20-patterns">Quick Reference Card: All 20 Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>QUICK REFERENCE CARD: ALL 20 PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -441,7 +460,20 @@
 <strong>Design Patterns:</strong> When performance matters or you need compile-time guarantees</p>
 <hr />
 <p><strong>Pro Tip:</strong> Start with Pattern 1 (AAA). It's the foundation. Then add Patterns 2-5 as you build test confidence. Add Architecture patterns as teams grow. Add Design patterns when you hit performance/safety walls.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="common-mistakes-across-all-patterns"><a class="header" href="#common-mistakes-across-all-patterns">Common Mistakes Across All Patterns</a></h1>
+<h2 id="quick-glance-1"><a class="header" href="#quick-glance-1">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="common-mistakes-across-all-patterns"><a class="header" href="#common-mistakes-across-all-patterns">Common Mistakes Across All Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>COMMON MISTAKES ACROSS ALL PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>This guide aggregates "The Gotcha" from each pattern and shows how to avoid it.</p>
 <blockquote>
 <p><strong>Want to learn patterns in order?</strong> See <a href="pattern-dependencies.html">Pattern Dependencies &amp; Learning Order</a> for recommended learning paths. <strong>Want a quick lookup?</strong> See <a href="quick-reference.html">Quick Reference Card</a>.</p>
@@ -642,10 +674,10 @@ const TIMEOUT_SECS: u64 = 30;  // Will diverge!
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// src/core/macros/test.rs (single source)
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs (imports)
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Why It Matters:</strong> "Same value" isn't "same source." Copies diverge when someone forgets to update both.</p>
 <hr />
@@ -880,7 +912,20 @@ observability-full = ["otel", "weaver"]
 </tbody></table>
 </div>
 <p><strong>Golden Rule:</strong> If you can enforce something at compile time, do it. It's free and impossible to bypass.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="real-world-scenarios-patterns-in-action"><a class="header" href="#real-world-scenarios-patterns-in-action">Real-World Scenarios: Patterns in Action</a></h1>
+<h2 id="quick-glance-2"><a class="header" href="#quick-glance-2">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="real-world-scenarios-patterns-in-action"><a class="header" href="#real-world-scenarios-patterns-in-action">Real-World Scenarios: Patterns in Action</a></h1>
+<blockquote>
+<p>🔧 <strong>REAL-WORLD SCENARIOS: PATTERNS IN ACTION</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to | Real-world scenarios combining multiple patterns</p>
 </blockquote>
@@ -1253,7 +1298,20 @@ pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 <li>Add Pattern 12 (GATs) for lifetime safety</li>
 </ol>
 <p><strong>Pro tip:</strong> Don't use all patterns at once. Start with the ones that solve your current problem, then add others as complexity grows.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="adoption-guide-adding-patterns-to-existing-projects"><a class="header" href="#adoption-guide-adding-patterns-to-existing-projects">Adoption Guide: Adding Patterns to Existing Projects</a></h1>
+<h2 id="quick-glance-3"><a class="header" href="#quick-glance-3">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="adoption-guide-adding-patterns-to-existing-projects"><a class="header" href="#adoption-guide-adding-patterns-to-existing-projects">Adoption Guide: Adding Patterns to Existing Projects</a></h1>
+<blockquote>
+<p>🔧 <strong>ADOPTION GUIDE: ADDING PATTERNS TO EXISTING PROJECTS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🚀 <strong>HOW-TO</strong> | Add Chicago TDD patterns incrementally to your existing test suite</p>
 </blockquote>
@@ -1651,7 +1709,17 @@ Share learnings with team</li>
 <li>"How to measure improvement"</li>
 <li>"Team adoption resistance"</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="troubleshooting-guide-common-issues"><a class="header" href="#troubleshooting-guide-common-issues">Troubleshooting Guide: Common Issues</a></h1>
+<h2 id="quick-glance-4"><a class="header" href="#quick-glance-4">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="troubleshooting-guide-common-issues"><a class="header" href="#troubleshooting-guide-common-issues">Troubleshooting Guide: Common Issues</a></h1>
 <blockquote>
 <p>🔧 <strong>HOW-TO</strong> | Fix common problems when using Chicago TDD patterns</p>
 </blockquote>
@@ -1871,15 +1939,21 @@ fn test_tracking() {
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[test]
-fn test_with_automatic_tracking() {
-    let weaver = WeaverTestFixture::new()?;
+fn test_with_automatic_tracking() -&gt; observability::ObservabilityResult&lt;()&gt; {
+    let mut weaver = WeaverTestFixture::new()?;
 
-    // Code that emits spans automatically
-    create_user_with_instrumentation("Alice");
+    // Instrument the code under test with a tracer that exports to Weaver
+    let tracer = weaver.tracer("user_service", "test-suite")?;
+    create_user_with_instrumentation(&amp;tracer, "Alice");
 
-    // Weaver captured the spans
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "user.created"));
+    // Flush telemetry, run live-check, and parse validation results
+    let results = weaver.finish()?;
+
+    // Assert on real validation state: no semantic convention violations,
+    // and the user.created span was actually observed
+    assert!(!results.has_violations(), "{}", results.violations_summary());
+    assert!(results.advices().any(|a| a.signal_name.as_deref() == Some("user.created")));
+    Ok(())
 }
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -1896,7 +1970,7 @@ fn test_with_automatic_tracking() {
 chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
 </code></pre>
 <p><strong>Step 2: Download Weaver</strong></p>
-<pre><code class="language-bash">cargo make weaver-bootstrap
+<pre><code class="language-bash">just weaver-bootstrap
 </code></pre>
 <p>This downloads the Weaver binary and registry.</p>
 <p><strong>Step 3: Verify Docker running</strong></p>
@@ -1904,7 +1978,7 @@ chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
 </code></pre>
 <p>If error: Start Docker Desktop / daemon</p>
 <p><strong>Step 4: Run Weaver smoke test</strong></p>
-<pre><code class="language-bash">cargo make weaver-smoke
+<pre><code class="language-bash">just weaver-smoke
 </code></pre>
 <p>If this passes, Weaver is ready.</p>
 <p><strong>Step 5: If tests still fail, allow skip</strong></p>
@@ -2086,6 +2160,9 @@ Error path tests: 12 ← 6x improvement!
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="observability--instrumentation-in-tests"><a class="header" href="#observability--instrumentation-in-tests">Observability &amp; Instrumentation in Tests</a></h1>
 <blockquote>
+<p>🔧 <strong>OBSERVABILITY &amp; INSTRUMENTATION IN TESTS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔍 <strong>REFERENCE</strong> | Instrument tests with observability to validate telemetry in real-time</p>
 </blockquote>
 <p>This guide shows how to use Chicago TDD Tools' observability features to validate that your code generates correct telemetry (OpenTelemetry spans, metrics, Weaver validation).</p>
@@ -2122,22 +2199,25 @@ chicago-tdd-tools = { version = "1.3.0", features = ["observability-full"] }
 <h3 id="2-initialize-observability-in-tests"><a class="header" href="#2-initialize-observability-in-tests">2. Initialize Observability in Tests</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
-use chicago_tdd_tools::observability::otel::OtelTestValidator;
+</span>use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_with_observability() {
     // Arrange: Create fixture with observability
-    let fixture = WeaverTestFixture::new()
+    let mut fixture = WeaverTestFixture::new()
         .expect("Failed to initialize Weaver fixture");
 
-    // Act: Your code under test runs (emits spans)
-    your_function_that_emits_spans();
+    // Act: Your code under test runs (emits spans through the fixture tracer)
+    let tracer = fixture
+        .tracer("test-component", "your-service")
+        .expect("Failed to create tracer");
+    your_function_that_emits_spans(&amp;tracer);
 
-    // Assert: Validate the spans
-    let spans = fixture.collect_spans();
-    assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].name, "your.operation");
+    // Assert: Flush telemetry and inspect the Weaver validation results
+    let results = fixture
+        .finish()
+        .expect("Failed to collect Weaver validation results");
+    assert!(!results.has_violations());
 }
 <span class="boring">}</span></code></pre></pre>
 <hr />
@@ -2146,24 +2226,32 @@ fn test_with_observability() {
 <h3 id="example-validating-span-attributes"><a class="header" href="#example-validating-span-attributes">Example: Validating Span Attributes</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use chicago_tdd_tools::observability::otel::OtelTestValidator;
+</span>use chicago_tdd_tools::observability::otel::test_helpers::create_test_span_with_attributes;
+use chicago_tdd_tools::observability::otel::SpanValidator;
+use std::collections::BTreeMap;
 
 #[test]
 fn test_span_has_correct_attributes() {
     // Arrange
-    let validator = OtelTestValidator::new();
+    let validator = SpanValidator::new()
+        .with_required_attributes(vec![
+            "db.system".to_string(),
+            "db.operation".to_string(),
+        ]);
 
     // Act: Function under test emits span
     let result = my_function_that_creates_span();
-
-    // Assert: Span has expected attributes
-    validator.assert_span_exists("db.query", |span| {
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-        assert_eq!(span.get_attribute("db.operation"), Some("SELECT"));
-        // Verify no .unwrap() calls in code (no panics recorded)
-        assert!(!span.has_exception());
+    let span = create_test_span_with_attributes("db.query", {
+        let mut attrs = BTreeMap::new();
+        attrs.insert("db.system".to_string(), "postgres".to_string());
+        attrs.insert("db.operation".to_string(), "SELECT".to_string());
+        attrs
     });
 
+    // Assert: Span satisfies the validator
+    validator
+        .validate(&amp;span)
+        .expect("Span failed validation");
     // Verify function returned correct result
     assert_ok!(result);
 }
@@ -2171,9 +2259,9 @@ fn test_span_has_correct_attributes() {
 <p><strong>What this validates:</strong></p>
 <ul>
 <li>✅ Span was created with correct name</li>
-<li>✅ Required attributes present</li>
-<li>✅ Attribute values correct</li>
-<li>✅ No exceptions in span</li>
+<li>✅ Required attributes present (<code>SpanValidator::with_required_attributes</code>)</li>
+<li>✅ Span ID / trace ID valid (non-zero validation is on by default)</li>
+<li>✅ Function behavior correct</li>
 </ul>
 <hr />
 <h2 id="pattern-integration-weaver-live-validation"><a class="header" href="#pattern-integration-weaver-live-validation">Pattern Integration: Weaver Live Validation</a></h2>
@@ -2181,28 +2269,31 @@ fn test_span_has_correct_attributes() {
 <h3 id="example-validating-against-semantic-conventions"><a class="header" href="#example-validating-against-semantic-conventions">Example: Validating Against Semantic Conventions</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
+</span>use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_http_request_span_complies_with_conventions() {
     // Arrange: Create Weaver fixture
-    let fixture = WeaverTestFixture::new()
+    let mut fixture = WeaverTestFixture::new()
         .expect("Weaver not available (needs Docker)");
 
-    // Act: Code under test
-    let response = make_http_request("GET", "https://api.example.com/users/123");
+    // Act: Code under test, instrumented through the fixture tracer
+    let tracer = fixture
+        .tracer("http-client", "your-service")
+        .expect("Failed to create tracer");
+    let response = make_http_request(&amp;tracer, "GET", "https://api.example.com/users/123");
 
-    // Assert: Span complies with semantic conventions
-    let result = fixture.validate_span("http.client", |span| {
-        // Weaver checks these automatically:
-        // - http.method is one of GET, POST, etc (not "download")
-        // - http.url is valid URL (not just "example")
-        // - http.status_code is 100-599 (not 999)
-        // - http.response_content_length is positive (not negative)
-        span
-    });
+    // Assert: Flush telemetry and check Weaver's verdict
+    let results = fixture
+        .finish()
+        .expect("Failed to collect Weaver validation results");
 
-    assert_ok!(result);
+    // Weaver checks these automatically:
+    // - http.method is one of GET, POST, etc (not "download")
+    // - http.url is valid URL (not just "example")
+    // - http.status_code is 100-599 (not 999)
+    // - http.response_content_length is positive (not negative)
+    assert!(!results.has_violations(), "{}", results.violations_summary());
     assert_ok!(response);
 }
 <span class="boring">}</span></code></pre></pre>
@@ -2220,7 +2311,7 @@ fn test_http_request_span_complies_with_conventions() {
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::integration::testcontainers::GenericContainer;
-use chicago_tdd_tools::observability::weaver::WeaverTestFixture;
+use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_database_query_with_instrumentation() {
@@ -2228,26 +2319,26 @@ fn test_database_query_with_instrumentation() {
     let db_container = GenericContainer::new(client, "postgres", "latest")
         .expect("Docker not available");
 
-    let weaver = WeaverTestFixture::new()
+    let mut weaver = WeaverTestFixture::new()
         .expect("Weaver not available");
 
     let db_url = db_container.get_connection_string();
 
-    // Act: Execute query (which emits spans)
-    let result = execute_query_with_logging(db_url, "SELECT * FROM users");
+    // Act: Execute query (which emits spans through the fixture tracer)
+    let tracer = weaver
+        .tracer("db-client", "your-service")
+        .expect("Failed to create tracer");
+    let result = execute_query_with_logging(&amp;tracer, db_url, "SELECT * FROM users");
 
     // Assert: Verify both behavior and observability
     assert_ok!(result);
 
-    // Validate span structure
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "db.client.operation"));
-
-    // Validate semantic conventions
-    weaver.validate_span("db.client.operation", |span| {
-        // Weaver checks: db.system = "postgres", db.operation = "SELECT", etc
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-    }).expect("Span violates semantic conventions");
+    // Flush telemetry and validate semantic conventions via Weaver
+    let results = weaver
+        .finish()
+        .expect("Failed to collect Weaver validation results");
+    // Weaver checks: db.system = "postgres", db.operation = "SELECT", etc
+    assert!(!results.has_violations(), "{}", results.violations_summary());
 }
 <span class="boring">}</span></code></pre></pre>
 <p><strong>This pattern validates:</strong></p>
@@ -2292,8 +2383,9 @@ export WEAVER_ALLOW_SKIP=1  # Test runs without Weaver validation
 <p><strong>Fix:</strong></p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Ensure spans are flushed before collecting
-let spans = fixture.collect_spans_with_timeout(Duration::from_secs(1))?;
+</span>// Ensure spans are flushed before validating
+let results = fixture.finish()?;
+assert!(!results.has_violations(), "{}", results.violations_summary());
 <span class="boring">}</span></code></pre></pre>
 <h3 id="issue-3-semantic-convention-violation"><a class="header" href="#issue-3-semantic-convention-violation">Issue 3: "Semantic Convention Violation"</a></h3>
 <pre><code>thread 'test_http_span' panicked at 'Attribute "http.status_code": expected int, got string "200"'
@@ -2344,7 +2436,7 @@ span.set_attribute("http.status_code", 200i32);
 </span><span class="boring">fn main() {
 </span>use chicago_tdd_tools::{
     integration::testcontainers::GenericContainer,
-    observability::weaver::WeaverTestFixture,
+    observability::fixtures::WeaverTestFixture,
     test,
 };
 
@@ -2352,10 +2444,12 @@ span.set_attribute("http.status_code", 200i32);
 test!(test_user_service_with_full_observability, {
     // Arrange: Database + Weaver
     let db = GenericContainer::new(client, "postgres", "latest")?;
-    let weaver = WeaverTestFixture::new()?;
+    let mut weaver = WeaverTestFixture::new()?;
     let db_url = db.get_connection_string();
 
-    let user_service = UserService::new(&amp;db_url);
+    let tracer = weaver
+        .tracer("user-service", "your-service")?;
+    let user_service = UserService::new(&amp;db_url, tracer);
 
     // Act: Create user (emits spans, writes to DB)
     let result = user_service.create_user(User {
@@ -2372,22 +2466,9 @@ test!(test_user_service_with_full_observability, {
     assert_eq!(stored_user.name, "Alice");
 
     // Assert: Observability correct
-    // Validate structure
-    let spans = weaver.collect_spans();
-    assert!(spans.iter().any(|s| s.name == "db.client.operation"));
-    assert!(spans.iter().any(|s| s.name == "user.service.create"));
-
-    // Validate semantic conventions (Weaver)
-    weaver.validate_span("db.client.operation", |span| {
-        assert_eq!(span.get_attribute("db.system"), Some("postgres"));
-        assert_eq!(span.get_attribute("db.operation"), Some("INSERT"));
-    })?;
-
-    // Validate trace shows proper nesting
-    // user.service.create → db.client.operation (parent-child)
-    let service_span = spans.iter().find(|s| s.name == "user.service.create").unwrap();
-    let db_span = spans.iter().find(|s| s.name == "db.client.operation").unwrap();
-    assert_eq!(db_span.parent_span_id, service_span.span_id);
+    // Flush telemetry and validate semantic conventions (Weaver)
+    let results = weaver.finish()?;
+    assert!(!results.has_violations(), "{}", results.violations_summary());
 });
 <span class="boring">}</span></code></pre></pre>
 <p>This test validates:</p>
@@ -2416,7 +2497,20 @@ test!(test_user_service_with_full_observability, {
 <li><strong>Automate:</strong> Add observability checks to shipping checklist</li>
 </ol>
 <p>See <a href="pattern-dependencies.html">Pattern Dependencies</a> for how observability fits with other patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="choosing-your-pattern"><a class="header" href="#choosing-your-pattern">Choosing Your Pattern</a></h1>
+<h2 id="quick-glance-5"><a class="header" href="#quick-glance-5">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="choosing-your-pattern"><a class="header" href="#choosing-your-pattern">Choosing Your Pattern</a></h1>
+<blockquote>
+<p>🔧 <strong>CHOOSING YOUR PATTERN</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>💡 Explanation</p>
 </blockquote>
@@ -2638,7 +2732,20 @@ A: Application guide shows <em>how to apply patterns in practice</em>. Cookbook 
 <p>Or jump directly to the pattern you need from the Quick Finder above.</p>
 <hr />
 <p><strong>Remember</strong>: Patterns work together. As you learn each one, you'll recognize them appearing in others. That's the power of a pattern language.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-dependencies--learning-order"><a class="header" href="#pattern-dependencies--learning-order">Pattern Dependencies &amp; Learning Order</a></h1>
+<h2 id="quick-glance-6"><a class="header" href="#quick-glance-6">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-dependencies--learning-order"><a class="header" href="#pattern-dependencies--learning-order">Pattern Dependencies &amp; Learning Order</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN DEPENDENCIES &amp; LEARNING ORDER</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🎓 Tutorial | Learning paths and dependencies between patterns</p>
 </blockquote>
@@ -3025,40 +3132,40 @@ PHASE 5: DESIGN PATTERNS (80 min)
 <li>✅ No <code>.unwrap()</code> in error paths (Clippy -D unwrap_used)</li>
 <li>✅ No <code>.expect()</code> in production code (Clippy -D expect_used)</li>
 <li>✅ All errors propagate via <code>?</code> operator or explicit match</li>
-<li>✅ Run: <code>cargo make lint</code> (catches all violations)</li>
+<li>✅ Run: <code>just lint</code> (catches all violations)</li>
 </ul>
 <p><strong>Test Isolation (Pattern 1 + Pattern 4):</strong></p>
 <ul>
 <li>✅ Tests use AAA pattern (Arrange-Act-Assert)</li>
 <li>✅ Tests clean up resources via Drop (no manual teardown)</li>
 <li>✅ Tests run in parallel without flakiness</li>
-<li>✅ Run: <code>cargo make test-unit &amp;&amp; cargo make test-all</code></li>
+<li>✅ Run: <code>just test-unit &amp;&amp; just test-all</code></li>
 </ul>
 <p><strong>Type Safety (Pattern 14 + Pattern 15):</strong></p>
 <ul>
 <li>✅ Invalid states impossible to construct</li>
 <li>✅ Wrong call order = compile error (not runtime bug)</li>
 <li>✅ Sealed traits prevent unsafe downstream code</li>
-<li>✅ Run: <code>cargo make check</code> (catches all violations)</li>
+<li>✅ Run: <code>just check</code> (catches all violations)</li>
 </ul>
 <p><strong>Real Collaborators (Pattern 5):</strong></p>
 <ul>
 <li>✅ Integration tests use actual services (not mocks)</li>
 <li>✅ Docker container tests in CI (testcontainers feature)</li>
 <li>✅ Catching integration bugs before production</li>
-<li>✅ Run: <code>cargo make test-integration</code></li>
+<li>✅ Run: <code>just test-integration</code></li>
 </ul>
 <p><strong>Resource Safety (Pattern 4 + Pattern 16):</strong></p>
 <ul>
 <li>✅ Fixtures guarantee cleanup even on panic</li>
 <li>✅ No resource leaks detected</li>
 <li>✅ Timeout defense prevents hanging tests</li>
-<li>✅ Run: <code>cargo make test-all</code> with <code>RUST_BACKTRACE=1</code></li>
+<li>✅ Run: <code>just test-all</code> with <code>RUST_BACKTRACE=1</code></li>
 </ul>
 <p><strong>Production Readiness (Full Pipeline):</strong></p>
 <ul>
-<li>✅ <code>cargo make pre-commit</code> passes (format + lint + unit tests)</li>
-<li>✅ <code>cargo make ci-local</code> passes (simulates GitHub Actions)</li>
+<li>✅ <code>just pre-commit</code> passes (format + lint + unit tests)</li>
+<li>✅ <code>just ci-local</code> passes (simulates GitHub Actions)</li>
 <li>✅ All clippy warnings fixed or justified with <code>#[allow(...)]</code></li>
 <li>✅ Code review checklist passed (see CODE_REVIEW_CHECKLIST.md)</li>
 </ul>
@@ -3085,7 +3192,20 @@ PHASE 5: DESIGN PATTERNS (80 min)
 <ul>
 <li><a href="real-world-scenarios.html">Real-World Scenarios</a> - 5 scenarios showing patterns combined (15 min)</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="all-patterns-quick-reference-card"><a class="header" href="#all-patterns-quick-reference-card">All Patterns: Quick Reference Card</a></h1>
+<h2 id="quick-glance-7"><a class="header" href="#quick-glance-7">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="all-patterns-quick-reference-card"><a class="header" href="#all-patterns-quick-reference-card">All Patterns: Quick Reference Card</a></h1>
+<blockquote>
+<p>🔧 <strong>ALL PATTERNS: QUICK REFERENCE CARD</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 <strong>REFERENCE</strong> | All 20 patterns at a glance</p>
 </blockquote>
@@ -3225,7 +3345,20 @@ Pattern 13 (Sealed Traits)
 <p>💡 <strong>Tip 4</strong>: Bookmark the <a href="choosing-your-pattern.html">Decision Guide</a>. You'll return to it when solving problems.</p>
 <hr />
 <p><strong>Next</strong>: Choose your learning path or jump to a pattern you need right now!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-testing-patterns-90-minute-mastery"><a class="header" href="#learning-testing-patterns-90-minute-mastery">Learning Testing Patterns: 90-Minute Mastery</a></h1>
+<h2 id="quick-glance-8"><a class="header" href="#quick-glance-8">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="learning-testing-patterns-90-minute-mastery"><a class="header" href="#learning-testing-patterns-90-minute-mastery">Learning Testing Patterns: 90-Minute Mastery</a></h1>
+<blockquote>
+<p>🔧 <strong>LEARNING TESTING PATTERNS: 90-MINUTE MASTERY</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🎓 Tutorial</p>
 </blockquote>
@@ -3593,7 +3726,20 @@ Why real collaborators are better than mocks?</li>
 </ul>
 <hr />
 <p><strong>Congratulations!</strong> You now understand the 5 fundamental testing patterns. Next, learn how to organize your code with Architecture Patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-architecture-patterns-60-minute-mastery"><a class="header" href="#learning-architecture-patterns-60-minute-mastery">Learning Architecture Patterns: 60-Minute Mastery</a></h1>
+<h2 id="quick-glance-9"><a class="header" href="#quick-glance-9">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="learning-architecture-patterns-60-minute-mastery"><a class="header" href="#learning-architecture-patterns-60-minute-mastery">Learning Architecture Patterns: 60-Minute Mastery</a></h1>
+<blockquote>
+<p>🔧 <strong>LEARNING ARCHITECTURE PATTERNS: 60-MINUTE MASTERY</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🎓 Tutorial</p>
 </blockquote>
@@ -4025,7 +4171,20 @@ How to organize code by capability?</li>
 <p>If yes to all, you've mastered Architecture Patterns! 🎉</p>
 <hr />
 <p><strong>Congratulations!</strong> You now understand how to organize production code. Next, master type safety and design with Design Patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="learning-design-patterns-120-minute-mastery"><a class="header" href="#learning-design-patterns-120-minute-mastery">Learning Design Patterns: 120-Minute Mastery</a></h1>
+<h2 id="quick-glance-10"><a class="header" href="#quick-glance-10">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="learning-design-patterns-120-minute-mastery"><a class="header" href="#learning-design-patterns-120-minute-mastery">Learning Design Patterns: 120-Minute Mastery</a></h1>
+<blockquote>
+<p>🔧 <strong>LEARNING DESIGN PATTERNS: 120-MINUTE MASTERY</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🎓 Tutorial</p>
 </blockquote>
@@ -4513,10 +4672,36 @@ When to use macros for enforcement?</li>
 ✅ High-performance
 ✅ Hard to misuse</p>
 <p>That's the Chicago TDD difference.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="testing-patterns-1"><a class="header" href="#testing-patterns-1">Testing Patterns</a></h1>
+<h2 id="quick-glance-11"><a class="header" href="#quick-glance-11">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="testing-patterns-1"><a class="header" href="#testing-patterns-1">Testing Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>TESTING PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>Tests are executable specifications. The Chicago TDD Tools testing patterns capture how to write fast, trustworthy, and expressive tests that verify observable behavior. Each pattern layers on the previous ones; together they reflect the AAA mindset, the insistence on real collaborators, and the bias toward fast failure.</p>
 <p>Use these patterns when a test feels brittle, slow, or unclear. The language highlights which macro to reach for, how to structure the test body, and how to keep failures meaningful.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-1-aaa-pattern-1"><a class="header" href="#pattern-1-aaa-pattern-1">Pattern 1: AAA Pattern</a></h1>
+<h2 id="quick-glance-12"><a class="header" href="#quick-glance-12">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-1-aaa-pattern-1"><a class="header" href="#pattern-1-aaa-pattern-1">Pattern 1: AAA Pattern</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 1: AAA PATTERN</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -4617,6 +4802,9 @@ Assert phase is specific (exact values, not ranges)</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-2-error-path-testing"><a class="header" href="#pattern-2-error-path-testing">Pattern 2: Error Path Testing</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 2: ERROR PATH TESTING</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-1"><a class="header" href="#pattern-at-a-glance-1">Pattern at a Glance</a></h2>
@@ -4711,6 +4899,9 @@ Error scenarios are realistic (not artificial)</li>
 No sensitive data in error messages</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-3-boundary-conditions"><a class="header" href="#pattern-3-boundary-conditions">Pattern 3: Boundary Conditions</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 3: BOUNDARY CONDITIONS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -4818,6 +5009,9 @@ Boundary violations produce clear error messages</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-4-resource-cleanup"><a class="header" href="#pattern-4-resource-cleanup">Pattern 4: Resource Cleanup</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 4: RESOURCE CLEANUP</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-3"><a class="header" href="#pattern-at-a-glance-3">Pattern at a Glance</a></h2>
@@ -4920,6 +5114,9 @@ File handles are closed</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-5-real-collaborators"><a class="header" href="#pattern-5-real-collaborators">Pattern 5: Real Collaborators</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 5: REAL COLLABORATORS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-4"><a class="header" href="#pattern-at-a-glance-4">Pattern at a Glance</a></h2>
@@ -4961,7 +5158,7 @@ fixture_test_with_timeout!(test_postgres_query, fixture, 30, {
 <li><input disabled="" type="checkbox"/>
 Integration tests use real containers/services, not mocks</li>
 <li><input disabled="" type="checkbox"/>
-Tests run with <code>cargo make test-integration</code> (separate from unit tests)</li>
+Tests run with <code>just test-integration</code> (separate from unit tests)</li>
 <li><input disabled="" type="checkbox"/>
 Docker is required; test fails clearly if unavailable</li>
 <li><input disabled="" type="checkbox"/>
@@ -5019,9 +5216,25 @@ Containers have version constraints documented</li>
 Docker failure message is clear (guides user to fix)</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="architecture-patterns-1"><a class="header" href="#architecture-patterns-1">Architecture Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>ARCHITECTURE PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>Chicago TDD Tools is deliberately layered so teams can extend the framework without rewriting core functionality. The architecture patterns describe how modules compose, how extensions fit, and how the framework keeps behavior predictable across crates.</p>
 <p>Use these patterns when building custom tooling on top of the framework or when evaluating how to contribute new modules upstream.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-6-generic-base-layer-1"><a class="header" href="#pattern-6-generic-base-layer-1">Pattern 6: Generic Base Layer</a></h1>
+<h2 id="quick-glance-13"><a class="header" href="#quick-glance-13">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-6-generic-base-layer-1"><a class="header" href="#pattern-6-generic-base-layer-1">Pattern 6: Generic Base Layer</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 6: GENERIC BASE LAYER</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -5115,6 +5328,9 @@ Build time is acceptable with/without features</li>
 Documentation doesn't mention domain concepts</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-7-extension-layer"><a class="header" href="#pattern-7-extension-layer">Pattern 7: Extension Layer</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 7: EXTENSION LAYER</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -5220,6 +5436,9 @@ Tests document extension usage patterns</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-8-composition-over-duplication"><a class="header" href="#pattern-8-composition-over-duplication">Pattern 8: Composition Over Duplication</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 8: COMPOSITION OVER DUPLICATION</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-7"><a class="header" href="#pattern-at-a-glance-7">Pattern at a Glance</a></h2>
@@ -5324,6 +5543,9 @@ Tests verify both base and domain behavior</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-9-single-source-of-truth"><a class="header" href="#pattern-9-single-source-of-truth">Pattern 9: Single Source of Truth</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 9: SINGLE SOURCE OF TRUTH</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-8"><a class="header" href="#pattern-at-a-glance-8">Pattern at a Glance</a></h2>
@@ -5385,10 +5607,10 @@ const TIMEOUT_SECS: u64 = 30;  // Same value, will diverge!
 
 // ✅ RIGHT: Single definition
 // src/core/macros/test.rs
-pub const DEFAULT_TEST_TIMEOUT_SECS: u64 = 30;
+pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
 // src/validation/guards.rs
-use chicago_tdd_tools::core::macros::DEFAULT_TEST_TIMEOUT_SECS;
+use chicago_tdd_tools::core::macros::DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS;
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Why</strong>: "Same value" isn't the same source. Accidental changes to one copy create bugs in unexpected places.</p>
 <h2 id="real-world-example-8"><a class="header" href="#real-world-example-8">Real-World Example</a></h2>
@@ -5418,6 +5640,9 @@ Tests verify constants are consistent</li>
 Feature gates don't duplicate constants</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-10-capability-grouping"><a class="header" href="#pattern-10-capability-grouping">Pattern 10: Capability Grouping</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 10: CAPABILITY GROUPING</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -5515,9 +5740,25 @@ Re-exports make common paths short</li>
 Feature flags align with groups</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="design-patterns-1"><a class="header" href="#design-patterns-1">Design Patterns</a></h1>
+<blockquote>
+<p>🔧 <strong>DESIGN PATTERNS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <p>These patterns codify the type-level and zero-cost techniques that make Chicago TDD Tools safe and fast. They explain how the framework encodes invariants, leverages Rust's compiler, and prevents misuse through types.</p>
 <p>Use them when extending the framework or designing downstream APIs that should feel at home in the ecosystem.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-11-zero-cost-abstractions"><a class="header" href="#pattern-11-zero-cost-abstractions">Pattern 11: Zero-Cost Abstractions</a></h1>
+<h2 id="quick-glance-14"><a class="header" href="#quick-glance-14">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-11-zero-cost-abstractions"><a class="header" href="#pattern-11-zero-cost-abstractions">Pattern 11: Zero-Cost Abstractions</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 11: ZERO-COST ABSTRACTIONS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -5610,6 +5851,9 @@ Binary size is monitored (monomorphization can bloat)</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-12-type-safety-with-gats"><a class="header" href="#pattern-12-type-safety-with-gats">Pattern 12: Type Safety with GATs</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 12: TYPE SAFETY WITH GATS</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>📚 Reference</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-11"><a class="header" href="#pattern-at-a-glance-11">Pattern at a Glance</a></h2>
@@ -5700,6 +5944,9 @@ Documentation explains lifetime constraints</li>
 Tests verify lifetime safety</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-13-sealed-traits-for-api-safety"><a class="header" href="#pattern-13-sealed-traits-for-api-safety">Pattern 13: Sealed Traits for API Safety</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 13: SEALED TRAITS FOR API SAFETY</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -5797,6 +6044,9 @@ Tests verify only framework types work</li>
 Consider unsealing if user demand is genuine</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-14-compile-time-validation"><a class="header" href="#pattern-14-compile-time-validation">Pattern 14: Compile-Time Validation</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 14: COMPILE-TIME VALIDATION</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -5900,6 +6150,9 @@ No runtime checks for compile-time known values</li>
 Performance is not impacted by validation</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-15-type-state-enforcement"><a class="header" href="#pattern-15-type-state-enforcement">Pattern 15: Type State Enforcement</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 15: TYPE STATE ENFORCEMENT</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -6023,10 +6276,26 @@ Documentation shows valid state diagram</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="new-patterns-from-practice"><a class="header" href="#new-patterns-from-practice">New Patterns from Practice</a></h1>
 <blockquote>
+<p>🔧 <strong>NEW PATTERNS FROM PRACTICE</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>💡 Explanation | Evolving design patterns from real-world practice</p>
 </blockquote>
 <p>The framework continues to evolve through real-world usage. This section captures patterns that emerged after building large Chicago TDD deployments. They complement the classical design patterns with pragmatic guidance on fixtures, timeouts, feature flags, and macro enforcement.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-16-fixture-lifecycle-management"><a class="header" href="#pattern-16-fixture-lifecycle-management">Pattern 16: Fixture Lifecycle Management</a></h1>
+<h2 id="quick-glance-15"><a class="header" href="#quick-glance-15">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-16-fixture-lifecycle-management"><a class="header" href="#pattern-16-fixture-lifecycle-management">Pattern 16: Fixture Lifecycle Management</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 16: FIXTURE LIFECYCLE MANAGEMENT</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -6131,6 +6400,9 @@ Tests run in any order without pollution</li>
 Cleanup failures are reported clearly</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-17-builder-driven-test-data"><a class="header" href="#pattern-17-builder-driven-test-data">Pattern 17: Builder-Driven Test Data</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 17: BUILDER-DRIVEN TEST DATA</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>🔧 How-to</p>
 </blockquote>
@@ -6256,6 +6528,9 @@ Tests using builder are easier to maintain</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-18-timeout-defense-in-depth"><a class="header" href="#pattern-18-timeout-defense-in-depth">Pattern 18: Timeout Defense in Depth</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN 18: TIMEOUT DEFENSE IN DEPTH</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🔧 How-to</p>
 </blockquote>
 <h2 id="pattern-at-a-glance-17"><a class="header" href="#pattern-at-a-glance-17">Pattern at a Glance</a></h2>
@@ -6357,6 +6632,9 @@ Timeout error messages identify the test</li>
 Timeout constants are centralized (no duplication)</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-19-feature-gate-slices"><a class="header" href="#pattern-19-feature-gate-slices">Pattern 19: Feature Gate Slices</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 19: FEATURE GATE SLICES</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>
@@ -6461,6 +6739,9 @@ No accidental feature requirements in base</li>
 CI tests multiple feature combinations</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-20-macro-pattern-enforcement"><a class="header" href="#pattern-20-macro-pattern-enforcement">Pattern 20: Macro Pattern Enforcement</a></h1>
+<blockquote>
+<p>🔧 <strong>PATTERN 20: MACRO PATTERN ENFORCEMENT</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
 <blockquote>
 <p>📚 Reference</p>
 </blockquote>

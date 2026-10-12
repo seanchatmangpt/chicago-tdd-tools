@@ -177,6 +177,9 @@
                     <main>
                         <h1 id="pattern-dependencies--learning-order"><a class="header" href="#pattern-dependencies--learning-order">Pattern Dependencies &amp; Learning Order</a></h1>
 <blockquote>
+<p>🔧 <strong>PATTERN DEPENDENCIES &amp; LEARNING ORDER</strong> | <strong>How-to</strong> | Solve this problem</p>
+</blockquote>
+<blockquote>
 <p>🎓 Tutorial | Learning paths and dependencies between patterns</p>
 </blockquote>
 <p>This guide shows which patterns depend on which others, helping you build a foundation before moving to advanced patterns.</p>
@@ -562,40 +565,40 @@ PHASE 5: DESIGN PATTERNS (80 min)
 <li>✅ No <code>.unwrap()</code> in error paths (Clippy -D unwrap_used)</li>
 <li>✅ No <code>.expect()</code> in production code (Clippy -D expect_used)</li>
 <li>✅ All errors propagate via <code>?</code> operator or explicit match</li>
-<li>✅ Run: <code>cargo make lint</code> (catches all violations)</li>
+<li>✅ Run: <code>just lint</code> (catches all violations)</li>
 </ul>
 <p><strong>Test Isolation (Pattern 1 + Pattern 4):</strong></p>
 <ul>
 <li>✅ Tests use AAA pattern (Arrange-Act-Assert)</li>
 <li>✅ Tests clean up resources via Drop (no manual teardown)</li>
 <li>✅ Tests run in parallel without flakiness</li>
-<li>✅ Run: <code>cargo make test-unit &amp;&amp; cargo make test-all</code></li>
+<li>✅ Run: <code>just test-unit &amp;&amp; just test-all</code></li>
 </ul>
 <p><strong>Type Safety (Pattern 14 + Pattern 15):</strong></p>
 <ul>
 <li>✅ Invalid states impossible to construct</li>
 <li>✅ Wrong call order = compile error (not runtime bug)</li>
 <li>✅ Sealed traits prevent unsafe downstream code</li>
-<li>✅ Run: <code>cargo make check</code> (catches all violations)</li>
+<li>✅ Run: <code>just check</code> (catches all violations)</li>
 </ul>
 <p><strong>Real Collaborators (Pattern 5):</strong></p>
 <ul>
 <li>✅ Integration tests use actual services (not mocks)</li>
 <li>✅ Docker container tests in CI (testcontainers feature)</li>
 <li>✅ Catching integration bugs before production</li>
-<li>✅ Run: <code>cargo make test-integration</code></li>
+<li>✅ Run: <code>just test-integration</code></li>
 </ul>
 <p><strong>Resource Safety (Pattern 4 + Pattern 16):</strong></p>
 <ul>
 <li>✅ Fixtures guarantee cleanup even on panic</li>
 <li>✅ No resource leaks detected</li>
 <li>✅ Timeout defense prevents hanging tests</li>
-<li>✅ Run: <code>cargo make test-all</code> with <code>RUST_BACKTRACE=1</code></li>
+<li>✅ Run: <code>just test-all</code> with <code>RUST_BACKTRACE=1</code></li>
 </ul>
 <p><strong>Production Readiness (Full Pipeline):</strong></p>
 <ul>
-<li>✅ <code>cargo make pre-commit</code> passes (format + lint + unit tests)</li>
-<li>✅ <code>cargo make ci-local</code> passes (simulates GitHub Actions)</li>
+<li>✅ <code>just pre-commit</code> passes (format + lint + unit tests)</li>
+<li>✅ <code>just ci-local</code> passes (simulates GitHub Actions)</li>
 <li>✅ All clippy warnings fixed or justified with <code>#[allow(...)]</code></li>
 <li>✅ Code review checklist passed (see CODE_REVIEW_CHECKLIST.md)</li>
 </ul>
@@ -622,7 +625,17 @@ PHASE 5: DESIGN PATTERNS (80 min)
 <ul>
 <li><a href="real-world-scenarios.html">Real-World Scenarios</a> - 5 scenarios showing patterns combined (15 min)</li>
 </ul>
-
+<h2 id="quick-glance"><a class="header" href="#quick-glance">Quick Glance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Details</th></tr></thead><tbody>
+<tr><td>Problem</td><td>Addressed by this pattern</td></tr>
+<tr><td>Solution</td><td>Core idea in 1-2 sentences</td></tr>
+<tr><td>When To Use</td><td>Typical scenarios</td></tr>
+<tr><td>When NOT To Use</td><td>Anti-patterns</td></tr>
+<tr><td>Trade-offs</td><td>What you gain/lose</td></tr>
+<tr><td>Complexity</td><td>Low/Medium/High</td></tr>
+<tr><td>Real-World Example</td><td>Link to actual code</td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">

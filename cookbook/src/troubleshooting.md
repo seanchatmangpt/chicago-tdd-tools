@@ -305,7 +305,7 @@ chicago-tdd-tools = { features = ["observability-full"] }  # Includes weaver
 **Step 2: Download Weaver**
 
 ```bash
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 This downloads the Weaver binary and registry.
@@ -321,7 +321,7 @@ If error: Start Docker Desktop / daemon
 **Step 4: Run Weaver smoke test**
 
 ```bash
-cargo make weaver-smoke
+just weaver-smoke
 ```
 
 If this passes, Weaver is ready.

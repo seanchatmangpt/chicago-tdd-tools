@@ -8,9 +8,9 @@
 
 ## Pre-Review Checklist
 
-- [ ] **Clippy passes**: Run `cargo make lint` - must pass with exit code 0
-- [ ] **Tests pass**: Run `cargo make test` - all tests must pass
-- [ ] **Format check**: Run `cargo make fmt` - code must be formatted
+- [ ] **Clippy passes**: Run `just lint` - must pass with exit code 0
+- [ ] **Tests pass**: Run `just test` - all tests must pass
+- [ ] **Format check**: Run `just fmt` - code must be formatted
 - [ ] **No unwrap/expect**: Check for `unwrap()`/`expect()` in production code (use `#[allow]` with justification if needed)
 
 ## Test Isolation Checklist (FMEA: Test Data Corruption RPN 168 → 34)
@@ -40,7 +40,7 @@ See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and e
 - [ ] **Type safety**: Types encode invariants (use newtypes where appropriate)
 - [ ] **Documentation**: Public APIs have doc comments with `# Errors` sections
 - [ ] **Tests**: New code has tests (AAA pattern, behavior verification)
-- [ ] **External command timeouts**: All external commands (docker, git, etc.) must have timeout protection to prevent hanging when dependencies are unavailable (see TIMEOUT_ENFORCEMENT.md for pattern)
+- [ ] **External command timeouts**: All external commands (docker, git, etc.) must have timeout protection to prevent hanging when dependencies are unavailable (timeout patterns live in the Justfile recipes and docs/process/CI_FIXES_SUMMARY.md)
 - [ ] **Consistency**: Code follows established patterns (see CODING_STANDARDS.md)
 - [ ] **unwrap/expect usage**: Production code uses `Result<T, E>`, test code can use `unwrap()`/`expect()` with justification
 
@@ -48,16 +48,16 @@ See: [Test Isolation Guide](TEST_ISOLATION_GUIDE.md) for detailed patterns and e
 
 When reviewing documentation changes, verify:
 
-- [ ] **Version numbers**: All version references match current version (run `cargo make docs-check`)
-- [ ] **Build commands**: All examples use `cargo make` commands, not direct `cargo` commands
-- [ ] **Links**: All internal links work (run `cargo make docs-check`)
+- [ ] **Version numbers**: All version references match current version (run `just docs-check`)
+- [ ] **Build commands**: All examples use `just` commands, not direct `cargo` commands
+- [ ] **Links**: All internal links work (run `just docs-check`)
 - [ ] **Style guide**: Documentation follows [Documentation Style Guide](DOCUMENTATION_STYLE_GUIDE.md)
 - [ ] **Cross-references**: Major docs have "See Also" or "Next Steps" sections
 - [ ] **Examples**: Code examples are runnable and use correct version/commands
 - [ ] **New features**: New features have documentation
 - [ ] **API changes**: API changes have updated documentation
 
-**Automated checks**: Run `cargo make docs-check` to validate version numbers, build commands, links, and style.
+**Automated checks**: Run `just docs-check` to validate version numbers, build commands, links, and style.
 
 ## Clippy Allow Patterns
 
@@ -73,9 +73,9 @@ When `#[allow(clippy::...)]` is used, verify:
 
 ## CI/CD Integration
 
-- [ ] **CI will enforce**: All checks run automatically on commit/PR
+- [ ] **CI will enforce**: clippy/fmt/tests gate on PR/CI (the pre-commit hook itself only blocks unwrap/expect in staged production Rust and runs `just docs-check` on staged `.md`)
 - [ ] **No bypassing**: Cannot merge if clippy fails
-- [ ] **Fast feedback**: Run `cargo make pre-commit` before pushing
+- [ ] **Fast feedback**: Run `just pre-commit` before pushing
 
 ## Root Cause Prevention
 

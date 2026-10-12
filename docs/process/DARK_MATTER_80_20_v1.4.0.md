@@ -1190,7 +1190,7 @@ fn test_claims_receipt_snapshot() -> Result<(), Box<dyn std::error::Error>> {
 
 ## References
 
-- [v1.4.0 Release Notes](../releases/RELEASE_NOTES_v1.4.0.md)
+- [v1.4.0 Release Notes](../archive/releases-v1x/RELEASE_NOTES_v1.4.0.md)
 - [Fail-Fast Module Documentation](../../src/core/fail_fast.rs)
 - [RDF Integration Guide](./RDF_INTEGRATION_SUMMARY.md)
 - [Spec Harness Documentation](../../spec-harness/README.md)
