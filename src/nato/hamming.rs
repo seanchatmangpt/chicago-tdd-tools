@@ -106,7 +106,9 @@
 )]
 
 use crate::conformance::pn64::step_branchless;
-use crate::nato::court::{Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict};
+use crate::nato::court::{
+    ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
 use crate::nato::disclosure::ScopingRecord;
 use crate::nato::rng::Lcg;
 use crate::nato::timing::T_THRESHOLD;

@@ -79,7 +79,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::nato::court::{
-    CandidateRef, Court, CourtId, CourtOutcome, ControlProbe, Pillar, Verdict,
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, Pillar, Verdict,
 };
 use crate::nato::disclosure::ScopingRecord;
 
@@ -366,11 +366,7 @@ pub(crate) fn n07_tick_chain_law_holds() -> bool {
 pub(crate) fn n07_conservation_holds(p: &PassMeasurement) -> bool {
     p.storm_seq.len() == StormConfig::SMALL.transitions as usize
         && p.checksum_storm == p.checksum_idle_ref
-        && p
-            .storm_seq
-            .iter()
-            .zip(p.idle_seq.iter())
-            .all(|(&out, &ref_out)| out == ref_out)
+        && p.storm_seq.iter().zip(p.idle_seq.iter()).all(|(&out, &ref_out)| out == ref_out)
         && p.storm_seq.last() == p.idle_seq.last()
 }
 
@@ -483,7 +479,10 @@ mod tests {
     #[test]
     fn n07_tick_chain_law() {
         // Wrapper over the hoisted probe predicate (W-NTW §3).
-        assert!(n07_tick_chain_law_holds(), "tick chain law drifted: +1 mod 256 or upper-bit preservation violated");
+        assert!(
+            n07_tick_chain_law_holds(),
+            "tick chain law drifted: +1 mod 256 or upper-bit preservation violated"
+        );
     }
 
     #[test]

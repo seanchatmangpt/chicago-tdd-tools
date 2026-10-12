@@ -71,7 +71,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::nato::court::{
-    CandidateRef, Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict,
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
 };
 use crate::nato::disclosure::ScopingRecord;
 

@@ -10,7 +10,9 @@ use tokio::time::timeout;
 
 /// Take piped stdio handles from a spawned child, mapping a missing handle to
 /// a typed error instead of panicking.
-fn take_stdio(child: &mut Child) -> anyhow::Result<(tokio::process::ChildStdin, tokio::process::ChildStdout)> {
+fn take_stdio(
+    child: &mut Child,
+) -> anyhow::Result<(tokio::process::ChildStdin, tokio::process::ChildStdout)> {
     let stdin = child
         .stdin
         .take()

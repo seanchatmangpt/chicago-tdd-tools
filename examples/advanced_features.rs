@@ -222,12 +222,8 @@ fn main() {
     #[cfg(feature = "async")]
     {
         println!("3. Async Traits (requires async feature)");
-        println!(
-            "   Note: Async fixture examples are in src/core/async_fixture.rs tests"
-        );
-        println!(
-            "   Run with: cargo test --features async --lib async_fixture"
-        );
+        println!("   Note: Async fixture examples are in src/core/async_fixture.rs tests");
+        println!("   Run with: cargo test --features async --lib async_fixture");
     }
     #[cfg(not(feature = "async"))]
     {
@@ -238,9 +234,7 @@ fn main() {
     println!("Summary: Advanced features maximize DX by:");
     println!("  - Providing compile-time guarantees (catch errors early)");
     println!("  - Reducing boilerplate (less code to write)");
-    println!(
-        "  - Improving error messages (type system guides correct usage)"
-    );
+    println!("  - Improving error messages (type system guides correct usage)");
     println!("  - Zero-cost abstractions (no runtime overhead)");
 }
 

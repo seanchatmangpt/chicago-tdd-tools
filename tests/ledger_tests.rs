@@ -135,7 +135,8 @@ fn chain_records_of(n: usize) -> Vec<chicago_tdd_tools::ledger::dossier_wire::Ch
         .iter()
         .map(|c| {
             chicago_tdd_tools::ledger::dossier_wire::ChainRecord::of(
-                &VerifiedCourtReceipt::from_bytes_verified(&c.encode()).expect("chained record verifies"),
+                &VerifiedCourtReceipt::from_bytes_verified(&c.encode())
+                    .expect("chained record verifies"),
             )
         })
         .collect()
@@ -170,10 +171,9 @@ fn law02b_chain_record_projection_copies_trailer_bytes() {
     let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(7))
         .expect("valid name")
         .encode();
-    let record =
-        chicago_tdd_tools::ledger::dossier_wire::ChainRecord::of(
-            &VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"),
-        );
+    let record = chicago_tdd_tools::ledger::dossier_wire::ChainRecord::of(
+        &VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"),
+    );
     assert_eq!(record.trailer.as_slice(), &bytes[304..320]);
     assert_eq!(record.trailer, [0u8; 16], "fresh record trailer is all-zero");
 }
@@ -740,11 +740,8 @@ fn t20_verification_failed_display_and_reachability() {
 
     // Reachability: a proof whose leaf hashes to a different root.
     let root = DossierRoot([9u8; 32]);
-    let proof = CourtProof {
-        court_id: "ledger-tests-vf".into(),
-        head: [1u8; 32],
-        path: Vec::new(),
-    };
+    let proof =
+        CourtProof { court_id: "ledger-tests-vf".into(), head: [1u8; 32], path: Vec::new() };
     match proof.verify(&root) {
         Err(DossierError::VerificationFailed(c)) => assert_eq!(c, "ledger-tests-vf"),
         other => panic!("expected VerificationFailed, got {other:?}"),
@@ -784,10 +781,7 @@ fn t20_malformed_proof_exact_variant_on_oversized_path() {
 fn t20_chain_discontinuity_display_is_populated() {
     // ChainDiscontinuity reachability is already exercised by Law 10; here we
     // pin its Display contract.
-    let e = LedgerError::ChainDiscontinuity {
-        expected_parent: [0u8; 32],
-        actual: [1u8; 32],
-    };
+    let e = LedgerError::ChainDiscontinuity { expected_parent: [0u8; 32], actual: [1u8; 32] };
     let s = e.to_string();
     assert!(!s.is_empty());
     assert!(s.contains("chain discontinuity"), "{s}");

@@ -362,10 +362,7 @@ pub(crate) fn entropy_run_court_probe() -> CourtOutcome {
             ("injected_refusals", MetricValue::U64(refusals as u64)),
             ("injected_trials", MetricValue::U64(INJECTED_TRIALS as u64)),
             ("off_contract_refusals", MetricValue::U64(off_contract_refusals as u64)),
-            (
-                "on_contract_accepted",
-                MetricValue::Bool(entropy_seam(SEED_LEN).is_ok()),
-            ),
+            ("on_contract_accepted", MetricValue::Bool(entropy_seam(SEED_LEN).is_ok())),
         ],
         scoping: ScopingRecord::partial(
             "entropy-starvation refusal behavior at the ledger signer's \

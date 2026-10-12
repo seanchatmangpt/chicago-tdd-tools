@@ -282,9 +282,8 @@ pub mod prelude {
         alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_approx_eq,
         assert_contains, assert_eq_enhanced, assert_eq_msg, assert_err, assert_fail,
         assert_guard_constraint, assert_in_range, assert_json_eq, assert_matches,
-        assert_not_contains, assert_ok, assert_subset, assert_superset,
-        assert_within_tick_budget, async_test, fixture_test, performance_test, source_location,
-        test,
+        assert_not_contains, assert_ok, assert_subset, assert_superset, assert_within_tick_budget,
+        async_test, fixture_test, performance_test, source_location, test,
     };
     // poka_yoke is accessed via core::poka_yoke::* to avoid conflicts with otel/testcontainers poka_yoke
     pub use crate::validation::*;

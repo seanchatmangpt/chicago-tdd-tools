@@ -271,8 +271,7 @@ mod tests {
             builder = builder.place(format!("p{i}"));
         }
         for i in 0..MAX_TRANSITIONS {
-            builder =
-                builder.transition(format!("t{i}"), "act").add_pre("p0").add_post("p1");
+            builder = builder.transition(format!("t{i}"), "act").add_pre("p0").add_post("p1");
         }
         let compiled = builder.build().compile().expect("at-limit net must compile");
         assert_eq!(usize::from(compiled.places), MAX_PLACES);

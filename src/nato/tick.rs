@@ -90,7 +90,9 @@ use std::time::{Duration, Instant};
 // `conformance` feature (Cargo.toml nato feature graph), so the pn64 surface
 // is available outside cfg(test).
 use crate::conformance::pn64;
-use crate::nato::court::{Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict};
+use crate::nato::court::{
+    ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
 use crate::nato::disclosure::ScopingRecord;
 
 // ---------------------------------------------------------------------------
@@ -464,8 +466,8 @@ pub(crate) struct N12ProbeRun {
 /// court 3 — panicking on any violation. Every leg's assertions are the
 /// verbatim court assertions; reaching the end means all three legs hold.
 /// Court probe: panics on law violation are the court's verdict law
-    /// (donor-verbatim from the tier tests this was hoisted from).
-    pub(crate) fn n12_run_court_probe() -> N12ProbeRun {
+/// (donor-verbatim from the tier tests this was hoisted from).
+pub(crate) fn n12_run_court_probe() -> N12ProbeRun {
     // Court 1: feed a real forward chain through the strict law with
     // glitches injected at ~1% (every 100th position, cycling the classes:
     // backwards replay, 0-jump, huge real jump). Every fed pair is
@@ -681,7 +683,6 @@ fn n12_shared_probe_court3_leg() {
         "the ordering-law leg must commit at least one firing and exercise refusals"
     );
 }
-
 
 /// Court 4 (positive control): the injected non-monotonic source MUST be
 /// caught. [`BackstepClock`] oscillates between two real anchor values
@@ -921,11 +922,11 @@ impl ClockGlitchCourt {
 }
 
 // Metrics are informational and deliberately diverge from the
-        // opt-in emitter's set (see emit_receipt_when_opted_in): this
-        // adapter reports live court-3 probe counts; the emitter reports
-        // court-1/court-4 constants. Verdict agreement is carried by the
-        // shared probe (n12_run_court_probe) + the court_id/pillar/verdict/
-        // name field legs, not by metric-key parity (W-NTW §6).
+// opt-in emitter's set (see emit_receipt_when_opted_in): this
+// adapter reports live court-3 probe counts; the emitter reports
+// court-1/court-4 constants. Verdict agreement is carried by the
+// shared probe (n12_run_court_probe) + the court_id/pillar/verdict/
+// name field legs, not by metric-key parity (W-NTW §6).
 impl Court for ClockGlitchCourt {
     fn id(&self) -> CourtId {
         Self::ID

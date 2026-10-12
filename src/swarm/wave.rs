@@ -205,9 +205,8 @@ mod tests {
         wave.add_phase("phase-a".to_string(), vec![request("t1"), request("t2")]);
         wave.add_phase("phase-b".to_string(), vec![request("t3")]);
 
-        let r = block_on(wave.execute(|task| async move {
-            receipt(&task.id, TaskStatus::Completed)
-        }));
+        let r =
+            block_on(wave.execute(|task| async move { receipt(&task.id, TaskStatus::Completed) }));
 
         assert_eq!(wave.status, WaveStatus::Completed);
         assert!(r.is_success());
@@ -258,9 +257,8 @@ mod tests {
         wave.add_phase("only".to_string(), vec![request("t1")]);
         assert_eq!(wave.phases.len(), 1);
 
-        let r = block_on(wave.execute(|task| async move {
-            receipt(&task.id, TaskStatus::Completed)
-        }));
+        let r =
+            block_on(wave.execute(|task| async move { receipt(&task.id, TaskStatus::Completed) }));
 
         assert_eq!(wave.status, WaveStatus::Completed);
         assert_eq!(r.success_count(), r.total_tasks());

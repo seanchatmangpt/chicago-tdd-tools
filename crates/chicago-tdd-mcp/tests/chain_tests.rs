@@ -43,8 +43,10 @@ mod chain {
             .await
             .expect("downstream pipe failed");
 
-        let bridge =
-            McpAgentBridge::builder().with_pipe(downstream).build().expect("bridge build failed");
+        let bridge = McpAgentBridge::builder()
+            .with_pipe(downstream)
+            .build()
+            .expect("bridge build failed");
 
         let orchestrator = McpPipe::new_in_process(bridge).await.expect("orchestrator pipe failed");
         let result = orchestrator
@@ -67,7 +69,10 @@ mod chain {
     async fn bridge_lists_downstream_tools() {
         let downstream =
             McpPipe::new_in_process(echo_stub()).await.expect("downstream pipe failed");
-        let bridge = McpAgentBridge::builder().with_pipe(downstream).build().expect("bridge build failed");
+        let bridge = McpAgentBridge::builder()
+            .with_pipe(downstream)
+            .build()
+            .expect("bridge build failed");
 
         let orchestrator = McpPipe::new_in_process(bridge).await.expect("orchestrator pipe failed");
         let tools = orchestrator.list_tools().await.expect("list_tools failed");
@@ -83,7 +88,10 @@ mod chain {
     async fn bridge_forwards_tool_call_successfully() {
         let downstream =
             McpPipe::new_in_process(echo_stub()).await.expect("downstream pipe failed");
-        let bridge = McpAgentBridge::builder().with_pipe(downstream).build().expect("bridge build failed");
+        let bridge = McpAgentBridge::builder()
+            .with_pipe(downstream)
+            .build()
+            .expect("bridge build failed");
 
         let orchestrator = McpPipe::new_in_process(bridge).await.expect("orchestrator pipe failed");
         let result = orchestrator

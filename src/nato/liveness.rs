@@ -50,7 +50,9 @@
 use super::disclosure::ScopingRecord;
 use super::transition_tables::{ronr, Shape}; // Shape lives at transition_tables top level, not in ronr
 use crate::conformance::pn64;
-use crate::nato::court::{CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
 
 /// Simulation step budget for the bounded scheduler model. `SLACK =
 /// TOTAL / 32` mirrors the strata N15 ring court's documented 1/8-of-fair-
@@ -270,9 +272,7 @@ pub(crate) fn n15_run_court_probe() -> bool {
     }
     markings.iter().all(|&m| {
         let (starved, dispositioned) = run_schedule(surface, m, true);
-        dispositioned
-            && starved.is_empty()
-            && run_to_disposition_within(surface, m, SLACK)
+        dispositioned && starved.is_empty() && run_to_disposition_within(surface, m, SLACK)
     })
 }
 
@@ -314,7 +314,10 @@ impl Court for LivenessCourt {
         CourtOutcome {
             verdict,
             metrics: vec![
-                ("reachable_markings", MetricValue::U64(reachable(M0, admission_surface()).len() as u64)),
+                (
+                    "reachable_markings",
+                    MetricValue::U64(reachable(M0, admission_surface()).len() as u64),
+                ),
                 ("slack", MetricValue::U64(SLACK as u64)),
                 ("total_steps", MetricValue::U64(TOTAL as u64)),
             ],

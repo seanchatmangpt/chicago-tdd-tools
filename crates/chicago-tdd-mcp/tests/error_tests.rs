@@ -97,8 +97,7 @@ async fn call_tool_on_ready_session_works() {
             .spawn()
             .await
             .expect("spawn failed");
-        let session =
-            McpSession::new(harness).initialize().await.expect("initialize failed");
+        let session = McpSession::new(harness).initialize().await.expect("initialize failed");
 
         let result = session.call_tool("echo", serde_json::json!({"message": "ping"})).await;
 

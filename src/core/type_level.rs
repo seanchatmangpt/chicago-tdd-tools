@@ -196,7 +196,9 @@ impl<const SIZE: usize, const MAX_SIZE: usize> SizeValidatedArray<SIZE, MAX_SIZE
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {
     use super::arithmetic::{Add, Div, Mul, Sub};
-    use super::{ConstRangeValid, ConstSizeValid, SizeValidatedArray, ValidatedRange, ValidatedSize};
+    use super::{
+        ConstRangeValid, ConstSizeValid, SizeValidatedArray, ValidatedRange, ValidatedSize,
+    };
     use crate::assert_eq_msg;
 
     #[test]

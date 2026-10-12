@@ -404,9 +404,7 @@ mod tests {
             // Capture the PRIOR bound before overwriting it, so Drop restores
             // the original value (reading after the set leaks the test's own
             // bound into later tests).
-            let lock = bound_lock()
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let lock = bound_lock().lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             let prior = guest_abi::linear_memory_end();
             guest_abi::set_linear_memory_end(end);
             Self(prior, lock)
@@ -430,13 +428,11 @@ mod tests {
         // past-the-bound pointer is never used as a destination.
         let st = unsafe { write_event_words(&words, buf.as_mut_ptr(), need as u32) };
         assert_eq!(
-            st, guest_abi::ERR_OOB_WRITE,
+            st,
+            guest_abi::ERR_OOB_WRITE,
             "out-pointer at/past the installed linear-memory end must be a typed errno"
         );
-        assert!(
-            buf.iter().all(|&b| b == 0),
-            "refused call must leave the buffer untouched"
-        );
+        assert!(buf.iter().all(|&b| b == 0), "refused call must leave the buffer untouched");
     }
 
     #[test]

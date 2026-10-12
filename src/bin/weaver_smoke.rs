@@ -14,7 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-
 #[cfg(feature = "weaver")]
 /// Exit code used when a gate check fails (shell convention: 1).
 const EXIT_FAILURE: i32 = 1;

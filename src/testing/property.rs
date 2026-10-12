@@ -291,7 +291,8 @@ mod property_tests {
 
     #[test]
     fn test_property_test_generator_test_counter() {
-        let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new().with_seed(42);
+        let mut generator: PropertyTestGenerator<10, 3> =
+            PropertyTestGenerator::new().with_seed(42);
         assert_eq!(generator.test_counter(), 42);
         let _data = generator.generate_test_data();
         // generate_test_data increments the seed (wrapping_add)
@@ -344,8 +345,9 @@ mod property_tests {
     #[test]
     fn test_property_all_data_valid() {
         let mut generator: PropertyTestGenerator<10, 3> = PropertyTestGenerator::new();
-        let result =
-            property_all_data_valid(&mut generator, 10, |data| !data.is_empty() && data.len() <= 10);
+        let result = property_all_data_valid(&mut generator, 10, |data| {
+            !data.is_empty() && data.len() <= 10
+        });
         assert!(result, "All generated data should be valid");
     }
 
@@ -372,10 +374,7 @@ mod property_tests {
         let mut rng = SimpleRng::new(42);
         let val = rng.next();
         // Exact LCG assertion: next() = seed * 1_103_515_245 + 12_345 (wrapping)
-        assert_eq!(
-            val,
-            1_103_515_245u64.wrapping_mul(42).wrapping_add(12_345)
-        );
+        assert_eq!(val, 1_103_515_245u64.wrapping_mul(42).wrapping_add(12_345));
     }
 
     #[test]

@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [26.10.12] - 2026-10-11
 ### Added
 - **Temprun guest bridge** (BEAM gen_statem worker + wasmi host bridge, landed
-  in strata (host binary `temprun_step`; rebased to guest ABI v2 in strata `59ed80c`): 4-byte little-endian
+  in strata (host binary `temprun_step`; rebased to guest ABI v2 in strata `59ed80c`): 4-byte
+  little-endian
   framed port protocol with cooperative reduction yields; CTT-side the guest
   ABI surface (`src/conformance/guest.rs`) and `crates/ctt-wasm-guest/` are
   part of this train. Tracked in `docs/jira/v26.10.11/000-temprun-guest.md`.
@@ -29,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [26.10.12] continued - 2026-10-11
 Endgame audit-wave convergence (`8ab234a` + `1fc1c72`, wave 1; `5189603`,
-wave 2; `70575e8` + `e465c1a`, wave 3; `2c80a9e`, wave 4; strata `59ed80c` rebase; `451f4a8`, wave 5): 20-lane
+wave 2; `70575e8` + `e465c1a`, wave 3; `2c80a9e`, wave 4; strata `59ed80c` rebase; `451f4a8`, wave
+  5): 20-lane
 adversarial audit with repairs, all with on-disk test receipts.
 
 ### Added
@@ -186,69 +188,145 @@ adversarial audit with repairs, all with on-disk test receipts.
 ## [26.10.11] - 2026-10-11
 
 ### Added
-- **Conformance module** (`src/conformance/`): PN64 branchless Petri-net transition kernel ported from strata-protocol (`pn64.rs`, @ 0de13a3); POWL model/loader/validator (`model.rs`, `loader.rs`, `validate.rs`); `ConformanceSession` trajectory verification with reduction budgets (`session.rs`); OCEL64 ingestion bridge (`session.rs`).
-- **OCEL importers** (`src/observability/ocel/`): `import_json.rs` and `import_xml.rs` behind the `ocel-ingest-json` / `ocel-ingest-xml` features, feeding the OCEL64 bridge (`ocel64_bridge.rs`, `idmap_bridge.rs`).
-- **Ledger module** (`src/ledger/`): strict 320/352-byte court-receipt wire format (`receipt.rs`) with deserialize-time BLAKE3 digest verification; Merkle dossier roots and per-court inclusion proofs (`dossier.rs`, `proof.rs`); ML-DSA-65 signer/sealer/keys (`signing/`); `ctdd_ledger` CLI (`src/bin/ctdd_ledger.rs`).
-- **NATO court framework** (`src/nato/`): adversarial court framework with positive-control gate (`control.rs`), Pillar I–V classification (Security/Timing/Resilience/Proof/Dossier), honest scoping records (`disclosure.rs`), and deterministic LCG-strided probes (`rng.rs`, `cache.rs`).
-- **Compile-fail suite** (`tests/compile_fail/`, `tests/trybuild.rs`): trybuild-based compile-fail courts; new test suites `prelude_surface_tests.rs`, `cli_proof_tests.rs`, `observability_fixtures_tests.rs`, `ocel_ingest_tests.rs`.
-- **Hermetic WASM guest** (`crates/ctt-wasm-guest/`): cdylib crate with a zero-import ABI (imports==∅), cooperative reduction-yield protocol, guest-produces/host-seals ML-DSA-65 receipt division, zero-import audit court, and native-ABI fault-injection courts.
-- **Conformance-test macro** (`src/core/macros/conformance_test.rs`) and `assurance.yml` workflow (`.github/workflows/assurance.yml`).
+- **Conformance module** (`src/conformance/`): PN64 branchless Petri-net transition kernel ported
+  from strata-protocol (`pn64.rs`, @ 0de13a3); POWL model/loader/validator (`model.rs`,
+  `loader.rs`, `validate.rs`); `ConformanceSession` trajectory verification with reduction budgets
+  (`session.rs`); OCEL64 ingestion bridge (`session.rs`).
+- **OCEL importers** (`src/observability/ocel/`): `import_json.rs` and `import_xml.rs` behind the
+  `ocel-ingest-json` / `ocel-ingest-xml` features, feeding the OCEL64 bridge (`ocel64_bridge.rs`,
+  `idmap_bridge.rs`).
+- **Ledger module** (`src/ledger/`): strict 320/352-byte court-receipt wire format (`receipt.rs`)
+  with deserialize-time BLAKE3 digest verification; Merkle dossier roots and per-court inclusion
+  proofs (`dossier.rs`, `proof.rs`); ML-DSA-65 signer/sealer/keys (`signing/`); `ctdd_ledger` CLI
+  (`src/bin/ctdd_ledger.rs`).
+- **NATO court framework** (`src/nato/`): adversarial court framework with positive-control gate
+  (`control.rs`), Pillar I–V classification (Security/Timing/Resilience/Proof/Dossier), honest
+  scoping records (`disclosure.rs`), and deterministic LCG-strided probes (`rng.rs`, `cache.rs`).
+- **Compile-fail suite** (`tests/compile_fail/`, `tests/trybuild.rs`): trybuild-based compile-fail
+  courts; new test suites `prelude_surface_tests.rs`, `cli_proof_tests.rs`,
+  `observability_fixtures_tests.rs`, `ocel_ingest_tests.rs`.
+- **Hermetic WASM guest** (`crates/ctt-wasm-guest/`): cdylib crate with a zero-import ABI
+  (imports==∅), cooperative reduction-yield protocol, guest-produces/host-seals ML-DSA-65 receipt
+  division, zero-import audit court, and native-ABI fault-injection courts.
+- **Conformance-test macro** (`src/core/macros/conformance_test.rs`) and `assurance.yml` workflow
+  (`.github/workflows/assurance.yml`).
 
-- **NATO guest-import audit court** (`src/nato/guest_audit.rs`): W4 zero-import census parsing the guest artifact's wasm import section directly from the binary (no `wasm-tools`/`wasm-objdump`, no `std::process`), with honest `Skipped`/`ArtifactMissing` status per the N06 law.
-- **Guest ABI consolidation**: canonical ABI errno table (`ERR_*` 0..=13, `src/conformance/guest.rs`) is the single source for yield-status vs errno separation; `guest_telemetry::write_event_words` is a never-truncating unsafe ABI writer with deterministic errno on refusal; `key_id` unified to the first 8 bytes of BLAKE3 over the signer public key (`src/ledger/signing/sealer.rs`).
-- **Release docs (v26.10.11, DRAFT)**: `docs/releases/ANNOUNCEMENT_v26.10.11.md`, `docs/releases/ANNOUNCEMENT_FORWARD_DEPLOYMENT_OS_v26.10.11.md`, `docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md`, and the temprun-guest integration ticket `docs/jira/v26.10.11/000-temprun-guest.md`.
-- **NATO court ports N08/N12/N14/N15** (`src/nato/`): the registry is now complete at 20/20 CTT-side (`registry.rs` `COURT_NAMES`) — `hamming.rs` (N08 Hamming weight/distance profile, partial-scale honest disclosure), `tick.rs` (N12 clock-glitch resilience, wall-monotonic surrogate), `thrash.rs` (N14 CAST-32A multi-core interference), `liveness.rs` (N15 liveness).
-- **Merger-guests crate** (`crates/merger-guests/`): hermetic WASM guest crate with 8 leaf kernels behind a uniform `mgi_*` stateless ABI (wasm32 artifact build in flight).
-- **Merger conformance suite** (`tests/merger_conformance_tests.rs`): W1 contract pipeline + phase courts over the landed merger-matrix fixtures (fresh run: 25 passed / 0 failed / 0 ignored — all phase blocks green).
+- **NATO guest-import audit court** (`src/nato/guest_audit.rs`): W4 zero-import census parsing the
+  guest artifact's wasm import section directly from the binary (no `wasm-tools`/`wasm-objdump`, no
+  `std::process`), with honest `Skipped`/`ArtifactMissing` status per the N06 law.
+- **Guest ABI consolidation**: canonical ABI errno table (`ERR_*` 0..=13,
+  `src/conformance/guest.rs`) is the single source for yield-status vs errno separation;
+  `guest_telemetry::write_event_words` is a never-truncating unsafe ABI writer with deterministic
+  errno on refusal; `key_id` unified to the first 8 bytes of BLAKE3 over the signer public key
+  (`src/ledger/signing/sealer.rs`).
+- **Release docs (v26.10.11, DRAFT)**: `docs/releases/ANNOUNCEMENT_v26.10.11.md`,
+  `docs/releases/ANNOUNCEMENT_FORWARD_DEPLOYMENT_OS_v26.10.11.md`,
+  `docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md`, and the temprun-guest integration ticket
+  `docs/jira/v26.10.11/000-temprun-guest.md`.
+- **NATO court ports N08/N12/N14/N15** (`src/nato/`): the registry is now complete at 20/20
+  CTT-side (`registry.rs` `COURT_NAMES`) — `hamming.rs` (N08 Hamming weight/distance profile,
+  partial-scale honest disclosure), `tick.rs` (N12 clock-glitch resilience, wall-monotonic
+  surrogate), `thrash.rs` (N14 CAST-32A multi-core interference), `liveness.rs` (N15 liveness).
+- **Merger-guests crate** (`crates/merger-guests/`): hermetic WASM guest crate with 8 leaf kernels
+  behind a uniform `mgi_*` stateless ABI (wasm32 artifact build in flight).
+- **Merger conformance suite** (`tests/merger_conformance_tests.rs`): W1 contract pipeline + phase
+  courts over the landed merger-matrix fixtures (fresh run: 25 passed / 0 failed / 0 ignored — all
+  phase blocks green).
 - **Merger Justfile recipes**: `merger-guest-build`, `merger-guest-test`, `merger-conformance`.
 
 ### Changed
-- **Docs wave**: 15 dated plan/verification docs archived to `docs/archive/2026-10/` and `cookbook/archive/`; fabricated-API claims removed from docs; `cargo make` → `just` migrations; stale counts corrected.
+- **Docs wave**: 15 dated plan/verification docs archived to `docs/archive/2026-10/` and
+  `cookbook/archive/`; fabricated-API claims removed from docs; `cargo make` → `just` migrations;
+  stale counts corrected.
 
 ### Fixed
-- **ctdd_ledger CLI** (`src/bin/ctdd_ledger.rs`): explicit `exit_code(&LedgerError) -> u8` domain mapping (failures map to typed exit codes rather than a blanket 2), and `ChainRecord` now correctly implements `Blake3ReceiptEntry` for BLAKE3 chain verification.
-- **N11 torn-write / slot+ring resilience court**: ported 64B CAS ring subject — every torn write recovers to a valid prior state; torn guest inputs refused typed (never admitted) in `crates/ctt-wasm-guest/tests/fault_injection.rs`.
+- **ctdd_ledger CLI** (`src/bin/ctdd_ledger.rs`): explicit `exit_code(&LedgerError) -> u8` domain
+  mapping (failures map to typed exit codes rather than a blanket 2), and `ChainRecord` now
+  correctly implements `Blake3ReceiptEntry` for BLAKE3 chain verification.
+- **N11 torn-write / slot+ring resilience court**: ported 64B CAS ring subject — every torn write
+  recovers to a valid prior state; torn guest inputs refused typed (never admitted) in
+  `crates/ctt-wasm-guest/tests/fault_injection.rs`.
 
 ## [26.6.29] - 2026-06-28
 
 ### Added
-- **Cryptographic BLAKE3 Chaining & Validation** (feature `receipt-validation`): Adds the `Blake3ReceiptEntry` trait, `RawReceiptEntry` struct (providing a 57-byte adapter mapping to `bcinr-powl`), `ReceiptChainBuilder` helper, and the `Blake3ChainValidator` to programmatically assert the validity, replayability, and tamper-evidence of process receipt logs. Wires `seal_run()` to use `blake3::Hasher` for securing mined OCEL log digests under the `ocel-generation` feature.
-- **Star-TOML TDD Integration Workload** (`examples/star-toml/`): Comprehensive config-admissibility testing example using the `star-toml` package as a real collaborator target (layered loader, validation rules, alerts, exit behaviors).
-- **Comprehensive E2E Suite** (`tests/star_toml_e2e.rs`): 60 opaque-box tests mapped across 4 tiers (Feature Coverage, Boundaries, Cross-Feature Combinations, and Real-World Scenarios).
-- **DoD Gap Report** (`examples/star-toml/GAP_REPORT.md`): Closed the loop on Track E requirements, converting feedback issues (ST-201 to ST-206) into actionable Jira/DoD tickets.
+- **Cryptographic BLAKE3 Chaining & Validation** (feature `receipt-validation`): Adds the
+  `Blake3ReceiptEntry` trait, `RawReceiptEntry` struct (providing a 57-byte adapter mapping to
+  `bcinr-powl`), `ReceiptChainBuilder` helper, and the `Blake3ChainValidator` to programmatically
+  assert the validity, replayability, and tamper-evidence of process receipt logs. Wires
+  `seal_run()` to use `blake3::Hasher` for securing mined OCEL log digests under the
+  `ocel-generation` feature.
+- **Star-TOML TDD Integration Workload** (`examples/star-toml/`): Comprehensive
+  config-admissibility testing example using the `star-toml` package as a real collaborator target
+  (layered loader, validation rules, alerts, exit behaviors).
+- **Comprehensive E2E Suite** (`tests/star_toml_e2e.rs`): 60 opaque-box tests mapped across 4 tiers
+  (Feature Coverage, Boundaries, Cross-Feature Combinations, and Real-World Scenarios).
+- **DoD Gap Report** (`examples/star-toml/GAP_REPORT.md`): Closed the loop on Track E requirements,
+  converting feedback issues (ST-201 to ST-206) into actionable Jira/DoD tickets.
 
 ### Changed
 - Bumped workspace packages and dependency versions to `26.6.29`.
 - Upgraded `wasm4pm-compat` to version `26.6.26`.
 
 ### Fixed
-- Fixed all `anti-llm-cheat-lsp` admissibility scan violations, achieving a zero non-metric diagnostic state across the entire codebase.
+- Fixed all `anti-llm-cheat-lsp` admissibility scan violations, achieving a zero non-metric
+  diagnostic state across the entire codebase.
 
 ## [26.6.121] - 2026-06-13
 
 ### Added
-- **OCEL 2.0 process mining** (`observability::ocel`, feature `ocel-generation`): turns test execution into Object-Centric Event Logs. New modules `collector`, `discovery`, `projections`, `types`, `wasm4pm`; types `TestOcelEvent`, `OcelLog`, `TestObject`, `TestActivity`, `TestObjectType`; `OcelCollector` (a `DiagnosticSink` that captures events), `seal_run()` (seals a run into a receipted log + digest), and `project_admission_events()`. Built on the published [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate, which enforces the one-way `Raw → Admitted → Receipted` evidence lifecycle.
-- **Process discovery** (feature `ocel-generation-discovery`): `ProcessModelStore` and `graduate_for_discovery()` surface `GraduationCandidate`s where the mined process diverges from the declared model.
-- **Governance module** (`core::governance`): diagnostic/severity primitives for the agent governance loop — `Severity`, `DiagnosticCategory`, `DiagnosticCode`, `Diagnostic`, `DiagnosticSink`, `TaskReceipt`; a global diagnostic `channel` (`register_sink`, `emit_diagnostic`, `set_run_id`, `close_channel`, …); admission `laws` (`AdmissionMetadata`, `SubstrateDelta`, `ContributionKind`); and `sector` stacks (`SectorStack`, `MergeStrategy`).
-- **Wave orchestration** (`swarm::wave`): N-phase sequential waves with M parallel tasks — `Wave`, `WavePhase`, `WaveStatus`, `WaveReceipt`, `PhaseReceipt`, and `ResidualClass` failure classification.
-- **Full YAWL operator registry** (`operator_registry`): all **43** YAWL workflow control patterns registered via `OperatorRegistry`/`OperatorDescriptor`/`OperatorProperties`, each characterized by its control-flow law and `GuardType`s; `global_registry()` accessor.
-- **`chicago-tdd-lsp`** crate: editor guard that emits `CTDD-DEV-001` when `chicago-tdd-tools` appears in `[dependencies]` instead of `[dev-dependencies]` (built on lsp-max).
+- **OCEL 2.0 process mining** (`observability::ocel`, feature `ocel-generation`): turns test
+  execution into Object-Centric Event Logs. New modules `collector`, `discovery`, `projections`,
+  `types`, `wasm4pm`; types `TestOcelEvent`, `OcelLog`, `TestObject`, `TestActivity`,
+  `TestObjectType`; `OcelCollector` (a `DiagnosticSink` that captures events), `seal_run()` (seals
+  a run into a receipted log + digest), and `project_admission_events()`. Built on the published
+  [`wasm4pm-compat 26.6.11`](https://crates.io/crates/wasm4pm-compat) crate, which enforces the
+  one-way `Raw → Admitted → Receipted` evidence lifecycle.
+- **Process discovery** (feature `ocel-generation-discovery`): `ProcessModelStore` and
+  `graduate_for_discovery()` surface `GraduationCandidate`s where the mined process diverges from
+  the declared model.
+- **Governance module** (`core::governance`): diagnostic/severity primitives for the agent
+  governance loop — `Severity`, `DiagnosticCategory`, `DiagnosticCode`, `Diagnostic`,
+  `DiagnosticSink`, `TaskReceipt`; a global diagnostic `channel` (`register_sink`,
+  `emit_diagnostic`, `set_run_id`, `close_channel`, …); admission `laws` (`AdmissionMetadata`,
+  `SubstrateDelta`, `ContributionKind`); and `sector` stacks (`SectorStack`, `MergeStrategy`).
+- **Wave orchestration** (`swarm::wave`): N-phase sequential waves with M parallel tasks — `Wave`,
+  `WavePhase`, `WaveStatus`, `WaveReceipt`, `PhaseReceipt`, and `ResidualClass` failure
+  classification.
+- **Full YAWL operator registry** (`operator_registry`): all **43** YAWL workflow control patterns
+  registered via `OperatorRegistry`/`OperatorDescriptor`/`OperatorProperties`, each characterized
+  by its control-flow law and `GuardType`s; `global_registry()` accessor.
+- **`chicago-tdd-lsp`** crate: editor guard that emits `CTDD-DEV-001` when `chicago-tdd-tools`
+  appears in `[dependencies]` instead of `[dev-dependencies]` (built on lsp-max).
 - Feature flags `ocel-generation` and `ocel-generation-discovery`.
-- Documentation: `docs/OCEL.md` (OCEL 2.0 generation guide) and `docs/governance_architecture.md` (agent governance architecture).
+- Documentation: `docs/OCEL.md` (OCEL 2.0 generation guide) and `docs/governance_architecture.md`
+  (agent governance architecture).
 
 ### Changed
-- Migrated OCEL evidence handling from the in-tree vendored `wasm4pm-compat` to the published `26.6.11` crate (associated-type `Admit`, `Witness`/`WitnessFamily`, `Admission::new().into_evidence()` as the sole path to admitted evidence).
+- Migrated OCEL evidence handling from the in-tree vendored `wasm4pm-compat` to the published
+  `26.6.11` crate (associated-type `Admit`, `Witness`/`WitnessFamily`,
+  `Admission::new().into_evidence()` as the sole path to admitted evidence).
 - Consolidated workspace version to `26.6.121`.
-- `HttpGet::execute()` (`testing::effects`) now returns an explicit feature-missing error instead of silently succeeding when no HTTP client feature is enabled — test-double semantics.
-- Wired the testcontainers `Container` type-state machine to a real `GenericContainer` (start/exec/get_host_port/stop).
-- Tuned build timeouts for the heavier `testcontainers`/`bollard` dependency graph: `fmt` 5s→30s, `check` 30s→60s.
-- Excluded `chicago-tdd-lsp` from the root workspace build so the root `check`/CI never resolves `lsp-max` against the published `wasm4pm-compat` (which lacks the `fresh_names` module the local source provides).
+- `HttpGet::execute()` (`testing::effects`) now returns an explicit feature-missing error instead
+  of silently succeeding when no HTTP client feature is enabled — test-double semantics.
+- Wired the testcontainers `Container` type-state machine to a real `GenericContainer`
+  (start/exec/get_host_port/stop).
+- Tuned build timeouts for the heavier `testcontainers`/`bollard` dependency graph: `fmt` 5s→30s,
+  `check` 30s→60s.
+- Excluded `chicago-tdd-lsp` from the root workspace build so the root `check`/CI never resolves
+  `lsp-max` against the published `wasm4pm-compat` (which lacks the `fresh_names` module the local
+  source provides).
 
 ### Fixed
-- Eliminated **93 stubs and cheats** (69 + 24) across `core`, `testing`, `observability`, and `integration` — placeholders replaced with real implementations (verification-pipeline phases 3 & 4, dog-fooding string-literal scanner, proc-macro panic removal, weaver fixture `Default` panic removal, and more).
-- Resolved all `--all-features` clippy errors across the `ocel`, `otel`, `weaver`, `property`, and `testcontainers` modules (0 warnings under `all`/`pedantic`/`nursery`/`cargo`).
+- Eliminated **93 stubs and cheats** (69 + 24) across `core`, `testing`, `observability`, and
+  `integration` — placeholders replaced with real implementations (verification-pipeline phases 3 &
+  4, dog-fooding string-literal scanner, proc-macro panic removal, weaver fixture `Default` panic
+  removal, and more).
+- Resolved all `--all-features` clippy errors across the `ocel`, `otel`, `weaver`, `property`, and
+  `testcontainers` modules (0 warnings under `all`/`pedantic`/`nursery`/`cargo`).
 - Fixed proc_macros doc-test imports (test-unit now runs `--lib`).
-- Added missing `lint`/`fmt`/`test-unit` task stubs to sub-crate `Makefile.toml` files so the workspace runner resolves every root task.
+- Added missing `lint`/`fmt`/`test-unit` task stubs to sub-crate `Makefile.toml` files so the
+  workspace runner resolves every root task.
 
 ### Security
 - Upgraded `testcontainers` `^0.25 → ^0.27` to clear `astral-tokio-tar` advisories.
@@ -256,18 +334,23 @@ adversarial audit with repairs, all with on-disk test receipts.
 ## [26.6.11] - 2026-06-11
 
 ### Changed
-- Bumped crate version of chicago-tdd-tools, chicago-tdd-tools-proc-macros, and chatman-spec-harness to `26.6.11`.
+- Bumped crate version of chicago-tdd-tools, chicago-tdd-tools-proc-macros, and
+  chatman-spec-harness to `26.6.11`.
 - Aligned `git2` dependency version in `spec-harness` to `^0.20` to match root `Cargo.toml`.
-- Modified dependency on `chicago-tdd-tools` in `playground/Cargo.toml` to add `path = ".."` referencing the local copy.
+- Modified dependency on `chicago-tdd-tools` in `playground/Cargo.toml` to add `path = ".."`
+  referencing the local copy.
 
 ### Removed
-- Removed the non-existent `spec_conformance` test target in `spec-harness/Cargo.toml` to avoid target discovery errors.
+- Removed the non-existent `spec_conformance` test target in `spec-harness/Cargo.toml` to avoid
+  target discovery errors.
 
 ## [1.4.0] - 2025-01-16
 
 ### Added - Production-Grade Verification Infrastructure
 
-This release extends the μ-kernel verification substrate with production-grade sector implementations, fail-fast hardening, and complete verification pipeline phases. The framework now supports real-world workflows with deterministic guarantees and cryptographic proofs.
+This release extends the μ-kernel verification substrate with production-grade sector
+  implementations, fail-fast hardening, and complete verification pipeline phases. The framework
+  now supports real-world workflows with deterministic guarantees and cryptographic proofs.
 
 #### Fail-Fast Hardening Infrastructure (`core::fail_fast`)
 - **StrictExecutionContext**: Zero-tolerance execution context with 12-phase verification pipeline
@@ -289,7 +372,8 @@ This release extends the μ-kernel verification substrate with production-grade 
 
 #### Sector-Grade Reference Stacks (`sector_stacks`)
 - **Academic Publishing Workflow** (`sector_stacks::academic`): Complete paper review lifecycle
-  - 6 workflow stages: Submission → Desk Review → Reviewer Assignment → Review Collection → Decision → Notification
+  - 6 workflow stages: Submission → Desk Review → Reviewer Assignment → Review Collection →
+  Decision → Notification
   - Deterministic decision algorithm (3.5+ avg review score = Accept)
   - All-or-nothing decision logic (any rejection → Rejected)
   - 5+ knowledge hooks per major operation
@@ -381,7 +465,10 @@ This release extends the μ-kernel verification substrate with production-grade 
 
 ### Added - Hyper-Advanced μ-Kernel Verification Substrate
 
-This release transforms Chicago TDD Tools from a "great testing framework" into a **canonical verification substrate for A = μ(O)** (Artifacts equal micro-operator of Observations). Six hyper-advanced tracks provide compile-time contracts, timing discipline, effect typing, state machine validation, cryptographic proofs, and agent-driven orchestration.
+This release transforms Chicago TDD Tools from a "great testing framework" into a **canonical
+  verification substrate for A = μ(O)** (Artifacts equal micro-operator of Observations). Six
+  hyper-advanced tracks provide compile-time contracts, timing discipline, effect typing, state
+  machine validation, cryptographic proofs, and agent-driven orchestration.
 
 #### Track 1: Test Contracts as First-Class Types (`core::contract`)
 - **TestContract**: Const-evaluable test descriptors with coverage/invariant declarations
@@ -395,7 +482,8 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - **HotPathTest**: Enforces Chatman Constant (τ ≤ 8 ticks) for critical paths
 - **WarmPathTest**: Standard paths with heap allocation (τ ≤ 100 ticks)
 - **ColdPathTest**: Integration tests without timing constraints
-- **HotPathConfig**: Configurable constraints (`max_ticks`, `enforce_no_alloc`, `enforce_no_syscall`)
+- **HotPathConfig**: Configurable constraints (`max_ticks`, `enforce_no_alloc`,
+  `enforce_no_syscall`)
 - **ThermalTestError**: Budget violation errors with detailed diagnostics
 - RDTSC/CNTVCT cycle-accurate timing integration
 - Relaxed configs for test environments (strict enforcement in production)
@@ -403,7 +491,8 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 
 #### Track 3: Effect-Typed Tests (`testing::effects`)
 - **EffectTest<E>**: Type-safe effect constraints via phantom types
-- **Effect Markers**: `Pure`, `NetworkRead`, `NetworkWrite`, `StorageRead`, `StorageWrite`, `Privileged`
+- **Effect Markers**: `Pure`, `NetworkRead`, `NetworkWrite`, `StorageRead`, `StorageWrite`,
+  `Privileged`
 - **EffectCoverageRegistry**: Track which effects are tested across test suite
 - **RequiresEffect<E>**: Compile-time enforcement that operations match declared effects
 - Zero overhead (phantom types)
@@ -438,11 +527,16 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - ~1 KB per plan
 
 ### Added - Testing & Documentation
-- **Integration Tests** (`tests/hyper_advanced_integration.rs`): 19 comprehensive test cases covering all 6 tracks
-- **Complete Workflow Test**: End-to-end demonstration of Contract → Test → Receipt → Orchestration → Governance
-- **Comprehensive Documentation** (`docs/features/HYPER_ADVANCED_MICROKERNEL.md`): 400+ line guide with theory, examples, and migration path
-- **Example Program** (`examples/hyper_advanced_microkernel.rs`): Runnable demonstration of all 6 tracks
-- **Example Documentation** (`examples/hyper_advanced_microkernel.md`): Tutorial with expected output
+- **Integration Tests** (`tests/hyper_advanced_integration.rs`): 19 comprehensive test cases
+  covering all 6 tracks
+- **Complete Workflow Test**: End-to-end demonstration of Contract → Test → Receipt → Orchestration
+  → Governance
+- **Comprehensive Documentation** (`docs/features/HYPER_ADVANCED_MICROKERNEL.md`): 400+ line guide
+  with theory, examples, and migration path
+- **Example Program** (`examples/hyper_advanced_microkernel.rs`): Runnable demonstration of all 6
+  tracks
+- **Example Documentation** (`examples/hyper_advanced_microkernel.md`): Tutorial with expected
+  output
 
 ### Changed
 - **Prelude Exports**: Added hyper-advanced types to prelude for easy access
@@ -461,14 +555,16 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 ### Performance
 - **Total Overhead**: <1% for typical test suites
 - **Compile-time Features**: Zero overhead (contracts, effects, state machines)
-- **Runtime Features**: Minimal overhead (thermal: ~10 cycles, receipts: ~100 μs, orchestrator: ~1 ms)
+- **Runtime Features**: Minimal overhead (thermal: ~10 cycles, receipts: ~100 μs, orchestrator: ~1
+  ms)
 
 ### Theory
 - **A = μ(O)**: Canonical equation for verification substrate
   - **A (Artifacts)**: Test receipts, contracts, proofs
   - **μ (Micro-operator)**: μ-kernel substrate transforming observations
   - **O (Observations)**: Timing, effects, state transitions
-- **Chatman Constant (τ ≤ 8)**: Maximum sustainable cognitive load for hot paths, derived from μ-kernel timing discipline
+- **Chatman Constant (τ ≤ 8)**: Maximum sustainable cognitive load for hot paths, derived from
+  μ-kernel timing discipline
 - **Poka-Yoke Design**: Compile-time prevention of invalid states via phantom types
 - **80/20 Thinking**: Second idea = sweet spot (demonstrated in 19 integration tests)
 
@@ -607,13 +703,16 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - Build system: All commands use `cargo make` with timeout protection
 - Documentation: Comprehensive documentation updates (README, guides, architecture)
 - Test framework: All tests migrated to use `chicago_test!` macro
-- Code quality: Extracted magic numbers to named constants for improved readability and maintainability
-- Tooling: Retired the custom git hook installer; `cargo make` tasks (`pre-commit`, `check`, `lint`, `audit`) are now the canonical workflow
+- Code quality: Extracted magic numbers to named constants for improved readability and
+  maintainability
+- Tooling: Retired the custom git hook installer; `cargo make` tasks (`pre-commit`, `check`,
+  `lint`, `audit`) are now the canonical workflow
 
 ### Fixed
 - Documentation: Updated outdated reports to reflect actual implementation status
 - Test framework: Fixed test organization and consistency
-- Dead code: Removed duplicate `andon.rs` module (393 lines) - `alert.rs` is the correct implementation
+- Dead code: Removed duplicate `andon.rs` module (393 lines) - `alert.rs` is the correct
+  implementation
 
 ### Documentation
 - Added comprehensive README with Chicago TDD principles and dog fooding

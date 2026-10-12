@@ -324,10 +324,7 @@ fn golden_vector_slot_unpinned_prints_derivation() {
 /// into [`n17_legitimate_accept`] (shared with the court registry adapter).
 #[test]
 fn kat_verify_accepts_legitimate() {
-    assert!(
-        n17_legitimate_accept(),
-        "legitimate PIPELINE-KAT signature must verify"
-    );
+    assert!(n17_legitimate_accept(), "legitimate PIPELINE-KAT signature must verify");
 }
 
 /// Verify-REJECT on each of 64 sampled single-bit flips of the golden

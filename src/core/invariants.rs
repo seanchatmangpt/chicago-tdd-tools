@@ -592,7 +592,7 @@ mod tests {
             vec!["Init".to_string(), "Running".to_string()],
         )
         .expect("valid initial state"); // Test code
-        // Transition to a state in the set succeeds and updates current state
+                                        // Transition to a state in the set succeeds and updates current state
         assert!(sv.validate_transition("Running").is_ok());
         // Note: validate_transition accepts any non-empty next state (open world)
         assert!(sv.validate_transition("Arbitrary").is_ok());
@@ -705,19 +705,14 @@ mod tests {
         };
         assert_eq!(unhandled.to_string(), "Unhandled state event: tick in state 'Idle'");
 
-        let version = UnrecoverableInvariantViolation::ReceiptVersionMismatch {
-            expected: 1,
-            found: 2,
-        };
+        let version =
+            UnrecoverableInvariantViolation::ReceiptVersionMismatch { expected: 1, found: 2 };
         assert_eq!(version.to_string(), "Receipt version mismatch: expected 1, found 2");
 
         let snapshot = UnrecoverableInvariantViolation::SnapshotSchemaVersionMismatch {
             expected: 3,
             found: 4,
         };
-        assert_eq!(
-            snapshot.to_string(),
-            "Snapshot schema version mismatch: expected 3, found 4"
-        );
+        assert_eq!(snapshot.to_string(), "Snapshot schema version mismatch: expected 3, found 4");
     }
 }

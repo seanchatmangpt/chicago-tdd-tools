@@ -14,7 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-
 use std::fs;
 
 /// Exit code used when a gate check fails (shell convention: 1).

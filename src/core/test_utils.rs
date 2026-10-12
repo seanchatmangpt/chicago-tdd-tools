@@ -144,8 +144,7 @@ impl TempDir {
         // monotonic; pid disambiguates across processes.
         #[cfg(not(feature = "uuid-v4"))]
         let unique_name = {
-            static COUNTER: std::sync::atomic::AtomicU64 =
-                std::sync::atomic::AtomicU64::new(0);
+            static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
             let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             format!("{prefix}-id-{}-{}", std::process::id(), n)
         };

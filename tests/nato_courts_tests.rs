@@ -20,14 +20,8 @@ use std::sync::Mutex;
 
 use chicago_tdd_tools::nato::bell_lapadula::BellLapadulaCourt;
 use chicago_tdd_tools::nato::cache::CacheCourt;
-use chicago_tdd_tools::nato::seu::{SeuDoubleBitCourt, SeuSingleBitCourt};
-use chicago_tdd_tools::nato::thrash::Cast32ThrashCourt;
-use chicago_tdd_tools::nato::tick::ClockGlitchCourt;
-use chicago_tdd_tools::nato::timing::TimingCourt;
-use chicago_tdd_tools::nato::torn::TornWriteCourt;
-use chicago_tdd_tools::nato::wcet::WcetCourt;
-use chicago_tdd_tools::nato::dossier_court::DossierCourt;
 use chicago_tdd_tools::nato::disasm::DisasmCourt;
+use chicago_tdd_tools::nato::dossier_court::DossierCourt;
 use chicago_tdd_tools::nato::entropy::EntropyCourt;
 use chicago_tdd_tools::nato::hamming::HammingProfileCourt;
 use chicago_tdd_tools::nato::kat::KatCourt;
@@ -36,8 +30,14 @@ use chicago_tdd_tools::nato::mils::MilSeparationCourt;
 use chicago_tdd_tools::nato::orthogonality::OrthogonalityCourt;
 use chicago_tdd_tools::nato::receipt::canonical_digest;
 use chicago_tdd_tools::nato::reproducible::ReproducibleCourt;
-use chicago_tdd_tools::nato::stackbound::StackBoundCourt;
 use chicago_tdd_tools::nato::rng::Lcg;
+use chicago_tdd_tools::nato::seu::{SeuDoubleBitCourt, SeuSingleBitCourt};
+use chicago_tdd_tools::nato::stackbound::StackBoundCourt;
+use chicago_tdd_tools::nato::thrash::Cast32ThrashCourt;
+use chicago_tdd_tools::nato::tick::ClockGlitchCourt;
+use chicago_tdd_tools::nato::timing::TimingCourt;
+use chicago_tdd_tools::nato::torn::TornWriteCourt;
+use chicago_tdd_tools::nato::wcet::WcetCourt;
 use chicago_tdd_tools::nato::zero_ambient::ZeroAmbientCourt;
 use chicago_tdd_tools::nato::{
     run_court, CandidateRef, ControlProbe, ControlResult, Court, CourtId, CourtOutcome,
@@ -550,10 +550,9 @@ fn registry_sweep_runs_all_twenty_and_matches_real_receipts() {
                 "{} non-Pass must disclose partial scale, never a full-scale claim",
                 e.id.canonical()
             );
-            outcome
-                .scoping
-                .validate()
-                .unwrap_or_else(|err| panic!("{} scoping record must validate: {err:?}", e.id.canonical()));
+            outcome.scoping.validate().unwrap_or_else(|err| {
+                panic!("{} scoping record must validate: {err:?}", e.id.canonical())
+            });
         }
 
         // On-disk field agreement for the adapter lanes with minted receipts:

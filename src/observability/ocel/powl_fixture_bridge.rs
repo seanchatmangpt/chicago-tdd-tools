@@ -100,10 +100,9 @@ impl core::fmt::Display for FixtureBridgeError {
                 write!(f, "unknown activity {name:?} at trace position {position}")
             }
             Self::EmptyTrace => write!(f, "fixture declares no ocel:events"),
-            Self::TraceTooLong { len } => write!(
-                f,
-                "trace length {len} exceeds the 255-event session tick-byte budget"
-            ),
+            Self::TraceTooLong { len } => {
+                write!(f, "trace length {len} exceeds the 255-event session tick-byte budget")
+            }
         }
     }
 }
@@ -563,8 +562,7 @@ mod tests {
         let atoms = vec!["a".to_string(), "b".to_string()];
 
         // Strict mapper: exactly at budget succeeds with ticks 1..=255.
-        let ok_names: Vec<String> =
-            (0..255).map(|i| atoms[i % 2].to_string()).collect();
+        let ok_names: Vec<String> = (0..255).map(|i| atoms[i % 2].to_string()).collect();
         let words = session_words_for_atoms(&ok_names, &atoms)
             .unwrap_or_else(|e| panic!("255 events must map: {e}"));
         assert_eq!(words.len(), 255);
@@ -601,7 +599,8 @@ mod tests {
     #[test]
     fn session_words_for_atoms_unknown_activity_is_typed() {
         let atoms = vec!["a".to_string(), "b".to_string()];
-        let names: Vec<String> = ["a", "b", "not_an_atom", "b"].iter().map(|s| s.to_string()).collect();
+        let names: Vec<String> =
+            ["a", "b", "not_an_atom", "b"].iter().map(|s| s.to_string()).collect();
         assert_eq!(
             session_words_for_atoms(&names, &atoms),
             Err(FixtureBridgeError::UnknownActivity {
@@ -618,8 +617,10 @@ mod tests {
     #[test]
     fn relaxed_mapper_encodes_unknown_names_as_0xff() {
         let atoms = vec!["a".to_string(), "b".to_string()];
-        let names: Vec<String> =
-            ["a", "not_an_atom", "b", "also_missing"].iter().map(|s| s.to_string()).collect();
+        let names: Vec<String> = ["a", "not_an_atom", "b", "also_missing"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
         let words = session_words_for_atoms_relaxed(&names, &atoms);
         assert_eq!(words.len(), 4, "one word per name, nothing partial dropped");
         assert_eq!(word_tid(words[0]), 0, "declared name keeps its DFS tid");

@@ -358,8 +358,7 @@ static TABLE: std::sync::Mutex<Table> = std::sync::Mutex::new(Table::new());
 /// TODO(plan W-ABI2 item 3: wasm32 `memory_size()` reflection would remove
 /// the stale-bound refresh obligation; the `AtomicUsize` bound stays for the
 /// native tier).
-static LINEAR_MEMORY_END: std::sync::atomic::AtomicUsize =
-    std::sync::atomic::AtomicUsize::new(0);
+static LINEAR_MEMORY_END: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 /// Installs the guest linear-memory end bound (exclusive). Called by the
 /// embedding runtime at instantiation and after every `memory.grow`. `0`
@@ -383,9 +382,7 @@ pub(crate) fn span_oob(ptr: *const u8, len: usize) -> bool {
         return false;
     }
     // (is_none_or: None (overflow) stays out-of-bounds.)
-    (ptr as usize)
-        .checked_add(len)
-        .is_none_or(|span_end| span_end > end)
+    (ptr as usize).checked_add(len).is_none_or(|span_end| span_end > end)
 }
 
 /// Read-side span law: an input span at/past the bound is

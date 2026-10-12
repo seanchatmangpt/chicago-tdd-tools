@@ -54,9 +54,10 @@ impl SectorStack for ProcessIntelligenceSector {
             // The `Value::Null` arm above is rejected early, so this arm is
             // unreachable in practice — but we fail closed with a typed error
             // rather than panicking if the early guard is ever relaxed.
-            Value::Null => Err(
-                "ProcessIntelligenceSector: artifact must be a JSON object, got null".to_string(),
-            ),
+            Value::Null => {
+                Err("ProcessIntelligenceSector: artifact must be a JSON object, got null"
+                    .to_string())
+            }
         }
     }
 }

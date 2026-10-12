@@ -650,7 +650,7 @@ mod tests {
     #[allow(clippy::unwrap_used)]
     fn test_phase_7_verification_pipeline_skipped_phase_is_err() {
         let mut ctx = StrictExecutionContext::new("contract_001".to_string()).unwrap(); // Test code
-        // ReceiptGeneration never ran
+                                                                                        // ReceiptGeneration never ran
         let expected = vec![PhaseLabel::ContractDefinition, PhaseLabel::ReceiptGeneration];
         let result = ctx.phase_7_verification_pipeline(&expected);
         assert!(result.is_err());
@@ -736,12 +736,11 @@ mod tests {
         );
         assert!(ok.is_ok());
 
-        let err = assert_invariant(
-            false,
-            UnrecoverableInvariantViolation::Other("fired".to_string()),
-        );
+        let err =
+            assert_invariant(false, UnrecoverableInvariantViolation::Other("fired".to_string()));
         assert!(err.is_err());
-        assert!(err.expect_err("false condition must fail").to_string().contains("fired")); // Test code
+        assert!(err.expect_err("false condition must fail").to_string().contains("fired"));
+        // Test code
     }
 
     // ---- finalize success path ----

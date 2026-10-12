@@ -47,10 +47,10 @@ use std::sync::Mutex;
 use chicago_tdd_tools::conformance::guest::{
     ctt_guest_abi_version, ctt_session_attach, ctt_session_drop, ctt_session_new, ctt_session_seal,
     ctt_session_step, linear_memory_end, set_linear_memory_end, DIGEST_LEN, ERR_BAD_HANDLE,
-    ERR_BAD_MAGIC, ERR_BAD_MODEL, ERR_BAD_VERSION, ERR_CAP_TOO_SMALL, ERR_NULL_PTR,
-    ERR_OOB_READ, ERR_OOB_WRITE, ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE,
-    ERR_STREAM_ALIGNMENT, ERR_STREAM_EMPTY, ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED,
-    MAX_SESSIONS, MODULE_DIGEST_LEN, SEAL_PREIMAGE_LEN, SEAL_PREIMAGE_V2_LEN, STEP_STATUS_LEN,
+    ERR_BAD_MAGIC, ERR_BAD_MODEL, ERR_BAD_VERSION, ERR_CAP_TOO_SMALL, ERR_NULL_PTR, ERR_OOB_READ,
+    ERR_OOB_WRITE, ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE, ERR_STREAM_ALIGNMENT,
+    ERR_STREAM_EMPTY, ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED, MAX_SESSIONS, MODULE_DIGEST_LEN,
+    SEAL_PREIMAGE_LEN, SEAL_PREIMAGE_V2_LEN, STEP_STATUS_LEN,
 };
 #[cfg(feature = "ledger")]
 use chicago_tdd_tools::conformance::guest_seal::{encode_receipt_wire, guest_receipt};
@@ -463,8 +463,7 @@ fn out_pointer_past_linear_memory_end_is_typed_err_oob_write() {
 
     // Seal `out_len` word past the end (digest buffer in-bounds at base).
     let out_len_past = (FAKE_MEM_BASE + FAKE_MEM_LEN - 2) as *mut u32;
-    let code =
-        unsafe { ctt_session_seal(s.0, FAKE_MEM_BASE as *mut u8, 64, out_len_past) };
+    let code = unsafe { ctt_session_seal(s.0, FAKE_MEM_BASE as *mut u8, 64, out_len_past) };
     assert_eq!(code, ERR_OOB_WRITE, "seal out_len past memory end must be typed");
 
     // The handle was never consumed by any refused call: still live.

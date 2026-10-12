@@ -389,9 +389,8 @@ pub(crate) fn reproducible_run_court_probe() -> CourtOutcome {
         )
     };
     // A Skipped reason must survive verbatim into the disclosure record.
-    let bound = skip_reason.map_or(bound.to_string(), |reason| {
-        format!("{bound} [typed skip reason: {reason}]")
-    });
+    let bound = skip_reason
+        .map_or(bound.to_string(), |reason| format!("{bound} [typed skip reason: {reason}]"));
     let byte_identical = matches!(verdict, Verdict::Pass);
     CourtOutcome {
         verdict,

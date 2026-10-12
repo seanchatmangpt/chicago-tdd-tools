@@ -14,7 +14,6 @@
 )]
 #![allow(missing_docs)] // Binary crate - documentation not required
 
-
 use std::fs;
 use std::path::{Path, PathBuf};
 

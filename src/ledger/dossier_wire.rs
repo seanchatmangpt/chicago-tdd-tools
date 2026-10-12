@@ -507,7 +507,9 @@ mod tests {
             )
             .expect("valid receipt");
             let bytes = ChainedCourtReceipt::from_receipt(&receipt).expect("chain").encode();
-            let r = ChainRecord::of(&VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"));
+            let r = ChainRecord::of(
+                &VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"),
+            );
             prev = r.stored;
             chain.push(r);
         }

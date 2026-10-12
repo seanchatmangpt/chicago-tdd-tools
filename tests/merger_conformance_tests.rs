@@ -429,12 +429,7 @@ fn phase5_golden_pipeline_completes() {
 /// law.
 #[test]
 fn phase5_landed_golden_loop_repetition_faults_skipped() {
-    assert_violation(
-        "phase5_syndicated_debt",
-        &ConformanceError::Skipped { step: 4 },
-        1 << 4,
-        4,
-    );
+    assert_violation("phase5_syndicated_debt", &ConformanceError::Skipped { step: 4 }, 1 << 4, 4);
 }
 
 /// Phase 5 negative: the landed violation fixture replaces the admission

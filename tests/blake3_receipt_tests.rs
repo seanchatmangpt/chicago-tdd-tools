@@ -183,7 +183,8 @@ fn bcinr_powl_57byte_format_round_trips() {
     for i in 0u64..3 {
         let run_id_le = (i + 1).to_le_bytes();
         let op_trace_le = ((i + 1) * 0b111).to_le_bytes();
-        #[allow(clippy::cast_possible_truncation)] // JUSTIFICATION: test hash byte extraction — topological tag is a low-byte selector
+        #[allow(clippy::cast_possible_truncation)]
+        // JUSTIFICATION: test hash byte extraction — topological tag is a low-byte selector
         let topo_tag = (i & 0xFF) as u8;
         let replay_ptr: u64 = i * ENTRY_BYTES as u64;
 
