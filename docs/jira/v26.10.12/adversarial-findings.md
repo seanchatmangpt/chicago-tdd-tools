@@ -393,10 +393,11 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
 - QUEUED (operator): docs/latex/chicago-tdd-tools-formalization.tex
   \includes 4 nonexistent chapters + a nonexistent appendix/ dir — the
   paper does not compile; regenerate-paper.yml is an admitted stub.
-- QUEUED (small): tests/README.md:46 still lists the deleted
-  teamwork_preview_integration.rs; ARCHITECTURE.md module tree omits
-  ~15 modules (core/testing/validation/observability/swarm submodules);
-  swarm coordinator find_best_member doc overstates sector semantics.
+- PARTIAL (updated by W28 closing probe): the teamwork_preview_integration.rs
+  clause is CLOSED — the test was deleted in 2c679bb and tests/README.md no
+  longer lists it. STILL OPEN: ARCHITECTURE.md module tree omits ~15 modules
+  (core/testing/validation/observability/swarm submodules); swarm coordinator
+  find_best_member doc overstates sector semantics.
 
 ## W27 CONVERGENCE ADDITIONS
 - QUEUED: HasEffect trait unsealed (src/testing/effects.rs — in-source audit
