@@ -12,8 +12,9 @@ use crate::conformance::error::ConformanceError;
 
 /// One observed departure from the specification during replay.
 ///
-/// session.rs stamps `steps_done`, which starts at 0 — the doc's earlier 1-based claim was wrong; loader line/col are the 1-based numbering);
-/// `tid` values are transition ids; `marking` is the raw marking bitset.
+/// session.rs stamps `steps_done`, which starts at 0 (0-based step
+/// numbering; loader line/col are 1-based); `tid` values are transition
+/// ids; `marking` is the raw marking bitset.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Deviation {
     /// A step fired the right transition but under the wrong activity name.

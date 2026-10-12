@@ -390,8 +390,6 @@ mod tests {
 
     // ── write_output contract (ported from bin write_output_tests) ─────────
 
-    // ── write_output contract (ported from bin write_output_tests) ─────────
-
     #[test]
     fn success_writes_full_bytes_and_leaves_no_tmp_residue() {
         let dir = std::env::temp_dir()

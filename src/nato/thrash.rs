@@ -220,9 +220,9 @@ impl ThrashConfig {
     };
 
     /// Build the tier-1 small variant: 50k transitions, 4+4 adversaries,
-    /// 2x-probed-L2 eviction buffers, 60 s bound. The storm shape (2x-L2
-    /// LCG-strided eviction + adjacent-line spin) is the donor's; only the
-    /// transition budget and thread counts shrink.
+    /// 2x-probed-L2 eviction buffers, 120 s watchdog bound. The storm
+    /// shape (2x-L2 LCG-strided eviction + adjacent-line spin) is the
+    /// donor's; only the transition budget and thread counts shrink.
     fn small() -> Self {
         let l2 = crate::nato::cache::l2_cache_size_bytes();
         let l2_words = (l2 as usize / 8).max(1);

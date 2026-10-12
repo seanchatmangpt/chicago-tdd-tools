@@ -12,7 +12,7 @@
 //! [`SEED_LEN`] bytes), the signer's fail-closed branch maps the violation
 //! to a typed `SealError::EntropyRefused` carrying an opaque 32-byte
 //! [`RefusalDigest`], no `Ok` and no panic escapes, and the refusal text
-//! uses a fixed diagnostic vocabulary. It does NOT prove the quality of the
+//! names the refusal in words with no hex-literal leakage. It does NOT prove the quality of the
 //! operating system's entropy source; a healthy OS entropy source cannot be
 //! forced to fail in-process, so the failure branch is exercised through an
 //! injected-failure harness that replicates the seam's exact fail-closed
@@ -174,10 +174,10 @@ fn replica_refusal_matches_signer_hashed_cause_pattern() {
     );
 }
 
-/// Fixed diagnostic vocabulary: the refusal's Display text must name the
-/// refusal in words, must carry the opaque digest hex, and must never leak
-/// raw `0x`-prefixed byte tokens (no hex-literal leakage into operator
-/// diagnostics).
+/// Zero-leak diagnostic shape (not a literal string-set vocabulary): the
+/// refusal's Display text must name the refusal in words, must never leak
+/// raw `0x`-prefixed byte tokens, and carries only the opaque digest hex
+/// plus the (non-secret) off-contract length integer.
 fn refusal_text_is_in_fixed_vocabulary(text: &str) -> bool {
     text.contains("refused") && !text.contains("0x")
 }

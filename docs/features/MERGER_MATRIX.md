@@ -34,7 +34,7 @@ SHACL (`sh:closed true`).
 | `examples/merger_matrix/analytics/hhi.ttl`, `analytics/simm-outputs.ttl` | analytics |
 | `examples/merger_matrix/models/master.powl` + `phase{1..10}_*.powl` (11 files) | POWL phase models, all 10 phases |
 | `examples/merger_matrix/conformance/*.ocel.json` (19 files) | OCEL64 streams: phases 1-8 positive+violation pairs, phase 9 audit + phase 10 seal (positive-only), master trace |
-| `crates/merger-guests/` | hermetic WASM guest crate: 8 leaf kernels behind a uniform `mgi_*` stateless ABI |
+| `crates/merger-guests/` | hermetic WASM guest crate: leaf kernels (kernel roster per the crate's own ABI doc, `crates/merger-guests/src/lib.rs`) behind a uniform `mgi_*` stateless ABI |
 | `src/nato/hamming.rs` | N08 Hamming weight/distance profile court (port; partial-scale honest disclosure) |
 | `src/nato/tick.rs` | N12 clock-glitch resilience court (wall-monotonic surrogate; partial-scale disclosure) |
 | `src/nato/thrash.rs` | N14 CAST-32A multi-core interference court |
@@ -47,7 +47,7 @@ SHACL (`sh:closed true`).
 ### In flight
 
 - merger-guests WASM artifact build — `crates/merger-guests` is landed as
-  source (workspace member, `Cargo.toml` `members` line 463); the wasm32
+  source (workspace member, `Cargo.toml` `members` line 455); the wasm32
   cdylib artifact itself is not built in this checkout.
 - temprun ABI re-base — merger-guests targets a uniform `mgi_*` stateless
   ABI; re-basing onto the temprun leaf ABI exercised by
@@ -89,7 +89,8 @@ Arrow-by-arrow:
    `guest-audit` (zero-import audit court, `src/nato/guest_audit.rs`), and
    `guest-test` (native-ABI contract + fault-injection suites). The
    merger-specific guest crate `crates/merger-guests` is landed as source with
-   8 leaf kernels; its wasm32 artifact build is in flight. The a2a lease is
+   its leaf kernels behind the uniform `mgi_*` ABI; its wasm32 artifact build
+   is in flight. The a2a lease is
    the SagaControl epoch per E-M16 (external to this repo).
 4. **temprun leaves → CTT conformance** — `src/conformance/` compiles POWL
    models and replays them against OCEL64 streams
@@ -100,7 +101,7 @@ Arrow-by-arrow:
    courts, emits `docs/nato/NATO_STANAG_4107_DOSSIER.json` via
    the `affi` `dossier emit` verb (landed in `~/affidavit`, Phase D M2;
    routed via `just emit-dossier`); verified by
-   `affi dossier inspect ... --verify-pqc-signature ML-DSA-65 --assert-merkle-root`
+   `affi dossier inspect --verify-pqc-signature ML-DSA-65 --assert-merkle-root`
    (`just dossier-verify`).
 
 ## The execution equation (ΔS + Φ ≡ R)
@@ -140,8 +141,8 @@ All recipes verified in `Justfile`:
 
 | Command | What it does |
 |---|---|
-| `just emit-dossier` | court tests → receipts → `affi dossier-emit` (typed refusal on empty receipts dir) |
-| `just dossier-verify` | `affi dossier-inspect` with PQC (ML-DSA-65) + Merkle-root assertion |
+| `just emit-dossier` | court tests → receipts → `affi dossier emit` (typed refusal on empty receipts dir) |
+| `just dossier-verify` | `affi dossier inspect` with PQC (ML-DSA-65) + Merkle-root assertion |
 | `just verify-ledger SOURCE` | `affi validate` on a source |
 | `just guest-build` | builds the WASM guest (wasm32-unknown-unknown) |
 | `just guest-audit` | zero-import audit court over the built artifact |
@@ -150,8 +151,9 @@ All recipes verified in `Justfile`:
 Merger-specific Justfile recipes exist: `merger-guest-build` (wasm32 cdylib
 for `crates/merger-guests`), `merger-guest-test` (`cargo test -p
 merger-guests`), and `merger-conformance` (the W1 suite: `cargo test --test
-merger_conformance_tests --features conformance,ocel-ingest-json`; fresh run
-26 passed / 0 failed / 0 ignored — all phase blocks green). The fixtures themselves are additionally validated by
+merger_conformance_tests --features conformance,ocel-ingest-json`; re-verified
+2026-10-12 on the landed tree: 26 passed / 0 failed / 0 ignored — all phase
+blocks green). The fixtures themselves are additionally validated by
 external validators (`pyshacl`, `eye`) per the example README.
 
 ## See Also

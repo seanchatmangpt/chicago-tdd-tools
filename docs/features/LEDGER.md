@@ -258,8 +258,9 @@ just emit-dossier     # run nato::dossier_court courts, then affi dossier emit -
 just dossier-verify   # affi dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json
 ```
 
-`docs/nato/NATO_STANAG_4107_DOSSIER.json` is a generated artifact (run
-`just emit-dossier`); it is not checked in. `emit-dossier` is gated on the
+`docs/nato/NATO_STANAG_4107_DOSSIER.json` is a generated artifact (regenerate
+with `just emit-dossier`); the emitted copy from the last gated run is checked
+in. `emit-dossier` is gated on the
 `nato::dossier_court` courts passing first, and `dossier-emit` refuses with a
 typed error when `docs/receipts/N01..N20.json` are absent — court-receipt
 persistence to `docs/receipts` is wired via the opt-in court test
@@ -282,8 +283,8 @@ per code:
 | 15 | `DanglingObject` | referenced object dangling / unknown |
 | 16 | `NonMonotonic` | sequence ordering regressed |
 | 17 | `EmptyDossier` | dossier contained no proofs / no courts |
-| 18 |
-| 19 | `DossierInvalid` — sealed dossier structurally invalid (format tag / receipt count / recomputed Merkle root mismatch) | `DigestMismatch` | stored digest did not match recomputed digest |
+| 18 | `DigestMismatch` | stored digest did not match recomputed digest |
+| 19 | `DossierInvalid` | sealed dossier structurally invalid (format tag / receipt count / recomputed Merkle root mismatch) |
 
 `exit_code(&LedgerError)` (mod.rs:245-258) is the error→exit-code mapping:
 `UnsupportedVersion` → 11, `ChainLinkMismatch` → 12, `DigestMismatch` → 13,
@@ -297,7 +298,7 @@ just verify-ledger SOURCE
 
 which runs the `affi` binary (`cargo run --manifest-path /Users/sac/affidavit/Cargo.toml
 --features ctdd --bin affi -- --format json receipt validate "<SOURCE>"`,
-matching the Justfile recipe at Justfile:191-193).
+matching the Justfile recipe at Justfile:199-200).
 
 ### In-flight seams (honesty notes)
 
@@ -313,5 +314,6 @@ matching the Justfile recipe at Justfile:191-193).
 ## See Also
 
 - `docs/features/NATO_COURTS.md`
+- `docs/features/CONFORMANCE.md` (the conformance runs whose receipts the ledger seals)
 - `src/ledger/receipt.rs` (wire-format module doc reproduces the full layout)
 - `Justfile` recipes: `test-ledger`, `verify-ledger`

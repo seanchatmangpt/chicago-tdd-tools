@@ -283,10 +283,6 @@ fn model_exhaustive_torn_orderings_bitflips_full() {
     assert_eq!(corrupted_words_admitted, 0, "corrupted state admitted a non-intended word");
 }
 
-/// POSITIVE CONTROL: with the checksum interlock dropped from the model read
-/// law (seq gate only), corrupted torn states MUST admit non-intended words.
-/// If this fails the interlock is not load-bearing and the model court above
-/// is vacuous.
 /// POSITIVE CONTROL probe: with the checksum interlock dropped from the
 /// model read law (seq gate only), corrupted torn states MUST admit
 /// non-intended words. Returns `true` iff corruption was admitted — if

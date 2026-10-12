@@ -4,7 +4,7 @@ Load a POWL process model (fail-closed, positioned parse errors), validate it,
 compile it to a PN64 net, attach a stream of packed event words, and replay it
 cooperatively against a branchless hot path. Every deviation is classified as a
 typed value, never a string. Gated behind feature `conformance`
-(Cargo.toml:216, wired at src/lib.rs:188-189 as
+(Cargo.toml:212, wired at src/lib.rs:192-193 as
 `#[cfg(feature = "conformance")] pub mod conformance;`).
 
 Flat re-exports: `src/conformance/mod.rs:40-52`; canonical-type table in the
@@ -103,7 +103,7 @@ sequence {
 
 ## Session Lifecycle
 
-`session::ConformanceSession` (session.rs:121), flat re-exported at mod.rs:46.
+`session::ConformanceSession` (session.rs:130), flat re-exported at mod.rs:46.
 Deliberate distinctions: `session::Marking64 = u64` (session.rs:65) is an
 alias, distinct from the `state::Marking64` struct (state.rs:20); likewise
 `session::CompiledNet` (session.rs:78) is the session-local linear net, while
@@ -169,23 +169,23 @@ re-exports them for path stability.
 ## pn64 Primitives
 
 Branchless, `no_std`-compatible hot path. Bit layout [15:0] m / [31:16] W- /
-[47:32] W+ / [55:48] tid / [63:56] flags (pn64.rs:7-11; ported from strata @
-0de13a3, pn64.rs:3-4).
+[47:32] W+ / [55:48] tid / [63:56] flags (pn64.rs:5-11; ported from strata @
+0de13a3, pn64.rs:1-2).
 
 | Member | Cite |
 |---|---|
-| `MASK16` | pn64.rs:18 |
-| `marking` / `pre` / `post` / `tid` / `flags` | pn64.rs:23 / 30 / 37 / 44 / 57 |
-| `pack(mark, pre, post, tid, flags)` | pn64.rs:65 |
-| `enabled` / `fire` | pn64.rs:77 / 85 |
+| `MASK16` | pn64.rs:28 |
+| `marking` / `pre` / `post` / `tid` / `flags` | pn64.rs:33 / 40 / 47 / 54 / 67 |
+| `pack(mark, pre, post, tid, flags)` | pn64.rs:75 |
+| `enabled` / `fire` | pn64.rs:87 / 95 |
 | `ct_eq` / `ct_lte` | pn64.rs:112 / 127 |
 | `step_branchless(pn, ocel, invariant_mask)` | pn64.rs:162 |
 
 ## Net / State Space / Validation
 
-- `net::NetBuilder` (net.rs:198-250): `CompiledNet::builder()` net.rs:67,
-  `place` :205, `forbidden_place` :212, `transition` :220, `add_pre` :232,
-  `add_post` :241, `build` :250; `NetSpec::compile()` net.rs:92,
+- `net::NetBuilder` (net.rs:215-267): `NetSpec::builder()` net.rs:81,
+  `place` :222, `forbidden_place` :229, `transition` :237, `add_pre` :249,
+  `add_post` :258, `build` :267; `NetSpec::compile()` net.rs:107,
   `compile()` emits `CompiledNet.forbidden_mask` (bit i set per
   `forbidden_place` declaration), feedable to `StateSpace::new` /
   session's `set_forbidden_mask` so declarations are enforced.
@@ -194,8 +194,8 @@ Branchless, `no_std`-compatible hot path. Bit layout [15:0] m / [31:16] W- /
   :93 (const), `enabled_mask` :103, `fire` :117, `try_fire` :129, `reach()`
   :160, `is_safe()` :199, `deadlock_free()` :217, `forbidden_reachable()`
   :225; `state::Marking64` struct state.rs:20 with `covers(mask)` :25.
-- `validate::validate(&PowlModel)` validate.rs:45, `validate_petri(&PetriNet)`
-  validate.rs:99, `validate_bcinr` validate.rs:166 — see Known Boundaries: the
+- `validate::validate(&PowlModel)` validate.rs:51, `validate_petri(&PetriNet)`
+  validate.rs:116, `validate_bcinr` validate.rs:183 — see Known Boundaries: the
   BCINR bridge is NOT wired.
 
 ## Test Macros
@@ -265,12 +265,12 @@ tier by design; use the rich `OcelLog` tier when attributes matter.
 ### idmap_bridge (feature `ocel-ingest`)
 
 `src/observability/ocel/idmap_bridge.rs`, gated
-`#![cfg(feature = "ocel-ingest")]` (idmap_bridge.rs:44).
+`#![cfg(feature = "ocel-ingest")]` (idmap_bridge.rs:52).
 
-`IdMapError::Collision{index_a,name_a,index_b,name_b}` :51; `IdMap` :69 via
-`IdMap::build(&[&str])` :91 (ids 1..=n in first-seen order; duplicate name is
-the degenerate collision refusal); `get` :118, `name` :124, `is_bijective()`
- :132, `len` :152, `is_empty` :158; `collision_risk(&[&str]) -> usize` :174.
+`IdMapError::Collision{index_a,name_a,index_b,name_b}` :59; `IdMap` :77 via
+`IdMap::build(&[&str])` :99 (ids 1..=n in first-seen order; duplicate name is
+the degenerate collision refusal); `get` :126, `name` :132, `is_bijective()`
+ :140, `len` :160, `is_empty` :166; `collision_risk(&[&str]) -> usize` :182.
 
 **Birthday bound** (module docs idmap_bridge.rs:16-33): 16-bit
 blake3-truncated collision sentinel; p(n) is approximately
@@ -281,21 +281,21 @@ a typed refusal and the digest never participates in id derivation.
 ### import_json (feature `ocel-ingest-json`)
 
 `src/observability/ocel/import_json.rs`, gated
-`#![cfg(feature = "ocel-ingest-json")]` (import_json.rs:22).
+`#![cfg(feature = "ocel-ingest-json")]` (import_json.rs:29).
 
 Fail-closed contract (import_json.rs:7-19): accepts
 `{"ocel:version": "2.0", "ocel:events": {...}, "ocel:objects": {...}}` shape;
 missing `ocel:version` -> `MissingField`; version != "2.0" -> `InvalidVersion`;
 missing `ocel:activity` / `ocel:timestamp` (or per-object `ocel:type`) ->
 `MissingField` carrying the field name; non-JSON -> `MalformedJson`.
-`ImportError` :31 (`MalformedJson{message}` :34, `MissingField{field,subject}`
-:40, `InvalidVersion{found}` :48). `import_ocel_json(&str) -> Result<OcelLog,
-ImportError>` :67 — refuses the whole document, never a partial import.
+`ImportError` :38 (`MalformedJson{message}` :41, `MissingField{field,subject}`
+:47, `InvalidVersion{found}` :55). `import_ocel_json(&str) -> Result<OcelLog,
+ImportError>` :74 — refuses the whole document, never a partial import.
 
 ### import_xml (feature `ocel-ingest-xml`)
 
 `src/observability/ocel/import_xml.rs`, gated
-`#![cfg(feature = "ocel-ingest-xml")]` (import_xml.rs:32).
+`#![cfg(feature = "ocel-ingest-xml")]` (import_xml.rs:35).
 
 **Roundtrip-first reader disclosure** (module docs import_xml.rs:3-5): accepts
 exactly the shape the ocel-xml exporter emits (the
@@ -304,10 +304,10 @@ Accepted envelope example at import_xml.rs:11-17; the escaper inverse covers
 exactly `&amp; &lt; &gt; &quot; &apos;` — a numeric or unknown entity is a hard
 refusal (:19-20); activities/types deserialize as `TestActivity` /
 `TestObjectType` unit variants via serde, payload variants refused (:21-25);
-hand-rolled scanner, no XML crate (:26-27). `XmlImportError` :41
-(`MalformedXml{offset,reason}` :44, `UnclosedTag{tag,offset}` :52,
+hand-rolled scanner, no XML crate (:26-27). `XmlImportError` :44
+(`MalformedXml{offset,reason}` :47, `UnclosedTag{tag,offset}` :55,
 `MissingAttribute{tag,attr}`, `InvalidVersion{found}`).
-`import_ocel_xml(&str) -> Result<OcelLog, XmlImportError>` :251.
+`import_ocel_xml(&str) -> Result<OcelLog, XmlImportError>` :254.
 
 ## Tiering Commands
 
@@ -316,8 +316,8 @@ From the Justfile on disk:
 ```text
 just test-conformance     # Justfile:136-137
 just test-ocel-ingest     # Justfile:140-141
-just verify-hermetic      # Justfile:196-201 (locked + offline build/test matrix over conformance/ledger/nato)
-just check-mutation-gate  # Justfile:204-205
+just verify-hermetic      # Justfile:247 (locked + offline build/test matrix over conformance/ledger/nato)
+just check-mutation-gate  # Justfile:255
 ```
 
 Runnable pipeline:
@@ -333,7 +333,7 @@ examples/conformance_quickstart.rs:33-36).
   (Cargo.toml:225, declared as `powl-bcinr = ["conformance"]`), but the bridge
   is compiled out: `src/conformance/bcinr.rs` is `#[cfg(any())]`-gated
   (bcinr.rs:44), so enabling the feature contributes zero items;
-  `validate_bcinr` (validate.rs:166) remains a stub returning `Ok(())`.
+  `validate_bcinr` (validate.rs:183) remains a stub returning `Ok(())`.
   Documenting `to_bcinr_powl2` / `validate_bcinr` as functional would be an
   overclaim.
 - No `conformance-ocel` aggregation feature exists; none is cited.
@@ -352,3 +352,5 @@ examples/conformance_quickstart.rs:33-36).
   transition-table substrate.
 - [Court-Receipt Ledger](LEDGER.md) — ledger sealing court receipts
   over conformance runs.
+- [Merger Matrix](MERGER_MATRIX.md) — the Fortune-5 harness replaying merger
+  phase models through this kernel.

@@ -23,8 +23,9 @@
 //! What this court proves and what it does not:
 //! - PROVES: byte-exact reproducibility of the seed->pk->signature pipeline
 //!   across repeated derivations (self-pinning); sign determinism (3 runs);
-//!   verify-accept on legitimate signatures; verify-REJECT on each of 64
-//!   sampled single-bit-corrupted signatures; subject binding (a signature
+//!   verify-accept on legitimate signatures; verify-REJECT on each of 128
+//!   sampled single-bit corruptions (64 signature + 64 public-key flips);
+//!   subject binding (a signature
 //!   over subject A refuses all 75 sampled divergent subjects); cross-key
 //!   binding; and compile-time fail-closed malformed input handling.
 //! - DOES NOT PROVE: conformance to the official NIST reference vectors.
@@ -35,9 +36,8 @@
 //!
 //! # Self-pinning vs cross-run pinning
 //!
-//! Strata's KAT froze its pk/sig hex at lane-authoring time. That is only
-//! possible by running the signer, which this lane cannot do (no cargo).
-//! Instead this court self-pins: each test derives the pipeline twice and
+//! Strata's KAT froze its pk/sig hex at lane-authoring time. This court
+//! originally self-pinned: each test derived the pipeline twice and
 //! asserts the two derivations byte-identical, so any drift between the
 //! ml-dsa version, the SIGN_CONTEXT, or the encoding shows up as a failure
 //! the moment anything changes. True cross-run pinning lands once the
@@ -358,11 +358,11 @@ fn kat_verify_accepts_legitimate() {
 /// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8. Body hoisted into
 /// [`n17_sampled_flip_reject`] (shared with the court registry adapter).
 #[test]
-fn kat_rejects_64_sampled_single_bit_flips() {
+fn kat_rejects_128_sampled_single_bit_flips() {
     assert!(
         n17_sampled_flip_reject(),
-        "all 64 sampled corrupted signatures must be REJECTED and the original must \
-         still verify"
+        "all 128 sampled single-bit corruptions (64 sig + 64 pk) must be REJECTED and the \
+         original must still verify"
     );
 }
 

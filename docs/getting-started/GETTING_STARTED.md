@@ -57,7 +57,7 @@ test!(test_basic_example, {
 });
 ```
 
-**Run**: `just test test_basic_example`. **Verify**: Test passes. AAA pattern: Arrange (input), Act (result), Assert (verify).
+**Run**: `cargo test --test my_first_test` (integration tests live in `tests/`; `just test` runs the library suite). **Verify**: Test passes. AAA pattern: Arrange (input), Act (result), Assert (verify).
 
 ## Common Patterns
 
@@ -173,6 +173,7 @@ chicago-tdd-tools = {
 
 **File**: `tests/my_param_test.rs`:
 ```rust
+use chicago_tdd_tools::param_test; // macros: full variant not in the prelude glob
 use chicago_tdd_tools::prelude::*;
 
 param_test! {
