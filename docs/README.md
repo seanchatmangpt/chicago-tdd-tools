@@ -2,6 +2,8 @@
 
 Complete documentation index organized using [Diátaxis framework](https://diataxis.fr/): **Tutorials** (learn), **How-to Guides** (accomplish), **Reference** (lookup), **Explanation** (understand).
 
+**Cross-product documentation suite:** [docs/diataxis/README.md](diataxis/README.md) — 20 docs across attestation, execution, beam-membrane, semantic-graph, and settlement (tutorial / how-to / reference / explanation × 5).
+
 ## Quick Start
 
 **New to Chicago TDD Tools?** Start with **[Getting Started](getting-started/GETTING_STARTED.md)** → **[Quick Guide](getting-started/QUICK_GUIDE.md)** → **[User Guide](getting-started/USER_GUIDE.md)**

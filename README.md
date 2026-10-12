@@ -1025,6 +1025,10 @@ chicago-tdd-tools = {
 
 ## Documentation Portal
 
+The [Diátaxis cross-product documentation suite](docs/diataxis/README.md) covers the
+attestation trust plane, zero-ambient execution, BEAM membrane, semantic graph law, and
+financial settlement — 20 documents across tutorial / how-to / reference / explanation.
+
 ### 📚 Learning Path (Start Here)
 
 1. **[Getting Started](docs/getting-started/GETTING_STARTED.md)** - Installation, first test, troubleshooting
