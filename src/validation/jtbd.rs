@@ -91,7 +91,7 @@ pub struct ScenarioIndex(usize);
 impl ScenarioIndex {
     /// Create a new scenario index
     ///
-    /// Returns `None` if the index is out of bounds for the given collection size.
+    /// Always returns `Some` (audit W25: the constructor performs no bounds check; use `new_for_collection` for the bounds-checked variant).
     ///
     /// # Example
     ///

@@ -1,3 +1,5 @@
+> **ARCHIVED — historical artifact; does not describe the current release.**
+
 > 💡 Explanation
 # Chatman Equation: From Theory to Executable Multi-Sector Spec
 

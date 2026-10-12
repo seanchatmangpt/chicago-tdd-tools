@@ -11,7 +11,12 @@
 //! # Architecture
 //!
 //! ```text
-//! hot_path_test! → HotPathTest<F> → Enforces:
+//! NOTE (audit W25): the macros named in the original architecture sketch
+//! (hot_path_test!/warm_path_test!/cold_path_test!) DO NOT EXIST — the landed
+//! surface is the HotPathTest/WarmPathTest types below. Sketch retained for
+//! the enforcement-class description only:
+//!
+//! HotPathTest<F> → Enforces:
 //!     - Tick budget (τ ≤ 8 by default)
 //!     - RDTSC/CNTVCT measurement
 //!     (enforce_no_alloc / enforce_no_syscall are configuration passthrough

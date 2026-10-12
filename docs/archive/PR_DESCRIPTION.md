@@ -1,3 +1,5 @@
+> **ARCHIVED — historical artifact; does not describe the current release.**
+
 > 💡 Explanation
 # Pull Request: Comprehensive GitHub Actions CI/CD Improvements
 

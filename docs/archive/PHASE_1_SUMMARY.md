@@ -1,3 +1,5 @@
+> **ARCHIVED — historical artifact; does not describe the current release.**
+
 > 💡 Explanation
 # Phase 1 Completion Summary: Spec Harness & Literate Verification
 

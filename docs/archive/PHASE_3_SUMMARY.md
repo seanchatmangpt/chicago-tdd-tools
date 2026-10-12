@@ -1,3 +1,5 @@
+> **ARCHIVED — historical artifact; does not describe the current release.**
+
 > 💡 Explanation
 # Phase 3 Completion Summary: Paper as Self-Hosting RDF Instance
 

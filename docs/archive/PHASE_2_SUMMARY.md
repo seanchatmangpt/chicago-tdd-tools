@@ -1,3 +1,5 @@
+> **ARCHIVED — historical artifact; does not describe the current release.**
+
 > 💡 Explanation
 # Phase 2 Completion Summary: Core Ontology & Operator Registry
 
