@@ -130,6 +130,9 @@ fn law02_tamper_matrix_every_single_byte_flip_is_rejected() {
 // ─── Law 2b (T7): unhashed trailer bytes are covered at chain level ─────────
 
 /// Wire-level chain projection via `ChainRecord::of` for a minted chain.
+/// `dossier_wire` is gated on the `nato` feature in `src/ledger/mod.rs`, so
+/// this helper (and the Law 2b tests) are likewise `nato`-gated.
+#[cfg(feature = "nato")]
 fn chain_records_of(n: usize) -> Vec<chicago_tdd_tools::ledger::dossier_wire::ChainRecord> {
     chained_records(n)
         .iter()
@@ -143,6 +146,7 @@ fn chain_records_of(n: usize) -> Vec<chicago_tdd_tools::ledger::dossier_wire::Ch
 }
 
 #[test]
+#[cfg(feature = "nato")]
 fn law02b_trailer_tamper_on_last_record_is_refused_by_dossier_chain_validation() {
     use chicago_tdd_tools::ledger::dossier_wire::validate_dossier_chain;
     let mut records = chain_records_of(3);
@@ -158,6 +162,7 @@ fn law02b_trailer_tamper_on_last_record_is_refused_by_dossier_chain_validation()
 }
 
 #[test]
+#[cfg(feature = "nato")]
 fn law02b_mid_chain_trailer_tamper_names_the_tampered_record() {
     use chicago_tdd_tools::ledger::dossier_wire::validate_dossier_chain;
     let mut records = chain_records_of(3);
@@ -167,6 +172,7 @@ fn law02b_mid_chain_trailer_tamper_names_the_tampered_record() {
 }
 
 #[test]
+#[cfg(feature = "nato")]
 fn law02b_chain_record_projection_copies_trailer_bytes() {
     let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(7))
         .expect("valid name")
