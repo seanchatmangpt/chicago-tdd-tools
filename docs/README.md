@@ -54,7 +54,7 @@ Goal-focused guides to accomplish specific tasks:
 - **[Observability Testing](observability/observability-testing-guide.md)** - Observability testing guide
 - **[OTEL Weaver Guide](observability/otel-weaver-guide.md)** - OpenTelemetry + Weaver integration
 - **[Test Verification Results](testing/TEST_VERIFICATION_RESULTS.md) (historical, 2025-12-01)** - Results and fixes for test runs
-- **[MdBook Verification Summary](testing/VERIFICATION_SUMMARY.md)** - Executable documentation checks
+- **[MdBook Verification Summary](testing/VERIFICATION_SUMMARY.md)** - Executable documentation checks (HISTORICAL — W27 probe: its critical finding is stale)
 
 ---
 

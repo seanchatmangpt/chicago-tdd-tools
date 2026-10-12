@@ -236,7 +236,7 @@ fn test_tracking() {
     create_user("Alice");
 
     // This fails: No events were captured
-    assert!(AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:.has_event("user.created"));
+    assert!(metadata.has_event("user.created")); // W27 PROBE: has_event is illustrative — never existed on TestFixture
 }
 ```
 
@@ -251,7 +251,7 @@ fn test_tracking() {
     fixture.emit_event("user.created", "Alice");
 
     // Now it's tracked
-    assert!(AUDIT NOTE (W27 probe): the snippets below name a nonexistent API — the real surface is `metadata_ref()`/`metadata_mut()` and there is no emit_event/has_event on fixtures. The scenario is illustrative of the metadata-tracking pattern only:.has_event("user.created"));
+    assert!(metadata.has_event("user.created")); // W27 PROBE: has_event is illustrative — never existed on TestFixture
 }
 ```
 
