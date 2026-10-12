@@ -59,19 +59,31 @@ pub struct DossierJson {
 /// [`ChainedCourtReceipt`](crate::ledger::receipt::ChainedCourtReceipt) has
 /// no public decode constructor, so this reconstructs the exact
 /// [`Blake3ReceiptEntry`] projection the domain uses — **RM1 offset law:
-/// content = record[..304], stored hash = record[320..352], prev = the
-/// receipt's `parent_receipt_hash`** — from a [`VerifiedCourtReceipt`].
+/// content = record[..304], stored hash = record[320..352], zero trailer =
+/// record[304..320], prev = the receipt's `parent_receipt_hash`** — from a
+/// [`VerifiedCourtReceipt`].
 /// Same bytes, same law, no second hash implementation (replay still runs
 /// through the domain chain validator).
+///
+/// T7 tamper-evidence law: the chain hash covers only `record[..304]`, so
+/// the trailer bytes `record[304..320]` are otherwise invisible to chain
+/// replay. [`ChainRecord`] carries them and
+/// [`validate_dossier_chain`] refuses any record whose trailer is not the
+/// lawful all-zero trailer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChainRecord {
     /// Previous record's stored hash (genesis `[0u8; 32]` for the first).
     pub prev: [u8; 32],
     /// Content bytes hashed into the chain: `record[..304]`.
     pub content: [u8; 304],
+    /// Zero trailer (unhashed receipt tail): `record[304..320]`.
+    pub trailer: [u8; 16],
     /// Stored hash bytes: `record[320..352]`.
     pub stored: [u8; 32],
 }
+
+/// The lawful zero trailer length: record bytes `304..320`.
+pub const TRAILER_LEN: usize = 16;
 
 impl ChainRecord {
     /// Reconstruct the chain projection from a verified 352-byte record.
@@ -82,9 +94,11 @@ impl ChainRecord {
         let prev = verified.receipt().parent_receipt_hash;
         let mut content = [0u8; 304];
         content.copy_from_slice(&record[..304]);
+        let mut trailer = [0u8; TRAILER_LEN];
+        trailer.copy_from_slice(&record[304..320]);
         let mut stored = [0u8; 32];
         stored.copy_from_slice(&record[320..352]);
-        ChainRecord { prev, content, stored }
+        ChainRecord { prev, content, trailer, stored }
     }
 }
 
@@ -98,6 +112,33 @@ impl Blake3ReceiptEntry for ChainRecord {
     fn stored_hash(&self) -> [u8; 32] {
         self.stored
     }
+}
+
+/// Per-record pre-check that the unhashed zero trailer `record[304..320]`
+/// matches the record law, then full chain replay through the domain
+/// [`Blake3ChainValidator`](crate::observability::receipt::Blake3ChainValidator).
+///
+/// This closes the T7 gap: `Blake3ReceiptEntry` chain validation sees only
+/// `prev ‖ content[..304] ‖ stored[320..352]`, so a tampered trailer byte was
+/// invisible at chain level. Folding the trailer into `content_bytes` would
+/// change the hash law (replayed digests would no longer match the stored
+/// hashes minted over `[..304]`), so the trailer is checked separately,
+/// before the chain replay, for every record.
+///
+/// # Errors
+/// `Err(String)` naming the first record whose trailer is non-zero, or the
+/// domain [`ChainError`](crate::observability::receipt::ChainError) display
+/// for any chain-replay failure.
+pub fn validate_dossier_chain(records: &[ChainRecord]) -> Result<(), String> {
+    for (i, r) in records.iter().enumerate() {
+        if r.trailer != [0u8; TRAILER_LEN] {
+            return Err(format!(
+                "record {i}: zero trailer (record[304..320]) tampered — non-zero byte in unhashed receipt tail"
+            ));
+        }
+    }
+    crate::observability::receipt::Blake3ChainValidator::validate_chain(records)
+        .map_err(|e| e.to_string())
 }
 
 /// Decode embedded receipt JSON values through the domain
@@ -439,5 +480,75 @@ mod tests {
             crate::ledger::chain_verify(&[tampered]).is_err(),
             "tampered stored hash must fail chain replay"
         );
+    }
+
+    /// Build a valid 3-record chain (each record's prev = prior stored), minted
+    /// through the real constructors with correct parent threading.
+    fn wire_chain() -> Vec<ChainRecord> {
+        let mut prev = [0u8; 32];
+        let mut chain = Vec::new();
+        for seed in 1u8..=3 {
+            let receipt = CourtReceiptV1::new(
+                [seed; 32],
+                prev,
+                ReceiptMetrics {
+                    timestamp_ms: 0,
+                    run_id: u64::from(seed),
+                    total_ticks: 1_000,
+                    wall_ms: 10,
+                    thermal: ThermalClass::Warm,
+                    outcome: crate::ledger::receipt::CourtOutcome::Pass,
+                    budget_met: true,
+                },
+                [9u8; 32],
+                [7u8; 32],
+                [0u8; 32],
+                "court-wire",
+            )
+            .expect("valid receipt");
+            let bytes = ChainedCourtReceipt::from_receipt(&receipt).expect("chain").encode();
+            let r = ChainRecord::of(&VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"));
+            prev = r.stored;
+            chain.push(r);
+        }
+        chain
+    }
+
+    #[test]
+    fn validate_dossier_chain_accepts_untampered_chain() {
+        let chain = wire_chain();
+        validate_dossier_chain(&chain).expect("untampered chain must validate");
+    }
+
+    #[test]
+    fn validate_dossier_chain_refuses_last_record_trailer_tamper() {
+        // T7: trailer bytes (record[304..320]) are outside the hashed content,
+        // so the domain validator alone cannot see this tamper.
+        let mut chain = wire_chain();
+        let last = chain.len() - 1;
+        chain[last].trailer[0] ^= 0x01;
+        assert!(
+            crate::ledger::chain_verify(&chain).is_ok(),
+            "precondition: the domain validator alone misses a trailer tamper on the last record"
+        );
+        let err = validate_dossier_chain(&chain).expect_err("trailer tamper must be refused");
+        assert!(err.contains("zero trailer"), "typed trailer error: {err}");
+    }
+
+    #[test]
+    fn validate_dossier_chain_refuses_mid_chain_trailer_tamper() {
+        let mut chain = wire_chain();
+        chain[0].trailer[15] ^= 0x80;
+        let err = validate_dossier_chain(&chain).expect_err("mid-chain trailer tamper refused");
+        assert!(err.contains("record 0"), "error names the tampered record: {err}");
+    }
+
+    #[test]
+    fn chain_record_of_carries_trailer_bytes() {
+        let bytes = ledger_receipt(9u8);
+        let verified = VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies");
+        let record = ChainRecord::of(&verified);
+        assert_eq!(record.trailer.as_slice(), &bytes[304..320]);
+        assert_eq!(record.trailer, [0u8; TRAILER_LEN], "fresh record trailer is all-zero");
     }
 }

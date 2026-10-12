@@ -127,6 +127,57 @@ fn law02_tamper_matrix_every_single_byte_flip_is_rejected() {
     }
 }
 
+// ─── Law 2b (T7): unhashed trailer bytes are covered at chain level ─────────
+
+/// Wire-level chain projection via `ChainRecord::of` for a minted chain.
+fn chain_records_of(n: usize) -> Vec<chicago_tdd_tools::ledger::dossier_wire::ChainRecord> {
+    chained_records(n)
+        .iter()
+        .map(|c| {
+            chicago_tdd_tools::ledger::dossier_wire::ChainRecord::of(
+                &VerifiedCourtReceipt::from_bytes_verified(&c.encode()).expect("chained record verifies"),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn law02b_trailer_tamper_on_last_record_is_refused_by_dossier_chain_validation() {
+    use chicago_tdd_tools::ledger::dossier_wire::validate_dossier_chain;
+    let mut records = chain_records_of(3);
+    // Precondition (the T7 gap): the trait-only validator cannot see the trailer.
+    let last = records.len() - 1;
+    records[last].trailer[7] ^= 0x01;
+    assert!(
+        Blake3ChainValidator::validate_chain(&records).is_ok(),
+        "precondition: trait-level chain replay misses trailer tamper on the last record"
+    );
+    let err = validate_dossier_chain(&records).expect_err("trailer tamper must be refused");
+    assert!(err.contains("zero trailer"), "typed trailer error: {err}");
+}
+
+#[test]
+fn law02b_mid_chain_trailer_tamper_names_the_tampered_record() {
+    use chicago_tdd_tools::ledger::dossier_wire::validate_dossier_chain;
+    let mut records = chain_records_of(3);
+    records[0].trailer[15] ^= 0x80;
+    let err = validate_dossier_chain(&records).expect_err("mid-chain trailer tamper refused");
+    assert!(err.contains("record 0"), "error names the tampered record: {err}");
+}
+
+#[test]
+fn law02b_chain_record_projection_copies_trailer_bytes() {
+    let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(7))
+        .expect("valid name")
+        .encode();
+    let record =
+        chicago_tdd_tools::ledger::dossier_wire::ChainRecord::of(
+            &VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("verifies"),
+        );
+    assert_eq!(record.trailer.as_slice(), &bytes[304..320]);
+    assert_eq!(record.trailer, [0u8; 16], "fresh record trailer is all-zero");
+}
+
 // ─── Law 3: chained records validate through Blake3ChainValidator ───────────
 
 /// Test-local entry capturing the trait view of a chained record. A real
