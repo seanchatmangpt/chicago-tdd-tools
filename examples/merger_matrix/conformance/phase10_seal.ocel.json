@@ -1,0 +1,151 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p10-e01": {
+      "ocel:activity": "dossier_chapter_c01",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch01", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 1, "ingestion": "parallel-block", "law": "all 10 chapters complete before the closure gate"}
+    },
+    "p10-e02": {
+      "ocel:activity": "dossier_chapter_c02",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch02", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 2, "ingestion": "parallel-block"}
+    },
+    "p10-e03": {
+      "ocel:activity": "dossier_chapter_c03",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch03", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 3, "ingestion": "parallel-block"}
+    },
+    "p10-e04": {
+      "ocel:activity": "dossier_chapter_c04",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch04", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 4, "ingestion": "parallel-block"}
+    },
+    "p10-e05": {
+      "ocel:activity": "dossier_chapter_c05",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch05", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 5, "ingestion": "parallel-block"}
+    },
+    "p10-e06": {
+      "ocel:activity": "dossier_chapter_c06",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch06", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 6, "ingestion": "parallel-block"}
+    },
+    "p10-e07": {
+      "ocel:activity": "dossier_chapter_c07",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch07", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 7, "ingestion": "parallel-block"}
+    },
+    "p10-e08": {
+      "ocel:activity": "dossier_chapter_c08",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch08", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 8, "ingestion": "parallel-block"}
+    },
+    "p10-e09": {
+      "ocel:activity": "dossier_chapter_c09",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch09", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 9, "ingestion": "parallel-block"}
+    },
+    "p10-e10": {
+      "ocel:activity": "dossier_chapter_c10",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-ch10", "type": "Artifact"}],
+      "ocel:attributes": {"chapter": 10, "ingestion": "parallel-block"}
+    },
+    "p10-e11": {
+      "ocel:activity": "deontic_closure",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-closure", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "B", "obligations_resolved": true, "prohibitions_resolved": true, "law": "closure gate before any attestation material"}
+    },
+    "p10-e12": {
+      "ocel:activity": "master_merkle_root",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-root", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "boundary": "CTT-host-side", "executor": "just emit-dossier", "note": "modeled composition only; the seal executes host-side per E-M10"}
+    },
+    "p10-e13": {
+      "ocel:activity": "pillar_cert_1",
+      "ocel:timestamp": 1700000000012000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-cert-1", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "pillar": 1, "boundary": "CTT-host-side"}
+    },
+    "p10-e14": {
+      "ocel:activity": "pillar_cert_2",
+      "ocel:timestamp": 1700000000013000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-cert-2", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "pillar": 2, "boundary": "CTT-host-side"}
+    },
+    "p10-e15": {
+      "ocel:activity": "pillar_cert_3",
+      "ocel:timestamp": 1700000000014000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-cert-3", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "pillar": 3, "boundary": "CTT-host-side"}
+    },
+    "p10-e16": {
+      "ocel:activity": "pillar_cert_4",
+      "ocel:timestamp": 1700000000015000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-cert-4", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "pillar": 4, "boundary": "CTT-host-side"}
+    },
+    "p10-e17": {
+      "ocel:activity": "pillar_cert_5",
+      "ocel:timestamp": 1700000000016000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-cert-5", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "pillar": 5, "boundary": "CTT-host-side"}
+    },
+    "p10-e18": {
+      "ocel:activity": "master_seal",
+      "ocel:timestamp": 1700000000017000000,
+      "ocel:caseId": "p10-seal-1",
+      "ocel:objectTypes": [{"id": "p10-obj-seal", "type": "Receipt"}],
+      "ocel:attributes": {"stage": "C", "algorithm": "ML-DSA-65", "boundary": "CTT-host-side", "executor": "just emit-dossier", "law": "seal is terminal and atomic: never partially minted"}
+    }
+  },
+  "ocel:objects": {
+    "p10-obj-ch01": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 01"}},
+    "p10-obj-ch02": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 02"}},
+    "p10-obj-ch03": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 03"}},
+    "p10-obj-ch04": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 04"}},
+    "p10-obj-ch05": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 05"}},
+    "p10-obj-ch06": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 06"}},
+    "p10-obj-ch07": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 07"}},
+    "p10-obj-ch08": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 08"}},
+    "p10-obj-ch09": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 09"}},
+    "p10-obj-ch10": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dossier chapter 10"}},
+    "p10-obj-closure": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "deontic closure receipt"}},
+    "p10-obj-root": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "master merkle root"}},
+    "p10-obj-cert-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pillar certificate 1", "boundary": "CTT-host-side"}},
+    "p10-obj-cert-2": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pillar certificate 2", "boundary": "CTT-host-side"}},
+    "p10-obj-cert-3": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pillar certificate 3", "boundary": "CTT-host-side"}},
+    "p10-obj-cert-4": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pillar certificate 4", "boundary": "CTT-host-side"}},
+    "p10-obj-cert-5": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pillar certificate 5", "boundary": "CTT-host-side"}},
+    "p10-obj-seal": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "ML-DSA-65 master seal", "boundary": "CTT-host-side"}}
+  }
+}

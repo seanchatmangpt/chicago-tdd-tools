@@ -1,6 +1,6 @@
 # Chicago TDD Tools - Examples
 
-**Version:** 1.4.0 | **Updated:** 2025-01-16
+**Version:** 26.10.12 | **Updated:** 2026-10-11
 
 This directory contains comprehensive examples demonstrating Chicago TDD Tools usage, organized using the [Diátaxis framework](https://diataxis.fr/) for technical documentation.
 
@@ -83,7 +83,7 @@ cargo test --example macro_examples
 
 ---
 
-### 3. Sector Stacks Workflows (`sector_stacks_workflows.rs`) - **NEW in v1.4.0**
+### 3. Sector Stacks Workflows (`sector_stacks_workflows.rs`) - **NEW in v26.10.11**
 
 **Production-grade sector implementations demonstrating the Chatman Equation.**
 
@@ -112,7 +112,7 @@ cargo run --example sector_stacks_workflows
 
 How-to guides are task-oriented and show you how to solve specific problems. They assume you understand the basics.
 
-### 4. Fail-Fast Verification (`fail_fast_verification.rs`) - **NEW in v1.4.0**
+### 4. Fail-Fast Verification (`fail_fast_verification.rs`) - **NEW in v26.10.11**
 
 **12-phase fail-fast verification pipeline with zero-tolerance invariant checking.**
 
@@ -160,7 +160,7 @@ cargo run --example property_testing --features property-testing
 
 ---
 
-### 6. Snapshot Testing (`snapshot_testing.rs`) - **Enhanced in v1.4.0**
+### 6. Snapshot Testing (`snapshot_testing.rs`) - **Enhanced in v26.10.11**
 
 How to use snapshot testing for complex data structures and output stability.
 
@@ -183,7 +183,7 @@ cargo test --features snapshot-testing --example snapshot_testing
 - Debug representation snapshots
 - Custom snapshot settings
 - Snapshot review workflow
-- **v1.4.0**: Enhanced fixtures, complex structures, improved organization, sensitive data redaction
+- **v26.10.11**: Enhanced fixtures, complex structures, improved organization, sensitive data redaction
 
 **Workflow:**
 ```bash
@@ -300,7 +300,7 @@ cargo run --example testcontainers_example --features testcontainers
 
 ---
 
-### 11. RDF Validation (`rdf_validation.rs`) - **NEW in v1.4.0**
+### 11. RDF Validation (`rdf_validation.rs`) - **NEW in v26.10.11**
 
 **RDF-driven validation with ontologies as single source of truth.**
 
@@ -351,7 +351,7 @@ cargo test --features otel,weaver --example otel_weaver_testing
 
 ---
 
-### 13. Swarm Coordination (`swarm_coordination.rs`) - **NEW in v1.4.0**
+### 13. Swarm Coordination (`swarm_coordination.rs`) - **NEW in v26.10.11**
 
 **Distributed multi-sector coordination with task receipts.**
 
@@ -500,7 +500,7 @@ cargo run --example all_phases_pipeline
 
 ---
 
-### 18. Operator Registry (`operator_registry.rs`) - **NEW in v1.4.0**
+### 18. Operator Registry (`operator_registry.rs`) - **NEW in v26.10.11**
 
 **Global operator registry with guard system and pattern registration.**
 
@@ -529,18 +529,18 @@ cargo run --example operator_registry
 |---------|---------|---------|
 | Basic Testing | `basic_test.rs` | `cargo run --example basic_test` |
 | Macros | `macro_examples.rs` | `cargo test --example macro_examples` |
-| Sector Stacks (v1.4.0) | `sector_stacks_workflows.rs` | `cargo run --example sector_stacks_workflows` |
-| Fail-Fast Verification (v1.4.0) | `fail_fast_verification.rs` | `cargo run --example fail_fast_verification` |
+| Sector Stacks (v26.10.11) | `sector_stacks_workflows.rs` | `cargo run --example sector_stacks_workflows` |
+| Fail-Fast Verification (v26.10.11) | `fail_fast_verification.rs` | `cargo run --example fail_fast_verification` |
 | Property Testing | `property_testing.rs` | `cargo run --example property_testing --features property-testing` |
-| Snapshot Testing (v1.4.0) | `snapshot_testing.rs` | `cargo test --features snapshot-testing --example snapshot_testing` |
+| Snapshot Testing (v26.10.11) | `snapshot_testing.rs` | `cargo test --features snapshot-testing --example snapshot_testing` |
 | Mutation Testing | `mutation_testing.rs` | `cargo run --example mutation_testing` |
 | Concurrency Testing | `concurrency_testing.rs` | `cargo test --features concurrency-testing --example concurrency_testing` |
 | CLI Testing | `cli_testing.rs` | `cargo test --features cli-testing --example cli_testing` |
 | Testcontainers | `testcontainers_example.rs` | `cargo run --example testcontainers_example --features testcontainers` |
-| RDF Validation (v1.4.0) | `rdf_validation.rs` | `cargo run --example rdf_validation` |
+| RDF Validation (v26.10.11) | `rdf_validation.rs` | `cargo run --example rdf_validation` |
 | OTEL/Weaver | `otel_weaver_testing.rs` | `cargo test --features otel,weaver --example otel_weaver_testing` |
-| Swarm Coordination (v1.4.0) | `swarm_coordination.rs` | `cargo run --example swarm_coordination` |
-| Operator Registry (v1.4.0) | `operator_registry.rs` | `cargo run --example operator_registry` |
+| Swarm Coordination (v26.10.11) | `swarm_coordination.rs` | `cargo run --example swarm_coordination` |
+| Operator Registry (v26.10.11) | `operator_registry.rs` | `cargo run --example operator_registry` |
 | Go Extra Mile | `go_extra_mile.rs` | `cargo run --example go_extra_mile --features otel,weaver` |
 | Advanced Features | `advanced_features.rs` | `cargo run --example advanced_features` |
 | Hyper-Advanced Microkernel (v1.3.0) | `hyper_advanced_microkernel.rs` | `cargo run --example hyper_advanced_microkernel` |
@@ -610,6 +610,16 @@ Examples require different feature flags:
 
 ---
 
+### Conformance Quickstart (`conformance_quickstart.rs`)
+
+POWL process model in, structured verdict out: load a `.powl` model
+fail-closed, attach an OCEL64 event stream, drive `step_budget` cooperatively,
+assert `is_conforming()`.
+
+```bash
+cargo run --example conformance_quickstart --features conformance
+```
+
 ## Learning Path
 
 ### Beginner Path
@@ -628,8 +638,8 @@ Examples require different feature flags:
 **Integration Testing:**
 1. `testcontainers_example.rs` - Docker containers
 2. `otel_weaver_testing.rs` - Observability validation
-3. `sector_stacks_workflows.rs` - Production-grade workflows (v1.4.0)
-4. `swarm_coordination.rs` - Distributed coordination (v1.4.0)
+3. `sector_stacks_workflows.rs` - Production-grade workflows (v26.10.11)
+4. `swarm_coordination.rs` - Distributed coordination (v26.10.11)
 
 **Advanced Testing:**
 1. `mutation_testing.rs` - Test quality validation
@@ -643,7 +653,7 @@ Examples require different feature flags:
 1. `go_extra_mile.rs` - Progressive enhancement
 2. `advanced_features.rs` - Advanced Rust features
 
-**v1.4.0 New Features:**
+**v26.10.11 New Features:**
 1. `fail_fast_verification.rs` - 12-phase fail-fast verification pipeline
 2. `sector_stacks_workflows.rs` - Production-grade sector implementations
 3. `rdf_validation.rs` - RDF-driven validation
@@ -826,4 +836,4 @@ Found an issue or have a suggestion? Please [open an issue](https://github.com/s
 
 **Quality is the default. Prevention beats detection.**
 
-*Version 1.4.0 | Updated 2025-01-16 | Team KNHK | License MIT*
+*Version 26.10.12 | Updated 2026-10-11 | Team KNHK | License MIT*

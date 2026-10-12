@@ -1,0 +1,55 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p8v-e01": {
+      "ocel:activity": "plan_ingest",
+      "ocel:timestamp": 1700002000000000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-plan-1", "type": "Artifact"}],
+      "ocel:attributes": {"plan_filing": "DEFM14A", "constituent": "target-co", "surviving": "acquirer-holdco", "statute": "DGCL 251"}
+    },
+    "p8v-e02": {
+      "ocel:activity": "continuity_gate",
+      "ocel:timestamp": 1700002000001000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-cont-1", "type": "Receipt"}],
+      "ocel:attributes": {"shareholders_continuity_pct": 82.5, "min_continuity_pct": 80.0, "directors_seated": 5}
+    },
+    "p8v-e03": {
+      "ocel:activity": "share_exchange",
+      "ocel:timestamp": 1700002000002000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-xchg-1", "type": "Receipt"}],
+      "ocel:attributes": {"swap_ratio": "2.5000", "outstanding_shares": 40000000, "exchanged_shares": 40000001, "violation": "over-issuance", "law": "issued != outstanding — the structural-equality law (zero over-issuance) is violated by exactly one share"}
+    },
+    "p8v-e04": {
+      "ocel:activity": "dgcl_authorize",
+      "ocel:timestamp": 1700002000003000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-auth-1", "type": "Receipt"}],
+      "ocel:attributes": {"board_vote": "unanimous", "shareholder_vote_pct": 91.2, "required_pct": 66.667, "statute": "DGCL 251"}
+    },
+    "p8v-e05": {
+      "ocel:activity": "cert_issue",
+      "ocel:timestamp": 1700002000004000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-cert-1", "type": "Receipt"}],
+      "ocel:attributes": {"certificate_id": "DE-SOS-251-88411", "one_shot": true, "law": "exactly one certificate per merger"}
+    },
+    "p8v-e06": {
+      "ocel:activity": "refusal_absorb",
+      "ocel:timestamp": 1700002000005000000,
+      "ocel:caseId": "p8-statutory-violation",
+      "ocel:objectTypes": [{"id": "p8v-obj-ref-1", "type": "Receipt"}],
+      "ocel:attributes": {"reason": "over-issuance-absorbed-fail-closed", "note": "the one-share over-issuance is absorbed here as a typed refusal reason; no second certificate exists (one-shot law intact)"}
+    }
+  },
+  "ocel:objects": {
+    "p8v-obj-plan-1": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "plan of merger filing", "statute": "DGCL 251"}},
+    "p8v-obj-cont-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "continuity gate check"}},
+    "p8v-obj-xchg-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "share exchange tranche", "over_issued": 1}},
+    "p8v-obj-auth-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "DGCL 251 authorization"}},
+    "p8v-obj-cert-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "certificate of merger", "one_shot": true}},
+    "p8v-obj-ref-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "refusal absorption slot", "reason": "over-issuance-absorbed-fail-closed"}}
+  }
+}

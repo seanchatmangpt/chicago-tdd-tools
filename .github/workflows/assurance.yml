@@ -155,7 +155,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: assurance-receipts
-          path: docs/receipts/
+          path: |
+            docs/receipts/
+            docs/nato/
           retention-days: 30
           if-no-files-found: warn
 

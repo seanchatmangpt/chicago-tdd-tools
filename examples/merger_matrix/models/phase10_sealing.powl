@@ -1,0 +1,81 @@
+# phase10_sealing.powl — Phase 10: Dossier Sealing (E-M10)
+#
+# Contract: "## M-Phase Contracts (E-M10)" — dossier chapter ingestion x10 as
+# ONE parallel block, deontic closure, master merkle root, pillar certificate
+# fan-out (5 certs), ML-DSA-65 master seal.
+#
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638); MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# # CTT-HOST-SIDE BOUNDARY (E-M10, authoritative)
+#
+# The guest/WASM lane models the COMPOSITION ONLY. The actual ML-DSA-65 master
+# seal is executed host-side via `just emit-dossier` (Justfile:201); the
+# activities marked CTT-HOST-SIDE below are boundary steps the in-session
+# linear net does not execute. The 18-atom composition exceeds the linear
+# session net's 15-atom place budget (MAX_PETRI_PLACES - 1), so the session
+# compiler refuses with a typed TooManyPlaces(16) — the refusal is the court
+# (same law as phases 1/2, tests/merger_conformance_tests.rs). No in-session
+# golden replay exists for phase 10; the phase conformance surface is
+# model-load + composition-shape + documented host-side boundary.
+#
+# Embedded invariants as structure (contract E-M10 stages):
+# - STAGE A INGESTION: dossier chapters c01..c10 arrive as one PARALLEL block
+#   (fail-closed intake membrane; any missing chapter is a refusal, not a
+#   skip). All ten must complete before the closure gate.
+# - STAGE B CLOSURE: deontic closure over the ingested corpus — obligations
+#   and prohibitions resolved before any attestation material is derived.
+# - STAGE C ATTESTATION (all CTT-HOST-SIDE): master merkle root commits the
+#   corpus; pillar certificates 1..5 fan out in parallel; the ML-DSA-65 master
+#   seal is a single atomic terminal transition — commit-only, no abort branch
+#   (a seal is never partially minted; failure is a typed refusal host-side).
+#
+# Case-id convention (E-M09 master-trace namespacing): phase-local case ids in
+# the OCEL fixture are namespaced `p10-<case>` (e.g. p10-seal-1).
+#
+# Node budget: 22 / 64 (MAX_POWL_NODES, loader.rs:47) — 18 declared
+# activities + root sequence + 2 parallel blocks.
+
+activity dossier_chapter_c01   = dossier.chapter_01_ingestion    # Stage A: chapter 1 ingested
+activity dossier_chapter_c02   = dossier.chapter_02_ingestion    # Stage A: chapter 2 ingested
+activity dossier_chapter_c03   = dossier.chapter_03_ingestion    # Stage A: chapter 3 ingested
+activity dossier_chapter_c04   = dossier.chapter_04_ingestion    # Stage A: chapter 4 ingested
+activity dossier_chapter_c05   = dossier.chapter_05_ingestion    # Stage A: chapter 5 ingested
+activity dossier_chapter_c06   = dossier.chapter_06_ingestion    # Stage A: chapter 6 ingested
+activity dossier_chapter_c07   = dossier.chapter_07_ingestion    # Stage A: chapter 7 ingested
+activity dossier_chapter_c08   = dossier.chapter_08_ingestion    # Stage A: chapter 8 ingested
+activity dossier_chapter_c09   = dossier.chapter_09_ingestion    # Stage A: chapter 9 ingested
+activity dossier_chapter_c10   = dossier.chapter_10_ingestion    # Stage A: chapter 10 ingested
+activity deontic_closure       = closure.deontic_resolution      # Stage B: obligations/prohibitions resolved
+activity master_merkle_root    = attestation.master_merkle_root  # CTT-HOST-SIDE: corpus commitment
+activity pillar_cert_1         = attestation.pillar_cert_1       # CTT-HOST-SIDE: pillar certificate 1
+activity pillar_cert_2         = attestation.pillar_cert_2       # CTT-HOST-SIDE: pillar certificate 2
+activity pillar_cert_3         = attestation.pillar_cert_3       # CTT-HOST-SIDE: pillar certificate 3
+activity pillar_cert_4         = attestation.pillar_cert_4       # CTT-HOST-SIDE: pillar certificate 4
+activity pillar_cert_5         = attestation.pillar_cert_5       # CTT-HOST-SIDE: pillar certificate 5
+activity master_seal           = attestation.mldsa65_master_seal # CTT-HOST-SIDE: ML-DSA-65 master seal (terminal, atomic)
+
+sequence {
+  parallel {                                                 # Stage A: chapters 1-10, one parallel block
+    dossier_chapter_c01
+    dossier_chapter_c02
+    dossier_chapter_c03
+    dossier_chapter_c04
+    dossier_chapter_c05
+    dossier_chapter_c06
+    dossier_chapter_c07
+    dossier_chapter_c08
+    dossier_chapter_c09
+    dossier_chapter_c10
+  }
+  deontic_closure                                            # Stage B: closure gate before attestation
+  master_merkle_root                                         # CTT-HOST-SIDE: commit the corpus
+  parallel {                                                 # CTT-HOST-SIDE: pillar cert fan-out (5)
+    pillar_cert_1
+    pillar_cert_2
+    pillar_cert_3
+    pillar_cert_4
+    pillar_cert_5
+  }
+  master_seal                                                # CTT-HOST-SIDE: ML-DSA-65 master seal
+}

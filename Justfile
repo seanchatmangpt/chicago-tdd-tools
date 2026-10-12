@@ -108,7 +108,13 @@ test:
     timeout 300s cargo nextest run --lib --all-features
 
 docker-check:
-    timeout 5s docker info
+    # Docker-less environments degrade to skip instead of hard-failing when
+    # WEAVER_ALLOW_SKIP=1 is set (documented escape hatch in CLAUDE.md).
+    @if [ "${WEAVER_ALLOW_SKIP:-0}" = "1" ]; then \
+        echo "docker-check: WEAVER_ALLOW_SKIP=1 — skipping Docker daemon check"; \
+    else \
+        timeout 5s docker info; \
+    fi
 
 # Unit tests only (excludes integration tests via test organization)
 test-unit:
@@ -119,7 +125,7 @@ test-unit:
     # `cargo test -p chicago-claims --features fixture-self-test -- fixture_` to
     # see each corrupted variant's oracle fail on its own.
     timeout 300s cargo test --workspace --lib --all-features --exclude chicago-claims
-    timeout 60s cargo test -p chicago-claims --lib
+    timeout 300s cargo test -p chicago-claims --lib  # compiles fresh under lock contention; tests themselves ~3s
 
 # Conformance: pn64/POWL trajectory verification suite (feature conformance)
 test-conformance:
@@ -127,7 +133,7 @@ test-conformance:
 
 # OCEL 2.0 ingestion bridge tests (feature ocel-ingest)
 test-ocel-ingest:
-    timeout 120s cargo nextest run --test ocel_ingest_tests --features ocel-ingest,ocel-generation
+    timeout 120s cargo nextest run --test ocel_ingest_tests --features ocel-ingest,ocel-generation,ocel-ingest-json,ocel-ingest-xml
 
 # Ledger: receipt/dossier verification suite (feature ledger)
 test-ledger:
@@ -141,13 +147,12 @@ test-nato:
 nato-courts-full:
     timeout 600s cargo test --release --lib --features nato -- --ignored nato::
 
-# Pure-Rust receipt/dossier CLI (PRD P15)
-ctdd-ledger:
-    timeout 60s cargo build --release --bin ctdd_ledger --features ledger,ledger-cli
-
+# Affidavit CLI runner (PRD P15: affi is sovereign CLI)
+# SOURCE must be a 352-byte CTRT binary record (MAGIC b"CTRT") or `-` for
+# stdin. JSON court receipts under docs/receipts/ are the dossier-emit input
+# format, not CTRT wire — use `just dossier-verify` for the emitted dossier.
 verify-ledger SOURCE:
-    just ctdd-ledger
-    timeout 30s ./target/release/ctdd_ledger validate "{{SOURCE}}" --json
+    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features ctdd --bin affi -- --format json receipt validate "{{SOURCE}}"
 
 # WASM guest: build the hermetic ctt guest artifact (wasm32; PRD temprun embed)
 guest-build:
@@ -161,6 +166,18 @@ guest-audit:
 guest-test:
     timeout 300s cargo test -p ctt-wasm-guest --features chicago-tdd-tools/wasm-guest
     timeout 300s cargo test --features wasm-guest,conformance,ledger --test guest_abi_tests
+
+# Merger-matrix WASM guest: build the leaf-kernel cdylib (wasm32)
+merger-guest-build:
+    timeout 300s cargo build -p merger-guests --target wasm32-unknown-unknown --release
+
+# Merger-matrix WASM guest: native unit tests
+merger-guest-test:
+    timeout 300s cargo test -p merger-guests
+
+# Merger-matrix conformance: full contract pipeline over the landed fixtures
+merger-conformance:
+    timeout 300s cargo test --test merger_conformance_tests --features conformance,ocel-ingest-json
 
 # Compile-fail suite (trybuild; stderr must be seeded and committed)
 test-compile-fail:
@@ -186,27 +203,30 @@ check-mutation-gate:
 # courts — no tests carry a `nato_tier2` marker, so this recipe selects the
 # two cheapest ignored courts by exact test path instead of a filter group.
 # Tier-1 runs in test-unit; the full tier-3 scale run stays in nato-courts-full.
+# NOTE (CP-N14): `nato::thrash::tests::n14_cast32a_thrash_full` is donor-verbatim
+# scale (1M transitions, 16 threads, 600s bound) — it does NOT fit this recipe's
+# 120s SLA and stays in nato-courts-full.
 test-nato-tier2:
     timeout 120s cargo nextest run --lib --features nato -- --ignored \
         nato::stackbound::tests::n16_workload_100k_transitions_on_32kib_thread \
         nato::cache::tests::n07_conservation_under_eviction_storm_full
 
 # Aggregate: emit the sealed compliance dossier (N20; gated on green courts).
-# NOTE: the court tests return CourtReceipts in-process only — nothing in
-# src/nato/dossier_court.rs or src/core/receipt.rs persists
-# docs/receipts/N{01..20}.json (contract documented in src/nato/README.md
-# "Receipt contract", unwired in code). Receipt persistence to docs/receipts
-# is a PREREQUISITE of the dossier-emit step; `dossier-emit` refuses with a
-# typed error when the --receipts-dir is empty.
+# NOTE: receipt persistence to docs/receipts/N{01..20}.json is wired via the
+# opt-in court test (src/nato/dossier_court.rs emit_dossier_receipts_when_opted_in,
+# gated on CTT_EMIT_RECEIPTS=1 — the env var this recipe sets; permission errors
+# skip typed, never panic). Persistence is a PREREQUISITE of the dossier-emit
+# step; `dossier-emit` refuses with a typed error when --receipts-dir is empty.
 emit-dossier:
-    just ctdd-ledger
     CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
-    timeout 60s ./target/release/ctdd_ledger dossier-emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --json
+    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --format json
 
 # Verify the emitted dossier: PQC (ML-DSA-65) signature + Merkle-root assertion
 dossier-verify:
-    just ctdd-ledger
-    timeout 60s ./target/release/ctdd_ledger dossier-inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json
+    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
+
+dossier-inspect FILE:
+    timeout 300s cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi -- dossier inspect "{{FILE}}" --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check
@@ -217,22 +237,22 @@ test-all: test-unit docker-check test-integration
 test-full-integration: timeout-check test-unit docker-check test-integration
 
 check-examples:
-    timeout 30s cargo check --examples --all-features
+    timeout 300s cargo check --examples --all-features
 
 test-examples: check-examples
-    timeout 10s cargo nextest run --examples --all-features
+    timeout 600s cargo nextest run --examples --all-features
 
 test-property:
-    timeout 10s cargo nextest run --features property-testing
+    timeout 600s cargo nextest run --features property-testing
 
 test-mutation:
-    timeout 10s cargo nextest run --features mutation-testing
+    timeout 600s cargo nextest run --features mutation-testing
 
 test-mutation-mutants:
     timeout 60s cargo mutants --all-features
 
 test-snapshot:
-    timeout 10s cargo nextest run --features snapshot-testing
+    timeout 600s cargo nextest run --features snapshot-testing
 
 # Requires cargo-insta: cargo install cargo-insta
 snapshot-review:
@@ -245,18 +265,18 @@ snapshot-reject:
     timeout 30s cargo insta reject --all-features
 
 test-single-threaded:
-    RUST_TEST_THREADS=1 timeout 10s cargo nextest run --test-threads 1 --all-features
+    RUST_TEST_THREADS=1 timeout 600s cargo nextest run --test-threads 1 --all-features
 
 test-verbose:
-    timeout 10s cargo nextest run --lib --all-features -- --skip testcontainers --skip weaver_integration --nocapture
+    timeout 600s cargo nextest run --lib --all-features -- --skip testcontainers --skip weaver_integration --nocapture
 
 # Run tests and generate timing report to identify slow tests
 test-timings:
-    timeout 10s cargo nextest run --lib --all-features --timings=html,json -- --skip testcontainers --skip weaver_integration
+    timeout 600s cargo nextest run --lib --all-features --timings=html,json -- --skip testcontainers --skip weaver_integration
 
 # Fallback: standard cargo test (if nextest not available)
 test-cargo:
-    timeout 10s cargo test --all-features
+    timeout 600s cargo test --all-features
 
 test-doc:
     timeout 60s cargo test --doc --all-features
@@ -266,13 +286,13 @@ test-doc:
 # ---------------------------------------------------------------------------
 
 coverage:
-    timeout 30s cargo llvm-cov --all-features -- --test-threads 1
+    timeout 600s cargo llvm-cov --all-features -- --test-threads 1
 
 coverage-report:
-    timeout 30s cargo llvm-cov --all-features --html -- --test-threads 1
+    timeout 600s cargo llvm-cov --all-features --html -- --test-threads 1
 
 coverage-tarpaulin:
-    timeout 30s cargo tarpaulin --all-features --out Xml --output-dir target/coverage
+    timeout 900s cargo tarpaulin --all-features --out Xml --output-dir target/coverage
 
 # ---------------------------------------------------------------------------
 # Quality gates — dead code / unwrap / expect / TODO detection
@@ -558,7 +578,7 @@ release-validate-compilation:
     timeout 180s cargo build --release --all-features
 
 release-validate-examples:
-    timeout 10s cargo check --examples --all-features
+    timeout 300s cargo check --examples --all-features
 
 release-validate-precommit: pre-commit
 

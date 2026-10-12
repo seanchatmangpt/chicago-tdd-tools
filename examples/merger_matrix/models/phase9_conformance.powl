@@ -1,0 +1,125 @@
+# phase9_conformance.powl — Phase 9: Process-Mining Re-run (master audit loop)
+#
+# Contract: E-M09 — Phase 9 is ~95% re-instantiated capability; the "model"
+# here is the master composition driver: it re-runs the landed conformance
+# machinery over the 10-phase merger matrix rather than introducing new net
+# structure. The full cross-phase conformance harness lands Wave 4 (E-M09;
+# master.powl:3-4); this file is the Wave-3 composition surface the harness
+# drives.
+#
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638) / from_powl_file (:654); MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# Audit loop (sequence):
+# 1. MASTER TRACE INGEST — the master trace (conformance/master_trace.ocel.json,
+#    p-namespaced case ids per master.powl:18-19) is the single ingest point.
+# 2. PER-PHASE FITNESS GATES — one gate per phase (p1..p10), fanned out in
+#    parallel: each gate replays its phase golden against its phase net and
+#    latches a fitness verdict. Phases 3/6/8-10 have no landed model yet
+#    (master.powl:24-31) — the gate NODE exists now; its verdict is UNKNOWN
+#    until the phase net lands (fail-closed at the harness, not here).
+# 3. COURT RE-RUN FAN-OUT — the NATO court registry (src/nato/, registry.rs;
+#    row map in src/nato/README.md) re-runs N01..N20 in parallel over the
+#    phase-9 subject. The 20 courts fit under the 64-node cap, so they are
+#    individual activity nodes (not the single collapsed activity node
+#    E-M09's cap rule provides); the court MACHINERY stays in src/nato/ —
+#    these nodes name registry rows, they do not re-declare court internals.
+# 4. THROUGHPUT METRICS ROWS — informational only (trace metrics, checked
+#    post-replay; same status as phase7's efficiency/volume rows), never
+#    gate-structural.
+# 5. AGGREGATE — one seal activity: the audit case closes only after every
+#    gate and court row has landed (strict tail of the sequence).
+#
+# Harness boundary (honest scoping): the linear session lowering admits at
+# most 15 transitions (MAX_PETRI_PLACES - 1; ConformanceError::TooManyPlaces,
+# see phase1/phase2 refusals in tests/merger_conformance_tests.rs), so this
+# 35-atom composition compiles as a PowlModel but refuses as a single
+# ConformanceSession — the Wave-4 chained-session harness (E-M09 cap rule:
+# per-phase sessions chained by case-ID ranges, master.powl:13-17) is the
+# lawful replay path. The phase9 tests pin exactly that boundary.
+#
+# Case-id convention (E-M09 master-trace namespacing): phase-local case ids in
+# the OCEL fixture are namespaced `p9-<case>` (e.g. p9-audit-1).
+#
+# Node budget: 39 / 64 (MAX_POWL_NODES, loader.rs:47) — 35 activities +
+# 4 blocks (root sequence, gate fan-out, court fan-out, metrics rows).
+
+activity master_ingest          = merger.master_trace            # master trace ingest (single intake point)
+activity fitness_gate_p1        = fitness.phase1_intake_gate     # per-phase fitness gate (phase1 net)
+activity fitness_gate_p2        = fitness.phase2_antitrust_gate  # per-phase fitness gate (phase2 net)
+activity fitness_gate_p3        = fitness.phase3_capital_gate    # gate node landed; phase net pending (UNKNOWN)
+activity fitness_gate_p4        = fitness.phase4_novation_gate   # per-phase fitness gate (phase4 net)
+activity fitness_gate_p5        = fitness.phase5_syndicated_gate # per-phase fitness gate (phase5 net)
+activity fitness_gate_p6        = fitness.phase6_tax_gate        # gate node landed; phase net pending (UNKNOWN)
+activity fitness_gate_p7        = fitness.phase7_settlement_gate # per-phase fitness gate (phase7 net)
+activity fitness_gate_p8        = fitness.phase8_employment_gate # gate node landed; phase net pending (UNKNOWN)
+activity fitness_gate_p9        = fitness.phase9_mining_gate     # self-gate (this composition)
+activity fitness_gate_p10       = fitness.phase10_pq_ledger_gate # gate node landed; phase net pending (UNKNOWN)
+activity court_n01_replay       = nato.n01_court                 # N01 registry row (src/nato/registry.rs)
+activity court_n02_replay       = nato.n02_court                 # N02 registry row
+activity court_n03_replay       = nato.n03_court                 # N03 bell_lapadula.rs
+activity court_n04_replay       = nato.n04_court                 # N04 zero_ambient.rs (channel isolation)
+activity court_n05_replay       = nato.n05_court                 # N05 timing.rs (|t| < 4.5)
+activity court_n06_replay       = nato.n06_court                 # N06 registry row
+activity court_n07_replay       = nato.n07_court                 # N07 cache.rs
+activity court_n08_replay       = nato.n08_court                 # N08 strata-side (README:47-49)
+activity court_n09_replay       = nato.n09_court                 # N09 seu.rs (SEU over swap valuation)
+activity court_n10_replay       = nato.n10_court                 # N10 seu.rs (SEU, second stratum)
+activity court_n11_replay       = nato.n11_court                 # N11 torn/ring.rs + torn/slot.rs
+activity court_n12_replay       = nato.n12_court                 # N12 strata-side (README:47-49)
+activity court_n13_replay       = nato.n13_court                 # N13 registry row
+activity court_n14_replay       = nato.n14_court                 # N14 registry row
+activity court_n15_replay       = nato.n15_court                 # N15 strata-side (NATO_COURTS.md:161)
+activity court_n16_replay       = nato.n16_court                 # N16 stackbound.rs
+activity court_n17_replay       = nato.n17_court                 # N17 registry row
+activity court_n18_replay       = nato.n18_court                 # N18 registry row
+activity court_n19_replay       = nato.n19_court                 # N19 reproducible.rs
+activity court_n20_replay       = nato.n20_court                 # N20 reproducible.rs + dossier_court.rs
+activity metric_row_fitness     = metrics.fitness_rows           # informational: per-phase fitness table
+activity metric_row_throughput  = metrics.throughput_rows        # informational: re-run throughput table
+activity metric_row_courts      = metrics.court_rows             # informational: court verdict table
+activity audit_aggregate_seal   = pn64.phase9_audit_seal         # aggregate: seal closes the audit case
+
+sequence {
+  master_ingest                                            # 1. master trace ingest
+  parallel {                                               # 2. per-phase fitness gates (fan-out)
+    fitness_gate_p1
+    fitness_gate_p2
+    fitness_gate_p3
+    fitness_gate_p4
+    fitness_gate_p5
+    fitness_gate_p6
+    fitness_gate_p7
+    fitness_gate_p8
+    fitness_gate_p9
+    fitness_gate_p10
+  }
+  parallel {                                               # 3. court re-run fan-out (N01..N20)
+    court_n01_replay
+    court_n02_replay
+    court_n03_replay
+    court_n04_replay
+    court_n05_replay
+    court_n06_replay
+    court_n07_replay
+    court_n08_replay
+    court_n09_replay
+    court_n10_replay
+    court_n11_replay
+    court_n12_replay
+    court_n13_replay
+    court_n14_replay
+    court_n15_replay
+    court_n16_replay
+    court_n17_replay
+    court_n18_replay
+    court_n19_replay
+    court_n20_replay
+  }
+  sequence {                                               # 4. throughput metrics rows (informational)
+    metric_row_fitness
+    metric_row_throughput
+    metric_row_courts
+  }
+  audit_aggregate_seal                                     # 5. aggregate seal (strict tail)
+}

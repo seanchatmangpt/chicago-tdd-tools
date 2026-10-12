@@ -1,0 +1,530 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p9-e01": {
+      "ocel:activity": "master_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-01",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "master_ingest",
+        "row": "master-trace"
+      }
+    },
+    "p9-e02": {
+      "ocel:activity": "fitness_gate_p1",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-02",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p1",
+        "row": "phase1-gate"
+      }
+    },
+    "p9-e03": {
+      "ocel:activity": "fitness_gate_p2",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-03",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p2",
+        "row": "phase2-gate"
+      }
+    },
+    "p9-e04": {
+      "ocel:activity": "fitness_gate_p3",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-04",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p3",
+        "row": "phase3-gate"
+      }
+    },
+    "p9-e05": {
+      "ocel:activity": "fitness_gate_p4",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-05",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p4",
+        "row": "phase4-gate"
+      }
+    },
+    "p9-e06": {
+      "ocel:activity": "fitness_gate_p5",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-06",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p5",
+        "row": "phase5-gate"
+      }
+    },
+    "p9-e07": {
+      "ocel:activity": "fitness_gate_p6",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-07",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p6",
+        "row": "phase6-gate"
+      }
+    },
+    "p9-e08": {
+      "ocel:activity": "fitness_gate_p7",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-08",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p7",
+        "row": "phase7-gate"
+      }
+    },
+    "p9-e09": {
+      "ocel:activity": "fitness_gate_p8",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-09",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p8",
+        "row": "phase8-gate"
+      }
+    },
+    "p9-e10": {
+      "ocel:activity": "fitness_gate_p9",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-10",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p9",
+        "row": "phase9-gate"
+      }
+    },
+    "p9-e11": {
+      "ocel:activity": "fitness_gate_p10",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-11",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "fitness_gate_p10",
+        "row": "phase10-gate"
+      }
+    },
+    "p9-e12": {
+      "ocel:activity": "court_n01_replay",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-12",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n01_replay",
+        "row": "nato-court-01"
+      }
+    },
+    "p9-e13": {
+      "ocel:activity": "court_n02_replay",
+      "ocel:timestamp": 1700000000012000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-13",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n02_replay",
+        "row": "nato-court-02"
+      }
+    },
+    "p9-e14": {
+      "ocel:activity": "court_n03_replay",
+      "ocel:timestamp": 1700000000013000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-14",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n03_replay",
+        "row": "nato-court-03"
+      }
+    },
+    "p9-e15": {
+      "ocel:activity": "court_n04_replay",
+      "ocel:timestamp": 1700000000014000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-15",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n04_replay",
+        "row": "nato-court-04"
+      }
+    },
+    "p9-e16": {
+      "ocel:activity": "court_n05_replay",
+      "ocel:timestamp": 1700000000015000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-16",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n05_replay",
+        "row": "nato-court-05"
+      }
+    },
+    "p9-e17": {
+      "ocel:activity": "court_n06_replay",
+      "ocel:timestamp": 1700000000016000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-17",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n06_replay",
+        "row": "nato-court-06"
+      }
+    },
+    "p9-e18": {
+      "ocel:activity": "court_n07_replay",
+      "ocel:timestamp": 1700000000017000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-18",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n07_replay",
+        "row": "nato-court-07"
+      }
+    },
+    "p9-e19": {
+      "ocel:activity": "court_n08_replay",
+      "ocel:timestamp": 1700000000018000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-19",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n08_replay",
+        "row": "nato-court-08"
+      }
+    },
+    "p9-e20": {
+      "ocel:activity": "court_n09_replay",
+      "ocel:timestamp": 1700000000019000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-20",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n09_replay",
+        "row": "nato-court-09"
+      }
+    },
+    "p9-e21": {
+      "ocel:activity": "court_n10_replay",
+      "ocel:timestamp": 1700000000020000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-21",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n10_replay",
+        "row": "nato-court-10"
+      }
+    },
+    "p9-e22": {
+      "ocel:activity": "court_n11_replay",
+      "ocel:timestamp": 1700000000021000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-22",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n11_replay",
+        "row": "nato-court-11"
+      }
+    },
+    "p9-e23": {
+      "ocel:activity": "court_n12_replay",
+      "ocel:timestamp": 1700000000022000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-23",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n12_replay",
+        "row": "nato-court-12"
+      }
+    },
+    "p9-e24": {
+      "ocel:activity": "court_n13_replay",
+      "ocel:timestamp": 1700000000023000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-24",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n13_replay",
+        "row": "nato-court-13"
+      }
+    },
+    "p9-e25": {
+      "ocel:activity": "court_n14_replay",
+      "ocel:timestamp": 1700000000024000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-25",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n14_replay",
+        "row": "nato-court-14"
+      }
+    },
+    "p9-e26": {
+      "ocel:activity": "court_n15_replay",
+      "ocel:timestamp": 1700000000025000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-26",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n15_replay",
+        "row": "nato-court-15"
+      }
+    },
+    "p9-e27": {
+      "ocel:activity": "court_n16_replay",
+      "ocel:timestamp": 1700000000026000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-27",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n16_replay",
+        "row": "nato-court-16"
+      }
+    },
+    "p9-e28": {
+      "ocel:activity": "court_n17_replay",
+      "ocel:timestamp": 1700000000027000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-28",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n17_replay",
+        "row": "nato-court-17"
+      }
+    },
+    "p9-e29": {
+      "ocel:activity": "court_n18_replay",
+      "ocel:timestamp": 1700000000028000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-29",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n18_replay",
+        "row": "nato-court-18"
+      }
+    },
+    "p9-e30": {
+      "ocel:activity": "court_n19_replay",
+      "ocel:timestamp": 1700000000029000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-30",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n19_replay",
+        "row": "nato-court-19"
+      }
+    },
+    "p9-e31": {
+      "ocel:activity": "court_n20_replay",
+      "ocel:timestamp": 1700000000030000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-31",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "court_n20_replay",
+        "row": "nato-court-20"
+      }
+    },
+    "p9-e32": {
+      "ocel:activity": "metric_row_fitness",
+      "ocel:timestamp": 1700000000031000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-32",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "metric_row_fitness",
+        "row": "metrics-rows"
+      }
+    },
+    "p9-e33": {
+      "ocel:activity": "metric_row_throughput",
+      "ocel:timestamp": 1700000000032000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-33",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "metric_row_throughput",
+        "row": "aggregate"
+      }
+    },
+    "p9-e34": {
+      "ocel:activity": "metric_row_courts",
+      "ocel:timestamp": 1700000000033000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-34",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "metric_row_courts",
+        "row": "aggregate"
+      }
+    },
+    "p9-e35": {
+      "ocel:activity": "audit_aggregate_seal",
+      "ocel:timestamp": 1700000000034000000,
+      "ocel:caseId": "p9-audit-1",
+      "ocel:objectTypes": [
+        {
+          "id": "p9-obj-35",
+          "type": "Artifact"
+        }
+      ],
+      "ocel:attributes": {
+        "powl": "audit_aggregate_seal",
+        "row": "aggregate"
+      }
+    }
+  }
+}

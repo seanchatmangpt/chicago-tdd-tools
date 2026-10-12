@@ -26,6 +26,16 @@ merger_matrix/
     └── breach.ttl                     Violation / Remedy roles
 ```
 
+Additional fixture layers on disk (not shown in the tree above):
+
+- `models/` — 11 POWL normative-net models (`phase1..phase10` + `master.powl`),
+  consumed by `ConformanceSession::from_powl_file`.
+- `conformance/` — 19 OCEL 2.0 trace fixtures (per-phase goldens +
+  `*_violation` negatives + `master_trace.ocel.json`), replayed through the
+  pn64 bridge by `tests/merger_conformance_tests.rs`.
+- Domain data: `analytics/`, `capital/`, `collateral/`, `contracts/`,
+  `data/`, `loans/`, `settlement/`, `tax/` (TTL instance data, 2 files each).
+
 ## Layer responsibilities
 
 | Layer   | Answers                                        | File format |

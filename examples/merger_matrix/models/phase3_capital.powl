@@ -1,0 +1,46 @@
+# phase3_capital.powl — Phase 3: Capital & Risk Compute
+#
+# Contract: E-M03 (Phase 3, capital/RWA chain). Chain per the lane directive:
+# capital-buffer ingest -> RWA compute -> SIMM -> CET1 >= 13.2% gate ->
+# DSCR >= 1.45 gate -> BCBS-248 sweeps -> DTA IRC 382 -> merkle chain.
+#
+# Loader grammar contract (same law every phase model cites):
+# src/conformance/loader.rs:11-31 doc, scanner loader.rs:283-338, parser
+# loader.rs:350-580, MAX_POWL_NODES = 64 at loader.rs:47. Model MUST parse via
+# PowlModel::from_powl_str (loader.rs:638) and pass validate::validate
+# (src/conformance/validate.rs:45). Additionally, the linear session net caps
+# compilable models at 16 atoms (`TooManyPlaces { limit: 16 }` above that —
+# see tests/merger_conformance_tests.rs phase1/phase2 courts); this model has
+# 8 atoms and compiles.
+#
+# Disclosed seams:
+# - SIMM is a WASM guest seam (`simm_guest` source): the sensitivity/IISCC
+#   computation is delegated to the merger-guests guest module, not modeled
+#   here. The activity is a first-class atom so its presence in the trace is
+#   witnessed; its internals are out of scope for this net.
+# - DSCR >= 1.45 is an UNOWNED invariant: no lane owns the DSCR calculator,
+#   so the threshold is carried comment-only here (this block) and asserted
+#   nowhere in code. Do not promote it to a gate without an owner.
+#
+# Node budget: 17 / 64 (MAX_POWL_NODES, loader.rs:47):
+# 8 activity declarations + 1 root sequence + 8 activity references.
+
+activity p3_capital_buffer_ingest = capital.buffer_ingest        # EBA/CRR capital-buffer ingest
+activity p3_rwa_compute          = risk.rwa_compute              # risk-weighted assets compute
+activity p3_simm_guest           = simm_guest.simm_compute       # SIMM via WASM guest (disclosed seam)
+activity p3_cet1_gate            = capital.cet1_gate             # CET1 >= 13.2% hard gate
+activity p3_dscr_gate            = credit.dscr_gate              # DSCR >= 1.45 (unowned: comment-only)
+activity p3_bcbs248_sweeps       = risk.bcbs248_sweeps           # BCBS-248 fundamental review sweeps
+activity p3_dta_382              = tax.dta_irc382                # DTA / IRC 382 limitation check
+activity p3_merkle_chain         = blake3.merkle_chain           # BLAKE3 audit merkle chain seal
+
+sequence {
+  p3_capital_buffer_ingest
+  p3_rwa_compute
+  p3_simm_guest
+  p3_cet1_gate                                                   # hard gate: < 13.2% refuses the chain
+  p3_dscr_gate                                                   # comment-only invariant: >= 1.45
+  p3_bcbs248_sweeps
+  p3_dta_382
+  p3_merkle_chain
+}

@@ -1,0 +1,55 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p8-e01": {
+      "ocel:activity": "plan_ingest",
+      "ocel:timestamp": 1700002000000000000,
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-plan-1", "type": "Artifact"}],
+      "ocel:attributes": {"plan_filing": "DEFM14A", "constituent": "target-co", "surviving": "acquirer-holdco", "statute": "DGCL 251"}
+    },
+    "p8-e02": {
+      "ocel:activity": "continuity_gate",
+      "ocel:timestamp": 1700002000001000000,
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-cont-1", "type": "Receipt"}],
+      "ocel:attributes": {"shareholders_continuity_pct": 82.5, "min_continuity_pct": 80.0, "directors_seated": 5, "law": "continuity >= 80 pct shareholders, majority directors"}
+    },
+    "p8-e03": {
+      "ocel:activity": "share_exchange",
+      "ocel:timestamp": 1700002000002000000,
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-xchg-1", "type": "Receipt"}],
+      "ocel:attributes": {"swap_ratio": "2.5000", "outstanding_shares": 40000000, "exchanged_shares": 40000000, "law": "issued == outstanding (zero over-issuance, structural equality)"}
+    },
+    "p8-e04": {
+      "ocel:activity": "dgcl_authorize",
+      "ocel:timestamp": 1700002000003000000,
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-auth-1", "type": "Receipt"}],
+      "ocel:attributes": {"board_vote": "unanimous", "shareholder_vote_pct": 91.2, "required_pct": 66.667, "statute": "DGCL 251"}
+    },
+    "p8-e05": {
+      "ocel:activity": "cert_issue",
+      "ocel:timestamp": 1700002000004000000,
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-cert-1", "type": "Receipt"}],
+      "ocel:attributes": {"certificate_id": "DE-SOS-251-88410", "one_shot": true, "law": "exactly one certificate per merger"}
+    },
+    "p8-e06": {
+      "ocel:activity": "refusal_absorb",
+      "ocel:timestamp": 1700002000005000000,
+      "ocel:attributes": {"reason": "no-refusal-on-golden-path", "note": "xor branch walked in the model-derived golden per the linear lowering (each DFS atom once) — phase5 precedent; the golden case itself took the cert_issue branch"},
+      "ocel:caseId": "p8-statutory-1",
+      "ocel:objectTypes": [{"id": "p8-obj-ref-1", "type": "Receipt"}]
+    }
+  },
+  "ocel:objects": {
+    "p8-obj-plan-1": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "plan of merger filing", "statute": "DGCL 251"}},
+    "p8-obj-cont-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "continuity gate check"}},
+    "p8-obj-xchg-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "share exchange tranche"}},
+    "p8-obj-auth-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "DGCL 251 authorization"}},
+    "p8-obj-cert-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "certificate of merger", "one_shot": true}},
+    "p8-obj-ref-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "refusal absorption slot (unfired on the golden path)"}}
+  }
+}

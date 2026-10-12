@@ -1,0 +1,58 @@
+# phase8_statutory.powl — Phase 8: Statutory Merger Share Exchange & DGCL §251 Authorization
+#
+# Contract: E-M08 lane (MX5 dispatch, 2026-10-11) — 6-place/5-transition spine
+#   PlanIngest → ContinuityGate → ShareExchange → DGCLAuthorize → CertIssue.
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638); MAX_POWL_NODES = 64 (loader.rs:47). Lowering/session laws:
+# ConformanceSession (session.rs), linear lowering = each DFS atom once
+# (xor branches flatten in the model-derived golden — phase5 precedent).
+#
+# Embedded invariants as structure (E-M08's four laws):
+# - ORDERING / NO-BYPASS: the five spine transitions sit in one strict
+#   `sequence`; no transition is reachable out of order and no spine transition
+#   is bypassable (linear lowering tid = atom index, tick = prev+1 carries the
+#   order — a dropped spine atom faults `Skipped` at its step).
+# - EXACT SHARE-COUNT EQUALITY (zero over-issuance, conservation loop): the
+#   exchange runs as a bounded loop; every `share_exchange` iteration carries
+#   exchanged_shares == outstanding_shares in its OCEL attributes. The
+#   structural-equality check itself is the invariants-lane court (attributes
+#   are UNSUPPORTED at the packed tier), not a net node — the loop bound
+#   (max 12) keeps the conservation walk finite.
+# - ONE-SHOT CERTIFICATE: `cert_issue` appears exactly once, outside the loop,
+#   terminal on its xor branch — a second issuance is structurally unreachable
+#   (a repeated cert_issue faults `Skipped`, the phase5 loop-repetition law).
+# - FAIL-CLOSED REFUSAL ABSORPTION: DGCL refusal is not a silent no-fire —
+#   `refusal_absorb` is a declared terminal branch of the post-authorization
+#   xor that carries the seeded refusal reason (reason=dgcl-subsidiary-vote-
+#   failed, reason=appraisal-demand-open) as replay events and terminates the
+#   case without a certificate. The xor keeps the two outcomes mutually
+#   exclusive in the graph; the linear lowering walks both branches in the
+#   model-derived golden (phase5 precedent — act_admitted + act_refused).
+#
+# Case-id convention (E-M09 master-trace namespacing): phase-local case ids are
+# namespaced `p8-<case>` (e.g. p8-statutory-1).
+#
+# OCEL fixture note: the phase-8 fixtures (conformance/phase8_statutory*.ocel.json)
+# use the in-crate `ocel:*` map projection accepted by import_ocel_json
+# (import_json.rs:67-77) — ocel:version "2.0", ocel:events as a map keyed by
+# event id, ocel:timestamp u64 ns, ocel:activity, ocel:caseId.
+#
+# Node budget: 10 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity plan_ingest     = merger.plan_filing            # t_plan_ingest (1)     -> p_plan_ingested
+activity continuity_gate = merger.continuity_check       # t_continuity_gate (2) -> p_continuity_gated
+activity share_exchange  = merger.share_exchange         # t_share_exchange (3)  -> p_exchanged (conservation loop, zero over-issuance)
+activity dgcl_authorize  = merger.dgcl_251_authorize     # t_dgcl_authorize (4)  -> p_authorized
+activity cert_issue      = merger.certificate_issue      # t_cert_issue (5)      -> p_certified (one-shot)
+activity refusal_absorb  = merger.dgcl_refusal_absorb    #                       -> p_refused (fail-closed terminal, no certificate)
+
+sequence {
+  plan_ingest                                               # spine 1/5: plan of merger filing (no bypass)
+  continuity_gate                                           # spine 2/5: continuity of shareholders/directors
+  loop { share_exchange } redo { silent } max 12            # spine 3/5: conservation loop — issued == outstanding
+  dgcl_authorize                                            # spine 4/5: DGCL §251 board + shareholder authorization
+  xor {                                                     # one-shot certificate vs fail-closed refusal absorption
+    cert_issue                                              # spine 5/5: exactly one certificate, ever
+    refusal_absorb                                          # refusal reasons ride the event; terminal, no cert
+  }
+}

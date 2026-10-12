@@ -1,0 +1,111 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p6-e01": {
+      "ocel:activity": "act_ingest_collateral",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-pool", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_ingest_collateral -> p_collateral_schedule_ingested", "pool": "tri-party collateral schedule"}
+    },
+    "p6-e02": {
+      "ocel:activity": "act_validate_eligibility",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-elig", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_validate_eligibility -> p_eligibility_validated"}
+    },
+    "p6-e03": {
+      "ocel:activity": "act_bound_rehypothecation",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-rehypo", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_bound_rehypothecation -> p_rehypothecation_bounded"}
+    },
+    "p6-e04": {
+      "ocel:activity": "act_resolve_custody",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-custody", "type": "AgentContext"}],
+      "ocel:attributes": {"step": "t_resolve_custody -> p_custody_resolved"}
+    },
+    "p6-e05": {
+      "ocel:activity": "act_check_sovereign_limits",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-sov", "type": "AgentContext"}],
+      "ocel:attributes": {"step": "t_check_sovereign_limits -> p_sovereign_within_limits"}
+    },
+    "p6-e06": {
+      "ocel:activity": "act_assert_lcr_ge_128",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-lcr", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_assert_lcr_ge_128 -> p_lcr_gate", "lcr_bps": 13150, "floor_bps": 12800, "law": "A05 normative LCR >= 128% gate"}
+    },
+    "p6-e07": {
+      "ocel:activity": "act_rebalance_clearing_margin",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-margin", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_rebalance_clearing_margin -> p_margin_rebalanced"}
+    },
+    "p6-e08": {
+      "ocel:activity": "act_reassign_credit_lines",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-credit", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_reassign_credit_lines -> p_credit_lines_reassigned"}
+    },
+    "p6-e09": {
+      "ocel:activity": "act_compute_dynamic_haircuts",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-haircut", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_compute_dynamic_haircuts -> p_haircuts_computed", "law": "A08 haircut floor (E-M15 typed refusal)"}
+    },
+    "p6-e10": {
+      "ocel:activity": "act_central_bank_sweep",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-sweep", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_central_bank_sweep -> p_central_bank_swept"}
+    },
+    "p6-e11": {
+      "ocel:activity": "act_verify_385_reclass",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-385", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_verify_385_reclass -> p_tax_reclass_verified"}
+    },
+    "p6-e12": {
+      "ocel:activity": "act_commit_treasury_saga",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-saga", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_commit_treasury_saga -> p_saga_committed (all-or-nothing)"}
+    },
+    "p6-e13": {
+      "ocel:activity": "act_sign_collateral_dossier",
+      "ocel:timestamp": 1700000000012000000,
+      "ocel:caseId": "p6-treasury-1",
+      "ocel:objectTypes": [{"id": "p6-obj-dossier", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_sign_collateral_dossier -> p_dossier_signed", "pqc": "BLAKE3 + ML-DSA-65"}
+    }
+  },
+  "ocel:objects": {
+    "p6-obj-pool": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "tri-party collateral schedule"}},
+    "p6-obj-elig": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "eligibility validation"}},
+    "p6-obj-rehypo": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "rehypothecation bound"}},
+    "p6-obj-custody": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "custody resolution"}},
+    "p6-obj-sov": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "sovereign limits check"}},
+    "p6-obj-lcr": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "LCR gate admission"}},
+    "p6-obj-margin": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "clearing margin rebalance"}},
+    "p6-obj-credit": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "credit line reassignment"}},
+    "p6-obj-haircut": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "dynamic haircut matrix"}},
+    "p6-obj-sweep": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "central-bank sweep"}},
+    "p6-obj-385": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "385 reclass verification"}},
+    "p6-obj-saga": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "treasury saga commit"}},
+    "p6-obj-dossier": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "collateral dossier seal"}}
+  }
+}

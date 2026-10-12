@@ -1,0 +1,73 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p3-e01": {
+      "ocel:activity": "p3_capital_buffer_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-buffers", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_ingest: p_start -> p_buffers"}
+    },
+    "p3-e02": {
+      "ocel:activity": "p3_rwa_compute",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-rwa", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_rwa: p_buffers -> p_rwa"}
+    },
+    "p3-e03": {
+      "ocel:activity": "p3_simm_guest",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-simm", "type": "Artifact"}],
+      "ocel:attributes": {
+        "place_transition": "t_simm: p_rwa -> p_simm",
+        "seam": "WASM guest: merger-guests SIMM module (disclosed seam)"
+      }
+    },
+    "p3-e05": {
+      "ocel:activity": "p3_dscr_gate",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-dscr", "type": "Receipt"}],
+      "ocel:attributes": {
+        "place_transition": "t_dscr: p_cet1 -> p_dscr",
+        "law": "VIOLATION: p3_cet1_gate (CET1 >= 13.2%) skipped — DSCR gate reached without the CET1 receipt"
+      }
+    },
+    "p3-e06": {
+      "ocel:activity": "p3_bcbs248_sweeps",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-sweeps", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_sweeps: p_dscr -> p_sweeps"}
+    },
+    "p3-e07": {
+      "ocel:activity": "p3_dta_382",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-dta", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_dta: p_sweeps -> p_dta"}
+    },
+    "p3-e08": {
+      "ocel:activity": "p3_merkle_chain",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p3-capital-1",
+      "ocel:objectTypes": [{"id": "p3-obj-merkle", "type": "Receipt"}],
+      "ocel:attributes": {
+        "place_transition": "t_merkle: p_dta -> p_sealed",
+        "pqc": "ML-DSA-65",
+        "law": "merkle seal attempted over an ungated chain — the gate skip upstream voids this seal"
+      }
+    }
+  },
+  "ocel:objects": {
+    "p3-obj-buffers": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "CRR capital buffers"}},
+    "p3-obj-rwa": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "risk-weighted assets"}},
+    "p3-obj-simm": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "SIMM sensitivities (guest)"}},
+    "p3-obj-dscr": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "DSCR >= 1.45 gate receipt (unowned)"}},
+    "p3-obj-sweeps": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "BCBS-248 sweep results"}},
+    "p3-obj-dta": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "DTA IRC 382 limitation"}},
+    "p3-obj-merkle": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "BLAKE3 merkle chain seal (void: gate skipped)"}}
+  }
+}

@@ -1,0 +1,56 @@
+# phase6_treasury.powl — Phase 6: Tri-Party Collateral & Treasury Rebalancing
+#
+# Contract: "## M-Phase Contracts (E-M06) — Phase 6: Tri-Party Collateral &
+# Treasury Rebalancing" §1
+# (/Users/sac/.claude/plans/compressed-zooming-diffie.md:3497-3560).
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638); MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# Embedded invariants as structure (contract §1):
+# - LCR GATE (A05, normative): assert_lcr_ge_128 sits mid-sequence; the E-M06
+#   contract declares `lcr_gate` a forbidden_place at the pn64 tier — a
+#   trajectory that reaches (or, at the linear lowering, skips) the gate is a
+#   typed LCR-breach violation. In the POWL linear lowering the law is carried
+#   as the mandatory 6th atom: the violation fixture drops it and the replay
+#   faults Skipped{step: 5} (the gate can never be bypassed silently).
+# - REFUSAL-BEFORE-SWEEP (mask law, phase5 precedent): central_bank_sweep is
+#   reachable only downstream of the LCR gate and verify_385_reclass — no
+#   sweep is ever enabled off a gate-skipped trajectory.
+# - SAGA ALL-OR-NOTHING: commit_treasury_saga -> sign_collateral_dossier is a
+#   strict terminal sequence; the dossier (A15) never signs over an
+#   uncommitted saga.
+# - Haircut-floor safety (A08) and LcrBreach ratio math live in the E-M15
+#   invariants module as typed refusals; this net stays pure structure.
+#
+# Node budget: 13 / 64 (MAX_POWL_NODES, loader.rs:47); 13 atoms linear ->
+# 14 places, inside the 16-place linear-net budget.
+
+activity act_ingest_collateral      = collateral.schedule_ingest    # t_ingest_collateral (1)   -> p_collateral_schedule_ingested
+activity act_validate_eligibility   = collateral.eligibility_check  # t_validate_eligibility (2)-> p_eligibility_validated
+activity act_bound_rehypothecation  = collateral.rehypo_bound       # t_bound_rehypothecation(3)-> p_rehypothecation_bounded
+activity act_resolve_custody        = collateral.custody_resolved   # t_resolve_custody (4)     -> p_custody_resolved
+activity act_check_sovereign_limits = treasury.sovereign_limits     # t_check_sovereign_limits(5)->p_sovereign_within_limits
+activity act_assert_lcr_ge_128      = treasury.lcr_gate             # t_assert_lcr_ge_128 (6)   -> p_lcr_gate (normative A05 gate, forbidden at pn64 tier)
+activity act_rebalance_clearing_margin = treasury.clearing_margin   # t_rebalance (7)           -> p_margin_rebalanced
+activity act_reassign_credit_lines  = treasury.credit_lines         # t_reassign_credit_lines(8)-> p_credit_lines_reassigned
+activity act_compute_dynamic_haircuts = treasury.haircut_matrix     # t_compute_haircuts (9)    -> p_haircuts_computed (A08, floor law in E-M15)
+activity act_central_bank_sweep     = treasury.cb_sweep             # t_central_bank_sweep (10) -> p_central_bank_swept
+activity act_verify_385_reclass     = tax.reclass_385               # t_verify_385_reclass (11) -> p_tax_reclass_verified
+activity act_commit_treasury_saga   = saga.treasury_commit          # t_commit_treasury_saga(12)-> p_saga_committed (all-or-nothing)
+activity act_sign_collateral_dossier = ml_dsa65.dossier_seal        # t_sign_dossier (13)       -> p_dossier_signed (A15, over committed saga only)
+
+sequence {
+  act_ingest_collateral
+  act_validate_eligibility
+  act_bound_rehypothecation
+  act_resolve_custody
+  act_check_sovereign_limits
+  act_assert_lcr_ge_128                                    # normative LCR >= 128% gate — never bypassed silently
+  act_rebalance_clearing_margin
+  act_reassign_credit_lines
+  act_compute_dynamic_haircuts
+  act_central_bank_sweep
+  act_verify_385_reclass
+  act_commit_treasury_saga
+  act_sign_collateral_dossier
+}
