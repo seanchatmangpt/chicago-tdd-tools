@@ -397,3 +397,12 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   teamwork_preview_integration.rs; ARCHITECTURE.md module tree omits
   ~15 modules (core/testing/validation/observability/swarm submodules);
   swarm coordinator find_best_member doc overstates sector semantics.
+
+## W27 CONVERGENCE ADDITIONS
+- QUEUED: HasEffect trait unsealed (src/testing/effects.rs — in-source audit
+  note present; sealing or guarantee-rewording is the work order).
+- QUEUED: invariant_properties "derived from the 47 failure modes" claim
+  sources to HISTORICAL-bannered INVARIANT_MATRIX.md; no per-property
+  traceability link.
+- CLOSED: probe-B doc fixes (generator ident caveat, telemetry flush-on-drop)
+  landed after being found missing from d03b4f7's diff.
