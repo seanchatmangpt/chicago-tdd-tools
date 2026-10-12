@@ -938,6 +938,31 @@ truth); findings ledger W26/W27 register additions + closures.
   `CTT_MODULE_DIGEST` build-time splice — doc-promised, implementation
   sequenced with V5.
 
+### Waves 46-47 addendum (2026-10-12, book placement + typed-error wave + CI splice)
+
+- W46 (44e37fc): Waves 38-45 addendum itself; QUICK_GUIDE placed in the
+  Application Guide (reference/quick-guide.md + SUMMARY entry; canonical
+  source noted — closes the book-placement queue item); spec-harness +
+  playground pins bumped to 26.10.12; guest README gains the splice steps +
+  zero-until-attested disclosure; ctt-wasm-guest abi pin cfg-mirrored (the
+  one REAL DoD-2a defect of the 12 reported "failures"; the other 11 were
+  by-design fixture-self-test oracles, disclosed in the claims crate).
+- W47 (c44b7fb): DoD §2.3 typed-error wave part 1 — DossierWireError (14
+  variants), SwarmError (4), ReceiptJsonError + BuilderError, Display
+  byte-preserving; assurance.yml guest-splice + guest-verify BEFORE
+  guest-audit (CI previously built and uploaded an UNATTESTED zero-digest
+  artifact); ctt-wasm-guest [features] forwards guest-abi-v1 to the parent
+  (the cfg pin was dead without it); docs.yml quick-guide drift guard
+  (heading-sequence form; body links intentionally differ); docs-check.sh
+  multiline-fence check rewritten portable (awk) with the archive exemption;
+  DoD §4.3 variance row amended to the descope decision.
+- W48 (this addendum): typed-error wave part 2 — GovernanceError (5
+  variants; parse/validate/validate_with_key/sign/close_channel/sector
+  validate_artifact), WeaverError + OtelError (9 fns), testing/effects/
+  reproducible/loader conversion; crate-root re-exports for all typed
+  error channels (feature-gated for ledger). Operator-queue consolidation
+  in the findings ledger (CTT push + strata push were unregistered).
+
 ### Waves 38-45 addendum (2026-10-12, errno remap + splice tool + DoD certification)
 
 - W43 (d016764): guest-abi-v1 errno remap landed (abi_map boundary fn,

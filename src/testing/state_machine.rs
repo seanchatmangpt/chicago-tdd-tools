@@ -59,7 +59,7 @@ pub trait State: Sized + 'static {
 /// // Define transition
 /// struct Unlock;
 /// impl Transition<Locked, Unlocked> for Unlock {
-///     fn execute() -> Result<(), String> {
+///     fn execute() -> Result<(), StateMachineError> {
 ///         Ok(())
 ///     }
 /// }
@@ -72,8 +72,45 @@ pub trait Transition<From: State, To: State> {
     /// # Errors
     ///
     /// Returns error if the transition cannot be executed.
-    fn execute() -> Result<(), String>;
+    fn execute() -> Result<(), StateMachineError>;
 }
+
+/// Typed failure of a state-machine transition or invariant check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum StateMachineError {
+    /// The transition's `execute` body reported failure.
+    Execution {
+        /// Human-readable failure description from the transition body.
+        message: String,
+    },
+    /// A generated schedule violated the checked invariant.
+    InvariantViolated {
+        /// Zero-based index of the counterexample schedule.
+        schedule_index: usize,
+        /// Number of steps in the counterexample schedule.
+        schedule_length: usize,
+        /// Rendered counterexample schedule.
+        schedule: String,
+    },
+}
+
+impl std::fmt::Display for StateMachineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Execution { message } => write!(f, "{message}"),
+            Self::InvariantViolated {
+                schedule_index,
+                schedule_length,
+                schedule,
+            } => write!(
+                f,
+                "Invariant violated by schedule {schedule_index} (length {schedule_length}): {schedule}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for StateMachineError {}
 
 /// State machine with phantom-typed state
 ///
@@ -99,7 +136,7 @@ impl<S: State> StateMachine<S> {
     ///
     /// Returns error if the transition execution fails.
     #[allow(clippy::unused_self)] // Consumes self to enforce state machine linearity
-    pub fn transition<To: State, T>(self) -> Result<StateMachine<To>, String>
+    pub fn transition<To: State, T>(self) -> Result<StateMachine<To>, StateMachineError>
     where
         T: Transition<S, To>,
     {
@@ -147,7 +184,7 @@ impl<S: State> Actor<S> {
     /// # Errors
     ///
     /// Returns error if the transition fails.
-    pub fn transition<To: State, T>(self) -> Result<Actor<To>, String>
+    pub fn transition<To: State, T>(self) -> Result<Actor<To>, StateMachineError>
     where
         T: Transition<S, To>,
     {
@@ -321,19 +358,18 @@ impl ModelChecker {
     /// # Errors
     ///
     /// Returns error if invariant is violated by any schedule.
-    pub fn check_invariant<F>(&self, invariant: F) -> Result<(), String>
+    pub fn check_invariant<F>(&self, invariant: F) -> Result<(), StateMachineError>
     where
         F: Fn(&Schedule) -> bool,
     {
         let schedules = self.generator.generate();
         for (i, schedule) in schedules.iter().enumerate() {
             if !invariant(schedule) {
-                return Err(format!(
-                    "Invariant violated by schedule {} (length {}): {}",
-                    i,
-                    schedule.len(),
-                    schedule.format()
-                ));
+                return Err(StateMachineError::InvariantViolated {
+                    schedule_index: i,
+                    schedule_length: schedule.len(),
+                    schedule: schedule.format(),
+                });
             }
         }
         Ok(())
@@ -370,7 +406,7 @@ impl State for Unlocked {
 pub struct Unlock;
 
 impl Transition<Locked, Unlocked> for Unlock {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Transition from Locked -> Unlocked: the type system guarantees the
         // caller held a StateMachine<Locked>, so this transition is always valid.
         // Returning Ok(()) signals successful unlocking; the new StateMachine<Unlocked>
@@ -383,7 +419,7 @@ impl Transition<Locked, Unlocked> for Unlock {
 pub struct Lock;
 
 impl Transition<Unlocked, Locked> for Lock {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Transition from Unlocked -> Locked: the type system guarantees the
         // caller held a StateMachine<Unlocked>, so this transition is always valid.
         // Returning Ok(()) signals successful locking; the new StateMachine<Locked>

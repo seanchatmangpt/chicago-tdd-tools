@@ -18,7 +18,8 @@
     clippy::unnecessary_literal_bound
 )]
 use super::{
-    Diagnostic, DiagnosticCategory, DiagnosticSink, MergeStrategy, RunId, SectorStack, Severity,
+    Diagnostic, DiagnosticCategory, DiagnosticSink, GovernanceError, MergeStrategy, RunId,
+    SectorStack, Severity,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -133,7 +134,7 @@ pub fn register_sector_stack(stack: Box<dyn SectorStack>, strategy: MergeStrateg
     state.merge_strategy = strategy;
 }
 
-pub fn close_channel() -> Result<RunSummary, String> {
+pub fn close_channel() -> Result<RunSummary, GovernanceError> {
     let (diagnostics, sinks, run_id) = {
         let mut state = get_state().lock().unwrap_or_else(|e| e.into_inner());
         state.closed = true;

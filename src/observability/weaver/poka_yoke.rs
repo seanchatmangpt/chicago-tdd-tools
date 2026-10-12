@@ -253,7 +253,7 @@ impl RegistryState {
     /// # Errors
     ///
     /// Returns error if validation fails.
-    pub fn validate(self) -> Result<Self, String> {
+    pub fn validate(self) -> Result<Self, crate::observability::weaver::types::WeaverError> {
         match self {
             Self::Unvalidated(path) => {
                 // Perform validation (simplified - actual validation would call weaver)
@@ -261,11 +261,15 @@ impl RegistryState {
                 if path.as_path().exists() && path.as_path().is_dir() {
                     Ok(Self::Validated(path))
                 } else {
-                    Err("Registry path does not exist or is not a directory".to_string())
+                    Err(crate::observability::weaver::types::WeaverError::Registry(
+                        "Registry path does not exist or is not a directory".to_string(),
+                    ))
                 }
             }
             Self::Validated(_) => Ok(self), // Already validated
-            Self::ValidationFailed(_, err) => Err(err), // Already failed
+            Self::ValidationFailed(_, err) => {
+                Err(crate::observability::weaver::types::WeaverError::Registry(err))
+            }
         }
     }
 

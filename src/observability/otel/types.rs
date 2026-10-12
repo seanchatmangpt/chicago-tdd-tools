@@ -10,6 +10,23 @@
 
 use std::collections::BTreeMap;
 
+/// Typed error for `OTEL` span operations (`DoD` §2.3)
+///
+/// Replaces the former `Result<_, String>` returns on the public span
+/// surface. Display strings carry the original messages.
+#[derive(Debug, thiserror::Error)]
+pub enum OtelError {
+    /// Span completion attempted on an already-completed span
+    #[error("{0}")]
+    AlreadyCompleted(String),
+    /// End time precedes start time
+    #[error("{0}")]
+    InvalidTimeRange(String),
+    /// Span name is empty or whitespace-only
+    #[error("{0}")]
+    InvalidSpanName(String),
+}
+
 /// Trace ID (128-bit)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraceId(pub u128);
@@ -217,17 +234,19 @@ impl SpanState {
     /// # Errors
     ///
     /// Returns an error if the span is already completed or if `end_time` < `start_time`.
-    pub fn complete(self, end_time_ms: u64) -> Result<Self, String> {
+    pub fn complete(self, end_time_ms: u64) -> Result<Self, OtelError> {
         match self {
             Self::Active { start_time_ms } => {
                 if end_time_ms < start_time_ms {
-                    return Err(format!(
+                    return Err(OtelError::InvalidTimeRange(format!(
                         "End time {end_time_ms} must be >= start time {start_time_ms}"
-                    ));
+                    )));
                 }
                 Ok(Self::Completed { start_time_ms, end_time_ms })
             }
-            Self::Completed { .. } => Err("Span is already completed".to_string()),
+            Self::Completed { .. } => {
+                Err(OtelError::AlreadyCompleted("Span is already completed".to_string()))
+            }
         }
     }
 }
@@ -284,9 +303,11 @@ impl Span {
         attributes: Attributes,
         events: Vec<SpanEvent>,
         status: SpanStatus,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, OtelError> {
         if end_time_ms < start_time_ms {
-            return Err(format!("End time {end_time_ms} must be >= start time {start_time_ms}"));
+            return Err(OtelError::InvalidTimeRange(format!(
+                "End time {end_time_ms} must be >= start time {start_time_ms}"
+            )));
         }
         Ok(Self {
             context,
@@ -327,7 +348,7 @@ impl Span {
     /// # Errors
     ///
     /// Returns an error if the span is already completed or if `end_time` < `start_time`.
-    pub fn complete(&mut self, end_time_ms: u64) -> Result<(), String> {
+    pub fn complete(&mut self, end_time_ms: u64) -> Result<(), OtelError> {
         self.state = self.state.complete(end_time_ms)?;
         Ok(())
     }
@@ -493,7 +514,7 @@ mod tests {
 
         assert!(result.is_err(), "Should fail if already completed");
         assert!(
-            result.unwrap_err().contains("already completed"),
+            result.unwrap_err().to_string().contains("already completed"),
             "Error should mention already completed"
         );
     }
@@ -504,7 +525,10 @@ mod tests {
         let result = active.complete(1000);
 
         assert!(result.is_err(), "Should fail if end_time < start_time");
-        assert!(result.unwrap_err().contains("must be >="), "Error should mention time constraint");
+        assert!(
+            result.unwrap_err().to_string().contains("must be >="),
+            "Error should mention time constraint"
+        );
     }
 
     // ========================================================================
@@ -593,7 +617,10 @@ mod tests {
         );
 
         assert!(result.is_err(), "Should fail if end_time < start_time");
-        assert!(result.unwrap_err().contains("must be >="), "Error should mention time constraint");
+        assert!(
+            result.unwrap_err().to_string().contains("must be >="),
+            "Error should mention time constraint"
+        );
     }
 
     #[test]

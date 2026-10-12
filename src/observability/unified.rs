@@ -248,7 +248,9 @@ impl WeaverValidator {
             live_check = live_check.with_output("./weaver-reports".to_string());
         }
 
-        let process = live_check.start().map_err(ObservabilityError::WeaverStartFailed)?;
+        let process = live_check
+            .start()
+            .map_err(|e| ObservabilityError::WeaverStartFailed(e.to_string()))?;
 
         self.live_check = Some(live_check);
 
@@ -257,7 +259,9 @@ impl WeaverValidator {
 
     fn stop(&mut self) -> ObservabilityResult<()> {
         if let Some(ref live_check) = self.live_check {
-            live_check.stop().map_err(ObservabilityError::WeaverStopFailed)?;
+            live_check
+                .stop()
+                .map_err(|e| ObservabilityError::WeaverStopFailed(e.to_string()))?;
         }
         self.live_check = None;
         Ok(())

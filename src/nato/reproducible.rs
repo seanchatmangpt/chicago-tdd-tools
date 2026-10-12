@@ -206,13 +206,26 @@ fn run_court() -> ReproVerdict {
 /// `Result`-returning wrapper over [`validate_schema`]: the panicking court
 /// assertion is caught and rendered as `Err`; a schema-valid receipt is
 /// `Ok(())`.
-fn schema_result(receipt: &Value) -> Result<(), String> {
+/// Typed schema violation: the assertion message raised by
+/// [`validate_schema`] and caught by [`schema_result`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SchemaViolation(String);
+
+impl std::fmt::Display for SchemaViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for SchemaViolation {}
+
+fn schema_result(receipt: &Value) -> Result<(), SchemaViolation> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| validate_schema(receipt))).map_err(
         |payload| {
-            payload.downcast_ref::<&str>().map_or_else(
+            SchemaViolation(payload.downcast_ref::<&str>().map_or_else(
                 || payload.downcast_ref::<String>().cloned().unwrap_or_default(),
                 |s| (*s).to_string(),
-            )
+            ))
         },
     )
 }

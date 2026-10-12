@@ -13,6 +13,8 @@ use thiserror::Error;
 pub mod poka_yoke;
 pub mod types;
 
+pub use types::WeaverError;
+
 /// Poka-yoke types for Weaver process lifecycle
 ///
 /// **Poka-yoke**: Type-level state machine prevents invalid operations.
@@ -440,7 +442,9 @@ impl WeaverValidator {
             .with_output("./weaver-reports".to_string()); // Output to directory for parsing
 
         // Start Weaver live-check process
-        let process = live_check.start().map_err(WeaverValidationError::ProcessStartFailed)?;
+        let process = live_check
+            .start()
+            .map_err(|e| WeaverValidationError::ProcessStartFailed(e.to_string()))?;
 
         self.live_check = Some(live_check);
         self.process = Some(process);
@@ -455,7 +459,9 @@ impl WeaverValidator {
     /// Returns an error if stopping the process fails.
     pub fn stop(&mut self) -> WeaverValidationResult<()> {
         if let Some(ref live_check) = self.live_check {
-            live_check.stop().map_err(WeaverValidationError::ProcessStopFailed)?;
+            live_check
+                .stop()
+                .map_err(|e| WeaverValidationError::ProcessStopFailed(e.to_string()))?;
         }
 
         if let Some(mut process) = self.process.take() {

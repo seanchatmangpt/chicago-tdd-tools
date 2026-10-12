@@ -222,9 +222,11 @@ impl Span<state::Active> {
     /// # Errors
     ///
     /// Returns error if span creation fails.
-    pub fn new(name: &str) -> Result<Self, String> {
+    pub fn new(name: &str) -> Result<Self, crate::observability::otel::types::OtelError> {
         if name.trim().is_empty() {
-            return Err("Span name cannot be empty".to_string());
+            return Err(crate::observability::otel::types::OtelError::InvalidSpanName(
+                "Span name cannot be empty".to_string(),
+            ));
         }
         Ok(Self {
             name: name.to_string(),

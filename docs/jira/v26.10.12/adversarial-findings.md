@@ -601,3 +601,23 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   (governance, otel/weaver, testing, reproducible, loader) = next wave.
 - Application-guide tracked book/ artifact deleted (29.5k lines of build
   output out of the repo).
+
+- OPERATOR-QUEUE CONSOLIDATION (HEAD c44b7fb+): two queue items were
+  tracked outside this register and are folded in here.
+  (1) CTT main push — this repo is main...origin/main [ahead 220+];
+      nothing downstream (spliced guests, pins, nightly AFFIDAVIT_DIR
+      pin verification) sees any of it until pushed.
+  (2) Strata push — fix/kg-42-status-code (incl. 59ed80c temprun_step
+      ABI-v2 rebase) is rebase-landed but pending merge/push to strata
+      main (docs/releases/CHANGELOG.md:46); the earlier "strata
+      temprun_step ABI re-base" queue entry (W28-W32) is superseded by
+      this named-branch item.
+  Ordering constraint: CTT push + affidavit push precede dossier
+  re-seal; re-seal precedes the v26.10.12 re-tag; crates.io publish
+  (proc_macros first) follows the re-tag.
+- TYPED-ERROR WAVE COMPLETION ADDENDUM: all lanes green — swarm 43/0,
+  dossier_wire 9/0 + dossier_cli 14/0, receipt 93/0, builders 46/0,
+  governance 11/0, weaver 29/0, otel 41/0. Crate-root re-exports added
+  for BuilderError/ReceiptJsonError/DossierWireError (ledger-gated)/
+  SwarmError. Remaining: DiagnosticSink::emit/close (blocks on a
+  coordinated ocel-collector splice — registered).

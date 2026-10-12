@@ -9,6 +9,8 @@ use thiserror::Error;
 
 pub mod types;
 
+pub use types::OtelError;
+
 /// Poka-yoke types for OTEL (compile-time error prevention)
 ///
 /// **Poka-yoke**: Type-level state machine prevents invalid span operations.

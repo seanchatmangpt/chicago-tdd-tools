@@ -23,6 +23,32 @@ pub enum WeaverValidationError {
     StopFailed(String),
 }
 
+/// Typed error for `Weaver` live-check operations (`DoD` §2.3)
+///
+/// Replaces the former `Result<_, String>` returns on the public
+/// `WeaverLiveCheck` surface. Display strings carry the original messages.
+#[derive(Error, Debug)]
+pub enum WeaverError {
+    /// Registry path missing, unreadable, not a directory, or empty
+    #[error("{0}")]
+    Registry(String),
+    /// Registry availability check exceeded its time budget
+    #[error("{0}")]
+    Timeout(String),
+    /// Weaver admin endpoint did not respond to the health probe
+    #[error("{0}")]
+    Health(String),
+    /// Weaver live-check process could not be spawned
+    #[error("{0}")]
+    Spawn(String),
+    /// Weaver live-check process could not be stopped
+    #[error("{0}")]
+    Stop(String),
+    /// Operation requires the `weaver` feature
+    #[error("{0}")]
+    FeatureDisabled(String),
+}
+
 /// Weaver live-check integration for telemetry validation
 #[derive(Debug)]
 pub struct WeaverLiveCheck {
@@ -202,7 +228,7 @@ impl WeaverLiveCheck {
     ///     return;
     /// }
     /// ```
-    pub fn check_registry_available() -> Result<(), String> {
+    pub fn check_registry_available() -> Result<(), WeaverError> {
         const MAX_CHECK_TIME_MS: u128 = 5000; // 5 second timeout
 
         use std::fs;
@@ -217,45 +243,49 @@ impl WeaverLiveCheck {
 
         // Check 1: Path exists
         if !registry_path.exists() {
-            return Err(format!(
+            return Err(WeaverError::Registry(format!(
                 "🚨 Registry path does not exist: {}\n   ⚠️  STOP: Cannot proceed with Weaver tests\n   💡 FIX: Run just weaver-bootstrap",
                 registry_path.display()
-            ));
+            )));
         }
 
         // Check timeout hasn't elapsed
         if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
-            return Err("Registry check timed out (5s). Filesystem may be slow.".to_string());
+            return Err(WeaverError::Timeout(
+                "Registry check timed out (5s). Filesystem may be slow.".to_string(),
+            ));
         }
 
         // Check 2: Path is a directory and readable
         match fs::metadata(&registry_path) {
             Ok(metadata) => {
                 if !metadata.is_dir() {
-                    return Err(format!(
+                    return Err(WeaverError::Registry(format!(
                         "🚨 Registry path is not a directory: {}",
                         registry_path.display()
-                    ));
+                    )));
                 }
                 // Check if we can read the directory
                 if metadata.permissions().readonly() && cfg!(unix) {
-                    return Err(format!(
+                    return Err(WeaverError::Registry(format!(
                         "⚠️  Registry path is not readable (permission denied): {}",
                         registry_path.display()
-                    ));
+                    )));
                 }
             }
             Err(e) => {
-                return Err(format!(
+                return Err(WeaverError::Registry(format!(
                     "⚠️  Cannot read registry metadata: {} - {e}",
                     registry_path.display()
-                ))
+                )))
             }
         }
 
         // Check timeout again before final checks
         if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
-            return Err("Registry check timed out (5s) during metadata validation.".to_string());
+            return Err(WeaverError::Timeout(
+                "Registry check timed out (5s) during metadata validation.".to_string(),
+            ));
         }
 
         // Check 3: Contains expected structure (at least one .yaml file or subdirectory)
@@ -281,23 +311,25 @@ impl WeaverLiveCheck {
                     });
 
                 if !has_content {
-                    return Err(format!(
+                    return Err(WeaverError::Registry(format!(
                         "⚠️  Registry appears empty (no YAML/JSON files or subdirectories): {}",
                         registry_path.display()
-                    ));
+                    )));
                 }
             }
             Err(e) => {
-                return Err(format!(
+                return Err(WeaverError::Registry(format!(
                     "⚠️  Cannot read registry directory: {} - {e}",
                     registry_path.display()
-                ))
+                )))
             }
         }
 
         // Final timeout check
         if start_time.elapsed().as_millis() > MAX_CHECK_TIME_MS {
-            return Err("Registry check timed out (5s) during content validation.".to_string());
+            return Err(WeaverError::Timeout(
+                "Registry check timed out (5s) during content validation.".to_string(),
+            ));
         }
 
         Ok(())
@@ -492,7 +524,7 @@ impl WeaverLiveCheck {
     /// # Errors
     ///
     /// Returns an error if health check fails.
-    pub fn check_health(&self) -> Result<bool, String> {
+    pub fn check_health(&self) -> Result<bool, WeaverError> {
         // Note: This requires reqwest, which may not be available
         // For now, return a basic connectivity check
         match std::net::TcpStream::connect(format!(
@@ -500,10 +532,10 @@ impl WeaverLiveCheck {
             self.otlp_grpc_address, self.admin_port
         )) {
             Ok(_) => Ok(true), // Port is open, assume Weaver is running
-            Err(e) => Err(format!(
+            Err(e) => Err(WeaverError::Health(format!(
                 "Weaver admin endpoint not responding on {}:{}: {e}",
                 self.otlp_grpc_address, self.admin_port
-            )),
+            ))),
         }
     }
 
@@ -513,16 +545,16 @@ impl WeaverLiveCheck {
     /// # Errors
     ///
     /// Returns an error if Weaver binary is not available or starting the process fails.
-    pub fn start(&self) -> Result<Child, String> {
+    pub fn start(&self) -> Result<Child, WeaverError> {
         // Items (use statements) must come before statements (Rust requirement)
         use std::process::Command;
 
         // Check Weaver binary availability first (may trigger runtime download)
-        Self::check_weaver_available().map_err(|e| format!("{e}"))?;
+        Self::check_weaver_available().map_err(|e| WeaverError::Spawn(format!("{e}")))?;
 
         // Find weaver binary path
         let weaver_binary = Self::find_weaver_binary()
-            .ok_or_else(|| "Weaver binary not found after check".to_string())?;
+            .ok_or_else(|| WeaverError::Spawn("Weaver binary not found after check".to_string()))?;
 
         let mut cmd = Command::new(&weaver_binary);
 
@@ -545,9 +577,11 @@ impl WeaverLiveCheck {
         cmd.spawn()
             .map_err(|e| {
                 if e.kind() == std::io::ErrorKind::NotFound {
-                    "🚨 Weaver binary not found in PATH. Run just weaver-bootstrap (installs CLI locally) or cargo install weaver".to_string()
+                    WeaverError::Spawn("🚨 Weaver binary not found in PATH. Run just weaver-bootstrap (installs CLI locally) or cargo install weaver".to_string())
                 } else {
-                    format!("Failed to start Weaver live-check: {e}. Ensure Weaver is installed and in PATH.")
+                    WeaverError::Spawn(format!(
+                        "Failed to start Weaver live-check: {e}. Ensure Weaver is installed and in PATH."
+                    ))
                 }
             })
     }
@@ -558,7 +592,7 @@ impl WeaverLiveCheck {
     ///
     /// Returns an error if stopping the process fails.
     #[cfg(feature = "weaver")]
-    pub fn stop(&self) -> Result<(), String> {
+    pub fn stop(&self) -> Result<(), WeaverError> {
         use std::io::{Read, Write};
         use std::net::{TcpStream, ToSocketAddrs};
         use std::time::Duration;
@@ -568,19 +602,21 @@ impl WeaverLiveCheck {
         let addr_str = format!("{ip_addr}:{}", self.admin_port);
         let socket_addr = addr_str
             .to_socket_addrs()
-            .map_err(|e| format!("Failed to resolve address {addr_str}: {e}"))?
+            .map_err(|e| WeaverError::Stop(format!("Failed to resolve address {addr_str}: {e}")))?
             .next()
-            .ok_or_else(|| format!("No addresses resolved for {addr_str}"))?;
+            .ok_or_else(|| WeaverError::Stop(format!("No addresses resolved for {addr_str}")))?;
 
-        let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(5))
-            .map_err(|e| format!("Failed to connect to Weaver admin at {addr_str}: {e}"))?;
+        let mut stream =
+            TcpStream::connect_timeout(&socket_addr, Duration::from_secs(5)).map_err(|e| {
+                WeaverError::Stop(format!("Failed to connect to Weaver admin at {addr_str}: {e}"))
+            })?;
 
         stream
             .set_read_timeout(Some(Duration::from_secs(5)))
-            .map_err(|e| format!("Failed to set read timeout: {e}"))?;
+            .map_err(|e| WeaverError::Stop(format!("Failed to set read timeout: {e}")))?;
         stream
             .set_write_timeout(Some(Duration::from_secs(5)))
-            .map_err(|e| format!("Failed to set write timeout: {e}"))?;
+            .map_err(|e| WeaverError::Stop(format!("Failed to set write timeout: {e}")))?;
 
         let request = format!(
             "POST /stop HTTP/1.1\r\n\
@@ -591,7 +627,7 @@ impl WeaverLiveCheck {
 
         stream
             .write_all(request.as_bytes())
-            .map_err(|e| format!("Failed to send stop request: {e}"))?;
+            .map_err(|e| WeaverError::Stop(format!("Failed to send stop request: {e}")))?;
 
         let mut response = String::new();
         match stream.read_to_string(&mut response) {
@@ -602,10 +638,10 @@ impl WeaverLiveCheck {
                 {
                     Ok(())
                 } else {
-                    Err(format!(
+                    Err(WeaverError::Stop(format!(
                         "Weaver stop request returned unexpected response: {}",
                         response.lines().next().unwrap_or("")
-                    ))
+                    )))
                 }
             }
             Err(_) => {
@@ -619,8 +655,10 @@ impl WeaverLiveCheck {
     /// Stop the live-check process via HTTP admin endpoint
     /// Fallback when weaver feature is not enabled
     #[cfg(not(feature = "weaver"))]
-    pub fn stop(&self) -> Result<(), String> {
-        Err("Weaver stop requires weaver feature to be enabled".to_string())
+    pub fn stop(&self) -> Result<(), WeaverError> {
+        Err(WeaverError::FeatureDisabled(
+            "Weaver stop requires weaver feature to be enabled".to_string(),
+        ))
     }
 
     /// Get the OTLP gRPC endpoint for sending telemetry

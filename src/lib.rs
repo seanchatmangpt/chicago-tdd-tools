@@ -216,6 +216,13 @@ pub use operator_registry::{
     global_registry, GuardType, OperatorDescriptor, OperatorProperties, OperatorRegistry,
 };
 pub use sector_stacks::{academic, claims, OperationReceipt, OperationStatus, SectorOperation};
+// Typed error channels (DoD §2.3 wave): crate-root re-exports so consumers
+// can `match` on the error variants without deep path imports.
+pub use crate::core::builders::BuilderError;
+pub use crate::core::receipt::ReceiptJsonError;
+#[cfg(feature = "ledger")]
+pub use crate::ledger::dossier_wire::DossierWireError;
+pub use crate::swarm::SwarmError;
 pub use swarm::{
     ComposedOperation, OperationChain, SwarmCoordinator, SwarmMember, TaskReceipt, TaskRequest,
     TaskStatus,

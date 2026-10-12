@@ -56,8 +56,11 @@ pub use channel::{
     register_domain, register_sink, set_channel_capacity, set_run_id, RunSummary,
 };
 pub mod channel;
+pub mod error;
 pub mod laws;
 pub mod sector;
+
+pub use error::GovernanceError;
 
 pub use laws::*;
 pub use sector::{MergeStrategy, ProcessIntelligenceSector, SectorStack};
@@ -247,9 +250,9 @@ impl DiagnosticCode {
     /// - Domain must be ALL-CAPS alphanumeric only (`[A-Z0-9]+`)
     /// - Category prefix must be one of the known prefixes
     /// - Ordinal must be a decimal integer in the range `0..=65535`
-    pub fn parse(s: &str) -> Result<Self, String> {
+    pub fn parse(s: &str) -> Result<Self, GovernanceError> {
         if s.is_empty() {
-            return Err("empty diagnostic code string".to_string());
+            return Err(GovernanceError::Parse("empty diagnostic code string".to_string()));
         }
         let parts: Vec<&str> = s.split('-').collect();
         match parts.as_slice() {
@@ -266,28 +269,28 @@ impl DiagnosticCode {
                 let ordinal = Self::parse_ordinal(ord)?;
                 Ok(Self { domain: dom.to_string(), category, ordinal })
             }
-            _ => Err(format!(
+            _ => Err(GovernanceError::Parse(format!(
                 "expected 'CAT-NNN' or 'DOM-CAT-NNN', got {} part(s) in '{s}'",
                 parts.len()
-            )),
+            ))),
         }
     }
 
-    fn validate_domain(domain: &str) -> Result<(), String> {
+    fn validate_domain(domain: &str) -> Result<(), GovernanceError> {
         if domain.is_empty() {
-            return Err("domain cannot be empty".to_string());
+            return Err(GovernanceError::Parse("domain cannot be empty".to_string()));
         }
         for ch in domain.chars() {
             if !ch.is_ascii_uppercase() && !ch.is_ascii_digit() {
-                return Err(format!(
+                return Err(GovernanceError::Parse(format!(
                     "domain '{domain}' contains invalid character '{ch}'; only A-Z and 0-9 allowed"
-                ));
+                )));
             }
         }
         Ok(())
     }
 
-    fn parse_category(prefix: &str) -> Result<DiagnosticCategory, String> {
+    fn parse_category(prefix: &str) -> Result<DiagnosticCategory, GovernanceError> {
         match prefix {
             "ADM" => Ok(DiagnosticCategory::Admission),
             "LIN" => Ok(DiagnosticCategory::Lineage),
@@ -302,16 +305,17 @@ impl DiagnosticCode {
             "COV" => Ok(DiagnosticCategory::Coverage),
             "PER" => Ok(DiagnosticCategory::Performance),
             "CFL" => Ok(DiagnosticCategory::Conflict),
-            other => Err(format!("unknown category prefix '{other}'")),
+            other => Err(GovernanceError::Parse(format!("unknown category prefix '{other}'"))),
         }
     }
 
-    fn parse_ordinal(s: &str) -> Result<u16, String> {
+    fn parse_ordinal(s: &str) -> Result<u16, GovernanceError> {
         // Reject negative-looking strings before trying parse
         if s.starts_with('-') {
-            return Err(format!("ordinal cannot be negative: '{s}'"));
+            return Err(GovernanceError::Parse(format!("ordinal cannot be negative: '{s}'")));
         }
-        s.parse::<u16>().map_err(|_| format!("invalid ordinal '{s}': must be 0–65535"))
+        s.parse::<u16>()
+            .map_err(|_| GovernanceError::Parse(format!("invalid ordinal '{s}': must be 0–65535")))
     }
 }
 
@@ -359,15 +363,17 @@ impl Diagnostic {
     /// Validate the internal consistency of this diagnostic.
     ///
     /// Returns `Err` if `code.category` does not match `category`.
-    pub fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> Result<(), GovernanceError> {
         if self.code.category != self.category {
-            return Err(format!(
+            return Err(GovernanceError::Validation(format!(
                 "category mismatch: code.category={:?} but diagnostic.category={:?}",
                 self.code.category, self.category
-            ));
+            )));
         }
         if self.message.is_empty() {
-            return Err("diagnostic message cannot be empty".to_string());
+            return Err(GovernanceError::Validation(
+                "diagnostic message cannot be empty".to_string(),
+            ));
         }
         Ok(())
     }
@@ -419,14 +425,14 @@ impl TaskReceipt {
     /// Use [`TaskReceipt::validate_with_key`] to verify a signature with the
     /// caller-supplied secret. If a signature is present, this method returns
     /// a typed refusal directing the caller to `validate_with_key`.
-    pub fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> Result<(), GovernanceError> {
         self.validate_structural()?;
         if self.signature.is_some() {
-            return Err(
+            return Err(GovernanceError::MissingKey(
                 "signature present but no verifying key supplied: embedded-key signatures are \
                  retired (forgeable); use TaskReceipt::validate_with_key"
                     .to_string(),
-            );
+            ));
         }
         Ok(())
     }
@@ -441,37 +447,43 @@ impl TaskReceipt {
     ///
     /// A receipt with no signature at all still passes the structural checks;
     /// signatures are optional by design.
-    pub fn validate_with_key(&self, key: &str) -> Result<(), String> {
+    pub fn validate_with_key(&self, key: &str) -> Result<(), GovernanceError> {
         self.validate_structural()?;
         let Some(sig) = &self.signature else {
             return Ok(());
         };
         if sig.len() % 2 != 0 || !sig.chars().all(|c| c.is_ascii_hexdigit()) {
-            return Err("Invalid signature".to_string());
+            return Err(GovernanceError::Signature("Invalid signature".to_string()));
         }
         let expected = self.hmac_hex(key.as_bytes());
         if !ct_eq_str(expected.as_bytes(), sig.as_bytes()) {
-            return Err("Invalid signature".to_string());
+            return Err(GovernanceError::Signature("Invalid signature".to_string()));
         }
         Ok(())
     }
 
-    fn validate_structural(&self) -> Result<(), String> {
+    fn validate_structural(&self) -> Result<(), GovernanceError> {
         // 1. ID checks
         let trimmed_id = self.id.trim();
         if trimmed_id.is_empty() {
-            return Err("Receipt ID cannot be empty".to_string());
+            return Err(GovernanceError::Validation("Receipt ID cannot be empty".to_string()));
         }
         if self.id.contains('\0') {
-            return Err("Receipt ID cannot contain null bytes".to_string());
+            return Err(GovernanceError::Validation(
+                "Receipt ID cannot contain null bytes".to_string(),
+            ));
         }
 
         // 2. Payload checks
         if self.payload.contains('\0') {
-            return Err("Payload cannot contain null bytes".to_string());
+            return Err(GovernanceError::Validation(
+                "Payload cannot contain null bytes".to_string(),
+            ));
         }
         if self.payload.len() > MAX_PAYLOAD_BYTES {
-            return Err("Payload exceeds maximum size limit of 1MB".to_string());
+            return Err(GovernanceError::Validation(
+                "Payload exceeds maximum size limit of 1MB".to_string(),
+            ));
         }
 
         // 3. Timestamp check
@@ -480,7 +492,7 @@ impl TaskReceipt {
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
         if self.timestamp_ms > now_ms + MAX_FUTURE_OFFSET_MS {
-            return Err("Timestamp is in the far future".to_string());
+            return Err(GovernanceError::Validation("Timestamp is in the far future".to_string()));
         }
         Ok(())
     }
@@ -494,11 +506,11 @@ impl TaskReceipt {
     ///
     /// Returns a typed error for keys longer than
     /// `MAX_SIGNING_KEY_BYTES` (255 bytes) instead of truncating.
-    pub fn sign(&mut self, secret: &str) -> Result<(), String> {
+    pub fn sign(&mut self, secret: &str) -> Result<(), GovernanceError> {
         if secret.len() > MAX_SIGNING_KEY_BYTES {
-            return Err(format!(
+            return Err(GovernanceError::Signature(format!(
                 "signing key exceeds maximum length of {MAX_SIGNING_KEY_BYTES} bytes"
-            ));
+            )));
         }
         self.signature = Some(self.hmac_hex(secret.as_bytes()));
         Ok(())
@@ -576,7 +588,7 @@ mod task_receipt_tests {
         assert_ne!(real, forged_sig, "different keys must produce different sigs");
         r.signature = Some(forged_sig.to_string());
         let err = r.validate_with_key("secret-key").unwrap_err();
-        assert!(err.contains("Invalid signature"), "got: {err}");
+        assert!(err.to_string().contains("Invalid signature"), "got: {err}");
         // Directly: ct_eq_str agrees in both directions.
         assert!(ct_eq_str(real.as_bytes(), real.as_bytes()));
         assert!(!ct_eq_str(real.as_bytes(), forged_sig.as_bytes()));
@@ -587,7 +599,7 @@ mod task_receipt_tests {
         let mut r = receipt();
         r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
         let err = r.validate_with_key("attacker-key").unwrap_err();
-        assert!(err.contains("Invalid signature"), "got: {err}");
+        assert!(err.to_string().contains("Invalid signature"), "got: {err}");
     }
 
     #[test]
@@ -605,7 +617,7 @@ mod task_receipt_tests {
         let mut r = receipt();
         r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
         let err = r.validate().unwrap_err();
-        assert!(err.contains("validate_with_key"), "got: {err}");
+        assert!(err.to_string().contains("validate_with_key"), "got: {err}");
     }
 
     #[test]
@@ -619,7 +631,7 @@ mod task_receipt_tests {
         let mut r = receipt();
         let big_key = "k".repeat(256);
         let err = r.sign(&big_key).unwrap_err();
-        assert!(err.contains("255"), "got: {err}");
+        assert!(err.to_string().contains("255"), "got: {err}");
         assert!(r.signature.is_none(), "failed sign must not leave a signature");
     }
 
@@ -637,7 +649,7 @@ mod task_receipt_tests {
         r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
         r.payload.push_str("-tampered");
         let err = r.validate_with_key("secret-key").unwrap_err();
-        assert!(err.contains("Invalid signature"), "got: {err}");
+        assert!(err.to_string().contains("Invalid signature"), "got: {err}");
     }
 }
 

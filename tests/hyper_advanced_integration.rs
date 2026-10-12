@@ -34,7 +34,7 @@ use chicago_tdd_tools::testing::effects::{
     RequiresEffect, StorageWrite,
 };
 use chicago_tdd_tools::testing::state_machine::{
-    Actor, Schedule, ScheduleStep, State, StateMachine, Transition,
+    Actor, Schedule, ScheduleStep, State, StateMachine, StateMachineError, Transition,
 };
 use chicago_tdd_tools::validation::thermal::{
     ColdPathTest, HotPathConfig, HotPathTest, WarmPathConfig, WarmPathTest,
@@ -307,7 +307,7 @@ impl State for Unlocked {
 // Define transitions
 struct Unlock;
 impl Transition<Locked, Unlocked> for Unlock {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Unlock logic
         Ok(())
     }
@@ -315,7 +315,7 @@ impl Transition<Locked, Unlocked> for Unlock {
 
 struct Lock;
 impl Transition<Unlocked, Locked> for Lock {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         // Lock logic
         Ok(())
     }

@@ -28,7 +28,9 @@ use chicago_tdd_tools::swarm::test_orchestrator::{
     QoSClass, ResourceBudget, TestOrchestrator, TestPlan, TestPlanningAPI,
 };
 use chicago_tdd_tools::testing::effects::{Effects, NetworkRead, Pure, StorageWrite};
-use chicago_tdd_tools::testing::state_machine::{State, StateMachine, Transition};
+use chicago_tdd_tools::testing::state_machine::{
+    State, StateMachine, StateMachineError, Transition,
+};
 use chicago_tdd_tools::validation::thermal::{
     ColdPathTest, HotPathConfig, HotPathTest, WarmPathTest,
 };
@@ -191,25 +193,25 @@ struct Disconnect;
 
 // Define valid transitions
 impl Transition<Disconnected, Connected> for Connect {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }
 
 impl Transition<Connected, Authenticated> for Authenticate {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }
 
 impl Transition<Authenticated, Active> for Activate {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }
 
 impl Transition<Active, Disconnected> for Disconnect {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }

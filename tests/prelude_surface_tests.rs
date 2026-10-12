@@ -379,7 +379,7 @@ mod core_prelude_surface {
         }
         struct DoUnlock;
         impl Transition<LockedState, UnlockedState> for DoUnlock {
-            fn execute() -> Result<(), String> {
+            fn execute() -> Result<(), StateMachineError> {
                 Ok(())
             }
         }
