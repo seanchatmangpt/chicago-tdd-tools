@@ -888,3 +888,5 @@ Found an issue or have a suggestion? Please [open an issue](https://github.com/s
 **Quality is the default. Prevention beats detection.**
 
 *Version 26.10.12 | Updated 2026-10-11 | Team KNHK | License MIT*
+
+`merger_matrix/` — merger-matrix fixtures used by the conformance kernel courts (v26.10.12); reference data, not a runnable example.

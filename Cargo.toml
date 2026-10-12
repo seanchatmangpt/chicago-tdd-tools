@@ -450,7 +450,7 @@ harness = false
 [[bench]]
 name = "receipt_chain"
 harness = false
-required-features = ["receipt-validation"]
+required-features = ["ledger"]
 
 [workspace]
 members = [

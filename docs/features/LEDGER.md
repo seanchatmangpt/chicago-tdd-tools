@@ -279,9 +279,10 @@ per code:
 | 15 | `DanglingObject` | referenced object dangling / unknown |
 | 16 | `NonMonotonic` | sequence ordering regressed |
 | 17 | `EmptyDossier` | dossier contained no proofs / no courts |
-| 18 | `DigestMismatch` | stored digest did not match recomputed digest |
+| 18 |
+| 19 | `DossierInvalid` — sealed dossier structurally invalid (format tag / receipt count / recomputed Merkle root mismatch) | `DigestMismatch` | stored digest did not match recomputed digest |
 
-`exit_code(&LedgerError)` (mod.rs:237-248) is the error→exit-code mapping:
+`exit_code(&LedgerError)` (mod.rs:245-258) is the error→exit-code mapping:
 `UnsupportedVersion` → 11, `ChainLinkMismatch` → 12, `DigestMismatch` → 13,
 `CrossCourtAppend` / `EmptyChain` → 16, everything else → 10.
 
@@ -293,7 +294,7 @@ just verify-ledger SOURCE
 
 which runs the `affi` binary (`cargo run --manifest-path /Users/sac/affidavit/Cargo.toml
 --features ctdd --bin affi -- --format json receipt validate "<SOURCE>"`,
-matching the Justfile recipe at Justfile:159-161).
+matching the Justfile recipe at Justfile:191-193).
 
 ### In-flight seams (honesty notes)
 

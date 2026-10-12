@@ -104,29 +104,29 @@ sequence {
 ## Session Lifecycle
 
 `session::ConformanceSession` (session.rs:121), flat re-exported at mod.rs:46.
-Deliberate distinctions: `session::Marking64 = u64` (session.rs:58) is an
+Deliberate distinctions: `session::Marking64 = u64` (session.rs:65) is an
 alias, distinct from the `state::Marking64` struct (state.rs:20); likewise
-`session::CompiledNet` (session.rs:71) is the session-local linear net, while
+`session::CompiledNet` (session.rs:78) is the session-local linear net, while
 the canonical `CompiledNet` is `net::CompiledNet` (mod.rs:13-14).
 
 | Member | Notes | Cite |
 |---|---|---|
-| `ConformanceResult<T>` | `Result<T, ConformanceError>` | session.rs:47 |
-| `Marking64 = u64` alias | distinct from `state::Marking64` | session.rs:58 |
+| `ConformanceResult<T>` | `Result<T, ConformanceError>` | session.rs:54 |
+| `Marking64 = u64` alias | distinct from `state::Marking64` | session.rs:65 |
 | `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:156 |
 | `from_model(&PowlModel)` | from an already-loaded model | session.rs:166 |
-| `set_forbidden_mask(u64)` | masked to 0xFFFF; read on every step | session.rs:215 |
-| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:236 (refusal :241) |
-| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:257 |
-| `resume(u32)` | continue after a yield | session.rs:305 |
-| `phase()` | `&Phase` | session.rs:311 |
-| `steps_done()` | `u32` | session.rs:317 |
-| `remaining_events()` | `usize` | session.rs:323 |
-| `marking()` | `Marking64` | session.rs:329 |
-| `initial_marking()` | `Marking64` | session.rs:335 |
-| `net()` | `&CompiledNet` | session.rs:348 |
-| `finish()` | `-> ReplaySummary` | session.rs:355 |
-| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:378 |
+| `set_forbidden_mask(u64)` | masked to 0xFFFF; read on every step | session.rs:223 |
+| `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:240 (refusal :244-245) |
+| `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:268 |
+| `resume(u32)` | continue after a yield | session.rs:316 |
+| `phase()` | `&Phase` | session.rs:322 |
+| `steps_done()` | `u32` | session.rs:328 |
+| `remaining_events()` | `usize` | session.rs:334 |
+| `marking()` | `Marking64` | session.rs:340 |
+| `initial_marking()` | `Marking64` | session.rs:346 |
+| `net()` | `&CompiledNet` | session.rs:359 |
+| `finish()` | `-> ReplaySummary` | session.rs:366 |
+| `conformance_report()` | `-> ConformanceReport` (macro seam) | session.rs:389 |
 
 ### Event-Word Layout and Tick Law
 
@@ -336,7 +336,7 @@ examples/conformance_quickstart.rs:33-36).
 - No `conformance-ocel` aggregation feature exists; none is cited.
 - Session's `stream` field is private: there is no public `stream()` getter,
   and `attach_stream` on a `Complete`/`Faulted` session stays frozen
-  (session.rs:207-210) — attaching does not unfreeze a terminal phase.
+  (session.rs:240-242) — attaching does not unfreeze a terminal phase.
 - `session::CompiledNet` and `session::Marking64` are distinct on purpose from
   the canonical `net::CompiledNet` and `state::Marking64` (mod.rs:13-14).
 - The POWL DSL is not a general Petri-net text format; the separate

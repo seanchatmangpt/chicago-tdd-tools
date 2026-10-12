@@ -89,7 +89,7 @@ s.set_forbidden_mask(0b0010);
 ```
 
 Landed semantics (session.rs:203): the mask is u64 in, truncated to the
-16-bit marking encoding, and **only effective before the first step** — the
+16-bit marking encoding, and **read on every step** (mid-stream install between `Yielded` and `resume` changes subsequent-step classification) — the
 session latches, so set the mask right after compile, before
 `attach_stream`/`step_budget`.
 
