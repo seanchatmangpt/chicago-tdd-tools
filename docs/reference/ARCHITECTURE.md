@@ -39,6 +39,15 @@ Modules are organized into capability groups for better discoverability and main
 - `type_level`: Type-level arithmetic and compile-time validation (const generics, type-level arithmetic)
 - `alert`: Alert helpers for visual problem indicators (with optional `log` crate integration, requires `logging` feature)
 - `governance`: Agent governance loop — diagnostic/severity types, global diagnostic channel, admission laws, sector stacks (`Diagnostic`, `DiagnosticSink`, `SectorStack`, `MergeStrategy`)
+- `poka_yoke`: Poka-Yoke error-prevention patterns — type-level error prevention making invalid states unrepresentable (compile-time prevention; not glob re-exported to avoid conflicts with feature-gated poka_yoke modules)
+- `config`: Configuration loading and type-safe configuration types (`loading`, `poka_yoke`)
+- `contract`: Test contracts as first-class types — declared covered modules/capabilities/invariants, resource envelope (time/memory/network), required environment, Q constraints (τ ≤ 8, no panics), and test ontology Σₜ queries without running tests
+- `invariants`: Fail-fast hardening core type system — 52 unrecoverable invariant violation types across the 12 framework phases plus per-phase validators
+- `fail_fast`: Strict verification pipeline with zero tolerance — orchestrates all 12 phases with fail-fast semantics; every invariant violation is immediate test failure
+- `invariant_properties`: Property-based invariant validation — proptest properties exhaustively verifying that invariant violations are always detected (derived from the 47 failure modes in INVARIANT_MATRIX.md)
+- `receipt`: Proof-carrying test receipts — cryptographically verifiable receipts (contract ID, code hash, environment fingerprint, invariants checked, timing windows, SHA-256 signature) making tests observable operations
+- `verification_pipeline`: Phase 7 unified verification pipeline — straight-line Contract → Thermal → Effects → State Machine → Receipt → Orchestration sequencing for the A = μ(O) transformation (String error channel; typed-channel refactor registered as follow-up)
+- `test_utils`: Community-requested test utilities — retry configuration for flaky tests, timing and path helpers
 
 **Advanced Testing Techniques** (`testing/`): Specialized testing methodologies.
 - `property`: Property-based testing (const generics, reproducible, requires `property-testing` feature)
@@ -47,23 +56,36 @@ Modules are organized into capability groups for better discoverability and main
 - `concurrency`: Concurrency testing (requires `concurrency-testing` feature)
 - `cli`: CLI testing (requires `cli-testing` feature)
 - `generator`: Test code generation
+- `effects`: Effect-typed tests — type-level effect system declaring/constraining test capabilities (network I/O, storage I/O, privileged ops, pure), enabling static pure-test verification and CI routing by effect
+- `state_machine`: Type-directed state machine testing — phantom-typed states, transition traits preventing illegal transitions, automatic schedule generation for concurrent actors (loom integration lives in `concurrency`)
+- `continuous_learning`: Phase 8 continuous learning — ML-inspired test optimization/prediction from historical receipts: failure-likelihood prediction, execution-order optimization, τ-pattern learning, preventive-test suggestions
 
 **Quality & Validation** (`validation/`): Quality assurance and constraint validation.
 - `coverage`: Test coverage analysis (tracking, reports, CoveragePercentage, CoveredCount, TotalCount)
 - `guards`: Guard constraints (input validation, Chatman Constant ≤8, batch size limits)
 - `jtbd`: Jobs To Be Done validation (scenario validation, real-world testing, ScenarioIndex)
 - `performance`: Performance validation (RDTSC, tick measurement, hot path budget, ValidatedTickBudget)
+- `advanced_phases`: Advanced phases 9–12 — distributed consensus, time-travel debugging, performance prophet, quality metrics dashboard
+- `thermal`: Thermal test harness — τ-aware hot/warm/cold test classification binding the suite to the Chatman Constant τ ≤ 8 and μ-kernel timing discipline
 
 **Telemetry & Observability** (`observability/`): Telemetry validation.
 - `otel`: OTEL validation (span/metric validation, schema conformance, requires `otel` feature)
 - `weaver`: Weaver live validation (live validation, registry, OTLP, requires `weaver` feature, automatically enables `otel`)
 - `ocel`: OCEL 2.0 process mining (Object-Centric Event Logs from test runs, `Raw → Admitted → Receipted` evidence lifecycle on `wasm4pm-compat`, requires `ocel-generation`; process discovery via `ocel-generation-discovery`)
+- `unified`: Unified observability testing API — single ergonomic API over OTEL + Weaver testing with RAII lifecycle management, auto-detection of Weaver binary/registry, and invalid-states-unrepresentable typing (re-exported as the main observability API)
+- `receipt`: BLAKE3 receipt chain validation (requires `receipt-validation`) — generic replay and tamper-evidence utilities for any project claiming BLAKE3 receipt chaining
+- `fixtures`: Weaver fixture and telemetry capture utilities (requires `weaver` + `otel`) — Chicago-aligned fixtures, telemetry capture helpers, and assertion adapters wiring live-check results into the assertion pipeline
 
 **Integration Testing** (`integration/`): External system integration.
 - `testcontainers`: Docker support (port mapping, exec, auto-cleanup, requires `testcontainers` feature)
 
 **Orchestration** (`swarm/`): Distributed multi-sector coordination.
 - `wave`: N-phase sequential waves with M parallel tasks, wave-state observability, `ResidualClass` failure classification
+- `composition`: Knowledge hook composition — ordered operation chains across sectors (`OperationChain` with order-sorted steps and cursor; bookkeeping only, no step execution or data piping)
+- `coordinator`: Swarm coordinator — central orchestration of members, task distribution, and deterministic swarm consensus
+- `member`: Swarm member — individual agent record with capabilities (sectors), lifecycle state, task capacity, heartbeat; passive, all coordination in `SwarmCoordinator`
+- `task`: Task receipt system — proof-of-work receipts for swarm agents (what was done, by whom, when, result), `TaskQueue`/`TaskRequest`/`TaskReceipt`
+- `test_orchestrator`: Swarm-native test orchestrator — agent-driven test scheduling at scale: tenant/org/priority/QoS scheduling, hardware-aware μ-kernel placement, minimal sufficient test-set suggestions
 
 **Workflow Patterns** (crate root):
 - `operator_registry`: All 43 YAWL workflow control patterns (`OperatorRegistry`, `GuardType`, `global_registry()`)
@@ -93,7 +115,13 @@ sealed STANAG-4107 dossier at `docs/nato/NATO_STANAG_4107_DOSSIER.json`).
 
 Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
 
-**Dependency Graph**: lib.rs → core (fixture, async_fixture, builders, assertions, macros, state, const_assert, type_level, alert), testing (property, mutation, snapshot, concurrency, cli, generator), validation (coverage, guards, jtbd, performance), observability (otel, weaver), integration (testcontainers). Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
+**Dependency Graph**: lib.rs → core (fixture, async_fixture, builders, assertions, macros, state, const_assert, type_level, alert, config, contract, receipt, invariants, fail_fast, verification_pipeline), testing (property, mutation, snapshot, concurrency, cli, generator, effects, state_machine, continuous_learning), validation (coverage, guards, jtbd, performance, thermal, advanced_phases), observability (otel, weaver, unified, fixtures, receipt), integration (testcontainers), swarm (wave, composition, coordinator, member, task, test_orchestrator). Most modules have no dependencies (zero-cost). Optional features are feature-gated. Internal types avoid external dependencies.
+
+**Assurance feature edges** (per `Cargo.toml` feature declarations):
+- `conformance`: zero-dependency feature (`conformance = []`) — POWL/PN64 kernel
+- `ledger` → `dep:blake3` + `receipt-validation` (which itself pulls `dep:blake3`) — CTRT wire + sealing
+- `nato` → `ledger` + `conformance` + `dep:ml-dsa` (+ `zeroize`, `getrandom`) — 20-court matrix with ML-DSA-65 dossier sealing
+- `ocel-generation` → `dep:wasm4pm-compat` + `dep:blake3` (+ `dashmap`, `tracing`); `ocel-generation-discovery` → `ocel-generation` + `wasm4pm-compat/wasm4pm`
 
 ## Feature Flags
 
