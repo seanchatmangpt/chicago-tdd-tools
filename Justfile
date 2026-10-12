@@ -625,8 +625,11 @@ release-validate-artifacts:
     #!/usr/bin/env bash
     set -uo pipefail
     if [ ! -f docs/releases/CHANGELOG.md ]; then echo '🚨 CRITICAL: docs/releases/CHANGELOG.md missing'; exit 1; fi
-    if [ ! -f docs/releases/RELEASE_NOTES_v1.1.0.md ] && [ ! -f docs/releases/RELEASE_NOTES.md ]; then
-      echo '⚠️  WARNING: Release notes missing (not blocking but recommended)'
+    VERSION=$(grep '^version' Cargo.toml 2>/dev/null | cut -d'"' -f2 || echo '')
+    if [ -f "docs/releases/RELEASE_NOTES_v${VERSION}.md" ]; then
+      echo "✅ Release notes found: docs/releases/RELEASE_NOTES_v${VERSION}.md"
+    else
+      echo "⚠️  WARNING: Release notes missing for version ${VERSION} (not blocking but recommended)"
     fi
     echo '✅ Release artifacts validated'
 
