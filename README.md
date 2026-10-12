@@ -11,7 +11,7 @@ If it compiles, correctness follows. Type system encodes invariants. Quality is 
 
 ## Use As a Dependency
 
-`chicago-tdd-tools` is published to crates.io (`version = "26.8.3"` and later — see
+`chicago-tdd-tools` is published to crates.io (`version = "26.10.11"` and later — see
 [Cargo.toml](Cargo.toml) for the current version) and is also consumable directly from this
 repo via a `path`/`git` dependency for sibling projects in the same workspace tree. All three
 forms are real and in active use:
@@ -19,7 +19,7 @@ forms are real and in active use:
 ```toml
 # From crates.io (what ggen's crates use in production):
 [dev-dependencies]
-chicago-tdd-tools = { version = "26.8.9", features = ["testing-extras"] }
+chicago-tdd-tools = { version = "26.10.11", features = ["testing-extras"] }
 
 # From a sibling checkout on disk (what this repo's own examples/ and castle use):
 [dev-dependencies]
@@ -27,7 +27,7 @@ chicago-tdd-tools = { path = "../chicago-tdd-tools", features = ["testing-extras
 
 # From git, pinned to a tag/rev, when neither of the above fits:
 [dev-dependencies]
-chicago-tdd-tools = { git = "https://github.com/seanchatmangpt/chicago-tdd-tools", tag = "v26.8.9" }
+chicago-tdd-tools = { git = "https://github.com/seanchatmangpt/chicago-tdd-tools", tag = "v26.10.11" }
 ```
 
 Only `core`/`prelude` (the `test!`/`fixture_test!`/`async_test!` macros, builders, assertions)
@@ -729,6 +729,124 @@ test!(test_ocel_collector, {
 
 ---
 
+## Conformance Checking (POWL Replay)
+
+Load a **POWL process model** (fail-closed, positioned parse errors), attach a
+stream of **OCEL64 event words** (activity id in bits [7:0], tick in bits
+[15:8], ticks strictly `prev + 1`), and replay it cooperatively against a
+branchless PN64 net: bounded `step_budget` slices yield control back with a
+`YieldStatus`, and the final structured report classifies every deviation.
+
+Requires feature `conformance`. Trimmed from the compile-checked
+`examples/conformance_quickstart.rs`:
+
+```rust
+use chicago_tdd_tools::conformance::{ConformanceSession, ReportOutcome, YieldStatus};
+
+// 1. Fail-closed load: parse errors are positioned and typed.
+let mut session =
+    ConformanceSession::from_powl_file(&model_path).expect("parse POWL fixture");
+
+// 2. Attach an OCEL64 word stream: tids 0,1,2 at ticks 1,2,3.
+session.attach_stream(&words).expect("attach stream");
+
+// 3. Cooperative reductions: step in bounded slices, resuming until complete.
+let report = loop {
+    match session.step_budget(2) {
+        YieldStatus::Yielded { remaining_events } => {
+            println!("yielded: {remaining_events} event(s) remaining");
+        }
+        YieldStatus::Complete(report) => break report,
+        YieldStatus::Violation(err) => panic!("conformance violation: {err}"),
+    }
+};
+
+// 4. Structured verdict: every event replayed, no violation. The verdict is
+//    computed by the library, never asserted by the caller.
+assert_eq!(report.steps_executed, words.len() as u32);
+assert_eq!(report.events_total, words.len());
+assert_eq!(report.outcome, ReportOutcome::Complete);
+```
+
+The POWL DSL itself is a small declaration + block syntax
+(`examples/conformance_quickstart.rs`):
+
+```text
+# Three-atom linear process: handle -> fork -> approve
+activity handle  = log.handle
+activity fork    = robot.fork
+activity approve = ledger.approve
+
+sequence {
+    handle
+    fork
+    approve
+}
+```
+
+Violation classification is structural, not a string: a misordered or
+regressed tick refuses as `YieldStatus::Violation(ConformanceError)`, and the
+report side carries typed `Deviation`s (`VerbMismatch`, `NotEnabled`,
+`ForbiddenBit`, `OutOfOrder`, `Unfinished`) with `open_deviations()` /
+`explain(idx)` / `is_conforming()` accessors. Landed tests prove each class
+(`tests/conformance_tests.rs`): skipped tick gap, undeclared activity,
+repeated tick latches the session, forbidden marking bit, budget
+yield/resume monotonicity.
+
+Run it:
+
+```bash
+cargo run --example conformance_quickstart --features conformance
+```
+
+---
+
+## Defense Assurance (Ledger + NATO Courts)
+
+Two feature-gated modules for tamper-evident assurance artifacts. Both are
+zero-default surface: nothing is enabled unless you ask.
+
+**`ledger`** — a strict court-receipt wire format with BLAKE3 chain and
+Merkle dossier laws:
+
+- Receipt wire: `MAGIC = b"CTRT"`, `VERSION = 1`, 320-byte court receipt
+  (`COURT_RECEIPT_V1_LEN`), 352-byte chained record (`COURT_RECORD_LEN`).
+- Chain law: `head(n+1) = BLAKE3(head(n) || head(receipt))`, validated by the
+  existing `Blake3ReceiptEntry` validator.
+- Dossier sealing: ML-DSA-65 (`SIGNATURE_LEN = 3309`,
+  `PUBLIC_KEY_LEN = 1952`, context `chicago-ledger-dossier-v1`), with a
+  subject-binding-before-signature verification order.
+- Typed exit codes (`LedgerExitCode`): `Ok = 0`, then per-class codes 10–18
+  (`MalformedReceipt = 10`, `SchemaVersionMismatch = 11`, `ChainBroken = 12`,
+  `Tampered = 13`, `AdmissionRefused = 14`, `DanglingObject = 15`,
+  `NonMonotonic = 16`, `EmptyDossier = 17`, `DigestMismatch = 18`).
+
+A `ctdd_ledger` binary (`validate` / `chain-verify` / `seal` / `verify` /
+`dossier-emit` / `dossier-inspect`, feature `ledger-cli`) validates receipts,
+replays chains across a directory of records, seals/verifies dossiers, and
+emits/inspects the `CTT-DOSSIER-v1` JSON compliance dossier:
+
+- `just emit-dossier` — run the NATO court gate, then
+  `ctdd_ledger dossier-emit --receipts-dir docs/receipts --out
+  docs/nato/NATO_STANAG_4107_DOSSIER.json --json`. Refuses unless all 20
+  court receipts are present and `Pass` + `MutantCaught`.
+- `just dossier-verify` —
+  `ctdd_ledger dossier-inspect docs/nato/NATO_STANAG_4107_DOSSIER.json
+  --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json`.
+
+The assurance dossier lives at
+`docs/nato/NATO_STANAG_4107_DOSSIER.json` (generated artifact; run
+`just emit-dossier`). See `docs/features/LEDGER.md` for the full JSON
+schema and exit-code table.
+
+**`nato`** (implies `ledger`) — a court matrix named `N01`–`N20`
+(`COURT_NAMES: [&str; 20]`): each court declares a positive control that must
+catch its mutant before the court adjudicates (probe failure ⇒ `Refused`,
+never adjudication), and every receipt carries a typed `ScopingRecord` so
+honest scoping is a required field, not a comment. Run with `just test-nato`.
+
+---
+
 ## Multi-Agent Teamwork Orchestration
 
 Coordinate multi-agent swarms with high-integrity guarantees and structured execution workflows. The teamwork subsystem supports dry-running, validation, and multi-agent execution.
@@ -873,6 +991,11 @@ chicago-tdd-tools = {
         "async",                     # Async fixture providers (Rust 1.75+)
         "ocel-generation",           # OCEL 2.0 event logs from test runs (wasm4pm-compat)
         "ocel-generation-discovery", # + process discovery / graduation candidates
+        "conformance",               # POWL model replay: conformance checking (OCEL64 event words)
+        "ocel-ingest",               # OCEL -> OCEL64 word packing bridge (implies ocel-generation)
+        "ledger",                    # strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws
+        "nato",                      # NATO assurance courts + ML-DSA-65 dossier sealing (implies ledger)
+        "all-assurance",             # umbrella: conformance + ledger + nato
     ]
 }
 ```
@@ -882,7 +1005,9 @@ chicago-tdd-tools = {
 - **Full testing**: `["testing-extras", "testcontainers"]`
 - **With observability**: `["testing-extras", "otel", "weaver"]`
 - **With process mining**: `["testing-extras", "ocel-generation"]`
-- **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async", "ocel-generation-discovery"]`
+- **Conformance checking**: `["conformance"]` (POWL DSL in, structured verdict out)
+- **Defense assurance**: `["all-assurance"]` (conformance + ledger + NATO courts)
+- **Everything**: `["testing-extras", "otel", "weaver", "testcontainers", "async", "ocel-generation-discovery", "all-assurance"]`
 
 > **Process mining** (`ocel-generation`) builds on the published [`wasm4pm-compat`](https://crates.io/crates/wasm4pm-compat) `26.6.26` crate, which supplies the one-way `Evidence` lifecycle (`Raw → Admitted → Receipted`) and OCEL 2.0 standard types. See [Process Mining (OCEL)](#process-mining-ocel) below.
 
@@ -1051,6 +1176,12 @@ just build-release   # Optimized binary
 ---
 
 ## Recent Highlights
+
+**Conformance, Ledger & NATO Assurance (v26.10.11)**:
+
+- 📋 **POWL Conformance Checking** (`conformance`) — fail-closed POWL model loading, cooperative `step_budget` replay over OCEL64 event words, and typed deviation reports (`VerbMismatch`, `NotEnabled`, `ForbiddenBit`, `OutOfOrder`, `Unfinished`).
+- 🧾 **Court-Receipt Ledger** (`ledger`) — strict 320/352-byte wire records with BLAKE3 chain + Merkle dossier laws, and a `ctdd_ledger` CLI with typed exit codes 10–18.
+- 🛡️ **NATO Court Matrix** (`nato`) — 20 positive-control-gated courts (N01–N20) with ML-DSA-65 dossier sealing and required `ScopingRecord` honest-scoping receipts. Emitted assurance dossier: `docs/nato/NATO_STANAG_4107_DOSSIER.json` (generated artifact; run `just emit-dossier`).
 
 **Multi-Agent Swarm & High-Integrity Coordination**:
 
