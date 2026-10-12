@@ -45,11 +45,13 @@ cargo build --target wasm32-unknown-unknown --release -p ctt-wasm-guest
 
 Artifact: `target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm`
 
-## ABI surface (v2, `ctt_guest_abi_version() == 2`)
+## ABI surface (default v2: `ctt_guest_abi_version() == 2`; `guest-abi-v1` feature compiles the shim tier, probe -> 1)
 
 > v1 note: the v1 seal layout (34-byte preimage, zero reserved at `26..34`) fails closed
 > under a v1 parser when handed a v2 preimage — the digest occupies `26..58`. The
-> authoritative discriminator is the `ctt_guest_abi_version()` probe (returns 2); call it
+> authoritative discriminator is the `ctt_guest_abi_version()` probe (returns 2 under the
+> default feature set; the `guest-abi-v1` shim tier returns 1 and selects the 34-byte
+> legacy seal-preimage body with the module digest ignored); call it
 > before the first `ctt_session_new`. The strata temprun v2 rebase landed in strata
 > `59ed80c` (branch `fix/kg-42-status-code`; pending merge to strata main).
 
