@@ -125,7 +125,7 @@ macro_rules! async_test {
 **Why It Works**: Code using the macro automatically gets best practices. No discipline required.
 
 **Production Checklist**:
-- [ ] Core testing macros (test!, async_test!, fixture_test!) enforce timeouts
+- [ ] Core testing macros (async_test!, fixture_test!) enforce 1s timeouts; test! does not (W27 probe)
 - [ ] Feature-gated macros require appropriate features
 - [ ] Macro expansions are small and fast
 - [ ] Error messages guide users to solutions

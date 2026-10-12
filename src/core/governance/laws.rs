@@ -1,4 +1,4 @@
-//! Law enforcement macros and backing logic for agent governance.
+//! Backing data types for agent governance (W27 probe: no macros exist in this file — plain serde types; the module's only macro, `source_location!`, lives in mod.rs).
 
 #![allow(missing_docs)]
 #![allow(dead_code)]

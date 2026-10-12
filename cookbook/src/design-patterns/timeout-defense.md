@@ -51,7 +51,7 @@ fixture_test_with_timeout!(test_container_query, fixture, 30, {
 - [ ] Test-level timeouts with *_with_timeout! macros
 - [ ] Timeout constants defined in one place (Pattern 9)
 - [ ] Runner profiles configured in nextest.toml
-- [ ] Process-level timeout in Makefile.toml as safety net
+- [ ] Process-level timeout in AUDIT NOTE (W27 probe: Makefile.toml is retired — the mechanism lives in the Justfile timeout wrappers and .config/nextest.toml profiles) Makefile.toml as safety net
 - [ ] Timeout constants match runner configuration
 - [ ] Error messages identify which test timed out
 

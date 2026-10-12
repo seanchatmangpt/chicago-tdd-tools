@@ -1,3 +1,4 @@
+<!-- W27 probe: this page is an unfilled template scaffold; the named topics live in the sibling pages -->
 # New Patterns from Practice
 
 > 🔧 **NEW PATTERNS FROM PRACTICE** | **How-to** | Solve this problem

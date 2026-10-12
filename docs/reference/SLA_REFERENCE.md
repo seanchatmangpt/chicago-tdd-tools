@@ -60,7 +60,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Git Hook SLAs
 
-_Removed_: Git hook installer has been retired; developers run `just` tasks directly (`pre-commit`, `check`, `lint`, `audit`, etc.).
+_Correction (W27 probe)_: the hook installer is NOT retired — `scripts/install-hooks.sh` is live via the `install-hooks` recipe and `setup-dev` dependency. Original text claimed removal.
 
 ## Rationale
 

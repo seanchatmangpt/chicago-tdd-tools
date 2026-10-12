@@ -10,7 +10,7 @@ Report upstream issues to OpenTelemetry semantic conventions repository when:
 
 ## When to Work Around
 
-Use workarounds (version pinning, skip validation) when:
+Use workarounds (version pinning; skip-validation is a DEAD env var — W27 probe) when:
 - Errors are known upstream issues
 - Upstream fix is in progress
 - Errors don't block critical functionality

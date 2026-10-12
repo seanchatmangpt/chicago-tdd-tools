@@ -5,7 +5,7 @@ release. Labeling law: content here is linked only from the
 "Historical & Archives" section of `docs/README.md`, never from the
 live feature/reference docs.
 
-- Root: June-2025 "Chatman Equation" project-era build summaries and
+- Root: November-2025 "Chatman Equation" project-era build summaries and
   status snapshots.
 - `2026-10/`: working papers from the October-2026 diataxis/docs effort
   (plans, verification checklists, the v26.7.2 docs request).

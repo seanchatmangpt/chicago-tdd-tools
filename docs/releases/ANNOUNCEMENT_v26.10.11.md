@@ -54,7 +54,7 @@ Furthermore, conventional execution engines evaluate task success using terminal
 
 - **Repository:** https://github.com/seanchatmangpt/temprun
 - **Documentation:** https://hexdocs.pm/temprun (live after Hex publication — currently PLANNED per the claim ledger below)
-- **Assurance Dossier:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts emitted under `docs/receipts/N01..N20.json` (N19 reproducible-build identity + N20 dossier-generator receipts landed post-train; N19 narrative record: `docs/nato/N19_BUILD_RECEIPT.md`); a consolidated `NATO_STANAG_4107_DOSSIER.json` projection is on the roadmap)
+- **Assurance Dossier:** `docs/nato/DOSSIER.md` + `DOSSIER.sha256` + `DOSSIER.sha256.sig` (per-court JSON receipts emitted under `docs/receipts/N01..N20.json` (N19 reproducible-build identity + N20 dossier-generator receipts landed post-train; N19 narrative record: `docs/nato/N19_BUILD_RECEIPT.md`); AUDIT NOTE (W27 probe, inverted-claim correction): the roadmap item LANDED — `docs/nato/NATO_STANAG_4107_DOSSIER.json` exists and is sealed; the cited `DOSSIER.md`/`DOSSIER.sha256`/`.sig` files never existed in this tree)
 
 ## Media Contact
 

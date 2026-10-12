@@ -1,13 +1,13 @@
 //! [`SabotageFixture`] — adversarial file corruption helpers for fail-closed testing.
 //!
-//! All methods write real corrupted bytes to real disk paths — no mocks, no stubs.
+//! W27 probe scoping: write_garbage/bit_flip/corrupt_json write corrupted bytes; remove deletes (no write); truncate empties — no mocks, no stubs.
 
 use std::fs;
 use std::path::Path;
 
 /// Adversarial file corruption helpers for fail-closed testing.
 ///
-/// Every method writes real corrupted bytes to a real on-disk path so that
+/// W27 probe scoping: write_garbage/bit_flip/corrupt_json write corrupted bytes; `remove` DELETES the path (no write) and `truncate` writes empty — the original all-methods claim was overbroad so that
 /// error-handling paths in the system under test are exercised with genuine
 /// bad inputs.
 pub struct SabotageFixture;

@@ -174,7 +174,7 @@ pub enum ThrashCourtError {
 // Adversaries
 // ---------------------------------------------------------------------------
 
-/// One AtomicU64 per spinner, packed CONSECUTIVELY (adjacent cachelines —
+/// One AtomicU64 per spinner, W27 probe correction: `AdjacentLines([AtomicU64; 8])` with repr(align(64)) is ONE 64-B cacheline total — the 8B-stride accesses are SAME-LINE false sharing, not adjacent-line MESI bouncing (the donor shape was N distinct lines). Original wording: packed CONSECUTIVELY (adjacent cachelines —
 /// deliberately NOT cacheline-padded between neighbors: the coherence
 /// traffic between adjacent lines is the load).
 #[repr(align(64))]

@@ -16,7 +16,7 @@ use serde_json::{self, Value};
 
 use crate::observability::{ObservabilityError, ObservabilityResult};
 
-/// Complete set of validation artefacts emitted by Weaver live-check.
+/// Filtered projection of `live_check.json` — only `live_check_result` and `/// advice_level_counts` lines are kept; other Weaver artefacts are discarded /// (W27 probe corrected the "complete set" claim).
 #[derive(Debug, Clone)]
 pub struct ValidationResults {
     advices: Vec<LiveCheckAdvice>,

@@ -134,9 +134,9 @@ Check that:
 
 ## Example: .cursorrules Consolidation
 
-**Before**: 661 lines with verbose explanations, examples, and repetition
+W27 probe: these line counts are unreceipted — .cursorrules history measures 94→114 lines, no 661-line revision exists. Original text said **Before**: 661 lines with verbose explanations, examples, and repetition
 
-**After**: 91 lines (86% reduction) with:
+(see note above) with:
 - Core principles distilled
 - Associations linked (Types = invariants, etc.)
 - Critical requirements preserved
