@@ -41,7 +41,7 @@
 //! - **Causality**: Ensures causal dependencies respected
 //! - **Recursion**: Bounds recursion depth (Chatman Constant = 8)
 //!
-//! **YAWL Patterns**: 12 registered patterns from YAWL workflow control patterns,
+//! **YAWL Patterns**: 43 registered patterns from YAWL workflow control patterns,
 //! each with guard definitions and Chatman Equation properties.
 //!
 //! ## How-to: Common Tasks

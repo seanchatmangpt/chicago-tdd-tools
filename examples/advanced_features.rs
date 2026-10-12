@@ -55,7 +55,7 @@
 //! ## Reference: Quick Lookup
 //!
 //! **Key Types**:
-//! - `SizeValidatedArray<const SIZE: usize, const VALIDATED_SIZE: usize>`: Size-validated array with const generics
+//! - `SizeValidatedArray<const SIZE: usize, const MAX_SIZE: usize>`: Size-validated array with const generics
 //! - `TestState<Phase>`: Type state pattern for test phases (Arrange, Act, Assert)
 //! - `AsyncFixtureProvider`: Async trait for fixture management (requires `async` feature)
 //!
@@ -114,12 +114,12 @@ struct DatabaseProvider;
 ///
 /// ## Reference
 ///
-/// - **Type**: `SizeValidatedArray<const SIZE: usize, const VALIDATED_SIZE: usize>`
+/// - **Type**: `SizeValidatedArray<const SIZE: usize, const MAX_SIZE: usize>`
 /// - **Function**: `SizeValidatedArray::new(data) -> SizeValidatedArray`
 /// - **Methods**:
 ///   - `size() -> usize` - Get array size
 ///   - `data() -> &[T]` - Get array data
-/// - **Const Generics**: `SIZE` and `VALIDATED_SIZE` are compile-time constants
+/// - **Const Generics**: `SIZE` and `MAX_SIZE` are compile-time constants
 ///
 /// # Examples
 ///

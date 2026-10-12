@@ -127,7 +127,7 @@
 | # | Failure Mode | Cause | Reaction | Exit |
 |---|---|---|---|---|
 | 7.1 | **PartialPipelineSuccess** | Pipeline returns `OK` but not all configured phases ran | Should be impossible if earlier phases enforce; if detected → failure | ❌ FAIL |
-| 7.2 | **PipelineConfigInvalid** | Attempted to use "relaxed" or unvalidated config | NOT removed — PipelineConfig::relaxed() is a live supported constructor (audit W24/W25); the variant is constructed only in fail_fast.rs tests; refusal policy is aspirational | ❌ FAIL (compile-time) |
+| 7.2 | **PipelineConfigInvalid** | Attempted to use "relaxed" or unvalidated config | NOT removed — PipelineConfig::relaxed() is a live supported constructor (audit W24/W25); the variant is constructed NOWHERE (dead, reserved); refusal policy is aspirational | ❌ FAIL (compile-time) |
 | 7.3 | **PipelinePhaseSkipped** | Contract phase 5 defined but pipeline skips it | Pipeline entry validation rejects; emit invariant violation | ❌ FAIL |
 | 7.4 | **PipelineInternalStateCorruption** | Pipeline state machine reached invalid intermediate state | Sealed API prevents this; if detected, panic in debug | ❌ FAIL |
 | 7.5 | **PipelineResultAmbiguous** | Multiple conflicting results (e.g., phase A passed, phase A failed) | Use Result-based composition; impossible by construction | ❌ FAIL |
