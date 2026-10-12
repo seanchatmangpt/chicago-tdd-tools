@@ -10,35 +10,41 @@ Tests are organized by chapter, and each test validates a specific theorem or pr
 
 ## Chapter 2: Core Testing Primitives
 
-| Theorem ID | LaTeX Name | Lines | Test Path | Test Type | Status |
-|-----------|-----------|-------|-----------|-----------|--------|
-| Thm-2.1 | Determinism of Test Execution | 100-150 | `chapter02::test_determinism` | Property | ✅ Pass |
-| Thm-2.2 | Idempotence of Test State | 151-200 | `chapter02::test_idempotence` | Property | ✅ Pass |
-| Thm-2.3 | Type Preservation Through Lifecycle | 201-250 | `chapter02::test_type_preservation` | Property | ✅ Pass |
-| Thm-2.4 | Boundedness of Test Execution | 251-300 | `chapter02::test_boundedness` | Property | ✅ Pass |
-| Thm-2.5 | Fixture Invariant Preservation | 301-350 | `chapter02::test_fixture_invariants` | Property | ✅ Pass |
-| Thm-2.6 | Builder Pattern Type Safety | 351-400 | `chapter02::test_builder_type_safety` | Property | ✅ Pass |
+**Note on provenance:** `docs/latex/chapters/02-core-primitives.tex` contains no theorem
+environments. The determinism/idempotence/type-safety/boundedness theorems below are defined in
+`docs/latex/chapters/07-chatman-equation-realization.tex` (lines 29, 70, 122, 163) and are
+exercised by the Chapter-2 harness tests. The last two rows have no corresponding theorem in the
+LaTeX spec — they are pattern-level tests, not theorem validations.
+
+| Theorem ID | LaTeX Name | Source (file:lines) | Test Path | Test Type | Status |
+|-----------|-----------|---------------------|-----------|-----------|--------|
+| Thm-7.1 | Test Determinism | `07-chatman-equation-realization.tex:29-32` | `chapter02::test_determinism` | Property | ✅ Pass |
+| Thm-7.2 | Test Idempotence | `07-chatman-equation-realization.tex:70-76` | `chapter02::test_idempotence` | Property | ✅ Pass |
+| Thm-7.3 | Type Safety Through Test Lifecycle | `07-chatman-equation-realization.tex:122-130` | `chapter02::test_type_preservation` | Property | ✅ Pass |
+| Thm-7.4 | Bounded Test Execution | `07-chatman-equation-realization.tex:163-171` | `chapter02::test_boundedness` | Property | ✅ Pass |
+| — | (no theorem — pattern-level test) | — | `chapter02::test_fixture_invariants` | Property | ✅ Pass |
+| — | (no theorem — pattern-level test) | — | `chapter02::test_builder_type_safety` | Property | ✅ Pass |
 
 **Total Tests:** 6 | **Passed:** 6 | **Failed:** 0 | **Pending:** 0
 
 ### Chapter 2 Key Concepts
 
-**Determinism (Thm-2.1):** Tests that identical inputs always produce identical outputs, demonstrating
+**Determinism (Thm-7.1):** Tests that identical inputs always produce identical outputs, demonstrating
 that test execution is pure with no side effects.
 
-**Idempotence (Thm-2.2):** Tests that running a test twice produces the same result as running it once,
+**Idempotence (Thm-7.2):** Tests that running a test twice produces the same result as running it once,
 showing that test state is immutable.
 
-**Type Preservation (Thm-2.3):** Tests that test data types are maintained throughout the lifecycle,
+**Type Preservation (Thm-7.3):** Tests that test data types are maintained throughout the lifecycle,
 enforced by the Rust type system.
 
-**Boundedness (Thm-2.4):** Tests that test execution time is measurable and finite, preventing
+**Boundedness (Thm-7.4):** Tests that test execution time is measurable and finite, preventing
 infinite loops or unbounded operations.
 
-**Fixture Invariants (Thm-2.5):** Tests that fixture invariants are preserved throughout the test,
+**Fixture Invariants (no theorem):** Tests that fixture invariants are preserved throughout the test,
 with invalid states unrepresentable.
 
-**Builder Safety (Thm-2.6):** Tests that the builder pattern maintains type safety through the
+**Builder Safety (no theorem):** Tests that the builder pattern maintains type safety through the
 build process, preventing incorrect sequences.
 
 ---
@@ -83,11 +89,11 @@ to prevent stack overflow.
 
 | Theorem ID | LaTeX Name | Lines | Test Path | Test Type | Status |
 |-----------|-----------|-------|-----------|-----------|--------|
-| Thm-7.1 | Property of Determinism | 100-200 | `chapter07::test_property_determinism` | Property | ✅ Pass |
-| Thm-7.2 | Property of Idempotence | 201-300 | `chapter07::test_property_idempotence` | Property | ✅ Pass |
-| Thm-7.3 | Property of Type Preservation | 301-400 | `chapter07::test_property_type_preservation` | Property | ✅ Pass |
-| Thm-7.4 | Property of Boundedness | 401-500 | `chapter07::test_property_boundedness` | Property | ✅ Pass |
-| Thm-7.5 | Chatman Equation Integration | 501-600 | `chapter07::test_chatman_integration` | Integration | ✅ Pass |
+| Thm-7.1 | Test Determinism | 29-32 | `chapter07::test_property_determinism` | Property | ✅ Pass |
+| Thm-7.2 | Test Idempotence | 70-76 | `chapter07::test_property_idempotence` | Property | ✅ Pass |
+| Thm-7.3 | Type Safety Through Test Lifecycle | 122-130 | `chapter07::test_property_type_preservation` | Property | ✅ Pass |
+| Thm-7.4 | Bounded Test Execution | 163-171 | `chapter07::test_property_boundedness` | Property | ✅ Pass |
+| — | (no theorem — integration test) | — | `chapter07::test_chatman_integration` | Integration | ✅ Pass |
 
 **Total Tests:** 5 | **Passed:** 5 | **Failed:** 0 | **Pending:** 0
 
@@ -105,7 +111,7 @@ to prevent stack overflow.
 **Boundedness (Thm-7.4):** Demonstrates bounded execution:
 `∀ fixture, data. ∃ t > 0. exec_time(test(fixture, data)) ≤ t`
 
-**Integration (Thm-7.5):** Full integration test verifying all four properties hold together in the
+**Integration (no theorem):** Full integration test verifying all four properties hold together in the
 complete Chatman Equation framework.
 
 ---
@@ -114,12 +120,12 @@ complete Chatman Equation framework.
 
 ### By Chapter
 
-| Chapter | Theorems | Tests | Passed | Failed | Coverage |
-|---------|----------|-------|--------|--------|----------|
-| **Chapter 2** | 6 | 6 | 6 | 0 | 100% |
-| **Chapter 3** | 6 | 7 | 7 | 0 | 100% |
-| **Chapter 7** | 5 | 5 | 5 | 0 | 100% |
-| **TOTAL** | **17** | **18** | **18** | **0** | **100%** |
+| Chapter | Theorems | Tests | Passed | Failed | Tests Mapped |
+|---------|----------|-------|--------|--------|--------------|
+| **Chapter 2** | 4 (of 6 tests; 2 pattern-level) | 6 | 6 | 0 | 6/6 |
+| **Chapter 3** | 2 (Thm: Type State Pattern for AAA, No Invalid Test States) | 7 | 7 | 0 | 7/7 |
+| **Chapter 7** | 4 (of 5 tests; 1 integration) | 5 | 5 | 0 | 5/5 |
+| **TOTAL** | — | **18** | **18** | **0** | **18/18** |
 
 ### By Test Type
 
@@ -178,7 +184,7 @@ cargo make spec-check
 1. **Spec Registry Initialization** - Load all theorem definitions
 2. **Chapter Tests** - Execute tests for each chapter
 3. **Receipt Generation** - Compute merkle root and generate receipt
-4. **Compliance Check** - Verify 100% theorem coverage
+4. **Compliance Check** - Verify all mapped tests pass (18/18)
 5. **Output** - Generate `CERTIFICATION.json`
 
 ### Example Receipt Structure
@@ -262,7 +268,9 @@ Each theorem tracks:
 
 The spec harness ensures:
 
-✅ **100% Theorem Coverage** - Every theorem in the LaTeX spec has a test
+✅ **Test Coverage** - All 18 harness tests are mapped. The LaTeX spec defines 6 theorem
+environments (0 in Chapter 2, 2 in Chapter 3, 4 in Chapter 7); the remaining mapped tests are
+pattern-level or integration tests without a theorem counterpart
 ✅ **Reproducibility** - Tests produce identical results on every run
 ✅ **Determinism** - All tests are deterministic (same input = same output)
 ✅ **Type Safety** - Tests validate type-level guarantees

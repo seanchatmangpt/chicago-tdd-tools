@@ -217,7 +217,7 @@ test!(test_with_cleanup, {
     let fixture = TestFixture::new()?;
 
     // Use the fixture
-    fixture.set_metadata("key", "value");
+    fixture.set_metadata("key".to_string(), "value".to_string());
 
     // No need to cleanup - happens automatically
     // when fixture is dropped!
@@ -349,10 +349,15 @@ Using all 5 patterns, write tests for:
 ### Example Solution Framework
 
 ```rust
+// NOTE: Illustrative pseudocode of the Pattern 4/5 shape (real collaborator set up
+// through a fixture), not runnable API. TestFixture provides new()/with_data(),
+// inner()/inner_mut(), and set_metadata/get_metadata — it has no test_database()
+// constructor; a real database handle is something your own fixture provider
+// supplies.
 test!(test_register_success, {
     // Arrange
     let fixture = TestFixture::new()?;
-    let db = fixture.test_database();  // Real database
+    let db = RealUserDatabase::connect_temp()?;  // Real database (via your fixture provider)
     let mut service = UserService::new(db);
 
     // Act
