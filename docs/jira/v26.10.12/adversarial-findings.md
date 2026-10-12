@@ -157,11 +157,11 @@ R-numbered receipts were not visible to this lane at write time.
 
 | Lane | Verdict | Finding (one line) | Disposition |
 |------|---------|--------------------|-------------|
-| SX1 | FALSIFIED-BY-ABSENCE | No burn/odometer/blind-nullifier mechanism exists anywhere in the tree; `Lease.admit` trusts `attested: true` without verifying a signature - 200 forged leases admitted in 5ms. | FIX IN FLIGHT (R35) |
+| SX1 | FALSIFIED-BY-ABSENCE | No burn/odometer/blind-nullifier mechanism exists anywhere in the tree; `Lease.admit` trusts `attested: true` without verifying a signature - 200 forged leases admitted in 5ms. | FIXED (R35, strata commit 514308f — lease admission fail-closed; deferred_ctt_boundary honest deferral) |
 | SX2 | FALSIFIED (vacuous) | No ordering layer exists to falsify directly: split-brain is the default, the wire format carries no seq/nonce, and an in-path adversary holds the MEV position. | QUEUED |
 | SX3 | FALSIFIED | Affidavit fold layer: UTF-8 identity instability (NFC/NFD renders yield different chain_hash/court_id); Skip>Fail fold erases Fail byte-identically; outcome 255 decodes unvalidated; CTT `receipt.rs` range-checks but `unwrap_or(Error)` silently reclasses (`:634`). | QUEUED (fix: NFC pin + severity-lattice fold + validated outcome; CTT format-law unification) |
-| SX4 | FALSIFIED | R31's in-memory fix witnessed, but persistence re-opens the amnesty: `to_bytes` omits `nullifier_history` (empty rebuild after save/load); production `handlers.rs` flat-log admits cross-process replay (FULL amnesty); AFRN snapshot is unauthenticated plaintext (generation forgery accepted). | FIX IN FLIGHT (R38) |
-| SX5 | UNSUPPORTED | Dual-verify claim unsupported - no runtime libcrux anywhere, oracle-consensus API takes caller-supplied booleans; R32 degenerate-seed screening landed ES256-only (ml-dsa/slh-dsa `from_seed` still infallible). ml-dsa verify fuzz HELD (0/12373 accept-on-malformed). | FIX IN FLIGHT (R37: forward-port seed screening) + doc retract/rework for dual-verify |
+| SX4 | FALSIFIED | R31's in-memory fix witnessed, but persistence re-opens the amnesty: `to_bytes` omits `nullifier_history` (empty rebuild after save/load); production `handlers.rs` flat-log admits cross-process replay (FULL amnesty); AFRN snapshot is unauthenticated plaintext (generation forgery accepted). | FIXED (R38, commit 1e2e840 — AFRN v2 + HMAC-sealed snapshots, fail-closed persistence) |
+| SX5 | UNSUPPORTED | Dual-verify claim unsupported - no runtime libcrux anywhere, oracle-consensus API takes caller-supplied booleans; R32 degenerate-seed screening landed ES256-only (ml-dsa/slh-dsa `from_seed` still infallible). ml-dsa verify fuzz HELD (0/12373 accept-on-malformed). | FIXED (R37, commit 1a16e25 — 0xE305 screening on both PQC paths) + doc retracted (UNSUPPORTED verdict stands) |
 | SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | QUEUED (V5 work order: bind module hash into seal preimage) |
 | SX7 | FALSIFIED | ash_graphlaw membrane: contradictory covenants admitted silently (both `priorityOf` and `notPriorityOf` derived from the same fact, no conflict court); authority triples (`authorizedSigner`/`actuationAuthority`) on untargeted classes pass SHACL conform:true; cycle divergence HELD (typed `:resource_limit` refusal). | QUEUED (deontic conflict court + authority-vocabulary SHACL coverage; ash_graphlaw work orders, not CTT code defects) |
 | SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. Tid truncation/boundary class HELD (closed). | FIXED (commit 8b92c3e, SX8-F1) |
@@ -221,7 +221,7 @@ IN-PROGRESS.
   plaintext (generation forgery `u64::MAX` accepted; epoch key exfiltratable).
   HELD: 0xE101 FP DoS refuted (0/50k), truncation fail-closed at the registry
   layer, gen wraparound refuted.
-- **Disposition**: FIX IN FLIGHT (R38) - serialize `nullifier_history` +
+- **Disposition**: FIXED (R38, commit 1e2e840) - serialize `nullifier_history` +
   version-bump AFRN; route handlers to AFRN snapshots + `with_generated_key`;
   HMAC the snapshot. Priority HIGH.
 
@@ -234,7 +234,7 @@ IN-PROGRESS.
   `ml_dsa65_from_seed`/`slh_dsa128s_from_seed` remain infallible (all-zero/
   all-ones/near-degenerate seeds reproduce valid keys, runtime-proven).
   HELD: ml-dsa verify 12,373-case fuzz, 0 accept-on-malformed.
-- **Disposition**: FIX IN FLIGHT (R37: forward-port `seed_is_degenerate` to
+- **Disposition**: FIXED (R37, commit 1a16e25) - forward-port
   both PQC `from_seed` paths); dual-verify claim to be reworked (feature-gated
   runtime verify-vs-verify over KAT vectors) or retracted in docs.
 
