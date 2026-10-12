@@ -344,15 +344,39 @@ Snapshot testing. Output capture and comparison. Review workflow.
 
 Concurrency testing. Thread model checking. Deterministic concurrency testing.
 
-**Types**: `LoomModel` (loom model checker).
+**Types**: `ConcurrencyTest` (loom model-checking harness; loom itself is
+feature-gated).
 
-**Methods**: 
-- `new() -> Self` - Create model
-- `model(|| { /* concurrent code */ })` - Model concurrent code
+**Methods**:
+- `ConcurrencyTest::run(test_fn)` - Model the closure under loom's
+  interleaving exploration (unit struct, no `new`)
+- `ConcurrencyTest::run_with_config(max_threads, max_branches, test_fn)` -
+  accepted args are not forwarded (loom default model; disclosed)
 
-**Pattern**: `ConcurrencyTest::new().run(|| { /* concurrent code */ })`.
+**Pattern**: `ConcurrencyTest::run(|| { /* concurrent code */ })`.
 
-**Requirements**: `concurrency-testing` feature.
+**Requirements**: `concurrency-testing` feature (loom).
+
+## conformance (feature-gated)
+
+POWL/PN64 conformance replay: `ConformanceSession` (from_powl_file /
+attach_stream / step_budget / resume / finish), `YieldStatus`,
+`Phase`, `ConformanceError` taxonomy, `StateSpace` reachability,
+`pn64` kernel. Full surface: docs/features/CONFORMANCE.md.
+
+## ledger (feature-gated)
+
+CTRT 352-byte court-receipt wire + BLAKE3 chains + ML-DSA-65 sealing:
+`CourtReceiptV1`/`ChainedCourtReceipt`, `VerifiedCourtReceipt`,
+`DossierBuilder`, `Signer`, `KeyStore`, `LedgerExitCode` (10-19).
+Full surface: docs/features/LEDGER.md.
+
+## nato (feature-gated; implies ledger+conformance)
+
+20-court NATO assurance matrix: `Court` trait, `COURT_REGISTRY`
+(N01-N20), `run_court` positive-control gate, `CourtReceipt`,
+pillar taxonomy, dossier sealing. Full surface:
+docs/features/NATO_COURTS.md.
 
 ## testing::cli
 
