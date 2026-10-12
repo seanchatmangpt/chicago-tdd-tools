@@ -48,8 +48,11 @@ test!(test_bad, {
 test!(test_good, {
     let result = validate(invalid_input);
     assert_err!(&result);
-    assert_eq!(result.W27 probe (compile-verified): the snippet below double-calls unwrap_err(), which consumes self (E0382) — bind first: let err = result.unwrap_err(); Original used:.kind(), ValidationError);
-    assert!(result.W27 probe (compile-verified): the snippet below double-calls unwrap_err(), which consumes self (E0382) — bind first: let err = result.unwrap_err(); Original used:.to_string().contains("empty"));
+    // W27 probe note: the original snippet double-called unwrap_err(), which
+    // consumes self (E0382) — bind the error once, then assert on it.
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), ValidationError);
+    assert!(err.to_string().contains("empty"));
 });
 ```
 

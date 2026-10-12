@@ -112,7 +112,7 @@ pub enum UnrecoverableInvariantViolation {
     PartialPipelineSuccess(String),
     /// Phase 7: Invalid pipeline config. NOTE (wave-24 audit): the "removed
     /// relaxed" reading is stale — `PipelineConfig::relaxed()` is a SUPPORTED
-    /// live constructor; this `UnrecoverableInvariantViolation` variant is NEVER constructed (dead variant, reserved for a future relaxed-refusal policy; `PipelineConfig::relaxed()` call sites live in verification_pipeline.rs tests — W27 probe correction).
+    /// live constructor; this `UnrecoverableInvariantViolation` variant is NEVER constructed (dead variant, reserved for a future relaxed-refusal policy; `PipelineConfig::relaxed()` call sites live in `verification_pipeline.rs` tests — W27 probe correction).
     PipelineConfigInvalid(String),
     /// Phase 7: Contract phase defined but pipeline skipped it
     PipelinePhaseSkipped(String),

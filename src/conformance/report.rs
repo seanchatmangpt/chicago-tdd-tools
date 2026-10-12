@@ -12,7 +12,7 @@ use crate::conformance::error::ConformanceError;
 
 /// One observed departure from the specification during replay.
 ///
-/// Step numbers are 0-based indices into the replayed trajectory (W27 probe: session.rs stamps steps_done, which starts at 0 — the doc's earlier 1-based claim was wrong; loader line/col are the 1-based numbering);
+/// session.rs stamps `steps_done`, which starts at 0 — the doc's earlier 1-based claim was wrong; loader line/col are the 1-based numbering);
 /// `tid` values are transition ids; `marking` is the raw marking bitset.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Deviation {

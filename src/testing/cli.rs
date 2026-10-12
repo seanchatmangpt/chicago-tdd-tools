@@ -303,7 +303,7 @@ impl CliEnvironment {
 
     /// Create clean environment (v1.3.0)
     ///
-    /// Presets three override variables (HOME/USER/PATH) to test values (W27 probe: nothing is removed — this is an override preset like ci(), not a cleaning operation).
+    /// Presets three override variables (HOME/USER/PATH) to test values (W27 probe: nothing is removed — this is an override preset like `ci()`, not a cleaning operation).
     #[must_use]
     pub fn clean() -> Self {
         let mut env = Self::new();

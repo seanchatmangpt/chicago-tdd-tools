@@ -919,3 +919,36 @@ Docs (waves 21-27): doc-truth sweeps across ~30 pages/modules (retired-tool
 references, stale counts/line cites, overclaimed laws narrowed to reality,
 ARCHITECTURE/README/API_REFERENCE coverage refreshed to declared-module
 truth); findings ledger W26/W27 register additions + closures.
+
+### Waves 21-27 addendum, part 2 (2026-10-12, closing saturation)
+
+Covers the ~50 commits after the addendum landed. Net-window refusal,
+`from_seed` screening, `TestReceipt` signing coverage, the `advance`
+empty-chain fix, suite wiring, and the `star_toml_e2e` harness move were
+already recorded above — not repeated here.
+
+Fixed:
+- `proc_macros #[fixture]` — generated expansion referenced
+  `chicago_tdd_tools::fixture::TestFixture`, which resolves to the crate-root
+  fixture MACRO, not a module; uncompilable for external consumers. Corrected
+  to `core::fixture::TestFixture`; witnessed by an external path-dep scratch
+  consumer (1/0).
+- `swarm::member` — `Node::with_capacity` was a real const-fn candidate
+  buried under a falsified `missing_const_for_fn` allow; it is now `pub
+  const fn` and the allow was removed (receipt: swarm + testing 204/0).
+- `scripts/n06_disasm_audit.sh` — ret-count regex required trailing
+  whitespace, so `ret` was never counted (receipt ret:0 vs actual 1); regex
+  corrected to `ret[[:space:]]*$`. Receipt regeneration noted as follow-up.
+- `conformance::validate` — fail-closed layering disclosed as TEXT-entry-only:
+  `from_powl_json` does not resolve activity references, so an undeclared
+  activity loads and passes validate (probe-verified); re-check registered as
+  a work order.
+- Removed a probe-scratch file that had been swept into a batch commit by
+  `git add -A` (lane residue, not repo content).
+
+Docs (part 2): a second doc-truth sweep across ~60 further files — phantom-API
+imports retired, stale counts and line cites corrected against on-disk state,
+HISTORICAL banners added to dated reports and retired cargo-make-era material
+(61 live "cargo make" instruction residues rerouted to `just`; archived
+narrative hits excluded by design). Findings ledger gained a W27-CLOSING
+section: 5 closures plus the quick-start missing_docs operator row.

@@ -8,7 +8,7 @@
 //!    (`ArityBelowMinimum`); loop termination bounds are a *type-level*
 //!    guarantee of [`super::loader::PowlNode`] (`Loop.max` is `u8`), and
 //!    activity references are resolved by the loader — W27 PROBE: true only
-//!    for the TEXT entry point; from_powl_json does NOT resolve them, so the
+//!    for the TEXT entry point; `from_powl_json` does NOT resolve them, so the
 //!    "neither re-checked here" guarantee below fails for the JSON path
 //!    (re-check work order registered).
 //!

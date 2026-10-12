@@ -101,8 +101,7 @@ impl SwarmMember {
 
     /// Set capacity
     #[must_use]
-    #[allow(clippy::missing_const_for_fn)] // Mutating self is not const
-    pub fn with_capacity(mut self, capacity: u32) -> Self {
+    pub const fn with_capacity(mut self, capacity: u32) -> Self {
         self.capacity = capacity;
         self
     }

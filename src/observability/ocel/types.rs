@@ -75,7 +75,7 @@ pub struct TestOcelEvent {
     pub attributes: HashMap<String, serde_json::Value>,
 }
 
-/// OCEL-SHAPED internal log (AUDIT NOTE W27: serialization does NOT produce spec-conformant OCEL 2.0 JSON — `ocel:version` nests inside the renamed `ocel:global-log` map and event fields carry no `ocel:` renames; import_json.rs parses the spec shape, not this output).
+/// OCEL-SHAPED internal log (AUDIT NOTE W27: serialization does NOT produce spec-conformant OCEL 2.0 JSON — `ocel:version` nests inside the renamed `ocel:global-log` map and event fields carry no `ocel:` renames; `import_json.rs` parses the spec shape, not this output).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OcelLog {
     #[serde(rename = "ocel:global-log")]

@@ -17,7 +17,7 @@ pub enum MutationOperator {
     SwapValues(String, String),
     /// Toggle boolean value (flip true/false) (v1.3.0)
     ToggleBoolean(String),
-    /// Apply numeric delta to an i32 value (AUDIT NOTE W27 probe: floats and values beyond i32::MAX are silently left unchanged — a mutation that can never fire, counted as uncaught in scoring) (v1.3.0)
+    /// Apply numeric delta to an i32 value (AUDIT NOTE W27 probe: floats and values beyond `i32::MAX` are silently left unchanged — a mutation that can never fire, counted as uncaught in scoring) (v1.3.0)
     NumericDelta(String, i32),
     /// Change string case (uppercase/lowercase/title) (v1.3.0)
     StringCase(String, CaseMode),

@@ -193,7 +193,7 @@ impl From<RawAdvice> for LiveCheckAdvice {
 /// Simplified view of an advice record emitted by Weaver.
 #[derive(Debug, Clone)]
 pub struct LiveCheckAdvice {
-    /// Severity of the advice (violation / improvement / information — plus `Unknown`: the `#[serde(other)]`/`#[default]` fallback, so missing/unrecognized levels degrade to Unknown silently rather than erroring; W27 probe disclosure).
+    /// Severity of the advice (violation / improvement / information — plus `Unknown`: the `#[serde(other)]`/`#[default]` fallback on `LiveCheckAdvice`, so missing/unrecognized levels degrade to Unknown silently rather than erroring; W27 probe disclosure).
     pub level: AdviceLevel,
     /// Machine readable identifier describing the advice category.
     pub advice_type: String,
@@ -247,7 +247,7 @@ pub struct LiveCheckStatistics {
     pub registry_coverage: Option<f64>,
 }
 
-/// Severity levels reported by Weaver (plus the `Unknown` serde fallback — see the LiveCheckAdvice note; W27 probe disclosure).
+/// Severity levels reported by Weaver (plus the `Unknown` serde fallback — see the `LiveCheckAdvice` note; W27 probe disclosure).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum AdviceLevel {

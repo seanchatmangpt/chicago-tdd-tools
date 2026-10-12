@@ -237,10 +237,10 @@ impl Default for Schedule {
     }
 }
 
-/// Schedule generator (W27 AUDIT NOTE: emits exactly ≤2 hard-coded schedules — empty + one linear path clamped to min(max_depth, 2); does NOT generate interleavings)
+/// Schedule generator (W27 AUDIT NOTE: emits exactly ≤2 hard-coded schedules — empty + one linear path clamped to at most `max_depth` (2); does NOT generate interleavings)
 ///
 /// Given a set of concurrent actors and their possible transitions,
-/// emits its fixed ≤2 schedules (bounded by min(max_depth, 2); see the module-header note).
+/// emits its fixed ≤2 schedules (bounded by at most two schedules (`max_depth` clamps the linear path); see the module-header note).
 pub struct ScheduleGenerator {
     max_depth: usize,
 }
