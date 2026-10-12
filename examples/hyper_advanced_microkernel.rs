@@ -454,7 +454,7 @@ fn main() {
     example_complete_workflow();
 
     println!("\n╔═══════════════════════════════════════════════════════════════╗");
-    println!("║  All 6 tracks demonstrated successfully!                     ║");
+    println!("║  All 7 tracks demonstrated successfully!                     ║");
     println!("║  See docs/features/HYPER_ADVANCED_MICROKERNEL.md for more    ║");
     println!("╚═══════════════════════════════════════════════════════════════╝");
 }
