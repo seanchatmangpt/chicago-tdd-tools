@@ -468,3 +468,30 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   dead-stub gate; thermal τ-law re-scope; W24 typed-channel refactor;
   validate.rs JSON re-check; crates.io publish order (proc_macros first);
   strata temprun_step ABI re-base; worker.ex backpressure/env allowlist.
+
+## W34 REGISTER (2026-10-12, 20-lane finish wave)
+
+- LANDED (fa6a633): validate.rs JSON activity-resolution law (W27 re-check
+  order CLOSED); W24 typed PipelineError channel; N04 extension
+  (AUDITED_MODULES 15→20 + 5 justified allowlist entries, exact pin);
+  nightly AFFIDAVIT_DIR checkout + step env (pin = origin/main b5112f32 —
+  the first pin was a local-only SHA and would have failed the runner);
+  latex UNWRITTEN-STUB disclosures; tests/temp_workspace_tests.rs (9/0);
+  nextest star_toml_e2e terminate-after=1; thermal τ budget disclosures.
+- REPAIRED in-wave: QUICK_GUIDE note falsified a THIRD time ("NOT
+  prelude-exported" was false — prelude glob src/lib.rs:383); 2 merger
+  goldens gained is_conforming() asserts; stale merger header prose;
+  tests/README inventory + temp_workspace_tests.rs.
+- NEW QUEUED (guest ABI, W-ABI2 gaps): `guest-abi-v1` shim feature is
+  doc-promised (src/conformance/guest.rs:540) but absent from both
+  Cargo.tomls — no v1 gating exists; `CTT_MODULE_DIGEST` static is
+  doc-promised (guest.rs:114) but defined nowhere in the workspace
+  (module-digest build-time splicing never landed). Both are doc-vs-code
+  gaps: the docs claim the v2 seal binds module identity; today the seal
+  takes a module_digest ARGUMENT but nothing populates it from the
+  artifact bytes. Priority with V5 (WASM-digest envelope binding).
+- NOTED (commit-message accuracy): 27c84f0 claimed the prelude re-export
+  closure landed in that commit; the register entry actually landed in
+  W30/W33. Historical message-only overclaim, recorded here.
+- Observed tag counts after W34: CLOSED 25 / QUEUED 24 / PARTIAL 14 /
+  FALSIFIED 20 (substring counts).
