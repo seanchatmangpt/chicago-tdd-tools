@@ -235,7 +235,11 @@ impl StateSpace {
             if m.0 & self.forbidden_mask != 0 {
                 return Ok(Some(m));
             }
-            for &word in &self.net.words {
+            let enabled = self.enabled_mask(m);
+            for (tid, &word) in self.net.words.iter().enumerate() {
+                if enabled & (1u64 << tid) == 0 {
+                    continue;
+                }
                 let successor = Marking64((m.0 ^ (word & 0xFFFF)) | (word >> 16));
                 if visited.insert(successor) {
                     if visited.len() > self.max_markings {
@@ -391,6 +395,52 @@ mod tests {
         assert!(open.is_safe().expect("reach under cap"));
     }
 
+    /// Net: p0 --t0--> p1 (forbidden target via a DISABLED path) and
+    /// p0 --t1--> p2 (enabled, benign). Only t1's preset is marked reachable.
+    fn disabled_path_net() -> CompiledNet {
+        NetSpec::builder()
+            .place("p0")
+            .place("p1")
+            .place("p2")
+            .place("p3")
+            .transition("t0", "a")
+            .add_pre("p3")
+            .add_post("p1")
+            .transition("t1", "b")
+            .add_pre("p0")
+            .add_post("p2")
+            .build()
+            .compile()
+            .expect("disabled-path net is structurally valid")
+    }
+
+    #[test]
+    fn forbidden_reachable_ignores_disabled_transition_paths() {
+        // t0 (p3 -> p1) is never enabled from initial p0 (p3 unmarked), so the
+        // forbidden place p1 is NOT reachable despite the transition existing.
+        let ss = StateSpace::new(disabled_path_net(), Marking64(0b001), 0b010)
+            .expect("initial p0 does not intersect the mask");
+        assert!(
+            ss.forbidden_reachable().expect("search under cap").is_none(),
+            "disabled t0 must not manufacture a path to forbidden p1"
+        );
+        assert!(ss.is_safe().expect("reach under cap"));
+    }
+
+    #[test]
+    fn forbidden_reachable_still_finds_enabled_transition_paths() {
+        // Same net, but the initial marking marks p3, enabling t0 (p3 -> p1):
+        // the forbidden place IS reachable through an enabled transition.
+        let ss = StateSpace::new(disabled_path_net(), Marking64(0b1001), 0b010)
+            .expect("initial {p0,p3} does not intersect the mask");
+        let hit = ss
+            .forbidden_reachable()
+            .expect("search under cap")
+            .expect("enabled t0 reaches forbidden p1");
+        assert_eq!(hit, Marking64(0b011)); // {p0, p1}: p0 is not consumed by t0
+        assert!(!ss.is_safe().expect("reach under cap"));
+    }
+
     #[test]
     fn forbidden_mask_zero_short_circuits_search() {
         let ss = StateSpace::new(cycle_net(), Marking64(0b001), 0).expect("valid");
@@ -419,6 +469,22 @@ mod tests {
         // p0 and p1 — both transitions produce the same successor.
         assert_eq!(reach.count, 2);
         assert_eq!(reach.terminal, vec![Marking64(0b10)]);
+    }
+
+    /// At-limit admission (T4): `places = 64` compiles Ok and the initial
+    /// marking may use the full `u64` word — the entire justification for the
+    /// `u64` marking encoding. `place_mask(64)` saturates to `u64::MAX`, so a
+    /// marking with every bit set is inside the net.
+    #[test]
+    fn state_space_admits_64_place_net_with_full_width_marking() {
+        let net = CompiledNet { places: 64, words: vec![] };
+        let ss = StateSpace::new(net, Marking64(u64::MAX), 0).expect("64 places admit");
+        let reach = ss.reach().expect("single-state search under cap");
+        assert_eq!(reach.count, 1);
+        assert_eq!(reach.terminal, vec![Marking64(u64::MAX)]);
+        // With no transitions the lone state is terminal: deadlock observed,
+        // not an error.
+        assert!(!ss.deadlock_free().expect("reach under cap"));
     }
 
     #[test]
