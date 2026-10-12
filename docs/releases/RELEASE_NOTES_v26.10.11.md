@@ -47,7 +47,7 @@ Related ecosystem artifacts this train: the Strata `temprun` integration (BEAM `
 
 ## Known scope boundaries (honest disclosures)
 
-- All 20 courts CTT-side: registry 20/20 (`src/nato/registry.rs` `COURT_NAMES`); N08 (Hamming profile, partial-scale), N12 (clock-glitch, wall-monotonic surrogate), N14 (CAST-32A thrash), N15 (liveness) are post-train ports. The `src/nato/README.md` scoping note has been updated post-port: 20/20 delivered CTT-side, Erlang/OTP tiers remain strata-side.
+- All 20 courts CTT-side: registry 20/20 (`src/nato/registry.rs` `COURT_NAMES`); N08 (Hamming profile, partial-scale), N12 (clock-glitch, wall-monotonic surrogate), N14 (CAST-32A thrash), N15 (liveness) are post-train ports. The `src/nato/README.md` scoping note has been updated post-port: 20/20 delivered CTT-side; no Erlang/OTP tier for N08/N12/N14/N15 is planned or exists in strata (strata's Erlang tiers are N21–N24) — CTT's Rust courts are the only implementation.
 - N17 is PIPELINE-KAT (self-pinned vectors), not official ACVP; drop-in upgrade path documented.
 - N19 reproducible-build: same-host 2-run identity; 3-host NOT-RUN.
 - WASM guest ABI v1; the temprun bridge re-base (errno-packed i64 → out-buffer i32) is a tracked work order (`docs/jira/v26.10.11/000-temprun-guest.md`).

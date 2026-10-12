@@ -168,8 +168,9 @@ Numbering note: all 20 courts N01–N20 are delivered CTT-side
 (`src/nato/registry.rs` `COURT_NAMES` is 20/20). N08 Hamming profile
 (`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
 thrash (`src/nato/thrash.rs`), and N15 liveness (`src/nato/liveness.rs`)
-landed CTT-side as test-court lanes; the Erlang/OTP tiers of those four
-remain strata-side. Pillar law is the landed `Court::PILLAR` consts, pinned by the
+landed CTT-side as test-court lanes; no Erlang/OTP tier for these four is
+planned or exists in strata (strata's Erlang tiers are N21–N24) — CTT's Rust
+courts are the only implementation. Pillar law is the landed `Court::PILLAR` consts, pinned by the
 `pillar_mapping_matches_the_matrix` test; the emitter-carve-out receipts
 (`docs/receipts/N{08,12,14,15}.json`) witness it for the four real-run
 courts — the other 16 persisted receipts are the synthetic control set
