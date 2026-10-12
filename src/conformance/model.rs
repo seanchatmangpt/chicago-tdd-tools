@@ -317,6 +317,16 @@ mod tests {
         ));
     }
 
+    /// At-limit admission (T4): exactly [`MAX_PETRI_PLACES`] (16) places
+    /// construct Ok — the cap is inclusive.
+    #[test]
+    fn net_admits_exactly_max_places() {
+        let places: Vec<String> = (0..MAX_PETRI_PLACES).map(|i| format!("p{i}")).collect();
+        let net = PetriNet::try_new(places, Vec::new(), Vec::new(), BTreeSet::new())
+            .expect("16 places == MAX_PETRI_PLACES must be admitted");
+        assert_eq!(net.places().len(), usize::from(MAX_PETRI_PLACES));
+    }
+
     #[test]
     fn net_admits_a_valid_minimal_net() {
         let net = PetriNet::try_new(

@@ -262,6 +262,26 @@ mod tests {
         assert_eq!(compiled.words[0], (1u64 << 17) | 1);
     }
 
+    /// At-limit admission: exactly 64 places and exactly 256 transitions
+    /// compile Ok — both caps are inclusive (limit+1 refusals above).
+    #[test]
+    fn compile_admits_at_limit_64_places_and_256_transitions() {
+        let mut builder = NetSpec::builder();
+        for i in 0..MAX_PLACES {
+            builder = builder.place(format!("p{i}"));
+        }
+        for i in 0..MAX_TRANSITIONS {
+            builder =
+                builder.transition(format!("t{i}"), "act").add_pre("p0").add_post("p1");
+        }
+        let compiled = builder.build().compile().expect("at-limit net must compile");
+        assert_eq!(usize::from(compiled.places), MAX_PLACES);
+        assert_eq!(compiled.words.len(), MAX_TRANSITIONS);
+        // Every word packs the same p0 -> p1 masks.
+        let expected = 1u64 | (1 << 17);
+        assert!(compiled.words.iter().all(|&w| w == expected));
+    }
+
     /// More than 64 places is refused with `TooManyPlaces`.
     #[test]
     fn compile_refuses_more_than_64_places() {

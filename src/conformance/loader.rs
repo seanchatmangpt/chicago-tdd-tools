@@ -994,6 +994,16 @@ sequence {
         }
     }
 
+    /// At-limit admission (T4): `max 255` is the inclusive literal bound.
+    #[test]
+    fn max_literal_at_255_is_admitted() {
+        let model = PowlModel::from_powl_str("loop { silent } max 255").expect("max 255 parses");
+        match &model.root {
+            PowlNode::Loop { max, .. } => assert_eq!(*max, 255),
+            other => panic!("expected Loop root, got {other:?}"),
+        }
+    }
+
     #[test]
     fn json_roundtrip() {
         let model = PowlModel::from_powl_str(GOLDEN).expect("golden parses");
