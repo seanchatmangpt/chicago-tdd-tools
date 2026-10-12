@@ -259,7 +259,7 @@ mod tests {
     // W27: advance() on an empty chain must bail typed (was a usize underflow).
     #[test]
     fn test_operation_chain_advance_empty() {
-        assert!(!OperationChain::new("id".into(), vec![]).advance());
+        assert!(!OperationChain::new("id".into(), "chain".into()).advance());
     }
 
     #[test]
