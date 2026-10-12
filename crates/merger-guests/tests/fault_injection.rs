@@ -1508,3 +1508,244 @@ fn overflow_refuses_typed() {
     let st = cap_probe(neng_drive, &b, false);
     assert_eq!(st, errno::ERR_OVERFLOW, "pair-sum overflow must be ERR_OVERFLOW");
 }
+
+// ---------------------------------------------------------------------------
+// Torn-input tier (audit wave: per-leaf torn framing courts)
+//
+// Three tearing modes over each leaf's maximal lawful input:
+//   truncate-to-half  — the caller presents half the documented length;
+//   zero-second-half  — full length presented, second half zeroed;
+//   swap-halves       — full length presented, the two halves exchanged.
+//
+// Mode classification is by the per-leaf INDEPENDENT oracle (never by the
+// leaf's own law): truncate and swap always break the framing law (exact
+// length / magic-at-offset-0), so the leaf MUST refuse typed and leave the
+// caller's buffer bit-exact 0xAA. The zero-half mode preserves length, so
+// whether it is torn is decided by the leaf's domain law: where the oracle
+// still admits the zeroed body (simm / netting-engine / fractional / pn64
+// accept all-zero rows by law), the court demands a byte-exact oracle
+// admission; where the oracle refuses (hhi / vote / settler / lp), it
+// demands a typed refusal with the 0xAA law. Asserting a refusal for a
+// lawfully-admissible zeroed body would be asserting a bug — so the court
+// classifies against the oracle on BOTH branches and additionally proves
+// non-vacuity: every leaf is driven, both branches are exercised, and no
+// status ever lands outside the documented refusal space.
+// ---------------------------------------------------------------------------
+
+/// Torn-law classification: what the leaf must do on a mutated input.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TornLaw {
+    /// Documented law refuses: typed errno + bit-exact 0xAA output buffer.
+    Refuse,
+    /// Documented law admits: OK + byte-exact oracle output prefix.
+    Admit,
+}
+
+/// Torn law per (leaf, mode), fixed by the oracles: modes 0 (truncate) and
+/// 2 (swap) refuse for every leaf; mode 1 (zero-half) refuses exactly for
+/// the leaves whose domain law rejects all-zero bodies (hhi sum==0, vote
+/// threshold/row domains, settler amount>0 domain, lp unbounded on A=0).
+const fn torn_mode_law(leaf: usize, mode: u8) -> TornLaw {
+    if mode != 1 {
+        return TornLaw::Refuse;
+    }
+    match leaf {
+        0 | 4 | 5 | 3 => TornLaw::Refuse, // hhi, vote, nset, lp
+        _ => TornLaw::Admit,              // neng, simm, frac, pna
+    }
+}
+
+/// One leaf descriptor: (name, clean builder, drive, zero-half law index).
+type LeafCase = (&'static str, fn() -> Vec<u8>, fn(&[u8]) -> (i32, Vec<u8>), usize);
+
+#[test]
+fn torn_inputs_refuse_across_leaves() {
+    let leaves: [LeafCase; 8] = [
+        ("hhi_calc", hhi_clean, hhi_drive, 0),
+        ("netting_engine", neng_clean, neng_drive, 1),
+        ("simm_matrix", simm_clean, simm_drive, 2),
+        ("collateral_lp", lp_clean, lp_drive, 3),
+        ("vote_reconciler", vote_clean, vote_drive, 4),
+        ("netting_settler", nset_clean, nset_drive, 5),
+        ("fractional_shares", frac_clean, frac_drive, 6),
+        ("pn64_audit", pna_clean, pna_drive, 7),
+    ];
+    let mut refused = 0u32;
+    let mut admitted = 0u32;
+    for (name, clean_fn, drive, leaf) in leaves {
+        let clean = clean_fn();
+        for mode in 0..=2u8 {
+            // For the leaves whose oracle is IN SCOPE on the zeroed body
+            // (simm / neng / frac / pna — the all-zero rows are within the
+            // fixture families the oracles enumerate), the admit law must
+            // agree with the oracle. The lp oracle is scoped to the bounded
+            // fixture family and cannot see unboundedness, so lp's zeroed
+            // body (A=0 -> unbounded) is classified by the leaf's own
+            // documented cap law (ERR_NO_SOLUTION), verified directly by
+            // the refusal half-trial below.
+            if matches!(leaf, 1 | 2 | 6 | 7) {
+                let mutated_zero = {
+                    let mut b = clean.clone();
+                    let half = b.len() / 2;
+                    b[half..].fill(0);
+                    b
+                };
+                let oracle_zero = matches!(law_of(leaf)(&mutated_zero), Expect::Admit(_));
+                assert_eq!(
+                    torn_mode_law(leaf, 1) == TornLaw::Admit,
+                    oracle_zero,
+                    "{name}: zero-half law table disagrees with the oracle"
+                );
+            }
+
+            match torn_mode_law(leaf, mode) {
+                TornLaw::Refuse => {
+                    torn_trial_refuse(clean.as_slice(), mode, drive);
+                    refused += 1;
+                }
+                TornLaw::Admit => {
+                    torn_trial_admit(&clean, mode, drive, law_of(leaf));
+                    admitted += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(refused + admitted, 24, "8 leaves x 3 modes = 24 torn trials");
+    assert!(refused >= 16, "truncate+swap must refuse on all 8 leaves");
+    assert!(admitted >= 4, "zero-half must exercise the oracle-admit branch");
+}
+
+/// Drive helper: law table -> the leaf's oracle function.
+fn law_of(leaf: usize) -> fn(&[u8]) -> Expect {
+    match leaf {
+        0 => hhi_law,
+        1 => neng_law,
+        2 => simm_law,
+        3 => lp_law,
+        4 => vote_law,
+        5 => nset_law,
+        6 => frac_law,
+        _ => pna_law,
+    }
+}
+
+/// Refusal half-trial: the leaf must refuse typed with a 0xAA buffer.
+fn torn_trial_refuse(clean: &[u8], mode: u8, drive: impl Fn(&[u8]) -> (i32, Vec<u8>)) {
+    let mutated: Vec<u8> = match mode {
+        0 => clean[..clean.len() / 2].to_vec(),
+        1 => {
+            let mut b = clean.to_vec();
+            let half = b.len() / 2;
+            b[half..].fill(0);
+            b
+        }
+        _ => {
+            let half = clean.len() / 2;
+            let mut b = clean.to_vec();
+            b[..half].copy_from_slice(&clean[half..]);
+            b[half..].copy_from_slice(&clean[..half]);
+            b
+        }
+    };
+    let (st, out) = drive(&mutated);
+    assert_ne!(st, errno::OK, "torn input admitted (mode {mode})");
+    assert!(is_typed_refusal(st), "torn input refused untyped (st={st}, mode {mode})");
+    assert!(
+        out.iter().all(|&b| b == 0xAA),
+        "refusing call wrote to the caller buffer (mode {mode})"
+    );
+}
+
+/// Admission half-trial: the leaf must admit with a byte-exact oracle match.
+fn torn_trial_admit(
+    clean: &[u8],
+    mode: u8,
+    drive: impl Fn(&[u8]) -> (i32, Vec<u8>),
+    law: impl Fn(&[u8]) -> Expect,
+) {
+    let mut mutated = clean.to_vec();
+    let half = mutated.len() / 2;
+    mutated[half..].fill(0);
+    match law(&mutated) {
+        Expect::Admit(expected) => {
+            let (st, out) = drive(&mutated);
+            assert_eq!(st, errno::OK, "lawful zeroed body refused (mode {mode})");
+            assert!(
+                out.len() >= expected.len() && out[..expected.len()] == expected[..],
+                "admitted zero-half input diverged from the oracle"
+            );
+        }
+        Expect::Refuse => panic!("admit-classified trial with a refusing oracle"),
+    }
+}
+
+#[test]
+fn err_no_solution_driven_on_lp_and_settler() {
+    // LP: an over-constrained row (x + y <= -1 with x, y >= 0) makes the
+    // system infeasible — Phase I ends with w > 0: exact ERR_NO_SOLUTION.
+    let mut l = lp_clean();
+    let rhs0_off = 16 + 8 * (2 + 2 + 2 * 2); // header + n + m + c[2] + a[4]
+    l[rhs0_off..rhs0_off + 8].copy_from_slice(&(-1_i64).to_le_bytes());
+    let st = cap_probe(lp_drive, &l, false);
+    assert_eq!(st, errno::ERR_NO_SOLUTION, "infeasible LP must be ERR_NO_SOLUTION");
+
+    // Settler — HONEST SCOPE (audit correction): the audit asked for a
+    // "party short by any amount" -> ERR_NO_SOLUTION, but the settler's
+    // wire law conserves by construction (each instruction credits the
+    // payee and debits the payer the same amount, so the 16-slot net is
+    // identically zero; `NotZeroSum` is unreachable from the wire — the
+    // crate's own comment at src/netting_settler.rs says the same). The
+    // short-party input is therefore LAWFUL: the court asserts exact
+    // conservation (payer -100 / payee +100) instead of a false refusal.
+    let mut s =
+        Mgi1Header { leaf_id: nset::LEAF_ID_NETTING_SETTLER, scale_tag: fixed::TAG_MONEY, dims: 1 }
+            .to_bytes()
+            .to_vec();
+    s.extend_from_slice(&2_u32.to_le_bytes()); // n_parties
+    s.extend_from_slice(&0_u64.to_le_bytes()); // payer
+    s.extend_from_slice(&1_u64.to_le_bytes()); // payee
+    s.extend_from_slice(&100_i64.to_le_bytes()); // amount
+    let mut want = Vec::new();
+    push_header(&mut want, nset::LEAF_ID_NETTING_SETTLER, fixed::TAG_MONEY, 2);
+    want.extend_from_slice(&2_u32.to_le_bytes());
+    want.extend_from_slice(&0_u64.to_le_bytes());
+    want.extend_from_slice(&(-100_i64).to_le_bytes());
+    want.extend_from_slice(&1_u64.to_le_bytes());
+    want.extend_from_slice(&100_i64.to_le_bytes());
+    let (st, out) = nset_drive(&s);
+    assert_eq!(st, errno::OK, "conserving short-party input must be admitted");
+    assert!(
+        out.len() >= want.len() && out[..want.len()] == want[..],
+        "settler net must conserve exactly (payer -100 / payee +100)"
+    );
+}
+
+#[test]
+fn err_overflow_driven_on_simm_and_hhi() {
+    // HHI: two shares at i64::MAX — the i128 sum^2 term
+    // (2*i64::MAX)^2 overflows checked i128: exact ERR_OVERFLOW.
+    let mut h = Mgi1Header { leaf_id: hhi::LEAF_ID_HHI_CALC, scale_tag: fixed::TAG_HHI, dims: 2 }
+        .to_bytes()
+        .to_vec();
+    for _ in 0..2 {
+        h.extend_from_slice(&i64::MAX.to_le_bytes());
+    }
+    let st = cap_probe(hhi_drive, &h, false);
+    assert_eq!(st, errno::ERR_OVERFLOW, "sum^2 i128 overflow must be ERR_OVERFLOW");
+
+    // SIMM: 1x3 matvec with every entry i64::MAX — the i128 dot-product
+    // accumulation 3 * i64::MAX^2 overflows checked i128: exact ERR_OVERFLOW.
+    let (rows, cols) = (1usize, 3usize);
+    let dims = (2 + rows * cols + cols) as u64;
+    let mut b =
+        Mgi1Header { leaf_id: simm::LEAF_ID_SIMM_MATRIX, scale_tag: fixed::TAG_RATIO, dims }
+            .to_bytes()
+            .to_vec();
+    b.extend_from_slice(&(rows as u64).to_le_bytes());
+    b.extend_from_slice(&(cols as u64).to_le_bytes());
+    for _ in 0..(rows * cols + cols) {
+        b.extend_from_slice(&i64::MAX.to_le_bytes());
+    }
+    let st = cap_probe(simm_drive, &b, false);
+    assert_eq!(st, errno::ERR_OVERFLOW, "dot-product i128 overflow must be ERR_OVERFLOW");
+}

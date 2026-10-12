@@ -42,6 +42,9 @@ pub enum SettleError {
     Instruction(usize),
     /// Zero-sum law violated: Σ payee legs ≠ Σ payer legs.
     NotZeroSum,
+    /// A party net exceeds the i64 output lane (audit W7: checked in the
+    /// scratch phase so refusal is whole-call, never partial).
+    Overflow,
 }
 
 impl SettleError {
@@ -59,6 +62,7 @@ impl SettleError {
             Self::Length => crate::errno::ERR_LENGTH,
             Self::Instruction(_) => crate::errno::ERR_LENGTH,
             Self::NotZeroSum => crate::errno::ERR_NO_SOLUTION,
+            Self::Overflow => crate::errno::ERR_OVERFLOW,
         }
     }
 }
@@ -116,6 +120,13 @@ pub fn settle(
     }
     if net != 0 {
         return Err(SettleError::NotZeroSum);
+    }
+
+    // i64 fit law (audit W7): every party net must fit the i64 output
+    // lane BEFORE the commit phase touches the caller's buffer — a
+    // mid-write refusal would leave a partial write-set behind.
+    for v in scratch.iter().take(n_parties) {
+        i64::try_from(*v).map_err(|_| SettleError::Overflow)?;
     }
 
     // Commit phase: every check passed; write the prefix, leave the rest of
@@ -200,9 +211,10 @@ fn run(in_buf: &[u8], out_buf: &mut [u8]) -> Result<(), i32> {
     for (i, w) in ws.iter().enumerate().take(n_parties) {
         let o = 20 + 16 * i;
         out_buf[o..o + 8].copy_from_slice(&(i as u64).to_le_bytes());
-        // Adversarial inputs can push a party net past i64 even though the
-        // i128 scratch never overflows; refuse rather than truncate.
-        let net: i64 = i64::try_from(*w).map_err(|_| errno::ERR_OVERFLOW)?;
+        // JUSTIFICATION: i64 fit proven in the scratch phase (audit W7) —
+        // this narrowing is unreachable; expect_used is justified inline.
+        #[allow(clippy::expect_used)]
+        let net: i64 = i64::try_from(*w).expect("i64 fit proven in scratch phase");
         out_buf[o + 8..o + 16].copy_from_slice(&net.to_le_bytes());
     }
     Ok(())
@@ -313,6 +325,38 @@ mod tests {
         assert_eq!(settle(&ins, 2, &mut short), Err(SettleError::Length));
         assert_eq!(short[0], 0, "never partial");
         assert_eq!(SettleError::Length.code(), crate::errno::ERR_LENGTH);
+    }
+
+    /// Audit W7: the party-net i64 overflow path (run()'s i64::try_from
+    /// refusal at commit) must be driven, not just implemented.
+    #[test]
+    fn party_net_above_i64_max_err_overflow() {
+        // Two i64::MAX credits to one payee overflow the i64 party net.
+        let mut inbuf = Vec::new();
+        inbuf.extend_from_slice(&b"MGI1"[..]);
+        inbuf.push(8); // leaf id: netting_settler
+        inbuf.push(crate::fixed::TAG_MONEY); // scale_tag (u8 @ [5])
+        inbuf.extend_from_slice(&[0u8; 2]); // reserved [6..8]
+        inbuf.extend_from_slice(&2u64.to_le_bytes()); // dims = 2 legs @ [8..16]
+        inbuf.extend_from_slice(&2u32.to_le_bytes()); // n_parties
+                                                      // dims = 2 instructions x 24B (payer u64, payee u64, amount i64)
+        for _ in 0..2 {
+            inbuf.extend_from_slice(&0u64.to_le_bytes()); // payer 0
+            inbuf.extend_from_slice(&1u64.to_le_bytes()); // payee 1
+            inbuf.extend_from_slice(&i64::MAX.to_le_bytes()); // amount
+        }
+        let mut out = vec![0xAAu8; 64];
+        // SAFETY: fully-initialized in-buffer; refusal leaves out untouched.
+        let rc = unsafe {
+            crate::mgi_netting_settler_compute(
+                inbuf.as_ptr(),
+                inbuf.len() as u32,
+                out.as_mut_ptr(),
+                out.len() as u32,
+            )
+        };
+        assert_eq!(rc, crate::errno::ERR_OVERFLOW, "party net > i64::MAX must refuse typed");
+        assert!(out.iter().all(|&b| b == 0xAA), "output must be untouched on refusal");
     }
 
     #[test]

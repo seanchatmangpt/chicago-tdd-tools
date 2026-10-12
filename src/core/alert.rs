@@ -590,6 +590,169 @@ mod logging_tests {
     }
 }
 
+/// Tests for the `eprintln!` fallback arms of the `alert_*` macros, compiled
+/// only when the `logging` feature is off (`--no-default-features`).
+///
+/// Chicago discipline: the observable state is the child process's real
+/// stderr. Each fallback is exercised by re-invoking this same test binary
+/// with an exact test filter and a sentinel env var; the child emits the
+/// alert, the parent asserts on the captured stderr bytes.
+#[cfg(all(test, not(feature = "logging")))]
+#[allow(clippy::panic)] // Test code - panic is appropriate for test failures
+#[allow(clippy::unwrap_used, clippy::expect_used)] // JUSTIFICATION: Test code only
+mod no_logging_fallback_tests {
+    use std::process::Command;
+
+    const CHILD_SENTINEL: &str = "ALERT_FALLBACK_CHILD_PROCESS";
+
+    /// Re-run this test binary with `--exact <test>` and a sentinel env var,
+    /// returning the child's captured stderr.
+    fn child_stderr(test_name: &str) -> String {
+        let exe = std::env::current_exe().unwrap_or_else(|e| panic!("current_exe: {e}"));
+        let output = Command::new(exe)
+            .args(["--exact", test_name, "--nocapture"])
+            .env(CHILD_SENTINEL, "1")
+            .output()
+            .unwrap_or_else(|e| panic!("failed to spawn test binary child: {e}"));
+        assert!(
+            output.status.success(),
+            "child test `{test_name}` must exit successfully, got {:?}\nstderr:\n{}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8_lossy(&output.stderr).into_owned()
+    }
+
+    fn assert_child_emits(test_name: &str, needles: &[&str]) {
+        let stderr = child_stderr(test_name);
+        for needle in needles {
+            assert!(
+                stderr.contains(needle),
+                "child stderr for `{test_name}` must contain {needle:?}\nstderr:\n{stderr}"
+            );
+        }
+    }
+
+    // ── child-side emitters (each gated on the sentinel so the parent run of
+    //    the same test is a no-op) ────────────────────────────────────────────
+
+    #[test]
+    fn emit_critical_two_arg() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            alert_critical!("fallback critical message", "do the fix");
+        }
+    }
+
+    #[test]
+    fn emit_warning_one_arg() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            alert_warning!("fallback warning message");
+        }
+    }
+
+    #[test]
+    fn emit_info_two_arg() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            alert_info!("fallback info message", "detail one");
+        }
+    }
+
+    #[test]
+    fn emit_success_one_arg() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            alert_success!("fallback success message");
+        }
+    }
+
+    #[test]
+    fn emit_debug_format_args() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            let state = "INITIALIZED";
+            alert_debug!("fallback debug state: {:?}", state);
+        }
+    }
+
+    #[test]
+    fn emit_custom_alert_four_arg() {
+        if std::env::var_os(CHILD_SENTINEL).is_some() {
+            alert!("🚨", "fallback custom message", "STOP: halted", "FIX: apply patch");
+        }
+    }
+
+    // ── parent-side observations ─────────────────────────────────────────────
+
+    #[test]
+    fn alert_critical_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_critical_two_arg",
+            &["🚨", "fallback critical message", "FIX: do the fix"],
+        );
+    }
+
+    #[test]
+    fn alert_warning_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_warning_one_arg",
+            &["⚠️", "fallback warning message", "WARNING: Investigate before proceeding"],
+        );
+    }
+
+    #[test]
+    fn alert_info_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_info_two_arg",
+            &["ℹ️", "fallback info message", "detail one"],
+        );
+    }
+
+    #[test]
+    fn alert_success_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_success_one_arg",
+            &["✅", "fallback success message"],
+        );
+    }
+
+    #[test]
+    fn alert_debug_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_debug_format_args",
+            &["🔍", "fallback debug state: \"INITIALIZED\""],
+        );
+    }
+
+    #[test]
+    fn alert_custom_fallback_writes_to_stderr() {
+        assert_child_emits(
+            "core::alert::no_logging_fallback_tests::emit_custom_alert_four_arg",
+            &["🚨 fallback custom message", "FIX: apply patch"],
+        );
+    }
+
+    /// In-process: every arity of every macro expands and evaluates to `()`
+    /// under the fallback (no `log` crate involved).
+    #[test]
+    fn alert_fallback_macros_expand_and_return_unit() {
+        let check: () = {
+            alert_critical!("m");
+            alert_critical!("m", "f");
+            alert_critical!("m", "f", "a1", "a2");
+            alert_warning!("m");
+            alert_warning!("m", "f");
+            alert_warning!("m", "f", "a1", "a2");
+            alert_info!("m");
+            alert_info!("m", "d1", "d2");
+            alert_success!("m");
+            alert_success!("m", "d1");
+            alert_debug!("m");
+            alert_debug!("fmt {}", 1);
+            alert!("🚨", "m");
+            alert!("🚨", "m", "s", "f");
+            alert!("🚨", "m", "s", "f", "a1");
+        };
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::panic)] // Test code - panic is appropriate for test failures
 mod tests {

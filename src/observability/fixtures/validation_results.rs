@@ -51,8 +51,9 @@ impl ValidationResults {
 
         let mut advices = Vec::new();
         let mut statistics = None;
+        let mut parse_errors: Vec<(usize, String)> = Vec::new();
 
-        for line_result in reader.lines() {
+        for (line_no, line_result) in reader.lines().enumerate() {
             let line = line_result.map_err(|err| {
                 ObservabilityError::ValidationFailed(format!(
                     "Failed to read Weaver report {}: {err}",
@@ -67,19 +68,43 @@ impl ValidationResults {
 
             let value: Value = serde_json::from_str(trimmed).map_err(|err| {
                 ObservabilityError::ValidationFailed(format!(
-                    "Failed to parse Weaver JSON output: {err}"
+                    "Failed to parse Weaver JSON output at line {}: {err}",
+                    line_no + 1
                 ))
             })?;
 
             if let Some(result) = value.get("live_check_result") {
-                if let Ok(advice_set) = serde_json::from_value::<LiveCheckResult>(result.clone()) {
-                    advices.extend(advice_set.all_advice.into_iter().map(Into::into));
+                match serde_json::from_value::<LiveCheckResult>(result.clone()) {
+                    Ok(advice_set) => {
+                        advices.extend(advice_set.all_advice.into_iter().map(Into::into));
+                    }
+                    Err(err) => {
+                        parse_errors.push((line_no + 1, err.to_string()));
+                    }
                 }
             } else if value.get("advice_level_counts").is_some() {
-                if let Ok(stats) = serde_json::from_value::<LiveCheckStatistics>(value.clone()) {
-                    statistics = Some(stats);
+                match serde_json::from_value::<LiveCheckStatistics>(value.clone()) {
+                    Ok(stats) => {
+                        statistics = Some(stats);
+                    }
+                    Err(err) => {
+                        parse_errors.push((line_no + 1, err.to_string()));
+                    }
                 }
             }
+        }
+
+        if !parse_errors.is_empty() {
+            let detail = parse_errors
+                .iter()
+                .map(|(line_no, err)| format!("line {line_no}: {err}"))
+                .collect::<Vec<_>>()
+                .join("; ");
+            return Err(ObservabilityError::ValidationFailed(format!(
+                "Failed to deserialize Weaver report {} ({} malformed line(s)): {detail}",
+                report_path.display(),
+                parse_errors.len()
+            )));
         }
 
         Ok(Self { advices, statistics, report_path })

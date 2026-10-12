@@ -144,6 +144,34 @@ fn validation_results_malformed_json_line_is_typed_err() {
     let err = ValidationResults::from_report_dir(dir.path()).unwrap_err(); // JUSTIFICATION: Test code only
     assert!(matches!(err, ObservabilityError::ValidationFailed(_)));
     assert!(err.to_string().contains("parse"));
+    assert!(err.to_string().contains("line 1"));
+}
+
+/// A valid advice line followed by a line whose `live_check_result` payload
+/// fails to deserialize must fail loudly, naming the offending line — the
+/// parser must not silently swallow deserialize failures.
+#[test]
+fn validation_results_malformed_advice_payload_names_the_bad_line() {
+    let dir = tempfile::tempdir().unwrap(); // JUSTIFICATION: Test code only
+    write_report(
+        dir.path(),
+        &[
+            violation_line("good.signal", "fine advice"),
+            // Valid JSON, but `live_check_result` is an array where the
+            // advice-set struct expects an object — deserialize fails.
+            String::from(r#"{"live_check_result":[1,2,3]}"#),
+        ],
+    );
+
+    let err = ValidationResults::from_report_dir(dir.path()).unwrap_err(); // JUSTIFICATION: Test code only
+    assert!(matches!(err, ObservabilityError::ValidationFailed(_)));
+
+    let message = err.to_string();
+    assert!(message.contains("line 2"), "error must name the bad line number: {message}");
+    assert!(
+        message.contains("invalid type"),
+        "error must include the deserialize failure: {message}"
+    );
 }
 
 #[test]

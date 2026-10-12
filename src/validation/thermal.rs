@@ -12,15 +12,16 @@
 //!
 //! ```text
 //! hot_path_test! → HotPathTest<F> → Enforces:
-//!     - No allocations
-//!     - No syscalls
-//!     - Cycle-accurate timing (τ ≤ 8)
+//!     - Tick budget (τ ≤ 8 by default)
 //!     - RDTSC/CNTVCT measurement
+//!     (enforce_no_alloc / enforce_no_syscall are configuration passthrough
+//!      for the verification pipeline; this harness does NOT detect
+//!      allocations or syscalls.)
 //!
 //! warm_path_test! → WarmPathTest<F> → Enforces:
-//!     - Sub-ms timing budget
-//!     - Bounded memory
-//!     - No network/storage IO
+//!     - Tick budget (sub-ms by default)
+//!     (memory/network/storage limits are configuration passthrough; not
+//!      enforced by this harness)
 //!
 //! cold_path_test! → ColdPathTest<F> → Allows:
 //!     - Full IO (Docker, network, storage)
@@ -74,18 +75,19 @@ pub type ThermalTestResult<T> = Result<T, ThermalTestError>;
 
 /// Hot path test configuration
 ///
-/// Enforces:
-/// - τ ≤ 8 ticks
-/// - No allocations
-/// - No syscalls
-/// - Cycle-accurate timing
+/// Enforced by this harness: the tick budget (τ ≤ 8 by default) and
+/// cycle-accurate timing. The `enforce_no_alloc` / `enforce_no_syscall`
+/// flags are configuration passthrough for the verification pipeline;
+/// allocation/syscall detection is NOT implemented in this harness.
 #[derive(Debug, Clone, Copy)]
 pub struct HotPathConfig {
     /// Maximum allowed ticks (default: 8, the Chatman Constant)
     pub max_ticks: u64,
-    /// Enforce no allocations (default: true)
+    /// Configuration passthrough for the verification pipeline. This harness
+    /// does NOT detect allocations; the flag only signals intent downstream.
     pub enforce_no_alloc: bool,
-    /// Enforce no syscalls (default: true)
+    /// Configuration passthrough for the verification pipeline. This harness
+    /// does NOT detect syscalls; the flag only signals intent downstream.
     pub enforce_no_syscall: bool,
 }
 
@@ -111,19 +113,19 @@ impl HotPathConfig {
 
 /// Warm path test configuration
 ///
-/// Enforces:
-/// - Sub-ms timing budget
-/// - Bounded memory
-/// - No network/storage IO
+/// Enforced by this harness: the tick budget (`max_ticks`). The memory,
+/// network, and storage fields are configuration passthrough for the
+/// verification pipeline; memory/IO enforcement is not implemented here.
 #[derive(Debug, Clone, Copy)]
 pub struct WarmPathConfig {
     /// Maximum allowed ticks (default: `500_000` ~= 125μs at 4GHz)
     pub max_ticks: u64,
-    /// Maximum memory usage in bytes (default: 1MB)
+    /// Maximum memory usage in bytes (default: 1MB). Passthrough for the
+    /// verification pipeline; not enforced by this harness.
     pub max_memory_bytes: usize,
-    /// Enforce no network IO (default: true)
+    /// Passthrough for the verification pipeline; not enforced by this harness.
     pub enforce_no_network: bool,
-    /// Enforce no storage IO (default: true)
+    /// Passthrough for the verification pipeline; not enforced by this harness.
     pub enforce_no_storage: bool,
 }
 
@@ -188,7 +190,10 @@ impl ColdPathConfig {
 
 /// Hot path test harness
 ///
-/// Enforces μ-kernel timing discipline: τ ≤ 8, no allocations, no syscalls.
+/// Enforces μ-kernel timing discipline: the tick budget (τ ≤ 8 by default).
+/// The `enforce_no_alloc`/`enforce_no_syscall` config flags are configuration
+/// passthrough for the verification pipeline; allocation/syscall detection
+/// is NOT implemented in this harness.
 ///
 /// # Example
 ///
@@ -225,10 +230,11 @@ impl HotPathTest {
     ///
     /// # Errors
     ///
-    /// Returns error if:
-    /// - Tick budget exceeded (τ violation)
-    /// - Allocation detected (when `enforce_no_alloc` is true)
-    /// - Syscall detected (when `enforce_no_syscall` is true)
+    /// Returns error if the tick budget is exceeded (τ violation). This is
+    /// the only constraint this harness enforces: `enforce_no_alloc` and
+    /// `enforce_no_syscall` are configuration passthrough for the
+    /// verification pipeline; allocation/syscall detection is not
+    /// implemented here.
     pub fn run<F, T>(&self, f: F) -> ThermalTestResult<(T, u64)>
     where
         F: FnOnce() -> T,
@@ -277,7 +283,8 @@ impl Default for HotPathTest {
 
 /// Warm path test harness
 ///
-/// Enforces sub-ms timing and bounded memory, but allows heap allocations.
+/// Enforces the tick budget only (see [`WarmPathConfig`]); memory/IO limits
+/// are configuration passthrough for the verification pipeline.
 pub struct WarmPathTest {
     config: WarmPathConfig,
 }

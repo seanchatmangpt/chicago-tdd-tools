@@ -7,8 +7,8 @@
 //! - Unified API for OTEL and Weaver testing
 //! - RAII-based automatic lifecycle management
 //! - Auto-detection of Weaver binary and registry
-//! - Compile-time validation where possible (zero-cost)
-//! - Runtime validation when needed (real collaborators)
+//! - Runtime structural checks (non-empty names, non-zero IDs)
+//! - Runtime validation against real collaborators (Weaver, OTLP)
 //! - Type-safe API (invalid states unrepresentable)
 //!
 //! **Usage**:
@@ -76,18 +76,16 @@ pub enum ObservabilityError {
     FeatureDisabled(&'static str),
 }
 
-/// Result type for observability testing (when OTEL feature enabled)
-#[cfg(feature = "otel")]
+/// Result type for observability testing
 pub type ObservabilityResult<T> = Result<T, ObservabilityError>;
 
-/// Result type for observability testing (fallback when OTEL feature disabled)
-#[cfg(not(feature = "otel"))]
-pub type ObservabilityResult<T> = Result<T, ObservabilityError>;
-
-/// Type-level validation state (compile-time guarantees)
+/// Type-level validation state
+///
+/// Note: this is plain data, not a compile-time guarantee — the checks driven
+/// by these flags are runtime structural checks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ValidationState {
-    /// Compile-time validation enabled
+    /// Structural validation performed before runtime validation
     pub compile_time_validated: bool,
     /// Runtime validation enabled
     pub runtime_validated: bool,
@@ -104,7 +102,9 @@ pub struct TestConfig {
     pub admin_port: u16,
     /// Enable Weaver validation
     pub weaver_enabled: bool,
-    /// Enable compile-time validation
+    /// Enable pre-validation structural checks (non-empty names). Despite
+    /// the historical field name, these are RUNTIME structural checks, not
+    /// compile-time validation. The name is retained for API compatibility.
     pub compile_time_validation: bool,
     /// Optional directory for Weaver JSON reports
     pub weaver_output_dir: Option<PathBuf>,
@@ -267,8 +267,14 @@ impl WeaverValidator {
 impl ObservabilityTest {
     /// Create a new observability test with smart defaults
     ///
-    /// Auto-detects Weaver binary and registry path. Zero configuration
-    /// for 80% of use cases.
+    /// Zero configuration for 80% of use cases, but note the constructor's
+    /// side effects when `weaver_enabled` is true: if no registry path is
+    /// configured, this probes three literal registry paths (`registry`,
+    /// `./registry`, `../semantic-conventions`) and, failing those, runs
+    /// `git clone --depth 1` of `open-telemetry/semantic-conventions` into
+    /// the current working directory — a side-effecting network operation
+    /// from a constructor. Set `weaver_enabled: false` (the default) or
+    /// supply `registry_path` to avoid it.
     ///
     /// # Errors
     ///
@@ -404,7 +410,9 @@ impl ObservabilityTest {
         self
     }
 
-    /// Enable or disable compile-time validation
+    /// Enable or disable the pre-validation structural checks (runtime
+    /// checks despite the historical name; see [`TestConfig::
+    /// compile_time_validation`]).
     #[must_use]
     pub const fn with_compile_time_validation(mut self, enabled: bool) -> Self {
         self.config.compile_time_validation = enabled;
@@ -420,14 +428,14 @@ impl ObservabilityTest {
 
     /// Validate a span
     ///
-    /// Performs compile-time validation (if enabled) and runtime validation.
+    /// Performs the structural checks (if enabled) and runtime validation.
     ///
     /// # Errors
     ///
     /// Returns an error if validation fails.
     #[cfg(feature = "otel")]
     pub fn validate_span(&self, span: &Span) -> ObservabilityResult<()> {
-        // Compile-time validation (if enabled)
+        // Structural checks (if enabled) — runtime, despite the historical name
         if self.config.compile_time_validation {
             Self::validate_span_static(span)?;
         }
@@ -451,14 +459,14 @@ impl ObservabilityTest {
 
     /// Validate a metric
     ///
-    /// Performs compile-time validation (if enabled) and runtime validation.
+    /// Performs the structural checks (if enabled) and runtime validation.
     ///
     /// # Errors
     ///
     /// Returns an error if validation fails.
     #[cfg(feature = "otel")]
     pub fn validate_metric(&self, metric: &Metric) -> ObservabilityResult<()> {
-        // Compile-time validation (if enabled)
+        // Structural checks (if enabled) — runtime, despite the historical name
         if self.config.compile_time_validation {
             Self::validate_metric_static(metric)?;
         }
@@ -480,13 +488,13 @@ impl ObservabilityTest {
         Ok(())
     }
 
-    /// Compile-time span validation (zero-cost)
+    /// Structural span validation (runtime check despite the historical name)
     ///
-    /// Validates span structure at compile-time where possible.
-    /// Zero runtime cost for static checks.
+    /// Validates span structure at runtime (non-empty name). Not a
+    /// compile-time check and not zero-cost.
     #[cfg(feature = "otel")]
     fn validate_span_static(span: &Span) -> ObservabilityResult<()> {
-        // Basic compile-time checks
+        // Basic structural checks
         if span.name.is_empty() {
             return Err(ObservabilityError::SpanValidationFailed(
                 "Span name cannot be empty".to_string(),
@@ -496,10 +504,10 @@ impl ObservabilityTest {
         Ok(())
     }
 
-    /// Compile-time metric validation (zero-cost)
+    /// Structural metric validation (runtime check despite the historical name)
     ///
-    /// Validates metric structure at compile-time where possible.
-    /// Zero runtime cost for static checks.
+    /// Validates metric structure at runtime (non-empty name). Not a
+    /// compile-time check and not zero-cost.
     #[cfg(feature = "otel")]
     fn validate_metric_static(metric: &Metric) -> ObservabilityResult<()> {
         if metric.name.is_empty() {

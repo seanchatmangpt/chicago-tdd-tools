@@ -445,3 +445,208 @@ fn harness_composite_workspace_and_binary() {
     assert_eq!(output.stdout, "composite proof"); // cat echoes the file verbatim (no trailing newline)
     let _ = ws.assert_file_contains("input.txt", "proof");
 }
+
+// ─── ReceiptAssertions: real receipt JSON files on real disk ─────────────────
+
+use chicago_tdd_tools::cli_proof::receipt::ReceiptAssertions;
+
+/// Write a receipt JSON file at `rel` under `ws` with an explicit mtime so the
+/// newest-first ordering in `from_dir` is deterministic.
+fn write_receipt(ws: &TempWorkspace, rel: &str, json: &str, mtime: std::time::SystemTime) {
+    ws.write_file(rel, json).unwrap();
+    let path = ws.resolve(rel);
+    let f = std::fs::File::options().append(true).open(&path).unwrap(); // JUSTIFICATION: Test code only
+    f.set_modified(mtime).unwrap();
+}
+
+/// A well-formed two-receipt chain: latest links back to the older receipt's
+/// hash, both signed, latest valid, and carrying a known input hash.
+fn well_formed_chain(ws: &TempWorkspace) {
+    let t0 = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_000_000);
+    let t1 = t0 + std::time::Duration::from_secs(60);
+
+    write_receipt(
+        ws,
+        "r1.json",
+        r#"{
+            "hash": "aaaa-1111",
+            "signature": "sig-for-r1",
+            "is_valid": true,
+            "input_hashes": ["sha256:src/main.rs", "sha256:Cargo.toml"]
+        }"#,
+        t0,
+    );
+    write_receipt(
+        ws,
+        "r2.json",
+        r#"{
+            "hash": "bbbb-2222",
+            "previous_receipt_hash": "aaaa-1111",
+            "signature": "sig-for-r2",
+            "is_valid": true,
+            "input_hashes": ["sha256:src/lib.rs"]
+        }"#,
+        t1,
+    );
+}
+
+/// `from_dir` loads only `*.json` files, newest-first, and the well-formed
+/// chain passes every assertion.
+#[test]
+fn receipt_well_formed_chain_passes_all_assertions() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    ws.write_file("notes.txt", "not a receipt").unwrap(); // non-json must be ignored
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+
+    let _ = ra.assert_count(2);
+    let _ = ra
+        .assert_latest_is_valid()
+        .assert_latest_signature_nonempty()
+        .assert_latest_has_input(|h| h.starts_with("sha256:src/lib.rs"))
+        .assert_chain_linked()
+        .assert_receipt_hash_changed();
+}
+
+/// Non-JSON files are excluded from the count.
+#[test]
+fn receipt_from_dir_ignores_non_json_files() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    ws.write_file("garbage.txt", "ignore me").unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_count(2);
+}
+
+#[test]
+#[should_panic(expected = "expected 1 receipt")]
+fn receipt_assert_count_panics_on_wrong_count() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_count(1);
+}
+
+#[test]
+#[should_panic(expected = "is_valid=true")]
+fn receipt_assert_latest_is_valid_panics_on_invalid_receipt() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    SabotageFixture::corrupt_json(ws.resolve("r2.json"), |mut v| {
+        v["is_valid"] = serde_json::Value::Bool(false);
+        v
+    })
+    .unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_is_valid();
+}
+
+#[test]
+#[should_panic(expected = "non-empty 'signature'")]
+fn receipt_assert_latest_signature_nonempty_panics_on_missing_signature() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    SabotageFixture::corrupt_json(ws.resolve("r2.json"), |mut v| {
+        if let serde_json::Value::Object(ref mut map) = v {
+            map.remove("signature");
+        }
+        v
+    })
+    .unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_signature_nonempty();
+}
+
+#[test]
+#[should_panic(expected = "signature")]
+fn receipt_assert_latest_signature_nonempty_panics_on_empty_signature() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    SabotageFixture::corrupt_json(ws.resolve("r2.json"), |mut v| {
+        v["signature"] = serde_json::Value::String(String::new());
+        v
+    })
+    .unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_signature_nonempty();
+}
+
+#[test]
+#[should_panic(expected = "input_hashes")]
+fn receipt_assert_latest_has_input_panics_without_array() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    SabotageFixture::corrupt_json(ws.resolve("r2.json"), |mut v| {
+        if let serde_json::Value::Object(ref mut map) = v {
+            map.remove("input_hashes");
+        }
+        v
+    })
+    .unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_has_input(|_| true);
+}
+
+#[test]
+#[should_panic(expected = "matched the predicate")]
+fn receipt_assert_latest_has_input_panics_when_no_entry_matches() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_has_input(|h| h.contains("never-present"));
+}
+
+#[test]
+#[should_panic(expected = "chain broken")]
+fn receipt_assert_chain_linked_panics_on_broken_linkage() {
+    let ws = TempWorkspace::new().unwrap();
+    well_formed_chain(&ws);
+    // Point the latest receipt's back-link at a hash no older receipt has.
+    SabotageFixture::corrupt_json(ws.resolve("r2.json"), |mut v| {
+        v["previous_receipt_hash"] = serde_json::Value::String("deadbeef".into());
+        v
+    })
+    .unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_chain_linked();
+}
+
+#[test]
+#[should_panic(expected = "at least 2 receipts")]
+fn receipt_assert_chain_linked_panics_with_single_receipt() {
+    let ws = TempWorkspace::new().unwrap();
+    ws.write_file("only.json", r#"{"hash": "aaaa-1111"}"#).unwrap();
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_chain_linked();
+}
+
+#[test]
+#[should_panic(expected = "hash to change")]
+fn receipt_assert_receipt_hash_changed_panics_on_identical_hashes() {
+    let ws = TempWorkspace::new().unwrap();
+    let t0 = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_000_000);
+    let t1 = t0 + std::time::Duration::from_secs(60);
+    let same = r#"{"hash": "same-hash-both"}"#;
+    write_receipt(&ws, "r1.json", same, t0);
+    write_receipt(&ws, "r2.json", same, t1);
+
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_receipt_hash_changed();
+}
+
+#[test]
+#[should_panic(expected = "no receipts found")]
+fn receipt_assert_latest_is_valid_panics_on_empty_dir() {
+    let ws = TempWorkspace::new().unwrap();
+    let ra = ReceiptAssertions::from_dir(ws.path()).unwrap();
+    let _ = ra.assert_latest_is_valid();
+}
