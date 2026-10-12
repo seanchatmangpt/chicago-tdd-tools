@@ -408,3 +408,17 @@ See `CHANGELOG.md` for full history.
 ---
 
 **Version:** 26.10.12 | **Updated:** 2026-10-11 | **Principle:** Compile-time prevention > runtime detection
+
+## Annealing Doctrine (repo clauses)
+
+Global law: [[entropic-annealing-doctrine]]. Repo-specific clauses:
+
+- **Ad-hoc CLI runners are retired** — domain verbs route through `affi`
+  (affidavit, `{{AFFIDAVIT_DIR}}` in the Justfile); never re-add a local bin
+  for a surface affi owns.
+- **Every court needs a vacuity sweep** — a court without a positive control
+  that must fire (`Refused(positive_control)`) is vacuous; see the NATO
+  positive-control gate law.
+- **Skeptic/audit lanes do not grade their own builders** — adversarial
+  lanes verify on-disk state with test receipts; the lane that wrote a file
+  never certifies it.
