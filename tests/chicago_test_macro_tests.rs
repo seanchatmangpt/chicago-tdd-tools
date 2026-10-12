@@ -10,20 +10,14 @@ use chicago_tdd_tools::chicago_test;
 
 // Happy path: ticket exists (tests/fixtures/CC-0042_acceptance_spec.md),
 // so the macro expands instead of refusing at the ticket gate.
-#[chicago_test(
-    ticket = "tests/fixtures/CC-0042_acceptance_spec.md",
-    scaffold_fn = "scaffold_impl"
-)]
+#[chicago_test(ticket = "tests/fixtures/CC-0042_acceptance_spec.md", scaffold_fn = "scaffold_impl")]
 fn happy_path_body_runs() {
     assert_eq!(2 + 2, 4);
 }
 
 // A second expansion used to pin the name-derivation contract
 // (extract_ticket_id -> CC-0042 -> slug cc_0042 -> prefix chicago_cc_0042_).
-#[chicago_test(
-    ticket = "tests/fixtures/CC-0042_acceptance_spec.md",
-    scaffold_fn = "scaffold_impl"
-)]
+#[chicago_test(ticket = "tests/fixtures/CC-0042_acceptance_spec.md", scaffold_fn = "scaffold_impl")]
 fn name_derivation_body() {
     // Scaffold-pending panic inside the body must be absorbed by
     // catch_scaffold (CANDIDATE pass), so this generated test passes.

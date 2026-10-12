@@ -186,7 +186,7 @@ impl<const BUDGET: u64> ValidatedTickBudget<BUDGET> {
     /// Create a new validated tick budget
     ///
     /// The budget is a compile-time-known const generic, validated at runtime in
-/// `validate()` — no compile-time trait bound constrains it.
+    /// `validate()` — no compile-time trait bound constrains it.
     #[must_use]
     pub const fn new() -> Self {
         Self { _inner: Validated::new(BUDGET) }

@@ -276,18 +276,24 @@ impl TestReceipt {
     fn signature_payload(&self) -> String {
         let mut unsigned = self.clone();
         unsigned.signature = None;
-        serde_json::to_string(&unsigned)
-            .unwrap_or_else(|_| {
-                // Serde serialization of this plain-data struct cannot fail
-                // (no maps with non-string keys, no fallible types); the
-                // fallback keeps the function total without panicking.
-                format!(
-                    "{}-{}-{}-{:?}-{:?}-{:?}-{:?}-{}-{}-{:?}",
-                    self.receipt_id, self.contract_name, self.code_hash, self.environment,
-                    self.invariants_checked, self.timing, self.effects_exercised, self.result,
-                    self.timestamp, self.metadata
-                )
-            })
+        serde_json::to_string(&unsigned).unwrap_or_else(|_| {
+            // Serde serialization of this plain-data struct cannot fail
+            // (no maps with non-string keys, no fallible types); the
+            // fallback keeps the function total without panicking.
+            format!(
+                "{}-{}-{}-{:?}-{:?}-{:?}-{:?}-{}-{}-{:?}",
+                self.receipt_id,
+                self.contract_name,
+                self.code_hash,
+                self.environment,
+                self.invariants_checked,
+                self.timing,
+                self.effects_exercised,
+                self.result,
+                self.timestamp,
+                self.metadata
+            )
+        })
     }
 
     /// Sign this receipt using a SHA-256 content hash over the canonical

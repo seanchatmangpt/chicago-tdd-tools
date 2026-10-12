@@ -396,8 +396,7 @@ mod tests {
         for i in 0..=17 {
             builder = builder.place(format!("p{i}"));
         }
-        let spec =
-            builder.transition("t_far", "act").add_pre("p0").add_post("p17").build();
+        let spec = builder.transition("t_far", "act").add_pre("p0").add_post("p17").build();
         let err = spec.compile().expect_err("must refuse, not panic");
         assert_eq!(err, ConformanceError::TooManyPlaces { limit: 16 });
     }

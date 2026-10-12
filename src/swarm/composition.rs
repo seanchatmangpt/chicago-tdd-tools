@@ -97,7 +97,9 @@ impl OperationChain {
     /// Move to next step
     #[allow(clippy::missing_const_for_fn)] // Cannot be const: mutates self
     pub fn advance(&mut self) -> bool {
-        if self.current_step < self.steps.len() - 1 {
+        if self.steps.len() == 0 || self.current_step < self.steps.len().checked_sub(1).unwrap_or(0)
+        {
+            // empty chain: nothing to advance (W27 underflow fix)
             self.current_step += 1;
             true
         } else {
@@ -252,6 +254,12 @@ mod tests {
 
         assert_eq!(chain.step_count(), 2);
         assert!(chain.current().is_some());
+    }
+
+    // W27: advance() on an empty chain must bail typed (was a usize underflow).
+    #[test]
+    fn test_operation_chain_advance_empty() {
+        assert!(!OperationChain::new("id".into(), vec![]).advance());
     }
 
     #[test]

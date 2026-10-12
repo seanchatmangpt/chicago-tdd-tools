@@ -303,16 +303,14 @@ mod tests {
         let zero = [0u8; SEED_LEN];
         let ones = [0xFFu8; SEED_LEN];
         for seed in [zero, ones] {
-            let err =
-                Signer::from_seed(seed).expect_err("degenerate seed must be refused");
+            let err = Signer::from_seed(seed).expect_err("degenerate seed must be refused");
             assert!(
                 matches!(err, SealError::EntropyRefused(_)),
                 "refusal must carry the hashed-cause refusal digest: {err}"
             );
         }
         // Distinct causes, same class: reproducible digests, not fresh entropy.
-        let (Err(e1), Err(e2)) = (Signer::from_seed(zero), Signer::from_seed(zero))
-        else {
+        let (Err(e1), Err(e2)) = (Signer::from_seed(zero), Signer::from_seed(zero)) else {
             panic!("all-zero seed must refuse both times");
         };
         assert_eq!(e1, e2, "same cause must reproduce the same refusal digest");
