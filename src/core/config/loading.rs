@@ -602,6 +602,9 @@ pub fn max_run_len() -> usize {
 ///
 /// **Kaizen improvement**: Uses named constant instead of magic number.
 #[must_use]
+/// AUDIT NOTE (inert config): read from `[guards]` but no enforcement
+/// path consumes it — `GuardValidator` uses its own `MAX_BATCH_SIZE`
+/// constant. Configuring this key changes no behavior.
 pub fn max_batch_size() -> usize {
     read_config_value_usize("guards", "max_batch_size", DEFAULT_MAX_BATCH_SIZE)
 }
