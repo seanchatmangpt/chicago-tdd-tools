@@ -11,7 +11,7 @@ A test run **is** an OCEL 2.0 event log:
 
 ## Zero Code Changes
 
-OCEL generation requires no changes to your test code. By enabling the `ocel-generation` feature, the framework's internal `DiagnosticSink` pipeline is instrumented to collect and admit events into a standard OCEL log.
+OCEL generation requires no changes to your test code. W27 PROBE CORRECTION: enabling `ocel-generation` alone wires NOTHING — collection is opt-in via explicit registration (`register_sink(Box::new(OcelCollector::new(...)))`); the zero-code-changes claim below held only given a registered collector.
 
 ## Features
 

@@ -1,7 +1,7 @@
 //! Chapter 2: Core Testing Primitives and Chatman Equation Properties
 //!
 //! Tests for core properties of the Chatman Equation:
-//! - Theorem 2.1: Determinism (identical inputs → identical results)
+//! - AUDIT NOTE (W27 probe): the Thm-2.x IDs/latex_lines below reference nonexistent chapter-02 theorems (ch02 tex has 0 theorem envs); the real theorems are Thm-7.1-7.4 in chapter 07 per THEOREM_MAPPING.md — IDs preserved for harness stability. Theorem 2.1: Determinism (identical inputs → identical results)
 //! - Theorem 2.2: Idempotence (running twice = running once)
 //! - Theorem 2.3: Type Preservation (types maintained through lifecycle)
 //! - Theorem 2.4: Boundedness (execution time is measurable and bounded)
