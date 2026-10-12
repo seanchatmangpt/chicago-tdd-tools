@@ -200,4 +200,28 @@ mod tests {
             other => panic!("expected Io error, got {other:?}"),
         }
     }
+
+    /// The module doc claims deterministic bytes: persisting the same
+    /// receipts twice must leave the files byte-identical (audit W3 gap).
+    #[test]
+    fn persist_is_deterministic_across_double_write() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let receipts = control_receipts();
+        persist(tmp.path(), &receipts).expect("first persist");
+        let first = std::fs::read(tmp.path().join("N01.json")).expect("read first");
+        persist(tmp.path(), &receipts).expect("second persist");
+        let second = std::fs::read(tmp.path().join("N01.json")).expect("read second");
+        assert_eq!(first, second, "double persist must be byte-identical");
+    }
+
+    /// A directory named `*.json` inside the receipts dir must fail loud
+    /// with a typed Io error, never be skipped silently (audit W3: pin the
+    /// intended fail-loud semantics).
+    #[test]
+    fn load_dir_fails_loud_on_json_named_subdirectory() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir(tmp.path().join("N99.json")).expect("create subdir");
+        let err = load_dir(tmp.path()).expect_err("subdir must fail loud");
+        assert!(matches!(err, PersistError::Io { .. }), "got {err:?}");
+    }
 }

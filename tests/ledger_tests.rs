@@ -16,7 +16,7 @@
 //! 9. `ledger::exit_code` is total over every `LedgerError` variant.
 //! 10. Replay detection: an already-stored head is refused; wrong-parent
 //!     threading is refused; chains replay through stored hashes (RL2).
-//! 11. Receipt-name law: NAME_MAX refusals — too-long names rejected,
+//! 11. Receipt-name law: `NAME_MAX` refusals — too-long names rejected,
 //!     collisions distinguished, boundary length accepted.
 //!
 //! All items here are gated on the `ledger` feature — the ledger module is

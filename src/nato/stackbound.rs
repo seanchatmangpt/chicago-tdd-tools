@@ -342,37 +342,7 @@ pub(crate) fn stackbound_zero_recursion_probe() -> (usize, usize) {
     }
     let edges_total: usize = graph.values().map(Vec::len).sum();
 
-    // Cycle detection: iterative DFS, color 0 = unvisited, 1 = in-stack,
-    // 2 = done. Any back edge to an in-stack node is recursion (direct or
-    // mutual) on a state path — hard fail.
-    let mut cycles = Vec::new();
-    for start in graph.keys() {
-        let mut color: HashMap<&str, u8> = HashMap::new();
-        let mut stack: Vec<(&str, Vec<&str>)> =
-            vec![(start.as_str(), graph[start].iter().map(String::as_str).collect())];
-        color.insert(start.as_str(), 1);
-        while let Some((node, succ)) = stack.pop() {
-            if let Some(next) = succ.first().copied() {
-                let mut rest = succ;
-                rest.remove(0);
-                stack.push((node, rest));
-                match color.get(next).copied() {
-                    Some(1) => cycles.push(format!("{node} -> {next}")),
-                    Some(2) => {}
-                    _ => {
-                        color.insert(next, 1);
-                        let edges: Vec<&str> = graph
-                            .get(next)
-                            .map(|v| v.iter().map(String::as_str).collect())
-                            .unwrap_or_default();
-                        stack.push((next, edges));
-                    }
-                }
-            } else {
-                color.insert(node, 2);
-            }
-        }
-    }
+    let cycles = detect_cycles(&graph);
     assert!(cycles.is_empty(), "N16 FAIL: recursion detected on state path: {cycles:?}");
     // Audit non-vacuity receipt: the graph actually had nodes and edges.
     assert!(
@@ -587,8 +557,74 @@ fn heap_mutant(pn: u64, ocel: u64, mask: u64) -> u64 {
 
 /// Positive control: an injected `Vec::` token on a state-path body MUST be
 /// flagged by the heap audit. Returns false if the court is vacuous.
+/// Iterative DFS cycle detection over the extracted call graph
+/// (color 0 = unvisited, 1 = in-stack, 2 = done; any back edge to an
+/// in-stack node is recursion on a state path).
+fn detect_cycles(graph: &std::collections::HashMap<String, Vec<String>>) -> Vec<String> {
+    let mut cycles = Vec::new();
+    for start in graph.keys() {
+        let mut color: HashMap<&str, u8> = HashMap::new();
+        let mut stack: Vec<(&str, Vec<&str>)> =
+            vec![(start.as_str(), graph[start].iter().map(String::as_str).collect())];
+        color.insert(start.as_str(), 1);
+        while let Some((node, succ)) = stack.pop() {
+            if let Some(next) = succ.first().copied() {
+                let mut rest = succ;
+                rest.remove(0);
+                stack.push((node, rest));
+                match color.get(next).copied() {
+                    Some(1) => cycles.push(format!("{node} -> {next}")),
+                    Some(2) => {}
+                    _ => {
+                        color.insert(next, 1);
+                        let edges: Vec<&str> = graph
+                            .get(next)
+                            .map(|v| v.iter().map(String::as_str).collect())
+                            .unwrap_or_default();
+                        stack.push((next, edges));
+                    }
+                }
+            } else {
+                color.insert(node, 2);
+            }
+        }
+    }
+    cycles
+}
+
+/// Extracts the call graph from `src` and returns every recursion cycle.
+fn cycles_in(file: &str, src: &str) -> Vec<String> {
+    let stripped = strip_comments(src);
+    let (fns, balanced) = extract_fns(&stripped);
+    assert!(balanced, "N16 control: brace imbalance in {file}");
+    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+    for f in &fns {
+        graph.entry(f.name.clone()).or_default().extend(callees(&f.body));
+    }
+    detect_cycles(&graph)
+}
+
 pub(crate) fn stackbound_positive_control() -> bool {
-    !heap_violations_in("mutant.rs", HEAP_MUTANT_SRC).is_empty()
+    !heap_violations_in("mutant.rs", HEAP_MUTANT_SRC).is_empty() && stackbound_recursion_control()
+}
+
+/// Audit W3: the cycle detector's vacuity control — a self-recursive fn
+/// (direct recursion) must be flagged by the iterative DFS, proving the
+/// zero-recursion leg can fire, not just pass on clean input.
+const RECURSION_MUTANT_SRC: &str = r"
+fn checked_recurse(n: u64) -> u64 {
+    if n == 0 {
+        1
+    } else {
+        checked_recurse(n - 1)
+    }
+}
+";
+
+/// Returns true iff the cycle detector flags the injected self-recursive
+/// mutant. Wired as part of the N16 court's positive control.
+pub(crate) fn stackbound_recursion_control() -> bool {
+    !cycles_in("mutant.rs", RECURSION_MUTANT_SRC).is_empty()
 }
 
 /// N16 stack-bound court (always-run legs: zero recursion + zero heap
@@ -658,4 +694,11 @@ impl Court for StackBoundCourt {
     fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
         stackbound_run_court_probe()
     }
+}
+
+/// Audit W3: the cycle detector's vacuity control — the injected
+/// self-recursive mutant MUST be flagged (court has power).
+#[test]
+fn n16_court_detects_injected_recursion() {
+    assert!(stackbound_recursion_control(), "injected self-recursion positive control must fire");
 }

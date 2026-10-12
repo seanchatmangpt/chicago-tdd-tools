@@ -9,7 +9,7 @@
 //!
 //! See Also: `src/conformance/loader.rs`, `src/conformance/error.rs`
 
-//! Run: cargo test --test conformance_loader_tests --features conformance
+//! Run: `cargo test --test conformance_loader_tests --features conformance`
 #![cfg(feature = "conformance")]
 #![allow(missing_docs)]
 #![allow(clippy::pedantic, clippy::nursery, clippy::cargo)]

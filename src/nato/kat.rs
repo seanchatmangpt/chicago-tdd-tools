@@ -269,6 +269,20 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
             return false;
         }
     }
+    // Audit W3: the sweep must cover the pk space too — a corrupted pk
+    // must be rejected, not just a corrupted signature. 64 sampled pk-bit
+    // flips + the 64-sig-flip loop above; stride hits the sig tail
+    // (bytes 3258..3309, the ML-DSA hint region) via the ceiling division
+    // sample points below.
+    for i in 0..64usize {
+        let byte_idx = (i * PK_LEN) / 64;
+        let bit = i % 8;
+        let mut bad_pk = pk;
+        bad_pk[byte_idx] ^= 1 << bit;
+        if Signer::verify(&bad_pk, &GOLDEN_SUBJECT, &good) {
+            return false;
+        }
+    }
     Signer::verify(&pk, &GOLDEN_SUBJECT, &good)
 }
 

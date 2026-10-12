@@ -273,7 +273,7 @@ fn run(in_buf: &[u8], out_buf: &mut [u8]) -> Result<(), i32> {
         let b = &in_buf[16 + 24 * i..16 + 24 * (i + 1)];
         // Row slices are exact 24-byte rows by construction; the error arm
         // is unreachable but the conversions stay typed (no-expect law).
-        let conv = |_e: std::array::TryFromSliceError| crate::errno::ERR_TRUNCATED;
+        let conv = |_e: core::array::TryFromSliceError| crate::errno::ERR_TRUNCATED;
         rows.push(Obligation {
             debtor: u64::from_le_bytes(b[0..8].try_into().map_err(conv)?),
             creditor: u64::from_le_bytes(b[8..16].try_into().map_err(conv)?),
