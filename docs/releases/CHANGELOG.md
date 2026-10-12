@@ -51,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-10 closeout** (`6b4d13d`/`58c3ba0`): run_with_config honesty
+  note (params accepted, not forwarded — loom default model); 11
+  CONFORMANCE.md cites refreshed + compile()'s forbidden_mask
+  documented (`6b4d13d`); dead surfaces retired — assert_eq_enhanced!
+  (0 uses, false diff-output doc), duplicate generator const_assert,
+  two std-benchmarking placeholder benches; set_run_id validation +
+  de-tautologized test; kat endpoint-coverage comment corrected;
+  chicago_test! spanned errors for async/parameterized fns (was
+  silent mis-expansion / panic trap); emit-dossier idempotence law
+  (scripts/dossier_idempotence.py — sealed_at-only drift restores
+  committed bytes); ARCHITECTURE assurance-chain + companion-crate
+  scope; GETTING_STARTED anchor + EXAMPLES version to 26.10.12.
 - **Wave-9 closeout**: attach fresh-start replay law (`f760042` —
   attach_stream resets prev_tick/steps/marking so a re-attach replays
   the new stream from its own start); N17 ceiling-division flip
