@@ -29,6 +29,13 @@
 //!   * bits `7:0`   : activity id (verb); matched against transition `tid`
 //!   * bits `15:8`  : tick — must be exactly `prev_tick + 1 (mod 256)`
 //!
+//! # Model-relative trajectory identity
+//!
+//! The Model-Log Law is per-net: `tid` is the DFS index of the atom in the
+//! compiled net (positional), never an absolute or cross-model identifier —
+//! a trajectory is identified only relative to the net it was compiled
+//! against.
+//!
 //! # Step semantics (P3)
 //!
 //! One event word is consumed per step through the branchless PN64 step
@@ -425,10 +432,23 @@ impl ConformanceSession {
 
         // 4. Branchless commit over the selected lane; a declared, lawful
         //    lane that still refuses is out of the model's linear order.
+        //
+        // The refusal predicate is computed from the same arithmetic
+        // predicates `step_branchless` uses internally (verb match + token
+        // availability; the invariant law was already enforced above), NOT
+        // from word identity. A word-identity sentinel (`committed == sel`)
+        // misclassifies lawful self-loop firings — `W- == W+` leaves the
+        // marking bit-exact unchanged, so the fired word equals the
+        // unfired word — as a refusal. The token-availability predicate
+        // keeps the original law intact: an unchanged word on a
+        // NON-enabled firing still refuses, because `token_ok == 0` is
+        // exactly the not-enabled condition.
+        let verb_ok = pn64::ct_eq(u64::from(pn64::tid(sel)), u64::from(activity));
+        let token_ok =
+            pn64::ct_eq(u64::from(pn64::marking(sel) & pn64::pre(sel)), u64::from(pn64::pre(sel)));
+        let fired = verb_ok & token_ok;
         let committed = pn64::step_branchless(sel, word, self.forbidden_mask);
-        // A bit-exact unchanged word means the branchless step refused
-        // (not enabled) — the event is out of the model's linear order.
-        if pn64::ct_eq(committed, sel) == 1 {
+        if fired == 0 {
             return Err(ConformanceError::Skipped { step: self.steps_done });
         }
 
@@ -649,6 +669,65 @@ mod tests {
             YieldStatus::Violation(ConformanceError::Skipped { step }) => assert_eq!(step, 0),
             other => panic!("expected Skipped violation, got {other:?}"),
         }
+    }
+
+    // -- Self-loop sentinel regressions (SK8) -------------------------------
+
+    /// Direct-constructor helper (in-module: session fields are private).
+    /// `words` carry the initial marking in their PN64 marking field, as
+    /// `from_model` builds them; the live marking starts at `initial`.
+    fn session_with_net(words: Vec<u64>, initial: Marking64) -> ConformanceSession {
+        ConformanceSession {
+            net: CompiledNet { words, tids: vec![0] },
+            initial_marking: initial,
+            forbidden_mask: 0,
+            stream: Vec::new(),
+            cursor: 0,
+            steps_done: 0,
+            prev_tick: None,
+            marking: initial,
+            phase: Phase::Idle,
+        }
+    }
+
+    /// SK8 fix: a lawful self-loop firing (W- == W+, net word of the
+    /// 0x0000_0000_0001_0001 class) leaves the marking bit-exact unchanged,
+    /// so the old word-identity sentinel misread it as a refusal. It must
+    /// fire and reach Complete.
+    #[test]
+    fn self_loop_firing_completes_not_skipped() {
+        // One transition, self-loop on place 0: consumes and produces place 0.
+        let mut s = session_with_net(vec![pn64::pack(1, 1, 1, 0, 0)], 1);
+        s.attach_stream(&[event(0, 1), event(0, 2)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        match s.step_budget(10) {
+            YieldStatus::Complete(report) => {
+                assert_eq!(report.steps_executed, 2);
+                assert_eq!(report.final_marking, 1);
+            }
+            other => panic!("expected Complete, got {other:?}"),
+        }
+        assert_eq!(*s.phase(), Phase::Complete);
+        assert_eq!(s.marking(), 1);
+    }
+
+    /// SK8 companion: the original non-self-loop unchanged-word case — a
+    /// declared transition whose pre-place holds no token — must STILL be
+    /// refused as `Skipped`. The refusal now comes from the token
+    /// availability predicate, not word identity.
+    #[test]
+    fn unchanged_word_refusal_still_fires_for_not_enabled() {
+        // Transition 0 consumes place 1 only; the live marking is place 0.
+        let mut s = session_with_net(vec![pn64::pack(1, 0b0010, 0b0100, 0, 0)], 1);
+        s.attach_stream(&[event(0, 1)]).unwrap_or_else(|e| panic!("attach: {e}"));
+        match s.step_budget(10) {
+            YieldStatus::Violation(ConformanceError::Skipped { step }) => assert_eq!(step, 0),
+            other => panic!("expected Skipped violation, got {other:?}"),
+        }
+        // Frozen before any commit: the unfired word survives bit-exact.
+        assert!(matches!(s.phase(), Phase::Faulted(ConformanceError::Skipped { step: 0 })));
+        assert_eq!(s.marking(), 1);
+        assert_eq!(s.steps_done(), 0);
     }
 
     #[test]

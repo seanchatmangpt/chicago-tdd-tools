@@ -13,6 +13,16 @@
 //! All accessors are total and branch-light; no heap, no strings — the word is
 //! the whole state, suitable for dispatch tables and OCEL-style event streams.
 //! Zero dependencies, `no_std`-compatible (no alloc on hot paths).
+//!
+//! # 1-safe domain precondition
+//!
+//! The firing arithmetic uses bitwise OR semantics: a deposit into an
+//! already-occupied place *coalesces* (the two tokens become one), it does
+//! not accumulate. Token conservation (`|m'| == |m| - |W-| + |W+|`) and the
+//! standard 1-safe reasoning therefore hold only on the restricted domain of
+//! 1-safe nets — at most one token per place — where coalescing can never
+//! fire. The [`tests::fire_token_conservation`] guard below enumerates the
+//! conserved sub-domain explicitly.
 
 /// Low 16-bit field mask (marking, `W-`, `W+`).
 pub const MASK16: u64 = 0xFFFF;

@@ -410,7 +410,7 @@ fn assert_conforms_macro_panics_on_violation() {
     let mut s = three_atom();
     // Tampered stream: second event repeats tid 0 out of order — the session
     // verdict is not conforming even with a closed receipt.
-    s.attach_stream(&vec![event(0, 1), event(0, 2)]).expect("stream attaches");
+    s.attach_stream(&[event(0, 1), event(0, 2)]).expect("stream attaches");
     let _ = s.step_budget(16);
     chicago_tdd_tools::assert_conforms!(s, pass_receipt());
 }
@@ -441,4 +441,58 @@ fn fixture_dsl_declares_activities_in_order() {
     // Session compiles it into a 3-transition linear net.
     let s = ConformanceSession::from_model(&model).expect("compiles");
     assert_eq!(s.net().len(), 3);
+}
+
+// ---------------------------------------------------------------------------
+// 13. SK8 regressions: self-loop sentinel + model-relative trajectory identity
+// ---------------------------------------------------------------------------
+
+/// The unchanged-word refusal law holds at the public boundary: a declared
+/// activity replayed out of the model's linear order (its pre-place holds no
+/// token) is refused as `Skipped` even though the refusal predicate no longer
+/// relies on word identity. Companion to the in-module self-loop tests: a
+/// self-loop firing (W- == W+) also leaves the word unchanged but must COMMIT.
+#[test]
+fn unchanged_word_refusal_holds_at_public_boundary() {
+    let mut s = three_atom();
+    // tid 1 is declared but place 1 holds no token yet => Skipped.
+    s.attach_stream(&[event(1, 1)]).expect("stream attaches");
+    match s.step_budget(16) {
+        YieldStatus::Violation(ConformanceError::Skipped { step }) => assert_eq!(step, 0),
+        other => panic!("expected Skipped, got {other:?}"),
+    }
+    // Frozen before any commit.
+    assert_eq!(s.marking(), 1);
+    assert_eq!(s.steps_done(), 0);
+}
+
+/// Model-relative trajectory identity: `tid` is the DFS index of the atom in
+/// the compiled net (positional), never absolute. The same activity byte is
+/// lawful in one net and refused in another compiled from a different model.
+#[test]
+fn trajectory_identity_is_model_relative_not_absolute() {
+    // One-atom model: only tid 0 exists; event tid 1 is Undeclared.
+    let src_single = "activity only = sys.only\n\nsequence {\n    only\n}\n";
+    let (path, _dir) = write_powl_fixture("single.powl", src_single);
+    let mut single = session_from_file(&path);
+    single.attach_stream(&[event(1, 1)]).expect("stream attaches");
+    match single.step_budget(16) {
+        YieldStatus::Violation(ConformanceError::Undeclared { step, tid }) => {
+            assert_eq!((step, tid), (0, 1));
+        }
+        other => panic!("expected Undeclared, got {other:?}"),
+    }
+
+    // Two-atom model: tid 1 is declared, but positionally second — firing it
+    // first is out of the model's linear order, so it is still refused.
+    let src_pair = "activity first = sys.first\n\
+                    activity second = sys.second\n\n\
+                    sequence {\n    first\n    second\n}\n";
+    let (path2, _dir2) = write_powl_fixture("pair.powl", src_pair);
+    let mut pair = session_from_file(&path2);
+    pair.attach_stream(&[event(1, 1)]).expect("stream attaches");
+    match pair.step_budget(16) {
+        YieldStatus::Violation(ConformanceError::Skipped { step }) => assert_eq!(step, 0),
+        other => panic!("expected Skipped, got {other:?}"),
+    }
 }
