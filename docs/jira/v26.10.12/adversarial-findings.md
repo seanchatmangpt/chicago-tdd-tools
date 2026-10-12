@@ -418,6 +418,12 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   referenced the uncompilable `chicago_tdd_tools::fixture::` module; fixed
   to `core::fixture` (afb14e2).
 - CLOSED: swarm_coordination.rs cryptographic-receipts residual.
+- QUEUED (W27-CLOSING, registered late): validate.rs JSON-loader re-check -
+  from_powl_json does NOT resolve activity references (runtime-verified: an
+  undeclared activity in JSON loads and passes validate); the fail-closed
+  layering holds only for the text entry point. In-source note at
+  src/conformance/validate.rs:10-13 + walk body. Work order: re-check in
+  validate() or resolve in the JSON loader.
 - QUEUED (operator): README quick-start example missing_docs deny
   interaction — the rewritten assertion compiles, but a fresh-copy user may
   still hit `missing_docs` on the test file (probe finding; needs either a

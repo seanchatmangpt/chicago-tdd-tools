@@ -48,9 +48,7 @@ test!(test_bad, {
 test!(test_good, {
     let result = validate(invalid_input);
     assert_err!(&result);
-    // W27 probe note: the original snippet double-called unwrap_err(), which
-    // consumes self (E0382) — bind the error once, then assert on it.
-    let err = result.unwrap_err();
+    let err = result.unwrap_err(); // bind once — unwrap_err consumes self (E0382)
     assert_eq!(err.kind(), ValidationError);
     assert!(err.to_string().contains("empty"));
 });
