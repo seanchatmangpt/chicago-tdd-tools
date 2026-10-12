@@ -49,9 +49,9 @@
 //!   `payment_elimination`, `settlement_prepare`, `settlement_commit`,
 //!   `settlement_seal`); no `intake_pacs008` name appears in the landed
 //!   fixture — that earlier claim was stale.
-//! * Master/placeholder phases 3, 6, 8 are NOT tested (phase 9/10 have dedicated courts): their models are not
-//!   landed (only `phase3_pending`/`phase6_pending`/`phase10_pending` marker
-//!   events inside `master_trace.ocel.json`).
+//! * Phases 3, 6, 8 have full golden + violation courts in this file
+//!   (`phase3_capital.powl`, `phase6_treasury.powl`, `phase8_statutory.powl`
+//!   are landed); phase 9/10 have dedicated compile-refusal courts.
 //!
 //! Real collaborators, no mocks (Chicago): real POWL files, real OCEL JSON, a
 //! real import/pack/unpack boundary, a real replay. No `println!`.

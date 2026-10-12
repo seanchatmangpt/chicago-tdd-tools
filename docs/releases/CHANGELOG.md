@@ -122,10 +122,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed); nextest install added to the CI assurance-integration
   job; N12 registry-sweep flake ROOT-CAUSED (first monotonic sample of
   a process can lawfully be 0; guard replaced with the sample-domain
-  law); test-assurance-integration extended to 16 suites (all
-  previously local-only tests now CI-gated; v1_3_0_integration
-  deliberately excluded — legacy snapshot expects retired redaction
-  placeholders, re-mint is an operator decision); ERRC: 3 orphan bins,
+  law); test-assurance-integration extended to 16 suites at wave-12
+  (all previously local-only tests then CI-gated; the recipe is 14
+  legs at wave-20 after the W10 re-mint brought v1_3_0_integration
+  back in); ERRC: 3 orphan bins,
   3 zero-use macros, check-dog-fooding.sh retired; NOMRG charter marked
   DRAFT/UNSUPPORTED; TEST_INFRA.md marked HISTORICAL; OCEL discovery
   claim narrowed to the real surface; SLA_REFERENCE brought to ground
