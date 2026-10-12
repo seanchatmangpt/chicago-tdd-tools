@@ -611,8 +611,46 @@ fn n13_wcet_static_table_leg_is_always_run_and_measured_leg_is_tier3() {
         WCET_SRC.contains("const BRANCHLESS_TOTAL: u32 = 35;")
             && WCET_SRC.contains("const BRANCHLESS_DEPTH: u32 = 12;")
             && WCET_SRC.contains("const SPEC_TARGET_CYCLES: u32 = 12;"),
-        "N13 static WCET table must publish the 35-op / depth-12 / <=12-cycle figures"
+        "N13 static WCET table must publish the 35-op / depth-12 / <=12-cycle figures",
     );
+
+    // Behavioral cross-check (arithmetic court). The wcet module exposes no
+    // public items, so the table fn itself cannot be invoked from an
+    // integration test; instead derive the kernel row's total two independent
+    // ways from the module source and require both to agree with the pinned
+    // const — if the OpRow literal, the published doc table, or the const
+    // drifts apart from the others, this fails.
+    //
+    // 1. Sum the fields of the `const BRANCHLESS: OpRow = OpRow { .. }`
+    //    literal and require it to equal BRANCHLESS_TOTAL.
+    let row_at = WCET_SRC
+        .find("const BRANCHLESS: OpRow = OpRow {")
+        .expect("BRANCHLESS OpRow literal must exist");
+    let row = &WCET_SRC[row_at..row_at + WCET_SRC[row_at..].find("};").expect("literal closes")];
+    // The only digit runs inside the literal are the field values
+    // (6, 14, 6, 6, 3); `..OpRow::EMPTY` carries none.
+    let row_total: u64 = parse_doc_table_numbers(row).iter().sum();
+    assert_eq!(row_total, 35, "sum of BRANCHLESS OpRow fields must equal the pinned 35");
+
+    // 2. Sum the per-column totals of the published doc table's total row
+    //    (`| **total** | **6** |**14**|**6**|**6**|**3**| = 35`) and require
+    //    the sum AND the stated figure to equal 35.
+    let total_row_at = WCET_SRC.find("| **total** |").expect("doc table total row");
+    let total_row = &WCET_SRC[total_row_at..WCET_SRC.len().min(total_row_at + 120)];
+    let nums: Vec<u64> = parse_doc_table_numbers(total_row);
+    assert_eq!(nums.len(), 6, "total row must carry 5 column totals plus the grand total");
+    let column_sum: u64 = nums[..5].iter().sum();
+    assert_eq!(column_sum, 35, "doc-table column totals must sum to 35");
+    assert_eq!(nums[5], 35, "doc-table grand total must state 35");
+}
+
+/// Extract the integers from a doc-table row like
+/// `| **total** | **6** |**14**|**6**|**6**|**3**| = 35`.
+fn parse_doc_table_numbers(row: &str) -> Vec<u64> {
+    row.split(|c: char| !c.is_ascii_digit())
+        .filter(|tok| !tok.is_empty())
+        .filter_map(|tok| tok.parse::<u64>().ok())
+        .collect()
 }
 
 #[test]

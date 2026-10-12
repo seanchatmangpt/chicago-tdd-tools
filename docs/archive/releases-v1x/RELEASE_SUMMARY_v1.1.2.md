@@ -130,7 +130,7 @@ cargo make check-examples
 ## Support
 
 For issues or questions about this release, please:
-- Check the [documentation](../README.md)
+- Check the [documentation](../../README.md)
 - Review the [CHANGELOG](../../releases/CHANGELOG.md)
 - Open an issue on GitHub
 

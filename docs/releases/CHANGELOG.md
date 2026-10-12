@@ -29,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [26.10.12] continued - 2026-10-11
 Endgame audit-wave convergence (`8ab234a` + `1fc1c72`, wave 1; `5189603`,
-wave 2): 20-lane adversarial audit with repairs, all with on-disk test
-receipts.
+wave 2; `70575e8` + `e465c1a`, wave 3): 20-lane adversarial audit with
+repairs, all with on-disk test receipts.
 
 ### Added
 - **Prelude assert macros**: prelude gains 8 new assert macros
@@ -87,8 +87,28 @@ receipts.
   historical; sector_stacks/ARCHITECTURE/GETTING_STARTED/FMEA claims
   corrected; advanced_features example emits stdout; weaver runbook
   strings corrected.
+- **Pre-commit hook BRE fix** (`e465c1a`): `scripts/hooks/pre-commit` used
+  `\.unwrap\(\)`, whose `.` matched any `.unwrap*` prefix and whose BRE
+  group mis-parsed under `grep`; ugrep hard-errors on the pattern. Rewritten
+  as `[.]unwrap[(` with the installed copy refreshed; self-test proof
+  documented in the hook.
+- **Testcontainers retry sleeps** (`e465c1a`): retry backoff sleeps now use
+  `CONTAINER_RETRY_INITIAL_DELAY_MS`; 2 dead delay consts removed
+  (`src/integration/testcontainers/mod.rs`).
+- **fail_fast ReceiptData docs** (`e465c1a`): field docs state the real
+  shape contract honestly (`src/core/fail_fast.rs`).
+- **Annealing doctrine landed** (`70575e8` + `e465c1a`):
+  `docs/process/ANNEALING_DOCTRINE.md` (entropy-cascade failure model, ERRC
+  asymmetry, mechanical-annealing saturation law, TRIZ bindings) + repo
+  clauses in root `CLAUDE.md` (affi-sovereign CLI, court vacuity sweeps,
+  skeptic lanes never grade their own builders); TTL `AnnealingVibration`
+  admitted to the doctrine projection (primitives=27, IN_SYNC).
 - **NATO dossier re-sealed** (`5189603`): dossier re-sealed over the real
-  N08/N12/N14/N15 receipts (previously control-set stand-ins).
+  N08/N12/N14/N15 receipts (previously control-set stand-ins); receipts-parity
+  closure witnessed — re-minted receipts byte-identical, `dossier verify` ok
+  over the real receipt set (`e465c1a`).
+- **Examples docs** (`e465c1a`): `examples/README.md` gains a star-toml
+  section and a conformance feature-flag row.
 - **Debris removed**: `operator_registry.rs.backup`, `wip/`,
   `check_output.txt`; `__pycache__/` gitignored.
 
@@ -323,7 +343,7 @@ This release extends the μ-kernel verification substrate with production-grade 
 - [Phase 3 Summary](../archive/PHASE_3_SUMMARY.md)
 - [Phase 4 Summary](../archive/PHASE_4_SUMMARY.md)
 - [RDF Integration Summary](../process/RDF_INTEGRATION_SUMMARY.md)
-- [Release Notes](archive/releases-v1x/RELEASE_NOTES_v1.4.0.md)
+- [Release Notes](archive/releases-v1x/ANNOUNCEMENT_v1.4.0.md)
 
 ## [1.3.0] - 2025-11-16
 
@@ -430,7 +450,7 @@ This release transforms Chicago TDD Tools from a "great testing framework" into 
 - [Feature Documentation](../features/HYPER_ADVANCED_MICROKERNEL.md)
 - [Integration Tests](../../tests/hyper_advanced_integration.rs)
 - [Example Program](../../examples/hyper_advanced_microkernel.rs)
-- [Release Notes](archive/releases-v1x/RELEASE_NOTES_v1.3.0.md)
+- [Release Notes](archive/releases-v1x/ANNOUNCEMENT_v1.3.0.md)
 
 ## [1.2.0] - 2025-11-14
 

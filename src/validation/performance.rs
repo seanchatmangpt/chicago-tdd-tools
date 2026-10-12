@@ -630,10 +630,21 @@ mod tests {
             spins = spins.wrapping_add(1);
         }
 
-        // Act & Assert: true branch (budget exhausted)
+        // Act & Assert: true branch (budget exhausted by real elapsed time)
         assert!(counter.exceeds_budget(0));
-        // Act & Assert: false branch (max budget can never be exceeded)
-        assert!(!counter.exceeds_budget(u64::MAX));
+
+        // Boundary semantics (pinned): `exceeds_budget` compares with strict
+        // `elapsed > budget` (see TickCounter::exceeds_budget), so elapsed ==
+        // budget must report false — "exactly at budget" is within budget.
+        // Pin elapsed at exactly 0 by constructing a counter whose start is
+        // u64::MAX/2 ticks in the future; `elapsed_ticks` saturating_subs, so
+        // the boundary case elapsed == budget == 0 is deterministic, not a
+        // race against the clock.
+        let at_boundary = TickCounter { start_ticks: TickCounter::read_ticks() + u64::MAX / 2 };
+        assert_eq!(at_boundary.elapsed_ticks(), 0);
+        assert!(!at_boundary.exceeds_budget(0), "elapsed == budget must NOT count as exceeded");
+        // One below elapsed (elapsed 0 vs budget u64::MAX): never exceeds.
+        assert!(!at_boundary.exceeds_budget(u64::MAX));
     }
 
     #[test]

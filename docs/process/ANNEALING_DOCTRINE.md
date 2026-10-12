@@ -61,7 +61,7 @@ defects you have not yet observed.
 | Contradiction | Principle | Mechanism |
 |---|---|---|
 | N-lane speed ∥ one-truth | 17 Space division | Lane leases, coordinator-owned git |
-| Thoroughness ∥ no false confidence | 3 Local quality | Skeptic-pairing (audit lanes never grade their own builders) |
+| Thoroughness ∥ no false confidence | 3 Local quality | Skeptic-pairing (audit lanes never grade their own builders; process discipline, no hook) |
 | Coverage ∥ no vacuous pass | 5 Merging | Concurrent Audit/Mutate/Repair/Verify on one tree |
 | Entropy removal ∥ growth | 1 Segmentation | ERRC asymmetry dispatch order |
 

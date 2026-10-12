@@ -450,7 +450,7 @@ impl TaskReceipt {
             return Err("Invalid signature".to_string());
         }
         let expected = self.hmac_hex(key.as_bytes());
-        if expected != *sig {
+        if !ct_eq_str(expected.as_bytes(), sig.as_bytes()) {
             return Err("Invalid signature".to_string());
         }
         Ok(())
@@ -529,9 +529,22 @@ impl TaskReceipt {
     }
 }
 
+/// Constant-time equality over two byte strings (e.g. a computed and a
+/// stored hex signature): XOR-accumulates over `min(a.len(), b.len())`
+/// without data-dependent branching, then folds in a length check.
+/// Mirrors the pn64 `ct_eq` idiom.
+fn ct_eq_str(a: &[u8], b: &[u8]) -> bool {
+    let mut diff = 0u64;
+    for i in 0..a.len().min(b.len()) {
+        diff |= (a[i] ^ b[i]) as u64;
+    }
+    diff |= (a.len() ^ b.len()) as u64;
+    diff == 0
+}
+
 #[cfg(test)]
 mod task_receipt_tests {
-    use super::TaskReceipt;
+    use super::{ct_eq_str, TaskReceipt};
 
     fn receipt() -> TaskReceipt {
         TaskReceipt {
@@ -547,6 +560,26 @@ mod task_receipt_tests {
         let mut r = receipt();
         r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
         assert!(r.validate_with_key("secret-key").is_ok());
+    }
+
+    #[test]
+    fn test_constant_time_compare_rejects_forgery_accepts_truth() {
+        let mut r = receipt();
+        r.sign("secret-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        let real = r.signature.clone().unwrap_or_default();
+        // Correct signature passes the constant-time comparison.
+        assert!(r.validate_with_key("secret-key").is_ok());
+        // A forged signature (wrong-key HMAC, same length) must fail.
+        let mut forged = r.clone();
+        forged.sign("attacker-key").unwrap_or_else(|e| panic!("sign failed: {e}"));
+        let forged_sig = forged.signature.as_deref().unwrap_or_default();
+        assert_ne!(real, forged_sig, "different keys must produce different sigs");
+        r.signature = Some(forged_sig.to_string());
+        let err = r.validate_with_key("secret-key").unwrap_err();
+        assert!(err.contains("Invalid signature"), "got: {err}");
+        // Directly: ct_eq_str agrees in both directions.
+        assert!(ct_eq_str(real.as_bytes(), real.as_bytes()));
+        assert!(!ct_eq_str(real.as_bytes(), forged_sig.as_bytes()));
     }
 
     #[test]

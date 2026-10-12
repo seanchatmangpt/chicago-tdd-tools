@@ -522,10 +522,30 @@ mod proptest_tests {
 
     #[test]
     fn test_proptest_strategy_max_shrink_iters_plumb_through() {
+        // The cap must be observable in the runner the strategy actually
+        // builds: `with_max_shrink_iters` writes `config.max_shrink_iters`,
+        // and `build_runner` hands that `Config` clone to the `TestRunner`,
+        // so `runner.config()` must report the configured value (not the
+        // proptest default of 4096). Also pin the default differs, so this
+        // assert cannot pass vacuously.
         let strategy = ProptestStrategy::new()
             .with_cases(DEFAULT_PROPERTY_TEST_CASES)
             .with_max_shrink_iters(1_000);
-        // Trivially-true property passes with max_shrink_iters set
+        assert_eq!(strategy.config.max_shrink_iters, 1_000, "builder must store the cap");
+        assert_ne!(
+            strategy.config.max_shrink_iters,
+            proptest::test_runner::Config::default().max_shrink_iters,
+            "1_000 must differ from the proptest default or the assert is vacuous"
+        );
+        let runner = strategy.build_runner();
+        assert_eq!(
+            runner.config().max_shrink_iters,
+            1_000,
+            "configured shrink cap must reach the TestRunner config"
+        );
+        assert_eq!(runner.config().cases, DEFAULT_PROPERTY_TEST_CASES, "cases must plumb too");
+
+        // The trivially-true property still passes under the capped runner.
         strategy.test(any::<u32>(), |x| x.wrapping_add(0) == x);
     }
 }

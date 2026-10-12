@@ -78,7 +78,7 @@ runtime, never returned by an ABI fn in v1).
 | 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` slots occupied |
 | 9 | `ERR_BAD_HANDLE` | handle is free, out of range, or generation-stale |
 | 10 | `ERR_STREAM_EMPTY` | attach of a zero-length stream |
-| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length |
+| 11 | `ERR_CAP_TOO_SMALL` | capacity below the record's fixed length, or the out-buffer span falls at/past the installed linear-memory bound |
 | 12 | `ERR_SEAL_UNAVAILABLE` | sealing requested without the `ledger` feature |
 | 13 | `ERR_STREAM_ALIGNMENT` | stream byte length not a multiple of 8 |
 

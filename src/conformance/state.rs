@@ -111,8 +111,11 @@ impl StateSpace {
         enabled
     }
 
-    /// Fires transition `tid` at `m`, returning `None` if it is not enabled
-    /// or the successor marking intersects the forbidden mask.
+    /// Fires transition `tid` at `m`, returning `None` when it is not
+    /// enabled, the successor marking intersects the forbidden mask, OR
+    /// `tid` is undeclared (the [`ConformanceError::Undeclared`] typed
+    /// refusal collapses to `None` here — prefer [`StateSpace::try_fire`]
+    /// when the distinction matters).
     #[must_use]
     pub fn fire(&self, m: Marking64, tid: u8) -> Option<Marking64> {
         self.try_fire(m, tid).ok()
