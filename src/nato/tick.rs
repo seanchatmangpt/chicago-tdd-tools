@@ -738,9 +738,9 @@ pub(crate) fn n12_positive_control() -> bool {
         let s = mutant.tick();
         // Law: the mutant admits every sample the gate refuses. Pin the
         // sample to the source's domain {a, b} — an `> 0` guard would
-        // misfire on a lawfully-zero first epoch sample (a == 0 is legal
-        // when the first monotonic read lands on the process-start
-        // instant; the gate's own b < a ordering is what matters).
+        // misfire on a lawfully-zero `b` (only the FIRST epoch sample can
+        // be zero; `a > b` is guaranteed by forward_chain's strict-advance
+        // law, so `a` itself is never the zero sample).
         assert!(
             s.as_nanos() == a || s.as_nanos() == b,
             "mutant source returned a sample outside its declared domain"
