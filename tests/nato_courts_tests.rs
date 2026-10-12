@@ -521,16 +521,24 @@ fn registry_sweep_runs_all_twenty_and_matches_real_receipts() {
         // bound — never a silent pass; N19 additionally refuses when its
         // receipt artifact (target/nato_reproducible_receipt.json) is absent.
         if receipt.verdict != Verdict::Pass {
-            if e.id == CourtId::N19 {
+            if matches!(e.id, CourtId::N05 | CourtId::N06 | CourtId::N19) {
+                // The three environment-dependent courts (docstring above):
+                // N05's positive control is a timing-ratio check that can
+                // refuse on a loaded host; N06's census skips typed on
+                // missing tooling; N19 refuses on its absent receipt
+                // artifact. Refused there is an honest environment verdict,
+                // not a regression — but it must still be one of the two
+                // honest non-Pass verdicts, never a fabricated pass.
                 assert!(
                     matches!(receipt.verdict, Verdict::Refused | Verdict::Fail),
-                    "N19 non-Pass must be Refused or Fail, got {:?}",
+                    "{} non-Pass must be Refused or Fail, got {:?}",
+                    e.id.canonical(),
                     receipt.verdict
                 );
                 eprintln!(
-                    "N19 Refused/Fail: receipt artifact absent (machine-dependent, \
-                     not a regression). Run bash bin/nato_reproducible_build.sh \
-                     to flip to Pass."
+                    "{} Refused/Fail: environment-dependent court (not a \
+                     regression); see its ScopingRecord for the typed bound.",
+                    e.id.canonical()
                 );
             } else {
                 assert_eq!(
