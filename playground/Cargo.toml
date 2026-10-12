@@ -39,7 +39,6 @@ chicago-tdd-tools = { path = "..", version = "26.10.12", features = [
     "async",            # Async fixture providers (Rust 1.75+)
     "mutation-testing", # Mutation testing (no external deps)
     "benchmarking",     # Criterion benchmarking support
-    "workflow-engine",  # Workflow-specific features
     "logging",          # Log crate integration (enabled by default)
 ] }
 

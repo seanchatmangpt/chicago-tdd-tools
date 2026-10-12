@@ -37,12 +37,12 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
       - name: Quick-guide copy drift guard (heading sequence; body links intentionally differ)
         run: |
           diff <(grep -E "^#{1,4} " docs/getting-started/QUICK_GUIDE.md) <(grep -E "^#{1,4} " application-guide/src/reference/quick-guide.md) || { echo "::error::quick-guide.md copy heading structure has drifted from canonical QUICK_GUIDE.md"; exit 1; }
-
-      - name: Checkout code
-        uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

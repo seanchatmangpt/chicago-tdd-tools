@@ -33,7 +33,7 @@ crate):
 
 | Export | C signature | Purpose |
 |---|---|---|
-| `ctt_guest_abi_version` | `() -> u32` | Probe; returns `ABI_VERSION = 2` |
+| `ctt_guest_abi_version` | `() -> u32` | Probe; returns `ABI_VERSION = 2` by default (1 under `guest-abi-v1`) |
 | `ctt_session_new` | `(net_buf: *const u8, net_len: u32, out_handle: *mut u64) -> i32` | Parse, validate, and compile a wire-format model buffer into a `ConformanceSession` in a table slot |
 | `ctt_session_attach` | `(handle: u64, stream_ptr: *const u8, stream_len: u32) -> i32` | Bind a flat LE `u64` OCEL64 event stream (length must be a multiple of 8, nonempty) |
 | `ctt_session_step` | `(handle: u64, quota: u32, out_status: *mut u8, out_cap: u32) -> i32` | Replay at most `quota` events; write the fixed 21-byte step status record |

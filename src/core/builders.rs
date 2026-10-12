@@ -239,6 +239,7 @@ impl TestDataBuilder {
     ///
     /// ```rust
     /// use chicago_tdd_tools::builders::TestDataBuilder;
+    /// use chicago_tdd_tools::BuilderError;
     ///
     /// let result = TestDataBuilder::new()
     ///     .with_validation(|data| {
@@ -489,6 +490,7 @@ impl TestDataBuilder {
     ///
     /// ```rust
     /// use chicago_tdd_tools::builders::TestDataBuilder;
+    /// use chicago_tdd_tools::BuilderError;
     ///
     /// let result = TestDataBuilder::new()
     ///     .with_validation(|data| {

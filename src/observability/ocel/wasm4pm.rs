@@ -15,6 +15,14 @@ impl Witness for TestSuiteWitness {
     const YEAR: Option<u16> = None;
 }
 
+/// Typed error for `OCEL` log sealing (`DoD` §2.3 typed-error wave).
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum SealError {
+    /// The collector event mutex was poisoned (a prior panicked holder).
+    #[error("ocel seal lock error: {0}")]
+    Lock(String),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TestEventRefusal {
     MissingCaseId,
@@ -54,14 +62,14 @@ impl OcelCollector {
 /// a hex-encoded digest string.
 ///
 /// # Errors
-/// Returns an error if the log cannot be sealed.
+/// Returns [`SealError::Lock`] if the collector event mutex is poisoned.
 pub fn seal_run(
     collector: &OcelCollector,
     _run_id: RunId,
-) -> Result<(Evidence<OcelLog, Receipted, TestSuiteWitness>, String), String> {
+) -> Result<(Evidence<OcelLog, Receipted, TestSuiteWitness>, String), SealError> {
     let mut log = OcelLog::new();
     {
-        let events_guard = collector.events.lock().map_err(|e| e.to_string())?;
+        let events_guard = collector.events.lock().map_err(|e| SealError::Lock(e.to_string()))?;
         for (i, ev) in events_guard.iter().enumerate() {
             let id = format!("evt_{i:03}");
             let _ = log.events.insert(id, ev.inner().clone());

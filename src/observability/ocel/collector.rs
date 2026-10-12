@@ -89,8 +89,8 @@ impl DiagnosticSink for OcelCollector {
     }
 
     fn close(&self, summary: RunSummary) -> Result<(), GovernanceError> {
-        let (receipted_log, digest_hex) =
-            seal_run(self, summary.run_id.clone()).map_err(GovernanceError::Seal)?;
+        let (receipted_log, digest_hex) = seal_run(self, summary.run_id.clone())
+            .map_err(|e| GovernanceError::Seal(e.to_string()))?;
 
         if let Some(path) = &self.ocel_output_path {
             let log_json = serde_json::to_string_pretty(receipted_log.inner())
