@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [26.10.12] - 2026-10-11
 ### Added
 - **Temprun guest bridge** (BEAM gen_statem worker + wasmi host bridge, landed
-  in strata @ 1ac493d as host binary `temprun_step`): 4-byte little-endian
+  in strata (host binary `temprun_step`; rebased to guest ABI v2 in strata `59ed80c`): 4-byte little-endian
   framed port protocol with cooperative reduction yields; CTT-side the guest
   ABI surface (`src/conformance/guest.rs`) and `crates/ctt-wasm-guest/` are
   part of this train. Tracked in `docs/jira/v26.10.11/000-temprun-guest.md`.
@@ -29,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [26.10.12] continued - 2026-10-11
 Endgame audit-wave convergence (`8ab234a` + `1fc1c72`, wave 1; `5189603`,
-wave 2; `70575e8` + `e465c1a`, wave 3): 20-lane adversarial audit with
-repairs, all with on-disk test receipts.
+wave 2; `70575e8` + `e465c1a`, wave 3; `2c80a9e`, wave 4; strata `59ed80c` rebase; `451f4a8`, wave 5): 20-lane
+adversarial audit with repairs, all with on-disk test receipts.
 
 ### Added
 - **Prelude assert macros**: prelude gains 8 new assert macros
@@ -109,6 +109,34 @@ repairs, all with on-disk test receipts.
   over the real receipt set (`e465c1a`).
 - **Examples docs** (`e465c1a`): `examples/README.md` gains a star-toml
   section and a conformance feature-flag row.
+- **W-NTW court registry** (`2c80a9e`): `impl Court` for all 15 harness
+  courts N05-N19; `COURT_REGISTRY` `[CourtEntry; 20]` canonical order;
+  falsifier `registry_sweep_runs_all_twenty_and_matches_real_receipts`
+  (honest typed skips, on-disk field agreement for the emitter-carve-out
+  courts, never persists); pillar alignment to emitter receipts.
+- **Guest ABI v2 core** (`2c80a9e`): `SEAL_PREIMAGE_V2_LEN = 58` (v1
+  reserved field consumed by the 32B module-digest lane);
+  `ABI_VERSION = 2`; errnos 14-16; telemetry migrated; M2 falsifier
+  (distinct digests -> distinct seals). Strata `59ed80c` rebased the
+  temprun bridge to v2.
+- **Clippy `--all-targets` zeroed** (`451f4a8`): ~100 errors across 5
+  test/example files fixed — `tests/adversarial_as4.rs` (38: file-level
+  allows with JUSTIFICATION for FFI cast/pointer plumbing + mechanical
+  stale-code fixes), `tests/blake3_receipt_tests.rs` (~50: literal
+  separators, doc_markdown backticks, justified low-byte cast),
+  `tests/merger_conformance_tests.rs`, `examples/conformance_quickstart.rs`
+  and `tests/prelude_surface_tests.rs` (13 more).
+- **N06 census target dir** (`451f4a8`): `scripts/n06_disasm_audit.sh`
+  census target moved to `target/n06-lanes` (rust-cache-coverable); the
+  `/tmp` default was cold on every CI run against the 300s recipe SLA —
+  warm census now 0.62s. Lane-artifact default moved to `docs/lanes/`.
+- **N06 skip-law documented** (`451f4a8`): typed skip -> `Verdict::Fail`
+  stated at 3 sites (`docs/features/NATO_COURTS.md`, execution how-to,
+  `src/nato/disasm.rs` `DisasmCourt` docs).
+- **Falsifier determinism note** (`451f4a8`): N05 statistical / N06 host /
+  N19 artifact sweep determinism disclosed; N19 flip command now eprintln'd.
+- **Telemetry doc reflow** (`451f4a8`): `write_event_words` docs split into
+  two coherent paragraphs.
 - **Debris removed**: `operator_registry.rs.backup`, `wip/`,
   `check_output.txt`; `__pycache__/` gitignored.
 
@@ -140,6 +168,10 @@ repairs, all with on-disk test receipts.
   lint` clean; merger 25/0; ledger_tests 25/0; conformance_tests 23/0;
   guest_abi 14/0; `just release-validate-version`: consistent 26.10.12
   (3 sites).
+- Wave-5 gates (`451f4a8`): nato lib 853/0; nato_courts_tests 15/0; blake3
+  17/0; merger 25/0; adversarial_as4 4/0; `just lint` clean; n06 census
+  0.62s warm on `target/n06-lanes`; receipts writer set = lawful 5
+  (re-enumerated).
 
 ### Security
 - **Forgeable TaskReceipt embedded-key signature retired**: receipt

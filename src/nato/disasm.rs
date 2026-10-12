@@ -245,7 +245,7 @@ pub(crate) fn n06_positive_control() -> bool {
 
 /// N06 — branchless disassembly court (W-NTW §2 adapter, mils template).
 /// Verdict law: only a real `Pass` passes; a typed skip is `Verdict::Fail`
-/// + `ScopingRecord` disclosure..
+/// + `ScopingRecord` disclosure.
 pub struct DisasmCourt;
 
 /// Court identity constants.

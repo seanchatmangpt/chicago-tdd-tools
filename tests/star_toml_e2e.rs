@@ -745,7 +745,11 @@ chicago_tdd_tools::test!(test_b2_large_file_parsing, {
     let path = temp_dir.join("large_config.toml");
     let mut content = String::from("name = \"app\"\nworkers = 4\n");
     for i in 0..5000 {
-        content.push_str(&format!("unrelated_key_{i} = {i}\n"));
+        content.push_str("unrelated_key_");
+        content.push_str(&i.to_string());
+        content.push_str(" = ");
+        content.push_str(&i.to_string());
+        content.push('\n');
     }
     content.push_str("[server]\nhost = \"127.0.0.1\"\nport = 8080\n");
     std::fs::write(&path, content).unwrap();
@@ -1066,5 +1070,5 @@ fn test_observability_configuration_load() {
         ObservabilityTest::with_config(config).expect("Failed to initialize ObservabilityTest");
 
     let result = test.validate_span(&span);
-    assert!(result.is_ok(), "Configuration load span validation failed: {:?}", result);
+    assert!(result.is_ok(), "Configuration load span validation failed: {result:?}");
 }

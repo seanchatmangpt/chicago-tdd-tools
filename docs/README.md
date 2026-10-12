@@ -168,6 +168,7 @@ docs/
 ├── diagrams/            # PlantUML diagrams
 ├── diataxis/            # Cross-product Diátaxis suite (20 docs, 5 topics × 4 types)
 ├── nato/                # NATO STANAG 4107 dossier
+├── lanes/               # Lane-result artifacts (N06 census); NOT court receipts
 └── receipts/            # Court-receipt JSONs (N01–N20)
 ```
 

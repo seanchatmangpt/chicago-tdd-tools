@@ -425,7 +425,7 @@ fn harness_error_display_is_diagnostic() {
     assert!(not_found.to_string().contains("some-tool"));
     assert!(not_found.to_string().contains("binary not found"));
 
-    let io = CliHarnessError::Io(std::io::Error::new(std::io::ErrorKind::Other, "boom"));
+    let io = CliHarnessError::Io(std::io::Error::other("boom"));
     assert!(io.to_string().contains("boom"));
 }
 

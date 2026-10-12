@@ -95,7 +95,7 @@ fn main() {
     }
 
     let mut config_paths = Vec::new();
-    let mut args = std::env::args().peekable();
+    let mut args = std::env::args();
     args.next(); // Skip binary name
     while let Some(arg) = args.next() {
         if arg == "--config" {

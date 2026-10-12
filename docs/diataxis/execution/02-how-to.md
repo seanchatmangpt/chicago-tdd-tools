@@ -107,9 +107,10 @@ What it does:
    inlined `step_branchless` body), and censuses conditional branches
    (`b.*`, `cbz/cbnz`, `tbz/tbnz` on arm64). Bound: **zero**.
 
-Output: typed JSON receipt at `$N06_OUT` (default `docs/receipts/N06.json`), deserializable
+Output: typed JSON receipt at `$N06_OUT` (default `docs/lanes/N06_disasm.json`), deserializable
 into `src/nato/disasm.rs::N06Receipt`. Statuses: `PASS` (every executed tier at census 0),
-`SKIPPED` (a tier could not run, typed reason; executed tiers still 0), `FAIL` (a nonzero
+`SKIPPED` (a tier could not run, typed reason; executed tiers still 0), `FAIL`. A `SKIPPED` receipt is honest evidence, not a pass: the court
+maps it to `Verdict::Fail` carrying the typed skip disclosure (a nonzero
 census or the audit itself broke).
 
 Override the target dir or output:
