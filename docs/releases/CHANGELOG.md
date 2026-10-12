@@ -77,6 +77,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   HISTORICAL; findings register: core::receipt partial-signature
   surface + TempWorkspace drop-cleanup gap + type_level docs-grade
   surface queued.
+- **Wave-19 addendum** (`ee58227`/`0edb917`/`a928e80`/`cccfdf0`/
+  `787660f`): N04 audit-scope boundary disclosed in-source + entropy.rs
+  added to the scan (15/26 modules); findings register W15 additions;
+  playground hallucinated-macro cite corrected; mcp echo_bin lock-wait
+  disclosed; wave-15/16 repairs — pinning-page truth, SLA residuals,
+  kat scoping text 128 flips, wcet fraction 2%, benchmark CI
+  cargo-make install removed, master.powl Wave-4 clause removed,
+  ledger stale pending-line fixed.
 - **Wave-17 closeout** (`991885e`/`e520f4f`/`27ed91b`, wave-12
   `b45c4fe`): audit repairs — swarm member/composition module docs
   corrected to passive-record truth; max_run_len/max_batch_size

@@ -73,7 +73,7 @@
 //! status `ERR_STREAM_EMPTY`). A byte length that is not a multiple of 8 is
 //! `ERR_TRUNCATED`.
 //!
-//! # Step status record v1 (`ctt_session_step` out-buffer)
+//! # Step status step record (ABI v2; layout unchanged from v1) (`ctt_session_step` out-buffer)
 //!
 //! ```text
 //! offset  size  field

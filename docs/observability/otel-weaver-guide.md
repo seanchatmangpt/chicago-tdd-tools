@@ -488,34 +488,38 @@ fn test_http_server_span() {
 #[cfg(feature = "otel")]
 #[test]
 fn test_database_span() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    let db_span = Span {
-        name: "db.client.operation".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(0x4bf92f3577b34da6),
-            span_id: SpanId(0x00f067aa0ba902b8),
-            trace_flags: 1,
-        },
-        start_time: 1704110400050,
-        end_time: 1704110400120,
-        attributes: vec![
-            ("db.system".to_string(), "postgresql".to_string()),
-            ("db.name".to_string(), "myapp_db".to_string()),
-            ("db.operation".to_string(), "SELECT".to_string()),
-            ("db.statement".to_string(), "SELECT * FROM users WHERE id = ?".to_string()),
-            ("db.rows_affected".to_string(), "1".to_string()),
-        ],
-        events: vec![],
-        status: "Ok".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
 
-    // Validate database attributes
-    let attrs: std::collections::HashMap<_, _> =
-        db_span.attributes.iter().cloned().collect();
+    let mut attributes = Attributes::new();
+    attributes.insert("db.system".to_string(), "postgresql".to_string());
+    attributes.insert("db.name".to_string(), "myapp_db".to_string());
+    attributes.insert("db.operation".to_string(), "SELECT".to_string());
+    attributes
+        .insert("db.statement".to_string(), "SELECT * FROM users WHERE id = ?".to_string());
+    attributes.insert("db.rows_affected".to_string(), "1".to_string());
 
-    assert_eq!(attrs.get("db.system").map(|s| s.as_str()), Some("postgresql"));
-    assert_eq!(attrs.get("db.operation").map(|s| s.as_str()), Some("SELECT"));
+    let db_span = Span::new_completed(
+        SpanContext::root(TraceId(0x4bf92f3577b34da6), SpanId(0x00f067aa0ba902b8), 0),
+        "db.client.operation".to_string(),
+        1704110400050,
+        1704110400120,
+        attributes,
+        Vec::new(),
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
+
+    // Validate database attributes
+    assert_eq!(
+        db_span.attributes.get("db.system").map(|s| s.as_str()),
+        Some("postgresql")
+    );
+    assert_eq!(
+        db_span.attributes.get("db.operation").map(|s| s.as_str()),
+        Some("SELECT")
+    );
 }
 ```
 
@@ -525,33 +529,36 @@ fn test_database_span() {
 #[cfg(feature = "otel")]
 #[test]
 fn test_error_instrumentation() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    let error_span = Span {
-        name: "auth.validate".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(0x4bf92f3577b34da6),
-            span_id: SpanId(0x00f067aa0ba902b9),
-            trace_flags: 1,
-        },
-        start_time: 1704110400000,
-        end_time: 1704110400020,
-        attributes: vec![
-            ("error".to_string(), "true".to_string()),
-            ("error.type".to_string(), "InvalidToken".to_string()),
-            ("error.message".to_string(), "Token signature invalid".to_string()),
-        ],
-        events: vec![],
-        status: "Error".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
 
-    // Verify error attributes
-    assert_eq!(error_span.status, "Error");
-    let attrs: std::collections::HashMap<_, _> =
-        error_span.attributes.iter().cloned().collect();
+    let mut attributes = Attributes::new();
+    attributes.insert("error".to_string(), "true".to_string());
+    attributes.insert("error.type".to_string(), "InvalidToken".to_string());
+    attributes.insert("error.message".to_string(), "Token signature invalid".to_string());
 
-    assert_eq!(attrs.get("error").map(|s| s.as_str()), Some("true"));
-    assert_eq!(attrs.get("error.type").map(|s| s.as_str()), Some("InvalidToken"));
+    let error_span = Span::new_completed(
+        SpanContext::root(TraceId(0x4bf92f3577b34da6), SpanId(0x00f067aa0ba902b9), 0),
+        "auth.validate".to_string(),
+        1704110400000,
+        1704110400020,
+        attributes,
+        Vec::new(),
+        SpanStatus::Error,
+    )
+    .expect("valid span");
+
+    // Verify error attributes
+    assert_eq!(error_span.status, SpanStatus::Error);
+    assert_eq!(
+        error_span.attributes.get("error").map(|s| s.as_str()),
+        Some("true")
+    );
+    assert_eq!(
+        error_span.attributes.get("error.type").map(|s| s.as_str()),
+        Some("InvalidToken")
+    );
 }
 ```
 
@@ -560,7 +567,7 @@ fn test_error_instrumentation() {
 - [OpenTelemetry Documentation](https://opentelemetry.io/)
 - [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/)
 - [Weaver Documentation](https://github.com/open-telemetry/weaver)
-- [Observability Testing Guide](../observability/observability-testing-guide.md)
+- [Observability Testing Guide](./observability-testing-guide.md)
 
 ## Questions?
 
