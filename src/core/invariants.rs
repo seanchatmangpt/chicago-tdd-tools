@@ -21,9 +21,9 @@ use std::fmt::{self, Display};
 /// # Examples
 ///
 /// ```rust
-/// use chicago_tdd_tools::core::invariants::`UnrecoverableInvariantViolation`;
+/// use chicago_tdd_tools::core::invariants::UnrecoverableInvariantViolation;
 ///
-/// let violation = `UnrecoverableInvariantViolation`::ContractMalformed("empty ID".to_string());
+/// let violation = UnrecoverableInvariantViolation::ContractMalformed("empty ID".to_string());
 /// assert!(format!("{}", violation).contains("Contract malformed"));
 /// ```
 #[derive(Debug, Clone)]

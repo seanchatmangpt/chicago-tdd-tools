@@ -821,7 +821,7 @@ Merkle dossier laws:
 - Dossier sealing: ML-DSA-65 (`SIGNATURE_LEN = 3309`,
   `PUBLIC_KEY_LEN = 1952`, context `chicago-ledger-dossier-v1`), with a
   subject-binding-before-signature verification order.
-- Typed exit codes (`LedgerExitCode`): `Ok = 0`, then per-class codes 10–18
+- Typed exit codes (`LedgerExitCode`): `Ok = 0`, then per-class codes 10–19
   (`MalformedReceipt = 10`, `SchemaVersionMismatch = 11`, `ChainBroken = 12`,
   `Tampered = 13`, `AdmissionRefused = 14`, `DanglingObject = 15`,
   `NonMonotonic = 16`, `EmptyDossier = 17`, `DigestMismatch = 18`).

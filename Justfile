@@ -167,7 +167,10 @@ test-assurance-integration:
     timeout 600s cargo nextest run --test cli_proof_tests --features cli-proof
     timeout 600s cargo nextest run --test ocel_tests --features ocel-generation,ocel-generation-discovery,uuid-v4
     timeout 600s cargo nextest run --test observability_fixtures_tests --features weaver,otel
-    timeout 600s cargo nextest run --test star_toml_e2e --features property-testing,snapshot-testing,uuid-v4
+    # star_toml_e2e re-invokes cargo at test time (compile-at-runtime suite);
+    # nextest's per-test timeout charges that cold build to the first tests,
+    # so this leg uses the plain harness (audit W27 convergence receipt).
+    timeout 600s cargo test --test star_toml_e2e --features property-testing,snapshot-testing,uuid-v4
     timeout 600s cargo nextest run --test go_extra_mile_tests --features property-testing,snapshot-testing
     timeout 600s cargo nextest run --test v1_3_0_integration --features cli-testing,snapshot-testing,uuid-v4
     # (v1_3_0 was previously excluded: a stale v26.6.11-era snapshot and a

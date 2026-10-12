@@ -102,7 +102,7 @@ impl<E> Copy for Effects<E> {}
 
 /// Effect capability: trait for checking if an effect is available
 ///
-/// This trait is sealed and only implemented for valid effect combinations.
+/// AUDIT NOTE (W27 probe): this trait is NOT sealed — no private supertrait or sealing module exists; downstream crates can impl it. The doc's closed-world claim above is aspirational (registered work order: seal the trait or reword the module guarantee).
 pub trait HasEffect<E> {
     /// Check if this effect set has the given effect
     const HAS_EFFECT: bool;

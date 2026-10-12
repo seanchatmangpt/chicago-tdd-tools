@@ -325,7 +325,7 @@ mod properties {
             let mut validator = ThermalValidator::new(threshold);
             let _ = validator.validate_tau(0);
             let result = validator.validate_tau(u64::MAX);
-            prop_assert!(result.is_ok() || result.is_err(), "Should handle max u64");
+            prop_assert!(result.is_err(), "max-u64 input must be refused typed, never admitted");
         }
 
         #[test]
