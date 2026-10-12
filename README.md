@@ -117,18 +117,22 @@ fixture_test!(test_with_fixture, fixture, {
 });
 EOF
 
-# Run tests
-just test
+# Run just your new test file (fast, compiles only this integration test)
+cargo test --test my_first_test
 ```
 
-**✓ Installation complete** when `just test` shows 3 passing tests.
+**✓ Installation complete** when `cargo test --test my_first_test` shows
+`test_async_example`, `test_addition`, and `test_with_fixture` passing
+(3 passed). Note: `just test` runs the library unit-test suite via nextest
+(~1,100 tests) and does NOT include `tests/` integration files — use
+`cargo test --test <name>` for the file you just created.
 
 ---
 
 ### 2️⃣ Just Want Examples? → Examples Directory
 
 ```bash
-# Browse working examples (18 included, all tested)
+# Browse working examples (19 included, all tested)
 ls examples/
 
 # Run a specific example
@@ -137,7 +141,7 @@ cargo run --example fail_fast_verification
 cargo run --example sector_stacks_workflows
 ```
 
-**📖 Complete examples guide**: See [examples/README.md](examples/README.md) for all 18 examples organized by category.
+**📖 Complete examples guide**: See [examples/README.md](examples/README.md) for all 19 examples organized by category.
 
 ---
 
@@ -1088,7 +1092,7 @@ financial settlement — 20 documents across tutorial / how-to / reference / exp
 
 ## Examples
 
-**18 complete, runnable examples** are included, all with tests. Browse them:
+**19 complete, runnable examples** are included, all with tests. Browse them:
 
 ```bash
 # List examples
@@ -1142,6 +1146,7 @@ cargo run --example operator_registry
 | Rust | nightly (see [rust-toolchain.toml](rust-toolchain.toml)) | `rustc --version` | [rustup](https://rustup.rs/) |
 | Cargo | Latest stable | `cargo --version` | Included with Rust |
 | just | Latest | `just --version` | `cargo install just` |
+| cargo-nextest | Latest | `cargo nextest --version` | `cargo install cargo-nextest --locked` |
 | Tokio | 1.0+ | (add to Cargo.toml) | [tokio](https://tokio.rs) |
 | Docker* | Latest | `docker ps` | [Docker Desktop](https://www.docker.com) |
 | Rust 1.75+* | For async fixtures | `rustc --version` | `rustup update stable` |

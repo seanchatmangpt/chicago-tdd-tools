@@ -15,8 +15,8 @@
 | Lane | Verdict | Finding (one line) | Disposition |
 |------|---------|--------------------|-------------|
 | SK1 | FALSIFIED | PN64 fold is non-associative and `fire` panics outside the 1-safe domain; conservation only holds on the restricted 1-safe sub-domain. | DOCUMENTED (domain precondition now stated at `src/conformance/pn64.rs:16-24`; conservation guard test landed) |
-| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | QUEUED - relabel the claim constant-flow-not-constant-time |
-| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide and `SigningKey::from_seed` is publicly reachable (`src/ledger/signing/keys.rs:158`), bypassing key-id admission. | QUEUED |
+| SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | CLOSED - relabel landed (Diataxis reference pages now say constant-flow; `docs/features/CONFORMANCE.md` carries no CT claim) |
+| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide on the admission predicate. The keys.rs raw `from_seed` surface was reworked in 1fc1c72; only `Signer::from_seed` remains publicly reachable (`src/ledger/signing/signer.rs:141`), bypassing key-id admission. | QUEUED (re-scoped: signer.rs:141 sliver only) |
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:254`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | PARTIAL |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e: out-pointer bounds + errnos 14-16; F1 module digest placeholder until build-time splice) |
@@ -48,18 +48,22 @@ Tally: 9 FALSIFIED, 1 PARTIAL (SK9), 0 HELD.
 - **Repro**: timing-sensitive run over the wire surface
   (`src/ledger/dossier_wire.rs`); measured |t| range 10-3842 across inputs
   (constant-flow property: control flow independent of secrets, wall time not).
-- **Disposition**: QUEUED - relabel the claim constant-flow-not-constant-time
-  in `docs/features/CONFORMANCE.md` and the Diataxis attestation pages.
+- **Disposition**: CLOSED. The relabel landed: Diataxis reference/attestation
+  pages now say constant-flow, and `docs/features/CONFORMANCE.md` carries no
+  constant-time claim.
 
 ### SK3 - Raw-context collision + public `from_seed`
 
 - **Claim falsified**: that key construction is reachable only through the
   admitted keystore path.
-- **Repro**: `grep -n "from_seed" src/ledger/signing/keys.rs` - public
-  constructor at `src/ledger/signing/keys.rs:158`; two raw contexts can be
+- **Repro**: the raw `SigningKey::from_seed` surface cited in the original
+  finding (`src/ledger/signing/keys.rs:158`) was reworked in 1fc1c72; the
+  only remaining public raw entry point is `Signer::from_seed`
+  (`src/ledger/signing/signer.rs:141`). Two raw contexts can still be
   constructed that collide on the admission predicate.
-- **Disposition**: QUEUED - gate raw-context construction / make
-  `from_seed` pub(crate) or seal behind the keystore.
+- **Disposition**: QUEUED (re-scoped) - seal `Signer::from_seed`
+  (signer.rs:141) behind the keystore / make pub(crate); keys.rs surface
+  already closed by 1fc1c72.
 
 ### SK4 - Payload covert channel + BEAM/Rust divergence
 
@@ -139,7 +143,7 @@ plus the domain/identity doc edits in the shared working tree):
 - SK8: sentinel replacement + regression tests (`src/conformance/session.rs`,
   `tests/conformance_tests.rs`).
 
-Queued: SK2, SK3, SK4, SK10, NATO-ENTROPY-SEAM-01 (entropy.rs replica-seam work order — self-attested in-source; audit W13 flagged single-source location SK5: PARTIAL (persistence half landed 1fc1c72; rotation key-epoch binding queued). SK6/SX6: PARTIAL (see rows).
+Queued: SK3 (re-scoped to signer.rs:141), SK4, SK10, NATO-ENTROPY-SEAM-01 (entropy.rs replica-seam work order — self-attested in-source; audit W13 flagged single-source location SK5: PARTIAL (persistence half landed 1fc1c72; rotation key-epoch binding queued). SK6/SX6: PARTIAL (see rows). SK2: CLOSED (relabel landed).
 
 Note on fix IDs: the coordinator's R29-R34 batch corresponds to the landed
 set above; per-R mapping is not reproduced in this receipt because the
@@ -319,7 +323,8 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   now disclose; hardening (full-field signature or keyed verify) queued.
 - **cli_proof TempWorkspace** (COVERAGE-QUEUED): drop-cleanup is
   tempfile-RAII-delegated and unwitnessed by any test.
-- **N04 AUDITED_MODULES scope** (DISCLOSED W13): 14/26 nato modules
+- **N04 AUDITED_MODULES scope** (DISCLOSED W13; count refreshed W24):
+  15/26 nato modules
   scanned; timing/env-gated courts exempt by design (disclosed
   in zero_ambient.rs); extending to eligible pure modules queued.
 - **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
@@ -336,3 +341,13 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
 - **nfr1_latency_slo_test** (strata, W14): timing-sensitive flake
   witnessed once on cold fail-fast run, passed on retries — same class
   as fr7_constant_time.
+
+## W24 REGISTER ADDITIONS (audit wave-24)
+
+- **core::verification_pipeline String error channel** (QUEUED):
+  all `execute_*` fns in `src/core/verification_pipeline.rs` return
+  `String` errors; refactor to the typed
+  `UnrecoverableInvariantViolation` vocabulary used by the rest of the
+  invariant surface. Phase values are output labels only (straight-line
+  sequencing, no state machine) — the refactor is vocabulary-only, no
+  control-flow change. Source: wave-24 audit.

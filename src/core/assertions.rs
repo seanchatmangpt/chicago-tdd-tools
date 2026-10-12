@@ -314,7 +314,8 @@ impl<T: std::fmt::Debug> ValidatedAssertion<T> {
     ///
     /// # Panics
     ///
-    /// Panics if system time is before `UNIX_EPOCH` (should never happen in practice).
+    /// Panics if the predicate returns `false` for the value, or if system
+    /// time is before `UNIX_EPOCH` (should never happen in practice).
     #[must_use]
     pub fn assert_that<F>(mut self, predicate: F) -> Self
     where

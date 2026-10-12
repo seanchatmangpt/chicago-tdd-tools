@@ -294,6 +294,19 @@ mod tests {
         let _ = test_result.assert_ok("Should fail");
     }
 
+    // Wave-24 audit: the panic-on-Ok branch of assert_err had no court —
+    // the negative path was asymmetric with assert_ok's should_panic test.
+    #[test]
+    #[should_panic(expected = "Expected Err, but got Ok")]
+    fn test_test_result_assert_err_fails_on_ok() {
+        // Arrange
+        let result: Result<i32, String> = Ok(42);
+        let test_result = TestResult::new(result);
+
+        // Act & Assert: Should panic
+        let _ = test_result.assert_err("Should fail");
+    }
+
     #[test]
     fn test_test_result_assert_err() {
         // Arrange

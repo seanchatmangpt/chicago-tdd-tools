@@ -147,7 +147,7 @@ impl StrictExecutionContext {
     ///
     /// # Errors
     ///
-    /// Returns `Err(UnrecoverableInvariantViolation)` if τ measurement violates monotonicity or exceeds bounds.
+    /// Returns `Ok(PhaseResult::Violation(...))` (NOT `Err`) when τ measurement violates monotonicity or exceeds bounds — violations are values, not error-path aborts.
     pub fn phase_2_thermal_testing(
         &mut self,
         tau: u64,

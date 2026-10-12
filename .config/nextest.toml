@@ -77,8 +77,9 @@ test-threads = "num-cpus"
 # Progress is shown via cargo-nextest default output (test names as they run)
 failure-output = "immediate"
 
-# star_toml_e2e b2 layering tests run ~4s warm; the 5s default flaked the
-# assurance recipe once under load (audit W13). Give the file headroom.
+# star_toml_e2e b2 layering tests run ~4s warm, ~46s under 20-lane load
+# (measured wave-24); the 5s default flaked the assurance recipe once under
+# load (audit W13), 30s also too tight under load. Give the file headroom.
 [[profile.default.overrides]]
 filter = 'test(star_toml_e2e)'
-slow-timeout = { period = "30s", terminate-after = 2 }
+slow-timeout = { period = "60s", terminate-after = 2 }

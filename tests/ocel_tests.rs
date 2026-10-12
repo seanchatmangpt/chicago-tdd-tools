@@ -15,6 +15,25 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+/// Unique-per-call string id. Uses `uuid::Uuid::new_v4()` when the optional
+/// `uuid-v4` feature is on; falls back to a deterministic monotonic counter
+/// (process id + atomic tick) otherwise.
+fn unique_suffix() -> String {
+    #[cfg(feature = "uuid-v4")]
+    {
+        uuid::Uuid::new_v4().to_string()
+    }
+    #[cfg(not(feature = "uuid-v4"))]
+    {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        format!(
+            "id-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        )
+    }
+}
+
 #[test]
 fn test_ocel_collector_creation() {
     let output_path = PathBuf::from("target/test_log.ocel.jsonl");
@@ -134,7 +153,15 @@ fn test_collector_emits_events_with_objects_and_attributes() {
     assert_eq!(ev1.case_id, "run-a");
     assert_eq!(ev0.timestamp_ns, 100);
     assert_eq!(ev1.timestamp_ns, 200);
+    // With `uuid-v4` the collector mints unique v4 ids; without it ids are the
+    // documented empty-string zero-ambient fallback (host assigns ids).
+    #[cfg(feature = "uuid-v4")]
     assert_ne!(ev0.event_id, ev1.event_id, "event ids must be unique (uuid)");
+    #[cfg(not(feature = "uuid-v4"))]
+    {
+        assert!(ev0.event_id.is_empty(), "no uuid-v4: event_id is empty fallback");
+        assert!(ev1.event_id.is_empty(), "no uuid-v4: event_id is empty fallback");
+    }
 
     // Activity reflects the emitted diagnostic category/severity.
     assert!(matches!(
@@ -219,7 +246,7 @@ fn test_collector_close_writes_sealed_log_file() {
     let dir = std::env::temp_dir().join(format!(
         "ocel-collector-close-{}-{}",
         std::process::id(),
-        uuid::Uuid::new_v4()
+        unique_suffix()
     ));
     std::fs::create_dir_all(&dir).unwrap();
     let output_path = dir.join("sealed_log.ocel.json");

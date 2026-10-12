@@ -64,7 +64,7 @@ Never trust text, only test results. All code is production-ready with error han
 
 5. **Verify Completion**: All tests pass, no compilation errors, no test failures, all failing tests fixed and removed from todos, no pending test-related todos. Never mark complete without running tests first.
 
-**Quick Feedback**: `just check` (~1s), `just test-unit` (~1s), `just test test_name` (single test). Full validation: `just test`, `just pre-commit`.
+**Quick Feedback**: `just check` (~1s), `just test-unit` (~1s), `cargo nextest run -E 'test(name)'` (single test; `just test` takes no test-name argument). Full validation: `just test`, `just pre-commit`.
 
 ## Prohibited Patterns
 

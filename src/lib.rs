@@ -267,6 +267,14 @@ pub use validation::{coverage, guards, jtbd, performance};
 ///
 /// **What's included**:
 /// - All core modules (fixture, builders, assertions, macros)
+/// - All always-exported `#[macro_export]` macros (test, async_test,
+///   async_test_with_timeout, fixture_test, fixture_test_with_timeout,
+///   performance_test, all assert_* macros, alert_* macros, etc.). Note:
+///   procedural macros (`#[tdd_test]`, `#[fixture]`, `#[chicago_test]`,
+///   `#[derive(TestBuilder)]`, `scaffold!`) and feature-gated macros
+///   (`otel_test!` non-fallback variant, `param_test!` full variant) are NOT
+///   glob-included here — import them from the crate root or enable the
+///   corresponding feature.
 /// - All validation modules (coverage, guards, jtbd, performance)
 /// - Feature-gated modules (when features enabled): property, mutation, snapshot, concurrency, cli
 pub mod prelude {
@@ -286,8 +294,9 @@ pub mod prelude {
         alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_approx_eq,
         assert_contains, assert_eq_msg, assert_err, assert_fail, assert_guard_constraint,
         assert_in_range, assert_json_eq, assert_matches, assert_not_contains, assert_ok,
-        assert_subset, assert_superset, assert_within_tick_budget, async_test, fixture_test,
-        performance_test, source_location, test,
+        assert_subset, assert_superset, assert_within_tick_budget, async_test,
+        async_test_with_timeout, fixture_test, fixture_test_with_timeout, performance_test,
+        source_location, test,
     };
     // poka_yoke is accessed via core::poka_yoke::* to avoid conflicts with otel/testcontainers poka_yoke
     pub use crate::validation::*;

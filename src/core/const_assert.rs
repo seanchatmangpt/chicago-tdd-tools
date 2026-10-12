@@ -86,7 +86,7 @@ pub const fn const_assert(condition: bool) {
 
 /// Compile-time validation helper with message
 ///
-/// The message is included in the compile-time panic when the condition
+/// The condition must hold in const context; on failure compilation fails with a fixed message — the `msg` parameter is currently accepted for API stability but NOT included in the panic (doc corrected by the wave-24 audit) when the condition
 /// fails (it does not alter the const evaluation result on success).
 #[allow(clippy::panic, clippy::manual_assert, clippy::missing_panics_doc)]
 pub const fn const_assert_msg(condition: bool, msg: &'static str) {

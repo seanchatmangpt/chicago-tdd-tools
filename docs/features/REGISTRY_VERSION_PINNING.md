@@ -65,11 +65,16 @@ git ls-remote --tags https://github.com/open-telemetry/semantic-conventions.git
 
 
 
-1. **Build-time** (`build.rs`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version
-2. **Runtime** (`weaver/mod.rs`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version if registry missing
-3. **Bootstrap script** (`scripts/weaver-bootstrap.sh`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version
+1. **Config loading** (`src/core/config/loading.rs`): The only reader of
+   `WEAVER_REGISTRY_VERSION` — resolves the pinned version into the
+   `observability.weaver.registry_version` config value (the TOML key above).
+2. **Bootstrap script** (`scripts/weaver-bootstrap.sh`): Reads `WEAVER_VERSION`
+   (the Weaver *tool* release — a different variable) to download the binary.
+3. `build.rs` and the runtime registry fallback do not read the pin; they clone
+   whatever default the clone target provides.
 
-All three locations respect the environment variable for consistency.
+The pin takes effect by being loaded into config before bootstrap; set the env
+var (or the TOML key) and re-run `just weaver-bootstrap`.
 
 ## Troubleshooting
 

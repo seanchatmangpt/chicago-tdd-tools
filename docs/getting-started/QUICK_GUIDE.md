@@ -194,38 +194,46 @@ chicago_tdd_tools = {
 **File**: `tests/my_weaver_test.rs`:
 ```rust
 use chicago_tdd_tools::{weaver_test, prelude::*};
+use chicago_tdd_tools::observability::weaver::WeaverValidator;
 use std::path::PathBuf;
 
 weaver_test!(test_weaver_validation, {
-    // Arrange: Create validator
-    let registry_path = PathBuf::from("registry/");
-    let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);
-    // Act: Start Weaver (if available)
+    // Arrange: Create validator (infallible constructor; start() checks
+    // binary/Docker/registry availability)
+    let mut validator = WeaverValidator::new(PathBuf::from("registry/"));
+    // Act: Start Weaver
     let start_result = validator.start();
     // Assert: Verify Weaver started or handle unavailable case
     if start_result.is_ok() {
         assert!(validator.is_running());
-        validator.stop().unwrap();
+        assert!(validator.stop().is_ok());
     }
 });
 ```
 
-### Weaver Test with Custom Timeout (requires `weaver` feature)
+The validator lives at `chicago_tdd_tools::observability::weaver::WeaverValidator`
+(feature-gated: `#[cfg(feature = "weaver")]`). Key surface:
+`new(PathBuf)` (infallible), `start(&mut self) -> WeaverValidationResult<()>`,
+`stop(&mut self)`, `is_running(&self) -> bool`, and
+`WeaverValidator::check_weaver_available()` for a binary-only availability probe.
+
+### Weaver Test with Custom Ports (requires `weaver` feature)
 
 ```rust
 use chicago_tdd_tools::weaver_test;
+use chicago_tdd_tools::observability::weaver::WeaverValidator;
 use std::path::PathBuf;
 
 weaver_test!(test_weaver_integration, {
-    // Arrange: Create validator
-    let registry_path = PathBuf::from("registry/");
-    let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);
-    // Act: Start Weaver (30s timeout)
+    // Arrange: Create validator with custom OTLP gRPC and admin ports
+    let mut validator =
+        WeaverValidator::with_config(PathBuf::from("registry/"), 4318, 8081);
+    // Act: Start Weaver
     let start_result = validator.start();
     // Assert: Verify Weaver started or handle unavailable case
     if start_result.is_ok() {
-        assert!(validator.is_running());
-        validator.stop().unwrap();
+        assert_eq!(validator.otlp_endpoint(), "http://127.0.0.1:4318");
+        assert!(validator.stop().is_ok());
     }
 });
 ```
