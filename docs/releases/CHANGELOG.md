@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   completed, orphan wave-list fragment repaired); pillar-law authority
   note corrected — the landed PILLAR consts pinned by the
   `pillar_mapping_matches_the_matrix` test are the law, the 4 real-run
-  emitter receipts witness it, the other 17 persisted receipts (N15's
+  emitter receipts witness it, the other 16 persisted receipts (N15's
   control receipt mints Proof) are the synthetic control set, not pillar
   evidence; NATO_COURTS duplicate remnant line removed; findings
   register SK6/SX6 synced to PARTIAL (F2/F3 + V5 envelope landed),
@@ -51,6 +51,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-8 closeout (post-entry convergence)**: n13 interference-sentinel
+  scheduler-jitter absorption (`b2d457e`, MAX_CORRUPTED_FRAC 0.02 with
+  witnessed basis); telemetry success-test bound-lock race fix
+  (`f3fc7f6`, stress-verified 6x); `set_forbidden_mask` doc corrected to
+  the true per-step semantics (`03067ef`); registry-sweep honesty —
+  N05/N06/N19 accepted as Refused|Fail as environment-dependent, all
+  other 17 courts must Pass (`10bf17b`); forbidden-place mask wired
+  through `compile()` (was write-only) + dead ledger variants retired
+  (`TrailingBytes`/`InvalidTag`/`SealError::Serialization`) + exit-code
+  doc corrected to 10-19 (`1dc1c8f`, table fix `54c1cb0`).
 
 ## [26.10.12] continued - 2026-10-11
 Endgame audit-wave convergence: 20-lane adversarial audit with repairs,

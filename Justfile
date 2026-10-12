@@ -625,7 +625,7 @@ release-validate-git-push:
 release-validate-docs: docs-check
 
 # Comprehensive release validation (all FMEA failure mode checks)
-release-validate: timeout-check release-validate-git-state release-validate-artifacts release-validate-version release-validate-compilation release-validate-examples release-validate-precommit release-validate-security release-validate-testcontainers release-validate-docs
+release-validate: timeout-check check-mutation-gate release-validate-git-state release-validate-artifacts release-validate-version release-validate-compilation release-validate-examples release-validate-precommit release-validate-security release-validate-testcontainers release-validate-docs
 
 release: release-validate ci docs-build
 
