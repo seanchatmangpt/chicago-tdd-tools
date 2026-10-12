@@ -7,8 +7,10 @@
 //! 2. **Structural** — Sequence/Xor/Parallel arity `>= 1`
 //!    (`ArityBelowMinimum`); loop termination bounds are a *type-level*
 //!    guarantee of [`super::loader::PowlNode`] (`Loop.max` is `u8`), and
-//!    activity references are resolved by the loader, so neither is
-//!    re-checked here.
+//!    activity references are resolved by the loader — W27 PROBE: true only
+//!    for the TEXT entry point; from_powl_json does NOT resolve them, so the
+//!    "neither re-checked here" guarantee below fails for the JSON path
+//!    (re-check work order registered).
 //!
 //! The layering is fail-closed: any layer returning `Err` short-circuits.
 //!
@@ -76,9 +78,11 @@ fn walk(node: &PowlNode) -> Result<(), ConformanceError> {
             }
             Ok(())
         }
-        // Loop termination is guaranteed by `max`'s type; activity references
-        // are resolved by the loader. Neither is re-checked here — see
-        // module docs.
+        // Loop termination is guaranteed by `max`'s type. W27 PROBE
+        // (runtime-verified): the TEXT loader resolves activity refs, but
+        // from_powl_json does NOT — an undeclared activity in JSON loads and
+        // passes validate. Re-check here is a registered work order; the
+        // fail-closed layering holds only for the text entry point.
         PowlNode::Loop { body, redo, .. } => {
             walk(body)?;
             walk(redo)

@@ -303,11 +303,11 @@ impl CliEnvironment {
 
     /// Create clean environment (v1.3.0)
     ///
-    /// Removes common variables that might affect tests.
+    /// Presets three override variables (HOME/USER/PATH) to test values (W27 probe: nothing is removed — this is an override preset like ci(), not a cleaning operation).
     #[must_use]
     pub fn clean() -> Self {
         let mut env = Self::new();
-        // Clear common variables that might interfere with tests
+        // Override preset — no removal happens (W27 probe)
         env.vars.insert("HOME".to_string(), "/tmp/test-home".to_string());
         env.vars.insert("USER".to_string(), "test-user".to_string());
         env.vars.insert("PATH".to_string(), "/usr/bin:/bin".to_string());

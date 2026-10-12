@@ -33,7 +33,7 @@
 //!
 //! ```ignore
 //! #[cfg(all(feature = "wasm-guest", feature = "conformance"))]
-//! pub mod guest;
+//! pub mod guest;   // (W27 probe corrected: the mod decl gates on wasm-guest alone; the all(...) conjunct lives in this file inner cfg)
 //! ```
 //!
 //! # Panic semantics = fail-closed traps

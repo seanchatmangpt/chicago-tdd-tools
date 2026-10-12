@@ -87,8 +87,10 @@ pub fn scaffold_impl(input: TokenStream) -> TokenStream {
     // Extract ticket ID for the warning message
     let ticket_id = extract_ticket_id(&ticket_val).unwrap_or_else(|| ticket_val.clone());
 
-    // Runtime pending marker: the expansion panics via scaffold_pending (see
-    // scaffold_impl docs) so a missing ticket fails the test at runtime.
+    // Runtime pending marker: the expansion panics via scaffold_pending; W27
+    // probe correction: catch_scaffold absorbs the SCAFFOLD PENDING panic as a
+    // CANDIDATE pass — a missing ticket makes the test PASS-as-CANDIDATE (with
+    // an eprintln warning), not fail.
 
     let ticket_id_lit = LitStr::new(&ticket_id, Span::call_site());
     let ticket_lit = args.ticket_lit;

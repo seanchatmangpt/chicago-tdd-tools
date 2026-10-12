@@ -70,7 +70,7 @@ assert!(ticks <= 8); // Chatman Constant enforced
 
 **Key Types:**
 - `HotPathTest`: Enforces τ ≤ 8 ticks (configurable for test environments)
-- `WarmPathTest`: Allows heap allocation, τ ≤ 100 ticks
+- `WarmPathTest`: Allows heap allocation, τ ≤ 500_000 ticks warm (W27 probe corrected the stale 100-tick figure; relaxed 1_000_000)
 - `ColdPathTest`: No timing constraints
 - `HotPathConfig`: Configurable constraints (`max_ticks`, `enforce_no_alloc`, `enforce_no_syscall`)
 - `ThermalTestError`: Error type for budget violations

@@ -175,18 +175,18 @@ where SLO is specified per test (e.g., 500ms for unit tests).
 Chicago-tdd-tools provides performance measurement via RDTSC on x86_64:
 
 \begin{lstlisting}[language=Rust]
-use chicago_tdd_tools::performance::TickCounter;
+use chicago_tdd_tools::validation::performance::TickCounter;
 
 #[test]
 fn test_within_tick_budget() {
-    let counter = TickCounter::now();
+    let counter = TickCounter::start() (W27 probe: the listing's now()/elapsed() names were invented; real API: start()/elapsed_ticks());
 
     // Execute operation
     let result = expensive_operation();
     assert_ok!(result);
 
     // Check tick budget
-    let ticks = counter.elapsed();
+    let ticks = counter.elapsed_ticks();
     assert!(ticks <= 1000, "Exceeded tick budget: {} > 1000", ticks);
 }
 \end{lstlisting}

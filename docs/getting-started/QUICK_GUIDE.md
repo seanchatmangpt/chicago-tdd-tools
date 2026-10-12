@@ -435,7 +435,7 @@ struct DatabaseFixture {
 struct DatabaseProvider;
 
 #[cfg(feature = "async")]
-impl chicago_tdd_tools::core::async_fixture::private::Sealed for DatabaseProvider {}
+AUDIT NOTE (W27 probe, compile-verified): `private::Sealed` is NOT publicly nameable — external crates cannot implement `AsyncFixtureProvider` (sealed by design). The snippet below is illustrative of the internal pattern only. Original: impl chicago_tdd_tools::core::async_fixture::private::Sealed for DatabaseProvider {}
 
 #[cfg(feature = "async")]
 impl AsyncFixtureProvider for DatabaseProvider {

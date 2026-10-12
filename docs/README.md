@@ -82,7 +82,7 @@ Background, context, and understanding of how/why things work:
 
 ### Quality & Process
 - **[FMEA: Tests, Build, Actions](process/FMEA_TESTS_BUILD_ACTIONS.md)** - Failure Mode and Effects Analysis (historical snapshot — retired cargo-make era)
-- **[Test Isolation Guide](process/TEST_ISOLATION_GUIDE.md)** - Test isolation patterns and practices
+- **[Test Isolation Guide](process/TEST_ISOLATION_GUIDE.md) (historical — W27 probe; documents a TestFixture API not in the current tree)** - Test isolation patterns and practices
 - **[Poka-Yoke Weaver Registry](process/POKA_YOKE_WEAVER_REGISTRY.md)** - Type-level error prevention
 - **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver (historical snapshot — retired cargo-make era)
 - **[Dog Fooding](process/DOG_FOODING.md)** - Using Chicago TDD Tools to test itself

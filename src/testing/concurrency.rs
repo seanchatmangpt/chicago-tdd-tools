@@ -22,7 +22,7 @@ pub struct ConcurrencyTest;
 impl ConcurrencyTest {
     /// Run a concurrent test with model checking
     ///
-    /// This function uses loom to explore all possible thread interleavings
+    /// This function uses loom to explore thread interleavings within loom's bounded default model config
     /// and verify that the concurrent code maintains invariants.
     ///
     /// # Arguments

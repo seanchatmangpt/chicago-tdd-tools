@@ -109,7 +109,7 @@ case "$native_cond" in
   ''|*[!0-9]*) exit_fail "native census did not yield an integer count" ;;
 esac
 native_uncond="$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*b[[:space:]]' || true)"
-native_ret="$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*ret[[:space:]]' || true)"
+native_ret="$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*ret[[:space:]]*$' || true)"
 instr_total="$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*[a-z][a-z0-9.]*' || true)"
 
 native_json="\"native\": {\"count\": $native_cond, \"bound\": 0}"
