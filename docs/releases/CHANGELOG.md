@@ -150,6 +150,16 @@ W-ABI2); strata rebase (`59ed80c`); 5 (`451f4a8`); 6 (`b8dac24` +
   `check_output.txt`; `__pycache__/` gitignored.
 
 ### Fixed
+- **n13 measured-leg fold fix** (`31b5ed3`): n13's timed loop re-selects
+  corpus inputs via `black_box` each iteration (constant-bound tuple let
+  LLVM fold `step_branchless` to a compile-time value — a measured leg
+  measuring nothing); degenerate-fold floor added in batch wall time
+  (`K_UNROLL * ops/4 * 0.1 ns/op`).
+- **Zero-ambient WCET timer** (`31b5ed3`): CNTFRQ_EL0 inline-asm read
+  removed — `asm!` is ambient authority, caught by the N04 court itself
+  (3 witnessed failures); both platforms convert ticks via the calibrated
+  ns-per-cycle (same clock the measured leg times with). Receipts: nato
+  lib 853/0, nato-courts-full 18/0, clippy clean.
 - **Merger/guests errno ABI**: negative leaf codes remapped to positive ABI
   errnos (`ERR_LENGTH`/`ERR_BAD_SCALE`/`ERR_NO_SOURCES`); `expect` replaced
   with typed `ERR_TRUNCATED`; clippy clean.
