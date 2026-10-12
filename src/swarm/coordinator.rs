@@ -205,6 +205,14 @@ impl SwarmCoordinator {
         before - self.task_assignments.len()
     }
 
+    /// Removes a coordinator member and clears its in-flight assignments
+    /// in the same transition (audit W5: removal without the clear leaked
+    /// `task_assignments` entries indefinitely).
+    pub fn remove_member(&mut self, member_id: &str) -> usize {
+        self.membership.members.remove(member_id);
+        self.clear_assignments_for(member_id)
+    }
+
     /// Number of currently tracked task-to-member assignments.
     #[must_use]
     pub fn assignment_count(&self) -> usize {

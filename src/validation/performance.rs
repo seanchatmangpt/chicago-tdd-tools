@@ -155,7 +155,8 @@ impl TickCounter {
 ///
 /// ```rust,no_run
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// use chicago_tdd_tools::performance::{ValidatedTickBudget, TickCounter};
+/// use chicago_tdd_tools::ValidatedTickBudget;
+/// use chicago_tdd_tools::validation::performance::TickCounter;
 ///
 /// // Compile-time validated - BUDGET must be known at compile time
 /// fn validate_hot_path<const BUDGET: u64>(counter: &TickCounter) -> chicago_tdd_tools::performance::PerformanceValidationResult<()> {

@@ -231,6 +231,8 @@ nato = ["ledger", "conformance", "dep:ml-dsa", "dep:zeroize", "dep:getrandom"]
 all-assurance = ["conformance", "ledger", "nato"]
 # Hermetic WASM guest surface (temprun embed; PRD §1-4): zero-import ABI over
 # the conformance kernel + guest-side receipt production (host seals).
+# NOTE: src/conformance/guest_telemetry.rs requires BOTH wasm-guest AND
+# ocel-ingest (it reuses the ocel64_bridge packing law).
 wasm-guest = ["conformance"]
 
 # Concurrency testing: Thread model checking, deterministic concurrency testing

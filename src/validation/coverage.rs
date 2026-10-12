@@ -17,7 +17,7 @@ use std::fmt::Write;
 /// Total count newtype
 ///
 /// **Poka-Yoke**: Use this newtype instead of `usize` to prevent count errors.
-/// Ensures total count is always >= 0 and >= covered count.
+/// Ensures the count is validated at construction (non-negative by type).
 ///
 /// # Example
 ///
@@ -82,7 +82,7 @@ impl From<TotalCount> for usize {
 /// Covered count newtype
 ///
 /// **Poka-Yoke**: Use this newtype instead of `usize` to prevent count errors.
-/// Ensures covered count is always <= total count.
+/// Validates covered <= total when built via `new_for_total`.
 ///
 /// # Example
 ///

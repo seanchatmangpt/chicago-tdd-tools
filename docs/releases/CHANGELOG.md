@@ -51,6 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-9 closeout**: attach fresh-start replay law (`f760042` —
+  attach_stream resets prev_tick/steps/marking so a re-attach replays
+  the new stream from its own start); N17 ceiling-division flip
+  sampling + pk-leg positive control (`f760042`); dead
+  `SealError::MalformedSubject` variant retired; NATO_COURTS N08/N16
+  row overclaims corrected; ci.yml aggregate gained the mutation-gate
+  job; publish=false on the five internal 26.7.1 crates; wave-3
+  vacuity/coverage tests (`763c1b0`); findings-register verb fix
+  (`41777bf`); master.powl header refresh (`3937266`).
 - **Wave-8 closeout (post-entry convergence)**: n13 interference-sentinel
   scheduler-jitter absorption (`b2d457e`, MAX_CORRUPTED_FRAC 0.02 with
   witnessed basis); telemetry success-test bound-lock race fix

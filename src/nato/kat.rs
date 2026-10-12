@@ -249,10 +249,10 @@ pub(crate) fn n17_legitimate_accept() -> bool {
     Signer::verify(&pk, &GOLDEN_SUBJECT, &sig)
 }
 
-/// Sampled flip-reject leg (hoisted): each of 64 sampled single-bit flips
-/// of the golden signature (stride across the full 3309-byte signature,
-/// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8) must be REJECTED,
-/// and the un-corrupted original must still verify after the sweep.
+/// Sampled flip-reject leg (hoisted): 128 sampled single-bit flips (64 sig + 64 pk) of the
+/// golden signature PLUS 64 of the public key (stride across the full
+/// buffers, flip byte = (i * LEN + 63) / 64, bit = i % 8) must be
+/// REJECTED, and the un-corrupted original must still verify.
 pub(crate) fn n17_sampled_flip_reject() -> bool {
     let s = Signer::from_seed(GOLDEN_SEED);
     let pk = s.public_key();
@@ -261,7 +261,7 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
         return false;
     }
     for i in 0..64usize {
-        let byte_idx = (i * SIG_LEN + SIG_LEN - 1) / 64;
+        let byte_idx = (i * SIG_LEN).div_ceil(64);
         let bit = i % 8;
         let mut bad = good;
         bad[byte_idx] ^= 1 << bit;
@@ -269,13 +269,13 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
             return false;
         }
     }
-    // Audit W3: the sweep must cover the pk space too — a corrupted pk
-    // must be rejected, not just a corrupted signature. 64 sampled pk-bit
-    // flips + the 64-sig-flip loop above; ceiling-division sampling puts
-    // i=0 at byte 0 and i=63 at the LAST byte of both buffers (the
-    // ML-DSA hint tail included).
+    // Audit W3/W5: the sweep must cover the pk space too — a corrupted
+    // pk must be rejected, not just a corrupted signature. 64 + 64
+    // flips; ceiling-division sampling (i*LEN).div_ceil(64) puts i=0 at
+    // byte 0 and i=63 at the LAST byte of both buffers (the ML-DSA hint
+    // tail included).
     for i in 0..64usize {
-        let byte_idx = (i * PK_LEN + PK_LEN - 1) / 64;
+        let byte_idx = (i * PK_LEN).div_ceil(64);
         let bit = i % 8;
         let mut bad_pk = pk;
         bad_pk[byte_idx] ^= 1 << bit;
@@ -349,7 +349,7 @@ fn kat_verify_accepts_legitimate() {
     assert!(n17_legitimate_accept(), "legitimate PIPELINE-KAT signature must verify");
 }
 
-/// Verify-REJECT on each of 64 sampled single-bit flips of the golden
+/// Verify-REJECT on each of 128 sampled single-bit flips (64 sig + 64 pk) of the golden
 /// signature. Sample: stride across the full 3309-byte signature,
 /// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8. Body hoisted into
 /// [`n17_sampled_flip_reject`] (shared with the court registry adapter).
@@ -404,7 +404,7 @@ impl Court for KatCourt {
             verdict,
             metrics: vec![
                 ("determinism_runs", MetricValue::U64(3)),
-                ("sampled_flips", MetricValue::U64(64)),
+                ("sampled_flips", MetricValue::U64(128)),
                 ("sig_len", MetricValue::U64(SIG_LEN as u64)),
                 ("pk_len", MetricValue::U64(PK_LEN as u64)),
             ],

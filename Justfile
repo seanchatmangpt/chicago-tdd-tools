@@ -171,6 +171,9 @@ guest-audit:
 guest-test:
     timeout 300s cargo test -p ctt-wasm-guest --features chicago-tdd-tools/wasm-guest
     timeout 300s cargo test --features wasm-guest,conformance,ledger --test guest_abi_tests
+    # guest_telemetry is cfg(all(wasm-guest, ocel-ingest)) — without the
+    # ocel-ingest feature its tests silently compile out (audit W5).
+    timeout 300s cargo test --features wasm-guest,ocel-ingest --lib conformance::guest_telemetry
 
 # Merger-matrix WASM guest: build the leaf-kernel cdylib (wasm32)
 merger-guest-build:

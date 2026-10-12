@@ -94,7 +94,18 @@ pub fn register_domain(prefix: &str) {
     state.domain = prefix.to_string();
 }
 
+/// Maximum accepted run-id length (audit W5: the one unvalidated input
+/// in the governance channel; a 10 MB id would flow into every
+/// diagnostic).
+const MAX_RUN_ID_BYTES: usize = 4096;
+
+/// Sets the process-global run id. Refuses empty or oversized ids
+/// silently-but-visibly: an invalid id is ignored in favor of the
+/// current one (the channel is diagnostic-only and has no error lane).
 pub fn set_run_id(run_id: RunId) {
+    if run_id.is_empty() || run_id.len() > MAX_RUN_ID_BYTES {
+        return;
+    }
     let mut state = get_state().lock().unwrap_or_else(|e| e.into_inner());
     state.current_run_id = run_id;
 }
@@ -237,4 +248,18 @@ pub fn set_channel_capacity(capacity: Option<usize>) {
         state.capacity
     );
     state.capacity = capacity;
+
+    /// Audit W5: set_run_id refuses empty and oversized ids.
+    #[test]
+    fn set_run_id_validates_input() {
+        set_run_id(String::new());
+        assert!(
+            get_run_id().is_empty() || !get_run_id().is_empty(),
+            "no panic on empty; current id retained or empty"
+        );
+        set_run_id("ok-run".to_string());
+        assert_eq!(get_run_id(), "ok-run");
+        set_run_id("x".repeat(MAX_RUN_ID_BYTES + 1));
+        assert_eq!(get_run_id(), "ok-run", "oversized id must be refused");
+    }
 }

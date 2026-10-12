@@ -320,7 +320,7 @@ mod tests {
     }
 
     /// A one-place fan-out: 14 transitions each `p0 -> p_i` (i in 1..=14),
-    /// producing 2^14 reachable states — used to exercise the cap. Kept at
+    /// producing shared-preset fan-out: 1 + 14 = 15 reachable states — used to exercise the cap. Kept at
     /// 15 declared places so every pre/post mask fits the compiled word's
     /// 16-bit pre/post windows (a place index >= 16 cannot be packed).
     fn fanout_net() -> CompiledNet {
@@ -453,11 +453,13 @@ mod tests {
     #[test]
     fn cap_refusal_is_typed_model_too_large() {
         // A fan-out net: t_i moves p0 -> p_i for 20 distinct targets, so the
-        // reachable set is 2^20 states — far past a tiny cap.
+        // reachable set is shared-preset fan-out (1 + N reachable states) — far past a tiny cap.
         let ss = StateSpace::new(fanout_net(), Marking64(0b1), 0)
             .expect("net is valid")
             .with_max_markings(8);
-        let err = ss.reach().expect_err("2^20 states > cap of 8");
+        let err = ss
+            .reach()
+            .expect_err("shared-preset fan-out (1 + N reachable states) > cap of 8");
         assert!(
             matches!(err, ConformanceError::ModelTooLarge { limit: 8, .. }),
             "expected ModelTooLarge, got {err:?}"
@@ -514,5 +516,32 @@ mod tests {
         let m = Marking64(0b101);
         assert!(m.covers(0b001));
         assert!(!m.covers(0b010));
+    }
+
+    /// Audit W5: at-limit admission — a net whose reachable count EQUALS
+    /// the cap must be admitted (refusal fires only strictly above).
+    #[test]
+    fn cap_admits_at_limit_exactly() {
+        // 3-fanout net: p0 -> t0/t1/t2 -> p1/p2/p3 = 4 reachable states.
+        let net = NetSpec::builder()
+            .place("p0")
+            .place("p1")
+            .place("p2")
+            .place("p3")
+            .transition("t0", "a")
+            .add_pre("p0")
+            .add_post("p1")
+            .transition("t1", "a")
+            .add_pre("p0")
+            .add_post("p2")
+            .transition("t2", "a")
+            .add_pre("p0")
+            .add_post("p3")
+            .build()
+            .compile()
+            .expect("valid net");
+        let ss = StateSpace::new(net, Marking64(0b0001), 0).expect("valid initial");
+        let reach = ss.with_max_markings(4).reach().expect("4 == 4 admits");
+        assert_eq!(reach.count, 4, "reachable count must equal the cap exactly");
     }
 }

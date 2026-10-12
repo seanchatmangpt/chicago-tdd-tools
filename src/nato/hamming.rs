@@ -60,8 +60,9 @@
 //! # Tiering (E-M18)
 //!
 //! * Tier-1 (default `#[test]`): calibrated 10,000-sample prefix per class.
-//! * Tier-2 (`#[ignore]`, `--ignored` opt-in): full 100,000-sample court
-//!   at spec scale, both the main profile court and the negative control.
+//! * Tier-2 (`#[ignore]`, `--ignored` opt-in): full 100,000-sample main
+//!   profile court at spec scale (the negative control runs at Tier-1;
+//!   both tiers share the same seed and chain generator).
 //!
 //! Chicago discipline: real chained executions of the real kernel, no
 //! mocks; assertions on measured state (distributions), not call counts.
