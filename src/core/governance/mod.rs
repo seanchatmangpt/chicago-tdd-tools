@@ -7,7 +7,7 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
-// `unwrap_or(0)` and `unwrap_or_else` throughout this file are safe fallbacks that never panic.
+// `unwrap_or(0)` and `unwrap_or_else` throughout this file are safe fallbacks that deliberate: production fallbacks (unwrap_or(0)) never panic; test closures (unwrap_or_else(panic!)) panic on Err BY DESIGN — W27 probe corrected the earlier blanket never-panic claim.
 #![allow(clippy::unwrap_used)]
 // Pedantic lints suppressed for this internal module:
 // - redundant_closure: mutex poison-recovery closures are intentionally explicit

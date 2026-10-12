@@ -527,6 +527,13 @@ Define compile-time test contracts with coverage analysis:
 use chicago_tdd_tools::prelude::*;
 
 // Define contract at compile time
+
+> **AUDIT NOTE (W27 probe, compile-verified):** the prelude glob does NOT bring in
+> `TestContract`, `TestContractRegistry`, `TimingMeasurement`, `TestOutcome`,
+> `TestReceipt`, or `TestReceiptRegistry` — add
+> `use chicago_tdd_tools::core::{contract::*, receipt::*};` for the Track 1/5/6
+> and Complete-Workflow examples below. (Widening the prelude is an
+> operator-adjudication surface change.)
 const CONTRACT: TestContract = TestContract::hot_path(
     "test_critical_path",
     &["payments::process", "payments::validate"],

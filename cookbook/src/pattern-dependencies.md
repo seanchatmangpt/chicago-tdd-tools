@@ -19,7 +19,7 @@ Some patterns require optional features. Add them to your `Cargo.toml`:
 chicago-tdd-tools = { version = "26.10.12", features = ["testing-extras"] }
 
 # Real collaborators (requires Docker)
-chicago-tdd-tools = { version = "26.10.12", features = ["testing-full"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["integration-full"] // W27 probe: testing-full does NOT include testcontainers; Docker needs integration-full (or testcontainers alone) }
 
 # Observability patterns
 chicago-tdd-tools = { version = "26.10.12", features = ["observability-full"] }

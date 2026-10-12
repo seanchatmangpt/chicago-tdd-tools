@@ -15,7 +15,7 @@ One-page lookup for all Chicago TDD patterns. Each row = core idea in 1 sentence
 | 1 | **AAA** | Tests mix setup/verify | Arrange → Act → Assert | Clear failure diagnosis |
 | 2 | **Error Paths** | Happy path tests miss bugs | Test each error variant | Catches regressions early |
 | 3 | **Boundaries** | Off-by-one errors hide | Test below/at/above limit | Prevents boundary bugs |
-| 4 | **Cleanup** | Forgotten cleanup cascades | Use fixtures with Drop | Automatic resource release |
+| 4 | **Cleanup** | Forgotten cleanup cascades | Fixture cleanup is NOT Drop-automatic — TestFixture has no Drop impl (W27 probe); implement cleanup() or Drop yourself | Manual/own-Drop |
 | 5 | **Real Collaborators** | Mocks hide integration gaps | Use actual services/containers | Production confidence |
 
 ## Architecture Patterns (Patterns 6-10)

@@ -1,3 +1,5 @@
+> **HISTORICAL (W27 probe): 2025-12-01 era — counts cite 612 tests (actual today: 1313 via just test-unit); line cites and Makefile.toml references are stale. Do not cite as current.
+
 > 💡 Explanation
 # Test Verification Results - 2025-12-01
 
