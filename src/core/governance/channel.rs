@@ -252,14 +252,16 @@ pub fn set_channel_capacity(capacity: Option<usize>) {
     /// Audit W5: set_run_id refuses empty and oversized ids.
     #[test]
     fn set_run_id_validates_input() {
+        set_run_id("baseline".to_string());
+        assert_eq!(get_run_id(), "baseline");
         set_run_id(String::new());
-        assert!(
-            get_run_id().is_empty() || !get_run_id().is_empty(),
-            "no panic on empty; current id retained or empty"
-        );
+        assert_eq!(get_run_id(), "baseline", "empty id must be refused");
         set_run_id("ok-run".to_string());
         assert_eq!(get_run_id(), "ok-run");
         set_run_id("x".repeat(MAX_RUN_ID_BYTES + 1));
         assert_eq!(get_run_id(), "ok-run", "oversized id must be refused");
+        // Restore the process-global default so later governance tests see
+        // the stock run id (the channel is process-global).
+        set_run_id("default-run".to_string());
     }
 }

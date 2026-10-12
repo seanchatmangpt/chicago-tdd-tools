@@ -5,7 +5,7 @@
 //! Provides four types for Chicago TDD boundary-crossing CLI tests:
 //! - [`CliHarness`] — runs a real binary, returns [`CliOutput`]
 //! - [`TempWorkspace`] — hermetic `TempDir` with write/assert helpers
-//! - [`ReceiptAssertions`] — verifies signed receipt JSON on disk
+//! - [`ReceiptAssertions`] — verifies receipt JSON field structure on disk (presence checks, not cryptographic verification)
 //! - [`SabotageFixture`] — corrupts files to test fail-closed behavior
 
 #[cfg(feature = "cli-proof")]

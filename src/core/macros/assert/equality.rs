@@ -27,37 +27,6 @@ macro_rules! assert_eq_msg {
     }};
 }
 
-/// Assert equality with automatic type inference and diff output
-///
-/// Enhanced version that provides better error messages with context.
-#[macro_export]
-macro_rules! assert_eq_enhanced {
-    ($actual:expr, $expected:expr $(,)?) => {
-        {
-            let actual_val = &$actual;
-            let expected_val = &$expected;
-            if actual_val != expected_val {
-                panic!(
-                    "assertion failed: `(left == right)`\n  left: `{:?}`\n right: `{:?}`",
-                    actual_val, expected_val
-                );
-            }
-        }
-    };
-    ($actual:expr, $expected:expr, $($arg:tt)+) => {
-        {
-            let actual_val = &$actual;
-            let expected_val = &$expected;
-            if actual_val != expected_val {
-                panic!(
-                    "assertion failed: `(left == right)`\n  left: `{:?}`\n right: `{:?}`\n{}",
-                    actual_val, expected_val, format!($($arg)+)
-                );
-            }
-        }
-    };
-}
-
 /// Assert that two floating-point values are approximately equal
 ///
 /// **New in v1.3.0**: Floating-point comparison with configurable tolerance.

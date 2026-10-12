@@ -5,7 +5,7 @@
 //! # Modules
 //!
 //! - [`result`] - Result assertions (`assert_ok`, `assert_err`, `assert_fail`)
-//! - [`equality`] - Equality assertions (`assert_eq_msg`, `assert_eq_enhanced`, `assert_approx_eq`)
+//! - [`equality`] - Equality assertions (`assert_eq_msg`, `assert_approx_eq`)
 //! - [`collections`] - Collection assertions (`assert_contains`, `assert_not_contains`, `assert_subset`, `assert_superset`) - v1.3.0
 //! - [`json`] - JSON assertions (`assert_json_eq`) - v1.3.0
 //! - [`patterns`] - Pattern matching assertions (`assert_matches`) - v1.3.0

@@ -436,9 +436,6 @@ path = "examples/otel_weaver_testing.rs"
 required-features = ["otel", "weaver"]
 
 # Benchmarks
-[[bench]]
-name = "core_fixtures"
-harness = false
 
 [[bench]]
 name = "validation"
@@ -448,9 +445,6 @@ harness = false
 name = "testing_utilities"
 harness = false
 
-[[bench]]
-name = "builders"
-harness = false
 
 [[bench]]
 name = "receipt_chain"

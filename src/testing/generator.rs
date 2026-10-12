@@ -84,18 +84,6 @@ pub const fn generate_test_array_pattern<const N: usize>(pattern: u8) -> [u8; N]
     }
     array
 }
-
-/// Compile-time validation helper
-///
-/// Validates a condition at compile time using const assertions.
-///
-/// # Panics
-///
-/// Panics if `condition` is `false` at compile time.
-pub const fn const_assert(condition: bool) {
-    assert!(condition, "Compile-time assertion failed");
-}
-
 /// Compile-time validation helper with message
 ///
 /// # Panics

@@ -272,8 +272,9 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
     // Audit W3/W5: the sweep must cover the pk space too — a corrupted
     // pk must be rejected, not just a corrupted signature. 64 + 64
     // flips; ceiling-division sampling (i*LEN).div_ceil(64) puts i=0 at
-    // byte 0 and i=63 at the LAST byte of both buffers (the ML-DSA hint
-    // tail included).
+    // byte 0 and strides to within one stride-step of the tail (i=63 hits
+    // byte 3258/3309 sig, 1922/1952 pk — the last bytes are covered by the
+    // positive control and the malformed-input truncation tests).
     for i in 0..64usize {
         let byte_idx = (i * PK_LEN).div_ceil(64);
         let bit = i % 8;

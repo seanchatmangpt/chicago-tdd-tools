@@ -1,6 +1,6 @@
 # Chicago TDD Tools - Examples Quick Reference
 
-**Version:** 1.2.0 | **For complete documentation:** [examples/README.md](examples/README.md)
+**Version:** 26.10.12 | **For complete documentation:** [examples/README.md](examples/README.md)
 
 Quick reference for all examples organized by the [Diátaxis framework](https://diataxis.fr/).
 

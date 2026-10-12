@@ -228,6 +228,16 @@ test-nato-tier2:
 emit-dossier:
     CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
     timeout 300s cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml --features crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --format json
+    @# Idempotence law (audit W6): sealed_at is the only wall-clock input; when
+    @# the re-emitted dossier differs from HEAD solely in sealed_at (root,
+    @# receipts, and signature byte-stable), restore the committed bytes so a
+    @# no-material-change re-seal never dirties the tree.
+    @just _dossier-idempotence
+
+_dossier-idempotence:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 scripts/dossier_idempotence.py
 
 # Verify the emitted dossier: PQC (ML-DSA-65) signature + Merkle-root assertion
 dossier-verify:

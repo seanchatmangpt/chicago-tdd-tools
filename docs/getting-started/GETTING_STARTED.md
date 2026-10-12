@@ -319,7 +319,7 @@ chicago-tdd-tools = {
 }
 ```
 
-**See**: [README Features](../README.md#core-features) for complete feature documentation.
+**See**: [README Features](../README.md#core-capabilities-with-real-examples) for complete feature documentation.
 
 ## Procedural Macros
 

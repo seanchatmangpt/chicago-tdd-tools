@@ -78,7 +78,14 @@ Modules are organized into capability groups for better discoverability and main
 - `sector_stacks`: Sector reference stacks — demo-grade Chatman Equation worked examples per sector (synthetic data)
 - `bin/`: Standalone binaries (weaver_smoke, otel_production_run, otel_negative_run, git_hook_installer, check_dog_fooding, verify_lint_config, ctdd_combinatorial_plan)
 
-**Companion crate** (`crates/chicago-tdd-lsp/`): Editor guard built on lsp-max — emits `CTDD-DEV-001` when `chicago-tdd-tools` is placed in `[dependencies]` instead of `[dev-dependencies]`. Excluded from the root workspace build.
+**Companion crates**: `crates/chicago-tdd-lsp/` (editor guard, lsp-max, emits
+`CTDD-DEV-001`; excluded from the workspace build) and the assurance workspace
+members — `crates/ctt-wasm-guest/` (zero-import pn64 guest kernel), 
+`crates/merger-guests/` (8 zero-dep financial leaf kernels), 
+`crates/chicago-tdd-mcp/` + `crates/chicago-claims/` (internal tools,
+`publish = false`). The assurance chain is conformance (pn64/POWL replay) →
+ledger (CTRT wire + ML-DSA-65 sealing) → nato (20-court matrix, N01–N20, 
+sealed STANAG-4107 dossier at `docs/nato/NATO_STANAG_4107_DOSSIER.json`).
 
 **Backward Compatibility**: All modules are re-exported at the crate root. Existing code using `chicago_tdd_tools::fixture::*` continues to work. New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 

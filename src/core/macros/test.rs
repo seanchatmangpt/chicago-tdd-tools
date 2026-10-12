@@ -359,7 +359,10 @@ macro_rules! fixture_test_with_timeout {
 
 /// Macro for performance tests with tick budget validation
 ///
-/// Validates that hot path operations complete within the Chatman Constant
+/// Names a performance test. Audit honesty note: the macro itself performs
+/// NO validation — it is a marked `#[test]`; the tick-budget assertion is
+/// written by the caller inside the body (see `assert_within_tick_budget!`)
+/// against the Chatman Constant
 /// (≤8 ticks = 2ns budget).
 ///
 /// # Example
