@@ -215,7 +215,11 @@ impl ConformanceSession {
     /// Installs the forbidden-bit policy mask: any post-fire marking that
     /// intersects it is classified [`ConformanceError::ForbiddenBit`].
     ///
-    /// Only effective before the first step (the session latches).
+    /// The mask is read on every step, so installing it mid-stream (between
+    /// `Yielded` and `resume`) changes the classification of subsequent
+    /// steps; terminal-phase sessions never step again, so the write is
+    /// inert there. Callers wanting a fixed policy should install it before
+    /// [`Self::attach_stream`].
     pub const fn set_forbidden_mask(&mut self, mask: u64) {
         self.forbidden_mask = mask & 0xFFFF;
     }
