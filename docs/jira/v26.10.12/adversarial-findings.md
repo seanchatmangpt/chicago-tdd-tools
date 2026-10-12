@@ -621,3 +621,16 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   for BuilderError/ReceiptJsonError/DossierWireError (ledger-gated)/
   SwarmError. Remaining: DiagnosticSink::emit/close (blocks on a
   coordinated ocel-collector splice — registered).
+- DoD §2.3 — FULLY CLOSED (0c2375d, W49f/g): zero `Result<_, String>`
+  error slots in src/ production code at ALL visibilities (pub fn, trait
+  method, type alias, closure bound). Final 3: builders ValidationFn
+  alias + with_validation bound (BuilderError), effects
+  RequiresEffect::execute family (BuilderError::BuildFailure), weaver
+  download_weaver_runtime (WeaverError::Spawn, 10 sites). Prelude
+  DossierWireError gate corrected ledger→nato (the ledger-only gate was
+  an E0432 — `cargo check --features ledger` and bare
+  `cargo test -p ctt-wasm-guest` were broken by it); prelude surface
+  test extended with size_of nameability assertions for the four typed
+  channels (62/0). GETTING_STARTED Transition snippet moved to the
+  typed channel (W49e). The lone remaining src/ grep hit is the
+  historical doc comment on GovernanceError.
