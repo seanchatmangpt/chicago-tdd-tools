@@ -45,10 +45,13 @@ section of `/Users/sac/strata/docs/nato/NATO_N01_N20.md`.
 | N20 | Dossier generator | supply chain | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
 
 Note on numbering (E-M18): all 20 courts are delivered CTT-side and the
-matrix is 20/20 (`src/nato/registry.rs` `COURT_NAMES`). N08 Hamming profile
-(`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
-thrash (`src/nato/thrash.rs`), N15 liveness (`src/nato/liveness.rs`) landed
-CTT-side; the Erlang/OTP tiers remain strata-side.
+matrix is 20/20 (`src/nato/registry.rs` `COURT_NAMES`). N08
+[Hamming profile](hamming.rs), N12 [clock-glitch](tick.rs), N14
+[CAST-32A thrash](thrash.rs), N15 [liveness](liveness.rs) landed
+CTT-side; the Erlang/OTP tiers remain strata-side. These four courts'
+receipts are real-run emitted (via the `CTT_EMIT_RECEIPTS=1` emitters),
+unlike the synthetic control-stub receipts described under the
+[receipt contract](#receipt-contract).
 
 ## The positive-control gate law
 
@@ -75,24 +78,90 @@ claims another tier's strength.
 
 ## Receipt contract
 
-Each court writes a `CourtReceipt` as JSON to `docs/receipts/N{01..20}.json`
-(one file per court) when the opt-in gate `CTT_EMIT_RECEIPTS=1` is set
-(hermetic by default otherwise). Required fields:
+Each court writes a `CourtReceipt` (see `src/nato/receipt.rs`) as JSON to
+`docs/receipts/N{01..20}.json` (one file per court) when the opt-in gate
+`CTT_EMIT_RECEIPTS=1` is set (hermetic by default otherwise).
+
+`verdict` is one of `Pass` | `Fail` | `Refused`. A receipt carries:
+`receipt_id`, `court_id`, `pillar`, `name`, `subject_sha`, `verdict`,
+`metrics`, `positive_control`, `scoping` (a `ScopingRecord`), `digest`,
+and `timestamp_ms`. `scoping` maps the spec mandate to the delivered
+evidence: `spec_mandate`, `delivered_evidence`, `is_full_spec_scale`,
+and `bound`.
+
+The positive-control field is one of:
+
+- `MutantCaught { mutant_id, detection_channel }` — the injected defect
+  was caught, naming the channel that caught it;
+- `MutantSurvived { mutant_id }` — the court is void for that run;
+- `GateRefused { reason }` — the court refused at its gate.
+
+A real emitted receipt, quoted verbatim from `docs/receipts/N08.json`:
 
 ```json
 {
-  "court": "N01",
-  "verdict": "Admitted",
-  "spec_scale": "2^64 SMT dual-tenant state space",
-  "delivered_scale": "2^16 exhaustive + 10^7 randomized",
-  "follow_up": "Kani/Z3 full-domain harness (not shipped)",
-  "positive_control": {"mutant": "N01-leak-inject", "verdict": "Refused"},
-  "subject": {"crate": "chicago-tdd-tools", "sha256": "..."},
-  "command": "just test-nato-tier2",
-  "exit": 0,
-  "timestamp_utc": "2026-10-12T00:00:00Z"
+  "receipt_id": "cr-N08-e6c8d884e346e9e6",
+  "court_id": "N08",
+  "pillar": "Security",
+  "name": "N08",
+  "subject_sha": "b92e311b8d24773c28065b8d4fe522204b9d081f280cfcb7323d44d95cdfa776",
+  "verdict": "Pass",
+  "metrics": [
+    [
+      "n_per_class",
+      {
+        "U64": 10000
+      }
+    ],
+    [
+      "welch_t_weight",
+      {
+        "F64": 0.0
+      }
+    ],
+    [
+      "welch_t_distance",
+      {
+        "F64": 0.0
+      }
+    ],
+    [
+      "max_bin_diff_weight",
+      {
+        "F64": 0.0
+      }
+    ],
+    [
+      "max_bin_diff_distance",
+      {
+        "F64": 0.0
+      }
+    ]
+  ],
+  "positive_control": {
+    "MutantCaught": {
+      "mutant_id": "observe_leaky",
+      "detection_channel": "welch_t"
+    }
+  },
+  "scoping": {
+    "spec_mandate": "N08: Hamming weight/distance profile across successive states is input-independent",
+    "delivered_evidence": "receipt minted from a real tier-1 run: 10,000-step chained kernel profile court per payload class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram comparison, plus the firing leaky-observer positive control",
+    "is_full_spec_scale": false,
+    "bound": "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale"
+  },
+  "digest": "e6c8d884e346e9e6c22518ee9400789ddbe8a7db7fe2781103033024929a372c",
+  "timestamp_ms": 0
 }
 ```
 
-`verdict` is one of `Admitted` | `Refused` | `NotRun`. A missing receipt
-file degrades the N20 dossier to `Refused`, never a silent pass.
+### Dossier control reality
+
+Of the 20 receipt files, 16 (N01, N20, and 14 others) are **synthetic
+control-stub receipts** (`cr-control-*` receipt ids, subject
+`"control-subject"`) — they exercise the dossier generator, not the
+courts. Four courts — N08 (`src/nato/hamming.rs`), N12
+(`src/nato/tick.rs`), N14 (`src/nato/thrash.rs`), N15
+(`src/nato/liveness.rs`) — carry **real-run receipts** minted by their
+`CTT_EMIT_RECEIPTS=1` emitters. A missing receipt file degrades the N20
+dossier to `Refused`, never a silent pass.

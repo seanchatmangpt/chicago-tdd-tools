@@ -149,7 +149,7 @@ Snapshot testing: Output capture and comparison. Review workflow. Multiple forma
 
 **Basic Usage**: `SnapshotAssert::assert_matches(&value, "snapshot_name")` for Display, `SnapshotAssert::assert_debug_matches(&value, "snapshot_name")` for Debug, `SnapshotAssert::assert_json_matches(&json_value, "snapshot_name")` for JSON.
 
-**Review Workflow**: Run tests → `cargo make snapshot-review` → Accept/reject changes → Commit snapshots. Use `cargo make snapshot-accept` to accept all, `cargo make snapshot-reject` to reject all.
+**Review Workflow**: Run tests → `just snapshot-review` → Accept/reject changes → Commit snapshots. Use `just snapshot-accept` to accept all, `just snapshot-reject` to reject all.
 
 **Custom Settings**: `SnapshotAssert::with_settings(|settings| { settings.set_snapshot_path("custom"); }, || { /* test */ })` for custom paths.
 

@@ -414,8 +414,9 @@ impl Court for KatCourt {
                  prompt/expectedResult corpus from usnistgov/ACVP-Server)",
                 "PIPELINE-KAT over `Signer` (ML-DSA-65): frozen golden pk/sig reproduced \
                  bit-for-bit, 3-run seed->pk->sig determinism, verify-accept on the \
-                 legitimate signature, and verify-REJECT on 64 sampled single-bit \
-                 flips (positive control: a sampled flip must be rejected)",
+                 legitimate signature, and verify-REJECT on 128 sampled single-bit \
+                 flips (64 sig + 64 pk; positive control: a sampled flip must be \
+                 rejected)",
                 "self-pinning PIPELINE-KAT of OUR pipeline, NOT official NIST ACVP \
                  reference vectors; the ACVP corpus is unavailable offline and no \
                  network fetch is performed at test time; classified Pillar::Security \

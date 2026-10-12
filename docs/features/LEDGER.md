@@ -216,13 +216,16 @@ BLAKE3 over the encoded public key (lane R8 reconcile).
 ## CLI (`affi`, Phase D M2 — landed in `~/affidavit`)
 
 The `ctdd_ledger` binary and the `ledger-cli` feature were removed in the V2
-cleanup. The subcommand surface below is pending re-landing as `affi` verbs
-(Phase D M2); the domain logic lives in the library (`src/ledger/`, notably
-`dossier_wire.rs`) and `just verify-ledger`, `just emit-dossier`,
-`just dossier-verify`, `just dossier-inspect` already route through the
-`affi` binary at `/Users/sac/affidavit`.
+cleanup. The former subcommand surface is LANDED as `affi` verbs (Phase D M2,
+`~/affidavit`): `affi receipt validate`, `affi receipt chain-verify`,
+`affi dossier seal`, `affi dossier verify`, `affi dossier emit`,
+`affi dossier inspect`. The domain logic lives in the library (`src/ledger/`,
+notably `dossier_wire.rs`); the Justfile recipes `verify-ledger`, `emit-dossier`,
+`dossier-verify`, and `dossier-inspect` invoke the `affi` binary via
+`cargo run --manifest-path {{AFFIDAVIT_DIR}}/Cargo.toml` (default
+`/Users/sac/affidavit`).
 
-Former subcommands → `affi` verb mapping:
+Former subcommands → `affi` verb mapping (all landed):
 
 | subcommand | args | behavior |
 |---|---|---|

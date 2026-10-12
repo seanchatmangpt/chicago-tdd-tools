@@ -18,7 +18,7 @@ Get up and running with Chicago TDD Tools in 5 minutes. Verified, runnable examp
 
 ## Installation
 
-**Step 1**: Install `cargo-make` (required for build system):
+**Step 1**: Install `just` (required for build system):
 ```bash
 cargo install just
 ```

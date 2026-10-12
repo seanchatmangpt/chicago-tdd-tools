@@ -174,12 +174,12 @@ otel_test!(test_otel_span_validation, {
 
 **Bootstrap once**:
 ```bash
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 **Daily guardrail**:
 ```bash
-cargo make weaver-smoke    # version check + telemetry span
+just weaver-smoke    # version check + telemetry span
 ```
 
 **Enable in `Cargo.toml`**:

@@ -46,7 +46,7 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 
 ## Usage
 
-**Unit Tests Only**: `cargo make test` (fast iteration, excludes testcontainers, uses 1s timeout). `cargo make test-unit` (explicit). **Integration Tests Only**: `cargo make test-integration` (testcontainers, requires Docker, uses 30s timeout). **All Tests**: `cargo make test-all` (unit + integration). **With Verbose Output**: `cargo make test-verbose` (unit tests only).
+**Unit Tests Only**: `just test` (fast iteration, excludes testcontainers, uses 1s timeout). `just test-unit` (explicit). **Integration Tests Only**: `just test-integration` (testcontainers, requires Docker, uses 30s timeout). **All Tests**: `just test-all` (unit + integration). **With Verbose Output**: `just test-verbose` (unit tests only).
 
 ### Test Macro Timeout Configuration
 
@@ -64,9 +64,9 @@ Multi-layered timeout enforcement system ensuring all unit tests complete within
 
 **Excluded from Normal Iteration**: Testcontainers integration tests excluded from `test` and `test-unit` tasks because they require Docker, are slow (typically 5-30s per test), are not needed for fast feedback during development.
 
-**Running Integration Tests**: Use `cargo make test-integration` when you need to verify testcontainers functionality. Uses `integration` profile (30s timeout), requires `--features testcontainers` to be enabled, requires Docker to be running.
+**Running Integration Tests**: Use `just test-integration` when you need to verify testcontainers functionality. Uses `integration` profile (30s timeout), requires `--features testcontainers` to be enabled, requires Docker to be running.
 
-**Mocking Testcontainers**: For fast testing without Docker, disable the `testcontainers` feature: `cargo make test --no-default-features`. When feature is disabled, testcontainers stubs return `TestcontainersError::InvalidConfig`, which can be tested without Docker.
+**Mocking Testcontainers**: For fast testing without Docker, disable the `testcontainers` feature: `just test --no-default-features`. When feature is disabled, testcontainers stubs return `TestcontainersError::InvalidConfig`, which can be tested without Docker.
 
 ## External Command Timeout Pattern
 
@@ -151,7 +151,7 @@ See: [Root Cause Analysis - Docker Check Freeze](../process/FMEA_TESTS_BUILD_ACT
 
 ## Fallback
 
-If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to standard cargo test).
+If cargo-nextest is not available, use: `just test-cargo` (falls back to standard cargo test).
 
 ## Configuration Files
 
@@ -163,7 +163,7 @@ If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to s
 
 **Integration Tests Timing Out**: Verify Docker is running (`docker ps`), check container startup time (may need longer timeout), verify integration profile timeout in `.config/nextest.toml` (30s), consider mocking testcontainers for faster testing (disable feature), use `*_with_timeout!` macro variants with 30s timeout for async integration tests.
 
-**Testcontainers Tests Not Running**: Verify feature is enabled (`cargo make test-integration --features testcontainers`), check Docker is running (`docker ps`), verify test file exists (`tests/testcontainers_expert_tests.rs`), check feature gate (tests are gated with `#[cfg(all(feature = "testcontainers", test))]`).
+**Testcontainers Tests Not Running**: Verify feature is enabled (`just test-integration --features testcontainers`), check Docker is running (`docker ps`), verify test file exists (`tests/testcontainers_expert_tests.rs`), check feature gate (tests are gated with `#[cfg(all(feature = "testcontainers", test))]`).
 
 **Timeout Not Enforced**: Verify cargo-nextest is installed (`cargo install cargo-nextest`), check `.config/nextest.toml` exists and is valid, check macro expansion (`cargo expand --test test_name`), for async tests verify `tokio::time::timeout` is being applied.
 
@@ -177,7 +177,7 @@ If cargo-nextest is not available, use: `cargo make test-cargo` (falls back to s
 
 **When to Run Integration Tests**: Before committing major changes to testcontainers module, in CI/CD pipelines (can use `test-all` task), when debugging testcontainers-specific issues, before releases (comprehensive validation).
 
-**Normal Development**: Use `cargo make test` (unit tests only) for fast feedback. Integration tests are assumed to work (as per 80/20 principle).
+**Normal Development**: Use `just test` (unit tests only) for fast feedback. Integration tests are assumed to work (as per 80/20 principle).
 
 ## Summary
 

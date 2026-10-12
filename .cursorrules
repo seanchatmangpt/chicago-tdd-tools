@@ -6,7 +6,7 @@ Never trust text, only test results. All code is production-ready with error han
 
 ## Critical Non-Negotiables
 
-**Build System**: Always use `cargo make` commands, never direct `cargo` commands. Cargo-make handles proc-macro crates, includes timeouts, ensures consistency.
+**Build System**: Always use `just` commands, never direct `cargo` commands. Just handles proc-macro crates, includes timeouts, ensures consistency.
 
 **Git Hooks**: NEVER use `--no-verify` flag. All git hooks (pre-commit, pre-push, etc.) MUST run to enforce quality gates. If hooks fail, fix the issues - do not bypass them. Hooks are mandatory quality checks that prevent defects from entering the codebase.
 
@@ -104,7 +104,7 @@ Getting Started Guide, User Guide, API Reference, Chicago TDD Standards, Build S
 
 **Elite Mindset**: Think in types first, zero-cost abstractions, performance intuition, ergonomic APIs, leverage type system, maximize Rust's strengths, go extra mile (3 ideas, 80/20 thinking).
 
-**Critical Requirements**: Use `cargo make` commands, timeout SLAs for all CLI commands, behavior verification in tests, test before completion, rich todos for failures, Chicago TDD principles.
+**Critical Requirements**: Use `just` commands, timeout SLAs for all CLI commands, behavior verification in tests, test before completion, rich todos for failures, Chicago TDD principles.
 
 **Key Associations**: Types = invariants = compile-time guarantees. Zero-cost = generics/macros/const generics. Performance = references/stack/minimize allocations. Ownership = explicit = memory safety. APIs = type-safe = ergonomic = composable. Tests = observable outputs = behavior verification. 80/20 = second idea = sweet spot = maximum value.
 
