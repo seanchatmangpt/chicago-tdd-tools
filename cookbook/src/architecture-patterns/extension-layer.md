@@ -78,7 +78,7 @@ use chicago_tdd_tools::core::fixture::TestFixture;
 pub fn setup_domain() -> Result<DomainFixture, chicago_tdd_tools::core::fixture::FixtureError> {
     // W27 probe note: TestFixture::new() returns FixtureResult<Self>; propagate, don't `?` into a `-> Self` fn.
     let base = TestFixture::new()?;
-    Ok(DomainFixture::new(base))
+    Ok(DomainFixture::new(base, config))
 }
 ```
 
@@ -97,7 +97,7 @@ pub fn setup_domain() -> Result<DomainFixture, chicago_tdd_tools::core::fixture:
 
 ---
 
-**Why It Works**: Extensions stay loosely coupled to the base. When base APIs change, only the wrapper wrapper, not all domain code.
+**Why It Works**: Extensions stay loosely coupled to the base. When base APIs change, only the wrapper, not all domain code.
 
 **Production Checklist**:
 - [ ] No base helpers are duplicated in extension
