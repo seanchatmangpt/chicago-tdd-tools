@@ -50,10 +50,16 @@ for FILE in $STAGED_FILES; do
     fi
 
     # Count unwrap() calls in added lines
-    UNWRAPS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.unwrap\(\)' 2>/dev/null || echo "0")
+    # grep -c prints 0 AND exits 1 on zero matches; the `|| echo 0` then emitted a
+    # second 0, corrupting the integer test below ("0\n0"). Drop the fallback:
+    # `|| true` inside the substitution keeps set -e alive when grep -c exits 1
+    # (zero matches); ${:-0} then normalizes the empty result.
+    UNWRAPS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.unwrap\(\)' 2>/dev/null || true)
+    UNWRAPS=${UNWRAPS:-0}
 
     # Count expect() calls in added lines
-    EXPECTS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.expect\(' 2>/dev/null || echo "0")
+    EXPECTS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.expect\(' 2>/dev/null || true)
+    EXPECTS=${EXPECTS:-0}
 
     if [ "$UNWRAPS" -gt 0 ] || [ "$EXPECTS" -gt 0 ]; then
         FILES_WITH_ISSUES="$FILES_WITH_ISSUES\n  $FILE: $UNWRAPS unwrap(), $EXPECTS expect()"

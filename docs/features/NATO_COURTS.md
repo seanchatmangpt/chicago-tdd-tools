@@ -55,14 +55,21 @@ The `Court` trait (same file) fixes the shape every implementation follows:
 
 ```rust
 pub trait Court {
-    const ID: CourtId;
-    const PILLAR: Pillar;
+    /// Dyn-safe court identifier accessor. Concrete courts define the
+    /// identity as associated consts (`const ID` / `const PILLAR`) and
+    /// forward these methods to them.
+    fn id(&self) -> CourtId;
 
-    fn id(&self) -> CourtId { Self::ID }
-    fn pillar(&self) -> Pillar { Self::PILLAR }
+    /// Dyn-safe pillar accessor (see [`Court::id`]).
+    fn pillar(&self) -> Pillar;
 
+    /// Canonical court name.
     fn name(&self) -> &'static str;
+
+    /// The mandatory positive-control probe.
     fn positive_control(&self) -> ControlProbe;
+
+    /// Run the court's adversarial evaluation of the candidate.
     fn run(&self, candidate: &CandidateRef) -> CourtOutcome;
 }
 ```
@@ -165,9 +172,23 @@ Framework (landed):
 
 Court pillar files landing in this release (file present on disk):
 
-- `timing.rs` (N05), `disasm.rs` (N06), `cache.rs` (N07), `wcet.rs` (N13),
-  `stackbound.rs` (N16), `seu.rs` (N09/N10), `kat.rs` (N17),
-  `entropy.rs` (N18), `torn/` (N11: `ring.rs`, `slot.rs`).
+- `mils.rs` (N01), `orthogonality.rs` (N02), `bell_lapadula.rs` (N03),
+  `zero_ambient.rs` (N04), `timing.rs` (N05), `disasm.rs` (N06),
+  `cache.rs` (N07), `seu.rs` (N09/N10), `torn/` (N11: `ring.rs`, `slot.rs`),
+  `wcet.rs` (N13), `stackbound.rs` (N16), `kat.rs` (N17),
+  `entropy.rs` (N18), `reproducible.rs` (N19), `dossier_court.rs` (N20),
+  `guest_audit.rs` (guest-wasm import audit lane), `transition_tables.rs`
+  (RONR + DAO transition-table substrate for the N02/N03 courts).
+
+Concrete courts define identity as inherent associated consts and forward
+`id()`/`pillar()` to them, e.g. `MilSeparationCourt` (`mils.rs:424-429`):
+
+```rust
+impl MilSeparationCourt {
+    pub const ID: CourtId = CourtId::N01;
+    pub const PILLAR: Pillar = Pillar::Security;
+}
+```
 
 ## Honest scoping law
 

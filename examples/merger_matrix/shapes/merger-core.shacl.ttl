@@ -1,0 +1,58 @@
+# merger-core.shacl.ttl — deal entity topology
+# Hand-authored fixture. NOT legal advice.
+# FIBO referenced by prefix + rdfs:seeAlso only. No owl:imports.
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:    <http://example.com/merger#> .
+@prefix fibo-fbc: <https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/BusinessRegistries/> .
+@prefix fibo-fnd: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
+
+ex:AcmeCorp    rdfs:seeAlso fibo-fbc:  .
+ex:MergerSub   rdfs:seeAlso fibo-fnd:  .
+
+# The deal graph contains exactly these entities; anything else fails closed.
+ex:AcmeCorpShape a sh:NodeShape ;
+    sh:targetClass ex:Acquirer ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:legalName ;
+        sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:hasSubsidiary ;
+        sh:class ex:AcquisitionVehicle ; sh:minCount 1 ;
+    ] .
+
+ex:MergerSubShape a sh:NodeShape ;
+    sh:targetClass ex:AcquisitionVehicle ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:legalName ;
+        sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:formedBy ;
+        sh:class ex:Acquirer ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] .
+
+ex:BetaHoldingsShape a sh:NodeShape ;
+    sh:targetClass ex:Target ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:legalName ;
+        sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:sharesOutstanding ;
+        sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+    ] , [
+        sh:path ex:sharesVotingAtRecordDate ;
+        sh:datatype xsd:integer ; sh:maxCount 1 ;
+    ] .
+
+# Fixed individuals under test
+ex:AcmeCorp     a ex:Acquirer ;  ex:legalName "AcmeCorp, Inc." ;
+                ex:hasSubsidiary ex:MergerSub .
+ex:MergerSub    a ex:AcquisitionVehicle ; ex:legalName "Merger Sub, LLC" ;
+                ex:formedBy ex:AcmeCorp .
+ex:BetaHoldings a ex:Target ; ex:legalName "Beta Holdings, Inc." ;
+                ex:sharesOutstanding 400000000 .

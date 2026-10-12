@@ -70,7 +70,8 @@ fn workspace_corrupt_file_mutates_real_bytes() {
     let ws = TempWorkspace::new().unwrap();
     ws.write_file("data.bin", "ABCDE").unwrap();
 
-    ws.corrupt_file("data.bin", |bytes| bytes.into_iter().map(|b| b ^ 0x20).collect()).unwrap();
+    ws.corrupt_file("data.bin", |bytes| bytes.into_iter().map(|b| b ^ 0x20).collect())
+        .unwrap();
 
     // 'A' ^ 0x20 == 'a' — ASCII-safe case flip so read_file() still parses UTF-8.
     assert_eq!(ws.read_file("data.bin").unwrap(), "abcde");
@@ -303,10 +304,7 @@ fn sabotage_then_validation_fails_closed() {
 /// Running a real binary that exits 0 succeeds and captures its stdout.
 #[test]
 fn harness_runs_real_binary_and_captures_stdout() {
-    let output = CliHarness::from_path("/bin/echo")
-        .args(["hello", "harness"])
-        .run()
-        .unwrap();
+    let output = CliHarness::from_path("/bin/echo").args(["hello", "harness"]).run().unwrap();
 
     let _ = output.assert_success();
     assert_eq!(output.exit_code, 0);

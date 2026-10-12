@@ -1,0 +1,56 @@
+# deal-terms.shacl.ttl — exchange ratio, price, quorum terms
+# Hand-authored fixture. NOT legal advice.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.com/merger#> .
+@prefix fibo-fnd: <https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/> .
+
+ex:MergerAgreement rdfs:seeAlso fibo-fnd: .
+
+ex:DealTermsShape a sh:NodeShape ;
+    sh:targetClass ex:MergerAgreement ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:exchangeRatio ;
+        sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minInclusive "0.0"^^xsd:decimal ;
+    ] , [
+        sh:path ex:aggregateConsiderationUSD ;
+        sh:datatype xsd:decimal ; sh:maxCount 1 ;
+        sh:minInclusive "0.0"^^xsd:decimal ;
+    ] , [
+        sh:path ex:survivingEntity ;
+        sh:class ex:Acquirer ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:acquires ;
+        sh:class ex:Target ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:requiresAcquirerVote ;
+        sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:voteThresholdPct ;
+        sh:datatype xsd:decimal ; sh:maxCount 1 ;
+        sh:minInclusive "50.0"^^xsd:decimal ;
+        sh:maxInclusive "100.0"^^xsd:decimal ;
+    ] , [
+        sh:path ex:outsideDate ;
+        sh:datatype xsd:date ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] .
+
+# Note: no ex:considerationKind predicate or enum is used anywhere in this fixture tree
+# (deal.ttl models consideration via ex:exchangeRatio + ex:aggregateConsideration[USD]),
+# so no considerationKind sh:in constraint is defined here. Likewise ex:domicile is
+# unused; parties.ttl models incorporation via ex:jurisdiction on ex:Corporation nodes,
+# which no closed shape in this tree targets.
+
+ex:MergerAgreement
+    a ex:MergerAgreement ;
+    # Exchange ratio unified on 1.75 to match data/deal.ttl and contracts/merger-agreement.ttl.
+    ex:exchangeRatio "1.75"^^xsd:decimal ;
+    ex:aggregateConsiderationUSD "4200000000.00"^^xsd:decimal ;
+    ex:survivingEntity ex:AcmeCorp ;
+    ex:acquires ex:BetaHoldings ;
+    ex:requiresAcquirerVote true ;
+    ex:voteThresholdPct "66.67"^^xsd:decimal ;
+    ex:outsideDate "2027-06-30"^^xsd:date .

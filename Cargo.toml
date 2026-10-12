@@ -1,6 +1,6 @@
 [package]
 name = "chicago-tdd-tools"
-version = "26.8.9"
+version = "26.10.11"
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"
@@ -45,7 +45,7 @@ lsp-types = { version = "0.97", optional = true }
 # Async runtime
 # Tokio features optimized for testing: rt (basic runtime), rt-multi-thread (parallel execution),
 # macros (async test macros). Minimal feature set for testing use case.
-tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "^1.0", optional = true, default-features = false, features = ["rt", "rt-multi-thread", "macros"] }
 futures = "^0.3"
 
 # Serialization
@@ -56,8 +56,8 @@ serde_yaml = "0.9"
 toml = "1.1"
 
 # Utilities
-uuid = { version = "^1.0", features = ["v4"] }
-chrono = "^0.4"
+uuid = { version = "^1.0", optional = true, features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] } # wasmbind OFF: keeps the wasm guest zero-import
 
 # Cryptography and encoding (for sector stacks: receipts and merkle roots)
 sha2 = "^0.10"
@@ -132,6 +132,12 @@ loom = { version = "^0.7", optional = true }
 # Enables: observability::ocel module, OcelCollector DiagnosticSink
 # wasm4pm-compat provides the Evidence lifecycle and OCEL standard types
 wasm4pm-compat = { version = "26.6.26", optional = true, features = ["formats"] }
+# --- Assurance optional dependencies (v26.10.11) ---
+ml-dsa = { version = "0.1.1", optional = true, default-features = false, features = ["alloc", "getrandom", "zeroize"] }
+zeroize = { version = "1", optional = true }
+getrandom = { version = "0.3", optional = true }
+clap = { version = "4.5", optional = true, features = ["derive"] }
+# bcinr-powl = { version = "26.10.11", optional = true, default-features = false }
 blake3 = { version = "1", optional = true }
 dashmap = { version = "^6.0", optional = true }
 tracing = { version = "^0.1", optional = true }
@@ -154,7 +160,7 @@ trycmd = { version = "^1.2", optional = true }
 git2 = { version = "^0.20", optional = true }
 
 # Procedural macros (internal)
-chicago-tdd-tools-proc-macros = { version = "26.8.9", path = "proc_macros" }
+chicago-tdd-tools-proc-macros = { version = "26.10.11", path = "proc_macros" }
 
 # OTEL types are now internal (otel_types.rs, weaver_types.rs)
 # No external dependency on knhk-otel needed
@@ -162,6 +168,7 @@ chicago-tdd-tools-proc-macros = { version = "26.8.9", path = "proc_macros" }
 [dev-dependencies]
 star-toml = "26.6.29"
 # Test utilities (dev-only, not included in library)
+tokio = { version = "^1.0", features = ["rt", "rt-multi-thread", "macros"] } # dev: #[tokio::test]/#[tokio::main] in tests/examples
 tokio-test = "^0.4"      # Tokio testing utilities
 ntest = "^0.9"           # Test timeout enforcement (SLA compliance)
 trybuild = "^1.0"        # Compile-fail tests (compile-time test validation)
@@ -180,7 +187,7 @@ default = ["logging"]
 # Core features (always available - no dependencies)
 workflow-engine = [] # Enable workflow-specific features
 mutation-testing = [] # Enable mutation testing (no external dependencies)
-async = [] # Enable async performance measurement utilities (no external dependencies)
+async = ["dep:tokio"] # Enable async performance measurement utilities (tokio runtime)
 benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
 
 # Individual testing features
@@ -204,25 +211,31 @@ snapshot-testing = ["dep:insta"]
 # Enables: builders::FakeDataBuilder, fake data helpers
 # Common combo: Use with property-testing for comprehensive test data
 fake-data = ["dep:fake"]
-# Pending src/conformance module (loader/validator/net). Declared so the
-# conformance-gated test target and example compile cfg'd-out until the
-# module lane lands; remove this line only together with that module.
+# --- Assurance modules (v26.10.11): conformance kernel, ledger, NATO courts ---
+# Conformance: vendored branchless pn64 kernel + POWL model/loader/validator +
+# ConformanceSession trajectory verification. Zero external dependencies.
 conformance = []
-# Gate for src/bin/ctdd_ledger.rs until the ledger/clap lane lands (see the
-# [[bin]] block near the end of this file).
-__pending_ledger_module = []
-# Pending OCEL ingest modules (ocel64_bridge, idmap_bridge, import_json,
-# import_xml) — declared so tests/ocel_ingest_tests.rs compiles cfg'd-out
-# until the ingest module lane lands.
-ocel-ingest = []
-ocel-ingest-json = []
-ocel-ingest-xml = []
-# Pending NAT0 sealing module — declared so tests/ledger_sealing_tests.rs
-# compiles cfg'd-out until that module lane lands.
-nato = []
-# Pending ledger module — declared so tests/ledger_tests.rs compiles cfg'd-out
-# until that module lane lands.
-ledger = []
+# OCEL 2.0 ingestion bridge: idmap/ocel64 word packing over the existing
+# ocel-generation evidence pipeline (implies wasm4pm-compat + blake3).
+ocel-ingest = ["ocel-generation"]
+ocel-ingest-json = ["ocel-ingest"]
+ocel-ingest-xml = ["ocel-ingest"]
+# Optional normative POWL 2.0 bridge (bcinr-powl; NOT wired by default).
+# Declared as an empty feature so `#[cfg(feature = "powl-bcinr")]` sites
+# (conformance/bcinr.rs, validate.rs, loader.rs) pass the unexpected_cfgs
+# check; the bcinr-powl dependency itself remains unwired (coordinator).
+powl-bcinr = ["conformance"]
+# Ledger: strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws.
+ledger = ["dep:blake3", "receipt-validation"]
+# NATO assurance matrix: courts + ML-DSA-65 dossier sealing (implies ledger).
+nato = ["ledger", "conformance", "dep:ml-dsa", "dep:zeroize", "dep:getrandom"]
+# CLI for the pure-Rust receipt/dossier binary.
+ledger-cli = ["ledger", "nato", "dep:clap"]
+# Umbrella: full defense-assurance surface.
+all-assurance = ["conformance", "ledger", "nato"]
+# Hermetic WASM guest surface (temprun embed; PRD §1-4): zero-import ABI over
+# the conformance kernel + guest-side receipt production (host seals).
+wasm-guest = ["conformance"]
 
 # Concurrency testing: Thread model checking, deterministic concurrency testing
 # When to use: Detecting concurrency bugs, verifying thread safety
@@ -259,7 +272,7 @@ cli-proof = ["dep:tempfile"]
 # OTEL validation: OpenTelemetry span/metric validation
 # When to use: Validating OTEL instrumentation, span/metric verification
 # Enables: observability::otel module, OTEL validation APIs
-otel = []
+otel = ["dep:tokio"]
 
 # Weaver live validation: Weaver integration with OTEL
 # When to use: Live validation of Weaver telemetry, Weaver admin API integration
@@ -286,6 +299,7 @@ testcontainers = ["dep:testcontainers"]
 # Enables: AlertLogger integration with log::error!, log::warn!, etc.
 # Note: Enabled by default for better DX
 logging = ["dep:log"]
+uuid-v4 = ["dep:uuid"] # v4 UUID ids (host-side; excluded from the zero-import wasm guest)
 
 # Feature groups (convenience bundles for common use cases)
 # These reduce cognitive load by enabling common feature combinations with a single flag
@@ -454,6 +468,7 @@ members = [
     "proc_macros/chicago-tdd-mcp-macros",
     "crates/chicago-tdd-mcp",
     "crates/chicago-claims",
+    "crates/ctt-wasm-guest",
 ]
 default-members = [
     ".",
@@ -489,6 +504,11 @@ required-features = ["weaver"]
 # that lane lands. REMOVE the required-features line when the ledger module
 # and clap dependency are merged.
 [[bin]]
+name = "cq"
+path = "src/bin/cq.rs"
+required-features = ["ledger-cli"]
+
+[[bin]]
 name = "ctdd_ledger"
 path = "src/bin/ctdd_ledger.rs"
-required-features = ["__pending_ledger_module"]
+required-features = ["ledger-cli"]

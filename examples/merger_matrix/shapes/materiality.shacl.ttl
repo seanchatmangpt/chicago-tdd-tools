@@ -1,0 +1,37 @@
+# materiality.shacl.ttl — material-adverse-effect (MAE) threshold shape
+# Hand-authored fixture. NOT legal advice.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.com/merger#> .
+
+ex:MaterialityShape a sh:NodeShape ;
+    sh:targetClass ex:MaterialAdverseEffect ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:measuredAgainstTarget ;
+        sh:class ex:Target ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:thresholdPctOfRevenue ;
+        sh:datatype xsd:decimal ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minInclusive "0.0"^^xsd:decimal ;
+        sh:maxInclusive "100.0"^^xsd:decimal ;
+    ] , [
+        sh:path ex:measuredOverMonths ;
+        sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+    ] , [
+        # carve-outs are enumerated, closed
+        sh:path ex:carveOut ;
+        sh:in ( ex:GeneralEconomic ex:IndustryWide ex:AnnouncementEffect
+                ex:ChangeOfLaw ex:Pandemic ex:NaturalDisaster ) ;
+    ] , [
+        sh:path ex:occurred ;
+        sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] .
+
+ex:MaeDefinition a ex:MaterialAdverseEffect ;
+    ex:measuredAgainstTarget ex:BetaHoldings ;
+    ex:thresholdPctOfRevenue "10.0"^^xsd:decimal ;
+    ex:measuredOverMonths 12 ;
+    ex:carveOut ex:IndustryWide , ex:AnnouncementEffect ;
+    ex:occurred false .

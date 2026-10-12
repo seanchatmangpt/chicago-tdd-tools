@@ -51,5 +51,5 @@ chicago-tdd-tools = { version = "26.7.2", features = ["testing-extras", "ocel-ge
 ## See Also
 
 - [GitHub Release Notes](GITHUB_RELEASE_v26.7.2.md)
-- [Project Architecture and Milestones](../../PROJECT.md)
-- [Swarm Development Plan](../../SWARM_PLAN.md)
+- `PROJECT.md` (archived: docs/archive/2026-10/)
+- `SWARM_PLAN.md` (archived: docs/archive/2026-10/)

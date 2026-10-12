@@ -20,3 +20,13 @@ pub mod wasm4pm;
 pub use collector::OcelCollector;
 #[cfg(feature = "ocel-generation")]
 pub use types::*;
+
+// --- v26.10.11 assurance: OCEL 2.0 ingestion bridge (word packing + import) ---
+#[cfg(feature = "ocel-ingest")]
+pub mod idmap_bridge;
+#[cfg(feature = "ocel-ingest-json")]
+pub mod import_json;
+#[cfg(feature = "ocel-ingest-xml")]
+pub mod import_xml;
+#[cfg(feature = "ocel-ingest")]
+pub mod ocel64_bridge;

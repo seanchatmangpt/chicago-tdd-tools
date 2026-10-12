@@ -1,0 +1,100 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p7v-e01": {
+      "ocel:activity": "intake_pacs008",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-msg-1", "type": "Artifact"}],
+      "ocel:attributes": {"cycle": 1, "debtor_agent": "bank-a", "creditor_agent": "bank-b", "amount_minor_units": 500000}
+    },
+    "p7v-e02": {
+      "ocel:activity": "intake_pacs009",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-msg-2", "type": "Artifact"}],
+      "ocel:attributes": {"cycle": 1, "debtor_agent": "bank-b", "creditor_agent": "bank-a", "amount_minor_units": 450000}
+    },
+    "p7v-e03": {
+      "ocel:activity": "eliminate_pair",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-net-1", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 1, "gross_volume_minor_units": 950000, "net_obligation_minor_units": 50000}
+    },
+    "p7v-e04": {
+      "ocel:activity": "settlement_prepare",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-2pc-1", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 1, "phase": "PREPARE"}
+    },
+    "p7v-e05": {
+      "ocel:activity": "settlement_abort",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-2pc-1", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 1, "phase": "ABORT", "reason": "penny-discrepancy", "expected_minor_units": 50000, "actual_minor_units": 50001}
+    },
+    "p7v-e06": {
+      "ocel:activity": "intake_pacs008",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-msg-3", "type": "Artifact"}],
+      "ocel:attributes": {"cycle": 2, "debtor_agent": "bank-c", "creditor_agent": "bank-d", "amount_minor_units": 800000}
+    },
+    "p7v-e07": {
+      "ocel:activity": "intake_pacs009",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-msg-4", "type": "Artifact"}],
+      "ocel:attributes": {"cycle": 2, "debtor_agent": "bank-d", "creditor_agent": "bank-c", "amount_minor_units": 700000}
+    },
+    "p7v-e08": {
+      "ocel:activity": "eliminate_pair",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-net-2", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 2, "gross_volume_minor_units": 1500000, "net_obligation_minor_units": 100000}
+    },
+    "p7v-e09": {
+      "ocel:activity": "settlement_prepare",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-2pc-2", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 2, "phase": "PREPARE"}
+    },
+    "p7v-e10": {
+      "ocel:activity": "settlement_abort",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-2pc-2", "type": "Receipt"}],
+      "ocel:attributes": {"cycle": 2, "phase": "ABORT", "reason": "dvp-cash-leg-missing"}
+    },
+    "p7v-e11": {
+      "ocel:activity": "settlement_commit",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p7-settle-violation",
+      "ocel:objectTypes": [{"id": "p7v-obj-2pc-2", "type": "Receipt"}],
+      "ocel:attributes": {
+        "cycle": 2,
+        "phase": "COMMIT",
+        "cash_leg_committed": false,
+        "securities_leg_committed": true,
+        "violation": "skipped-transition",
+        "skipped": "cash-leg commit before securities release",
+        "law": "DvP forbidden marking: securities leg moves PREPARE->COMMIT while the cash place is unmarked — StateSpace::forbidden_reachable must hit DvpReleaseWithoutCashLeg; the Model-Log Law refuses the skipped cash-leg transition"
+      }
+    }
+  },
+  "ocel:objects": {
+    "p7v-obj-msg-1": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pacs.008 credit transfer", "message": "pacs.008"}},
+    "p7v-obj-msg-2": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pacs.009 credit transfer", "message": "pacs.009"}},
+    "p7v-obj-msg-3": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pacs.008 credit transfer", "message": "pacs.008"}},
+    "p7v-obj-msg-4": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pacs.009 credit transfer", "message": "pacs.009"}},
+    "p7v-obj-net-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pair elimination net", "cycle": 1}},
+    "p7v-obj-net-2": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "pair elimination net", "cycle": 2}},
+    "p7v-obj-2pc-1": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "2PC settlement", "cycle": 1}},
+    "p7v-obj-2pc-2": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "2PC settlement", "cycle": 2}}
+  }
+}

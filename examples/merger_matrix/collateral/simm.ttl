@@ -1,0 +1,46 @@
+# Instance graph: SIMM margin — 2 netting sets x 4 asset classes (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:SimmInputA a ex:SimmInput ;
+    rdfs:label "SIMM inputs — Netting Set A" ;
+    ex:forNettingSet ex:NettingSetA ;
+    ex:assetClass ex:InterestRate ;
+    ex:addOnUSD "38000000"^^xsd:decimal .
+
+ex:SimmInputA2 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetA ;
+    ex:assetClass ex:Credit ;
+    ex:addOnUSD "24000000"^^xsd:decimal .
+
+ex:SimmInputA3 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetA ;
+    ex:assetClass ex:Equity ;
+    ex:addOnUSD "11000000"^^xsd:decimal .
+
+ex:SimmInputA4 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetA ;
+    ex:assetClass ex:Commodity ;
+    ex:addOnUSD "5000000"^^xsd:decimal .
+
+ex:SimmInputB a ex:SimmInput ;
+    rdfs:label "SIMM inputs — Netting Set B" ;
+    ex:forNettingSet ex:NettingSetB ;
+    ex:assetClass ex:InterestRate ;
+    ex:addOnUSD "29000000"^^xsd:decimal .
+
+ex:SimmInputB2 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetB ;
+    ex:assetClass ex:Credit ;
+    ex:addOnUSD "21000000"^^xsd:decimal .
+
+ex:SimmInputB3 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetB ;
+    ex:assetClass ex:Equity ;
+    ex:addOnUSD "9000000"^^xsd:decimal .
+
+ex:SimmInputB4 a ex:SimmInput ;
+    ex:forNettingSet ex:NettingSetB ;
+    ex:assetClass ex:Commodity ;
+    ex:addOnUSD "4000000"^^xsd:decimal .

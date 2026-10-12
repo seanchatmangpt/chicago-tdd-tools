@@ -96,12 +96,13 @@ impl TickCounter {
         #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
         {
             // Fallback: use SystemTime for non-x86_64/ARM64 platforms
+            // (allow on a let statement: attributes on expressions are unstable)
             #[allow(clippy::cast_possible_truncation)]
-            // Nanoseconds won't exceed u64::MAX for reasonable durations
-            std::time::SystemTime::now()
+            let nanos = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
-                .as_nanos() as u64
+                .as_nanos();
+            nanos as u64
         }
     }
 

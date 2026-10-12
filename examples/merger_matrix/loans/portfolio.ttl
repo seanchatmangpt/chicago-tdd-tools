@@ -1,0 +1,23 @@
+# Instance graph: loan portfolio — 12 synthetic loans, no PII (synthetic entities only)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Loan1 a ex:Loan ; ex:borrower ex:AcmeCorp ; ex:facility ex:TermLoanB ; ex:balanceUSD "500000000"^^xsd:decimal ; ex:spreadBps "325"^^xsd:integer ; ex:maturityDate "2033-10-05"^^xsd:date ; ex:riskRating "BB-" .
+ex:Loan2 a ex:Loan ; ex:borrower ex:AcmeCorp ; ex:facility ex:Revolver ; ex:balanceUSD "150000000"^^xsd:decimal ; ex:spreadBps "275"^^xsd:integer ; ex:maturityDate "2030-10-05"^^xsd:date ; ex:riskRating "BB" .
+ex:Loan3 a ex:Loan ; ex:borrower ex:AcmeCorp ; ex:facility ex:TermLoanB ; ex:balanceUSD "300000000"^^xsd:decimal ; ex:spreadBps "350"^^xsd:integer ; ex:maturityDate "2032-03-31"^^xsd:date ; ex:riskRating "B+" .
+ex:Loan4 a ex:Loan ; ex:borrower ex:AcmeCorp ; ex:facility ex:Revolver ; ex:balanceUSD "75000000"^^xsd:decimal ; ex:spreadBps "250"^^xsd:integer ; ex:maturityDate "2029-06-30"^^xsd:date ; ex:riskRating "BB" .
+ex:Loan5 a ex:Loan ; ex:borrower ex:BetaHoldings ; ex:facility ex:TermLoanA ; ex:balanceUSD "220000000"^^xsd:decimal ; ex:spreadBps "200"^^xsd:integer ; ex:maturityDate "2028-12-31"^^xsd:date ; ex:riskRating "BBB-" .
+ex:Loan6 a ex:Loan ; ex:borrower ex:BetaHoldings ; ex:facility ex:TermLoanB ; ex:balanceUSD "410000000"^^xsd:decimal ; ex:spreadBps "340"^^xsd:integer ; ex:maturityDate "2031-09-30"^^xsd:date ; ex:riskRating "BB-" .
+ex:Loan7 a ex:Loan ; ex:borrower ex:BetaHoldings ; ex:facility ex:Revolver ; ex:balanceUSD "90000000"^^xsd:decimal ; ex:spreadBps "225"^^xsd:integer ; ex:maturityDate "2029-03-31"^^xsd:date ; ex:riskRating "BBB-" .
+ex:Loan8 a ex:Loan ; ex:borrower ex:MergerSub ; ex:facility ex:BridgeFacility ; ex:balanceUSD "1200000000"^^xsd:decimal ; ex:spreadBps "450"^^xsd:integer ; ex:maturityDate "2027-03-31"^^xsd:date ; ex:riskRating "B" .
+ex:Loan9 a ex:Loan ; ex:borrower ex:MergerSub ; ex:facility ex:TermLoanB ; ex:balanceUSD "600000000"^^xsd:decimal ; ex:spreadBps "375"^^xsd:integer ; ex:maturityDate "2033-10-05"^^xsd:date ; ex:riskRating "B+" .
+ex:Loan10 a ex:Loan ; ex:borrower ex:MergerSub ; ex:facility ex:BridgeFacility ; ex:balanceUSD "350000000"^^xsd:decimal ; ex:spreadBps "425"^^xsd:integer ; ex:maturityDate "2027-03-31"^^xsd:date ; ex:riskRating "B" .
+ex:Loan11 a ex:Loan ; ex:borrower ex:BetaHoldings ; ex:facility ex:TermLoanA ; ex:balanceUSD "180000000"^^xsd:decimal ; ex:spreadBps "210"^^xsd:integer ; ex:maturityDate "2028-12-31"^^xsd:date ; ex:riskRating "BBB" .
+ex:Loan12 a ex:Loan ; ex:borrower ex:MergerSub ; ex:facility ex:Revolver ; ex:balanceUSD "120000000"^^xsd:decimal ; ex:spreadBps "260"^^xsd:integer ; ex:maturityDate "2030-06-30"^^xsd:date ; ex:riskRating "BB-" .
+
+ex:LoanPortfolio a ex:Portfolio ;
+    rdfs:label "Aggregate exposure across 12 synthetic facilities" ;
+    ex:aggregates ex:Loan1 , ex:Loan2 , ex:Loan3 , ex:Loan4 , ex:Loan5 , ex:Loan6 ,
+        ex:Loan7 , ex:Loan8 , ex:Loan9 , ex:Loan10 , ex:Loan11 , ex:Loan12 ;
+    ex:totalBalanceUSD "3995000000"^^xsd:decimal .

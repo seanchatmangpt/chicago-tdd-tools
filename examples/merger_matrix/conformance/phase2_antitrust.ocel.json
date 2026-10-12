@@ -1,0 +1,156 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p2-e01": {
+      "ocel:activity": "shacl_topology",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-model", "type": "ProcessModel"}],
+      "ocel:attributes": {"step": "A01 closed-world market topology"}
+    },
+    "p2-e02": {
+      "ocel:activity": "control_infer",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-control", "type": "Artifact"}]
+    },
+    "p2-e03": {
+      "ocel:activity": "hhi_delta",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-hhi", "type": "Artifact"}],
+      "ocel:attributes": {"hhi_pre": 2450, "hhi_post": 2690, "delta_hhi": 240}
+    },
+    "p2-e04": {
+      "ocel:activity": "risk_buffer",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-frtb", "type": "Artifact"}]
+    },
+    "p2-e05": {
+      "ocel:activity": "mac_index",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-mac", "type": "Artifact"}]
+    },
+    "p2-e06": {
+      "ocel:activity": "ticking_fees",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-fees", "type": "Artifact"}]
+    },
+    "p2-e07": {
+      "ocel:activity": "divest_haircut",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-haircut", "type": "Artifact"}],
+      "ocel:attributes": {"haircut": 1.0}
+    },
+    "p2-e08": {
+      "ocel:activity": "escrow_fees",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-escrow", "type": "Artifact"}]
+    },
+    "p2-e09": {
+      "ocel:activity": "irc1060_alloc",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-irc1060", "type": "Receipt"}]
+    },
+    "p2-e10": {
+      "ocel:activity": "divestiture_package",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-divest", "type": "Receipt"}],
+      "ocel:attributes": {
+        "branch": "divest",
+        "law": "I2 DIVESTITURE XOR LAW: delta HHI 240 >= 100 forces the divestiture_package branch before clearance_saga"
+      }
+    },
+    "p2-e11": {
+      "ocel:activity": "clearance_saga",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-saga", "type": "AgentContext"}]
+    },
+    "p2-e12": {
+      "ocel:activity": "hhi_leaf",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-leaf", "type": "AgentContext"}],
+      "ocel:attributes": {"reductions": 2000}
+    },
+    "p2-e13": {
+      "ocel:activity": "pn64_replay",
+      "ocel:timestamp": 1700000000012000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-pn64", "type": "ProcessModel"}]
+    },
+    "p2-e14": {
+      "ocel:activity": "merkle_phase2",
+      "ocel:timestamp": 1700000000013000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-merkle", "type": "Receipt"}]
+    },
+    "p2-e15": {
+      "ocel:activity": "pqc_sign",
+      "ocel:timestamp": 1700000000014000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-pqc", "type": "Receipt"}],
+      "ocel:attributes": {"pqc": "ML-DSA-65"}
+    },
+    "p2-e16": {
+      "ocel:activity": "court_n02",
+      "ocel:timestamp": 1700000000015000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-court-n02", "type": "Receipt"}]
+    },
+    "p2-e17": {
+      "ocel:activity": "court_n06",
+      "ocel:timestamp": 1700000000016000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-court-n06", "type": "Receipt"}]
+    },
+    "p2-e18": {
+      "ocel:activity": "court_n10",
+      "ocel:timestamp": 1700000000017000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-court-n10", "type": "Receipt"}]
+    },
+    "p2-e19": {
+      "ocel:activity": "court_n14",
+      "ocel:timestamp": 1700000000018000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-court-n14", "type": "Receipt"}]
+    },
+    "p2-e20": {
+      "ocel:activity": "court_n18",
+      "ocel:timestamp": 1700000000019000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:objectTypes": [{"id": "p2-obj-court-n18", "type": "Receipt"}]
+    }
+  },
+  "ocel:objects": {
+    "p2-obj-model": {"ocel:type": "ProcessModel", "ocel:ovmap": {"phase": 2, "model": "phase2_antitrust.powl"}},
+    "p2-obj-control": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "indirect economic control"}},
+    "p2-obj-hhi": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "post-merge HHI delta"}},
+    "p2-obj-frtb": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "antitrust capital buffer"}},
+    "p2-obj-mac": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "cross-default / MAC clauses"}},
+    "p2-obj-fees": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "covenant timeline fees"}},
+    "p2-obj-haircut": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "divestment haircut"}},
+    "p2-obj-escrow": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "filing fee escrow"}},
+    "p2-obj-irc1060": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "IRC 1060 residual allocation"}},
+    "p2-obj-divest": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "packaged divestiture commitments"}},
+    "p2-obj-saga": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "clearance saga"}},
+    "p2-obj-leaf": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "HHI leaf 2000r"}},
+    "p2-obj-pn64": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase2 trace replay"}},
+    "p2-obj-merkle": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "phase2 BLAKE3 root"}},
+    "p2-obj-pqc": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "clearance dossier signature"}},
+    "p2-obj-court-n02": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N02"}},
+    "p2-obj-court-n06": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N06"}},
+    "p2-obj-court-n10": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N10"}},
+    "p2-obj-court-n14": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N14"}},
+    "p2-obj-court-n18": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N18"}}
+  }
+}

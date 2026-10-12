@@ -1,0 +1,40 @@
+# closing-conditions.ttl — LKIF conditions precedent to Closing
+# Hand-authored fixture. NOT legal advice.
+@prefix lkif: <http://www.estrellaproject.org/lkif-core/valuation.owl#> .
+@prefix lrole: <http://www.estrellaproject.org/lkif-core/role.owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.com/merger#> .
+
+# Closing occurs only when every precedent condition is satisfied.
+ex:ClosingCondition a lrole:Role ; rdfs:label "Condition precedent to Closing" .
+
+ex:CondShareholderApproval a ex:ClosingCondition , lkif:Obligation ;
+    rdfs:label "Target shareholder approval at 66.67% threshold" ;
+    ex:conditionOf ex:Closing ;
+    ex:traceableTo ex:MergerVote ;
+    ex:satisfied true .
+
+ex:CondNoMAE a ex:ClosingCondition , lkif:Obligation ;
+    rdfs:label "No material adverse effect on BetaHoldings through closing" ;
+    ex:conditionOf ex:Closing ;
+    ex:traceableTo ex:MaeDefinition ;
+    ex:satisfied true .
+
+ex:CondHSRClearance a ex:ClosingCondition , lkif:Obligation ;
+    rdfs:label "HSR waiting period expired or terminated" ;
+    ex:conditionOf ex:Closing ;
+    ex:satisfied false .
+
+ex:CondNettingExecuted a ex:ClosingCondition , lkif:Obligation ;
+    rdfs:label "Master netting agreement in effect between the parties" ;
+    ex:conditionOf ex:Closing ;
+    ex:traceableTo ex:MasterNetting1 ;
+    ex:satisfied true .
+
+ex:Closing a lkif:Permission ;
+    lkif:plays ex:EffectMerger ;
+    lkif:heldBy ex:AcmeCorp , ex:MergerSub ;
+    ex:requires ex:CondShareholderApproval , ex:CondNoMAE ,
+                ex:CondHSRClearance , ex:CondNettingExecuted .
+
+ex:EffectMerger rdfs:label "Effect the merger of MergerSub into BetaHoldings" .

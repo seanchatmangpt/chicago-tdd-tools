@@ -447,7 +447,60 @@ All examples include comprehensive reference sections documenting:
 - Error conditions
 - Usage examples
 
-### 16. Operator Registry (`operator_registry.rs`) - **NEW in v1.4.0**
+### 16. Hyper-Advanced Microkernel (`hyper_advanced_microkernel.rs`)
+
+**μ-kernel verification substrate demonstrating all 6 hyper-advanced tracks.**
+
+Demonstrates the hyper-advanced verification substrate introduced in v1.3.0:
+- Test contracts as first-class types
+- τ-aware test harness (Chatman Constant: τ ≤ 8)
+- Effect-typed tests
+- Type-directed state machine testing
+- Proof-carrying test receipts
+- Swarm-native test orchestration
+
+**Run:**
+```bash
+cargo run --example hyper_advanced_microkernel
+```
+
+**📖 Full Documentation:** [hyper_advanced_microkernel.md](hyper_advanced_microkernel.md)
+
+**Concepts:**
+- Compile-time test contracts (`TestContract`, `TestContractRegistry`)
+- Thermal classification (hot/warm/cold paths)
+- Test receipts with cryptographic signatures
+- Swarm test orchestration with QoS classes and resource budgets
+
+---
+
+### 17. All Phases Pipeline (`all_phases_pipeline.rs`)
+
+**Complete 12-phase hyper-advanced verification pipeline in one run.**
+
+Demonstrates all 12 phases working together:
+- Phases 1-6: Original hyper-advanced μ-kernel substrate
+- Phase 7: Verification Pipeline (orchestration)
+- Phase 8: Continuous Learning (ML-based optimization)
+- Phase 9: Distributed Consensus (multi-node)
+- Phase 10: Time-Travel Debugging (deterministic replay)
+- Phase 11: Performance Prophet (predictive analysis)
+- Phase 12: Quality Metrics Dashboard
+
+**Run:**
+```bash
+cargo run --example all_phases_pipeline
+```
+
+**Concepts:**
+- End-to-end verification pipeline composition
+- Test contracts driving the full phase sequence
+- Distributed consensus and deterministic replay
+- Quality metrics dashboards
+
+---
+
+### 18. Operator Registry (`operator_registry.rs`) - **NEW in v1.4.0**
 
 **Global operator registry with guard system and pattern registration.**
 
@@ -490,6 +543,8 @@ cargo run --example operator_registry
 | Operator Registry (v1.4.0) | `operator_registry.rs` | `cargo run --example operator_registry` |
 | Go Extra Mile | `go_extra_mile.rs` | `cargo run --example go_extra_mile --features otel,weaver` |
 | Advanced Features | `advanced_features.rs` | `cargo run --example advanced_features` |
+| Hyper-Advanced Microkernel (v1.3.0) | `hyper_advanced_microkernel.rs` | `cargo run --example hyper_advanced_microkernel` |
+| All Phases Pipeline | `all_phases_pipeline.rs` | `cargo run --example all_phases_pipeline` |
 
 ---
 
@@ -498,13 +553,10 @@ cargo run --example operator_registry
 ### Run All Examples
 
 ```bash
-# Run all runnable examples
-cargo make test-examples
+# Check and test all examples (real Justfile target)
+just test-examples
 
-# Or manually:
-for example in basic_test advanced_features property_testing mutation_testing go_extra_mile testcontainers_example; do
-    cargo run --example $example --all-features
-done
+# Or run each example individually per the Quick Reference table above
 ```
 
 ### Run Specific Example
@@ -513,7 +565,7 @@ done
 # Basic examples (no features required)
 cargo run --example basic_test
 cargo run --example advanced_features
-cargo run --example macro_examples
+cargo test --example macro_examples
 cargo run --example mutation_testing
 
 # Examples with feature requirements
@@ -540,7 +592,7 @@ Examples require different feature flags:
 
 | Feature | Examples | Description |
 |---------|----------|-------------|
-| None | `basic_test`, `advanced_features`, `macro_examples`, `mutation_testing`, `sector_stacks_workflows`, `fail_fast_verification`, `rdf_validation`, `swarm_coordination`, `operator_registry` | Core functionality |
+| None | `basic_test`, `advanced_features`, `macro_examples`, `mutation_testing`, `sector_stacks_workflows`, `fail_fast_verification`, `rdf_validation`, `swarm_coordination`, `operator_registry`, `hyper_advanced_microkernel`, `all_phases_pipeline` | Core functionality |
 | `property-testing` | `property_testing` | Property-based testing with proptest |
 | `snapshot-testing` | `snapshot_testing` | Snapshot testing with insta |
 | `concurrency-testing` | `concurrency_testing` | Concurrency testing with loom |
@@ -729,7 +781,7 @@ docker info       # Verify Docker is running
 
 **Solution**: Bootstrap Weaver:
 ```bash
-cargo make weaver-bootstrap
+just weaver-bootstrap
 ```
 
 ### Compilation Errors

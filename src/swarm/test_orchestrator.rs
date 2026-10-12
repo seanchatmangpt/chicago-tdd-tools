@@ -219,7 +219,16 @@ impl TestOrchestrator {
 
         // Assign plan ID if not set
         if plan.plan_id.is_empty() {
-            plan.plan_id = format!("plan-{}", uuid::Uuid::new_v4());
+            {
+                #[cfg(feature = "uuid-v4")]
+                {
+                    plan.plan_id = format!("plan-{}", uuid::Uuid::new_v4());
+                }
+                #[cfg(not(feature = "uuid-v4"))]
+                {
+                    plan.plan_id = format!("plan-{}", std::process::id());
+                }
+            }
         }
 
         self.pending.insert(insert_idx, plan);

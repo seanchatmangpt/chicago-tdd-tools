@@ -1,0 +1,100 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p5-e01": {
+      "ocel:activity": "act_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-facility", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_ingest -> p_facility_ingested"}
+    },
+    "p5-e02": {
+      "ocel:activity": "act_rank_liens",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-liens", "type": "Artifact"}],
+      "ocel:attributes": {"step": "t_rank_liens -> p_liens_ranked (strict seniority total order, mask bit2)"}
+    },
+    "p5-e03": {
+      "ocel:activity": "act_open_vote",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-vote", "type": "AgentContext"}]
+    },
+    "p5-e04": {
+      "ocel:activity": "act_vote",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-bank-a", "type": "AgentContext"}],
+      "ocel:attributes": {"bank": "agent-bank-01", "bps": 1250}
+    },
+    "p5-e05": {
+      "ocel:activity": "act_vote",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-bank-b", "type": "AgentContext"}],
+      "ocel:attributes": {"bank": "agent-bank-02", "bps": 1750}
+    },
+    "p5-e06": {
+      "ocel:activity": "act_close_vote",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-vote", "type": "AgentContext"}],
+      "ocel:attributes": {"tallied_bps": 3000, "required_bps": 1500, "threshold_law": "unanimous for sacred-rights classes, 50.1 percent otherwise"}
+    },
+    "p5-e07": {
+      "ocel:activity": "act_admitted",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-consent", "type": "Receipt"}],
+      "ocel:attributes": {"branch": "admitted"}
+    },
+    "p5-e08": {
+      "ocel:activity": "act_schedule_sweep",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-schedule", "type": "Artifact"}]
+    },
+    "p5-e09": {
+      "ocel:activity": "act_sweep",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-period-1", "type": "Artifact"}],
+      "ocel:attributes": {"period": 1, "interest_plus_principal": 1000000, "scheduled": 1000000, "law": "sweep conservation, mask bit3"}
+    },
+    "p5-e10": {
+      "ocel:activity": "act_sweep",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-period-2", "type": "Artifact"}],
+      "ocel:attributes": {"period": 2, "interest_plus_principal": 1000000, "scheduled": 1000000}
+    },
+    "p5-e11": {
+      "ocel:activity": "act_restructure",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-restated", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_restructure -> p_restructured (pari passu, mask bit2)"}
+    },
+    "p5-e12": {
+      "ocel:activity": "act_seal",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:objectTypes": [{"id": "p5-obj-deal-seal", "type": "Receipt"}],
+      "ocel:attributes": {"step": "t_seal -> p_deal_sealed", "pqc": "BLAKE3 + ML-DSA-65"}
+    }
+  },
+  "ocel:objects": {
+    "p5-obj-facility": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "syndicated facility docs"}},
+    "p5-obj-liens": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "lien seniority stack"}},
+    "p5-obj-vote": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "consent vote"}},
+    "p5-obj-bank-a": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "agent bank", "name": "agent-bank-01"}},
+    "p5-obj-bank-b": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "agent bank", "name": "agent-bank-02"}},
+    "p5-obj-consent": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "consent admission"}},
+    "p5-obj-schedule": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pro-rata sweep schedule"}},
+    "p5-obj-period-1": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "sweep period", "period": 1}},
+    "p5-obj-period-2": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "sweep period", "period": 2}},
+    "p5-obj-restated": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "restated facility"}},
+    "p5-obj-deal-seal": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "deal seal"}}
+  }
+}

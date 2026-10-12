@@ -1,0 +1,75 @@
+# phase1_intake.powl — Phase 1: Intake & Canonical Ingestion
+#
+# Contract: E-M01 (Phase 1). The plan file has no dedicated "## M-Phase Contracts
+# (E-M01)" section; the contract content is the matrix Phase 1 table
+# (/Users/sac/.claude/paste-cache/015f6959ccaaca30.txt:72-99) plus the loader-grammar
+# contract the other phase contracts cite as "the E-M01 loader grammar"
+# (src/conformance/loader.rs:11-31 doc, scanner loader.rs:283-338, parser
+# loader.rs:350-580, MAX_POWL_NODES = 64 at loader.rs:47). Model MUST parse via
+# PowlModel::from_powl_str (loader.rs:638) and pass validate::validate
+# (src/conformance/validate.rs:45).
+#
+# Court rows (A16-A20 -> landed NATO courts): N01 spatial isolation (mils.rs),
+# N05 timing invariance (timing.rs, |t| < 4.5), N09 SEU trap (seu.rs),
+# N13/N16 stack ceiling (stackbound.rs, <= 32 KiB), N17 hermetic provenance
+# (kat.rs ML-DSA-65 PIPELINE-KAT + reproducible.rs).
+#
+# Embedded invariants as structure:
+# - A01 SHACL membrane first, fail-closed: FIBO closed-shape validation gates
+#   every downstream cell (root sequence head).
+# - A03 defeasibility: conflict-clause resolution is a xor (Delta S = bottom ->
+#   silent clearance; else escalate to the conflict-resolution branch).
+# - A05 CET1 >= 12.5% and A09 zero-sum AP/AR: bounded loops (redo = silent
+#   failure path; max bounds body executions in 0..=255, loader.rs:92-101).
+# - A13 token conservation: sum M0 = sum Mf — the root is ONE sequence, so the
+#   linear lowering (tid = atom index, tick = prev+1) makes the trace a total
+#   order; the conformance replay (ConformanceSession) must finish with a final
+#   marking of exactly one token in the terminal activity and zero deviations
+#   (ConformanceReport::is_conforming, report.rs:209).
+#
+# Node budget: 34 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity a01_shacl_ingest       = fibo_fnd.entity_graph          # A01 FIBO closed-shape membrane
+activity a02_subsidiary_closure = n3.subsidiary_entailment       # A02 transitive hierarchy DAG
+activity a03_covenant_conflicts = lkif.open_texture_conflict     # A03 defeasibility: Delta S != bottom
+activity a04_naics_map          = naics.revenue_channels         # A04 HHI baseline extraction
+activity a05_cet1_buffers       = fibo_fbc.capital_buffers       # A05 CET1 >= 12.5%
+activity a06_isda_positions     = fibo_der.isda_schedule         # A06 open contract topology
+activity a07_facilities         = fibo_loan.credit_facilities    # A07 LMA/LSTA parity
+activity a08_repo_collateral    = fibo_sec.repo_positions        # A08 Basel collateral baseline
+activity a09_intercompany       = settlement.ap_ar_enumeration   # A09 zero-sum across 4,200 subs
+activity a10_irc368_election    = tax.irc_368_qualification      # A10 continuity-of-interest
+activity a11_supervisor_init    = strata.merger_supervisor       # A11 OTP :one_for_all
+activity a12_temprun_leaf       = temprun.zero_import_leaf       # A12 imports == empty
+activity a13_pn64_load          = pn64.phase1_net_load           # A13 sum M0 = sum Mf
+activity a14_merkle_root        = blake3.intake_root             # A14 audit/intake_merkle.root
+activity a15_lease_issue        = fips204.admission_lease        # A15 Phi_lease (Parameter Set 2)
+activity court_n01              = courts.n01_spatial_isolation   # A16 Court N01
+activity court_n05              = courts.n05_timing_invariance   # A17 Court N05 |t| < 4.5
+activity court_n09              = courts.n09_fault_injection     # A18 Court N09 SEU trap
+activity court_n13              = courts.n13_stack_ceiling       # A19 Court N13 stack <= 32 KiB
+activity court_n17              = courts.n17_provenance          # A20 Court N17 hermetic source
+
+sequence {
+  a01_shacl_ingest                                              # membrane: A01 first, fail-closed
+  parallel {                                                    # Tier 1 RDF semantics ∥ Tier 2 FIBO domains
+    sequence {
+      a02_subsidiary_closure
+      xor { a03_covenant_conflicts silent }                     # defeasible: Delta S = bottom -> silent
+    }
+    sequence {
+      a04_naics_map
+      loop { a05_cet1_buffers } redo { silent } max 3           # bounded re-buffer, CET1 >= 12.5%
+    }
+    sequence {
+      a06_isda_positions
+      a07_facilities
+      a08_repo_collateral
+      loop { a09_intercompany } redo { silent } max 255         # 4,200-subsidiary AP/AR enumeration, bounded
+      a10_irc368_election
+    }
+  }
+  sequence { a11_supervisor_init a12_temprun_leaf a13_pn64_load }   # runtime + normative net load
+  sequence { a14_merkle_root a15_lease_issue }                  # BLAKE3 root -> ML-DSA-65 lease
+  parallel { court_n01 court_n05 court_n09 court_n13 court_n17 }    # Tier 4 courts A16-A20
+}

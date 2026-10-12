@@ -1,0 +1,288 @@
+#![cfg(feature = "nato")]
+//! N06 — branchless disassembly court (NATO lane).
+//!
+//! Ported from strata `tests/nato/n06_branchless_disasm.rs` +
+//! `scripts/n06_disasm_audit.sh` (Apache/MIT per strata LICENSE).
+//!
+//! Asserts, over real build artifacts, that the PN64 state-execution path
+//! carries zero conditional branches. The real collaborator is
+//! `scripts/n06_disasm_audit.sh`, which performs the census over the
+//! compiler-emitted assembly of the release lib build (the `#[inline(never)]`
+//! [`kernel_step`] wrapper — whose body is the fully inlined
+//! [`crate::conformance::pn64::step_branchless`] — is the audited symbol)
+//! and emits a structured JSON receipt. The court asserts on the audit's
+//! real output and accepts ONLY a [`ReceiptStatus::Pass`] or a typed
+//! [`ReceiptStatus::Skipped`]; any `Fail` or malformed receipt fails.
+//!
+//! As a Chicago-style behavioral sanity check, [`kernel_step`] is also
+//! executed against the branched reference semantics over a xorshift64*
+//! corpus (a mis-audited wrapper — e.g. the census hit a different symbol —
+//! would not match the reference).
+
+// Lint-scope note: NATO court-harness and ledger wire-format modules use
+// domain literals, metric casts, and court-assertion panics by design; the
+// style-class lints below are allowed at module scope with this
+// justification rather than 300+ inline permits.
+#![allow(
+    clippy::doc_markdown,
+    clippy::must_use_candidate,
+    clippy::use_self,
+    clippy::missing_const_for_fn,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_lossless,
+    clippy::cast_precision_loss,
+    clippy::too_long_first_doc_paragraph,
+    clippy::doc_overindented_list_items,
+    clippy::doc_lazy_continuation,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::expect_used,
+    clippy::unwrap_used,
+    clippy::panic,
+    clippy::explicit_iter_loop,
+    clippy::unusual_byte_groupings,
+    clippy::unreadable_literal,
+    clippy::similar_names,
+    clippy::many_single_char_names,
+    clippy::too_many_lines,
+    clippy::unused_self,
+    clippy::needless_pass_by_value,
+    clippy::uninlined_format_args,
+    clippy::needless_range_loop,
+    clippy::needless_continue,
+    clippy::unnecessary_wraps,
+    clippy::double_must_use,
+    clippy::op_ref,
+    clippy::match_same_arms,
+    clippy::type_complexity,
+    clippy::or_fun_call,
+    clippy::nonminimal_bool,
+    clippy::unnecessary_map_or,
+    clippy::manual_is_multiple_of,
+    clippy::manual_midpoint,
+    clippy::identity_op,
+    clippy::format_collect,
+    clippy::trivially_copy_pass_by_ref
+)]
+
+use serde::{Deserialize, Serialize};
+
+// --- Typed N06 receipt model ---------------------------------------------
+
+/// Terminal status of an N06 audit receipt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ReceiptStatus {
+    /// All executed tiers passed their census bounds.
+    Pass,
+    /// The audit failed: at least one executed tier's census bound was
+    /// exceeded (conditional branches found).
+    Fail,
+    /// The audit could not run a tier for an environmental reason (missing
+    /// toolchain or artifact). Typed, never silent.
+    Skipped,
+}
+
+/// Typed reason a tier (or the whole audit) was skipped.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SkipReason {
+    /// A required audit tool is not installed on this host.
+    ToolchainUnavailable {
+        /// Name of the missing tool (e.g. `wasm-objdump`).
+        tool: String,
+    },
+    /// A required artifact does not exist (e.g. no wasm32 target installed).
+    ArtifactMissing {
+        /// Path or name of the missing artifact.
+        path: String,
+    },
+}
+
+/// Per-tier census result as recorded in the receipt.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TierReceipt {
+    /// Census count: 0 required for `Pass`.
+    pub count: u64,
+    /// Required bound (always 0 for N06).
+    pub bound: u64,
+    /// Typed skip reason when the tier did not execute.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip_reason: Option<SkipReason>,
+}
+
+/// Structured N06 receipt (JSON, emitted by `scripts/n06_disasm_audit.sh`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct N06Receipt {
+    /// Lane identifier (always "N06").
+    pub lane: String,
+    /// Terminal status.
+    pub status: ReceiptStatus,
+    /// Typed skip reason when `status == Skipped`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skip_reason: Option<SkipReason>,
+    /// Human-readable failure reason when `status == Fail`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// Wasm-tier census (present when that tier executed).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wasm: Option<TierReceipt>,
+    /// Native-tier census (must be present and zero for `Pass`).
+    #[serde(default)]
+    pub native: Option<TierReceipt>,
+}
+
+impl N06Receipt {
+    /// The court's acceptance rule: ONLY `Pass`, or `Skipped` with a typed
+    /// reason. `Fail` and malformed receipts are rejected by the caller.
+    #[must_use]
+    pub fn accepted(&self) -> bool {
+        match self.status {
+            ReceiptStatus::Pass => self.native.as_ref().is_some_and(|n| n.count <= n.bound),
+            ReceiptStatus::Skipped => self.skip_reason.is_some(),
+            ReceiptStatus::Fail => false,
+        }
+    }
+}
+
+// --- Audited symbol --------------------------------------------------------
+
+/// The audited wrapper: a separate emitted symbol so the disassembly census
+/// has a stable, nameable function body that contains the inlined kernel.
+/// The test harness around it may branch freely; only this symbol is
+/// audited.
+#[inline(never)]
+pub fn kernel_step(pn: u64, ocel: u64, invariant_mask: u64) -> u64 {
+    crate::conformance::pn64::step_branchless(pn, ocel, invariant_mask)
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)] // JUSTIFICATION: test code only
+mod tests {
+    use super::*;
+
+    fn repo_root() -> std::path::PathBuf {
+        // src/nato/<this file> -> crate root (CARGO_MANIFEST_DIR).
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    }
+
+    /// Run the real audit script and parse its receipt as typed JSON.
+    fn run_audit() -> N06Receipt {
+        let root = repo_root();
+        let script = root.join("scripts/n06_disasm_audit.sh");
+        let out = std::env::temp_dir().join(format!("n06_receipt_{}.json", std::process::id()));
+        let status = std::process::Command::new("bash")
+            .arg(&script)
+            .env("N06_OUT", &out)
+            .status()
+            .expect("failed to spawn scripts/n06_disasm_audit.sh");
+        let text = std::fs::read_to_string(&out)
+            .expect("N06 receipt unreadable (audit script did not write it)");
+        let _ = std::fs::remove_file(&out);
+        assert!(status.success(), "audit script exited nonzero; receipt: {text}");
+        serde_json::from_str(&text).expect("N06 receipt is not valid typed JSON")
+    }
+
+    #[test]
+    fn n06_branchless_disasm_census() {
+        let receipt = run_audit();
+        assert!(
+            receipt.accepted(),
+            "N06 receipt not accepted: status = {:?}, skip_reason = {:?}, \
+             reason = {:?}, native = {:?}",
+            receipt.status,
+            receipt.skip_reason,
+            receipt.reason,
+            receipt.native
+        );
+        if receipt.status == ReceiptStatus::Pass {
+            let n = receipt.native.as_ref().expect("Pass requires a native tier census");
+            assert_eq!(n.count, 0, "native tier: nonzero conditional-branch census in kernel_step");
+        }
+    }
+
+    /// The receipt model round-trips and the acceptance rule rejects Fail
+    /// and malformed shapes (court logic tested directly, no subprocess).
+    #[test]
+    fn n06_receipt_model_acceptance_rules() {
+        let pass = N06Receipt {
+            lane: "N06".into(),
+            status: ReceiptStatus::Pass,
+            skip_reason: None,
+            reason: None,
+            wasm: None,
+            native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
+        };
+        assert!(pass.accepted());
+
+        let skipped = N06Receipt {
+            lane: "N06".into(),
+            status: ReceiptStatus::Skipped,
+            skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
+            reason: None,
+            wasm: Some(TierReceipt {
+                count: 0,
+                bound: 0,
+                skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
+            }),
+            native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
+        };
+        assert!(skipped.accepted());
+
+        let skip_no_reason = N06Receipt { skip_reason: None, ..skipped };
+        assert!(!skip_no_reason.accepted(), "Skipped without a typed reason must not be accepted");
+
+        let fail = N06Receipt {
+            lane: "N06".into(),
+            status: ReceiptStatus::Fail,
+            skip_reason: None,
+            reason: Some("native census nonzero".into()),
+            wasm: None,
+            native: Some(TierReceipt { count: 3, bound: 0, skip_reason: None }),
+        };
+        assert!(!fail.accepted());
+
+        // Round-trip through the wire format the script emits.
+        let json = serde_json::to_string(&pass).expect("serialize");
+        let back: N06Receipt = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, pass);
+        assert_eq!(back.status, ReceiptStatus::Pass);
+    }
+
+    #[test]
+    fn kernel_step_matches_reference_semantics() {
+        // Chicago: the audited symbol is the real executable collaborator. A
+        // xorshift64* corpus must reproduce the branched reference semantics
+        // exactly — a branchless wrapper that was mis-audited (census hit a
+        // different symbol) would not.
+        struct Rng(u64);
+        impl Rng {
+            fn next(&mut self) -> u64 {
+                let mut x = self.0;
+                x ^= x >> 12;
+                x ^= x << 25;
+                x ^= x >> 27;
+                self.0 = x;
+                x.wrapping_mul(0x2545_F491_4F6C_DD1D)
+            }
+        }
+        let mut r = Rng(0x060C_0C0C_0C0C_0C01);
+        for _ in 0..50_000 {
+            let pn = r.next();
+            let ocel = r.next();
+            let inv = r.next();
+            // Branched reference, restated inline (semantics per pn64 doc).
+            let m = pn & 0xFFFF;
+            let w_pre = (pn >> 16) & 0xFFFF;
+            let w_post = (pn >> 32) & 0xFFFF;
+            let tid = (pn >> 48) & 0xFF;
+            let activity = ocel & 0xFF;
+            let next_m = ((m ^ w_pre) | w_post) & 0xFFFF;
+            let valid =
+                (activity == tid) && ((m & w_pre) == w_pre) && (next_m & (inv & 0xFFFF) == 0);
+            let want = if valid { (pn & !0xFFFF) | next_m } else { pn };
+
+            assert_eq!(kernel_step(pn, ocel, inv), want, "pn={pn:#x} ocel={ocel:#x} inv={inv:#x}");
+        }
+    }
+}

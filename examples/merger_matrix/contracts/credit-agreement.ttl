@@ -1,0 +1,19 @@
+# Instance graph: Credit Agreement (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:CreditAgreement a ex:Contract ;
+    rdfs:label "Credit Agreement, dated 2026-10-05" ;
+    ex:party ex:AcmeCorp , ex:BetaHoldings ;
+    ex:governingLaw "NY" ;
+    ex:effectiveDate "2026-10-05"^^xsd:date ;
+    ex:regardingTransaction ex:ProjectMatrix ;
+    ex:facilityType ex:TermLoanB ;
+    ex:commitmentUSD "4200000000"^^xsd:decimal ;
+    ex:referenceRate ex:SOFR ;
+    ex:marginBps "350"^^xsd:integer ;
+    ex:maturityDate "2033-10-05"^^xsd:date ;
+    # Change-of-control puts the facility — repayment triggered by merger close
+    ex:changeOfControlTrigger true ;
+    ex:regardingNettingSet ex:NettingSetA , ex:NettingSetB .

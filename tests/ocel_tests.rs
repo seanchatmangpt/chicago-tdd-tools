@@ -72,14 +72,18 @@ fn test_ocel_collector_full_lifecycle() {
 // Collector: real diagnostics -> collected log state
 // ============================================================================
 
+use chicago_tdd_tools::observability::ocel::projections;
 use chicago_tdd_tools::observability::ocel::types::{
     OcelLog, TestActivity, TestObjectType, TestOcelEvent,
 };
 use chicago_tdd_tools::observability::ocel::wasm4pm::{seal_run, TestSuiteWitness};
-use chicago_tdd_tools::observability::ocel::projections;
 use wasm4pm_compat::admission::Admission;
 
-fn make_diagnostic(run_id: &str, elapsed_ns: u64, context: HashMap<&'static str, serde_json::Value>) -> Diagnostic {
+fn make_diagnostic(
+    run_id: &str,
+    elapsed_ns: u64,
+    context: HashMap<&'static str, serde_json::Value>,
+) -> Diagnostic {
     Diagnostic {
         code: DiagnosticCode::new("ocel_test".to_string(), DiagnosticCategory::Conformance, 1),
         category: DiagnosticCategory::Conformance,
@@ -135,7 +139,10 @@ fn test_collector_emits_events_with_objects_and_attributes() {
     // Activity reflects the emitted diagnostic category/severity.
     assert!(matches!(
         ev0.activity,
-        TestActivity::DiagnosticEmitted { category: DiagnosticCategory::Conformance, severity: Severity::Warning }
+        TestActivity::DiagnosticEmitted {
+            category: DiagnosticCategory::Conformance,
+            severity: Severity::Warning
+        }
     ));
 
     // Object typing: fixture -> Fixture, schema -> Schema, other *_id -> Artifact.
@@ -147,25 +154,25 @@ fn test_collector_emits_events_with_objects_and_attributes() {
     assert_eq!(type_of(ev1, "artifact-9"), Some(TestObjectType::Artifact));
 
     // Attributes carry the full context map.
-    assert_eq!(
-        ev1.attributes.get("note").and_then(|v| v.as_str()),
-        Some("plain attribute")
-    );
-    assert_eq!(
-        ev1.attributes.get("fixture_id").and_then(|v| v.as_str()),
-        Some("fix-1")
-    );
+    assert_eq!(ev1.attributes.get("note").and_then(|v| v.as_str()), Some("plain attribute"));
+    assert_eq!(ev1.attributes.get("fixture_id").and_then(|v| v.as_str()), Some("fix-1"));
 }
 
 #[test]
 fn test_collector_refuses_non_monotonic_timestamps() {
     let collector = OcelCollector::new(None);
 
-    assert!(collector.emit(make_diagnostic("run-b", 100, fixture_context("fix-b", "schema-b"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-b", 100, fixture_context("fix-b", "schema-b")))
+        .is_ok());
     // Same timestamp as the last admitted event for this case -> refused (not added).
-    assert!(collector.emit(make_diagnostic("run-b", 100, fixture_context("fix-b", "schema-b"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-b", 100, fixture_context("fix-b", "schema-b")))
+        .is_ok());
     // Strictly lower timestamp -> refused too.
-    assert!(collector.emit(make_diagnostic("run-b", 99, fixture_context("fix-b", "schema-b"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-b", 99, fixture_context("fix-b", "schema-b")))
+        .is_ok());
 
     let (receipted, _) = seal_run(&collector, "run-b".to_string()).unwrap();
     let log = receipted.inner();
@@ -178,9 +185,15 @@ fn test_collector_timestamps_monotonic_per_case() {
     let collector = OcelCollector::new(None);
 
     // run-x and run-y are independent cases: each starts its own clock.
-    assert!(collector.emit(make_diagnostic("run-x", 100, fixture_context("fx", "sx"))).is_ok());
-    assert!(collector.emit(make_diagnostic("run-y", 100, fixture_context("fx", "sx"))).is_ok());
-    assert!(collector.emit(make_diagnostic("run-x", 150, fixture_context("fx", "sx"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-x", 100, fixture_context("fx", "sx")))
+        .is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-y", 100, fixture_context("fx", "sx")))
+        .is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-x", 150, fixture_context("fx", "sx")))
+        .is_ok());
 
     let (receipted, _) = seal_run(&collector, "run-x".to_string()).unwrap();
     let log = receipted.inner();
@@ -212,13 +225,12 @@ fn test_collector_close_writes_sealed_log_file() {
     let output_path = dir.join("sealed_log.ocel.json");
 
     let collector = OcelCollector::new(Some(output_path.clone()));
-    assert!(collector.emit(make_diagnostic("run-close", 10, fixture_context("fx", "sx"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-close", 10, fixture_context("fx", "sx")))
+        .is_ok());
 
-    let summary = RunSummary {
-        run_id: "run-close".to_string(),
-        total_diagnostics: 1,
-        ..Default::default()
-    };
+    let summary =
+        RunSummary { run_id: "run-close".to_string(), total_diagnostics: 1, ..Default::default() };
     assert!(collector.close(summary).is_ok());
 
     let written = std::fs::read_to_string(&output_path).unwrap();
@@ -237,12 +249,17 @@ fn test_collector_close_writes_sealed_log_file() {
 #[test]
 fn test_project_admission_events_projects_structure() {
     let collector = OcelCollector::new(None);
-    assert!(collector.emit(make_diagnostic("run-p", 100, fixture_context("fx", "sx"))).is_ok());
-    assert!(collector.emit(make_diagnostic("run-p", 200, fixture_context("fx", "sx"))).is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-p", 100, fixture_context("fx", "sx")))
+        .is_ok());
+    assert!(collector
+        .emit(make_diagnostic("run-p", 200, fixture_context("fx", "sx")))
+        .is_ok());
     let (receipted, _) = seal_run(&collector, "run-p".to_string()).unwrap();
 
     // Climb back to the Admitted stage so the projection has a lawful input.
-    let admitted = Admission::<OcelLog, TestSuiteWitness>::new(receipted.inner().clone()).into_evidence();
+    let admitted =
+        Admission::<OcelLog, TestSuiteWitness>::new(receipted.inner().clone()).into_evidence();
     let projected = projections::project_admission_events(admitted);
 
     let log: &OcelLog = &projected.value;
@@ -262,13 +279,17 @@ fn test_project_admission_events_projects_structure() {
 #[cfg(feature = "ocel-generation-discovery")]
 mod discovery_tests {
     use super::*;
-    use chicago_tdd_tools::observability::ocel::discovery::{graduate_for_discovery, ProcessModelStore};
+    use chicago_tdd_tools::observability::ocel::discovery::{
+        graduate_for_discovery, ProcessModelStore,
+    };
     use wasm4pm_compat::engine_bridge::GraduationReason;
 
     #[test]
     fn graduate_for_discovery_grounds_evidence() {
         let collector = OcelCollector::new(None);
-        assert!(collector.emit(make_diagnostic("run-d", 100, fixture_context("fx", "sx"))).is_ok());
+        assert!(collector
+            .emit(make_diagnostic("run-d", 100, fixture_context("fx", "sx")))
+            .is_ok());
         let (receipted, _) = seal_run(&collector, "run-d".to_string()).unwrap();
 
         // Graduation takes the Receipted evidence directly (discovery.rs:37).

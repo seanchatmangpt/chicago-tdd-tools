@@ -1,0 +1,57 @@
+# master.powl — Merger matrix master net (10-phase composition)
+#
+# GENERATED — placeholder skeleton. The final composition lands Wave 4
+# (E-M09 §2, /Users/sac/.claude/plans/compressed-zooming-diffie.md:2391-2396).
+#
+# Contract notes (E-M09):
+# - Root is ONE sequence of the 10 phase-net roots, ordered by phase
+#   dependencies; parallel phase groups nest as PowlNode::Parallel inside the
+#   sequence (plan:2392).
+# - The 10 phase nets stay as separate DSL files — one source of truth per
+#   phase net; this file composes by reference, it does NOT duplicate phase-net
+#   bodies (plan:2393). Each placeholder activity below names its phase file.
+# - The 64-node cap is loader-wide and applies to each compiled net; if
+#   composing all 10 phase nets exceeds it, compose via per-phase
+#   ConformanceSession runs chained by case-ID ranges — cap relaxation is
+#   PROHIBITED (plan:2394-2396). The Wave-4 composition replaces these
+#   placeholders with inlined phase roots or the chained-session harness.
+# - Case-id namespacing for the master trace: `p{N}-<phase-local-case-id>`
+#   (E-M09 §3, plan:2401-2402), e.g. p1-case-intake, p7-case-settlement-1.
+#
+# Phase files (authored, Wave 1):
+#   phase1_intake.powl         (E-M01, 34 nodes)
+#   phase2_antitrust.powl      (E-M02, 33 nodes)
+#   phase3  — capital adequacy (E-M08 contract; NOT authored this lane)
+#   phase4_novation.powl       (E-M04,  5 nodes)
+#   phase5_syndicated_debt.powl (E-M05, 19 nodes)
+#   phase6  — tax/deal structure (contract not landed; NOT authored this lane)
+#   phase7_settlement.powl     (E-M07, 14 nodes)
+#   phase8  — employment/benefits (contract not landed; NOT authored)
+#   phase9  — process mining re-run (E-M09; composition is THIS file, Wave 4)
+#   phase10 — post-quantum settlement ledger (E-M10 contract; not authored here)
+#
+# Node budget: 11 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity phase1_intake_ref          = merger.phase1_intake          # models/phase1_intake.powl
+activity phase2_antitrust_ref       = merger.phase2_antitrust       # models/phase2_antitrust.powl
+activity phase3_capital_ref         = merger.phase3_capital         # placeholder (contract landed, file pending)
+activity phase4_novation_ref        = merger.phase4_novation        # models/phase4_novation.powl
+activity phase5_syndicated_ref      = merger.phase5_syndicated_debt # models/phase5_syndicated_debt.powl
+activity phase6_tax_ref             = merger.phase6_tax             # placeholder
+activity phase7_settlement_ref      = merger.phase7_settlement      # models/phase7_settlement.powl
+activity phase8_employment_ref      = merger.phase8_employment      # placeholder
+activity phase9_mining_ref          = merger.phase9_mining          # placeholder (master run = this composition)
+activity phase10_pq_ledger_ref      = merger.phase10_pq_ledger      # placeholder
+
+sequence {
+  phase1_intake_ref
+  phase2_antitrust_ref
+  phase3_capital_ref
+  phase4_novation_ref
+  phase5_syndicated_ref
+  phase6_tax_ref
+  phase7_settlement_ref
+  phase8_employment_ref
+  phase9_mining_ref
+  phase10_pq_ledger_ref
+}

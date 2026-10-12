@@ -39,6 +39,8 @@ Goal-focused guides to accomplish specific tasks:
 - **[Timeout Enforcement](features/TIMEOUT_ENFORCEMENT.md)** - Timeout handling patterns
 - **[Registry Version Pinning](features/REGISTRY_VERSION_PINNING.md)** - Managing registry versions
 - **[Upstream Issue Reporting](features/UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues
+- **[NATO Courts](features/NATO_COURTS.md)** - NATO assurance matrix and positive-control gate law
+- **[Ledger](features/LEDGER.md)** - Evidence lifecycle for court receipts (sealing and verification)
 
 ### Testing Guides
 - **[CLI Testing](testing/cli-testing-guide.md)** - Command-line testing patterns
@@ -115,8 +117,8 @@ Background, context, and understanding of how/why things work:
 
 ### Releases
 - **[CHANGELOG](releases/CHANGELOG.md)** - Complete version history
-- **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Release notes for v26.6.121
-- **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121
+- **[Release Notes v26.6.121](releases/RELEASE_NOTES_v26.6.121.md)** - Release notes for v26.6.121 (historical)
+- **[GitHub Release v26.6.121](releases/GITHUB_RELEASE_v26.6.121.md)** - Highlights for v26.6.121 (historical)
 - **[Latest Release Notes](releases/)** - See the newest release documentation
 - **[Release Notes](releases/)** - Detailed release documentation
 

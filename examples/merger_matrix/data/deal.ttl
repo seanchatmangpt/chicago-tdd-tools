@@ -1,0 +1,17 @@
+# Instance graph: deal structure (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:ProjectMatrix a ex:Transaction ;
+    rdfs:label "Project Matrix — reverse triangular merger" ;
+    ex:acquirer ex:AcmeCorp ;
+    ex:mergerSub ex:MergerSub ;
+    ex:target ex:BetaHoldings ;
+    ex:structure ex:ReverseTriangularMerger ;
+    ex:exchangeRatio "1.75"^^xsd:decimal ;
+    ex:aggregateConsideration "7000000000"^^xsd:decimal ;
+    ex:announcementDate "2026-10-05"^^xsd:date ;
+    ex:expectedClose "2027-03-31"^^xsd:date ;
+    ex:financingMix ex:CashAndStock ;
+    ex:governingLaw "DE" .

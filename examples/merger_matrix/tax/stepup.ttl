@@ -1,0 +1,23 @@
+# Instance graph: tax basis step-up facts (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:StepUpAnalysis a ex:TaxAnalysis ;
+    rdfs:label "Basis step-up analysis for Project Matrix" ;
+    ex:regardingTransaction ex:ProjectMatrix ;
+    ex:transactionType ex:ReverseTriangularMerger ;
+    ex:targetTaxAttributes ex:BetaTaxAttributes ;
+    ex:carryoverBasisUSD "2100000000"^^xsd:decimal ;
+    ex:fmvOfTargetUSD "7000000000"^^xsd:decimal ;
+    # Reverse triangular merger: no s.338(h)(10) election — carryover basis, no full step-up
+    ex:section338h10Election false ;
+    ex:section754Election false ;
+    ex:resultingStepUpUSD "0"^^xsd:decimal ;
+    ex:analysisType ex:CarryoverBasis .
+
+ex:BetaTaxAttributes a ex:TaxAttributes ;
+    rdfs:label "BetaHoldings historical tax attributes" ;
+    ex:ofParty ex:BetaHoldings ;
+    ex:carryoverBasisUSD "2100000000"^^xsd:decimal ;
+    ex:nolCarryforwardUSD "150000000"^^xsd:decimal .

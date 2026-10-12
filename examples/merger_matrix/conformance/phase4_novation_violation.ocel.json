@@ -1,0 +1,41 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p4v-e01": {
+      "ocel:activity": "ingest_isda_csa",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p4-novation-violation",
+      "ocel:objectTypes": [{"id": "p4v-obj-schedule", "type": "Artifact"}]
+    },
+    "p4v-e02": {
+      "ocel:activity": "novation_dependency_closure",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p4-novation-violation",
+      "ocel:objectTypes": [{"id": "p4v-obj-closure", "type": "Artifact"}]
+    },
+    "p4v-e03": {
+      "ocel:activity": "cls_net_settlement",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p4-novation-violation",
+      "ocel:objectTypes": [{"id": "p4v-obj-cls", "type": "Receipt"}],
+      "ocel:attributes": {
+        "violation": "skipped-transition",
+        "skipped": "multilateral_compression",
+        "law": "ALL-OR-NOTHING SAGA CHAIN: t_closure -> t_compress -> t_settle is a strict sequence; skipping t_compress must be refused by the Model-Log Law (Deviation::NotEnabled) and the 0.18x law never evaluated"
+      }
+    },
+    "p4v-e04": {
+      "ocel:activity": "seal_novation_deed",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p4-novation-violation",
+      "ocel:objectTypes": [{"id": "p4v-obj-deed", "type": "Receipt"}],
+      "ocel:attributes": {"note": "deed over an unsettled net — second refusal on the same trace"}
+    }
+  },
+  "ocel:objects": {
+    "p4v-obj-schedule": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "ISDA/CSA schedule matrix"}},
+    "p4v-obj-closure": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "novation dependency closure"}},
+    "p4v-obj-cls": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "CLS net transfer"}},
+    "p4v-obj-deed": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "novation deed", "sealed": true}}
+  }
+}

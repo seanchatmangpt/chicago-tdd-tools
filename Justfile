@@ -149,6 +149,19 @@ verify-ledger SOURCE:
     just ctdd-ledger
     timeout 30s ./target/release/ctdd_ledger validate "{{SOURCE}}" --json
 
+# WASM guest: build the hermetic ctt guest artifact (wasm32; PRD temprun embed)
+guest-build:
+    timeout 300s cargo build --release -p ctt-wasm-guest --target wasm32-unknown-unknown
+
+# WASM guest: zero-import audit court over the built artifact
+guest-audit:
+    timeout 60s cargo test --features nato --lib nato::guest_audit -- --nocapture
+
+# WASM guest: native-ABI contract + fault-injection suites
+guest-test:
+    timeout 300s cargo test -p ctt-wasm-guest --features chicago-tdd-tools/wasm-guest
+    timeout 300s cargo test --features wasm-guest,conformance,ledger --test guest_abi_tests
+
 # Compile-fail suite (trybuild; stderr must be seeded and committed)
 test-compile-fail:
     timeout 120s cargo test --test trybuild
@@ -169,13 +182,31 @@ verify-hermetic:
 check-mutation-gate:
     timeout 300s cargo mutants --all-features --file src/conformance --file src/nato --file src/ledger
 
-# NATO tier-2 (medium courts; tier-1 runs in test-unit, tier-3 in nato-courts-full)
+# NATO tier-2: named medium-cost subset of the (all tier-3-marked) ignored
+# courts — no tests carry a `nato_tier2` marker, so this recipe selects the
+# two cheapest ignored courts by exact test path instead of a filter group.
+# Tier-1 runs in test-unit; the full tier-3 scale run stays in nato-courts-full.
 test-nato-tier2:
-    timeout 120s cargo nextest run --lib --features nato -- --ignored nato_tier2
+    timeout 120s cargo nextest run --lib --features nato -- --ignored \
+        nato::stackbound::tests::n16_workload_100k_transitions_on_32kib_thread \
+        nato::cache::tests::n07_conservation_under_eviction_storm_full
 
-# Aggregate: emit the sealed compliance dossier (N20; gated on green courts)
+# Aggregate: emit the sealed compliance dossier (N20; gated on green courts).
+# NOTE: the court tests return CourtReceipts in-process only — nothing in
+# src/nato/dossier_court.rs or src/core/receipt.rs persists
+# docs/receipts/N{01..20}.json (contract documented in src/nato/README.md
+# "Receipt contract", unwired in code). Receipt persistence to docs/receipts
+# is a PREREQUISITE of the dossier-emit step; `dossier-emit` refuses with a
+# typed error when the --receipts-dir is empty.
 emit-dossier:
-    timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
+    just ctdd-ledger
+    CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture
+    timeout 60s ./target/release/ctdd_ledger dossier-emit --receipts-dir docs/receipts --out docs/nato/NATO_STANAG_4107_DOSSIER.json --json
+
+# Verify the emitted dossier: PQC (ML-DSA-65) signature + Merkle-root assertion
+dossier-verify:
+    just ctdd-ledger
+    timeout 60s ./target/release/ctdd_ledger dossier-inspect docs/nato/NATO_STANAG_4107_DOSSIER.json --verify-pqc-signature ML-DSA-65 --assert-merkle-root --json
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check

@@ -1,0 +1,39 @@
+# vote-threshold.n3 — supermajority approval rule (N3, cwm/EYE)
+# Hand-authored fixture. NOT legal advice.
+# A merger vote PASSES iff yesShare >= thresholdPct of votes cast.
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix ex:   <http://example.com/merger#> .
+
+# votesCast = for + against (abstentions are not "votes cast" here)
+{ ?vote a ex:ShareholderVote ;
+        ex:votesFor ?f ; ex:votesAgainst ?a .
+  ( ?f ?a ) math:sum ?cast .
+} => { ?vote ex:votesCast ?cast . } .
+
+# yesShare = 100 * for / cast
+{ ?vote a ex:ShareholderVote ; ex:votesCast ?cast ; ex:votesFor ?f .
+  ( 100.0 ?f ) math:product ?num .
+  ( ?num ?cast ) math:quotient ?share .
+} => { ?vote ex:yesShare ?share . } .
+
+# pass iff yesShare >= threshold
+{ ?vote a ex:ShareholderVote ; ex:yesShare ?share .
+  ex:MergerAgreement ex:voteThresholdPct ?pct .
+  ( ?share ?pct ) math:notLessThan true .
+} => { ?vote a ex:VotePassed . } .
+
+# fail otherwise (negation-as-failure)
+# Semantics note (F3): log:notImplies here is cwm/EYE's scoped negation — the goal
+# `{ ?vote a ex:VotePassed } log:notImplies true` succeeds iff the VotePassed
+# derivation FAILS for this ?vote (negation-as-failure), not classical material
+# implication. This is the intended reading; the rule relies on cwm/EYE's
+# forward-chaining evaluation of the nested formula.
+{ ?vote a ex:ShareholderVote .
+  ( { ?vote a ex:VotePassed } log:notImplies true )
+} => { ?vote a ex:VoteFailed . } .
+
+# Fixture: 700,000 of 1,000,000 votes cast are for => 70% >= 66.67% => PASS
+ex:MergerAgreement ex:voteThresholdPct "66.67" .
+ex:MergerVote a ex:ShareholderVote ;
+    ex:votesFor 700000 ; ex:votesAgainst 300000 .

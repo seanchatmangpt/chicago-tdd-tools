@@ -1,0 +1,20 @@
+# Instance graph: SIMM engine recomputation targets (synthetic)
+# These are the exact values the SIMM engine must reproduce from collateral/simm.ttl inputs.
+# SMA: margin = multiplier x sqrt(sum of add-ons)... simplified synthetic aggregation below.
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:SimmOutputA a ex:SimmOutput ;
+    rdfs:label "Recomputed SIMM margin — Netting Set A" ;
+    ex:forNettingSet ex:NettingSetA ;
+    ex:sumAddOnsUSD "78000000"^^xsd:decimal ;       # 38 + 24 + 11 + 5
+    ex:multiplier 0.95 ;
+    ex:simmMarginUSD "74100000"^^xsd:decimal .      # 78,000,000 x 0.95
+
+ex:SimmOutputB a ex:SimmOutput ;
+    rdfs:label "Recomputed SIMM margin — Netting Set B" ;
+    ex:forNettingSet ex:NettingSetB ;
+    ex:sumAddOnsUSD "63000000"^^xsd:decimal ;       # 29 + 21 + 9 + 4
+    ex:multiplier 0.95 ;
+    ex:simmMarginUSD "59850000"^^xsd:decimal .      # 63,000,000 x 0.95

@@ -201,8 +201,8 @@ New file: `guides/choosing-techniques.md`
 
 | Your Question | Technique | Section |
 |--------------|-----------|---------|
-| How do I test mathematical properties? | Property-Based | [Learn](../tutorials/property-testing.md) |
-| How do I validate test quality? | Mutation Testing | [Learn](../tutorials/mutation-testing.md) |
+| How do I test mathematical properties? | Property-Based | `tutorials/property-testing.md` (planned path, never landed) |
+| How do I validate test quality? | Mutation Testing | `tutorials/mutation-testing.md` (planned path, never landed) |
 | etc. | | |
 ```
 
@@ -213,13 +213,13 @@ Each page ends with:
 ## What's Next?
 
 **Just learned about fixtures?**
-→ [How-to: Use Fixtures](../how-to/fixtures.md)
+→ `how-to/fixtures.md` (planned path, never landed)
 
 **Want to see all fixture methods?**
-→ [Fixture API Reference](../reference/fixture-api.md)
+→ `reference/fixture-api.md` (planned path, never landed)
 
 **Ready for advanced topics?**
-→ [Advanced Techniques](../advanced/README.md)
+→ `advanced/README.md` (planned path, never landed)
 ```
 
 ---

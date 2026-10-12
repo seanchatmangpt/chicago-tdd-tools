@@ -1,0 +1,27 @@
+# Instance graph: parties to Project Matrix (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:AcmeCorp a ex:Corporation ;
+    rdfs:label "Acme Corporation" ;
+    ex:jurisdiction "DE"^^xsd:string ;
+    ex:lei "549300ACME00SYNTH01" ;
+    ex:sharesOutstanding "800000000"^^xsd:integer ;
+    ex:industry "industrial-manufacturing" .
+
+ex:BetaHoldings a ex:Corporation ;
+    rdfs:label "Beta Holdings plc" ;
+    ex:jurisdiction "GB" ;
+    ex:lei "549300BETA00SYNTH02" ;
+    ex:sharesOutstanding "400000000"^^xsd:integer ;
+    ex:industry "diversified-industrials" .
+
+ex:MergerSub a ex:Corporation ;
+    rdfs:label "Matrix Merger Sub, Inc." ;
+    ex:jurisdiction "DE" ;
+    ex:lei "549300MSUB00SYNTH03" ;
+    ex:whollyOwnedBy ex:AcmeCorp ;
+    ex:industry "industrial-manufacturing" .
+
+ex:AcmeCorp ex:hasSubsidiary ex:MergerSub .

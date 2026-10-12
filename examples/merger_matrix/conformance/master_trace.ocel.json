@@ -1,0 +1,83 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p1-e01": {
+      "ocel:activity": "a01_shacl_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:attributes": {"master": "concatenation of phases 1..10 under the p{N}- namespacing rule (E-M09)", "phase": 1, "source": "phase1_intake.ocel.json"}
+    },
+    "p1-e02": {
+      "ocel:activity": "a02_subsidiary_closure",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:attributes": {"phase": 1, "source": "phase1_intake.ocel.json"}
+    },
+    "p2-e01": {
+      "ocel:activity": "shacl_topology",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p2-antitrust-ftc",
+      "ocel:attributes": {"phase": 2, "source": "phase2_antitrust.ocel.json"}
+    },
+    "p3-e01": {
+      "ocel:activity": "phase3_pending",
+      "ocel:timestamp": 1700000000020000000,
+      "ocel:caseId": "p3-pending-placeholder",
+      "ocel:attributes": {"placeholder": true, "phase": 3, "note": "phase 3 contract not landed; skeleton slot"}
+    },
+    "p4-e01": {
+      "ocel:activity": "ingest_isda_csa",
+      "ocel:timestamp": 1700000000030000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:attributes": {"phase": 4, "source": "phase4_novation.ocel.json"}
+    },
+    "p5-e01": {
+      "ocel:activity": "act_ingest",
+      "ocel:timestamp": 1700000000040000000,
+      "ocel:caseId": "p5-debt-vote-1",
+      "ocel:attributes": {"phase": 5, "source": "phase5_syndicated_debt.ocel.json"}
+    },
+    "p6-e01": {
+      "ocel:activity": "phase6_pending",
+      "ocel:timestamp": 1700000000050000000,
+      "ocel:caseId": "p6-pending-placeholder",
+      "ocel:attributes": {"placeholder": true, "phase": 6, "note": "phase 6 contract not landed; skeleton slot"}
+    },
+    "p7-e01": {
+      "ocel:activity": "intake_pacs008",
+      "ocel:timestamp": 1700000000060000000,
+      "ocel:caseId": "p7-settle-1",
+      "ocel:attributes": {"phase": 7, "source": "phase7_settlement.ocel.json"}
+    },
+    "p8-e01": {
+      "ocel:activity": "phase8_pending",
+      "ocel:timestamp": 1700000000070000000,
+      "ocel:caseId": "p8-pending-placeholder",
+      "ocel:attributes": {"placeholder": true, "phase": 8, "note": "phase 8 contract not landed; skeleton slot"}
+    },
+    "p9-e01": {
+      "ocel:activity": "phase9_pending",
+      "ocel:timestamp": 1700000000080000000,
+      "ocel:caseId": "p9-pending-placeholder",
+      "ocel:attributes": {"placeholder": true, "phase": 9, "note": "phase 9 contract not landed; skeleton slot"}
+    },
+    "p10-e01": {
+      "ocel:activity": "phase10_pending",
+      "ocel:timestamp": 1700000000090000000,
+      "ocel:caseId": "p10-pending-placeholder",
+      "ocel:attributes": {"placeholder": true, "phase": 10, "note": "phase 10 contract not landed; skeleton slot"}
+    }
+  },
+  "ocel:objects": {
+    "p1-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "master trace root"}},
+    "p2-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 2 concatenation slot"}},
+    "p3-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 3 placeholder slot"}},
+    "p4-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 4 concatenation slot"}},
+    "p5-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 5 concatenation slot"}},
+    "p6-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 6 placeholder slot"}},
+    "p7-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 7 concatenation slot"}},
+    "p8-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 8 placeholder slot"}},
+    "p9-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 9 placeholder slot"}},
+    "p10-obj-master": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase 10 placeholder slot"}}
+  }
+}

@@ -1,0 +1,433 @@
+//! Ledger (P12 wire format + P13 dossier) integration tests.
+//!
+//! Laws under test, per plans P12/P13:
+//! 1. Roundtrip `encode` → `from_bytes_verified` → `as_bytes`/`receipt` identity.
+//! 2. 352-byte-flip tamper matrix: every single-byte mutation of a valid
+//!    chained record is rejected.
+//! 3. Chained records validate through the crate's single chain validator
+//!    (`Blake3ChainValidator::validate_chain`); flipping one content byte is
+//!    tamper-evidently refused.
+//! 4. Dossier root is permutation-invariant over `add_court` order.
+//! 5. Odd-leaf promotion (never duplication) at 3 and 5 courts.
+//! 6. Full 20-court set: `seal_with_proofs` mints proofs that all verify;
+//!    tampering one head fails exactly that proof.
+//! 7. Empty dossier: root law `BLAKE3("P13-EMPTY")` + proof refusal.
+//! 8. Proof paths longer than `MAX_PROOF_STEPS` are rejected.
+//! 9. `ledger::exit_code` is total over every `LedgerError` variant.
+//!
+//! All items here are gated on the `ledger` feature — the ledger module is
+//! only compiled when that feature is active.
+#![cfg(feature = "ledger")]
+#![allow(missing_docs)]
+#![allow(clippy::pedantic, clippy::nursery, clippy::cargo)]
+// JUSTIFICATION: test code only — assertions on real collected state.
+#![allow(clippy::unwrap_used)]
+
+use chicago_tdd_tools::ledger::dossier::{DossierBuilder, DossierRoot};
+use chicago_tdd_tools::ledger::error::{LedgerError, NameError};
+use chicago_tdd_tools::ledger::proof::{
+    empty_root, leaf_hash, node_hash, CourtProof, ProofStep, MAX_PROOF_STEPS,
+};
+use chicago_tdd_tools::ledger::receipt::{
+    ChainedCourtReceipt, CourtOutcome, CourtReceiptV1, ReceiptMetrics, ThermalClass,
+    VerifiedCourtReceipt, COURT_RECORD_LEN,
+};
+use chicago_tdd_tools::ledger::{exit_code, LedgerExitCode};
+use chicago_tdd_tools::observability::receipt::{Blake3ChainValidator, Blake3ReceiptEntry};
+
+// ─── Fixtures ────────────────────────────────────────────────────────────────
+
+/// Deterministic head for a seed (test-only stand-in for a real chain head).
+fn head(seed: u8) -> [u8; 32] {
+    let mut h = blake3::Hasher::new();
+    h.update(&[seed]);
+    *h.finalize().as_bytes()
+}
+
+/// Build a valid receipt with deterministic fields.
+fn sample_receipt(seed: u8) -> CourtReceiptV1 {
+    CourtReceiptV1::new(
+        head(seed),
+        [0u8; 32],
+        ReceiptMetrics {
+            timestamp_ms: 1_700_000_000_000 + u64::from(seed),
+            run_id: u64::from(seed),
+            total_ticks: 9_999,
+            wall_ms: 123,
+            thermal: ThermalClass::Warm,
+            outcome: CourtOutcome::Pass,
+            budget_met: true,
+        },
+        [0u8; 32],
+        head(seed.wrapping_add(100)),
+        [0u8; 32],
+        "ledger-tests-sample",
+    )
+    .expect("sample receipt fields are valid")
+}
+
+// ─── Law 1: roundtrip identity ───────────────────────────────────────────────
+
+#[test]
+fn law01_roundtrip_encode_from_bytes_verified_identity() {
+    let receipt = sample_receipt(1);
+    let chained = ChainedCourtReceipt::from_receipt(&receipt);
+    let bytes = chained.encode();
+
+    let verified = VerifiedCourtReceipt::from_bytes_verified(&bytes)
+        .expect("a freshly chained valid record must verify");
+    assert_eq!(
+        verified.as_bytes(),
+        bytes,
+        "verified record must be byte-identical to what was encoded"
+    );
+    assert_eq!(verified.receipt(), receipt, "typed roundtrip must preserve every field");
+
+    // A second round over the verified bytes is a fixpoint.
+    let again = VerifiedCourtReceipt::from_bytes_verified(&verified.as_bytes())
+        .expect("re-verifying verified bytes must succeed");
+    assert_eq!(again, verified, "verification must be idempotent");
+}
+
+// ─── Law 2: 352-byte single-flip tamper matrix ──────────────────────────────
+
+#[test]
+fn law02_tamper_matrix_every_single_byte_flip_is_rejected() {
+    let bytes = ChainedCourtReceipt::from_receipt(&sample_receipt(2)).encode();
+    assert_eq!(
+        bytes.len(),
+        COURT_RECORD_LEN,
+        "chained record must be the documented 352-byte fixed size"
+    );
+    for i in 0..COURT_RECORD_LEN {
+        let mut mutated = bytes;
+        mutated[i] ^= 0x01;
+        assert!(
+            VerifiedCourtReceipt::from_bytes_verified(&mutated).is_err(),
+            "flip of byte {i}/{} was accepted",
+            COURT_RECORD_LEN
+        );
+    }
+    // A second matrix pass with a different flip mask, so a record position
+    // whose bit-0 is a don't-care cannot hide.
+    for i in 0..COURT_RECORD_LEN {
+        let mut mutated = bytes;
+        mutated[i] ^= 0x80;
+        assert!(
+            VerifiedCourtReceipt::from_bytes_verified(&mutated).is_err(),
+            "high-bit flip of byte {i}/{} was accepted",
+            COURT_RECORD_LEN
+        );
+    }
+}
+
+// ─── Law 3: chained records validate through Blake3ChainValidator ───────────
+
+/// Test-local entry capturing the trait view of a chained record. A real
+/// hand-written adapter (not a fake of the trait): `prev_hash`/`content_bytes`/
+/// `stored_hash` are captured through the public trait methods of
+/// `ChainedCourtReceipt`, so the same `Blake3ReceiptEntry` law applies.
+struct CapturedEntry {
+    prev: [u8; 32],
+    content: Vec<u8>,
+    stored: [u8; 32],
+}
+
+impl Blake3ReceiptEntry for CapturedEntry {
+    fn prev_hash(&self) -> [u8; 32] {
+        self.prev
+    }
+    fn content_bytes(&self) -> Vec<u8> {
+        self.content.clone()
+    }
+    fn stored_hash(&self) -> [u8; 32] {
+        self.stored
+    }
+}
+
+fn capture(entry: &ChainedCourtReceipt) -> CapturedEntry {
+    CapturedEntry {
+        prev: entry.prev_hash(),
+        content: entry.content_bytes(),
+        stored: entry.stored_hash(),
+    }
+}
+
+/// Build a forward-linked chain of `n` records: each record's parent hash is
+/// the previous record's stored chain hash; genesis parent is zeroed.
+fn chained_records(n: usize) -> Vec<ChainedCourtReceipt> {
+    let mut parent = [0u8; 32];
+    let mut records = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut receipt = sample_receipt(i as u8);
+        receipt.parent_receipt_hash = parent;
+        let chained = ChainedCourtReceipt::from_receipt(&receipt);
+        parent = chained.stored_hash();
+        records.push(chained);
+    }
+    records
+}
+
+#[test]
+fn law03_five_record_chain_validates_through_existing_validator() {
+    use chicago_tdd_tools::observability::receipt::ChainError;
+    let records = chained_records(5);
+    Blake3ChainValidator::validate_chain(&records)
+        .expect("5 chained court receipts must replay cleanly");
+
+    // Tamper: flip one content byte of record 2 without updating its stored
+    // hash. The stored hashes of records 2.. come from the ORIGINAL chain, so
+    // replay must fail at exactly index 2.
+    let mut entries: Vec<CapturedEntry> = records.iter().map(capture).collect();
+    let victim = 100; // inside the 304-byte content region, past the header
+    entries[2].content[victim] ^= 0x01;
+    let err = Blake3ChainValidator::validate_chain(&entries)
+        .expect_err("a flipped content byte must break chain replay");
+    assert_eq!(
+        err,
+        ChainError::HashMismatch {
+            index: 2,
+            stored: records[2].stored_hash(),
+            computed: {
+                let mut h = blake3::Hasher::new();
+                h.update(&entries[2].prev);
+                h.update(&entries[2].content);
+                *h.finalize().as_bytes()
+            },
+        },
+        "tamper must be evidenced at the mutated record's index"
+    );
+}
+
+// ─── Law 4: dossier root permutation invariance ─────────────────────────────
+
+#[test]
+fn law04_dossier_root_is_permutation_invariant() {
+    let courts: Vec<(String, [u8; 32])> =
+        (0..7u8).map(|i| (format!("court-{i:02}"), head(i + 10))).collect();
+
+    let seal = |order: &[usize]| {
+        let mut b = DossierBuilder::new();
+        for &i in order {
+            let (id, h) = &courts[i];
+            b.add_court(id.as_str(), *h).expect("each court added exactly once");
+        }
+        b.seal().expect("nonempty dossier seals")
+    };
+
+    // Identity, reversed, and a derangement — three distinct insertion orders.
+    let n = courts.len();
+    let identity: Vec<usize> = (0..n).collect();
+    let reversed: Vec<usize> = (0..n).rev().collect();
+    let rotated: Vec<usize> = (0..n).map(|i| (i + 3) % n).collect();
+    let r0 = seal(&identity);
+    assert_eq!(r0, seal(&reversed), "reversed insertion order must not change the root");
+    assert_eq!(r0, seal(&rotated), "rotated insertion order must not change the root");
+
+    // And the root matches an independent promotion-law reference over the
+    // sorted leaves.
+    let mut idx: Vec<usize> = (0..courts.len()).collect();
+    idx.sort_by(|&a, &b| courts[a].0.as_bytes().cmp(courts[b].0.as_bytes()));
+    let leaves: Vec<[u8; 32]> =
+        idx.iter().map(|&i| leaf_hash(&courts[i].0, &courts[i].1)).collect();
+    assert_eq!(r0, DossierRoot(promote_root(leaves)), "root must equal the sorted reference");
+}
+
+/// Independent reference Merkle root with PROMOTED (not duplicated) odd nodes.
+fn promote_root(mut level: Vec<[u8; 32]>) -> [u8; 32] {
+    while level.len() > 1 {
+        let mut next = Vec::new();
+        let promoted = (level.len() % 2 == 1).then(|| level.pop().expect("len > 1"));
+        for pair in level.chunks(2) {
+            next.push(node_hash(&pair[0], &pair[1]));
+        }
+        if let Some(p) = promoted {
+            next.push(p);
+        }
+        level = next;
+    }
+    level[0]
+}
+
+/// Independent reference with DUPLICATED odd nodes — the forbidden variant.
+fn duplicate_root(mut level: Vec<[u8; 32]>) -> [u8; 32] {
+    while level.len() > 1 {
+        if level.len() % 2 == 1 {
+            let last = *level.last().expect("nonempty");
+            level.push(last);
+        }
+        level = level.chunks(2).map(|p| node_hash(&p[0], &p[1])).collect();
+    }
+    level[0]
+}
+
+// ─── Law 5: odd-leaf promotion at 3 and 5 courts ────────────────────────────
+
+#[test]
+fn law05_odd_leaf_promotion_at_3_and_5_courts() {
+    for n in [3usize, 5] {
+        let mut b = DossierBuilder::new();
+        for i in 0..n {
+            b.add_court(format!("c{i}"), head(i as u8)).expect("unique court ids");
+        }
+        let leaves: Vec<[u8; 32]> =
+            (0..n).map(|i| leaf_hash(&format!("c{i}"), &head(i as u8))).collect();
+        let (root, proofs) = b.seal_with_proofs().expect("nonempty dossier");
+
+        assert_eq!(
+            root,
+            DossierRoot(promote_root(leaves.clone())),
+            "n={n}: root must be the PROMOTED-odd-node variant"
+        );
+        assert_ne!(
+            root,
+            DossierRoot(duplicate_root(leaves)),
+            "n={n}: root must NOT be the duplicated-odd-node variant"
+        );
+        assert_eq!(proofs.len(), n, "n={n}: one proof per court");
+        for p in &proofs {
+            assert_eq!(p.verify(&root), Ok(()), "n={n}: proof for {} must verify", p.court_id);
+        }
+    }
+}
+
+// ─── Law 6: 20-court full set, seal_with_proofs + tamper isolation ──────────
+
+#[test]
+fn law06_twenty_court_full_set_all_proofs_verify_and_tamper_is_isolated() {
+    let mut b = DossierBuilder::new();
+    for i in 0..20u8 {
+        b.add_court(format!("court-{i:02}"), head(i)).expect("unique court ids");
+    }
+    let (root, proofs) = b.seal_with_proofs().expect("nonempty dossier");
+    assert_eq!(proofs.len(), 20, "one proof per court");
+    for p in &proofs {
+        assert_eq!(p.verify(&root), Ok(()), "proof for {} must verify", p.court_id);
+    }
+    // Deepest path at 20 leaves: 20 → 10 → 5 → 3(promote) → 2 → 1.
+    let max_steps = proofs.iter().map(|p| p.path.len()).max().expect("nonempty");
+    assert_eq!(max_steps, 5, "deepest inclusion path at 20 leaves must be 5 steps");
+
+    // Tamper one head (court-07): rebuild with that head corrupted.
+    let mut b2 = DossierBuilder::new();
+    for i in 0..20u8 {
+        let h = if i == 7 { head(200) } else { head(i) };
+        b2.add_court(format!("court-{i:02}"), h).expect("unique court ids");
+    }
+    let (root2, proofs2) = b2.seal_with_proofs().expect("nonempty dossier");
+    assert_ne!(root, root2, "a tampered head must change the dossier root");
+
+    // Merkle locality: every original proof crosses the tampered court's
+    // subtree somewhere on its path, so ALL original proofs fail against the
+    // tampered root; the tampered court's own proof also fails against the
+    // ORIGINAL root (its leaf binds the tampered head).
+    for p in &proofs {
+        assert!(
+            p.verify(&root2).is_err(),
+            "original proof must fail against the tampered root ({})",
+            p.court_id
+        );
+        if p.court_id == "court-07" {
+            continue;
+        }
+        assert_eq!(p.verify(&root), Ok(()), "untampered {} verifies its own root", p.court_id);
+    }
+    // Fresh proofs over the tampered dossier verify against it, and fail
+    // against the original root (court-07 by head binding, others by
+    // locality).
+    for p in &proofs2 {
+        assert_eq!(p.verify(&root2), Ok(()), "tampered-dossier proof verifies");
+        assert!(p.verify(&root).is_err(), "tampered-dossier proof must fail the original root");
+    }
+}
+
+// ─── Law 7: empty dossier → BLAKE3("P13-EMPTY") root + proof refusal ────────
+
+#[test]
+fn law07_empty_dossier_root_law_and_proof_refusal() {
+    let b = DossierBuilder::new();
+    assert!(b.seal().is_err(), "sealing an empty dossier must be refused");
+    assert!(b.seal_with_proofs().is_err(), "minting proofs from an empty dossier must be refused");
+    // The empty-root law is exposed independently of the builder refusal.
+    assert_eq!(
+        empty_root(),
+        *blake3::hash(b"P13-EMPTY").as_bytes(),
+        "empty dossier root must be BLAKE3(\"P13-EMPTY\")"
+    );
+    // A forged proof can never verify against the empty root.
+    let forged = CourtProof {
+        court_id: "ghost".into(),
+        head: head(1),
+        path: vec![ProofStep { sibling: [0u8; 32], is_left: false }],
+    };
+    assert!(
+        forged.verify(&DossierRoot(empty_root())).is_err(),
+        "a forged proof must not verify against the empty root"
+    );
+}
+
+// ─── Law 8: proof path over MAX_PROOF_STEPS rejected ────────────────────────
+
+#[test]
+fn law08_proof_path_over_max_steps_is_rejected() {
+    let root = DossierRoot(empty_root());
+    let path = vec![ProofStep { sibling: [0u8; 32], is_left: false }; MAX_PROOF_STEPS + 1];
+    let proof = CourtProof { court_id: "adversarial".into(), head: [0u8; 32], path };
+    assert!(
+        proof.verify(&root).is_err(),
+        "a {}-step proof path must be rejected (max {MAX_PROOF_STEPS})",
+        MAX_PROOF_STEPS + 1
+    );
+
+    // Boundary sanity: a path AT the maximum is structurally accepted far
+    // enough to fail on root comparison, not on the length gate.
+    let at_limit = CourtProof {
+        court_id: "at-limit".into(),
+        head: [0u8; 32],
+        path: vec![ProofStep { sibling: [0u8; 32], is_left: false }; MAX_PROOF_STEPS],
+    };
+    assert!(
+        at_limit.verify(&root).is_err(),
+        "a max-length path that hashes to a different root must fail verification"
+    );
+}
+
+// ─── Law 9: exit-code table is total over LedgerError variants ──────────────
+
+#[test]
+fn law09_exit_code_table_covers_every_error_variant() {
+    let cases: &[(LedgerError, u8)] = &[
+        (LedgerError::TooShort { need: 16, got: 4 }, LedgerExitCode::MalformedReceipt as u8),
+        (LedgerError::TrailingBytes { count: 7 }, LedgerExitCode::MalformedReceipt as u8),
+        (LedgerError::BadMagic([0xde, 0xad, 0xbe, 0xef]), LedgerExitCode::MalformedReceipt as u8),
+        (
+            LedgerError::UnsupportedVersion { found: 9, supported: 1 },
+            LedgerExitCode::SchemaVersionMismatch as u8,
+        ),
+        (
+            LedgerError::ReservedNonzero { offset: 42, value: 0xff },
+            LedgerExitCode::MalformedReceipt as u8,
+        ),
+        (
+            LedgerError::InvalidTag { field: "kind", tag: 0x7f, offset: 12 },
+            LedgerExitCode::MalformedReceipt as u8,
+        ),
+        (
+            LedgerError::InvalidName { offset: 33, reason: NameError::InteriorNul },
+            LedgerExitCode::MalformedReceipt as u8,
+        ),
+        (
+            LedgerError::InvalidName { offset: 34, reason: NameError::InvalidUtf8 },
+            LedgerExitCode::MalformedReceipt as u8,
+        ),
+        (LedgerError::ChainLinkMismatch { index: 3 }, LedgerExitCode::ChainBroken as u8),
+        (LedgerError::ControlFlagMismatch { offset: 77 }, LedgerExitCode::MalformedReceipt as u8),
+        (
+            LedgerError::DigestMismatch { offset: 5, stored: [0u8; 32], computed: [1u8; 32] },
+            LedgerExitCode::Tampered as u8,
+        ),
+    ];
+    for (err, want) in cases {
+        assert_eq!(exit_code(err), *want, "wrong exit code for {err}");
+    }
+}

@@ -48,8 +48,7 @@ fn statistics_line(total_advisories: u64, no_advice: u64) -> String {
 
 fn write_report(dir: &Path, lines: &[String]) {
     fs::create_dir_all(dir).unwrap(); // JUSTIFICATION: Test code only
-    fs::write(dir.join("live_check.json"), lines.join("\n") + "\n")
-        .unwrap(); // JUSTIFICATION: Test code only
+    fs::write(dir.join("live_check.json"), lines.join("\n") + "\n").unwrap(); // JUSTIFICATION: Test code only
 }
 
 #[test]
@@ -57,10 +56,7 @@ fn validation_results_counts_violations_and_keeps_statistics() {
     let dir = tempfile::tempdir().unwrap(); // JUSTIFICATION: Test code only
     write_report(
         dir.path(),
-        &[
-            violation_line("orders.submit", "attribute order.id is required"),
-            statistics_line(1, 3),
-        ],
+        &[violation_line("orders.submit", "attribute order.id is required"), statistics_line(1, 3)],
     );
 
     let results = ValidationResults::from_report_dir(dir.path()).unwrap(); // JUSTIFICATION: Test code only
@@ -105,10 +101,7 @@ fn validation_results_clean_report_has_no_violations() {
     assert!(!results.has_violations());
     assert_eq!(results.advices().count(), 1);
     assert_eq!(results.advices().next().unwrap().level, AdviceLevel::Improvement);
-    assert_eq!(
-        results.violations_summary(),
-        "No Weaver live-check violations detected."
-    );
+    assert_eq!(results.violations_summary(), "No Weaver live-check violations detected.");
 }
 
 #[test]
@@ -161,8 +154,7 @@ fn advice_level_display_and_default_behavior() {
     assert_eq!(AdviceLevel::Unknown.to_string(), "unknown");
 
     // serde default for an unrecognized level string is Unknown.
-    let advice: AdviceLevel =
-        serde_json::from_str(r#""catastrophe""#).unwrap(); // JUSTIFICATION: Test code only
+    let advice: AdviceLevel = serde_json::from_str(r#""catastrophe""#).unwrap(); // JUSTIFICATION: Test code only
     assert_eq!(advice, AdviceLevel::Unknown);
 
     assert_eq!(AdviceLevel::default(), AdviceLevel::Unknown);
@@ -271,9 +263,7 @@ fn telemetry_capture_creates_distinct_tracers_for_lazy_endpoint() {
 fn telemetry_capture_malformed_endpoint_is_typed_err() {
     let capture = TelemetryCapture::new("::not a valid endpoint::");
 
-    let err = capture
-        .tracer("test_instrumentation", "service")
-        .unwrap_err(); // JUSTIFICATION: Test code only
+    let err = capture.tracer("test_instrumentation", "service").unwrap_err(); // JUSTIFICATION: Test code only
 
     assert!(matches!(err, ObservabilityError::ValidationFailed(_)));
     assert!(err.to_string().contains("Failed to create OTLP exporter"));
@@ -285,15 +275,10 @@ fn telemetry_capture_malformed_endpoint_is_typed_err() {
 
 #[test]
 fn weaver_fixture_with_nonexistent_registry_returns_typed_err() {
-    let missing = std::env::temp_dir().join(format!(
-        "ctdd-no-such-registry-{}",
-        std::process::id()
-    ));
+    let missing =
+        std::env::temp_dir().join(format!("ctdd-no-such-registry-{}", std::process::id()));
 
-    let config = TestConfig {
-        registry_path: Some(missing.clone()),
-        ..TestConfig::default()
-    };
+    let config = TestConfig { registry_path: Some(missing.clone()), ..TestConfig::default() };
 
     // JUSTIFICATION: Test code only — assert on the real error variant, not Debug.
     let err = match WeaverTestFixture::with_config(config) {

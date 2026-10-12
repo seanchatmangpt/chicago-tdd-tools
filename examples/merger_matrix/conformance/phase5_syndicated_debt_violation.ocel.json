@@ -1,0 +1,63 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p5v-e01": {
+      "ocel:activity": "act_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-facility", "type": "Artifact"}]
+    },
+    "p5v-e02": {
+      "ocel:activity": "act_rank_liens",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-liens", "type": "Artifact"}]
+    },
+    "p5v-e03": {
+      "ocel:activity": "act_open_vote",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-vote", "type": "AgentContext"}]
+    },
+    "p5v-e04": {
+      "ocel:activity": "act_vote",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-bank-a", "type": "AgentContext"}],
+      "ocel:attributes": {"bank": "agent-bank-01", "bps": 400}
+    },
+    "p5v-e05": {
+      "ocel:activity": "act_close_vote",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-vote", "type": "AgentContext"}],
+      "ocel:attributes": {"tallied_bps": 400, "required_bps": 1500}
+    },
+    "p5v-e06": {
+      "ocel:activity": "act_refused",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-consent-refused", "type": "Receipt"}],
+      "ocel:attributes": {"branch": "refused", "refusal": "VotingBelowThreshold", "class": "sacred-rights", "tallied_bps": 400, "required_bps": 1500}
+    },
+    "p5v-e07": {
+      "ocel:activity": "act_schedule_sweep",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p5-debt-violation",
+      "ocel:objectTypes": [{"id": "p5v-obj-schedule", "type": "Artifact"}],
+      "ocel:attributes": {
+        "violation": "skipped-transition",
+        "skipped": "act_admitted",
+        "law": "REFUSAL-BEFORE-SWEEP (mask bit1): t_schedule_sweep is enabled only on the admitted branch; after act_refused the Model-Log Law must refuse the sweep (Deviation::NotEnabled from p_consent_refused)"
+      }
+    }
+  },
+  "ocel:objects": {
+    "p5v-obj-facility": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "syndicated facility docs"}},
+    "p5v-obj-liens": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "lien seniority stack"}},
+    "p5v-obj-vote": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "consent vote"}},
+    "p5v-obj-bank-a": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "agent bank", "name": "agent-bank-01"}},
+    "p5v-obj-consent-refused": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "consent refusal"}},
+    "p5v-obj-schedule": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "pro-rata sweep schedule"}}
+  }
+}

@@ -1,0 +1,205 @@
+# Assurance Workflow (Phase-4 capability courts)
+#
+# **Tiering decision**: These assurance recipes (conformance, OCEL ingest,
+# ledger, NATO courts, compile-fail trybuild corpus, mutation gate) are held
+# out of the main ci.yml matrix on purpose. ci.yml is the fast feedback lane
+# (~90s target) that runs on every push across 3 OSes x 2 toolchains; the
+# assurance suite is slower, single-OS (ubuntu), and only relevant when the
+# capability surfaces they guard actually change. Gating them behind a paths
+# filter here keeps main CI green-fast without diluting the assurance signal,
+# while the nightly-full job still exercises the expensive full tier
+# (nato-courts-full, verify-hermetic, emit-dossier) on schedule.
+#
+# Triggered by:
+# - Pull requests touching the capability surfaces (paths filter below)
+# - Nightly schedule (03:30 UTC, offset from nightly.yml's 02:00 UTC)
+# - Manual workflow dispatch
+
+name: assurance
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'src/conformance/**'
+      - 'src/nato/**'
+      - 'src/ledger/**'
+      - 'tests/conformance*'
+      - 'tests/ocel_ingest_tests.rs'
+      - 'tests/ledger*'
+      - 'tests/nato*'
+      - 'tests/compile_fail/**'
+      - 'crates/ctt-wasm-guest/**'
+      - 'src/conformance/guest*'
+      - 'Justfile'
+      - 'Cargo.toml'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 * * *'  # Daily at 3:30 AM UTC (offset from Nightly Rust CI at 2:00)
+
+# Auto-cancel redundant workflow runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # **Andon Signal: CRITICAL (Red)** - Capability Assurance (fast tier)
+  # Runs the conformance, OCEL ingest, ledger, and NATO court suites plus the
+  # trybuild compile-fail corpus and mutation gate on every touching PR.
+  pr-assurance:
+    name: 🔴 PR Assurance (fast tier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v7
+
+      - name: 🔧 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: pr-assurance
+
+      - name: 🔨 Install just
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: just
+
+      - name: 🧪 Install cargo-nextest
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: cargo-nextest
+
+      - name: 🛡️ Compile-fail corpus guard (stderr vs rs count)
+        # Poka-Yoke: a *.rs case without a matching *.stderr expectation makes
+        # trybuild silently accept regressions. Fail before the corpus runs.
+        run: |
+          RS_COUNT=$(find tests/compile_fail -name '*.rs' -type f | wc -l | tr -d ' ')
+          STDERR_COUNT=$(find tests/compile_fail -name '*.stderr' -type f | wc -l | tr -d ' ')
+          echo "Compile-fail cases: $RS_COUNT rs / $STDERR_COUNT stderr"
+          if [ "$STDERR_COUNT" -lt "$RS_COUNT" ]; then
+            echo "❌ ANDON SIGNAL: $STDERR_COUNT stderr expectations for $RS_COUNT compile-fail cases"
+            echo "🔧 Fix: run 'just seed-trybuild' to regenerate missing .stderr files"
+            exit 1
+          fi
+          echo "✅ Compile-fail corpus complete: every case has a stderr expectation"
+
+      - name: 🎯 Conformance courts
+        run: just test-conformance
+
+      - name: 🎯 OCEL ingest tests
+        run: just test-ocel-ingest
+
+      - name: 🎯 Ledger tests
+        run: just test-ledger
+
+      - name: 🎯 NATO courts (fast tier)
+        run: just test-nato
+
+      - name: 🎯 Compile-fail corpus (trybuild)
+        run: just test-compile-fail
+
+      - name: 🎯 Mutation gate
+        run: just check-mutation-gate
+
+  # **Andon Signal: MEDIUM (Orange)** - Full assurance tier (nightly)
+  # Expensive full-court verification: NATO full courts, hermetic verification,
+  # and dossier emission with uploaded receipts. Runs on schedule only.
+  nightly-full:
+    name: 🟠 Nightly Full Assurance
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v7
+
+      - name: 🔧 Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: nightly-full-assurance
+
+      - name: 🔨 Install just
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: just
+
+      - name: 🧪 Install cargo-nextest
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: cargo-nextest
+
+      - name: 🎯 NATO courts (full tier)
+        run: just nato-courts-full
+
+      - name: 🎯 Hermetic verification
+        run: just verify-hermetic
+
+      - name: 🎯 Emit dossier
+        run: just emit-dossier
+
+      - name: 📤 Upload assurance receipts
+        uses: actions/upload-artifact@v7
+        with:
+          name: assurance-receipts
+          path: docs/receipts/
+          retention-days: 30
+          if-no-files-found: warn
+
+  # **Andon Signal: MEDIUM (Orange)** - WASM guest build assurance
+  # Builds the ctt-wasm-guest crate for wasm32-unknown-unknown and uploads the
+  # resulting .wasm artifact. guest-build failing IS a job failure (no skip);
+  # the artifact upload warns (not fails) when the build was skipped because
+  # the wasm32 target was unavailable.
+  guest:
+    name: 🟠 WASM Guest Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 📋 Checkout code
+        uses: actions/checkout@v7
+
+      - name: 🔧 Install Rust toolchain (wasm32-unknown-unknown)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: 💾 Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: guest-build
+
+      - name: 🔨 Install just
+        uses: taiki-e/install-action@v2.85.6
+        with:
+          tool: just
+
+      - name: 🎯 Guest build
+        run: just guest-build
+
+      - name: 🎯 Guest audit
+        run: just guest-audit
+
+      - name: 🎯 Guest tests
+        run: just guest-test
+
+      - name: 📤 Upload WASM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ctt-wasm-guest
+          path: target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
+          retention-days: 30
+          if-no-files-found: warn

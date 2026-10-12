@@ -1,0 +1,72 @@
+# phase5_syndicated_debt.powl — Phase 5: Syndicated Debt Restructuring & Pari Passu Re-Alignment
+#
+# Contract: "## M-Phase Contracts (E-M05)" §1
+# (/Users/sac/.claude/plans/compressed-zooming-diffie.md:2803-2866).
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638); validate (validate.rs:45) + validate_bcinr (:156);
+# MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# Court rows (N01/N05/N09/N13/N17, contract §4): N01 syndicate MILS
+# (mils.rs:229/:267), N05 amortization timing (timing.rs:138/:215/:417,
+# |t| < 4.5), N09 voting SEU (seu.rs:12-31 over step_branchless, pn64.rs:152),
+# N13/N16 lien stack (stackbound.rs:5), N17 debt provenance (kat.rs:167/:185 +
+# reproducible.rs:13-17).
+#
+# Embedded invariants as structure (contract §1 places/transitions/invariant
+# mask, bits 0-3):
+# - LIEN SENIORITY STRICT TOTAL ORDER (A02, mask bit2): t_rank_liens follows
+#   t_ingest directly in the sequence — rank r is enabled only after rank r-1;
+#   the linear lowering (tid = atom index, tick = prev+1) carries the order.
+# - SACRED-RIGHTS VOTE XOR (A03, consent threshold law): the close-vote outcome
+#   is ONE xor with exactly two branches — consent-admitted (tallied >=
+#   threshold: unanimous for sacred-rights classes, 50.1% otherwise) or
+#   consent-refused. Below-threshold is NOT a silent no-fire: it takes the
+#   refused branch and latches VotingBelowThreshold{class, tallied, required}
+#   alongside the p_consent_refused marking. Mutual exclusivity holds in every
+#   reachable marking (xor_arity_profile == [2], loader.rs:626).
+# - REFUSAL-BEFORE-SWEEP (mask bit1): t_schedule_sweep sits AFTER the xor, on
+#   the admitted branch only — the sweep is never reachable from
+#   p_consent_refused (Model-Log Law forces refusal-before-sweep).
+# - SWEEP CONSERVATION (A09, mask bit3): each t_sweep conserves sum interest +
+#   principal distributed == sum scheduled per period, per-bank share == bps
+#   pro-rata; the check is the pn64 invariant-mask law ((M(t+1) & mask) == 0,
+#   pn64.rs:143-147), structurally the bounded sweep loop.
+# - FCC >= 2.1x (A05) and collateral >= 150% (A08) refuse via the E-M15
+#   invariant lane (mask bits 1/3) — typed-refusal layer, not net nodes.
+# - DSCR >= 1.45 is UNOWNED as of 2026-10-11 (cross-consistency audit): it is
+#   left to the E-M15 invariants module. NO competing DSCR law is encoded here.
+# - Bounded loops: vote casting and sweep periods are POWL bounded loops
+#   (bounded_loop_model precedent, src/conformance/model.rs:185); max bounds
+#   body executions in 0..=255 (loader.rs:92-101).
+#
+# Node budget: 19 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity act_ingest        = loan.docs_admit                # t_ingest (1)         -> p_facility_ingested
+activity act_rank_liens    = n3.lien_seniority              # t_rank_liens (2)     -> p_liens_ranked (strict total order, bit2)
+activity act_open_vote     = syndicate.vote_open            # t_open_vote (3)      -> p_voting_open
+activity act_vote          = agentbank.ballot_cast          # t_vote (4)           -> p_voting_closed (bounded, loop)
+activity act_close_vote    = syndicate.vote_close           # t_close_vote (5)     -> xor admitted/refused (threshold law)
+activity act_admitted      = settlement.consent_admitted    #                      -> p_consent_admitted
+activity act_refused       = settlement.consent_refused     #                      -> p_consent_refused (+ VotingBelowThreshold)
+activity act_schedule_sweep = settlement.pro_rata_schedule  # t_schedule_sweep (6) -> p_sweep_scheduled (admitted branch ONLY)
+activity act_sweep         = settlement.pro_rata_sweep      # t_sweep (7)          -> p_swept (conservation law, bit3)
+activity act_restructure   = loan.facility_restate          # t_restructure (8)    -> p_restructured (pari passu, bit2)
+activity act_seal          = blake3_ml_dsa65.deal_seal      # t_seal (9)           -> p_deal_sealed
+
+sequence {
+  act_ingest
+  act_rank_liens                                            # strict seniority order (bit2)
+  act_open_vote
+  loop { act_vote } redo { silent } max 42                  # 42 agent banks cast ballots, bounded
+  act_close_vote
+  xor {                                                     # SACRED-RIGHTS VOTE XOR — mutually exclusive outcomes
+    sequence {
+      act_admitted
+      act_schedule_sweep                                    # refusal-before-sweep: admitted branch only (bit1)
+      loop { act_sweep } redo { silent } max 12             # per-period conservation (bit3)
+    }
+    sequence { act_refused }                                # below threshold -> typed VotingBelowThreshold, terminal
+  }
+  act_restructure                                           # pari passu (bit2)
+  act_seal
+}

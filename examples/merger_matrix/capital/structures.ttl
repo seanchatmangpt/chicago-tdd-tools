@@ -1,0 +1,21 @@
+# Instance graph: capital structures (consistent with deal.ttl exchangeRatio 1.75)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:AcmeCorpCap a ex:CapitalStructure ;
+    rdfs:label "AcmeCorp capitalization at announcement" ;
+    ex:ofParty ex:AcmeCorp ;
+    ex:sharesOutstanding "800000000"^^xsd:decimal ;
+    ex:sharePriceUSD "42.10"^^xsd:decimal ;
+    ex:debtOutstandingUSD "950000000"^^xsd:decimal ;
+    ex:marketCapUSD "33680000000"^^xsd:decimal .
+
+ex:BetaHoldingsCap a ex:CapitalStructure ;
+    rdfs:label "BetaHoldings capitalization at announcement" ;
+    ex:ofParty ex:BetaHoldings ;
+    ex:sharesOutstanding "400000000"^^xsd:decimal ;
+    # 400M shares x 1.75 x $42.10 = $29.47B equity value vs 7.0B cash component → blended
+    ex:impliedOfferPriceUSD "73.675"^^xsd:decimal ;
+    ex:debtOutstandingUSD "1800000000"^^xsd:decimal ;
+    ex:marketCapUSD "29470000000"^^xsd:decimal .

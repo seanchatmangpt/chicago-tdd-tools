@@ -1,0 +1,22 @@
+# Instance graph: Agreement and Plan of Merger (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:MergerAgreement a ex:Contract ;
+    rdfs:label "Agreement and Plan of Merger, dated 2026-10-05" ;
+    ex:party ex:AcmeCorp , ex:MergerSub , ex:BetaHoldings ;
+    ex:governingLaw "DE" ;
+    ex:effectiveDate "2026-10-05"^^xsd:date ;
+    ex:regardingTransaction ex:ProjectMatrix ;
+    ex:exchangeRatio "1.75"^^xsd:decimal ;
+    ex:clause [ a ex:Clause ; ex:clauseId "MA-3.01" ; ex:clauseType ex:ClosingCondition ; ex:obligation ex:Obligation_HSRClearance ] ;
+    ex:clause [ a ex:Clause ; ex:clauseId "MA-5.02" ; ex:clauseType ex:RepresentationsWarranties ] ;
+    ex:clause [ a ex:Clause ; ex:clauseId "MA-7.03" ; ex:clauseType ex:Termination ; ex:obligation ex:Obligation_PayReverseTerminationFee ] ;
+    ex:reverseTerminationFeeUSD "350000000"^^xsd:decimal .
+
+ex:Obligation_HSRClearance a ex:Obligation ;
+    rdfs:label "Obtain HSR clearance before closing" .
+
+ex:Obligation_PayReverseTerminationFee a ex:Obligation ;
+    rdfs:label "Pay reverse termination fee on covered termination" .

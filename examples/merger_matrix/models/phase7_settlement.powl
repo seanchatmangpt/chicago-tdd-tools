@@ -1,0 +1,65 @@
+# phase7_settlement.powl — Phase 7: Real-Time Gross Netting & Settlement
+#
+# Contract: "## M-Phase Contracts (E-M07)" §1
+# (/Users/sac/.claude/plans/compressed-zooming-diffie.md:1758-1790).
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638); MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# Court rows: N03 (bell_lapadula.rs), N07 (cache.rs), N11 (torn/ring.rs,
+# slot.rs), N15 strata-side (NATO_COURTS.md:161 — stays strata-side here,
+# closing it is E-M18's scope), N19 (reproducible.rs) — contract §0/§3.
+#
+# Embedded invariants as structure (contract §1 stages A-C):
+# - STAGE A INTAKE: pacs.008/pacs.009 credit-transfer messages arrive as OCEL
+#   events per message; the intake activity heads the sequence (fail-closed).
+# - STAGE B NETTING: per debtor/creditor pair per cycle, elimination is a
+#   bounded loop; the netting-ratio check (net/gross <= 0.18x, plan:1742)
+#   follows the loop before any settlement transition — a violation latches a
+#   typed refusal (SettlementPennyDiscrepancy-family invariants module,
+#   E-M15), not a net node. Efficiency >= 92.1% and volume <= Fed cap are
+#   TRACE METRICS checked post-replay, not net-structural (contract :1773).
+# - STAGE C 2PC DvP TRAP: prepare is ONE atomic transition covering both legs;
+#   the xor is commit-vs-abort. The securities leg may move PREPARE->COMMIT
+#   only when the matching cash leg commits IN THE SAME STEP — modeled by a
+#   single atomic commit activity (no parallel split at commit), so the
+#   forbidden marking (cash marked, securities unmarked) is unreachable by
+#   construction in POWL and checked by StateSpace::forbidden_reachable
+#   (state.rs:225) on the lowered net; deadlock_free (state.rs:217) must hold
+#   on the good path. Abort branch carries the seeded refusal reasons
+#   (reason=penny-discrepancy, reason=dvp-cash-leg-missing) as replay events.
+#
+# Case-id convention (E-M09 master-trace namespacing): phase-local case ids in
+# the OCEL fixture are namespaced `p7-<case>` (e.g. p7-case-settlement-1).
+#
+# OCEL fixture note: the phase-7 fixture (tests/fixtures/ocel/
+# settlement_trace.json) uses the in-crate `ocel:*` map projection accepted by
+# import_ocel_json (import_json.rs:67-77) — ocel:version "2.0", ocel:events as
+# a map keyed by event id, ocel:timestamp u64 ns, ocel:activity, ocel:caseId.
+#
+# Node budget: 14 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity pacs_intake          = iso20022.pacs008_pacs009        # Stage A: per-message OCEL intake
+activity payment_elimination  = netting.cycle_elimination       # Stage B: per-pair per-cycle gross -> net
+activity netting_ratio_check  = invariants.netting_max_018x     # net/gross <= 0.18x (plan:1742)
+activity cash_leg_credit      = settlement.cash_leg             # cash leg position
+activity securities_leg       = settlement.securities_leg       # securities leg position
+activity settlement_prepare   = settlement.twopc_prepare        # PREPARE (both legs, one transition)
+activity settlement_commit    = settlement.twopc_commit         # COMMIT: cash + securities move in the SAME step (DvP)
+activity settlement_abort     = settlement.twopc_abort          # ABORT: penny-discrepancy / dvp-cash-leg-missing
+activity settlement_seal      = pn64.settlement_seal            # pn64 sealing of the settled cycle
+
+sequence {
+  pacs_intake                                                # Stage A: ISO 20022 intake membrane
+  loop { payment_elimination } redo { silent } max 64        # Stage B: bounded payment cycles
+  netting_ratio_check                                        # net <= 0.18x gross, before any settlement move
+  parallel {                                                 # legs prepared concurrently, committed atomically
+    cash_leg_credit
+    securities_leg
+  }
+  settlement_prepare
+  xor {                                                      # STAGE C 2PC trap: exactly one of commit/abort
+    settlement_commit                                        # DvP: both legs move in the same step
+    settlement_abort                                         # seeded refusals fire here, exactly one per trace
+  }
+  settlement_seal
+}

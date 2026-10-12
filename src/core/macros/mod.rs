@@ -17,6 +17,11 @@ pub mod assert;
 #[macro_use]
 pub mod config_test;
 
+/// Conformance-checking macros (`conformance_test!`, `assert_conforms!`)
+/// — see `crate::conformance` for the engine they drive.
+#[cfg(feature = "conformance")]
+pub mod conformance_test;
+
 #[cfg(all(feature = "weaver", feature = "otel"))]
 #[macro_use]
 pub mod weaver_test;

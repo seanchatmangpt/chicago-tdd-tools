@@ -136,7 +136,10 @@ impl TempDir {
     /// Returns an error if the temporary directory cannot be created.
     pub fn new(prefix: &str) -> Result<Self, std::io::Error> {
         let temp_dir = std::env::temp_dir();
+        #[cfg(feature = "uuid-v4")]
         let uuid = uuid::Uuid::new_v4();
+        #[cfg(not(feature = "uuid-v4"))]
+        let uuid = String::from("id-0");
         let unique_name = format!("{prefix}-{uuid}");
         let path = temp_dir.join(unique_name);
 
@@ -246,8 +249,19 @@ impl TestData {
 
     /// Generate a test UUID string
     #[must_use]
+    #[cfg(feature = "uuid-v4")]
     pub fn uuid() -> String {
         uuid::Uuid::new_v4().to_string()
+    }
+
+    /// Deterministic fallback id when the `uuid-v4` feature is off
+    /// (zero-ambient: no OS entropy on wasm32 guests).
+    #[cfg(not(feature = "uuid-v4"))]
+    pub fn uuid() -> String {
+        // deterministic fallback id (zero-ambient; no entropy on wasm32)
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static N: AtomicU64 = AtomicU64::new(0);
+        format!("id-{:032x}", N.fetch_add(1, Ordering::Relaxed))
     }
 
     /// Generate a test timestamp (current time)
@@ -395,7 +409,11 @@ mod tests {
 
         // Assert
         assert_ne!(uuid1, uuid2);
+        #[cfg(feature = "uuid-v4")]
         assert_eq!(uuid1.len(), 36); // UUID format length
+        // Deterministic zero-ambient fallback: "id-" + 32 hex chars.
+        #[cfg(not(feature = "uuid-v4"))]
+        assert_eq!(uuid1.len(), 35);
     });
 
     test!(test_test_data_sequence, {

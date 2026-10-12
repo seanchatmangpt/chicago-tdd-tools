@@ -1,0 +1,84 @@
+# Instance graph: netting sets — 3 sets, 11 trades (synthetic)
+# Feeds rules/netting.n3
+#
+# Vocabulary alignment note (F3): rules/netting.n3 binds
+#   ?ag a ex:NettingAgreement ; ex:obligation [ ex:debtor ; ex:creditor ; ex:amountUSD ]
+# i.e. per-obligation debtor/creditor/amountUSD on an ex:NettingAgreement.
+# The data previously modeled ex:NettingSet / ex:trades / ex:mtmUSD, which the rule
+# cannot bind. Minimal edit chosen: each netting set is ALSO typed ex:NettingAgreement
+# and carries ex:obligation links to its trades; each trade gained per-trade
+# ex:debtor / ex:creditor / ex:amountUSD / ex:maturityDate so the rule body binds.
+# Sign convention: mtmUSD > 0 means the trade is in Acme's favor, i.e. Beta is the
+# debtor (owes Acme |mtm|); mtmUSD < 0 means Acme is the debtor. ex:amountUSD is the
+# absolute obligation. ex:mtmUSD fields are retained as the trading-desk view.
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:NettingSetA a ex:NettingSet , ex:NettingAgreement ;
+    rdfs:label "Netting Set A — cleared IRS vs unswapped FX" ;
+    ex:counterparty ex:BetaHoldings ;
+    ex:tradeCount "4"^^xsd:integer ;
+    ex:trades ( ex:TradeA1 ex:TradeA2 ex:TradeA3 ex:TradeA4 ) ;
+    ex:obligation ex:TradeA1 , ex:TradeA2 , ex:TradeA3 , ex:TradeA4 ;
+    ex:grossMtMUSD "118000000"^^xsd:decimal ;
+    ex:setOffPermitted true .
+
+# +42M: Beta debtor, Acme creditor, matures 2027-06-15 (pairs with TradeA2)
+ex:TradeA1 a ex:InterestRateSwap ; ex:withinSet ex:NettingSetA ; ex:mtmUSD "42000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "42000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-06-15"^^xsd:date .
+# -9M: Acme debtor, Beta creditor, same maturity as A1 -> rule nets 42M - 9M = 33M to Acme
+ex:TradeA2 a ex:InterestRateSwap ; ex:withinSet ex:NettingSetA ; ex:mtmUSD "-9000000"^^xsd:decimal ;
+    ex:debtor ex:AcmeCorp ; ex:creditor ex:BetaHoldings ; ex:amountUSD "9000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-06-15"^^xsd:date .
+ex:TradeA3 a ex:InterestRateSwap ; ex:withinSet ex:NettingSetA ; ex:mtmUSD "58000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "58000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-09-15"^^xsd:date .
+ex:TradeA4 a ex:FxForward ; ex:withinSet ex:NettingSetA ; ex:mtmUSD "27000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "27000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-12-15"^^xsd:date .
+
+ex:NettingSetB a ex:NettingSet , ex:NettingAgreement ;
+    rdfs:label "Netting Set B — mixed IRS/CDS, set-off permitted" ;
+    ex:counterparty ex:BetaHoldings ;
+    ex:tradeCount "4"^^xsd:integer ;
+    ex:trades ( ex:TradeB1 ex:TradeB2 ex:TradeB3 ex:TradeB4 ) ;
+    ex:obligation ex:TradeB1 , ex:TradeB2 , ex:TradeB3 , ex:TradeB4 ;
+    ex:grossMtMUSD "96000000"^^xsd:decimal ;
+    ex:setOffPermitted true .
+
+ex:TradeB1 a ex:InterestRateSwap ; ex:withinSet ex:NettingSetB ; ex:mtmUSD "31000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "31000000.00"^^xsd:decimal ;
+    ex:maturityDate "2028-03-15"^^xsd:date .
+# -14M pairs with B3's +62M at the same maturity -> rule nets 62M - 14M = 48M to Acme
+ex:TradeB2 a ex:CreditDefaultSwap ; ex:withinSet ex:NettingSetB ; ex:mtmUSD "-14000000"^^xsd:decimal ;
+    ex:debtor ex:AcmeCorp ; ex:creditor ex:BetaHoldings ; ex:amountUSD "14000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-06-15"^^xsd:date .
+ex:TradeB3 a ex:CreditDefaultSwap ; ex:withinSet ex:NettingSetB ; ex:mtmUSD "62000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "62000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-06-15"^^xsd:date .
+ex:TradeB4 a ex:InterestRateSwap ; ex:withinSet ex:NettingSetB ; ex:mtmUSD "17000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "17000000"^^xsd:decimal ;
+    ex:maturityDate "2028-06-15"^^xsd:date .
+
+ex:NettingSetC a ex:NettingSet , ex:NettingAgreement ;
+    rdfs:label "Netting Set C — no set-off (non-netting jurisdiction)" ;
+    ex:counterparty ex:BetaHoldings ;
+    ex:tradeCount "3"^^xsd:integer ;
+    ex:trades ( ex:TradeC1 ex:TradeC2 ex:TradeC3 ) ;
+    ex:obligation ex:TradeC1 , ex:TradeC2 , ex:TradeC3 ;
+    ex:grossMtMUSD "54000000"^^xsd:decimal ;
+    ex:setOffPermitted false .
+# Set C: all obligations run Beta -> Acme (no opposing direction), so the netting rule
+# correctly produces no ex:netPosition for this set (set-off not permitted).
+
+ex:TradeC1 a ex:FxForward ; ex:withinSet ex:NettingSetC ; ex:mtmUSD "22000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "22000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-03-15"^^xsd:date .
+ex:TradeC2 a ex:EquityOption ; ex:withinSet ex:NettingSetC ; ex:mtmUSD "19000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "19000000.00"^^xsd:decimal ;
+    ex:maturityDate "2027-09-15"^^xsd:date .
+ex:TradeC3 a ex:CommoditySwap ; ex:withinSet ex:NettingSetC ; ex:mtmUSD "13000000"^^xsd:decimal ;
+    ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ; ex:amountUSD "13000000.00"^^xsd:decimal ;
+    ex:maturityDate "2028-01-15"^^xsd:date .

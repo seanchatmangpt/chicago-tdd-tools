@@ -1,0 +1,37 @@
+# breach.ttl — LKIF Violation / Remedy roles
+# Hand-authored fixture. NOT legal advice.
+@prefix lkif: <http://www.estrellaproject.org/lkif-core/valuation.owl#> .
+@prefix laction: <http://www.estrellaproject.org/lkif-core/action.owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.com/merger#> .
+
+# A Violation arises when a breached Obligation is not excused;
+# each Violation opens at most one Remedy per remedy clause.
+ex:BreachOfVoteObligation a lkif:Violation ;
+    rdfs:label "Failure to call the shareholder vote by the covenant deadline" ;
+    lkif:heldBy ex:BetaHoldings ;
+    ex:violates ex:ObligationToCallVote ;
+    ex:excused false ;
+    ex:opensRemedy ex:RemedySpecificPerformance .
+
+ex:BreachOfConsummation a lkif:Violation ;
+    rdfs:label "Failure to consummate before the outside date" ;
+    lkif:heldBy ex:AcmeCorp ;
+    ex:violates ex:ObligationToConsummate ;
+    ex:excused false ;
+    ex:opensRemedy ex:RemedyTerminationFee .
+
+ex:RemedySpecificPerformance a ex:Remedy ;
+    rdfs:label "Specific performance of the vote covenant" ;
+    ex:inFavorOf ex:AcmeCorp .
+
+ex:RemedyTerminationFee a ex:Remedy ;
+    rdfs:label "Company termination fee payable to AcmeCorp" ;
+    ex:inFavorOf ex:AcmeCorp ;
+    ex:amountUSD "126000000.00" .
+
+# Permission waiver: BetaHoldings may waive its own condition failure
+# (here: netting execution) without breaching.
+ex:WaiverOfNettingCondition a lkif:Permission ;
+    lkif:heldBy ex:BetaHoldings ;
+    ex:waives ex:CondNettingExecuted .

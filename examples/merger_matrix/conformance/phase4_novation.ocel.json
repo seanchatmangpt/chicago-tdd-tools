@@ -1,0 +1,56 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p4-e01": {
+      "ocel:activity": "ingest_isda_csa",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:objectTypes": [{"id": "p4-obj-schedule", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_ingest: p_start -> p_agreement"}
+    },
+    "p4-e02": {
+      "ocel:activity": "novation_dependency_closure",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:objectTypes": [{"id": "p4-obj-closure", "type": "Artifact"}],
+      "ocel:attributes": {"place_transition": "t_closure: p_agreement -> p_closure"}
+    },
+    "p4-e03": {
+      "ocel:activity": "multilateral_compression",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:objectTypes": [{"id": "p4-obj-compression", "type": "Artifact"}],
+      "ocel:attributes": {
+        "place_transition": "t_compress: p_closure -> p_compressed",
+        "notional_pre": 1000000000,
+        "notional_post": 170000000,
+        "law": "NOTIONAL 0.18x: notional_post <= 0.18 * notional_pre"
+      }
+    },
+    "p4-e04": {
+      "ocel:activity": "cls_net_settlement",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:objectTypes": [{"id": "p4-obj-cls", "type": "Receipt"}],
+      "ocel:attributes": {"place_transition": "t_settle: p_compressed -> p_settled"}
+    },
+    "p4-e05": {
+      "ocel:activity": "seal_novation_deed",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p4-novation-1",
+      "ocel:objectTypes": [{"id": "p4-obj-deed", "type": "Receipt"}],
+      "ocel:attributes": {
+        "place_transition": "t_seal: p_settled -> p_sealed",
+        "pqc": "ML-DSA-65",
+        "law": "deed signs over a settled net only"
+      }
+    }
+  },
+  "ocel:objects": {
+    "p4-obj-schedule": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "ISDA/CSA schedule matrix"}},
+    "p4-obj-closure": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "novation dependency closure"}},
+    "p4-obj-compression": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "multilateral notional compression"}},
+    "p4-obj-cls": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "CLS net transfer"}},
+    "p4-obj-deed": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "novation deed", "sealed": true}}
+  }
+}

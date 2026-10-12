@@ -1,0 +1,35 @@
+# netting.n3 — mutual (two-way) netting rule (N3)
+# Hand-authored fixture. NOT legal advice.
+# Where A owes B and B owes A under the same netting agreement,
+# obligations reduce to a single net payable in the creditor's favor.
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix ex:   <http://example.com/merger#> .
+
+# pair the two directions of the same agreement
+{ ?ag a ex:NettingAgreement ; ex:party ?x , ?y .
+  ?x math:notEqualTo ?y .
+} => { ?ag ex:counterpair ( ?x ?y ) . } .
+
+{ ?ag a ex:NettingAgreement .
+  ?ag ex:obligation [ ex:debtor ?x ; ex:creditor ?y ; ex:amountUSD ?a ] .
+  ?ag ex:obligation [ ex:debtor ?y ; ex:creditor ?x ; ex:amountUSD ?b ] .
+  ( ?a ?b ) math:difference ?net .
+} => { ?ag ex:netPosition [ ex:between ( ?x ?y ) ; ex:amountUSD ?net ] . } .
+
+# sign convention: positive => first party of `between` is net creditor
+{ ?ag ex:netPosition ?p . ?p ex:amountUSD ?n .
+  ( ?n 0.0 ) math:greaterThan true .
+} => { ?p a ex:NetPayableToFirstParty . } .
+
+{ ?ag ex:netPosition ?p . ?p ex:amountUSD ?n .
+  ( ?n 0.0 ) math:lessThan true .
+} => { ?p a ex:NetPayableToSecondParty . } .
+
+# Fixture: Acme owes Beta 120M, Beta owes Acme 95M => net 25M to Acme.
+ex:MasterNetting1 a ex:NettingAgreement ;
+    ex:party ex:AcmeCorp , ex:BetaHoldings ;
+    ex:obligation [ ex:debtor ex:AcmeCorp ; ex:creditor ex:BetaHoldings ;
+                    ex:amountUSD "120000000.00" ] ;
+    ex:obligation [ ex:debtor ex:BetaHoldings ; ex:creditor ex:AcmeCorp ;
+                    ex:amountUSD "95000000.00" ] .

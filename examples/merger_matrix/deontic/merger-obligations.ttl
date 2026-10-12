@@ -1,0 +1,44 @@
+# merger-obligations.ttl — LKIF-core Obligation / Permission roles
+# Hand-authored fixture. NOT legal advice.
+# LKIF-core cited via prefix + rdfs:seeAlso only; no owl:imports.
+@prefix lkif: <http://www.estrellaproject.org/lkif-core/valuation.owl#> .
+@prefix laction: <http://www.estrellaproject.org/lkif-core/action.owl#> .
+@prefix lrole: <http://www.estrellaproject.org/lkif-core/role.owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.com/merger#> .
+
+lrole: rdfs:seeAlso <https://www.estrellaproject.org/lkif-core/> .
+
+# Obligation: AcmeCorp must cause MergerSub to merge with BetaHoldings
+ex:ObligationToConsummate a lkif:Obligation ;
+    rdfs:label "Obligation to consummate the merger" ;
+    lkif:plays ex:Consummation ;
+    lkif:heldBy ex:AcmeCorp ;
+    lkif:towards ex:BetaHoldings ;
+    ex:underAgreement ex:MergerAgreement ;
+    ex:deadline "2027-06-30"^^xsd:date .
+
+ex:Consummation a laction:Action ;
+    rdfs:label "MergerSub merges with and into BetaHoldings" ;
+    ex:actor ex:MergerSub .
+
+# Obligation: Target board must call the shareholder vote
+ex:ObligationToCallVote a lkif:Obligation ;
+    lkif:plays ex:CallVote ;
+    lkif:heldBy ex:BetaHoldings ;
+    lkif:towards ex:AcmeCorp ;
+    ex:underAgreement ex:MergerAgreement .
+
+ex:CallVote a laction:Action ; ex:actor ex:BetaHoldings .
+
+# Permission: MergerSub may operate BetaHoldings in the ordinary course
+# between signing and closing.
+ex:PermissionOrdinaryCourse a lkif:Permission ;
+    lkif:plays ex:OperateOrdinaryCourse ;
+    lkif:heldBy ex:MergerSub ;
+    lkif:towards ex:BetaHoldings ;
+    ex:underAgreement ex:MergerAgreement .
+
+ex:OperateOrdinaryCourse a laction:Action ;
+    rdfs:label "Operate the target in the ordinary course" .

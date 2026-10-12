@@ -1,0 +1,49 @@
+# Instance graph: market concentration inputs (synthetic)
+# Values chosen so rules/hhi-bands.n3 classifies the deal as PresumedIllegal.
+#
+# Vocabulary alignment note (F3): rules/hhi-bands.n3 binds
+#   ?mkt a ex:RelevantMarket ; ex:share <percent>
+# (percent numbers, HHI = sum of squares of percent shares), and computes deltaHHI
+# from ex:combinedShare/ex:targetShare/ex:acquirerShare on an ex:MergerAgreement.
+# The data previously modeled ex:Market / ex:marketShare blank nodes with fractions
+# (0.30). Minimal edit: restate the same market in the rule's vocabulary — percent
+# shares on ex:RelevantMarket — keeping the identical arithmetic.
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Same six-firm market as before, in percent: 30/22/18/12/10/8.
+# Pre-merger HHI = 30^2 + 22^2 + 18^2 + 12^2 + 10^2 + 8^2 = 900+484+324+144+100+64 = 2016
+# Post-merger HHI = 52^2 + 18^2 + 12^2 + 10^2 + 8^2 = 2704+324+144+100+64 = 3336
+# deltaHHI = 3336 - 2016 = 1320
+#   (= combinedShare^2 - acquirerShare^2 - targetShare^2 = 2704 - 900 - 484 = 1320)
+ex:IndustrialAdhesives a ex:RelevantMarket ;
+    rdfs:label "Industrial adhesives market (synthetic)" ;
+    ex:share 30 ;  # AcmeCorp (pre-merger)
+    ex:share 22 ;  # BetaHoldings (pre-merger)
+    ex:share 18 ;  # Competitor1
+    ex:share 12 ;  # Competitor2
+    ex:share 10 ;  # Competitor3
+    ex:share 8 .   # Competitor4
+
+ex:Competitor1 a ex:Corporation ; rdfs:label "Synthetic Competitor One" .
+ex:Competitor2 a ex:Corporation ; rdfs:label "Synthetic Competitor Two" .
+ex:Competitor3 a ex:Corporation ; rdfs:label "Synthetic Competitor Three" .
+ex:Competitor4 a ex:Corporation ; rdfs:label "Synthetic Competitor Four" .
+
+# Deal-side bindings for the deltaHHI rule: 30 + 22 = 52 combined.
+# NOTE: this ex:MergerAgreement node is the rule-local subject the delta rule binds
+# (`?deal a ex:MergerAgreement`). The SHACL-validated instance lives in
+# shapes/deal-terms.shacl.ttl; those graphs are reasoned over separately, so the
+# extra analytics predicates here are not closed-shape violations.
+ex:MergerAgreement a ex:MergerAgreement ;
+    ex:inMarket ex:IndustrialAdhesives ;
+    ex:acquirerShare 30 ;
+    ex:targetShare 22 ;
+    ex:combinedShare 52 .
+
+# Recorded result (recomputed F3): pre 2016, post 3336, delta 1320 (was 840 — wrong).
+ex:HHIResult a ex:HHIComputation ;
+    ex:forMarket ex:IndustrialAdhesives ;
+    ex:postMergerHHI "3336"^^xsd:integer ;
+    ex:deltaHHI "1320"^^xsd:integer .

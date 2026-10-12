@@ -1,0 +1,48 @@
+# phase4_novation.powl — Phase 4: Derivatives Novation & Netting Optimization
+#
+# Contract: "## M-Phase Contracts (E-M04)" §1
+# (/Users/sac/.claude/plans/compressed-zooming-diffie.md:3130-3178).
+# Grammar: src/conformance/loader.rs:11-31; PowlModel::from_powl_str
+# (loader.rs:638) / from_powl_file (:654); MAX_POWL_NODES = 64 (loader.rs:47).
+#
+# Court rows (A16-A20 -> disclosed landed bindings): A16 -> N04 channel
+# isolation (zero_ambient.rs:229/:326), A17 -> N05 compression timing
+# (timing.rs:138/:215, |t| < 4.5), A18 -> N09/N10 SEU courts over swap
+# valuation (seu.rs), A19 -> N16 stack (stackbound.rs), A20 -> N20 hermetic
+# (reproducible.rs + dossier_court.rs). The N08/N12 lanes themselves are
+# strata-side (README:47-49); the landed machinery above is reused with
+# merger-phase subjects (contract §3 note).
+#
+# Embedded invariants as structure (contract §1):
+# - ALL-OR-NOTHING SAGA CHAIN: t_closure -> t_compress -> t_settle is a STRICT
+#   sequence — no OR-split, no parallel fan-out, no xor detour. A broker
+#   rejection at any stage leaves the marking stuck at the pre-stage place;
+#   deadlock_free must FAIL on the rejection branch (the trap is the deadlock
+#   witness) and the rejection trace replays to Refused via
+#   ConformanceSession::finish (session.rs:317), never a partial Commit.
+# - NOTIONAL 0.18x LAW (A06): t_compress firing with Notional_post >
+#   0.18 x Notional_pre writes p_notional_violation (registered via
+#   NetBuilder::forbidden_place, net.rs:200); StateSpace::forbidden_reachable
+#   (state.rs:226) proves it unreachable over the closure->compression->
+#   settlement lattice; deadlock_free (state.rs:218) holds on the happy path.
+#   The POWL structure carries the law as the strict chain; the ratio check is
+#   a typed refusal (NotionalRatioViolated{pre, post}) at replay, not a node.
+# - Deed seal is reachable only from p_settled: seal_novation_deed is the LAST
+#   sequence element, so the deed (A15) never signs over an unsettled net
+#   (ClsSettlementFailed refusal fires before seal).
+#
+# Node budget: 6 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity ingest_isda_csa             = isda.schedule_matrix        # t_ingest:  p_start      -> p_agreement
+activity novation_dependency_closure = n3.novation_closure         # t_closure: p_agreement  -> p_closure  (strict, no OR-split)
+activity multilateral_compression    = compression.notional_reduce # t_compress: p_closure   -> p_compressed (0.18x law)
+activity cls_net_settlement          = cls.net_transfer            # t_settle:  p_compressed -> p_settled
+activity seal_novation_deed          = ml_dsa65.deed_seal          # t_seal:    p_settled    -> p_sealed (deed over settled net only)
+
+sequence {
+  ingest_isda_csa
+  novation_dependency_closure
+  multilateral_compression
+  cls_net_settlement
+  seal_novation_deed
+}

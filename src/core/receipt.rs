@@ -299,6 +299,27 @@ impl TestReceipt {
         })
     }
 
+    /// Closure under explanation: a receipt is **algebraically closed** iff
+    ///
+    /// 1. its signature verifies (`verify_signature()` — the content hash over
+    ///    `receipt_id-contract_name-timestamp-result` recomputes to the stored
+    ///    signature, so the receipt has not been tampered with), **and**
+    /// 2. the recorded outcome is not an unresolved deviation: `Fail` and
+    ///    `Error` outcomes leave the deviation unexplained by the receipt
+    ///    itself, so the receipt cannot close over them. `Pass` and `Skip`
+    ///    outcomes are explained by the receipt (the test succeeded, or was
+    ///    deliberately not run) and may close.
+    ///
+    /// This is the predicate the `assert_conforms!` macro
+    /// (`src/core/macros/conformance_test.rs`) asserts as
+    /// `$receipt.is_algebraically_closed()`: a conformance claim is only
+    /// meaningful when carried by an untampered receipt that records no
+    /// unresolved failure.
+    #[must_use]
+    pub fn is_algebraically_closed(&self) -> bool {
+        self.verify_signature() && !matches!(self.result, TestOutcome::Fail | TestOutcome::Error)
+    }
+
     /// Add metadata
     pub fn add_metadata(&mut self, key: impl Into<String>, value: impl Into<String>) {
         self.metadata.push((key.into(), value.into()));
@@ -596,6 +617,66 @@ mod tests {
         receipt.sign();
         assert!(receipt.signature.is_some());
         assert!(receipt.verify_signature());
+    }
+
+    #[test]
+    fn test_algebraically_closed_receipt_is_true() {
+        let env = EnvironmentFingerprint::capture();
+        let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
+        let mut receipt = TestReceipt::new(
+            "test_closed".to_string(),
+            "abc123".to_string(),
+            env,
+            vec![],
+            timing,
+            vec![],
+            TestOutcome::Pass,
+        );
+        receipt.sign();
+
+        assert!(receipt.is_algebraically_closed());
+    }
+
+    #[test]
+    fn test_algebraically_closed_false_on_tampered_signature() {
+        let env = EnvironmentFingerprint::capture();
+        let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
+        let mut receipt = TestReceipt::new(
+            "test_tampered".to_string(),
+            "abc123".to_string(),
+            env,
+            vec![],
+            timing,
+            vec![],
+            TestOutcome::Pass,
+        );
+        receipt.sign();
+        receipt.signature = Some("deadbeef".to_string());
+
+        assert!(!receipt.is_algebraically_closed());
+    }
+
+    #[test]
+    fn test_algebraically_closed_false_on_failed_outcome() {
+        let env = EnvironmentFingerprint::capture();
+        let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
+
+        for outcome in [TestOutcome::Fail, TestOutcome::Error] {
+            let mut receipt = TestReceipt::new(
+                "test_failed_closure".to_string(),
+                "abc123".to_string(),
+                EnvironmentFingerprint::capture(),
+                vec![],
+                timing.clone(),
+                vec![],
+                outcome,
+            );
+            receipt.sign();
+            assert!(
+                !receipt.is_algebraically_closed(),
+                "{outcome} outcome must not be algebraically closed"
+            );
+        }
     }
 
     #[test]

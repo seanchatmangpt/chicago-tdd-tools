@@ -1,0 +1,52 @@
+# hhi-bands.n3 — DOJ/FTC 2023 Merger Guidelines HHI screening bands (N3)
+# Hand-authored fixture. NOT legal advice.
+#
+# Source (comment-cited): U.S. DOJ & FTC, Merger Guidelines (Dec. 2023),
+# Section 1 / §2: concentration measured by HHI; thresholds:
+#   - Highly Concentrated: HHI > 1800 and delta-HHI > 100  -> presumption of illegality
+#   - Moderately Concentrated: HHI 1000-1800 and delta > 100 -> scrutiny
+#   - Unconcentrated: HHI < 1000                            -> ordinarily no challenge
+# (2023 Guidelines structural presumption: HHI above 1800 with change > 100.)
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix ex:   <http://example.com/merger#> .
+
+# HHI = sum of squared market shares (in percent)
+{ ?mkt a ex:RelevantMarket ; ex:share ?s } => { ( ?s ?s ) math:product ?sq . } .
+{ ?mkt a ex:RelevantMarket ; ex:share ?s . ( ?s ?s ) math:product ?sq . }
+  => { ?mkt ex:term ?sq . } .
+
+{ ?mkt a ex:RelevantMarket ; ex:term ?t } => { ?mkt ex:summand ?t . } .
+{ ?mkt ex:summand ?x . ?mkt ex:summand ?y . ( ?x ?y ) math:sum ?h . }
+  => { ?mkt ex:hhi ?h . } .
+
+# delta = combined-entity share squared minus the two pre-merger squares
+{ ?deal a ex:MergerAgreement ; ex:combinedShare ?c ;
+        ex:targetShare ?t ; ex:acquirerShare ?a .
+  ( ?c ?c ) math:product ?csq .
+  ( ?t ?t ) math:product ?tsq .
+  ( ?a ?a ) math:product ?asq .
+  ( ?tsq ?asq ) math:sum ?pre .
+  ( ?csq ?pre ) math:difference ?d .
+} => { ?deal ex:deltaHHI ?d . } .
+
+# Band classification
+{ ?deal ex:deltaHHI ?d . ?m ex:hhi ?h .
+  ?deal ex:inMarket ?m .
+  ( ?h 1800 ) math:greaterThan true .
+  ( ?d 100 ) math:greaterThan true .
+} => { ?deal a ex:PresumedIllegal . } .
+
+{ ?deal ex:deltaHHI ?d . ?m ex:hhi ?h .
+  ?deal ex:inMarket ?m .
+  ( ?h 1000 ) math:greaterThan true .
+  ( ?h 1800 ) math:notGreaterThan true .
+  ( ?d 100 ) math:greaterThan true .
+} => { ?deal a ex:Scrutinized . } .
+
+{ ?m ex:hhi ?h . ( ?h 1000 ) math:lessThan true . }
+  => { ?m a ex:Unconcentrated . } .
+
+# Fixture: 3 firms with 50/30/20 shares => HHI = 2500+900+400 = 3800
+ex:MarketA a ex:RelevantMarket ;
+    ex:share 50 ; ex:share 30 ; ex:share 20 .

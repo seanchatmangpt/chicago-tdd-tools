@@ -1,0 +1,153 @@
+{
+  "ocel:version": "2.0",
+  "ocel:events": {
+    "p1-e01": {
+      "ocel:activity": "a01_shacl_ingest",
+      "ocel:timestamp": 1700000000000000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-model", "type": "ProcessModel"}],
+      "ocel:attributes": {"step": "A01 FIBO closed-shape membrane"}
+    },
+    "p1-e02": {
+      "ocel:activity": "a02_subsidiary_closure",
+      "ocel:timestamp": 1700000000001000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-closure", "type": "Artifact"}],
+      "ocel:attributes": {"step": "A02 transitive hierarchy DAG"}
+    },
+    "p1-e03": {
+      "ocel:activity": "a04_naics_map",
+      "ocel:timestamp": 1700000000002000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-naics", "type": "Artifact"}]
+    },
+    "p1-e04": {
+      "ocel:activity": "a05_cet1_buffers",
+      "ocel:timestamp": 1700000000003000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-cet1", "type": "Artifact"}],
+      "ocel:attributes": {"cet1_ratio": 0.131}
+    },
+    "p1-e05": {
+      "ocel:activity": "a06_isda_positions",
+      "ocel:timestamp": 1700000000004000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-isda", "type": "Artifact"}],
+      "ocel:attributes": {"note": "a03_covenant_conflicts conforming silent skip (xor silent branch)"}
+    },
+    "p1-e06": {
+      "ocel:activity": "a07_facilities",
+      "ocel:timestamp": 1700000000005000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-facilities", "type": "Artifact"}]
+    },
+    "p1-e07": {
+      "ocel:activity": "a08_repo_collateral",
+      "ocel:timestamp": 1700000000006000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-repo", "type": "Artifact"}]
+    },
+    "p1-e08": {
+      "ocel:activity": "a09_intercompany",
+      "ocel:timestamp": 1700000000007000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-apar", "type": "Artifact"}],
+      "ocel:attributes": {"subsidiaries": 4200, "sum_M0_minus_sum_Mf": 0}
+    },
+    "p1-e09": {
+      "ocel:activity": "a10_irc368_election",
+      "ocel:timestamp": 1700000000008000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-irc368", "type": "Receipt"}]
+    },
+    "p1-e10": {
+      "ocel:activity": "a11_supervisor_init",
+      "ocel:timestamp": 1700000000009000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-supervisor", "type": "AgentContext"}],
+      "ocel:attributes": {"strategy": "one_for_all"}
+    },
+    "p1-e11": {
+      "ocel:activity": "a12_temprun_leaf",
+      "ocel:timestamp": 1700000000010000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-temprun", "type": "AgentContext"}]
+    },
+    "p1-e12": {
+      "ocel:activity": "a13_pn64_load",
+      "ocel:timestamp": 1700000000011000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-pn64", "type": "ProcessModel"}]
+    },
+    "p1-e13": {
+      "ocel:activity": "a14_merkle_root",
+      "ocel:timestamp": 1700000000012000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-merkle", "type": "Receipt"}],
+      "ocel:attributes": {"hash": "blake3-intake-root-synthetic"}
+    },
+    "p1-e14": {
+      "ocel:activity": "a15_lease_issue",
+      "ocel:timestamp": 1700000000013000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-lease", "type": "Receipt"}],
+      "ocel:attributes": {"pqc": "ML-DSA-65", "parameter_set": 2}
+    },
+    "p1-e15": {
+      "ocel:activity": "court_n01",
+      "ocel:timestamp": 1700000000014000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-court-n01", "type": "Receipt"}],
+      "ocel:attributes": {"court": "N01 spatial isolation"}
+    },
+    "p1-e16": {
+      "ocel:activity": "court_n05",
+      "ocel:timestamp": 1700000000015000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-court-n05", "type": "Receipt"}],
+      "ocel:attributes": {"court": "N05 timing invariance", "max_abs_t": 4.5}
+    },
+    "p1-e17": {
+      "ocel:activity": "court_n09",
+      "ocel:timestamp": 1700000000016000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-court-n09", "type": "Receipt"}],
+      "ocel:attributes": {"court": "N09 SEU trap"}
+    },
+    "p1-e18": {
+      "ocel:activity": "court_n13",
+      "ocel:timestamp": 1700000000017000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-court-n13", "type": "Receipt"}],
+      "ocel:attributes": {"court": "N13/N16 stack ceiling", "limit_kib": 32}
+    },
+    "p1-e19": {
+      "ocel:activity": "court_n17",
+      "ocel:timestamp": 1700000000018000000,
+      "ocel:caseId": "p1-intake-alpha",
+      "ocel:objectTypes": [{"id": "p1-obj-court-n17", "type": "Receipt"}],
+      "ocel:attributes": {"court": "N17 hermetic provenance"}
+    }
+  },
+  "ocel:objects": {
+    "p1-obj-model": {"ocel:type": "ProcessModel", "ocel:ovmap": {"phase": 1, "model": "phase1_intake.powl"}},
+    "p1-obj-closure": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "subsidiary closure DAG"}},
+    "p1-obj-naics": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "NAICS revenue channels"}},
+    "p1-obj-cet1": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "capital buffers", "cet1": 13.1}},
+    "p1-obj-isda": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "ISDA schedule"}},
+    "p1-obj-facilities": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "credit facilities"}},
+    "p1-obj-repo": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "repo positions"}},
+    "p1-obj-apar": {"ocel:type": "Artifact", "ocel:ovmap": {"kind": "intercompany AP/AR"}},
+    "p1-obj-irc368": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "IRC 368 election"}},
+    "p1-obj-supervisor": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "merger supervisor"}},
+    "p1-obj-temprun": {"ocel:type": "AgentContext", "ocel:ovmap": {"kind": "temprun zero-import leaf"}},
+    "p1-obj-pn64": {"ocel:type": "ProcessModel", "ocel:ovmap": {"kind": "phase1 net load"}},
+    "p1-obj-merkle": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "intake merkle root"}},
+    "p1-obj-lease": {"ocel:type": "Receipt", "ocel:ovmap": {"kind": "admission lease"}},
+    "p1-obj-court-n01": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N01"}},
+    "p1-obj-court-n05": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N05"}},
+    "p1-obj-court-n09": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N09"}},
+    "p1-obj-court-n13": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N13"}},
+    "p1-obj-court-n17": {"ocel:type": "Receipt", "ocel:ovmap": {"court": "N17"}}
+  }
+}

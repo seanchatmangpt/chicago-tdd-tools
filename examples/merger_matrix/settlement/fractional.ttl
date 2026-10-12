@@ -1,0 +1,15 @@
+# Instance graph: fractional-share settlement (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:FracSettlement a ex:SettlementInstruction ;
+    rdfs:label "Fractional shares: cash in lieu" ;
+    ex:regardingTransaction ex:ProjectMatrix ;
+    ex:entitledParty ex:BetaHoldings ;
+    ex:method ex:CashInLieu ;
+    ex:aggregateFractionalShares "7350000"^^xsd:decimal ;
+    ex:exchangeRatio "1.75"^^xsd:decimal ;
+    ex:cashInLieuRateUSD "42.10"^^xsd:decimal ;
+    ex:cashInLieuAmountUSD "309435000"^^xsd:decimal ;
+    ex:settlementDate "2027-03-31"^^xsd:date .

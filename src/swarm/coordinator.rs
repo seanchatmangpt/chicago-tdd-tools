@@ -21,7 +21,11 @@ impl SwarmMembership {
     /// Create a new swarm membership
     #[must_use]
     pub fn new() -> Self {
-        Self { swarm_id: format!("swarm-{}", uuid::Uuid::new_v4()), members: HashMap::new() }
+        #[cfg(feature = "uuid-v4")]
+        let swarm_id = format!("swarm-{}", uuid::Uuid::new_v4());
+        #[cfg(not(feature = "uuid-v4"))]
+        let swarm_id = String::new();
+        Self { swarm_id, members: HashMap::new() }
     }
 
     /// Add a member to the swarm

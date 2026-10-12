@@ -1,0 +1,78 @@
+# phase2_antitrust.powl — Phase 2: Antitrust & Regulatory Boundary Resolution
+#
+# Contract: "## M-Phase Contracts (E-M02) — Phase 2" §1
+# (/Users/sac/.claude/plans/compressed-zooming-diffie.md:2539-2601).
+# Grammar: src/conformance/loader.rs:11-31 (doc), scanner loader.rs:283-338,
+# parser loader.rs:350-580, MAX_POWL_NODES = 64 (loader.rs:47).
+# Model MUST parse via PowlModel::from_powl_str (loader.rs:638) and pass
+# validate::validate (src/conformance/validate.rs:45); the divestiture split
+# lowers to a real xor node (empty_xor_model precedent, src/conformance/model.rs:167).
+#
+# Court rows (A16-A20): N02 isolation (orthogonality.rs:309), N06 branchless
+# (disasm.rs:116), N10 SEU (seu.rs:343), N14 strata-side via landed N16
+# stackbound.rs, N18 build determinism via landed N19 reproducible.rs:179
+# (disclosed N14->N16 / N18->N19 stand-in mappings, contract §3 table).
+#
+# Embedded invariants as structure (contract §1 invariants I1-I4):
+# - I2 DIVESTITURE XOR LAW: the divestiture decision is ONE xor with exactly
+#   two branches — HHI_post <= 1800 -> silent (no divest); HHI_post > 1800 ->
+#   divestiture_package then clearance_saga. Exactly-one-of, never both, never
+#   neither (R3/R4 refusals: Deviation::NotEnabled / VerbMismatch,
+#   report.rs:29/:20; ConformanceReport::is_conforming() == false, report.rs:209).
+# - I3 REGULATORY-CLEARANCE SEQUENCE: A01 membrane -> (A02 ∥ A04-A10) -> xor ->
+#   A11 saga -> A12 leaf -> A13 replay -> A14 BLAKE3 -> A15 ML-DSA-65 -> courts.
+#   Order enforced by the linear lowering (tid = atom index, tick = prev+1,
+#   session.rs:27-31/:519).
+# - I4 sum Mf: exactly one token in the terminal court chain at Complete, zero
+#   deviations.
+# - Delta HHI >= 100 without divestiture is a refusal (R3) — structurally the
+#   xor forces a divest branch before any trace can pass a >1800 register.
+#
+# Node budget: 34 / 64 (MAX_POWL_NODES, loader.rs:47).
+
+activity shacl_topology       = ftc_guidelines.market_topology    # A01 closed-world vs FTC/DOJ shapefiles
+activity control_infer        = cross_holding.control_infer       # A02 indirect economic control
+activity hsr_exempt           = hsr.clayton7_exemption            # A03 defeasible HSR exemption
+activity hhi_delta            = hhi.post_merge_delta              # A04 Delta HHI < 100 or carve-out
+activity risk_buffer          = frtb.antitrust_buffer             # A05 frozen-asset capital model
+activity mac_index            = isda.mac_clause_index             # A06 cross-default / MAC clauses
+activity ticking_fees         = pplan.ticking_schedule            # A07 covenant timeline fees
+activity divest_haircut       = collateral.divestment_haircut     # A08 haircut = 100% on carve-outs
+activity escrow_fees          = settlement.filing_fee_escrow      # A09 zero-balance sweep
+activity irc1060_alloc        = tax.irc1060_alloc                 # A10 residual-method allocation
+activity clearance_saga       = ash_pplan.compensation_trap       # A11 saga rollback invariant
+activity hhi_leaf             = temprun.hhi_leaf_2000r            # A12 <= 2,000 reductions
+activity pn64_replay          = pn64.phase2_trace                 # A13 tau in L(N)
+activity merkle_phase2        = blake3.phase2_root                # A14 BLAKE3 leaf extension
+activity pqc_sign             = fips204.clearance_sign            # A15 ML-DSA-65 dossier
+activity divestiture_package  = divest.packaged_commitments       # xor divest branch (contract :2593)
+activity court_n02            = courts.n02_isolation              # A16 Court N02
+activity court_n06            = courts.n06_branchless             # A17 Court N06
+activity court_n10            = courts.n10_seu                    # A18 Court N10
+activity court_n14            = courts.n14_stack                  # A19 Court N14 (strata; landed N16)
+activity court_n18            = courts.n18_build                  # A20 Court N18 (drifted; landed N19)
+
+sequence {
+  shacl_topology                                                # membrane: A01 first, fail-closed
+  parallel {                                                    # Tier 1 semantic ∥ Tier 2 FIBO
+    sequence {
+      control_infer
+      xor { hsr_exempt silent }                                 # A03 defeasible exemption
+    }
+    sequence {
+      hhi_delta                                                 # A04 xor gate below
+      risk_buffer
+      mac_index
+      ticking_fees
+      divest_haircut
+      escrow_fees
+      irc1060_alloc
+    }
+  }
+  xor {                                                         # DIVESTITURE DECISION — the Phase 2 xor-split (I2)
+    sequence { silent clearance_saga }                          # HHI_post <= 1800 -> silent (no divest), proceed
+    sequence { divestiture_package clearance_saga }             # HHI_post > 1800 -> divest branch required
+  }
+  sequence { hhi_leaf pn64_replay merkle_phase2 pqc_sign }      # Tier 3 (A12-A15)
+  parallel { court_n02 court_n06 court_n10 court_n14 court_n18 }    # Tier 4 courts A16-A20
+}

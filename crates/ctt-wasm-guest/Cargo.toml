@@ -1,0 +1,50 @@
+[package]
+name = "ctt-wasm-guest"
+version = "26.10.11"
+edition = "2021"
+publish = false
+description = "WASM guest cdylib: re-exports the chicago-tdd-tools conformance guest ABI for temprun-hosted execution"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+chicago-tdd-tools = { path = "../..", default-features = false, features = [
+  "wasm-guest",
+  "conformance",
+  "ledger",
+  "logging",
+] }
+
+# WASM32 RNG source for the parent crate's unconditional `uuid` v4 usage
+# (src/swarm/coordinator.rs, src/observability/ocel/collector.rs compile
+# uuid::Uuid::new_v4() into every feature combination; uuid refuses to
+# compile on wasm32-unknown-unknown without a randomness source). Feature
+# union with the parent's uuid = { features = ["v4"] } — wasm32-only scope,
+# so host builds are untouched. DISCLOSURE: this does not achieve the
+# zero-import law by itself; the honest fix is making `uuid` optional in the
+# root manifest and gating the two call sites, which is outside this lane's
+# file scope.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { version = "1", default-features = false, features = ["v4", "js"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+codegen-units = 1
+strip = true
+
+# Workspace member: root Cargo.toml members already includes "crates/ctt-wasm-guest"
+# (coordinator). No nested [workspace] table — multi-root breaks cargo -p.
+#
+# Build (Gate 0 artifact):
+#   cargo build --target wasm32-unknown-unknown --release -p ctt-wasm-guest
+# Artifact:
+#   target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm
+#
+# NOTE: profile.release in a non-root workspace member is ignored by cargo
+# (profiles are root-only). Kept here to mirror pn_kernel's manifest intent;
+# the coordinator should carry these into the root [profile.release] if the
+# gate requires opt-level "z" + strip for the .wasm artifact.

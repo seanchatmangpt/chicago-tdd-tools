@@ -1,0 +1,18 @@
+# Instance graph: cross-border withholding facts (synthetic)
+@prefix ex: <http://example.com/merger#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:WithholdingAnalysis a ex:TaxAnalysis ;
+    rdfs:label "Dividend-equivalent withholding on rollover shares" ;
+    ex:regardingTransaction ex:ProjectMatrix ;
+    ex:shareholder ex:BetaHoldings ;
+    ex:shareholderJurisdiction "GB" ;
+    ex:payerJurisdiction "DE" ;
+    ex:incomeType ex:DividendEquivalent ;
+    ex:grossIncomeUSD "450000000"^^xsd:decimal ;
+    ex:applicableRate 0.15 ;
+    ex:treatyRate 0.0 ;
+    ex:treatyCountry "GB" ;
+    ex:netWithholdingUSD "67500000"^^xsd:decimal ;
+    ex:formW8BENEBeneficialOwner true .

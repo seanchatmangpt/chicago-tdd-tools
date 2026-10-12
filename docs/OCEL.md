@@ -33,7 +33,7 @@ Enable the feature in your `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "26.6.12", features = ["ocel-generation"] } # 26.6.12 is the minimum; the workspace itself uses 26.8.9
+chicago-tdd-tools = { version = "26.6.12", features = ["ocel-generation"] } # 26.6.12 is the minimum; the workspace itself uses 26.10.11
 ```
 
 ---

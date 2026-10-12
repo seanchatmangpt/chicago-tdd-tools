@@ -23,16 +23,18 @@
 // ============================================================================
 
 mod core_prelude_surface {
-    use chicago_tdd_tools::prelude::*;
     use chicago_tdd_tools::core::alert::AlertLogger;
-        use chicago_tdd_tools::core::const_assert::Validated;
+    use chicago_tdd_tools::core::const_assert::Validated;
     use chicago_tdd_tools::core::contract::{TestContract, TestContractRegistry, TestThermalClass};
     use chicago_tdd_tools::core::fail_fast::StrictExecutionContext;
     use chicago_tdd_tools::core::invariants::{EffectValidator, StateValidator};
-    use chicago_tdd_tools::core::receipt::{EnvironmentFingerprint, TestOutcome, TestReceipt, TestReceiptRegistry};
+    use chicago_tdd_tools::core::receipt::{
+        EnvironmentFingerprint, TestOutcome, TestReceipt, TestReceiptRegistry,
+    };
     use chicago_tdd_tools::core::test_utils::{RetryConfig, TempDir, TestData, TestTimer};
     use chicago_tdd_tools::core::type_level::{ValidatedRange, ValidatedSize};
     use chicago_tdd_tools::core::verification_pipeline::{PipelineConfig, VerificationPipeline};
+    use chicago_tdd_tools::prelude::*;
     use std::collections::HashMap;
 
     /// `fixture` — TestFixture::new + metadata + cleanup teardown.
@@ -57,10 +59,7 @@ mod core_prelude_surface {
     /// `builders` — TestDataBuilder builds real data.
     #[test]
     fn builders_test_data_builder_surface() {
-        let data = TestDataBuilder::new()
-            .with_var("env", "test")
-            .with_var("lane", "write")
-            .build();
+        let data = TestDataBuilder::new().with_var("env", "test").with_var("lane", "write").build();
         assert_eq!(data.get("env").map(String::as_str), Some("test"));
         assert_eq!(data.get("lane").map(String::as_str), Some("write"));
     }
@@ -126,9 +125,7 @@ mod core_prelude_surface {
     #[test]
     fn assertions_builder_surface() {
         let value = AssertionBuilder::new(10_i32);
-        let value = value
-            .assert_that(|v: &i32| *v > 0)
-            .assert_eq(&10);
+        let value = value.assert_that(|v: &i32| *v > 0).assert_eq(&10);
         assert_eq!(value.into_value(), 10);
     }
 
@@ -192,7 +189,10 @@ mod core_prelude_surface {
     fn test_utils_test_data_surface() {
         assert!(TestData::email("alice").contains("alice"));
         assert!(!TestData::uuid().is_empty());
-        assert_eq!(TestData::sequence(1, 2), vec![1, 2, 3].len().checked_sub(1).map(|_| vec![1, 2]).unwrap_or_default());
+        assert_eq!(
+            TestData::sequence(1, 2),
+            vec![1, 2, 3].len().checked_sub(1).map(|_| vec![1, 2]).unwrap_or_default()
+        );
     }
 
     /// `receipt` — EnvironmentFingerprint captures and hashes real env state.
@@ -273,8 +273,11 @@ mod core_prelude_surface {
         // is rejected with the real typed violation.
         assert!(effect.validate_observed(&[String::from("network")]).is_ok());
         assert!(effect.validate_observed(&[String::from("undeclared")]).is_err());
-        let state = StateValidator::new(String::from("idle"), vec![String::from("idle"), String::from("busy")])
-            .unwrap_or_else(|e| panic!("state validator: {e}"));
+        let state = StateValidator::new(
+            String::from("idle"),
+            vec![String::from("idle"), String::from("busy")],
+        )
+        .unwrap_or_else(|e| panic!("state validator: {e}"));
         drop(state);
     }
 
@@ -327,9 +330,7 @@ mod core_prelude_surface {
     /// `swarm::test_orchestrator` — orchestrator runs a real plan over real contracts.
     #[test]
     fn test_orchestrator_surface() {
-        const CONTRACTS: &[TestContract] = &[
-            TestContract::hot_path("surface_test", &["prelude"]),
-        ];
+        const CONTRACTS: &[TestContract] = &[TestContract::hot_path("surface_test", &["prelude"])];
         let registry = TestContractRegistry::new(CONTRACTS);
         let _orchestrator = TestOrchestrator::new(registry);
     }
@@ -349,7 +350,10 @@ mod core_prelude_surface {
         let get = HttpGet::new("https://api.example.com/ping");
         // Real behavior: the pure-substrate HttpGet admits example.com URLs
         // without any network I/O.
-        fn run<R: RequiresEffect<NetworkRead, Effect = Effects<NetworkRead>>>(op: &R, e: &Effects<NetworkRead>) {
+        fn run<R: RequiresEffect<NetworkRead, Effect = Effects<NetworkRead>>>(
+            op: &R,
+            e: &Effects<NetworkRead>,
+        ) {
             let _ = op.execute(e);
         }
         run(&get, &Effects::<NetworkRead>::default());
@@ -382,7 +386,9 @@ mod core_prelude_surface {
 
         let sm = StateMachine::<LockedState>::new();
         assert_eq!(StateMachine::<LockedState>::current_state(), "LockedState");
-        let sm = sm.transition::<UnlockedState, DoUnlock>().unwrap_or_else(|e| panic!("transition: {e}"));
+        let sm = sm
+            .transition::<UnlockedState, DoUnlock>()
+            .unwrap_or_else(|e| panic!("transition: {e}"));
         assert_eq!(StateMachine::<UnlockedState>::current_state(), "UnlockedState");
         drop(sm);
     }

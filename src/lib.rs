@@ -185,8 +185,14 @@ pub use rstest;
 // Only user-facing documentation should be in docs/ (guides, API refs, architecture).
 #[cfg(feature = "cli-proof")]
 pub mod cli_proof;
+#[cfg(feature = "conformance")]
+pub mod conformance;
 pub mod core;
 pub mod integration;
+#[cfg(feature = "ledger")]
+pub mod ledger;
+#[cfg(feature = "nato")]
+pub mod nato;
 pub mod observability;
 pub mod operator_registry;
 pub mod sector_stacks;

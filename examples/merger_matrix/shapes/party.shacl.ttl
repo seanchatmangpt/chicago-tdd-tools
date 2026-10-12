@@ -1,0 +1,37 @@
+# party.shacl.ttl — party roles to the merger agreement
+# Hand-authored fixture. NOT legal advice.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.com/merger#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Exactly one Acquirer, one Target, one AcquisitionVehicle in the fixture.
+ex:AcquirerShape a sh:NodeShape ;
+    sh:targetObjectsOf ex:partyRole ;
+    sh:closed true ;
+    sh:property [
+        sh:path ex:role ;
+        sh:in ( ex:Acquirer ex:Target ex:AcquisitionVehicle ) ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:signsAgreement ;
+        sh:class ex:MergerAgreement ; sh:maxCount 1 ;
+    ] , [
+        sh:path ex:dulyAuthorized ;
+        sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
+    ] .
+
+# Role exclusivity: one entity may not hold two principal roles.
+ex:RoleExclusivityShape a sh:NodeShape ;
+    sh:targetClass ex:Acquirer ;
+    sh:not [ sh:property [ sh:path rdf:type ;
+              sh:hasValue ex:Target ] ] .
+
+ex:AcmeCorp     ex:partyRole [ ex:role ex:Acquirer ;
+                    ex:signsAgreement ex:MergerAgreement ;
+                    ex:dulyAuthorized true ] .
+ex:BetaHoldings ex:partyRole [ ex:role ex:Target ;
+                    ex:signsAgreement ex:MergerAgreement ;
+                    ex:dulyAuthorized true ] .
+ex:MergerSub    ex:partyRole [ ex:role ex:AcquisitionVehicle ;
+                    ex:dulyAuthorized true ] .
