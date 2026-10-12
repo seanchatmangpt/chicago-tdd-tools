@@ -417,13 +417,24 @@ jobs:
         # Secret handling: CODECOV_TOKEN is optional, upload fails gracefully if not set
 
   # **Andon Signal: Pipeline Status** - Aggregates all signals
+  mutation-gate:
+    name: 🧬 Mutation gate (conformance / nato / ledger)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo mutants over the assurance surface
+        run: just check-mutation-gate
+
   # Full CI pipeline - runs all checks and aggregates Andon signal status
   # **Stop the Line**: Any CRITICAL signal stops the pipeline (merge blocked)
   # FMEA Fix: Remove optional jobs from needs (RPN: 210 → 21)
   ci:
     name: 🎯 Andon Signal Pipeline
     runs-on: ubuntu-latest
-    needs: [lint, fmt, test, test-integration, unwrap-check, coverage]
+    needs: [lint, fmt, test, test-integration, unwrap-check, coverage, mutation-gate]
     if: always()
     steps:
       - name: 📊 Aggregate Andon signals

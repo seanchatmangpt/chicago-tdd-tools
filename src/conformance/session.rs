@@ -246,6 +246,13 @@ impl ConformanceSession {
         }
         self.stream = words.to_vec();
         self.cursor = 0;
+        // Fresh-start replay law (audit W4): a new stream replays from its
+        // own start — the previous stream's tick chain, step count, and
+        // marking do not carry over, or the first word of the new stream
+        // latches OutOfOrder against a stale prev_tick.
+        self.prev_tick = None;
+        self.steps_done = 0;
+        self.marking = self.initial_marking;
         Ok(())
     }
 
@@ -835,6 +842,36 @@ mod tests {
             YieldStatus::Complete(report) => assert_eq!(report.steps_executed, 3),
             other => panic!("expected Complete, got {other:?}"),
         }
+    }
+
+    /// Audit W4: finish() is safe + idempotent on a Complete-phase session.
+    #[test]
+    fn finish_on_complete_phase_is_idempotent() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(1, 2), event(2, 3)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        assert!(matches!(s.step_budget(10), YieldStatus::Complete(_)));
+        let first = s.finish();
+        let second = s.finish();
+        assert_eq!(first, second, "finish must be idempotent on Complete");
+        assert_eq!(first.outcome, ReportOutcome::Complete);
+    }
+
+    /// Audit W4: attaching a new stream onto a Yielded session rewinds to
+    /// the new stream's start (doc-promised path).
+    #[test]
+    fn attach_on_yielded_session_rewinds_to_new_stream_start() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(1, 2), event(2, 3)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        assert!(matches!(s.step_budget(2), YieldStatus::Yielded { .. }));
+        // New stream: tids 0,1,2 ticks 1,2,3 again — replay must start over.
+        let new_words: Vec<u64> = vec![event(0, 1), event(1, 2), event(2, 3)];
+        s.attach_stream(&new_words).unwrap_or_else(|e| panic!("re-attach: {e}"));
+        assert_eq!(s.remaining_events(), 3, "rewound to the new stream");
+        assert!(matches!(s.step_budget(10), YieldStatus::Complete(_)));
     }
 
     #[test]

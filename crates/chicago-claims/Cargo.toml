@@ -1,6 +1,7 @@
 [package]
 name = "chicago-claims"
 version = "26.7.1"
+publish = false
 edition = "2021"
 authors = ["KNHK Team"]
 license = "MIT"

@@ -338,6 +338,21 @@ mod tests {
     }
 
     #[test]
+    fn wire_decode_refuses_oversized() {
+        // Audit W4: the != length check must refuse WIRE_LEN+1 too, not
+        // only truncations.
+        let s = crate::ledger::signing::signer::Signer::from_seed(
+            [7u8; crate::ledger::signing::signer::SEED_LEN],
+        );
+        let sealed = seal(&[0xab; 32], &s).expect("seal");
+        let mut bytes = encode(&sealed).to_vec();
+        bytes.push(0);
+        let err = decode(&bytes).expect_err("oversized wire must refuse");
+        assert_eq!(err.actual, bytes.len());
+        assert_eq!(err.expected, WIRE_LEN);
+    }
+
+    #[test]
     fn wire_decode_refuses_wrong_length() {
         let signer = fresh_signer(21);
         let sealed = seal(&[9u8; 32], &signer).expect("seal");

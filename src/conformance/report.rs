@@ -319,6 +319,18 @@ mod tests {
         assert!(!back.is_conforming());
     }
 
+    /// Audit W4: a report with a set explained flag must roundtrip with
+    /// the flag intact (open_deviations drops, verdict law preserved).
+    #[test]
+    fn test_explained_flag_survives_serde_roundtrip() {
+        let mut report = ConformanceReport::new(3, 3, vec![verb_mismatch(1), not_enabled(2)]);
+        report.explain(0).expect("in-range explain");
+        let json = serde_json::to_string(&report).expect("serializable");
+        let back: ConformanceReport = serde_json::from_str(&json).expect("deserializable");
+        assert_eq!(back.open_deviations(), 1, "explained flag must survive");
+        assert!(!back.is_conforming(), "one open deviation remains");
+    }
+
     #[test]
     fn test_replay_summary_fields_are_public_and_comparable() {
         let summary = ReplaySummary {

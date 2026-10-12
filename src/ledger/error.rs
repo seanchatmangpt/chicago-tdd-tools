@@ -268,9 +268,6 @@ impl std::fmt::Display for RefusalDigest {
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum SealError {
     /// The subject bytes did not conform to the sealable format.
-    #[error("malformed seal subject")]
-    MalformedSubject,
-
     /// The signing key is not in the required custody state.
     #[error("key custody violation: {0}")]
     KeyCustody(String),
@@ -390,8 +387,6 @@ mod tests {
 
     #[test]
     fn test_seal_error_displays() {
-        assert_eq!(SealError::MalformedSubject.to_string(), "malformed seal subject");
-
         let e = SealError::KeyCustody("key not held".into());
         assert!(e.to_string().contains("key not held"), "{}", e);
 

@@ -261,7 +261,7 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
         return false;
     }
     for i in 0..64usize {
-        let byte_idx = (i * SIG_LEN) / 64;
+        let byte_idx = (i * SIG_LEN + SIG_LEN - 1) / 64;
         let bit = i % 8;
         let mut bad = good;
         bad[byte_idx] ^= 1 << bit;
@@ -271,11 +271,11 @@ pub(crate) fn n17_sampled_flip_reject() -> bool {
     }
     // Audit W3: the sweep must cover the pk space too — a corrupted pk
     // must be rejected, not just a corrupted signature. 64 sampled pk-bit
-    // flips + the 64-sig-flip loop above; stride hits the sig tail
-    // (bytes 3258..3309, the ML-DSA hint region) via the ceiling division
-    // sample points below.
+    // flips + the 64-sig-flip loop above; ceiling-division sampling puts
+    // i=0 at byte 0 and i=63 at the LAST byte of both buffers (the
+    // ML-DSA hint tail included).
     for i in 0..64usize {
-        let byte_idx = (i * PK_LEN) / 64;
+        let byte_idx = (i * PK_LEN + PK_LEN - 1) / 64;
         let bit = i % 8;
         let mut bad_pk = pk;
         bad_pk[byte_idx] ^= 1 << bit;
@@ -305,7 +305,15 @@ pub(crate) fn n17_positive_control() -> bool {
     }
     let mut bad = good;
     bad[0] ^= 0x01;
-    !Signer::verify(&pk, &GOLDEN_SUBJECT, &bad)
+    if Signer::verify(&pk, &GOLDEN_SUBJECT, &bad) {
+        return false;
+    }
+    // Audit W4: the positive control must also exercise the pk lane — a
+    // verify() that accepted a corrupted pk would otherwise only be caught
+    // by the sweep in run(), never by the gate.
+    let mut bad_pk = pk;
+    bad_pk[0] ^= 0x01;
+    !Signer::verify(&bad_pk, &GOLDEN_SUBJECT, &good)
 }
 
 /// Self-pinning: 3 independent derivations of seed->pk->sig must be
