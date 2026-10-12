@@ -189,9 +189,9 @@ fn discover_workflows() -> Vec<WorkflowStatus> {
                 continue;
             };
 
-            let valid = serde_yaml::from_str::<serde_yaml::Value>(&content).is_ok();
+            let valid = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&content).is_ok();
 
-            let jobs = if let Ok(yaml) = serde_yaml::from_str::<serde_yaml::Value>(&content) {
+            let jobs = if let Ok(yaml) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&content) {
                 yaml.get("jobs").and_then(|j| j.as_mapping()).map(|m| m.len()).unwrap_or(0)
             } else {
                 0

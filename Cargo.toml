@@ -54,7 +54,7 @@ futures = "^0.3"
 # Serde with derive feature for automatic serialization/deserialization of test data structures
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
-serde_yaml = "0.9"
+serde_yaml_ng = "0.10"
 toml = "1.1"
 
 # Utilities
@@ -157,7 +157,7 @@ trycmd = { version = "^1.2", optional = true }
 # Git hooks support (optional, git-hooks feature)
 # When to use: Installing Rust-based git hooks, version-controlled hooks
 # Enables: git_hook_installer binary, git2 dependency for repository operations
-git2 = { version = "^0.20", optional = true }
+git2 = { version = "^0.21", optional = true }
 
 # Procedural macros (internal)
 chicago-tdd-tools-proc-macros = { version = "26.10.12", path = "proc_macros" }

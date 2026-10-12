@@ -35,7 +35,7 @@ chrono = "^0.4"
 proptest = "^1.5"
 
 # Git integration for commit hash tracking
-git2 = { version = "^0.20", optional = true }
+git2 = { version = "^0.21", optional = true }
 
 # Procedural macros for test generation
 chicago-tdd-tools-proc-macros = { path = "../proc_macros", version = "26.10.12" }

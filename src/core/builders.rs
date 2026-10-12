@@ -421,19 +421,19 @@ impl TestDataBuilder {
     ///
     /// # Errors
     ///
-    /// Returns `serde_yaml::Error` if serialization fails, or validation error if validation fails.
+    /// Returns `serde_yaml_ng::Error` if serialization fails, or validation error if validation fails.
     ///
     /// # Panics
     ///
     /// Panics if validation fails.
-    pub fn build_yaml(self) -> Result<String, serde_yaml::Error> {
+    pub fn build_yaml(self) -> Result<String, serde_yaml_ng::Error> {
         if let Err(e) = self.run_validations() {
             #[allow(clippy::panic)]
             {
                 panic!("Validation failed: {e}");
             }
         }
-        serde_yaml::to_string(&self.data)
+        serde_yaml_ng::to_string(&self.data)
     }
 
     /// Build test data as TOML

@@ -657,3 +657,11 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   chacha20 yanked. Note: reqwest 0.12/0.13 remain in the lock via other
   trees (chicago-tdd-mcp, jsonschema) — both are h2-0.4-based (patched),
   not the vulnerable 0.3 line. release-validate-security: exit 0.
+- W50c AUDIT FULL CLOSURE (this window): git2 → ^0.21 (RUSTSEC-2026-0183/0184
+  patched in 0.21.0; only API used is Repository::open/head/target in
+  spec-harness — verified); serde_yaml → serde_yaml_ng 0.10 (removes
+  unsafe-libyaml; 2 call sites: builders build_yaml, playground gh.rs).
+  REMAINING: chacha20 yanked warning (transitive via otel crypto; no
+  action available — yanked-version substitution needs upstream bump).
+  cargo audit: 0 vulnerabilities, warnings-only. release-validate:
+  EXIT 0.
