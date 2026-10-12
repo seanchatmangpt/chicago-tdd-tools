@@ -619,8 +619,8 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   dossier_wire 9/0 + dossier_cli 14/0, receipt 93/0, builders 46/0,
   governance 11/0, weaver 29/0, otel 41/0. Crate-root re-exports added
   for BuilderError/ReceiptJsonError/DossierWireError (ledger-gated)/
-  SwarmError. Remaining: DiagnosticSink::emit/close (blocks on a
-  coordinated ocel-collector splice — registered).
+  SwarmError. (The DiagnosticSink residue noted here was subsequently
+  closed — see the §2.3 entry below.)
 - DoD §2.3 — CLOSED WITH SCOPING (0c2375d, W49f/g; corrected by W49k):
   the named-surface conversions landed exactly as listed (builders
   ValidationFn + with_validation + run_validations, effects
