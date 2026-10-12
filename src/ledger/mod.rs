@@ -232,7 +232,7 @@ impl From<LedgerExitCode> for u8 {
 ///
 /// | variant(s) | class | code |
 /// |---|---|---|
-/// | `TooShort`, `TrailingBytes`, `BadMagic`, `InvalidLength`, `BodyLenMismatch`, `ReservedNonzero`, `InvalidTag`, `InvalidEnum`, `InvalidName`, `ZeroTrailerViolation`, `ControlFlagMismatch` | MalformedReceipt | 10 |
+/// | `TooShort`, `BadMagic`, `InvalidLength`, `BodyLenMismatch`, `ReservedNonzero`, `InvalidEnum`, `InvalidName`, `ZeroTrailerViolation`, `ControlFlagMismatch` | MalformedReceipt | 10 |
 /// | `UnsupportedVersion` | SchemaVersionMismatch | 11 |
 /// | `ChainLinkMismatch` | ChainBroken | 12 |
 /// | `ChainDiscontinuity` | ChainBroken | 12 |
