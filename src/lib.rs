@@ -84,7 +84,7 @@
 //! ## Backward Compatibility
 //!
 //! All modules are re-exported at the crate root for backward compatibility.
-//! Existing code using `chicago_tdd_tools::fixture::*` continues to work.
+//! NOTE (W27): the fixture TYPE lives at `chicago_tdd_tools::core::fixture` (prelude re-exported); the crate-root `fixture` name is the attribute macro.
 //! New code is encouraged to use capability group paths: `chicago_tdd_tools::core::fixture::*`
 //!
 //! ## Macros

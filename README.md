@@ -113,7 +113,7 @@ async_test!(test_async_example, {
 
 fixture_test!(test_with_fixture, fixture, {
     let counter = fixture.test_counter();
-    assert!(counter >= 0);
+    assert!(counter < u64::MAX); // counter is a u64 — bound it to a real check
 });
 EOF
 
@@ -833,13 +833,13 @@ seal/verify + the dossier emit/inspect cluster behind the `ctdd` feature)
 per the sovereignty split — the former `ctdd_ledger` binary
 and its `ledger-cli` feature were excised in v26.10.11:
 
-- `just emit-dossier` (Justfile:218) — run the NATO court gate
+- `just emit-dossier` (Justfile:268) — run the NATO court gate
   (`CTT_EMIT_RECEIPTS=1 timeout 300s cargo test --release --lib --features nato,ledger -- nato::dossier_court --nocapture`),
   then `cargo run --manifest-path /Users/sac/affidavit/Cargo.toml --features
   crypto-trust --bin affi -- dossier emit --receipts-dir docs/receipts --out
   docs/nato/NATO_STANAG_4107_DOSSIER.json --format json`. Refuses unless all
   20 court receipts are present and `Pass` + `MutantCaught`.
-- `just dossier-verify` (Justfile:223) — `cargo run --manifest-path
+- `just dossier-verify` (Justfile:283) — `cargo run --manifest-path
   /Users/sac/affidavit/Cargo.toml --features crypto-trust --bin affi --
   dossier inspect docs/nato/NATO_STANAG_4107_DOSSIER.json
   --verify-pqc-signature ML-DSA-65 --assert-merkle-root true --format json`.

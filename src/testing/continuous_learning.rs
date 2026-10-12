@@ -16,7 +16,7 @@ use std::collections::HashMap;
 pub struct HistoryEntry {
     /// Contract name
     pub contract_name: String,
-    /// Invariants checked (populated from receipt.invariants_checked — AUDIT NOTE W27: historically documented as module paths; the learned-pattern keyspace is actually invariant lists)
+    /// Invariants checked (populated from `receipt.invariants_checked` — AUDIT NOTE W27: historically documented as module paths; the learned-pattern keyspace is actually invariant lists)
     pub modules: Vec<String>,
     /// Execution time (ticks)
     pub ticks: u64,

@@ -317,6 +317,10 @@ impl CoverageReport {
     /// Add an item to the coverage report
     ///
     /// **Poka-Yoke**: Uses infallible constructors - no panic possible.
+///
+/// AUDIT NOTE (W27): duplicate names overwrite the `details` entry but still
+/// increment `total`/`covered` — counts can drift from `details.len()`.
+/// Use unique names or check `details.contains_key` first.
     pub fn add_item(&mut self, name: String, covered: bool) {
         self.details.insert(name, covered);
         let new_total = self.total.get() + 1;

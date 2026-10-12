@@ -32,7 +32,7 @@ pub struct CliTest;
 
 /// Builder for CLI commands with fluent API
 ///
-/// Enables clean, readable CLI command construction (AUDIT NOTE W27: no validation is performed — build() is plain concatenation and never executes).
+/// Enables clean, readable CLI command construction (AUDIT NOTE W27: no validation is performed — `build()` is plain concatenation and never executes).
 ///
 /// # Example
 ///

@@ -225,7 +225,7 @@ fn example_distribute_tasks() -> Result<(), Box<dyn std::error::Error>> {
 ///
 /// ## How-to: Task Receipts
 ///
-/// Generates cryptographic receipts for completed tasks.
+/// Generates receipts for completed tasks (plain records, not cryptographic attestation).
 fn example_task_receipts() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n=== Example: Task Receipts ===");
 

@@ -19,8 +19,11 @@
 //!
 //! # Tamper-evidence law
 //!
-//! Mutating any byte in any entry's `content_bytes` must change `stored_hash`
-//! for that entry and all subsequent entries.
+//! AUDIT NOTE (W27): the enforced property is chain LINKAGE —
+//! `assert_tamper_evident` verifies chain validity + prev/stored-hash linkage
+//! of the unmutated chain; no byte-mutation experiment runs here. Mutating
+//! content_bytes breaks the RECOMPUTED hash against the unchanged stored_hash
+//! downstream (the Blake3ReceiptEntry validator's law).
 //!
 //! # Usage with bcinr-powl
 //!

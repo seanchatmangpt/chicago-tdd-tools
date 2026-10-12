@@ -144,7 +144,7 @@ pub fn tdd_test(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// Automatically:
 /// - Generates fixture setup/teardown code
 /// - Provides type-safe fixture state management
-/// - Validates fixture lifecycle at compile time
+/// - Wraps fixture setup with a runtime assertion on the FixtureResult (AUDIT NOTE W27: validation is at runtime, not compile time)
 ///
 /// # Examples
 ///
@@ -228,7 +228,7 @@ pub fn fixture(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // FIX 2: no panic! in library code — use map_err + assert to
                 // surface a descriptive failure message without a panic! call.
                 let mut fixture = {
-                    let _r = chicago_tdd_tools::fixture::TestFixture::new()
+                    let _r = chicago_tdd_tools::core::fixture::TestFixture::new()
                         .map_err(|e| format!("fixture creation failed: {}", e));
                     assert!(_r.is_ok(), "{}", match _r.as_ref() { Err(s) => s.as_str(), Ok(_) => "" });
                     match _r { Ok(f) => f, Err(_) => unreachable!() }
@@ -262,7 +262,7 @@ pub fn fixture(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // FIX 2: no panic! — use map_err + assert to surface a
                 // descriptive failure message without a panic! call.
                 let mut fixture = {
-                    let _r = chicago_tdd_tools::fixture::TestFixture::new()
+                    let _r = chicago_tdd_tools::core::fixture::TestFixture::new()
                         .map_err(|e| format!("fixture creation failed: {}", e));
                     assert!(_r.is_ok(), "{}", match _r.as_ref() { Err(s) => s.as_str(), Ok(_) => "" });
                     match _r { Ok(f) => f, Err(_) => unreachable!() }
