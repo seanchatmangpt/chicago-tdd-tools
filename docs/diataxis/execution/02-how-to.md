@@ -70,7 +70,7 @@ assert!(chicago_tdd_tools::nato::timing::passes(outcome.final_t()?));
 
 ### The affidavit twin court
 
-`~/affidavit/tests/ct_timing_invariance.rs` is landed (324 lines) and mirrors the same law:
+`~/affidavit/tests/ct_timing_invariance.rs` is landed (336 lines as of 2026-10-12) and mirrors the same law:
 `T_THRESHOLD = 4.5`, up to 1 + 3 idle reruns, medians, Welch t. It courts
 `qg05_ctrt_deserialize_timing_invariance` and `qg05_ml_dsa65_sign_timing_invariance`, plus
 `qg05_positive_control_leaky_twin_must_fire`. Sample counts are environment-tunable; run it
