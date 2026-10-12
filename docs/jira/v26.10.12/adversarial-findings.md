@@ -523,3 +523,52 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   pushed. Disclosed at assurance.yml:229.
 - Registered follow-ups: guest errno remap (v1 collapse 14/15/16→11);
   ctt-splice-digest build pipeline; QUICK_GUIDE book placement decision.
+
+## DoD CERTIFICATION REGISTER — SYSTEM SPECIFICATION v26.10.12 (2026-10-12, W39–W44)
+
+Per-item verdicts from the 18-lane DoD certification wave (all repaired
+same-tick where repairable; cert basis = HEAD d329535):
+
+GREEN (certified): compile-time wire composition pin 352=320+32
+  (receipt.rs:104) + torn/slot size_of/align_of proofs; zero-#\[feature\]
+  stable const-generic surface + fresh /tmp consumer witness; just check +
+  lint 0 warnings; MemBoundGuard capture/restore-on-drop w/ mutex (+
+  EnvVarGuard/CliEnvironment corroborators); full suites 1150/0 lib,
+  146/0 doctests, 1313-class workspace counts; merger 123+17+3 /0;
+  20/20 COURT_REGISTRY sweep + falsifier no-persist; emitter bitwise
+  parity receipted (5189603/e465c1a) + non-clobber falsifier; Merkle
+  determinism 38/0 incl. zeroed-genesis + cross-court refusal; typed
+  error vocabularies (ConformanceError 18, LedgerError 15 + exit 0/10-19,
+  SealError x2, PipelineError 4, guest errno 0-16) with typed refusal
+  spot-checks; anti-cheat GREEN (ggen standards exit 0, zero mocks,
+  tautology kills receipted); Andon framing landed in CI; version
+  lockstep GREEN 26.10.12; packaging excludes GREEN; bench/examples
+  compile exit 0; tick budgets (hot 8, warm 500k≈125μs ≤ 1ms).
+CLOSED THIS WINDOW (was gaps): standing 10k CTRT wire-mutation loop
+  (wire_fuzz_10k..., W44); guest-abi-v1 errno remap (abi_map boundary);
+  ctt-splice-digest tool + workspace wiring (splice==recompute,
+  self-locating verify); CI docs-check backstop (D2) + BRE sync (D1);
+  nato README pillar column (9 rows → in-code enum); CONFORMANCE.md
+  4-step classification law + UnknownActivity{0,0} + ArityBelowMinimum
+  fields; diataxis probe/Sealed/exit-class refresh (5 pages);
+  gitignore/tracked-artifact rationalization (coverage.lcov,
+  weaver-reports untracked; root lock tracked, child locks ignored);
+  guest README probe qualification; CI pin blocker disclosure.
+HOLDS-AS-DISCLOSED: constant-time — ct_eq fold on magic+digest is real;
+  wire decode is constant-FLOW only (SK2 relabel); LEDGER.md:85 is a
+  per-compare claim, never an end-to-end CT claim; N05 dudect |t|<4.5
+  gates the kernel. DoD §2.4 certified with this scoping, not beyond it.
+GAPS (disclosed, not certifiable at HEAD):
+- DoD §2.3: ~30 public fns still return Result<_, String> (dossier_wire
+  x7, swarm, builders, receipt json, governance, otel/weaver, testing,
+  reproducible, loader) — typed-channel migration is a follow-up wave.
+- DoD §3.4: anti-replay nullifier windows RED-NOT-LANDED (epoch-scoped
+  keyed-BLAKE3 set + LedgerError::ReplayDetected = spec item V3,
+  sequenced after RL2; closest analog = stored_hash replay refusal).
+- DoD §4.3: benchmark VARIANCE ≤2.5% has no standing variance court
+  (benches compile; no gate asserts the ceiling).
+OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
+  (current NATO_STANAG_4107_DOSSIER.json sealed 06:44, predates HEAD —
+  re-run just emit-dossier after affidavit main push); v26.10.12 seal
+  tag (existing tag points at 4d451c7, NOT HEAD); crates.io publish
+  (proc_macros first); affidavit main push (unblocks nightly CI).
