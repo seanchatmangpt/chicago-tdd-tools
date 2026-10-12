@@ -50,8 +50,8 @@ Artifact: `target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm`
 > v1 note: the v1 seal layout (34-byte preimage, zero reserved at `26..34`) fails closed
 > under a v1 parser when handed a v2 preimage — the digest occupies `26..58`. The
 > authoritative discriminator is the `ctt_guest_abi_version()` probe (returns 2); call it
-> before the first `ctt_session_new`. The strata temprun bridge still consumes the v1
-> layout until its rebase.
+> before the first `ctt_session_new`. The strata temprun v2 rebase landed in strata
+> `59ed80c` (branch `fix/kg-42-status-code`; pending merge to strata main).
 
 Buffers are `(ptr: u32, len: u32)` pairs in guest linear memory,
 little-endian, tightly packed. Handles are
