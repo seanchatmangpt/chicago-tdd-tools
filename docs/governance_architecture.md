@@ -45,7 +45,7 @@ graph TD
 
 ## 2. Diagnostic Data Flow
 
-Diagnostics are generated from macro assertion failures or schema validation conflicts. They are emitted to the global diagnostics channel which applies thread-safe synchronization, capacity limits, and routes the reports to registered sinks.
+Diagnostics are generated from macro assertion failures or schema validation conflicts. They are emitted to the global diagnostics channel which applies thread-safe synchronization and routes the reports to registered sinks (W27 probe: the capacity knob is write-only — no enforcement exists).
 
 ```mermaid
 graph LR
