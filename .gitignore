@@ -72,3 +72,4 @@ __pycache__/
 # Lane-run artifacts (N06 disasm receipts etc.): lanes/ tracks README only;
 # live run output stays out of the receipts boundary.
 docs/lanes/*.json
+mutants.out/

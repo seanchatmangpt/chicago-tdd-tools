@@ -139,7 +139,7 @@ plus the domain/identity doc edits in the shared working tree):
 - SK8: sentinel replacement + regression tests (`src/conformance/session.rs`,
   `tests/conformance_tests.rs`).
 
-Queued (no code change in this session): SK2, SK3, SK4, SK5, SK10. SK6/SX6: PARTIAL (see rows).
+Queued: SK2, SK3, SK4, SK10. SK5: PARTIAL (persistence half landed 1fc1c72; rotation key-epoch binding queued). SK6/SX6: PARTIAL (see rows).
 
 Note on fix IDs: the coordinator's R29-R34 batch corresponds to the landed
 set above; per-R mapping is not reproduced in this receipt because the
