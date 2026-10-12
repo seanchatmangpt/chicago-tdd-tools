@@ -95,7 +95,7 @@ permanently.
 
 | Legal standard | Boolean encoding | Where |
 |----------------|------------------|-------|
-| Material adverse effect (MAE) | `ex:occurred` bit on `ex:MaeDefinition` | `materiality.shacl.ttl` |
+| Material adverse effect (MAE) | `ex:occurred` bit | `materiality.shacl.ttl` |
 | Ordinary-course operation | unpredicated `lkif:Permission` | `merger-obligations.ttl` |
 | Breach / excuse | `ex:excused false` hard-coded per violation | `breach.ttl` |
 | 66.67% vote threshold | `votesCast = for + against`, abstentions vanish | `vote-threshold.n3` |
