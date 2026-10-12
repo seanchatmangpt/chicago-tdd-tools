@@ -89,7 +89,9 @@ Mirror `YieldStatus` (worker.ex:38-39, 156-160):
 
 ## Errno vocabulary (`Error` frames)
 
-(worker.ex:47-51)
+(worker.ex:47-51) — FRESHNESS (W27 probe): this v1 5-errno table is SUPERSEDED; the landed
+worker.ex documents 11 errnos (through 11 = guest ABI version mismatch, probe != 2) and the
+352B receipt wire is deleted under guest ABI v2. Table preserved for history:
 
 | errno | meaning |
 |---|---|
