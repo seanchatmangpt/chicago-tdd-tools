@@ -351,3 +351,28 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   invariant surface. Phase values are output labels only (straight-line
   sequencing, no state machine) — the refactor is vocabulary-only, no
   control-flow change. Source: wave-24 audit.
+
+## W26 REGISTER ADDITIONS (wave-25/26 audit sweep)
+
+- QUEUED (latent, dead code): testcontainers wait.rs/exec.rs stub paths are
+  unreachable under the parent `#[cfg(feature = "testcontainers")]` gate at
+  src/integration/mod.rs:17 — and wait.rs's stub imports the gated
+  `implementation::{ContainerClient, GenericContainer}` path, so it would NOT
+  compile if the gate were lifted; stub signature `_wait_for: ()` also
+  diverges from the real `WaitFor` parameter. Source: audit W26.
+- QUEUED (doc-truth/law): thermal.rs hot tier gates wall-clock ticks against
+  τ ≤ 8 while validation/performance.rs's own header rules the Chatman
+  Constant a logical step count and prohibits timer-as-τ gates; thermal's only
+  enforced check is the prohibited pattern (its own success test runs at
+  50k ticks). Needs either a doc-scoped honest disclaimer or a re-scoped
+  gate law. Source: audit W25.
+- CLOSED (W26): TestReceipt partial-signature — sign/verify now cover all
+  receipt fields; metadata-mutation court added (commit e54b891).
+- CLOSED (W26): SK3 signer sliver — Signer::from_seed screens all-zero/
+  all-ones seeds typed (commit e54b891).
+- CLOSED (W26): master_trace.ocel.json placeholder atoms + stale intake_pacs008
+  replaced with real phase-model atoms; anti-placeholder guard court added
+  (merger_conformance_tests 26/0).
+- CLOSED (W26): weaver_macro_tests wired into test-integration;
+  teamwork_preview_integration.rs deleted (tautological self-test); 3 orphan
+  scripts deleted; mcp stale pre-rename snapshot regenerated.
