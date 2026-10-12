@@ -73,7 +73,9 @@ mod core_prelude_surface {
                 if map.contains_key("key") {
                     Ok(())
                 } else {
-                    Err("missing key".to_string())
+                    Err(chicago_tdd_tools::BuilderError::BuildFailure {
+                        detail: "missing key".to_string(),
+                    })
                 }
             })
             .try_build()

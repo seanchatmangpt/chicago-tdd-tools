@@ -64,13 +64,17 @@ fn test_ecommerce_order_processing_pipeline() {
             if let Some(amount) = data.get("amount") {
                 if let Ok(val) = amount.parse::<f64>() {
                     if val <= 0.0 {
-                        return Err("Order amount must be positive".to_string());
+                        return Err(chicago_tdd_tools::BuilderError::BuildFailure {
+                            detail: "Order amount must be positive".to_string(),
+                        });
                     }
                 }
             }
             // Business rule: Customer ID required
             if !data.contains_key("customer_id") {
-                return Err("Customer ID is required".to_string());
+                return Err(chicago_tdd_tools::BuilderError::BuildFailure {
+                    detail: "Customer ID is required".to_string(),
+                });
             }
             Ok(())
         })
@@ -297,7 +301,9 @@ fn test_complete_order_fulfillment_workflow() {
         .unwrap()
         .with_validation(|data| {
             if !data.contains_key("order_id") {
-                return Err("Order ID required".to_string());
+                return Err(chicago_tdd_tools::BuilderError::BuildFailure {
+                    detail: "Order ID required".to_string(),
+                });
             }
             Ok(())
         })
@@ -511,7 +517,9 @@ fn test_fortune_500_complete_integration() {
         .unwrap()
         .with_validation(|data| {
             if !data.contains_key("email") || !data.contains_key("role") {
-                return Err("User must have email and role".to_string());
+                return Err(chicago_tdd_tools::BuilderError::BuildFailure {
+                    detail: "User must have email and role".to_string(),
+                });
             }
             Ok(())
         })

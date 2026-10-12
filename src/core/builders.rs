@@ -95,8 +95,8 @@ fn preset_registry() -> &'static Mutex<HashMap<String, PresetFn>> {
 /// Validation function type for builder validation hooks
 ///
 /// Takes a reference to the data being built and returns Ok(()) if valid,
-/// or Err(String) with an error message if invalid.
-type ValidationFn = Box<dyn Fn(&HashMap<String, String>) -> Result<(), String> + Send + Sync>;
+/// or `Err(BuilderError::BuildFailure)` with a detail message if invalid.
+type ValidationFn = Box<dyn Fn(&HashMap<String, String>) -> Result<(), BuilderError> + Send + Sync>;
 
 /// > 📚 Reference
 ///
@@ -243,7 +243,7 @@ impl TestDataBuilder {
     /// let result = TestDataBuilder::new()
     ///     .with_validation(|data| {
     ///         if !data.contains_key("required_field") {
-    ///             return Err("Missing required_field".to_string());
+    ///             return Err(BuilderError::BuildFailure { detail: "Missing required_field".to_string() });
     ///         }
     ///         Ok(())
     ///     })
@@ -255,7 +255,7 @@ impl TestDataBuilder {
     #[must_use]
     pub fn with_validation<F>(mut self, validation: F) -> Self
     where
-        F: Fn(&HashMap<String, String>) -> Result<(), String> + Send + Sync + 'static,
+        F: Fn(&HashMap<String, String>) -> Result<(), BuilderError> + Send + Sync + 'static,
     {
         self.validations.push(Box::new(validation));
         self
@@ -386,7 +386,7 @@ impl TestDataBuilder {
             }
         }
         for validation in &self.validations {
-            validation(&self.data).map_err(|detail| BuilderError::BuildFailure { detail })?;
+            validation(&self.data)?;
         }
         Ok(())
     }
@@ -493,7 +493,7 @@ impl TestDataBuilder {
     /// let result = TestDataBuilder::new()
     ///     .with_validation(|data| {
     ///         if data.is_empty() {
-    ///             return Err("Data cannot be empty".to_string());
+    ///             return Err(BuilderError::BuildFailure { detail: "Data cannot be empty".to_string() });
     ///         }
     ///         Ok(())
     ///     })
@@ -1305,7 +1305,9 @@ mod tests {
         let result = TestDataBuilder::new()
             .with_validation(|data| {
                 if !data.contains_key("required_field") {
-                    return Err("Missing required_field".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing required_field".to_string(),
+                    });
                 }
                 Ok(())
             })
@@ -1323,7 +1325,9 @@ mod tests {
         let result = TestDataBuilder::new()
             .with_validation(|data| {
                 if !data.contains_key("required_field") {
-                    return Err("Missing required_field".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing required_field".to_string(),
+                    });
                 }
                 Ok(())
             })
@@ -1339,13 +1343,17 @@ mod tests {
         let result = TestDataBuilder::new()
             .with_validation(|data| {
                 if !data.contains_key("field1") {
-                    return Err("Missing field1".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing field1".to_string(),
+                    });
                 }
                 Ok(())
             })
             .with_validation(|data| {
                 if !data.contains_key("field2") {
-                    return Err("Missing field2".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing field2".to_string(),
+                    });
                 }
                 Ok(())
             })
@@ -1362,13 +1370,17 @@ mod tests {
         let result = TestDataBuilder::new()
             .with_validation(|data| {
                 if !data.contains_key("field1") {
-                    return Err("Missing field1".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing field1".to_string(),
+                    });
                 }
                 Ok(())
             })
             .with_validation(|data| {
                 if !data.contains_key("field2") {
-                    return Err("Missing field2".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Missing field2".to_string(),
+                    });
                 }
                 Ok(())
             })
@@ -1387,7 +1399,9 @@ mod tests {
                 if let Some(amount) = data.get("amount") {
                     if let Ok(val) = amount.parse::<f64>() {
                         if val < 0.0 {
-                            return Err("Amount must be non-negative".to_string());
+                            return Err(BuilderError::BuildFailure {
+                                detail: "Amount must be non-negative".to_string(),
+                            });
                         }
                     }
                 }
@@ -1407,7 +1421,9 @@ mod tests {
                 if let Some(amount) = data.get("amount") {
                     if let Ok(val) = amount.parse::<f64>() {
                         if val < 0.0 {
-                            return Err("Amount must be non-negative".to_string());
+                            return Err(BuilderError::BuildFailure {
+                                detail: "Amount must be non-negative".to_string(),
+                            });
                         }
                     }
                 }
@@ -1440,7 +1456,9 @@ mod tests {
         let _ = TestDataBuilder::new()
             .with_validation(|data| {
                 if data.is_empty() {
-                    return Err("Data cannot be empty".to_string());
+                    return Err(BuilderError::BuildFailure {
+                        detail: "Data cannot be empty".to_string(),
+                    });
                 }
                 Ok(())
             })

@@ -347,7 +347,7 @@ impl WeaverLiveCheck {
     /// serializes the download/extract sequence so only one thread performs it;
     /// the rest observe `output_path.exists()` and return immediately.
     #[cfg(feature = "weaver")]
-    fn download_weaver_runtime() -> Result<(), String> {
+    fn download_weaver_runtime() -> Result<(), WeaverError> {
         use std::env;
         use std::fs;
         use std::path::PathBuf;
@@ -384,7 +384,8 @@ impl WeaverLiveCheck {
 
         // Create parent directory
         if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {e}"))?;
+            fs::create_dir_all(parent)
+                .map_err(|e| WeaverError::Spawn(format!("Failed to create directory: {e}")))?;
         }
 
         // Download using curl or wget
@@ -392,63 +393,64 @@ impl WeaverLiveCheck {
         if Command::new("curl").arg("--version").output().is_ok() {
             let archive_str = archive_path
                 .to_str()
-                .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
+                .ok_or_else(|| WeaverError::Spawn("Archive path is not valid UTF-8".to_string()))?;
             let status = Command::new("curl")
                 .args(["-L", "-o", archive_str, &download_url])
                 .status()
-                .map_err(|e| format!("Failed to execute curl: {e}"))?;
+                .map_err(|e| WeaverError::Spawn(format!("Failed to execute curl: {e}")))?;
 
             if !status.success() {
-                return Err("curl download failed".to_string());
+                return Err(WeaverError::Spawn("curl download failed".to_string()));
             }
         } else if Command::new("wget").arg("--version").output().is_ok() {
             let archive_str = archive_path
                 .to_str()
-                .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
+                .ok_or_else(|| WeaverError::Spawn("Archive path is not valid UTF-8".to_string()))?;
             let status = Command::new("wget")
                 .args(["-O", archive_str, &download_url])
                 .status()
-                .map_err(|e| format!("Failed to execute wget: {e}"))?;
+                .map_err(|e| WeaverError::Spawn(format!("Failed to execute wget: {e}")))?;
 
             if !status.success() {
-                return Err("wget download failed".to_string());
+                return Err(WeaverError::Spawn("wget download failed".to_string()));
             }
         } else {
-            return Err(
-                "Neither curl nor wget found. Please install one to download weaver.".to_string()
-            );
+            return Err(WeaverError::Spawn(
+                "Neither curl nor wget found. Please install one to download weaver.".to_string(),
+            ));
         }
 
         // Extract tar.xz
-        let output_dir = archive_path
-            .parent()
-            .ok_or_else(|| "Archive path has no parent directory".to_string())?;
+        let output_dir = archive_path.parent().ok_or_else(|| {
+            WeaverError::Spawn("Archive path has no parent directory".to_string())
+        })?;
         let archive_str = archive_path
             .to_str()
-            .ok_or_else(|| "Archive path is not valid UTF-8".to_string())?;
-        let output_dir_str = output_dir
-            .to_str()
-            .ok_or_else(|| "Output directory path is not valid UTF-8".to_string())?;
+            .ok_or_else(|| WeaverError::Spawn("Archive path is not valid UTF-8".to_string()))?;
+        let output_dir_str = output_dir.to_str().ok_or_else(|| {
+            WeaverError::Spawn("Output directory path is not valid UTF-8".to_string())
+        })?;
         let status = Command::new("tar")
             .args(["-xJf", archive_str, "-C", output_dir_str])
             .status()
-            .map_err(|e| format!("Failed to extract tar.xz: {e}"))?;
+            .map_err(|e| WeaverError::Spawn(format!("Failed to extract tar.xz: {e}")))?;
 
         if !status.success() {
-            return Err("tar extraction failed".to_string());
+            return Err(WeaverError::Spawn("tar extraction failed".to_string()));
         }
 
         // Find and move weaver binary. The release archive extracts into a
         // versioned subdirectory (e.g. `weaver-aarch64-apple-darwin/weaver`), not
         // flatly into `output_dir`, so this must search recursively.
-        let weaver_binary = Self::find_file_recursive(output_dir, "weaver")
-            .ok_or_else(|| "could not find `weaver` binary in extracted archive".to_string())?;
+        let weaver_binary = Self::find_file_recursive(output_dir, "weaver").ok_or_else(|| {
+            WeaverError::Spawn("could not find `weaver` binary in extracted archive".to_string())
+        })?;
         let scaffold_dir = weaver_binary
             .parent()
             .filter(|p| *p != output_dir)
             .map(std::path::Path::to_path_buf);
         fs::rename(&weaver_binary, &output_path)
-            .map_err(|e| format!("Failed to move weaver binary: {e}"))?;
+            .map_err(|e| WeaverError::Spawn(format!("Failed to move weaver binary: {e}")))?;
 
         // Clean up archive and any leftover extraction scaffolding (best-effort;
         // this is library code so no `cargo:warning=` sink is available here).

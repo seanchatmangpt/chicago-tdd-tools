@@ -29,6 +29,7 @@
 //!     - Guaranteed side-effect free
 //! ```
 
+use crate::core::builders::BuilderError;
 use std::marker::PhantomData;
 
 /// Effect marker: Network read operations
@@ -214,7 +215,7 @@ pub trait RequiresEffect<E> {
     /// # Errors
     ///
     /// Returns error if the operation cannot be executed.
-    fn execute(&self, effect: &Self::Effect) -> Result<(), String>;
+    fn execute(&self, effect: &Self::Effect) -> Result<(), BuilderError>;
 }
 
 /// Network read operation
@@ -233,20 +234,22 @@ impl HttpGet {
 impl RequiresEffect<NetworkRead> for HttpGet {
     type Effect = Effects<NetworkRead>;
 
-    fn execute(&self, _effect: &Self::Effect) -> Result<(), String> {
+    fn execute(&self, _effect: &Self::Effect) -> Result<(), BuilderError> {
         if self.url.is_empty() {
-            return Err("URL cannot be empty".to_string());
+            return Err(BuilderError::BuildFailure { detail: "URL cannot be empty".to_string() });
         }
         if !self.url.starts_with("http://") && !self.url.starts_with("https://") {
-            return Err(format!(
-                "Invalid URL scheme — expected http:// or https://, got: {}",
-                self.url
-            ));
+            return Err(BuilderError::BuildFailure {
+                detail: format!(
+                    "Invalid URL scheme — expected http:// or https://, got: {}",
+                    self.url
+                ),
+            });
         }
         if self.url.contains("api.example.com") {
             return Ok(());
         }
-        Err("HTTP effects require an HTTP client feature (e.g. reqwest) — enable it to perform real network I/O".to_string())
+        Err(BuilderError::BuildFailure { detail: "HTTP effects require an HTTP client feature (e.g. reqwest) — enable it to perform real network I/O".to_string() })
     }
 }
 
@@ -267,11 +270,12 @@ impl FileWrite {
 impl RequiresEffect<StorageWrite> for FileWrite {
     type Effect = Effects<StorageWrite>;
 
-    fn execute(&self, _effect: &Self::Effect) -> Result<(), String> {
+    fn execute(&self, _effect: &Self::Effect) -> Result<(), BuilderError> {
         if self.path.is_empty() {
-            return Err("Path cannot be empty".to_string());
+            return Err(BuilderError::BuildFailure { detail: "Path cannot be empty".to_string() });
         }
-        std::fs::write(&self.path, &self.content).map_err(|e| e.to_string())
+        std::fs::write(&self.path, &self.content)
+            .map_err(|e| BuilderError::BuildFailure { detail: e.to_string() })
     }
 }
 
@@ -404,7 +408,7 @@ mod tests {
         // HTTP I/O requires the 'reqwest-client' feature; without it the call
         // must fail with an explanatory error rather than silently succeed.
         assert!(result.is_err());
-        let msg = result.unwrap_err();
+        let msg = result.unwrap_err().to_string();
         assert!(msg.contains("HTTP effects require"), "unexpected error message: {msg}");
     }
 
@@ -434,7 +438,7 @@ mod tests {
         let err = non_empty.execute(&effects);
         assert!(err.is_err());
         assert!(
-            err.unwrap_err().contains("HTTP effects require"),
+            err.unwrap_err().to_string().contains("HTTP effects require"),
             "should report missing HTTP client feature"
         );
     }
