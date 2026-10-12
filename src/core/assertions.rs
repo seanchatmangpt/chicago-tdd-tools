@@ -256,8 +256,8 @@ impl<T: std::fmt::Debug> AssertionBuilder<T> {
 ///
 /// Compile-time validated assertion with OTEL/Weaver validation.
 ///
-/// **3rd Idea**: Type-level validated assertion that prevents invalid states at compile time.
-/// Maximum value: Type-safe, validated, prevents entire class of errors.
+/// **3rd Idea**: Runtime-validated assertion with OTEL decoration (W27 probe: prevents nothing at compile time — `T: Debug` + closure bounds are the only compile gates).
+/// Maximum value: Type-safe, validated, catches failures at runtime with span/metric bookkeeping.
 ///
 /// **Telemetry**: Full OTEL spans and metrics
 /// **Validation**: OTEL span validation + Weaver live-check schema validation
