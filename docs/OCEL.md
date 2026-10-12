@@ -22,7 +22,7 @@ Every macro execution (the governance `Diagnostic` emission path (`emit_diagnost
 Events are admitted through the `wasm4pm-compat` Evidence lifecycle, ensuring that the generated log is valid and has proper provenance.
 
 ### 3. Log Sealing
-At the end of a run, the log is sealed with a BLAKE3 digest and can be exported as a `.ocel.jsonl` file for consumption by standard process mining tools.
+At the end of a run, the log is sealed with a BLAKE3 digest and is held in memory as `Evidence<OcelLog, Receipted, TestSuiteWitness>` (W27 probe: no `.ocel.jsonl` export writer exists in the crate — consumption is via the serde `Serialize` derive the consumer exercises).
 
 ### 4. Self-Teaching Loop
 When `ocel-generation-discovery` is enabled, runs can be graduated for discovery (`graduate_for_discovery` mints a `GraduationCandidate`; a write-only `ProcessModelStore` holds candidate models; currently exercised from tests, no production call site). Model inference and the replay path are NOT yet wired — conformance today is enforced explicitly via `ConformanceSession` replay against an authored model.

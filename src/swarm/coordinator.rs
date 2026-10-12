@@ -102,7 +102,7 @@ pub struct SwarmCoordinator {
     /// completion via `record_completion` and on member removal via
     /// `clear_assignments_for`)
     task_assignments: HashMap<String, String>,
-    /// Consensus threshold (% of members that must agree)
+    /// Consensus threshold (% of members — an IDLENESS ratio: the check is fraction-of-idle-members >= threshold, not result agreement; W27 probe)
     consensus_threshold: f32,
 }
 
@@ -219,7 +219,7 @@ impl SwarmCoordinator {
         self.task_assignments.len()
     }
 
-    /// Check swarm consensus on a result
+    /// Check the swarm idleness-consensus heuristic (W27 probe: no votes/result involved — returns whether the idle-member fraction meets the threshold)
     #[must_use]
     #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for consensus calculation (usize to f32)
     pub fn check_consensus(&self, sector: &str) -> bool {

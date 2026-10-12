@@ -589,7 +589,7 @@ OCEL 2.0 process mining. Turns test execution into Object-Centric Event Logs and
 **Submodule `observability::ocel::powl_fixture_bridge`** (src/observability/ocel/powl_fixture_bridge.rs):
 converts merger-matrix fixture JSON into POWL conformance session inputs.
 - `merger_fixture_to_session_words(...) -> Result<..., FixtureBridgeError>` - Fixture JSON → session words
-- `session_words_for_atoms(names, atoms) -> Vec<u64>` / `session_words_for_atoms_relaxed(names, atoms) -> Vec<u64>` - Atom-list → session words (strict / relaxed)
+- `session_words_for_atoms(names, atoms) -> Result<Vec<u64>, FixtureBridgeError> (the _relaxed variant returns bare Vec<u64>)` / `session_words_for_atoms_relaxed(names, atoms) -> Vec<u64>` - Atom-list → session words (strict / relaxed)
 - `fixture_activity_names(fixture_json) -> Result<Vec<String>, FixtureBridgeError>` - Extract activity names
 - `FixtureBridgeError` (error taxonomy)
 
