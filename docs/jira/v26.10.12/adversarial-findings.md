@@ -431,3 +431,40 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   interaction — the rewritten assertion compiles, but a fresh-copy user may
   still hit `missing_docs` on the test file (probe finding; needs either a
   doc comment in the example or a documented allow).
+
+## W28–W32 CLOSING REGISTER (2026-10-12, verification waves + same-tick repairs)
+
+- W28: closing sweep at 049aa30; repairs 89fc3b4/25ff66f/1d2102f. QUICK_GUIDE
+  note landed after being claimed-twice-missing; hamming 100%-admit claim
+  falsified (measured ~0.13, subset condition); generator.rs false const
+  allow removed; lint red (doc_markdown) fixed.
+- W29: the W28 QUICK_GUIDE note itself falsified twice (StateMachine DOES
+  exist at src/testing/state_machine.rs:82, un-prelude-exported; HTML
+  comment invisible in mdbook) — rewritten as visible blockquote (96ea408).
+  Extension-layer `?`-in-`-> Self` invalid-Rust snippets fixed (006e820).
+  SK3 row annotation + TestReceipt cross-ref actually landed (006e820;
+  first attempt was a string-replace-miss). Stale :396 row split (27c84f0).
+- W30: 19-lane audit wave. 16 Quick Glance banners stripped; nato README
+  matrix gained N08/N12/N14/N15 rows (16→20); phantom workflow-engine flag,
+  stale 1.2.0/v1.3+ versions, README SLA 5s→30s, CODE_REVIEW court-offline/
+  honesty-probe phantoms, DOG_FOODING nightly-clippy/audit-cron claims all
+  corrected; tests/README inventory regenerated (2 phantoms out, 12 in);
+  PERFECT_WEAVER timeout constant marked aspirational; USER_GUIDE impossible
+  private::Sealed instruction replaced (7ccc021).
+- W31: ARCHITECTURE.md submodule trees added (40 second-level omissions
+  closed); master_trace.ocel.json committed-status disclosed; 12 generated
+  .ggen/.ggen-v2 state files untracked + .ggen-v2/ ignored (no key material
+  was ever tracked); docs/jira/** added to package exclude (774e628).
+- W32: import_json.rs wire-format doc truth corrected (E2 correction that
+  had never landed: published OcelLog is builder-based NON-serde; serde
+  types are in-crate); import_xml.rs standard-surface line added (86aba86).
+- CLOSED this window: guest_abi quota-0 RED (0ba7dae, test aligned to RS1
+  law); prelude 29-symbol assurance re-exports verified LANDED; find_best_member
+  doc clause (e5b3b88); teamwork README clause (2c679bb); ARCHITECTURE tree.
+- STILL QUEUED (operator/next-session): nightly AFFIDAVIT_DIR env on
+  assurance.yml:220; merger-guests 6 dead errno consts (0..13 range kept
+  verbatim per do-not-renumber law — by-design, disclosed); nextest override
+  terminate-after=2 on star_toml_e2e (only non-1 value); testcontainers
+  dead-stub gate; thermal τ-law re-scope; W24 typed-channel refactor;
+  validate.rs JSON re-check; crates.io publish order (proc_macros first);
+  strata temprun_step ABI re-base; worker.ex backpressure/env allowlist.
