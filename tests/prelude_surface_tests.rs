@@ -703,6 +703,19 @@ mod feature_conformance {
 mod feature_ledger {
     use chicago_tdd_tools::prelude::*;
 
+    #[cfg(feature = "ledger")]
+    #[test]
+    fn typed_error_channels_surface() {
+        // DoD §2.3 typed-error wave: every error channel must be nameable
+        // from the prelude/crate root and non-ZST-sized.
+        use chicago_tdd_tools::prelude::*;
+        assert!(std::mem::size_of::<SwarmError>() < usize::MAX);
+        assert!(std::mem::size_of::<ReceiptJsonError>() < usize::MAX);
+        assert!(std::mem::size_of::<BuilderError>() < usize::MAX);
+        #[cfg(feature = "nato")]
+        assert!(std::mem::size_of::<DossierWireError>() < usize::MAX);
+    }
+
     #[test]
     fn ledger_surface() {
         assert!(std::mem::size_of::<DossierBuilder>() < usize::MAX);

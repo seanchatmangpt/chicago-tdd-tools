@@ -220,7 +220,7 @@ pub use sector_stacks::{academic, claims, OperationReceipt, OperationStatus, Sec
 // can `match` on the error variants without deep path imports.
 pub use crate::core::builders::BuilderError;
 pub use crate::core::receipt::ReceiptJsonError;
-#[cfg(feature = "ledger")]
+#[cfg(feature = "nato")]
 pub use crate::ledger::dossier_wire::DossierWireError;
 pub use crate::swarm::SwarmError;
 pub use swarm::{
@@ -297,7 +297,7 @@ pub mod prelude {
     pub use crate::core::governance::*;
     pub use crate::core::receipt::ReceiptJsonError;
     pub use crate::core::state::*;
-    #[cfg(feature = "ledger")]
+    #[cfg(feature = "nato")]
     pub use crate::ledger::dossier_wire::DossierWireError;
     pub use crate::swarm::SwarmError;
     // Re-export macros in prelude for use without manual root import
