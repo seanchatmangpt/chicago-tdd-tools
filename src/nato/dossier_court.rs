@@ -265,7 +265,7 @@ impl DossierCourt {
         &self,
     ) -> ([u8; 32], [u8; crate::ledger::signing::signer::SIGNATURE_LEN]) {
         let root = dossier_root(&self.receipts);
-        let signer = Signer::from_seed(seed_from_root(&root));
+        let signer = Signer::from_seed(seed_from_root(&root)).expect("non-degenerate");
         let subject = dossier_subject(&root);
         (root, signer.sign(&subject))
     }
@@ -615,7 +615,7 @@ mod tests {
         assert_eq!(root_a, root_b, "same receipt set -> same root");
         assert_eq!(sig_a, sig_b, "deterministic seal over the same root");
         assert_eq!(sig_a.len(), 3309, "FIPS 204 signature length");
-        let signer = Signer::from_seed(seed_from_root(&root_a));
+        let signer = Signer::from_seed(seed_from_root(&root_a)).expect("non-degenerate");
         assert!(
             Signer::verify(&signer.public_key(), &dossier_subject(&root_a), &sig_a),
             "sealed dossier must verify under the derived key over the \

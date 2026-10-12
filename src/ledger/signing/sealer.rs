@@ -267,7 +267,7 @@ mod tests {
     // Real signer instance (Chicago: real collaborator, no mocks).
     // Distinct seeds per call: two signers must never share a key.
     fn fresh_signer(seed: u8) -> super::super::signer::Signer {
-        super::super::signer::Signer::from_seed([seed; 32])
+        super::super::signer::Signer::from_seed([seed; 32]).expect("non-degenerate")
     }
 
     #[test]
@@ -343,7 +343,8 @@ mod tests {
         // only truncations.
         let s = crate::ledger::signing::signer::Signer::from_seed(
             [7u8; crate::ledger::signing::signer::SEED_LEN],
-        );
+        )
+        .expect("non-degenerate");
         let sealed = seal(&[0xab; 32], &s).expect("seal");
         let mut bytes = encode(&sealed).to_vec();
         bytes.push(0);

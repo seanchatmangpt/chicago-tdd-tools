@@ -128,6 +128,14 @@ pub fn assert_wire_sizes() {
     );
 }
 
+// Manual Debug impl: SigningKey/VerifyingKey do not implement Debug, and the
+// derived output must never leak signing material anyway.
+impl std::fmt::Debug for Signer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Signer").finish_non_exhaustive()
+    }
+}
+
 /// ML-DSA-65 signer. Clone-free verification key derived at construction.
 pub struct Signer {
     signing_key: SigningKey<MlDsa65>,
@@ -138,16 +146,30 @@ pub struct Signer {
 
 impl Signer {
     /// Deterministic path: derive the keypair from a 32-byte seed (xi).
-    pub fn from_seed(seed: [u8; SEED_LEN]) -> Self {
+    ///
+    /// Degenerate seeds are refused before any key material is expanded
+    /// (SK3-F2): an all-zero or all-ones seed is a well-formed input to
+    /// FIPS 204 key expansion but reconstructs a *valid* keypair from
+    /// non-secret, guessable constant material. Carries a [`RefusalDigest`]
+    /// per the same hashed-cause law as [`Signer::generate`].
+    ///
+    /// # Errors
+    /// [`SealError::EntropyRefused`] if `seed` is all-zero or all-ones.
+    pub fn from_seed(seed: [u8; SEED_LEN]) -> Result<Self, SealError> {
         debug_assert!({
             assert_wire_sizes();
             true
         });
+        if seed.iter().all(|b| *b == 0) || seed.iter().all(|b| *b == 0xFF) {
+            return Err(SealError::EntropyRefused(refusal_digest_of(
+                "degenerate generation seed refused (all-zero/all-ones)",
+            )));
+        }
         let seed = Zeroizing::new(seed);
         let ml_seed = ml_dsa::Seed::from(*seed);
         let signing_key = SigningKey::<MlDsa65>::from_seed(&ml_seed);
         let verifying_key = signing_key.verifying_key();
-        Signer { signing_key, verifying_key, seed }
+        Ok(Signer { signing_key, verifying_key, seed })
     }
 
     /// Random path: 32 bytes of OS entropy as the generation seed. Any
@@ -275,10 +297,44 @@ mod tests {
     }
 
     #[test]
+    fn from_seed_refuses_degenerate_seeds() {
+        // SK3-F2: all-zero and all-ones seeds reconstruct valid (guessable)
+        // keypairs — they must be typed refusals before key expansion.
+        let zero = [0u8; SEED_LEN];
+        let ones = [0xFFu8; SEED_LEN];
+        for seed in [zero, ones] {
+            let err =
+                Signer::from_seed(seed).expect_err("degenerate seed must be refused");
+            assert!(
+                matches!(err, SealError::EntropyRefused(_)),
+                "refusal must carry the hashed-cause refusal digest: {err}"
+            );
+        }
+        // Distinct causes, same class: reproducible digests, not fresh entropy.
+        let (Err(e1), Err(e2)) = (Signer::from_seed(zero), Signer::from_seed(zero))
+        else {
+            panic!("all-zero seed must refuse both times");
+        };
+        assert_eq!(e1, e2, "same cause must reproduce the same refusal digest");
+    }
+
+    #[test]
+    fn from_seed_accepts_distinct_non_degenerate_seeds() {
+        let a = Signer::from_seed(test_seed(1)).expect("seed 1 non-degenerate");
+        let b = Signer::from_seed(test_seed(2)).expect("seed 2 non-degenerate");
+        assert_ne!(a.public_key(), b.public_key());
+        // Near-degenerate seeds (single differing byte) are still accepted.
+        let mut near_zero = [0u8; SEED_LEN];
+        near_zero[17] = 0x01;
+        let c = Signer::from_seed(near_zero).expect("single-byte seed accepted");
+        assert_ne!(c.public_key(), a.public_key());
+    }
+
+    #[test]
     fn from_seed_is_reproducible() {
         let seed = test_seed(1);
-        let a = Signer::from_seed(seed);
-        let b = Signer::from_seed(seed);
+        let a = Signer::from_seed(seed).expect("non-degenerate");
+        let b = Signer::from_seed(seed).expect("non-degenerate");
         assert_eq!(a.seed(), b.seed(), "same seed must retain same replay key");
         assert_eq!(a.public_key(), b.public_key(), "same seed derives same keypair");
         let subject = test_subject(2);
@@ -291,7 +347,7 @@ mod tests {
 
     #[test]
     fn verify_accepts_own_signature() {
-        let signer = Signer::from_seed(test_seed(3));
+        let signer = Signer::from_seed(test_seed(3)).expect("non-degenerate");
         let subject = test_subject(4);
         let sig = signer.sign(&subject);
         assert!(Signer::verify(&signer.public_key(), &subject, &sig));
@@ -299,14 +355,14 @@ mod tests {
 
     #[test]
     fn verify_rejects_wrong_subject() {
-        let signer = Signer::from_seed(test_seed(5));
+        let signer = Signer::from_seed(test_seed(5)).expect("non-degenerate");
         let sig = signer.sign(&test_subject(6));
         assert!(!Signer::verify(&signer.public_key(), &test_subject(7), &sig));
     }
 
     #[test]
     fn bit_flip_sweep_rejects_all_64_flips() {
-        let signer = Signer::from_seed(test_seed(8));
+        let signer = Signer::from_seed(test_seed(8)).expect("non-degenerate");
         let subject = test_subject(9);
         let pk = signer.public_key();
         let sig = signer.sign(&subject);
@@ -338,7 +394,7 @@ mod tests {
         let ml_seed = ml_dsa::Seed::from(seed);
         let key = SigningKey::<MlDsa65>::from_seed(&ml_seed);
         let adopted = Signer::from_signing_key(key).expect("adopt");
-        let direct = Signer::from_seed(seed);
+        let direct = Signer::from_seed(seed).expect("non-degenerate");
         assert_eq!(adopted.seed(), direct.seed());
         assert_eq!(adopted.public_key(), direct.public_key());
         let subject = test_subject(14);
@@ -359,8 +415,8 @@ mod tests {
 
     #[test]
     fn cross_key_rejection() {
-        let signer_a = Signer::from_seed(test_seed(10));
-        let signer_b = Signer::from_seed(test_seed(11));
+        let signer_a = Signer::from_seed(test_seed(10)).expect("non-degenerate");
+        let signer_b = Signer::from_seed(test_seed(11)).expect("non-degenerate");
         assert_ne!(signer_a.public_key(), signer_b.public_key());
         let subject = test_subject(12);
         let sig_a = signer_a.sign(&subject);

@@ -7,7 +7,7 @@
 //! - Invariants checked (Qᵢ)
 //! - Timing windows (τ for hot, durations for warm/cold)
 //! - Effect envelope exercised
-//! - Optional cryptographic signature (SHA-256 (unkeyed, identity fields only))
+//! - Optional cryptographic signature (SHA-256 (unkeyed, over all receipt fields))
 //!
 //! Receipts make tests observable operations with cryptographic provenance,
 //! like everything else in the AHI architecture.
@@ -269,31 +269,47 @@ impl TestReceipt {
         format!("{:x}", hasher.finalize())[..16].to_string()
     }
 
-    /// Sign this receipt using a SHA-256 content hash.
+    /// Canonical signature payload: every receipt field that participates in
+    /// [`Self::to_json`] except the `signature` field itself (self-reference).
+    /// Struct field order is fixed, so `serde_json` output is deterministic;
+    /// metadata order is significant (it is a `Vec`, not a map).
+    fn signature_payload(&self) -> String {
+        let unsigned = TestReceipt { signature: None, ..self.clone() };
+        serde_json::to_string(&unsigned)
+            .unwrap_or_else(|_| {
+                // Serde serialization of this plain-data struct cannot fail
+                // (no maps with non-string keys, no fallible types); the
+                // fallback keeps the function total without panicking.
+                format!(
+                    "{}-{}-{}-{:?}-{:?}-{:?}-{:?}-{}-{}-{:?}",
+                    self.receipt_id, self.contract_name, self.code_hash, self.environment,
+                    self.invariants_checked, self.timing, self.effects_exercised, self.result,
+                    self.timestamp, self.metadata
+                )
+            })
+    }
+
+    /// Sign this receipt using a SHA-256 content hash over the canonical
+    /// payload (all fields serialized via `to_json` except `signature`).
     ///
     // SECURITY: Uses SHA-256 content hash, not a keyed signature. Sufficient for tamper detection, not authentication.
     pub fn sign(&mut self) {
-        let signature_input = format!(
-            "{}-{}-{}-{}",
-            self.receipt_id, self.contract_name, self.timestamp, self.result
-        );
+        let payload = self.signature_payload();
         let mut hasher = Sha256::new();
-        hasher.update(signature_input.as_bytes());
+        hasher.update(payload.as_bytes());
         self.signature = Some(format!("{:x}", hasher.finalize()));
     }
 
-    /// Verify receipt signature by recomputing the SHA-256 content hash and comparing.
+    /// Verify receipt signature by recomputing the SHA-256 content hash over
+    /// the canonical payload (all fields except `signature`) and comparing.
     ///
     // SECURITY: Uses SHA-256 content hash, not a keyed signature. Sufficient for tamper detection, not authentication.
     #[must_use]
     pub fn verify_signature(&self) -> bool {
         self.signature.as_ref().is_some_and(|sig| {
-            let signature_input = format!(
-                "{}-{}-{}-{}",
-                self.receipt_id, self.contract_name, self.timestamp, self.result
-            );
+            let payload = self.signature_payload();
             let mut hasher = Sha256::new();
-            hasher.update(signature_input.as_bytes());
+            hasher.update(payload.as_bytes());
             let expected = format!("{:x}", hasher.finalize());
             sig == &expected
         })
@@ -302,8 +318,8 @@ impl TestReceipt {
     /// Closure under explanation: a receipt is **algebraically closed** iff
     ///
     /// 1. its signature verifies (`verify_signature()` — the content hash over
-    ///    `receipt_id-contract_name-timestamp-result` recomputes to the stored
-    ///    signature, so the receipt has a consistent signature over its identity fields (receipt_id/contract/timestamp/result — other fields are NOT signature-covered; tamper detection is partial by design)), **and**
+    ///    the canonical all-fields payload recomputes to the stored
+    ///    signature, so the receipt is internally consistent over its own content; tamper detection, not authentication — the hash is unkeyed), **and**
     /// 2. the recorded outcome is not an unresolved deviation: `Fail` and
     ///    `Error` outcomes leave the deviation unexplained by the receipt
     ///    itself, so the receipt cannot close over them. `Pass` and `Skip`
@@ -614,6 +630,52 @@ mod tests {
         receipt.sign();
         assert!(receipt.signature.is_some());
         assert!(receipt.verify_signature());
+    }
+
+    #[test]
+    fn test_signature_covers_metadata() {
+        let env = EnvironmentFingerprint::capture();
+        let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
+        let mut receipt = TestReceipt::new(
+            "test_meta_tamper".to_string(),
+            "abc123".to_string(),
+            env,
+            vec![],
+            timing,
+            vec![],
+            TestOutcome::Pass,
+        );
+        receipt.add_metadata("reviewer", "lane_a");
+        receipt.sign();
+        assert!(receipt.verify_signature());
+
+        // Tampering with a metadata value must flip verification to false.
+        receipt.metadata[0].1 = "lane_b".to_string();
+        assert!(!receipt.verify_signature());
+
+        // Re-ordering metadata entries is also tampering (Vec, order-significant).
+        receipt.metadata.reverse();
+        // With one entry reverse is identity; add a second to make it real.
+        let mut receipt2 = {
+            let env = EnvironmentFingerprint::capture();
+            let timing = TimingMeasurement::new(5, 1, "hot".to_string(), true, 8);
+            let mut r = TestReceipt::new(
+                "test_meta_tamper2".to_string(),
+                "abc123".to_string(),
+                env,
+                vec![],
+                timing,
+                vec![],
+                TestOutcome::Pass,
+            );
+            r.add_metadata("a", "1");
+            r.add_metadata("b", "2");
+            r.sign();
+            r
+        };
+        assert!(receipt2.verify_signature());
+        receipt2.metadata.reverse();
+        assert!(!receipt2.verify_signature());
     }
 
     #[test]

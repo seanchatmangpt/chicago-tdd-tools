@@ -3,6 +3,10 @@
 // `#[ignore]`d tests and referenced by the court registry (KatCourt), so
 // non-test builds legitimately see unused items.
 #![allow(dead_code)]
+// JUSTIFICATION: the KAT court runs over frozen GOLDEN_SEED consts (verified
+// non-degenerate by Signer::from_seed's own screen), and hex decoding operates
+// on bytes the court itself wrote — the expect sites are total by construction.
+#![allow(clippy::expect_used)]
 //! N17 port — PIPELINE-KAT court over [`crate::ledger::signing::signer::Signer`]
 //! (ML-DSA-65, NIST FIPS 204).
 //!
@@ -143,7 +147,7 @@ const GOLDEN_SEED_1: [u8; SEED_LEN] = [
 
 /// Derive the (pk, sig) pair for the golden seed over the golden subject.
 fn golden_derivation() -> ([u8; PK_LEN], [u8; SIG_LEN]) {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     (s.public_key(), s.sign(&GOLDEN_SUBJECT))
 }
 
@@ -186,7 +190,7 @@ fn wire_sizes_match_fips204() {
 /// the pinning duty is reported, never silently dropped.
 #[test]
 fn golden_frozen_vectors_reproduce_bit_for_bit_across_3_runs() {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     for run in 0..3 {
         let sig = s.sign(&GOLDEN_SUBJECT);
         if !GOLDEN_PK_HEX.is_empty() {
@@ -235,7 +239,7 @@ pub(crate) fn n17_determinism_pin() -> bool {
         return false;
     }
     // The pinned golden slots themselves must reproduce bit-for-bit.
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     s.public_key() == to_arr::<PK_LEN>(unhex(GOLDEN_PK_HEX))
         && s.sign(&GOLDEN_SUBJECT) == to_arr::<SIG_LEN>(unhex(GOLDEN_SIG_HEX))
 }
@@ -243,7 +247,7 @@ pub(crate) fn n17_determinism_pin() -> bool {
 /// Legitimate-accept leg (hoisted): the golden signature over the golden
 /// subject must verify. Returns `false` on refusal.
 pub(crate) fn n17_legitimate_accept() -> bool {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     let pk = s.public_key();
     let sig = s.sign(&GOLDEN_SUBJECT);
     Signer::verify(&pk, &GOLDEN_SUBJECT, &sig)
@@ -254,7 +258,7 @@ pub(crate) fn n17_legitimate_accept() -> bool {
 /// buffers, flip byte = (i * LEN + 63) / 64, bit = i % 8) must be
 /// REJECTED, and the un-corrupted original must still verify.
 pub(crate) fn n17_sampled_flip_reject() -> bool {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     let pk = s.public_key();
     let good = s.sign(&GOLDEN_SUBJECT);
     if !Signer::verify(&pk, &GOLDEN_SUBJECT, &good) {
@@ -298,7 +302,7 @@ pub(crate) fn n17_run_court_probe() -> bool {
 /// the golden signature MUST be rejected — and the uncorrupted signature
 /// must verify — so the court refuses to run if verify loses its teeth.
 pub(crate) fn n17_positive_control() -> bool {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     let pk = s.public_key();
     let good = s.sign(&GOLDEN_SUBJECT);
     if !Signer::verify(&pk, &GOLDEN_SUBJECT, &good) {
@@ -443,7 +447,7 @@ impl Court for KatCourt {
 /// divergences = 75, preserving the count and the binding property.
 #[test]
 fn kat_signature_is_subject_bound_75_variants() {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     let pk = s.public_key();
     let sig_a = s.sign(&GOLDEN_SUBJECT);
 
@@ -518,8 +522,8 @@ fn kat_signature_is_subject_bound_75_variants() {
 /// the golden key (and vice versa) for the same subject.
 #[test]
 fn kat_signature_is_key_bound() {
-    let s0 = Signer::from_seed(GOLDEN_SEED);
-    let s1 = Signer::from_seed(GOLDEN_SEED_1);
+    let s0 = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
+    let s1 = Signer::from_seed(GOLDEN_SEED_1).expect("non-degenerate");
     assert_ne!(s0.public_key(), s1.public_key(), "distinct seeds -> distinct keys");
     let sig0 = s0.sign(&GOLDEN_SUBJECT);
     let sig1 = s1.sign(&GOLDEN_SUBJECT);
@@ -547,7 +551,7 @@ fn kat_signature_is_key_bound() {
 /// signature over anything).
 #[test]
 fn malformed_inputs_fail_closed() {
-    let s = Signer::from_seed(GOLDEN_SEED);
+    let s = Signer::from_seed(GOLDEN_SEED).expect("non-degenerate");
     let pk = s.public_key();
     let sig = s.sign(&GOLDEN_SUBJECT);
 

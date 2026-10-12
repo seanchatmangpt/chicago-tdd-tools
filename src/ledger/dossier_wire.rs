@@ -407,7 +407,7 @@ mod tests {
         // Real receipts minted through the real constructors (no mocks).
         let receipts = [nato_receipt(CourtId::N01), nato_receipt(CourtId::N02)];
         let root = dossier_root(&receipts);
-        let signer = Signer::from_seed([0x41; 32]);
+        let signer = Signer::from_seed([0x41; 32]).expect("non-degenerate");
         let kid = crate::ledger::signing::key_id(&signer.public_key());
         let signature = signer.sign(&root);
 

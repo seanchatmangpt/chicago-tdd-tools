@@ -58,7 +58,7 @@ fn temp_store() -> (tempfile::TempDir, KeyStore) {
 
 /// Seal a fresh dossier under a fresh signer, returning both.
 fn sealed_fresh(root_n: u8, signer_n: u8) -> (Signer, SealedDossier) {
-    let signer = Signer::from_seed(seed_for(signer_n));
+    let signer = Signer::from_seed(seed_for(signer_n)).expect("non-degenerate");
     let sealed = seal(&subject_for(root_n), &signer).expect("seal");
     (signer, sealed)
 }
@@ -84,8 +84,8 @@ fn wire_sizes_match_fips204_at_the_integration_surface() {
 #[test]
 fn from_seed_twice_is_byte_identical() {
     let seed = seed_for(1);
-    let a = Signer::from_seed(seed);
-    let b = Signer::from_seed(seed);
+    let a = Signer::from_seed(seed).expect("non-degenerate");
+    let b = Signer::from_seed(seed).expect("non-degenerate");
 
     assert_eq!(a.seed(), b.seed(), "same seed preserves the replay key");
     assert_eq!(a.public_key(), b.public_key(), "same seed derives same keypair");
@@ -183,7 +183,7 @@ fn tamper_matrix_is_all_invalid() {
     }
 
     // (d) swapped key from a DIFFERENT seed
-    let other = Signer::from_seed(seed_for(21));
+    let other = Signer::from_seed(seed_for(21)).expect("non-degenerate");
     assert_ne!(signer.public_key(), other.public_key());
     assert_eq!(
         verify_sealed(&sealed, &other.public_key()),
