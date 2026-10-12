@@ -143,3 +143,66 @@ Queued (no code change in this session): SK2, SK3, SK4, SK5, SK6, SK10.
 Note on fix IDs: the coordinator's R29-R34 batch corresponds to the landed
 set above; per-R mapping is not reproduced in this receipt because the
 R-numbered receipts were not visible to this lane at write time.
+
+## Second ensemble - blockchain-replacement thesis (SX1-SX10)
+
+- **Subject under audit**: the claim that the conformance/ledger kernel can
+  serve as a blockchain-replacement substrate (ordering, value-bearing
+  admission, double-spend resistance, MEV resistance).
+- **Method**: second 10-lane adversarial skeptic ensemble (SX1-SX10),
+  2026-10-11, same fan-out on the canonical checkout
+  `/Users/sac/chicago-tdd-tools` (main). One lane per thesis surface;
+  verdicts below are post-reproduction where a report has landed.
+- **Subject SHA at dispatch**: b798357 (main HEAD at SX dispatch).
+
+| Lane | Verdict | Finding (one line) | Disposition |
+|------|---------|--------------------|-------------|
+| SX1 | FALSIFIED-BY-ABSENCE | No burn/odometer/blind-nullifier mechanism exists anywhere in the tree; `Lease.admit` trusts `attested: true` without verifying a signature - 200 forged leases admitted in 5ms. | FIX IN FLIGHT (R35) |
+| SX2 | FALSIFIED (vacuous) | No ordering layer exists to falsify directly: split-brain is the default, the wire format carries no seq/nonce, and an in-path adversary holds the MEV position. | QUEUED |
+| SX3 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX4 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX5 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX6 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX7 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. | FIXED (commit 8b92c3e, SX8-F1) |
+| SX9 | IN-PROGRESS | Report not landed at receipt time. | - |
+| SX10 | IN-PROGRESS | Report not landed at receipt time. | - |
+
+Tally so far: 2 FALSIFIED (1 FIXED), 1 FALSIFIED-BY-ABSENCE (fix in flight),
+7 IN-PROGRESS.
+
+### SX1 - No conservation mechanism; unsigned lease admission
+
+- **Claim falsified**: that the kernel conserves value under a
+  blockchain-replacement thesis (burn/odometer/blind-nullifier class).
+- **Repro**: tree-wide search finds no burn, odometer, or blind-nullifier
+  mechanism; `Lease.admit` accepts the caller-supplied `attested: true` flag
+  without any signature verification. Forged-lease run: 200 leases admitted
+  in ~5ms.
+- **Disposition**: fix in flight (R35).
+
+### SX2 - Ordering layer absent; MEV position held by in-path adversary
+
+- **Claim falsified (vacuously)**: that ordering/MEV resistance holds.
+- **Repro**: there is no ordering layer, so the property is vacuous -
+  split-brain is the default state; the wire format carries no sequence
+  number or nonce; any in-path adversary occupies the MEV position by
+  construction.
+- **Disposition**: QUEUED.
+
+### SX8 - Prefix exhaustion vacuously conforming (SX8-F1)
+
+- **Claim falsified**: that a `Complete` phase plus an `is_conforming()==true`
+  report implies the trace reached the net's terminal place.
+- **Repro**: `report.rs`'s `Unfinished` criterion (`steps_done < total_events`)
+  is satisfied by any exhausted stream, and the session never compared the
+  final marking to the net's terminal place - a lawful prefix latched
+  `Complete`/conforming.
+- **Disposition**: FIXED - commit 8b92c3e: `ConformanceSession` now carries
+  `terminal_marking = 1 << n` computed at `from_model` time; the completion
+  law is `Phase::Complete` + conforming requires
+  `final_marking == terminal_marking`. Regression tests in session +
+  integration + `#[should_panic]` at the `assert_conforms!` macro seam.
+  Verified green: 102 lib conformance tests, 18 integration tests, 781
+  all-assurance lib tests, clippy/fmt clean; audit found no existing test
+  relied on prefix-completion-conforming.
