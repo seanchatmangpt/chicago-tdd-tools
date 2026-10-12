@@ -35,10 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `src/ledger/dossier_wire.rs` doc comments updated to the excised state.
 
 ## [26.10.12] continued - 2026-10-11
-Endgame audit-wave convergence (`8ab234a` + `1fc1c72`, wave 1; `5189603`,
-wave 2; `70575e8` + `e465c1a`, wave 3; `2c80a9e`, wave 4; strata `59ed80c` rebase; `451f4a8`, wave 5; `b8dac24`+`0f33671`+`934a70c`+`e0411dd`, wave 6)
-  5): 20-lane
-adversarial audit with repairs, all with on-disk test receipts.
+Endgame audit-wave convergence: 20-lane adversarial audit with repairs,
+all with on-disk test receipts. Waves: 1 (`8ab234a` + `1fc1c72`);
+2 (`5189603`); 3 (`70575e8` + `e465c1a`); 4 (`2c80a9e`, W-NTW +
+W-ABI2); strata rebase (`59ed80c`); 5 (`451f4a8`); 6 (`b8dac24` +
+`0f33671` + `934a70c` + `e0411dd`).
 
 ### Added
 - **Prelude assert macros**: prelude gains 8 new assert macros
