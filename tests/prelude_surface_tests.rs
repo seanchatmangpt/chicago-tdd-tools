@@ -676,3 +676,72 @@ mod feature_cli_proof {
         assert!(std::mem::size_of::<TempWorkspace>() < usize::MAX);
     }
 }
+
+/// conformance re-exports: ConformanceError, ConformanceReport,
+/// ConformanceSession, Deviation, Phase, ReplaySummary, ReportOutcome,
+/// YieldStatus
+#[cfg(feature = "conformance")]
+mod feature_conformance {
+    use chicago_tdd_tools::prelude::*;
+
+    #[test]
+    fn conformance_surface() {
+        assert!(std::mem::size_of::<ConformanceError>() < usize::MAX);
+        assert!(std::mem::size_of::<ConformanceReport>() < usize::MAX);
+        assert!(std::mem::size_of::<ConformanceSession>() < usize::MAX);
+        assert!(std::mem::size_of::<Deviation>() < usize::MAX);
+        assert!(std::mem::size_of::<Phase>() < usize::MAX);
+        assert!(std::mem::size_of::<ReplaySummary>() < usize::MAX);
+        assert!(std::mem::size_of::<ReportOutcome>() < usize::MAX);
+        assert!(std::mem::size_of::<YieldStatus>() < usize::MAX);
+    }
+}
+
+/// ledger re-exports: DossierBuilder, DossierRoot, LedgerError,
+/// LedgerExitCode, SealError, ChainedCourtReceipt, CourtReceiptV1
+#[cfg(feature = "ledger")]
+mod feature_ledger {
+    use chicago_tdd_tools::prelude::*;
+
+    #[test]
+    fn ledger_surface() {
+        assert!(std::mem::size_of::<DossierBuilder>() < usize::MAX);
+        assert!(std::mem::size_of::<DossierRoot>() < usize::MAX);
+        assert!(std::mem::size_of::<LedgerError>() < usize::MAX);
+        assert!(std::mem::size_of::<LedgerExitCode>() < usize::MAX);
+        assert!(std::mem::size_of::<SealError>() < usize::MAX);
+        assert!(std::mem::size_of::<ChainedCourtReceipt>() < usize::MAX);
+        assert!(std::mem::size_of::<CourtReceiptV1>() < usize::MAX);
+    }
+}
+
+/// nato re-exports: key_id, KeyStore, SealVerdict, SealedDossier, Signer,
+/// run_court, ControlResult, Court, CourtId, CourtReceipt, Pillar,
+/// ScopingRecord, Verdict, COURT_NAMES
+#[cfg(feature = "nato")]
+mod feature_nato {
+    use chicago_tdd_tools::prelude::*;
+
+    #[test]
+    fn nato_surface() {
+        // Functions and consts: binding resolves the symbol.
+        let _key_id_fn = key_id;
+        let _run_court_fn = run_court;
+        assert!(!COURT_NAMES.is_empty());
+
+        // Types: non-trivial sized layout.
+        assert!(std::mem::size_of::<KeyStore>() < usize::MAX);
+        assert!(std::mem::size_of::<SealVerdict>() < usize::MAX);
+        assert!(std::mem::size_of::<SealedDossier>() < usize::MAX);
+        assert!(std::mem::size_of::<Signer>() < usize::MAX);
+        assert!(std::mem::size_of::<ControlResult>() < usize::MAX);
+        // `Court` is a trait: resolve it with a generic-bound assertion.
+        #[allow(dead_code)]
+        fn _assert_court<T: Court>() {}
+        assert!(std::mem::size_of::<CourtId>() < usize::MAX);
+        assert!(std::mem::size_of::<CourtReceipt>() < usize::MAX);
+        assert!(std::mem::size_of::<Pillar>() < usize::MAX);
+        assert!(std::mem::size_of::<ScopingRecord>() < usize::MAX);
+        assert!(std::mem::size_of::<Verdict>() < usize::MAX);
+    }
+}
