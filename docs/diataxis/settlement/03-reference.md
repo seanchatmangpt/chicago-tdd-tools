@@ -1,4 +1,4 @@
-# Reference — merger-guests ABI As Landed
+# Reference: merger-guests ABI As Landed
 
 This is the reference for `crates/merger-guests` **as landed on disk**. Where
 an earlier specification (E-M-series plan, operator summary) disagrees with

@@ -1,4 +1,4 @@
-# How-To — Typed Refusals and Invariant-Mask Inspection
+# How To: Typed Refusals and Invariant-Mask Inspection
 
 This guide covers the two troubleshooting surfaces you will hit when a merger
 replay refuses: the typed `ConformanceError` surface, and the forbidden-mask

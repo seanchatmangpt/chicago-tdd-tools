@@ -1,4 +1,4 @@
-# Tutorial — Execute a Phase 7 Settlement Conformance Run
+# Tutorial: Execute a Phase 7 Settlement Conformance Run
 
 This tutorial runs the landed Phase 7 settlement court end to end. Everything
 below uses only files already on disk in this repo; no step requires code that

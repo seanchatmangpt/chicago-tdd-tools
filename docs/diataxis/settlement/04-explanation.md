@@ -1,4 +1,4 @@
-# Explanation — The Chatman Equation as Conservation
+# Explanation: The Chatman Equation as Conservation
 
 ## The claim, stated honestly
 
