@@ -619,13 +619,13 @@ struct Connect;
 struct Authenticate;
 
 impl Transition<Disconnected, Connected> for Connect {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }
 
 impl Transition<Connected, Authenticated> for Authenticate {
-    fn execute() -> Result<(), String> {
+    fn execute() -> Result<(), StateMachineError> {
         Ok(())
     }
 }
