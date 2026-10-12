@@ -635,8 +635,9 @@ fn n13_wcet_static_table_leg_is_always_run_and_measured_leg_is_tier3() {
     // 2. Sum the per-column totals of the published doc table's total row
     //    (`| **total** | **6** |**14**|**6**|**6**|**3**| = 35`) and require
     //    the sum AND the stated figure to equal 35.
-    let total_row_at = WCET_SRC.find("| **total** |").expect("doc table total row");
-    let total_row = &WCET_SRC[total_row_at..WCET_SRC.len().min(total_row_at + 120)];
+    let total_row_at = WCET_SRC.find("| **total**").expect("doc table total row");
+    let line_end = total_row_at + WCET_SRC[total_row_at..].find('\n').expect("total row ends");
+    let total_row = &WCET_SRC[total_row_at..line_end];
     let nums: Vec<u64> = parse_doc_table_numbers(total_row);
     assert_eq!(nums.len(), 6, "total row must carry 5 column totals plus the grand total");
     let column_sum: u64 = nums[..5].iter().sum();
