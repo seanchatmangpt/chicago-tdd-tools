@@ -163,7 +163,7 @@ R-numbered receipts were not visible to this lane at write time.
 | SX3 | FALSIFIED | Affidavit fold layer: UTF-8 identity instability (NFC/NFD renders yield different chain_hash/court_id); Skip>Fail fold erases Fail byte-identically; outcome 255 decodes unvalidated; CTT `receipt.rs` range-checks but `unwrap_or(Error)` silently reclasses (`:634`). | QUEUED (fix: NFC pin + severity-lattice fold + validated outcome; CTT format-law unification) |
 | SX4 | FALSIFIED | R31's in-memory fix witnessed, but persistence re-opens the amnesty: `to_bytes` omits `nullifier_history` (empty rebuild after save/load); production `handlers.rs` flat-log admits cross-process replay (FULL amnesty); AFRN snapshot is unauthenticated plaintext (generation forgery accepted). | FIXED (R38, commit 1e2e840 — AFRN v2 + HMAC-sealed snapshots, fail-closed persistence) |
 | SX5 | UNSUPPORTED | Dual-verify claim unsupported - no runtime libcrux anywhere, oracle-consensus API takes caller-supplied booleans; R32 degenerate-seed screening landed ES256-only (ml-dsa/slh-dsa `from_seed` still infallible). ml-dsa verify fuzz HELD (0/12373 accept-on-malformed). | FIXED (R37, commit 1a16e25 — 0xE305 screening on both PQC paths) + doc retracted (UNSUPPORTED verdict stands) |
-| SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | PARTIAL (V5 envelope landed 2c80a9e — 32B module digest slot + M2 falsifier; placeholder until build-time splice; out-pointer re-verify landed 532f38a) |
+| SX6 | FALSIFIED | Module-identity-blind seal preimage CONFIRMED (same finding as SK6 at the seal layer); out-pointers trusted on read without re-verification; trap indistinguishability. | PARTIAL (V5 envelope landed 2c80a9e — 32B module digest slot + M2 falsifier; placeholder until build-time splice; out-pointer bounds validation landed 532f38a) |
 | SX7 | FALSIFIED | ash_graphlaw membrane: contradictory covenants admitted silently (both `priorityOf` and `notPriorityOf` derived from the same fact, no conflict court); authority triples (`authorizedSigner`/`actuationAuthority`) on untargeted classes pass SHACL conform:true; cycle divergence HELD (typed `:resource_limit` refusal). | QUEUED (deontic conflict court + authority-vocabulary SHACL coverage; ash_graphlaw work orders, not CTT code defects) |
 | SX8 | FALSIFIED | Prefix exhaustion vacuously conforming: a stream that exhausted before reaching the net's terminal place latched `Phase::Complete` with `is_conforming()==true` and no deviation. Tid truncation/boundary class HELD (closed). | FIXED (commit 8b92c3e, SX8-F1) |
 | SX9 | HELD (ALIVE) | `deserialize_ct` survives SK2's exact methodology: thrash run 178/192 \|t\|<4.5, the 14 excursions flip sign between same-path classes (noise, not leak); branch-free below the public length gate, verdict table compiled to csel. Caveat: single-run cold Welch is drift-sensitive; future verification uses thrash/interleaved. | VERIFIED (R34; methodology note recorded) |
@@ -252,7 +252,7 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   data.
 - **Disposition**: PARTIAL - V5 envelope landed `2c80a9e` (32B module-digest
   slot + M2 falsifier; placeholder until build-time splice); out-pointer
-  re-verify landed `532f38a`; re-verify out-pointers at replay.
+  re-verify landed `532f38a`;
 
 ### SX7 - Contradictory covenants admitted; authority bypasses SHACL
 
