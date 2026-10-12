@@ -4,7 +4,7 @@
 //! - Phantom-typed states that the compiler enforces
 //! - Transition traits that prevent illegal state transitions
 //! - Automatic schedule generation for concurrent actors
-//! - Integration with loom for deterministic concurrency testing
+//! - AUDIT NOTE (W26): loom integration lives in the sibling `concurrency` module, not here
 //!
 //! This brings lightweight model checking into the test suite, purely in Rust,
 //! without external tools. It aligns with the μ-kernel notion of Λ total order
@@ -20,7 +20,7 @@
 //! Compiler enforces:
 //!     - Only valid transitions allowed
 //!     - Illegal sequences cannot compile
-//!     - All legal sequences explored (bounded depth)
+//!     - One linear sequence explored (bounded depth); interleaving exploration is not implemented
 //! ```
 
 use std::marker::PhantomData;

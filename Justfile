@@ -281,7 +281,7 @@ dossier-inspect FILE:
 
 # Run integration tests only (requires Docker - MUST fail if Docker stopped)
 test-integration: docker-check
-    timeout 60s cargo nextest run --test testcontainers --test weaver_integration --profile integration --features testcontainers,weaver
+    timeout 60s cargo nextest run --test testcontainers --test weaver_integration --test weaver_macro_tests --profile integration --features testcontainers,weaver
 
 test-all: test-unit docker-check test-integration
 

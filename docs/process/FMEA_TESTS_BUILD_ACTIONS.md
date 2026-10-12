@@ -1,3 +1,5 @@
+> **HISTORICAL SNAPSHOT — describes the retired cargo-make era. Commands shown are not current; use `just` recipes. Do not cite as live status.
+
 # FMEA: Tests, Build System, and GitHub Actions
 
 **Document**: Failure Mode and Effects Analysis (FMEA)

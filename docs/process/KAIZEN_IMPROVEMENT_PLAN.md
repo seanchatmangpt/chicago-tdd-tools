@@ -1,3 +1,5 @@
+> **HISTORICAL SNAPSHOT — describes the retired cargo-make era. Commands shown are not current; use `just` recipes. Do not cite as live status.
+
 > 💡 Explanation
 # Kaizen Improvement Plan
 

@@ -4,7 +4,7 @@
 #
 # This script installs pre-commit and pre-push hooks:
 # - Pre-commit: Prevents unwrap/expect in production code
-# - Pre-push: Ensures examples compile and tests pass
+# - Pre-push: Runs the full 6-gate validation (check, clippy, fmt, unit tests, examples, docs)
 # Run this once after cloning the repository: ./scripts/install-hooks.sh
 
 set -e
@@ -98,7 +98,7 @@ echo "  - Prevents pushing broken examples"
 echo ""
 echo "🔧 To bypass (DISCOURAGED):"
 echo "  - Pre-commit: SKIP_UNWRAP_CHECK=1 git commit"
-echo "  - Pre-push: SKIP_EXAMPLES_CHECK=1 git push"
+echo "  - Pre-push: SKIP_PRE_PUSH_CHECK=1 git push"
 echo ""
 echo "🗑️  To uninstall:"
 echo "  - rm .git/hooks/pre-commit"

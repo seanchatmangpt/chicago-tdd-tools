@@ -21,10 +21,9 @@
 pub use crate::{
     alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_approx_eq,
     assert_contains, assert_eq_msg, assert_err, assert_fail, assert_guard_constraint,
-    assert_in_range, assert_json_eq, assert_matches, assert_not_contains, assert_ok,
-    assert_subset, assert_superset, assert_within_tick_budget, async_test,
-    async_test_with_timeout, fixture_test, fixture_test_with_timeout, otel_test, param_test,
-    performance_test, test,
+    assert_in_range, assert_json_eq, assert_matches, assert_not_contains, assert_ok, assert_subset,
+    assert_superset, assert_within_tick_budget, async_test, async_test_with_timeout, fixture_test,
+    fixture_test_with_timeout, otel_test, param_test, performance_test, test,
 };
 
 /// Assertion macros
@@ -34,8 +33,7 @@ pub mod assert {
     pub use crate::{
         assert_approx_eq, assert_contains, assert_eq_msg, assert_err, assert_fail,
         assert_guard_constraint, assert_in_range, assert_json_eq, assert_matches,
-        assert_not_contains, assert_ok, assert_subset, assert_superset,
-        assert_within_tick_budget,
+        assert_not_contains, assert_ok, assert_subset, assert_superset, assert_within_tick_budget,
     };
 }
 
@@ -46,7 +44,7 @@ pub mod test {
     // param_test and otel_test exist in both feature states (compile_error!
     // fallback variants), so they are safe to re-export unconditionally.
     pub use crate::{
-        async_test, async_test_with_timeout, fixture_test, fixture_test_with_timeout,
-        otel_test, param_test, performance_test, test,
+        async_test, async_test_with_timeout, fixture_test, fixture_test_with_timeout, otel_test,
+        param_test, performance_test, test,
     };
 }

@@ -663,6 +663,69 @@ fn phase9_composition_loads_within_node_budget() {
     assert_eq!(model.activities.len(), atoms.len(), "phase9: no dead declarations");
 }
 
+/// Anti-placeholder guard (master-trace composition law): every event in the
+/// master trace names a real atom declared by some landed phase model — no
+/// `phaseN_pending` placeholder and no stale name survives. Also pins the
+/// monotone-timestamp shape of the concatenation.
+#[test]
+fn master_trace_events_compose_phase_model_atoms() {
+    let text = std::fs::read_to_string(fixture_path("master_trace"))
+        .unwrap_or_else(|e| panic!("read master_trace: {e}"));
+    let doc: serde_json::Value =
+        serde_json::from_str(&text).unwrap_or_else(|e| panic!("parse master_trace: {e}"));
+
+    // The union of every landed phase model's declaration set. DFS order is
+    // not needed here — membership is the law, not traversal.
+    let mut atoms = std::collections::BTreeSet::new();
+    for entry in std::fs::read_dir(MODELS_DIR).unwrap_or_else(|e| panic!("read models dir: {e}")) {
+        let entry = entry.unwrap_or_else(|e| panic!("models dir entry: {e}"));
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("powl") {
+            continue;
+        }
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or_default().to_string();
+        let model = PowlModel::from_powl_file(&path)
+            .unwrap_or_else(|e| panic!("{stem}: phase model must load: {e}"));
+        atoms.extend(model.activities.keys().cloned());
+    }
+    assert!(!atoms.is_empty(), "phase models must declare atoms");
+
+    let events = doc["ocel:events"].as_object().expect("master trace events object");
+    let mut stamps: Vec<(String, u64)> = Vec::new();
+    for (eid, ev) in events {
+        let name = ev["ocel:activity"].as_str().unwrap_or_else(|| panic!("{eid}: activity"));
+        assert!(
+            atoms.contains(name),
+            "{eid}: activity '{name}' is not an atom of any landed phase model (placeholder?)"
+        );
+        let ts = ev["ocel:timestamp"].as_u64().unwrap_or_else(|| panic!("{eid}: timestamp"));
+        stamps.push((eid.clone(), ts));
+        // No placeholder residue on the wire.
+        let attrs = &ev["ocel:attributes"];
+        assert!(
+            attrs.get("placeholder").is_none(),
+            "{eid}: placeholder attribute must not survive"
+        );
+        assert!(
+            !ev["ocel:caseId"].as_str().unwrap_or_default().contains("placeholder"),
+            "{eid}: case id must not carry placeholder residue"
+        );
+    }
+    assert_eq!(events.len(), 11, "master trace: 11 events over phases 1..10 (phase 1 has 2)");
+    // Timestamps are strictly monotone across the phase concatenation (JSON
+    // object key order is not phase order, so sort by stamp and require a
+    // strict total order — no ties, no regressions).
+    stamps.sort_by_key(|(_, ts)| *ts);
+    for pair in stamps.windows(2) {
+        assert!(
+            pair[0].1 < pair[1].1,
+            "timestamps must be strictly monotone: {} vs {}",
+            pair[0].0,
+            pair[1].0
+        );
+    }
+}
+
 /// The landed phase9 audit fixture drives the composition: its raw activity
 /// stream (the fixtures' own `ocel:activity` convention, p9-namespaced case)
 /// is exactly the full DFS atom sequence of the model, in audit-loop order.

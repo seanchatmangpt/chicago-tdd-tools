@@ -629,7 +629,7 @@ pub fn max_batch_size() -> usize {
 ///     .expect("Config should provide valid timeout > 0");
 /// ```
 ///
-/// See [Poka-Yoke Guide](../../../docs/POKA_YOKE_GUIDE.md) for more examples.
+/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_container_wait_timeout_seconds() -> u64 {
     read_config_value(
@@ -693,7 +693,7 @@ pub fn testcontainers_http_connection_timeout_seconds() -> u64 {
 /// // port.get() is guaranteed > 0
 /// ```
 ///
-/// See [Poka-Yoke Guide](../../../docs/POKA_YOKE_GUIDE.md) for more examples.
+/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_default_http_port() -> u16 {
     read_config_value_u16("testcontainers", "default_http_port", DEFAULT_HTTP_PORT)
@@ -715,7 +715,7 @@ pub fn testcontainers_default_http_port() -> u16 {
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///
-/// See [Poka-Yoke Guide](../../../docs/POKA_YOKE_GUIDE.md) for more examples.
+/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn testcontainers_default_https_port() -> u16 {
     read_config_value_u16("testcontainers", "default_https_port", DEFAULT_HTTPS_PORT)
@@ -870,7 +870,7 @@ pub fn testcontainers_commands_per_container() -> usize {
 ///     .expect("Config should provide valid port > 0");
 /// ```
 ///
-/// See [Poka-Yoke Guide](../../../docs/POKA_YOKE_GUIDE.md) for more examples.
+/// See the repo README's Poka-Yoke section (docs/POKA_YOKE_GUIDE.md does not exist — link removed per audit W26) for more examples.
 #[must_use]
 pub fn weaver_otlp_grpc_port() -> u16 {
     read_config_value_u16("observability.weaver", "otlp_grpc_port", DEFAULT_OTLP_GRPC_PORT)

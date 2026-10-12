@@ -267,9 +267,9 @@ pub use validation::{coverage, guards, jtbd, performance};
 ///
 /// **What's included**:
 /// - All core modules (fixture, builders, assertions, macros)
-/// - All always-exported `#[macro_export]` macros (test, async_test,
-///   async_test_with_timeout, fixture_test, fixture_test_with_timeout,
-///   performance_test, all assert_* macros, alert_* macros, etc.). Note:
+/// - All always-exported `#[macro_export]` macros (`test`, `async_test`,
+///   `async_test_with_timeout`, `fixture_test`, `fixture_test_with_timeout`,
+///   `performance_test`, all `assert_*` and `alert_*` macros, etc.). Note:
 ///   procedural macros (`#[tdd_test]`, `#[fixture]`, `#[chicago_test]`,
 ///   `#[derive(TestBuilder)]`, `scaffold!`) and feature-gated macros
 ///   (`otel_test!` non-fallback variant, `param_test!` full variant) are NOT

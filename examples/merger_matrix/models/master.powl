@@ -30,7 +30,7 @@
 #   phase9_conformance.powl    (E-M09, 39 nodes — the landed composition run)
 #   master.powl (this file) composes the ten by reference; the audit-run
 #   composition used in tests is phase9_conformance.powl
-#   phase10 — post-quantum settlement ledger (E-M10 contract; not authored here)
+#   phase10_sealing.powl       (E-M10, 18 nodes)
 #
 # Node budget: 11 / 64 (MAX_POWL_NODES, loader.rs:47).
 
