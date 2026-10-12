@@ -88,8 +88,6 @@ Complete API reference for Chicago TDD Tools, organized by module.
   - Signature: `assert_eq_msg!($actual:expr, $expected:expr, $msg:expr)`
   - Panics with: `"{message}: expected {:?}, got {:?}"`
 
-- **`assert_eq_enhanced!(actual, expected)`** / **`assert_eq_enhanced!(actual, expected, message)`**: Enhanced equality assertion
-  - Signature: `assert_eq_enhanced!($actual:expr, $expected:expr $(,)?)` / `assert_eq_enhanced!($actual:expr, $expected:expr, $($arg:tt)+)`
   - Panics with: `"assertion failed: `(left == right)`\n  left: `{:?}`\n right: `{:?}`"`
 
 - **`assert_guard_constraint!(condition, constraint_name)`**: Validate guard constraints

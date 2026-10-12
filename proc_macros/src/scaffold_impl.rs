@@ -1,8 +1,7 @@
 // proc-macro code runs at compile time; unwrap_or/unwrap_or_else are correct fallback patterns here
 #![allow(clippy::unwrap_used)]
-// These println! calls emit `cargo::rerun-if-changed=`/`cargo::warning=` directives, which
-// cargo only recognizes on stdout — the equivalent of a build script's println! protocol.
-#![allow(clippy::print_stdout)]
+// AUDIT NOTE: proc-macro stdout is NOT parsed for cargo:: directives (that is
+// a build-script-only protocol) — see the disclosure in scaffold_impl below.
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
@@ -80,16 +79,16 @@ pub fn scaffold_impl(input: TokenStream) -> TokenStream {
         return err.into_compile_error().into();
     }
 
-    // Note: proc_macro::tracked_path is nightly-only; incremental invalidation
-    // is handled by the cargo::rerun-if-changed directive emitted below instead.
-    println!("cargo::rerun-if-changed={}", ticket_path.display());
-    println!("cargo::rerun-if-changed={}", test_path.display());
+    // AUDIT DISCLOSURE (wave-8 re-apply): the ticket gate fires at macro
+    // expansion. After a ticket is deleted, only a clean rebuild re-fires it
+    // (proc-macro output is cached) — disclosed, not mechanized.
+    // `proc_macro::tracked_path` is the nightly-only mechanized alternative.
 
     // Extract ticket ID for the warning message
     let ticket_id = extract_ticket_id(&ticket_val).unwrap_or_else(|| ticket_val.clone());
 
-    // Emit build warning so agents can grep build output
-    println!("cargo::warning=SCAFFOLD PENDING: {ticket_id}  ticket={ticket_val}  test={test_val}");
+    // Runtime pending marker: the expansion panics via scaffold_pending (see
+    // scaffold_impl docs) so a missing ticket fails the test at runtime.
 
     let ticket_id_lit = LitStr::new(&ticket_id, Span::call_site());
     let ticket_lit = args.ticket_lit;

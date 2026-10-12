@@ -22,7 +22,7 @@ Runtime validation adds overhead and can be bypassed in rarely tested code paths
 
 ## The Solution
 
-Encode invariants as types and constants. Use const generics to parameterize limits. Use type-level markers to track state. Use `const_assert!` to validate at compile time. Move as much validation as possible to compile time where the compiler enforces it.
+Encode invariants as types and constants. Use const generics to parameterize limits. Use type-level markers to track state. Use `const_assert`/`const_assert_msg` (const fns, invoked as `const _: () = const_assert_msg(cond, "msg");` — see `src/core/const_assert.rs`) to validate at compile time. Move as much validation as possible to compile time where the compiler enforces it.
 
 ## Essential Code Example
 
@@ -38,7 +38,7 @@ pub struct ValidatedArray<const SIZE: usize, const MAX: usize> {
 // This fails to compile if SIZE > MAX
 impl<const SIZE: usize, const MAX: usize> ValidatedArray<SIZE, MAX> {
     pub const fn new() -> Self {
-        const_assert!(SIZE <= MAX);
+        const _: () = crate::core::const_assert::const_assert_msg(SIZE <= MAX, "SIZE must not exceed MAX");
         Self {
             data: [0u8; SIZE],
             _marker: std::marker::PhantomData,
@@ -74,7 +74,7 @@ pub fn process<T>(data: T, max_size: usize) {
 
 // ✅ RIGHT: Compile-time validation
 pub fn process<T, const MAX: usize>(data: T) {
-    const_assert!(std::mem::size_of::<T>() <= MAX);  // Compile error if violated
+    const _: () = assert!(std::mem::size_of::<T>() <= MAX, "T exceeds the MAX-size budget"); // Compile error if violated
 }
 ```
 

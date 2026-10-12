@@ -386,7 +386,7 @@ async_test!(test_bad, {
 **The Fix:**
 ```rust
 async_test!(test_good, fixture, {
-    let db = fixture.get_database().await?;
+    let db = fixture.database().await?; // illustrative; see src/integration/testcontainers
     let result = db.query().await?;
     assert_eq!(result, 42);  // Cleanup happens regardless
     Ok(())

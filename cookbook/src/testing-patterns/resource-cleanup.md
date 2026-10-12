@@ -31,7 +31,7 @@ use chicago_tdd_tools::prelude::*;
 
 fixture_test!(test_database_roundtrip, fixture, {
     // Arrange: Fixture allocates database connection
-    let db = fixture.get_database()?;
+    let db = fixture.database()?; // illustrative; see src/integration/testcontainers
 
     // Act: Execute query
     let result = db.query("SELECT COUNT(*) FROM users")?;

@@ -76,7 +76,7 @@ Modules are organized into capability groups for better discoverability and main
 **Proof & Domains** (top-level):
 - `cli_proof`: CLI proof testing — real boundary-crossing harness primitives (requires `cli-proof` feature)
 - `sector_stacks`: Sector reference stacks — demo-grade Chatman Equation worked examples per sector (synthetic data)
-- `bin/`: Standalone binaries (weaver_smoke, otel_production_run, otel_negative_run, git_hook_installer, check_dog_fooding, verify_lint_config, ctdd_combinatorial_plan)
+- `bin/`: Standalone binaries (weaver_smoke, otel_production_run, otel_negative_run, ctdd_combinatorial_plan — the retired git_hook_installer/check_dog_fooding/verify_lint_config stubs were removed in the wave-8 ERRC pass; their duties live in scripts/)
 
 **Companion crates**: `crates/chicago-tdd-lsp/` (editor guard, lsp-max, emits
 `CTDD-DEV-001`; excluded from the workspace build) and the assurance workspace
@@ -131,7 +131,7 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 **Test Macros**: `test!`, `async_test!`, `async_test_with_timeout!`, `fixture_test!`, `fixture_test_with_timeout!`, `performance_test!`, `param_test!` (requires `parameterized-testing`), `otel_test!` (requires `otel`), `weaver_test!`, `weaver_test_with_timeout!` (requires `weaver`).
 
-**Assertion Macros**: `assert_ok!`, `assert_err!`, `assert_within_tick_budget!`, `assert_in_range!`, `assert_eq_msg!`, `assert_eq_enhanced!`, `assert_guard_constraint!`.
+**Assertion Macros**: `assert_ok!`, `assert_err!`, `assert_within_tick_budget!`, `assert_in_range!`, `assert_eq_msg!`, `assert_guard_constraint!`.
 
 **Alert Macros**: `alert_critical!`, `alert_warning!`, `alert_info!`, `alert_success!`, `alert_debug!`, `alert!`.
 

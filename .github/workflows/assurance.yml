@@ -138,10 +138,10 @@ jobs:
         with:
           key: assurance-integration
 
-      - name: 🔨 Install just
+      - name: 🔨 Install just + cargo-nextest
         uses: taiki-e/install-action@v2.85.6
         with:
-          tool: just
+          tool: just,cargo-nextest
 
       - name: 🎯 Run assurance integration suites
         run: just test-assurance-integration

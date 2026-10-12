@@ -16,7 +16,7 @@ OCEL generation requires no changes to your test code. By enabling the `ocel-gen
 ## Features
 
 ### 1. Automatic Event Emission
-Every macro execution (`assert_admitted!`, etc.) produces OCEL events as a side effect. These events relate multiple objects (e.g., an Artifact and its governing Schema) simultaneously.
+Every macro execution (the governance `Diagnostic` emission path (`emit_diagnostic`), etc.) produces OCEL events as a side effect. These events relate multiple objects (e.g., an Artifact and its governing Schema) simultaneously.
 
 ### 2. Evidence Lifecycle
 Events are admitted through the `wasm4pm-compat` Evidence lifecycle, ensuring that the generated log is valid and has proper provenance.

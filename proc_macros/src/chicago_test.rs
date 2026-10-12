@@ -1,6 +1,7 @@
 // proc-macro code runs at compile time; unwrap_or/unwrap_or_else are correct fallback patterns here
 #![allow(clippy::unwrap_used)]
-// This proc-macro emits a `cargo::rerun-if-changed=` directive, which cargo only recognizes
+// AUDIT DISCLOSURE: the ticket gate fires at macro expansion; after a ticket
+// is deleted only a clean rebuild re-fires it (proc-macro output is cached).
 // on stdout — the equivalent of a build script's println! protocol, not a production log line.
 #![allow(clippy::print_stdout)]
 
@@ -48,6 +49,22 @@ pub fn chicago_test_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     let ticket_val = args.ticket_lit.value();
     let scaffold_fn_val = args.scaffold_fn_lit.value();
 
+    // Audit W8 (re-applied after the wave-7 checkout incident): an async or
+    // parameterized fn silently mis-expanded under the plain #[test] wrapper;
+    // refuse with a spanned error instead.
+    if func.sig.asyncness.is_some() {
+        let err =
+            syn::Error::new(func.sig.ident.span(), "chicago_test! does not support async test fns");
+        return err.into_compile_error().into();
+    }
+    if !func.sig.inputs.is_empty() {
+        let err = syn::Error::new(
+            func.sig.ident.span(),
+            "chicago_test! does not support parameterized test fns",
+        );
+        return err.into_compile_error().into();
+    }
+
     // Resolve workspace root and validate ticket exists
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     let manifest_path = std::path::Path::new(&manifest_dir);
@@ -63,9 +80,6 @@ pub fn chicago_test_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
         let err = syn::Error::new(args.ticket_lit.span(), msg);
         return err.into_compile_error().into();
     }
-
-    // Note: proc_macro::tracked_path is nightly-only; emit rerun directive instead.
-    println!("cargo::rerun-if-changed={}", ticket_path.display());
 
     // Derive test name: chicago_cc_NNN_<original>
     let ticket_id = extract_ticket_id(&ticket_val).unwrap_or_else(|| "unknown".to_string());

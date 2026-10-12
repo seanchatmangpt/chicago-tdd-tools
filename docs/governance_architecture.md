@@ -15,7 +15,7 @@ graph TD
     
     %% Compile-Time Path
     subgraph Compile-Time ["Compile-Time Enforcement"]
-        Macros["Governance Macros<br>(assert_admitted!, etc.)"]
+        Macros["Governance Diagnostics<br>(emit_diagnostic path)"]
         CompileError["std::compile_error! / panic!"]
     end
 

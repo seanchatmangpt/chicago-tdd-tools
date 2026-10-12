@@ -1000,7 +1000,7 @@ chicago-tdd-tools = {
         "ocel-ingest",               # OCEL -> OCEL64 word packing bridge (implies ocel-generation)
         "ledger",                    # strict court-receipt wire format + BLAKE3 chain/Merkle dossier laws
         "nato",                      # NATO assurance courts + ML-DSA-65 dossier sealing (implies ledger)
-        "wasm-guest",                # zero-import cdylib WASM guest (implies conformance; crates/ctt-wasm-guest)
+        "wasm-guest",                # zero-import cdylib WASM guest (implies conformance; guest telemetry also needs ocel-ingest)
         "all-assurance",             # umbrella: conformance + ledger + nato
     ]
 }
