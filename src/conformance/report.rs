@@ -50,7 +50,9 @@ pub enum Deviation {
         /// The offending tick.
         tick: u8,
     },
-    /// The trajectory ended before all recorded events were replayed.
+    /// The trajectory ended before all recorded events were replayed, OR
+    /// (SX8-F1) the stream exhausted while the marking had not reached the
+    /// net's terminal place — a lawful prefix is unfinished, not conforming.
     Unfinished {
         /// Steps actually replayed.
         steps_done: usize,

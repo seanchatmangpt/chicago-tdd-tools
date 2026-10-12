@@ -130,6 +130,12 @@ pub struct ConformanceSession {
     initial_marking: Marking64,
     /// Forbidden-bit mask: no post-fire marking may intersect it.
     forbidden_mask: u64,
+    /// Marking of the net's terminal place (SX8-F1): the last post target of
+    /// the lowered linear chain, `1 << n` for `n` atoms. Completion law:
+    /// `Phase::Complete` is conforming only when the final marking equals
+    /// this — an exhausted stream that stopped short latches `Complete`
+    /// (the trace played lawfully) but is NOT conforming.
+    terminal_marking: Marking64,
     stream: Vec<u64>,
     cursor: usize,
     steps_done: u32,
@@ -193,6 +199,9 @@ impl ConformanceSession {
         Ok(Self {
             net: CompiledNet { words, tids: (0..tid_count).collect() },
             initial_marking: 1, // place 0
+            // SX8-F1: the terminal place is the last post target of the
+            // linear chain — place n for n atoms.
+            terminal_marking: 1u64 << n,
             forbidden_mask: 0,
             stream: Vec::new(),
             cursor: 0,
@@ -327,6 +336,13 @@ impl ConformanceSession {
         self.initial_marking
     }
 
+    /// The net's terminal-place marking (SX8-F1): `1 << n` for `n` atoms —
+    /// the place the token rests in iff the whole linear chain played.
+    #[must_use]
+    pub const fn terminal_marking(&self) -> Marking64 {
+        self.terminal_marking
+    }
+
     /// The compiled net (read-only view).
     #[must_use]
     pub const fn net(&self) -> &CompiledNet {
@@ -352,11 +368,23 @@ impl ConformanceSession {
     /// violation; an unfinished trace records its `Unfinished` deviation
     /// automatically via [`ConformanceReport::new`]. A faulted session
     /// contributes the error that latched it.
+    ///
+    /// SX8-F1 completion law: a stream that exhausts before the net's
+    /// terminal place still latches `Phase::Complete` (the trace played
+    /// lawfully — it is unfinished, not malformed), but its report records
+    /// an `Unfinished` deviation, so `is_conforming()` is `false` unless
+    /// `final_marking == terminal_marking`.
     #[must_use]
     pub fn conformance_report(&self) -> ConformanceReport {
         let mut deviations = Vec::new();
         if let Phase::Faulted(err) = &self.phase {
             deviations.push(conformance_error_deviation(err, self.steps_done));
+        }
+        if matches!(self.phase, Phase::Complete) && self.marking != self.terminal_marking {
+            deviations.push(Deviation::Unfinished {
+                steps_done: self.steps_done as usize,
+                total_events: self.stream.len(),
+            });
         }
         ConformanceReport::new(self.steps_done as usize, self.stream.len(), deviations)
     }
@@ -671,6 +699,57 @@ mod tests {
         }
     }
 
+    // -- SX8-F1: prefix exhaustion is Complete but NOT conforming ----------
+
+    /// A prefix of the golden trajectory (2 of 3 events) exhausts the stream
+    /// lawfully: the phase latches `Complete` and the replay summary reports
+    /// `Complete` (the trace played, it is not malformed), but the structured
+    /// verdict carries an `Unfinished` deviation because the final marking
+    /// (place 2) never reached the terminal place (place 3) — so
+    /// `is_conforming()` is `false`.
+    #[test]
+    fn sx8f1_prefix_trace_is_complete_but_not_conforming() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(1, 2)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        match s.step_budget(10) {
+            YieldStatus::Complete(summary) => {
+                assert_eq!(summary.steps_executed, 2);
+                assert_eq!(summary.events_total, 2);
+                assert_eq!(summary.outcome, ReportOutcome::Complete);
+                assert_eq!(summary.final_marking, 1 << 2, "token stopped mid-chain");
+            }
+            other => panic!("expected Complete, got {other:?}"),
+        }
+        assert_eq!(*s.phase(), Phase::Complete);
+        assert_eq!(s.marking(), s.terminal_marking() >> 1, "prefix stops one place short");
+        let cr = s.conformance_report();
+        assert!(
+            cr.deviations()
+                .iter()
+                .any(|d| matches!(d, Deviation::Unfinished { steps_done: 2, total_events: 2 })),
+            "expected Unfinished deviation on the exhausted prefix, got {cr:?}"
+        );
+        assert!(!cr.is_conforming(), "a lawful prefix is unfinished, never conforming");
+    }
+
+    /// The full golden trajectory still conforms unchanged: final marking
+    /// equals the terminal-place marking.
+    #[test]
+    fn sx8f1_full_trace_conforming_unchanged() {
+        let mut s = ConformanceSession::from_model(&three_atom_model())
+            .unwrap_or_else(|e| panic!("compile: {e}"));
+        s.attach_stream(&[event(0, 1), event(1, 2), event(2, 3)])
+            .unwrap_or_else(|e| panic!("attach: {e}"));
+        let _ = s.step_budget(10);
+        assert_eq!(*s.phase(), Phase::Complete);
+        assert_eq!(s.marking(), s.terminal_marking());
+        let cr = s.conformance_report();
+        assert!(cr.is_conforming(), "full trajectory conforms: {cr:?}");
+        assert_eq!(cr.open_deviations(), 0);
+    }
+
     // -- Self-loop sentinel regressions (SK8) -------------------------------
 
     /// Direct-constructor helper (in-module: session fields are private).
@@ -680,6 +759,10 @@ mod tests {
         ConformanceSession {
             net: CompiledNet { words, tids: vec![0] },
             initial_marking: initial,
+            // SX8-F1: hand-built test nets have no lowered terminal place;
+            // the self-loop fixtures end where they start (marking == the
+            // stationary place), so the terminal is the initial marking.
+            terminal_marking: initial,
             forbidden_mask: 0,
             stream: Vec::new(),
             cursor: 0,

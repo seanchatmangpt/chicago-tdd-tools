@@ -131,6 +131,51 @@ fn golden_trajectory_is_complete_and_conforming() {
 }
 
 // ---------------------------------------------------------------------------
+// 1b. SX8-F1: prefix exhaustion is Complete but NOT conforming
+// ---------------------------------------------------------------------------
+
+/// A lawful prefix (2 of 3 events) exhausts the stream: the replay latches
+/// `Phase::Complete` and the summary outcome is `Complete` (the trace played
+/// lawfully), but the token rests at place 2 — not the terminal place 3 — so
+/// the structured verdict records `Unfinished` and `is_conforming()` is
+/// `false`.
+#[test]
+fn sx8f1_prefix_trace_is_complete_but_not_conforming() {
+    let mut s = three_atom();
+    s.attach_stream(&[event(0, 1), event(1, 2)]).expect("prefix stream attaches");
+    match s.step_budget(16) {
+        YieldStatus::Complete(summary) => {
+            assert_eq!(summary.outcome, ReportOutcome::Complete);
+            assert_eq!(summary.steps_executed, 2);
+            assert_eq!(summary.final_marking, 1 << 2);
+        }
+        other => panic!("expected Complete, got {other:?}"),
+    }
+    assert_eq!(*s.phase(), Phase::Complete);
+    let report = s.conformance_report();
+    assert!(
+        report
+            .deviations()
+            .iter()
+            .any(|d| matches!(d, Deviation::Unfinished { steps_done: 2, total_events: 2 })),
+        "expected Unfinished deviation on the exhausted prefix, got {report:?}"
+    );
+    assert!(!report.is_conforming(), "a lawful prefix is unfinished, never conforming");
+}
+
+/// The `assert_conforms!` macro path must panic on a prefix trace: the
+/// session's own verdict is not conforming even though the replay completed
+/// without violation and the receipt is algebraically closed.
+#[test]
+#[should_panic = "conformance failed"]
+fn sx8f1_assert_conforms_panics_on_prefix_trace() {
+    let mut s = three_atom();
+    s.attach_stream(&[event(0, 1), event(1, 2)]).expect("prefix stream attaches");
+    let _ = s.step_budget(16);
+    chicago_tdd_tools::assert_conforms!(s, pass_receipt());
+}
+
+// ---------------------------------------------------------------------------
 // 2. Skipped-state refusal (Skipped / Undeclared)
 // ---------------------------------------------------------------------------
 
