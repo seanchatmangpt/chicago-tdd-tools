@@ -87,8 +87,9 @@ Tally: 9 FALSIFIED, 1 PARTIAL (SK9), 0 HELD.
 - **Repro**: inspect any sealed receipt: no module hash field; out-pointers
   (artifact refs) are dereferenced and trusted at replay without
   re-hashing.
-- **Disposition**: QUEUED - add module hash to the receipt identity tuple;
-  re-verify out-pointers at replay.
+- **Disposition**: PARTIAL - out-pointer re-verification landed `532f38a`;
+  module-hash binding landed as the 32B digest slot in the v2 seal preimage
+  `2c80a9e` (placeholder digest until the build-time splice, W-ABI2-2).
 
 ### SK8 - Self-loop sentinel + OR-coalescing domain
 
@@ -248,8 +249,9 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   confirmed at the seal layer); out-pointers are dereferenced and trusted on
   read without re-verification; trap bytes are indistinguishable from live
   data.
-- **Disposition**: QUEUED - V5 work order: bind module hash into the seal
-  preimage; re-verify out-pointers at replay.
+- **Disposition**: PARTIAL - V5 envelope landed `2c80a9e` (32B module-digest
+  slot + M2 falsifier; placeholder until build-time splice); out-pointer
+  re-verify landed `532f38a`.; re-verify out-pointers at replay.
 
 ### SX7 - Contradictory covenants admitted; authority bypasses SHACL
 
