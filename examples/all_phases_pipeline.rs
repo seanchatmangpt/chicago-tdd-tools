@@ -12,7 +12,7 @@
 )]
 //! Complete 12-Phase Hyper-Advanced Pipeline Example
 //!
-//! Demonstrates all 12 phases working together:
+//! Demonstrates phases 7-12 of the 12-phase pipeline (phases 1-6 live in hyper_advanced_microkernel.rs — W27 probe corrected the header):
 //! - Phases 1-6: Original hyper-advanced μ-kernel substrate
 //! - Phase 7: Verification Pipeline (orchestration)
 //! - Phase 8: Continuous Learning (ML-based optimization)
@@ -260,7 +260,7 @@ fn main() {
     }
 
     println!("\n╔═══════════════════════════════════════════════════════════════╗");
-    println!("║  All 12 Phases Demonstrated Successfully!                    ║");
+    println!("║  All 6 landed phases (7-12) demonstrated successfully!                    ║");
     println!("║  A = μ(O) with Advanced Verification Capabilities            ║");
     println!("╚═══════════════════════════════════════════════════════════════╝");
 }
