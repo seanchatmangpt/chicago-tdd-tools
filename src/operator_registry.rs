@@ -1144,6 +1144,28 @@ mod tests {
     }
 
     #[test]
+    fn test_registry_covers_all_43_yawl_patterns() {
+        let registry = OperatorRegistry::new();
+        let ops = registry.all_operators();
+
+        // Doc header claims all 43 YAWL workflow control patterns.
+        assert_eq!(ops.len(), 43);
+
+        // Pattern numbers 1..=43 each appear exactly once (no gaps/duplicates).
+        // all_operators() sorts by pattern_number.
+        for (i, op) in ops.iter().enumerate() {
+            assert_eq!(
+                op.pattern_number,
+                (i + 1) as u32,
+                "expected pattern_number {} at index {}, got {}",
+                i + 1,
+                i,
+                op.pattern_number
+            );
+        }
+    }
+
+    #[test]
     fn test_operator_lookup() {
         let registry = OperatorRegistry::new();
 
