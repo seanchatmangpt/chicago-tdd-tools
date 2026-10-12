@@ -65,13 +65,13 @@ mod weaver_integration_tests {
         // Check Weaver binary availability
         if WeaverLiveCheck::check_weaver_available().is_err() {
             if allow_weaver_skip() {
-                eprintln!("⏭️  Skipping Weaver test: Weaver binary not available (run cargo make weaver-bootstrap)");
+                eprintln!("⏭️  Skipping Weaver test: Weaver binary not available (run just weaver-bootstrap)");
                 return false;
             }
             panic!(
                 "🚨 Weaver binary not available\n\
                  ⚠️  STOP: Cannot proceed with Weaver integration test\n\
-                 💡 FIX: Run cargo make weaver-bootstrap\n\
+                 💡 FIX: Run just weaver-bootstrap\n\
                  💡 ALT: Set WEAVER_ALLOW_SKIP=1 to bypass intentionally"
             );
         }

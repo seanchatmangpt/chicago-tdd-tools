@@ -22,7 +22,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["cli-testing"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["cli-testing"] }
 ```
 
 ### Basic Test
@@ -31,7 +31,7 @@ chicago-tdd-tools = { version = "1.2.0", features = ["cli-testing"] }
 #[cfg(feature = "cli-testing")]
 #[test]
 fn test_help_command() {
-    use chicago_tdd_tools::cli::{CliTest, CliAssertions};
+    use chicago_tdd_tools::testing::cli::{CliTest, CliAssertions};
 
     let output = "Usage: myapp [OPTIONS] <COMMAND>";
     CliAssertions::assert_output_contains(output, "Usage");
@@ -43,7 +43,7 @@ fn test_help_command() {
 The `CliCommandBuilder` provides a fluent API for building CLI commands:
 
 ```rust
-use chicago_tdd_tools::cli::CliTest;
+use chicago_tdd_tools::testing::cli::CliTest;
 
 let cmd = CliTest::command("my-cli")
     .arg("init")
@@ -96,7 +96,7 @@ let env_vars = builder.env_vars();
 #### Assert Output Contains
 
 ```rust
-use chicago_tdd_tools::cli::CliAssertions;
+use chicago_tdd_tools::testing::cli::CliAssertions;
 
 let output = "Test completed successfully";
 
@@ -135,7 +135,7 @@ CliAssertions::assert_output_contains_all(
 The `CliEnvironment` helps manage environment variables for isolated tests:
 
 ```rust
-use chicago_tdd_tools::cli::CliEnvironment;
+use chicago_tdd_tools::testing::cli::CliEnvironment;
 
 #[test]
 fn test_with_custom_env() {
@@ -194,7 +194,7 @@ Options:
 ```rust
 #[test]
 fn test_cli_golden_files() {
-    use chicago_tdd_tools::cli::CliTest;
+    use chicago_tdd_tools::testing::cli::CliTest;
 
     CliTest::run_tests("tests/cli");
 }
@@ -283,7 +283,7 @@ fn test_init_command() {
 #[cfg(feature = "cli-testing")]
 #[test]
 fn test_version_command() {
-    use chicago_tdd_tools::cli::{CliTest, CliAssertions};
+    use chicago_tdd_tools::testing::cli::{CliTest, CliAssertions};
 
     let cmd = CliTest::command("myapp")
         .arg("--version")
@@ -303,7 +303,7 @@ fn test_version_command() {
 #[cfg(feature = "cli-testing")]
 #[test]
 fn test_build_with_options() {
-    use chicago_tdd_tools::cli::CliTest;
+    use chicago_tdd_tools::testing::cli::CliTest;
 
     let cmd = CliTest::command("myapp")
         .arg("build")
@@ -323,7 +323,7 @@ fn test_build_with_options() {
 #[cfg(feature = "cli-testing")]
 #[test]
 fn test_with_custom_config() {
-    use chicago_tdd_tools::cli::CliEnvironment;
+    use chicago_tdd_tools::testing::cli::CliEnvironment;
 
     let mut env = CliEnvironment::new()
         .set("CONFIG_PATH", "/etc/myapp/config.toml")
@@ -342,7 +342,7 @@ fn test_with_custom_config() {
 #[cfg(feature = "cli-testing")]
 #[test]
 fn test_command_output() {
-    use chicago_tdd_tools::cli::CliAssertions;
+    use chicago_tdd_tools::testing::cli::CliAssertions;
 
     let output = "Project initialized successfully!\nCreated files: main.rs, Cargo.toml";
 

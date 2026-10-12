@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded by the current tree: WEAVER_ALLOW_SKIP remains live (tests/weaver_integration.rs, src/core/macros/weaver_test.rs) and the removed-fn claim below does not match disk. Do not cite as current.
+
 # Test Refactoring Summary: Removed Silent Skips
 
 **Date:** 2025-01-16  
