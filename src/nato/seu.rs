@@ -1,6 +1,8 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests, so non-test builds legitimately see unused items —
+// and the court registry references the probe/control fns from non-test
+// builds too.
 #![allow(dead_code)]
 //! NATO N09/N10 — SEU single- and double-bit-fault courts.
 //!
@@ -95,6 +97,10 @@
 )]
 
 use crate::conformance::pn64;
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 // --- Donor constants (verbatim, strata N09/N10 @ 0de13a3) ----------------
 // PN64 layout: marking[15:0] pre[31:16] post[47:32] tid[55:48] flags[63:56]
@@ -202,11 +208,14 @@ fn advance(pn: u64, ocel: u64, invariant_mask: u64) -> u64 {
     pn64::step_branchless(pn, ocel, invariant_mask)
 }
 
-// --- Positive-control mutants (cfg(test), cfg-gated with the file) --------
+// --- Positive-control mutants --------------------------------------------
+// (Previously cfg(test)-only; now always compiled because the court
+// positive-control probes below — part of the [`Court`] trait surface —
+// call them from non-test builds. Dead in non-test builds; covered by the
+// module-scope allow(dead_code) above.)
 
 /// MUTANT: drops the invariant predicate. A fault that pushes a forbidden
 /// bit into the post-fire marking must classify SDC under this law.
-#[cfg(test)]
 fn leaky_advance(pn: u64, ocel: u64, _invariant_mask: u64) -> u64 {
     let m = pn & 0xFFFF;
     let w_pre = (pn >> 16) & 0xFFFF;
@@ -225,7 +234,6 @@ fn leaky_advance(pn: u64, ocel: u64, _invariant_mask: u64) -> u64 {
 
 /// MUTANT: drops the token-availability predicate. A fault that kills
 /// enablement must classify SDC under this law.
-#[cfg(test)]
 fn maskless_advance(pn: u64, ocel: u64, invariant_mask: u64) -> u64 {
     let m = pn & 0xFFFF;
     let w_pre = (pn >> 16) & 0xFFFF;
@@ -262,7 +270,9 @@ fn field_of(target: usize, bit: u64) -> usize {
 
 /// Shared N09 driver; `n` is the flip budget. LCG seed is the donor seed at
 /// BOTH tiers, so the full run's prefix is the fast run (full subsumes fast).
-fn run_n09(n: u64) {
+/// Returns `(refused, lawful_dead, sdc)` after the reconciliation laws hold
+/// (the asserts inside are the court's verdict law: any violation panics).
+fn run_n09(n: u64) -> (u64, u64, u64) {
     let mut rng = Lcg(0x4E413039_0000_0001); // "NA09"
 
     let mut refused: u64 = 0;
@@ -316,11 +326,21 @@ fn run_n09(n: u64) {
     assert_eq!(sdc, 0, "SDC must be 0.000% — silent corruption detected");
     // Fail-closed must actually fire for a meaningful share of faults.
     assert!(refused > 0, "court is vacuous if no fault was ever refused");
+    (refused, lawful_dead, sdc)
+}
+
+/// Hoisted N09 fast-tier court probe (previously the body of
+/// `n09_seu_single_bit_zero_sdc_fast`): the fast census plus its
+/// reconciliation, zero-SDC and fail-closed laws. Returns
+/// `(refused, lawful_dead, sdc)`; panics (verdict Fail-equivalent) on any
+/// violated law.
+pub(crate) fn n09_run_court_probe() -> (u64, u64, u64) {
+    run_n09(FAST_N)
 }
 
 #[test]
 fn n09_seu_single_bit_zero_sdc_fast() {
-    run_n09(FAST_N);
+    n09_run_court_probe();
 }
 
 #[test]
@@ -331,6 +351,13 @@ fn n09_seu_single_bit_zero_sdc_full() {
 
 // --- N10: double-bit-fault census -----------------------------------------
 
+/// Fast-tier N10 budget (default): 10,000 total, same ratios as the donor
+/// budget, all 112 adjacent pairs and all 16 bypass combos still fully
+/// enumerated.
+const N10_FAST_ADJ_REPS: u64 = 15; // 112 x 15 = 1,680
+const N10_FAST_BYPASS_REPS: u64 = 25; // 16 x 25 = 400
+const N10_FAST_RANDOM_N: u64 = 7_920; // total = 10,000
+
 /// Shared N10 driver. Injection classes (donor-verbatim structure):
 /// 1. EXHAUSTIVE-ADJACENT: every adjacent-bit pair within each byte lane of
 ///    each word (2 words x 8 bytes x 7 pairs = 112 unique pairs), fully
@@ -340,7 +367,9 @@ fn n09_seu_single_bit_zero_sdc_full() {
 ///    enumerated at BOTH tiers.
 /// 3. RANDOMIZED NON-ADJACENT: two distinct non-adjacent bits, LCG-driven,
 ///    filling the budget; same seed at both tiers so full subsumes fast.
-fn run_n10(adj_reps: u64, bypass_reps: u64, random_n: u64) {
+/// Returns `(refused, lawful_dead, sdc)` after the reconciliation laws hold
+/// (the asserts inside are the court's verdict law: any violation panics).
+fn run_n10(adj_reps: u64, bypass_reps: u64, random_n: u64) -> (u64, u64, u64) {
     let total = adj_reps * 112 + bypass_reps * 16 + random_n;
     let mut rng = Lcg(0x4E413130_0000_0001); // "NA10"
 
@@ -470,16 +499,21 @@ fn run_n10(adj_reps: u64, bypass_reps: u64, random_n: u64) {
     // meaningful share of the time via the surviving check.
     assert_eq!(class_hist[1][2], 0, "bypass class produced SDC");
     assert!(bypass_refused > 0, "bypass class never refused — court vacuous");
+    (refused, lawful_dead, sdc)
+}
+
+/// Hoisted N10 fast-tier court probe (previously the body of
+/// `n10_seu_double_bit_zero_sdc_fast`): the fast census plus its
+/// reconciliation, zero-SDC, bypass and fail-closed laws. Returns
+/// `(refused, lawful_dead, sdc)`; panics (verdict Fail-equivalent) on any
+/// violated law.
+pub(crate) fn n10_run_court_probe() -> (u64, u64, u64) {
+    run_n10(N10_FAST_ADJ_REPS, N10_FAST_BYPASS_REPS, N10_FAST_RANDOM_N)
 }
 
 #[test]
 fn n10_seu_double_bit_zero_sdc_fast() {
-    // Fast tier: 10,000 total, same ratios as the donor budget, all 112
-    // adjacent pairs and all 16 bypass combos still fully enumerated.
-    const ADJ_REPS: u64 = 15; // 112 x 15 = 1,680
-    const BYPASS_REPS: u64 = 25; // 16 x 25 = 400
-    const RANDOM_N: u64 = 7_920; // total = 10,000
-    run_n10(ADJ_REPS, BYPASS_REPS, RANDOM_N);
+    n10_run_court_probe();
 }
 
 #[test]
@@ -530,9 +564,9 @@ fn record(
 /// Leak control: under [`leaky_advance`] a fault pushing a forbidden bit into
 /// the post-fire marking is ADMITTED (the surviving checks all pass on the
 /// corrupted word), while the independent oracle refuses it — SDC, proving
-/// the invariant check is load-bearing for this court.
-#[test]
-fn positive_control_leaky_advance_is_sdc() {
+/// the invariant check is load-bearing for the N09 court.
+/// Hoisted court probe: returns `true` iff the mutant classifies SDC.
+pub(crate) fn n09_positive_control() -> bool {
     let baseline_next = advance(PN_BASE, OCEL_BASE, INVARIANT_MASK);
     // Flip post bit 4 (bit 36): post 0x000C -> 0x001C, so next_m gains the
     // forbidden bit 4 (next_m 0x008C -> 0x009C). Verb and token still hold.
@@ -541,20 +575,154 @@ fn positive_control_leaky_advance_is_sdc() {
     assert_eq!(lawful_image(pn_corrupt, OCEL_BASE, INVARIANT_MASK), None);
     let (cls, _dead_eq) =
         classify_with(leaky_advance, pn_corrupt, OCEL_BASE, INVARIANT_MASK, baseline_next);
-    assert_eq!(cls, SeuClass::Sdc, "leaky mutant must classify SDC");
+    cls == SeuClass::Sdc
 }
 
 /// Maskless control: under [`maskless_advance`] a fault that kills enablement
 /// (clears the only required token from `m`) is ADMITTED, while the
 /// independent oracle refuses it — SDC, proving the token check is
-/// load-bearing for this court.
-#[test]
-fn positive_control_maskless_advance_is_sdc() {
+/// load-bearing for the N10 court.
+/// Hoisted court probe: returns `true` iff the mutant classifies SDC.
+pub(crate) fn n10_positive_control() -> bool {
     let baseline_next = advance(PN_BASE, OCEL_BASE, INVARIANT_MASK);
     // Clear marking bit 1 (bit 1): m 0x0082 -> 0x0080, m & pre != pre.
     let pn_corrupt = PN_BASE ^ (1u64 << 1);
     assert_eq!(lawful_image(pn_corrupt, OCEL_BASE, INVARIANT_MASK), None);
     let (cls, _dead_eq) =
         classify_with(maskless_advance, pn_corrupt, OCEL_BASE, INVARIANT_MASK, baseline_next);
-    assert_eq!(cls, SeuClass::Sdc, "maskless mutant must classify SDC");
+    cls == SeuClass::Sdc
+}
+
+#[test]
+fn positive_control_leaky_advance_is_sdc() {
+    assert!(n09_positive_control(), "leaky mutant must classify SDC");
+}
+
+#[test]
+fn positive_control_maskless_advance_is_sdc() {
+    assert!(n10_positive_control(), "maskless mutant must classify SDC");
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring
+// ---------------------------------------------------------------------------
+
+/// N09 SEU single-bit-fault court.
+pub struct SeuSingleBitCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl SeuSingleBitCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N09;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Resilience;
+}
+
+impl Court for SeuSingleBitCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N09 seu_single_bit"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n09_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let (refused, lawful_dead, sdc) = n09_run_court_probe();
+        // The probe's asserts already guarantee `sdc == 0` and
+        // `refused > 0` on return (any violation panics); the verdict law
+        // is restated so the receipt carries the rule, not the panic path.
+        let verdict =
+            if sdc == 0 && refused + lawful_dead == FAST_N { Verdict::Pass } else { Verdict::Fail };
+        CourtOutcome {
+            verdict,
+            metrics: vec![
+                ("flips", MetricValue::U64(FAST_N)),
+                ("refused", MetricValue::U64(refused)),
+                ("lawful_dead", MetricValue::U64(lawful_dead)),
+                ("sdc", MetricValue::U64(sdc)),
+                ("sdc_rate", MetricValue::F64(sdc as f64 / FAST_N as f64)),
+            ],
+            scoping: ScopingRecord::partial(
+                "SEU single-bit-fault census over the dual-word advance law: 0% SDC and \
+                 fail-closed (or structurally-0 HALT) on every injected flip",
+                "fast tier: 10,000 LCG-sampled single-bit flips (donor seed, prefix-stream \
+                 tiering), independent `lawful_image` oracle, classified REFUSED / \
+                 LAWFUL-DEAD / SDC, with a leaky-mutant positive control",
+                "the 1,000,000-flip donor-scale full tier runs behind `#[ignore = \
+                 \"nato-tier3\"]`; HALT is structurally 0 (total fn), not separately measured",
+            ),
+        }
+    }
+}
+
+/// N10 SEU double-bit-fault court.
+pub struct SeuDoubleBitCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl SeuDoubleBitCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N10;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Resilience;
+}
+
+impl Court for SeuDoubleBitCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N10 seu_double_bit"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n10_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let (refused, lawful_dead, sdc) = n10_run_court_probe();
+        // Same restated verdict law as N09: the probe's asserts guarantee
+        // zero SDC, a refused bypass share, and class reconciliation.
+        let total = N10_FAST_ADJ_REPS * 112 + N10_FAST_BYPASS_REPS * 16 + N10_FAST_RANDOM_N;
+        let verdict =
+            if sdc == 0 && refused + lawful_dead == total { Verdict::Pass } else { Verdict::Fail };
+        CourtOutcome {
+            verdict,
+            metrics: vec![
+                ("faults", MetricValue::U64(total)),
+                ("adjacent_pairs", MetricValue::U64(N10_FAST_ADJ_REPS * 112)),
+                ("bypass_combos", MetricValue::U64(N10_FAST_BYPASS_REPS * 16)),
+                ("randomized_pairs", MetricValue::U64(N10_FAST_RANDOM_N)),
+                ("refused", MetricValue::U64(refused)),
+                ("lawful_dead", MetricValue::U64(lawful_dead)),
+                ("sdc", MetricValue::U64(sdc)),
+                ("sdc_rate", MetricValue::F64(sdc as f64 / total as f64)),
+            ],
+            scoping: ScopingRecord::partial(
+                "SEU double-bit-fault census over the dual-word advance law: 0% SDC, zero \
+                 bypass-class SDC, and fail-closed (or structurally-0 HALT) on every injected \
+                 fault",
+                "fast tier: all 112 adjacent pairs x 15 reps, all 16 bypass combos x 25 reps, \
+                 and 7,920 randomized non-adjacent pairs (donor seed, prefix-stream tiering), \
+                 independent `lawful_image` oracle, with a maskless-mutant positive control",
+                "the donor-scale 500,000-fault full tier runs behind `#[ignore = \
+                 \"nato-tier3\"]`; HALT is structurally 0 (total fn), not separately measured",
+            ),
+        }
+    }
 }

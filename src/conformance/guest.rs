@@ -85,10 +85,12 @@
 //! ```
 //! 21 bytes total. `out_cap` must be `>= STEP_STATUS_LEN`.
 //!
-//! # Seal format v1 (`ctt_session_seal` out-buffer)
+//! # Seal format v1/v2 (`ctt_session_seal` out-buffer)
 //!
-//! Exactly what is sealed at v1 — a `ReplaySummary` fingerprint. The
-//! preimage is a fixed 34-byte record:
+//! Exactly what is sealed — a `ReplaySummary` fingerprint bound to the
+//! *module identity* that produced it.
+//!
+//! **v1 (`ABI_VERSION` 1, historical).** A fixed 34-byte record:
 //!
 //! ```text
 //! 8B LE steps_executed | 8B LE events_total | 8B LE final_marking
@@ -97,12 +99,34 @@
 //! | 8B reserved (zero)
 //! ```
 //!
-//! That preimage is digested with BLAKE3 when the `ledger` feature is on
+//! **v2 (`ABI_VERSION` 2, this surface).** A fixed 58-byte record — the
+//! v1-exact 26-byte prefix `0..26` is unchanged, and the v1 reserved field
+//! is **consumed**: the 32-byte module digest occupies `26..58`.
+//!
+//! ```text
+//! 0..8    LE steps_executed
+//! 8..16   LE events_total
+//! 16..24  LE final_marking
+//! 24      outcome (0 Incomplete / 1 Complete / 2 Faulted)
+//! 25      violation code (table in `violation`; 0 when not Faulted)
+//! 26..58  module_digest (32B; BLAKE3 of the wasm artifact with its
+//!         CTT_MODULE_DIGEST slot zero-filled — build-time threaded, W-ABI2
+//!         item 2; all-zero placeholder until the build splices it)
+//! ```
+//!
+//! The v1 `reserved == 0` law and the v2 digest law are mutually
+//! exclusive on bytes 26..34, so a v1 parser validating reserved==0 fails
+//! closed on a v2 preimage (v2 digests are not all-zero by construction).
+//! The layouts are therefore self-distinguishing; the authoritative
+//! discriminator is the `ctt_guest_abi_version()` probe (returns 2), which
+//! a host MUST call before the first `ctt_session_new`.
+//!
+//! The preimage is digested with BLAKE3 when the `ledger` feature is on
 //! (via `dep:blake3`) and the 32-byte digest is written to the out-buffer
 //! (`out_len = 32`). With `ledger` off, sealing is **refused**
 //! (`ERR_SEAL_UNAVAILABLE`) rather than downgraded to a weak hash — a
-//! non-cryptographic "receipt" is a receipt-shaped lie, so v1 ships no
-//! fallback digest.
+//! non-cryptographic "receipt" is a receipt-shaped lie, so no fallback
+//! digest ships at any version.
 //!
 //! # Status codes (`i32` return of every ABI fn)
 //!
@@ -124,9 +148,12 @@
 //! | 8    | `ERR_TABLE_FULL`        | all `MAX_SESSIONS` slots occupied |
 //! | 9    | `ERR_BAD_HANDLE`        | handle is free, out of range, or generation-stale |
 //! | 10   | `ERR_STREAM_EMPTY`      | attach of a zero-length stream |
-//! | 11   | `ERR_CAP_TOO_SMALL`     | out-buffer capacity below the record's fixed length, or the out-buffer span falls at/past the installed linear-memory bound |
+//! | 11   | `ERR_CAP_TOO_SMALL`     | out-buffer capacity below the record's fixed length (pure capacity meaning at v2) |
 //! | 12   | `ERR_SEAL_UNAVAILABLE`  | sealing requested without the `ledger` feature |
 //! | 13   | `ERR_STREAM_ALIGNMENT`  | stream byte length not a multiple of 8 |
+//! | 14   | `ERR_OOB_READ`          | an input span (`net_buf`/`stream_ptr`) reaches at/past the installed linear-memory bound |
+//! | 15   | `ERR_OOB_WRITE`         | an out-buffer span reaches at/past the installed linear-memory bound (the former v1 `ERR_CAP_TOO_SMALL` overload) |
+//! | 16   | `ERR_DEFERRED_HEAP`     | a heap-requiring path was requested under the deferred-heap ABI tier (reserved; not yet returned) |
 //!
 //! # Handle encoding
 //!
@@ -198,16 +225,32 @@ pub const ERR_TABLE_FULL: i32 = 8;
 pub const ERR_BAD_HANDLE: i32 = 9;
 /// Attach of a zero-length stream.
 pub const ERR_STREAM_EMPTY: i32 = 10;
-/// Out-buffer capacity below the record's fixed length, or out-buffer span
-/// at/past the installed linear-memory bound.
+/// Out-buffer capacity below the record's fixed length. At v2 this is pure
+/// capacity semantics again — the linear-memory out-span overload moved to
+/// [`ERR_OOB_WRITE`].
 pub const ERR_CAP_TOO_SMALL: i32 = 11;
 /// Sealing requested without the `ledger` feature.
 pub const ERR_SEAL_UNAVAILABLE: i32 = 12;
 /// Stream byte length not a multiple of 8.
 pub const ERR_STREAM_ALIGNMENT: i32 = 13;
+/// An input span (`net_buf` / `stream_ptr`) reaches at/past the installed
+/// linear-memory bound (or the span computation overflows).
+pub const ERR_OOB_READ: i32 = 14;
+/// An out-buffer span reaches at/past the installed linear-memory bound
+/// (or the span computation overflows).
+///
+/// The former v1 `ERR_CAP_TOO_SMALL` overload, split out per W-ABI2 item 4
+/// so guest OOB is distinct from capacity refusals.
+pub const ERR_OOB_WRITE: i32 = 15;
+/// A heap-requiring path was requested under the deferred-heap ABI tier.
+/// Reserved at v2 — defined and documented now so the errno space is
+/// stable; no current entry point returns it.
+pub const ERR_DEFERRED_HEAP: i32 = 16;
 
-/// ABI revision reported by [`ctt_guest_abi_version`].
-pub const ABI_VERSION: u32 = 1;
+/// ABI revision reported by [`ctt_guest_abi_version`]. v2: 58-byte seal
+/// preimage with a threaded module digest, and the split OOB read/write
+/// errnos 14/15.
+pub const ABI_VERSION: u32 = 2;
 
 // ---------------------------------------------------------------------------
 // Fixed record lengths
@@ -215,10 +258,17 @@ pub const ABI_VERSION: u32 = 1;
 
 /// Fixed length of the step status record (see module docs).
 pub const STEP_STATUS_LEN: usize = 21;
-/// Fixed length of the seal preimage record (see module docs).
+/// Fixed length of the **v1** seal preimage record (historical). A v1
+/// parser's `reserved == 0` law over `26..34` fails closed on v2
+/// preimages — see the module seal-format docs.
 pub const SEAL_PREIMAGE_LEN: usize = 34;
+/// Fixed length of the **v2** seal preimage record: the v1-exact 26-byte
+/// prefix plus the 32-byte module digest in `26..58`.
+pub const SEAL_PREIMAGE_V2_LEN: usize = 58;
 /// Length of the sealed BLAKE3 digest.
 pub const DIGEST_LEN: usize = 32;
+/// Length of the module digest carried in the v2 seal preimage.
+pub const MODULE_DIGEST_LEN: usize = 32;
 
 // ---------------------------------------------------------------------------
 // Violation code table (byte values used in the seal preimage)
@@ -300,11 +350,14 @@ static TABLE: std::sync::Mutex<Table> = std::sync::Mutex::new(Table::new());
 /// installed: the native host tier passes real allocations, so there is
 /// nothing to validate against. The embedding runtime installs the bound
 /// from the Wasm memory size at instantiation; the ABI then refuses any
-/// out-pointer whose span reaches at/past the bound with a typed errno
-/// instead of a store trap. A stale bound is a fail-closed hazard only for
-/// addresses inside a *grown* memory tail, so the embedder must refresh it
-/// after every `memory.grow` — the refusal is typed (`ERR_CAP_TOO_SMALL`),
-/// never silent.
+/// span (read or write) that reaches at/past the bound with a typed errno
+/// instead of a load/store trap. A stale bound is a fail-closed hazard only
+/// for addresses inside a *grown* memory tail, so the embedder must refresh
+/// it after every `memory.grow` — the refusal is typed (`ERR_OOB_READ` for
+/// input spans, `ERR_OOB_WRITE` for out-spans), never silent.
+/// TODO(plan W-ABI2 item 3: wasm32 `memory_size()` reflection would remove
+/// the stale-bound refresh obligation; the `AtomicUsize` bound stays for the
+/// native tier).
 static LINEAR_MEMORY_END: std::sync::atomic::AtomicUsize =
     std::sync::atomic::AtomicUsize::new(0);
 
@@ -321,18 +374,30 @@ pub fn linear_memory_end() -> usize {
     LINEAR_MEMORY_END.load(std::sync::atomic::Ordering::SeqCst)
 }
 
-/// True when the `[ptr, ptr+cap)` span falls at/past the installed
+/// True when the `[ptr, ptr+len)` span falls at/past the installed
 /// linear-memory bound (or the span computation overflows). With no bound
 /// installed (`0`, native host tier) no span can be out of bounds.
-pub(crate) fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
+pub(crate) fn span_oob(ptr: *const u8, len: usize) -> bool {
     let end = LINEAR_MEMORY_END.load(std::sync::atomic::Ordering::SeqCst);
     if end == 0 {
         return false;
     }
     // (is_none_or: None (overflow) stays out-of-bounds.)
     (ptr as usize)
-        .checked_add(cap)
+        .checked_add(len)
         .is_none_or(|span_end| span_end > end)
+}
+
+/// Read-side span law: an input span at/past the bound is
+/// [`ERR_OOB_READ`] (W-ABI2 item 4).
+pub(crate) fn in_span_oob(ptr: *const u8, len: usize) -> bool {
+    span_oob(ptr, len)
+}
+
+/// Write-side span law: an out-buffer span at/past the bound is
+/// [`ERR_OOB_WRITE`] (W-ABI2 item 4).
+pub(crate) fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
+    span_oob(ptr, cap)
 }
 
 /// Runs `f` with exclusive `&mut` access to the table, serializing
@@ -431,15 +496,16 @@ fn write_u64_le(out: &mut [u8], off: usize, v: u64) {
     out[off..off + 8].copy_from_slice(&v.to_le_bytes());
 }
 
-/// Builds the fixed 34-byte seal preimage for a [`ReplaySummary`]-shaped
-/// verdict (module-doc layout).
+/// Builds the fixed 58-byte (v2) seal preimage for a [`ReplaySummary`]
+/// -shaped verdict bound to `module_digest` (module-doc layout).
 const fn seal_preimage(
     steps_executed: u32,
     events_total: u32,
     final_marking: u64,
     outcome_byte: u8,
     violation_byte: u8,
-) -> [u8; SEAL_PREIMAGE_LEN] {
+    module_digest: &[u8; MODULE_DIGEST_LEN],
+) -> [u8; SEAL_PREIMAGE_V2_LEN] {
     // JUSTIFICATION: `copy_from_slice` is not const-stable; fixed-width
     // index writes keep the preimage builder const (it is reused by tests
     // and by the seal path without a runtime dependency). Declared before
@@ -452,13 +518,20 @@ const fn seal_preimage(
             i += 1;
         }
     }
-    let mut p = [0u8; SEAL_PREIMAGE_LEN];
+    let mut p = [0u8; SEAL_PREIMAGE_V2_LEN];
     put64(&mut p, 0, steps_executed as u64);
     put64(&mut p, 8, events_total as u64);
     put64(&mut p, 16, final_marking);
     p[24] = outcome_byte;
     p[25] = violation_byte;
-    p // bytes 26..34 stay zero (reserved)
+    // v2: the v1 reserved field is consumed — the module digest occupies
+    // 26..58. (26..34 overlaps the former reserved bytes by construction.)
+    let mut i = 0;
+    while i < MODULE_DIGEST_LEN {
+        p[26 + i] = module_digest[i];
+        i += 1;
+    }
+    p
 }
 
 // ---------------------------------------------------------------------------
@@ -466,6 +539,11 @@ const fn seal_preimage(
 // ---------------------------------------------------------------------------
 
 /// ABI revision of this guest surface.
+// TODO(plan W-ABI2 item 5, shim tier): a `guest-abi-v1` feature compiling
+// the v1 layout/errno semantics (probe -> 1) is not yet wired; until it is,
+// v1 consumers must migrate or consume the shim tier. Related pin:
+// crates/ctt-wasm-guest/src/lib.rs still asserts probe == 1 (cross-crate
+// migration, outside this lane).
 #[no_mangle]
 #[must_use]
 pub const extern "C" fn ctt_guest_abi_version() -> u32 {
@@ -487,6 +565,11 @@ pub unsafe extern "C" fn ctt_session_new(
 ) -> i32 {
     if net_buf.is_null() || out_handle.is_null() {
         return ERR_NULL_PTR;
+    }
+    // Read-span law (W-ABI2 item 4): an input span at/past the installed
+    // linear-memory bound is a typed ERR_OOB_READ, not a load trap.
+    if in_span_oob(net_buf, net_len as usize) {
+        return ERR_OOB_READ;
     }
     let Some(bytes) = slice_from_raw(net_buf, net_len) else {
         return ERR_NULL_PTR;
@@ -549,6 +632,10 @@ pub unsafe extern "C" fn ctt_session_attach(
     if stream_ptr.is_null() {
         return ERR_NULL_PTR;
     }
+    // Read-span law (W-ABI2 item 4), same as `ctt_session_new`'s net_buf.
+    if in_span_oob(stream_ptr, stream_len as usize) {
+        return ERR_OOB_READ;
+    }
     let Some(bytes) = slice_from_raw(stream_ptr, stream_len) else {
         return ERR_NULL_PTR;
     };
@@ -602,9 +689,10 @@ pub unsafe extern "C" fn ctt_session_step(
     }
     // Out-pointer span must lie inside linear memory (T13/SK6-F2): a valid
     // handle with an out-pointer at/past the memory end is a typed errno,
-    // not a Wasm store trap.
+    // not a Wasm store trap. v2: distinct ERR_OOB_WRITE, no longer the
+    // ERR_CAP_TOO_SMALL overload.
     if out_span_oob(out_status, out_cap as usize) {
-        return ERR_CAP_TOO_SMALL;
+        return ERR_OOB_WRITE;
     }
     let status = with_table(|t| match resolve(t, handle) {
         Err(_) => None,
@@ -661,7 +749,7 @@ pub unsafe extern "C" fn ctt_session_step(
 }
 
 /// Writes the sealed replay receipt: the 32-byte BLAKE3 digest of the fixed
-/// 34-byte seal preimage (`ledger` feature), or `ERR_SEAL_UNAVAILABLE`.
+/// 58-byte (v2) seal preimage (`ledger` feature), or `ERR_SEAL_UNAVAILABLE`.
 ///
 /// # Safety
 ///
@@ -681,9 +769,10 @@ pub unsafe extern "C" fn ctt_session_seal(
         return ERR_CAP_TOO_SMALL;
     }
     // Same out-pointer span law as [`ctt_session_step`] (T13/SK6-F2),
-    // covering both the digest buffer and the 4-byte `out_len` word.
+    // covering both the digest buffer and the 4-byte `out_len` word. v2:
+    // distinct ERR_OOB_WRITE.
     if out_span_oob(out_buf, out_cap as usize) || out_span_oob(out_len.cast(), 4) {
-        return ERR_CAP_TOO_SMALL;
+        return ERR_OOB_WRITE;
     }
     let preimage = with_table(|t| match resolve(t, handle) {
         Err(code) => Err(code),
@@ -704,6 +793,10 @@ pub unsafe extern "C" fn ctt_session_seal(
                 summary.final_marking,
                 outcome_byte,
                 violation_byte,
+                // TODO(plan W-ABI2 item 2: build-time module digest) — the
+                // all-zero placeholder is the documented pre-item-2 state;
+                // the digest PARAMETER is the v2 surface.
+                &[0u8; MODULE_DIGEST_LEN],
             ))
         }),
     });
@@ -809,7 +902,13 @@ mod tests {
             ERR_CAP_TOO_SMALL,
             ERR_SEAL_UNAVAILABLE,
             ERR_STREAM_ALIGNMENT,
+            ERR_OOB_READ,
+            ERR_OOB_WRITE,
+            ERR_DEFERRED_HEAP,
         ];
+        assert_eq!(ERR_OOB_READ, 14);
+        assert_eq!(ERR_OOB_WRITE, 15);
+        assert_eq!(ERR_DEFERRED_HEAP, 16);
         assert_eq!(codes[0], 0, "OK must be zero");
         assert!(
             codes.iter().all(|&c| c >= 0),
@@ -823,22 +922,63 @@ mod tests {
     }
 
     #[test]
-    fn abi_version_is_one() {
-        assert_eq!(ctt_guest_abi_version(), 1);
+    fn abi_version_is_two() {
+        assert_eq!(ctt_guest_abi_version(), 2);
     }
 
     // -- record encoding ------------------------------------------------------
 
     #[test]
     fn seal_preimage_layout_is_fixed() {
-        let p = seal_preimage(3, 7, 1 << 3, 1, violation::NONE);
-        assert_eq!(p.len(), SEAL_PREIMAGE_LEN);
+        let digest: [u8; MODULE_DIGEST_LEN] =
+            core::array::from_fn(|i| u8::try_from(i % 256).unwrap());
+        let p = seal_preimage(3, 7, 1 << 3, 1, violation::NONE, &digest);
+        // v2 length; the v1-exact prefix is unchanged.
+        assert_eq!(p.len(), SEAL_PREIMAGE_V2_LEN);
+        assert_eq!(SEAL_PREIMAGE_V2_LEN, 58);
+        assert_eq!(SEAL_PREIMAGE_LEN, 34, "v1 length pinned for the shim tier");
         assert_eq!(&p[0..8], &3u64.to_le_bytes());
         assert_eq!(&p[8..16], &7u64.to_le_bytes());
         assert_eq!(&p[16..24], &(1u64 << 3).to_le_bytes());
         assert_eq!(p[24], 1); // Complete
         assert_eq!(p[25], violation::NONE);
-        assert!(p[26..].iter().all(|&b| b == 0), "reserved must be zero");
+        // v2 law: the module digest occupies 26..58 (the v1 reserved-zero
+        // law over 26..34 is replaced by the digest law).
+        assert_eq!(&p[26..58], &digest);
+    }
+
+    /// W-ABI2 item 6 (SX6 M2) falsifier: the module digest is load-bearing.
+    /// Two distinct digests over identical summaries must produce distinct
+    /// preimages AND distinct BLAKE3 outputs — the v1 collision class
+    /// (different modules, identical `ReplaySummary`, byte-identical seal)
+    /// is closed.
+    #[test]
+    fn seal_preimage_binds_module_digest_distinct_digests_distinct_seals() {
+        let digest_a = [0xA5u8; MODULE_DIGEST_LEN];
+        let digest_b = [0x5Au8; MODULE_DIGEST_LEN];
+        assert_ne!(digest_a, digest_b);
+
+        let pa = seal_preimage(3, 3, 1 << 3, 1, violation::NONE, &digest_a);
+        let pb = seal_preimage(3, 3, 1 << 3, 1, violation::NONE, &digest_b);
+        assert_ne!(
+            pa.as_slice(),
+            pb.as_slice(),
+            "identical summaries with distinct module digests must give distinct preimages"
+        );
+        // Identical summaries means the v1-exact prefix is byte-identical.
+        assert_eq!(pa[0..26], pb[0..26]);
+        assert_ne!(pa[26..], pb[26..]);
+
+        #[cfg(feature = "ledger")]
+        {
+            let da = blake3::hash(&pa);
+            let db = blake3::hash(&pb);
+            assert_ne!(
+                da.as_bytes(),
+                db.as_bytes(),
+                "distinct preimages must digest to distinct BLAKE3 seals"
+            );
+        }
     }
 
     #[test]

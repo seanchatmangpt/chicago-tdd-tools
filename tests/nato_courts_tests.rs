@@ -19,14 +19,30 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use chicago_tdd_tools::nato::bell_lapadula::BellLapadulaCourt;
+use chicago_tdd_tools::nato::cache::CacheCourt;
+use chicago_tdd_tools::nato::seu::{SeuDoubleBitCourt, SeuSingleBitCourt};
+use chicago_tdd_tools::nato::thrash::Cast32ThrashCourt;
+use chicago_tdd_tools::nato::tick::ClockGlitchCourt;
+use chicago_tdd_tools::nato::timing::TimingCourt;
+use chicago_tdd_tools::nato::torn::TornWriteCourt;
+use chicago_tdd_tools::nato::wcet::WcetCourt;
+use chicago_tdd_tools::nato::dossier_court::DossierCourt;
+use chicago_tdd_tools::nato::disasm::DisasmCourt;
+use chicago_tdd_tools::nato::entropy::EntropyCourt;
+use chicago_tdd_tools::nato::hamming::HammingProfileCourt;
+use chicago_tdd_tools::nato::kat::KatCourt;
+use chicago_tdd_tools::nato::liveness::LivenessCourt;
 use chicago_tdd_tools::nato::mils::MilSeparationCourt;
 use chicago_tdd_tools::nato::orthogonality::OrthogonalityCourt;
 use chicago_tdd_tools::nato::receipt::canonical_digest;
+use chicago_tdd_tools::nato::reproducible::ReproducibleCourt;
+use chicago_tdd_tools::nato::stackbound::StackBoundCourt;
 use chicago_tdd_tools::nato::rng::Lcg;
 use chicago_tdd_tools::nato::zero_ambient::ZeroAmbientCourt;
 use chicago_tdd_tools::nato::{
     run_court, CandidateRef, ControlProbe, ControlResult, Court, CourtId, CourtOutcome,
     CourtReceipt, MetricValue, Pillar, ScopingRecord, ScopingValidationError, Verdict,
+    COURT_REGISTRY,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,6 +215,10 @@ fn passing_control_clears_the_gate_and_runs() {
 
 #[test]
 fn receipt_json_roundtrip_preserves_everything() {
+    // Serializes with the gate-law tests: this body runs PassingControlCourt,
+    // whose run() mutates the shared RUN_CALLED tripwire (race fix).
+    let _tripwire = GATE_TRIPWIRE_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+
     let receipt =
         run_court(&PassingControlCourt, &CandidateRef("roundtrip".into()), "sha-roundtrip");
     let json = receipt.to_json().expect("CourtReceipt must serialize to JSON");
@@ -225,6 +245,10 @@ fn receipt_json_roundtrip_preserves_everything() {
 
 #[test]
 fn receipt_digest_is_stable_and_discriminating() {
+    // Serializes with the gate-law tests: this body runs PassingControlCourt,
+    // whose run() mutates the shared RUN_CALLED tripwire (race fix).
+    let _tripwire = GATE_TRIPWIRE_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+
     let receipt = run_court(&PassingControlCourt, &CandidateRef("digest".into()), "sha-digest");
     // Same inputs, two mintings: identical canonical string and digest.
     let again = run_court(&PassingControlCourt, &CandidateRef("digest".into()), "sha-digest");
@@ -391,6 +415,22 @@ fn registry_court_ids_are_twenty_unique_and_canonical() {
     assert_eq!(<OrthogonalityCourt>::ID, CourtId::N02);
     assert_eq!(<BellLapadulaCourt>::ID, CourtId::N03);
     assert_eq!(<ZeroAmbientCourt>::ID, CourtId::N04);
+    assert_eq!(<TimingCourt>::ID, CourtId::N05);
+    assert_eq!(<DisasmCourt>::ID, CourtId::N06);
+    assert_eq!(<CacheCourt>::ID, CourtId::N07);
+    assert_eq!(<HammingProfileCourt>::ID, CourtId::N08);
+    assert_eq!(<SeuSingleBitCourt>::ID, CourtId::N09);
+    assert_eq!(<SeuDoubleBitCourt>::ID, CourtId::N10);
+    assert_eq!(<TornWriteCourt>::ID, CourtId::N11);
+    assert_eq!(<ClockGlitchCourt>::ID, CourtId::N12);
+    assert_eq!(<WcetCourt>::ID, CourtId::N13);
+    assert_eq!(<Cast32ThrashCourt>::ID, CourtId::N14);
+    assert_eq!(<LivenessCourt>::ID, CourtId::N15);
+    assert_eq!(<StackBoundCourt>::ID, CourtId::N16);
+    assert_eq!(<KatCourt>::ID, CourtId::N17);
+    assert_eq!(<EntropyCourt>::ID, CourtId::N18);
+    assert_eq!(<ReproducibleCourt>::ID, CourtId::N19);
+    assert_eq!(<DossierCourt>::ID, CourtId::N20);
 }
 
 #[test]
@@ -401,6 +441,22 @@ fn pillar_mapping_matches_the_matrix() {
     assert_eq!(<OrthogonalityCourt>::PILLAR, Pillar::Proof);
     assert_eq!(<BellLapadulaCourt>::PILLAR, Pillar::Security);
     assert_eq!(<ZeroAmbientCourt>::PILLAR, Pillar::Dossier);
+    assert_eq!(<TimingCourt>::PILLAR, Pillar::Timing);
+    assert_eq!(<DisasmCourt>::PILLAR, Pillar::Timing);
+    assert_eq!(<CacheCourt>::PILLAR, Pillar::Timing);
+    assert_eq!(<HammingProfileCourt>::PILLAR, Pillar::Security);
+    assert_eq!(<SeuSingleBitCourt>::PILLAR, Pillar::Resilience);
+    assert_eq!(<SeuDoubleBitCourt>::PILLAR, Pillar::Resilience);
+    assert_eq!(<TornWriteCourt>::PILLAR, Pillar::Resilience);
+    assert_eq!(<ClockGlitchCourt>::PILLAR, Pillar::Resilience);
+    assert_eq!(<WcetCourt>::PILLAR, Pillar::Timing);
+    assert_eq!(<Cast32ThrashCourt>::PILLAR, Pillar::Resilience);
+    assert_eq!(<LivenessCourt>::PILLAR, Pillar::Proof);
+    assert_eq!(<StackBoundCourt>::PILLAR, Pillar::Dossier);
+    assert_eq!(<KatCourt>::PILLAR, Pillar::Security);
+    assert_eq!(<EntropyCourt>::PILLAR, Pillar::Security);
+    assert_eq!(<ReproducibleCourt>::PILLAR, Pillar::Proof);
+    assert_eq!(<DossierCourt>::PILLAR, Pillar::Dossier);
 
     // Pillar machine names are stable (they feed receipts).
     assert_eq!(Pillar::Security.as_str(), "security");
@@ -408,6 +464,109 @@ fn pillar_mapping_matches_the_matrix() {
     assert_eq!(Pillar::Resilience.as_str(), "resilience");
     assert_eq!(Pillar::Proof.as_str(), "proof");
     assert_eq!(Pillar::Dossier.as_str(), "dossier");
+}
+
+#[test]
+fn registry_sweep_runs_all_twenty_and_matches_real_receipts() {
+    // Registry shape: 20 entries in canonical id order, ids unique.
+    assert_eq!(COURT_REGISTRY.len(), 20, "the registry must hold all 20 courts");
+    for (i, e) in COURT_REGISTRY.iter().enumerate() {
+        assert_eq!(
+            e.id.id_number() as usize,
+            i + 1,
+            "COURT_REGISTRY must be in canonical N01..N20 order"
+        );
+    }
+
+    // Snapshot docs/receipts before the sweep: the sweep reads real receipts
+    // and must never persist anything.
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/receipts");
+    let snapshot = || {
+        let mut names: Vec<String> = std::fs::read_dir(&dir)
+            .unwrap_or_else(|e| panic!("docs/receipts must exist: {e}"))
+            .map(|e| e.expect("readdir").file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        names
+    };
+    let before = snapshot();
+
+    for e in &COURT_REGISTRY {
+        let court = (e.ctor)();
+        let cand = CandidateRef(format!("registry-sweep-n{:02}", e.id.id_number()));
+        let subject = format!("sha-registry-sweep-n{:02}", e.id.id_number());
+        let receipt = run_court(court.as_ref(), &cand, &subject);
+
+        // Registry identity agreement: entry id/pillar == the court's own
+        // consts (the consts are the law), and the receipt carries both.
+        assert_eq!(receipt.court_id, e.id, "{} receipt id", e.id.canonical());
+        assert_eq!(receipt.pillar, e.pillar, "{} receipt pillar", e.id.canonical());
+        assert!(
+            receipt.name.starts_with(e.id.canonical()),
+            "{} name must be prefixed by its canonical id, got {:?}",
+            e.id.canonical(),
+            receipt.name
+        );
+
+        // Verdict law: a Pass is a real Pass. A non-Pass must be an honest
+        // typed skip or refusal: a Fail must carry the typed skip metric
+        // (`accepted == false`) AND a validating ScopingRecord naming the
+        // bound — never a silent pass; N19 additionally refuses when its
+        // receipt artifact (target/nato_reproducible_receipt.json) is absent.
+        if receipt.verdict != Verdict::Pass {
+            if e.id == CourtId::N19 {
+                assert!(
+                    matches!(receipt.verdict, Verdict::Refused | Verdict::Fail),
+                    "N19 non-Pass must be Refused or Fail, got {:?}",
+                    receipt.verdict
+                );
+            } else {
+                assert_eq!(
+                    receipt.verdict,
+                    Verdict::Fail,
+                    "{} non-Pass must be a typed-skip Fail, got {:?}",
+                    e.id.canonical(),
+                    receipt.verdict
+                );
+            }
+            // The skip must be disclosed: the outcome's ScopingRecord must
+            // be a partial disclosure naming its bound, never a full-scale
+            // claim over skipped evidence.
+            let outcome = court.run(&cand);
+            assert!(
+                !outcome.scoping.is_full_spec_scale,
+                "{} non-Pass must disclose partial scale, never a full-scale claim",
+                e.id.canonical()
+            );
+            outcome
+                .scoping
+                .validate()
+                .unwrap_or_else(|err| panic!("{} scoping record must validate: {err:?}", e.id.canonical()));
+        }
+
+        // On-disk field agreement for the adapter lanes with minted receipts:
+        // court_id/pillar/verdict must agree with docs/receipts/Nxx.json;
+        // bytes never equal (the sweep subject differs) and nothing persists.
+        if matches!(e.id, CourtId::N08 | CourtId::N12 | CourtId::N14 | CourtId::N15) {
+            let path = dir.join(format!("{}.json", e.id.canonical()));
+            let disk = CourtReceipt::from_json(
+                &std::fs::read_to_string(&path)
+                    .unwrap_or_else(|e| panic!("on-disk {} receipt: {e}", path.display())),
+            )
+            .unwrap_or_else(|e| panic!("on-disk {} parses: {e}", path.display()));
+            assert_eq!(disk.court_id, receipt.court_id);
+            assert_eq!(disk.pillar, receipt.pillar);
+            assert_eq!(disk.verdict, receipt.verdict);
+            assert_ne!(
+                disk.to_json().expect("disk json"),
+                receipt.to_json().expect("sweep json"),
+                "sweep receipts must never byte-equal the minted artifact"
+            );
+        }
+    }
+
+    let after = snapshot();
+    assert_eq!(before, after, "the registry sweep must never persist receipts");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

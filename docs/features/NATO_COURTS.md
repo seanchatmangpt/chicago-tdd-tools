@@ -141,33 +141,37 @@ including the honest scoping wording.
 
 | Court | Name | Pillar | Delivered scope |
 |---|---|---|---|
-| N01 | MILS non-interference | isolation | Bounded 2^16 exhaustive small-domain + 10^7 dual-tenant sweep proving `dState(TA)/dInput(TB) == 0`. Full Kani/Z3 2^64 NOT-SHIPPED; documented follow-up. |
-| N02 | Coordinate orthogonality | isolation | Spec-exact: exhaustive bit-spill census — every field write perturbs no neighbor field. |
-| N03 | Bell-LaPadula / Biba lattice | isolation | Exhaustive over the 25x65,536-entry transition-table space: no-write-down, no-read-up. |
-| N04 | Zero ambient authority | authority | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). In-code pillar: `Pillar::Dossier` (the 5-value enum has no Authority variant; pinned by `pillar_mapping_matches_the_matrix`). |
+| N01 | MILS non-interference | security | Bounded 2^16 exhaustive small-domain + 10^7 dual-tenant sweep proving `dState(TA)/dInput(TB) == 0`. Full Kani/Z3 2^64 NOT-SHIPPED; documented follow-up. |
+| N02 | Coordinate orthogonality | proof | Spec-exact: exhaustive bit-spill census — every field write perturbs no neighbor field. |
+| N03 | Bell-LaPadula / Biba lattice | security | Exhaustive over the 25x65,536-entry transition-table space: no-write-down, no-read-up. |
+| N04 | Zero ambient authority | dossier (disclosed; the 5-value enum has no Authority variant) | Source-tier symbol/AST audit of the final artifact: zero env/fs/unmetered-clock imports on state paths. Binary-tier audit deferred (disclosed). In-code pillar: `Pillar::Dossier`, pinned by `pillar_mapping_matches_the_matrix`. |
 | N05 | dudect timing | timing | Two tiers: smoke (small calibrated N in CI) and full (Welch t-test, `\|t\| < 4.5`, valid-vs-refusal timing; spec 10M, delivered calibrated-N disclosed). |
 | N06 | Branchless disassembly | timing | `.s`/objdump census over the compiled artifact: zero conditional branches on state paths; unmatched symbols recorded as typed skips, never silent passes. |
 | N07 | Cache side-channel | timing | Prime+Probe-style concurrent eviction vs sequencer; latency invariance is **reported, not gated** (host-noise floor disclosed in receipt). |
-| N08 | Hamming weight/distance profile | timing | Test-court lane (`src/nato/hamming.rs`, cfg(test) adjudication — no dyn `Court` impl): HIGH (`0xFFFF`) vs LOW (`0x0000`) payload-class kernel chains over the PN64 committed marking, identical LCG seed so payload is the only variable. Tier-1 bin-diff gate plus tier-2 100k-samples-per-class run (`--ignored`); input-independent Hamming profile = no power-analysis leak. |
+| N08 | Hamming weight/distance profile | security | Test-court lane (`src/nato/hamming.rs`, cfg(test) adjudication — no dyn `Court` impl): HIGH (`0xFFFF`) vs LOW (`0x0000`) payload-class kernel chains over the PN64 committed marking, identical LCG seed so payload is the only variable. Tier-1 bin-diff gate plus tier-2 100k-samples-per-class run (`--ignored`); input-independent Hamming profile = no power-analysis leak. |
 | N09 | SEU single-bit | resilience | Prefix-stream tiers: bounded randomized single-bit flips during ALU exec; 100.000% fail-closed-or-halt, 0% SDC on the executed prefix; calibrated-N disclosed. |
 | N10 | SEU double-bit | resilience | Adjacent-lane double flips vs forbidden-bit check; same prefix-stream tiering as N09. |
 | N11 | Torn-write / bus-disconnect | resilience | Fuzz over the ported 64B CAS ring: every torn write recovers to a valid prior state. |
-| N12 | Clock-glitch | timing | Hardware-tick law (`src/nato/tick.rs`): `HwTick::mono_checked` monotonicity over jittered/stuck/huge-jump tick sources. Jitter-injection regression is refused while forward chains admit; frozen clock gives bounded liveness; PN64 transition ordering law holds; wedged backstep clock is caught by positive control (honest host note: no counter register on this host). Tier-3 `n12_clock_resolution_calibration` is `--ignored` calibration. |
+| N12 | Clock-glitch | resilience | Hardware-tick law (`src/nato/tick.rs`): `HwTick::mono_checked` monotonicity over jittered/stuck/huge-jump tick sources. Jitter-injection regression is refused while forward chains admit; frozen clock gives bounded liveness; PN64 transition ordering law holds; wedged backstep clock is caught by positive control (honest host note: no counter register on this host). Tier-3 `n12_clock_resolution_calibration` is `--ignored` calibration. |
 | N13 | WCET | timing | Static per-opcode table + calibrated measurement. Units are `ticks≈ns on aarch64` — never "cycles"; the measured table is published in the receipt. |
-| N14 | CAST-32A thrash | timing | Multi-core interference on the landed 64B CAS ring (`src/nato/thrash.rs`): 4-producer/4-consumer MPMC pipeline vs storm/spinner adversary threads. Three legs — typed `ConsensusError` refusals only (zero SDC, zero loss), liveness under watchdog deadlock bound, run-to-run conservation determinism. Tier-1 small-config legs plus `--ignored` tier-3 donor-verbatim `n14_cast32a_thrash_full`; positive control is a wedged shim that must hit `DeadlockBound`. |
+| N14 | CAST-32A thrash | resilience | Multi-core interference on the landed 64B CAS ring (`src/nato/thrash.rs`): 4-producer/4-consumer MPMC pipeline vs storm/spinner adversary threads. Three legs — typed `ConsensusError` refusals only (zero SDC, zero loss), liveness under watchdog deadlock bound, run-to-run conservation determinism. Tier-1 small-config legs plus `--ignored` tier-3 donor-verbatim `n14_cast32a_thrash_full`; positive control is a wedged shim that must hit `DeadlockBound`. |
 | N15 | TLC liveness | proof | Starvation-freedom of the RONR admission surface (`src/nato/liveness.rs`), property-equivalent per the spec's own "Elixir property equivalent" sanction: exhaustive reachable-marking enumeration + round-robin fair-scheduler simulation with an explicit typed `StarvationMonitor` (enabled-then-fired within `TOTAL/32`), unfair-scheduler starvation counterexample, adoption-absorbing diamond, tier-3 full-net trap-pinning. TLC/Erlang itself NOT-SHIPPED (disclosed in the `ScopingRecord`). |
-| N16 | Stack bound | resource | Zero-recursion proof (call-graph analysis) + 32KiB ladder: depth-tiered deepest-frame bound, total <= 32KiB. |
-| N17 | ML-DSA-65 KAT | crypto | PIPELINE-KAT: known-answer tests against the signer. **NOT the official ACVP corpus**; the drop-in path to official vectors is documented in the receipt. |
-| N18 | Zero-entropy diagnostics | crypto | Entropy refusal court: Shannon entropy of all emitted error strings == 0 bits about internal state; strings that leak state are refused at construction. |
-| N19 | Reproducible build | supply chain | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
-| N20 | Dossier generator | supply chain | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
+| N16 | Stack bound | dossier (disclosed; the 5-value enum has no Resource variant, per the N04 precedent) | Zero-recursion proof (call-graph analysis) + 32KiB ladder: depth-tiered deepest-frame bound, total <= 32KiB. |
+| N17 | ML-DSA-65 KAT | security (disclosed; the 5-value enum has no Crypto variant, per the N04 precedent) | PIPELINE-KAT: known-answer tests against the signer. **NOT the official ACVP corpus**; the drop-in path to official vectors is documented in the receipt. |
+| N18 | Zero-entropy diagnostics | security (disclosed; the 5-value enum has no Crypto variant, per the N04 precedent) | Entropy refusal court: Shannon entropy of all emitted error strings == 0 bits about internal state; strings that leak state are refused at construction. |
+| N19 | Reproducible build | proof | 2-run same-host SHA-256 identity of the build artifact. 3-host cross-environment identity NOT-RUN (disclosed follow-up). |
+| N20 | Dossier generator | dossier (disclosed; the 5-value enum has no Supply-chain variant) | Aggregates N01–N19 receipts into one dossier, sealed with ML-DSA-65 over the manifest digest. |
 
 Numbering note: all 20 courts N01–N20 are delivered CTT-side
 (`src/nato/registry.rs` `COURT_NAMES` is 20/20). N08 Hamming profile
 (`src/nato/hamming.rs`), N12 clock-glitch (`src/nato/tick.rs`), N14 CAST-32A
 thrash (`src/nato/thrash.rs`), and N15 liveness (`src/nato/liveness.rs`)
 landed CTT-side as test-court lanes; the Erlang/OTP tiers of those four
-remain strata-side.
+remain strata-side. Pillar assignments follow the emitter-minted receipts
+(`docs/receipts/N*.json`) and the landed `Court::PILLAR` consts; where the
+spec pillar has no enum variant, the in-code mapping is disclosed in the row
+(N16 Resource->`Dossier`, N17/N18 Crypto->`Security`, per the N04
+Authority->`Dossier` precedent).
 
 ## Files on disk (src/nato/)
 

@@ -1,7 +1,8 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
-#![allow(dead_code)]
+// `#[ignore]`d tests and are referenced by the court registry, so non-test
+// builds legitimately see unused items.
+#![allow(dead_code)] // probes + registry slot (TimingCourt) referenced by the court registry
 //! N05 — dudect-style statistical constant-time court (NATO lane).
 //!
 //! Ported from strata `tests/nato/n05_dudect_timing.rs` (Apache/MIT per
@@ -94,6 +95,12 @@
 )]
 
 use std::time::{Duration, Instant};
+
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome as RegistryCourtOutcome, MetricValue,
+    Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 // --- Typed errors (production surface returns Result, never panics) -----
 
@@ -525,6 +532,112 @@ pub fn leaky_refusal(pn: u64, ocel: u64) -> u64 {
     x
 }
 
+// ---------------------------------------------------------------------------
+// Court wiring
+// ---------------------------------------------------------------------------
+
+/// Hoisted positive control for the N05 timing court: the leaky twin
+/// [`leaky_refusal`] must be class-selective (cheap on the valid class,
+/// expensive on the refusal class) — otherwise it controls nothing and every
+/// PASS this court issues carries no bits. 10k iterations and min-of-3 per
+/// class: the valid-class window is ~1 ns/call, so a 1k-iteration
+/// single-shot interval is dominated by ambient load noise in release (the
+/// AS2 law — a wall-clock reading under unknown load measures the machine);
+/// the min over repeated trials is the load-robust statistic, and 10k iters
+/// puts both windows far above timer noise.
+#[must_use]
+pub(crate) fn timing_positive_control() -> bool {
+    let v = (PN_VALID, OCEL_VALID);
+    let mut acc = 0u64;
+    let mut class_min = |ocel: u64| -> f64 {
+        let mut best = f64::INFINITY;
+        for _ in 0..3 {
+            let t0 = Instant::now();
+            for _ in 0..10_000u64 {
+                acc ^= leaky_refusal(v.0, ocel);
+            }
+            best = best.min(t0.elapsed().as_nanos() as f64);
+        }
+        best
+    };
+    let valid_ns = class_min(OCEL_VALID);
+    let refusal_ns = class_min(OCEL_REFUSAL);
+    std::hint::black_box(&mut acc);
+    refusal_ns > valid_ns * 4.0
+}
+
+/// N05 dudect-style statistical constant-time court.
+pub struct TimingCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl TimingCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N05;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Timing;
+}
+
+impl Court for TimingCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N05 dudect_timing"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        timing_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> RegistryCourtOutcome {
+        // Smoke-scale dudect court over the crate's own branchless kernel
+        // (full spec-class calibration remains behind the nato-tier3
+        // `#[ignore]`d test). Err is a soundness refusal (timer too coarse,
+        // vacuous samples, behavioral mismatch), never a Pass.
+        match run_court(BurstConfig::SMOKE, kernel) {
+            Ok(outcome) => {
+                let t = outcome.final_t().unwrap_or(f64::NAN);
+                RegistryCourtOutcome {
+                    verdict: if passes(t) { Verdict::Pass } else { Verdict::Fail },
+                    metrics: vec![
+                        ("final_t", MetricValue::F64(t)),
+                        ("attempts", MetricValue::U64(outcome.attempts.len() as u64)),
+                        ("min_raw_sample_ns", MetricValue::F64(outcome.min_raw_sample_ns)),
+                        ("min_batch_span_ns", MetricValue::F64(outcome.min_batch_span_ns)),
+                        ("resolution_ns", MetricValue::F64(outcome.resolution_ns)),
+                    ],
+                    scoping: ScopingRecord::partial(
+                        "full spec-class dudect measurement (100 x 2_000 x 1_024 = 204.8M \
+                         transitions per class) proving |t| < 4.5 for the branchless kernel",
+                        "smoke-scale dudect court over `step_branchless` (>= 100k transitions \
+                         per class) with 20x-resolution burst-soundness floors and idle-rerun \
+                         (up to 4 attempts) noise defense",
+                        "smoke calibration only; the 204.8M-transition/class full-scale court \
+                         is behind the nato-tier3 `#[ignore]`d test",
+                    ),
+                }
+            }
+            Err(e) => RegistryCourtOutcome {
+                verdict: Verdict::Fail,
+                metrics: vec![("error", MetricValue::Str(format!("{e:?}")))],
+                scoping: ScopingRecord::partial(
+                    "full spec-class dudect measurement proving |t| < 4.5 for the branchless \
+                     kernel",
+                    "court measurement was refused by a typed soundness error before any \
+                     verdict could be graded",
+                    "measurement refused: see the error metric for the typed failure",
+                ),
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)] // JUSTIFICATION: test code only
 mod tests {
@@ -569,34 +682,11 @@ mod tests {
 
     #[test]
     fn n05_leaky_refusal_control_diverges_by_construction() {
-        // The control must be cheap on the valid class and expensive on the
-        // refusal class — otherwise it controls nothing. 10k iterations and
-        // min-of-3 per class: the valid-class window is ~1 ns/call, so a
-        // 1k-iteration single-shot interval is dominated by ambient load
-        // noise in release (the AS2 law — a wall-clock reading under
-        // unknown load measures the machine); the min over repeated trials
-        // is the load-robust statistic, and 10k iters puts both windows far
-        // above timer noise.
-        let v = (PN_VALID, OCEL_VALID);
-        let r = (PN_VALID, OCEL_REFUSAL);
-        let mut acc = 0u64;
-        let mut class_min = |ocel: u64| -> f64 {
-            let mut best = f64::INFINITY;
-            for _ in 0..3 {
-                let t0 = Instant::now();
-                for _ in 0..10_000u64 {
-                    acc ^= leaky_refusal(v.0, ocel);
-                }
-                best = best.min(t0.elapsed().as_nanos() as f64);
-            }
-            best
-        };
-        let valid_ns = class_min(OCEL_VALID);
-        let refusal_ns = class_min(OCEL_REFUSAL);
-        std::hint::black_box(&mut acc);
+        // The class-selectivity law lives in the hoisted control the court
+        // registry itself runs; the wrapper asserts it directly.
         assert!(
-            refusal_ns > valid_ns * 4.0,
-            "leaky control not class-selective: valid {valid_ns} ns vs refusal {refusal_ns} ns"
+            timing_positive_control(),
+            "leaky control not class-selective: refusal class must cost > 4x the valid class"
         );
     }
 

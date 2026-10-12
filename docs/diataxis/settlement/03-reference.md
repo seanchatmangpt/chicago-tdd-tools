@@ -88,6 +88,14 @@ Codes 0-13 are the landed `ctt_*` guest semantics (do not renumber; hosts key
 on these). Codes 14-19 are merger-guest extensions appended in the next free
 range.
 
+> **ABI v2 collision (open, code-owned).** The `ctt_*` guest ABI is now v2
+> (`src/conformance/guest.rs`, probe returns 2), which defines `ERR_OOB_READ = 14` and
+> `ERR_OOB_WRITE = 15` — numeric values this merger-guest extension range already occupies
+> (`ERR_BAD_SCALE`/`ERR_DIM`). Also at v2, `ERR_CAP_TOO_SMALL` (11) is **pure capacity**
+> again: the v1 out-span OOB overload moved to codes 14/15, so this table's row 11 below is
+> correct for the merger guests but no longer matches the ctt v2 meaning. Renumbering the
+> merger-guest range past 16 is a work-order item outside this doc-sync lane.
+
 | Code | Constant | Meaning |
 |---|---|---|
 | 0 | `OK` | ok |
@@ -101,7 +109,7 @@ range.
 | 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` slots occupied |
 | 9 | `ERR_BAD_HANDLE` | handle free, out of range, or generation-stale |
 | 10 | `ERR_STREAM_EMPTY` | attach of a zero-length stream |
-| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length |
+| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length (pure capacity; merger guests have no OOB span law — see the v2 collision note above) |
 | 12 | `ERR_SEAL_UNAVAILABLE` | sealing without the `ledger` feature |
 | 13 | `ERR_STREAM_ALIGNMENT` | stream byte length not a multiple of 8 |
 | 14 | `ERR_BAD_SCALE` | scale_tag not one of the four documented scales |

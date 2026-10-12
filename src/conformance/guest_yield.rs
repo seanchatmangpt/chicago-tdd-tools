@@ -36,8 +36,8 @@
 //!
 //! # Canonical source of the errno table
 //!
-//! The canonical ABI errno table lives in `guest.rs` (`ERR_*` 0..=13, doc
-//! table in its module header). This module owns ONLY the slice-scheduling
+//! The canonical ABI errno table lives in `guest.rs` (`ERR_*` 0..=16 at ABI
+//! v2, doc table in its module header). This module owns ONLY the slice-scheduling
 //! protocol. [`STATUS_OK`] is an alias of the canonical `guest::OK` so the
 //! two surfaces share one zero. The remaining `STATUS_*` consts are
 //! **yield-scheduling statuses, NOT ABI errnos**: their numeric values
@@ -76,7 +76,8 @@ pub const STATUS_E_INVALID: i32 = 2;
 /// Guest asked for a resource (memory, table, fd) the host has not granted.
 ///
 /// Yield-scheduling status, NOT an ABI errno. Distinct from the canonical
-/// `ERR_CAP_TOO_SMALL` (11), which is the ABI form of "out-buffer too small".
+/// `ERR_CAP_TOO_SMALL` (11, pure out-buffer capacity at ABI v2; the former
+/// v1 out-span OOB overload moved to `ERR_OOB_WRITE` = 15).
 pub const STATUS_E_NOMEM: i32 = 3;
 
 /// Trap/panic inside guest code; guest state is poisoned for this slice.

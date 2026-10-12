@@ -1,6 +1,8 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests and the court registry, so non-test builds legitimately
+// see unused items; the probe/control fns are dead to test builds only and
+// referenced by the court registry.
 #![allow(dead_code)]
 //! NATO N11 — torn-write / bus-disconnect courts.
 //!
@@ -89,6 +91,11 @@ mod slot;
 
 use ring::{CasRing, ConsensusError, SlotId};
 use slot::Slot;
+
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// Knuth LCG, deterministic across platforms (high-bit sampling, per the
 /// donor courts). Same constants/shape as `crate::nato::rng`.
@@ -239,10 +246,24 @@ fn run_model(vectors: u64) -> (u64, u64, u64, u64) {
     (checks, torn_states_examined, torn_words_admitted, corrupted_words_admitted)
 }
 
+/// One fast-tier N11 court pass: the model-level exhaustive torn-ordering +
+/// bit-flip leg, then the 4W x 4R hammer abort/recovery leg. Laws asserted
+/// here (panics on violation); shared verbatim by the `#[test]` wrapper and
+/// the court registry probe.
+pub(crate) fn n11_run_court_probe() -> (u64, u64, u64, u64, u64) {
+    let (checks, states, torn_words_admitted, corrupted_words_admitted) =
+        run_model(MODEL_VECTORS_FAST);
+    assert_eq!(checks, model_checks(MODEL_VECTORS_FAST), "model check count mismatch");
+    assert_eq!(torn_words_admitted, 0, "torn word admitted by read law");
+    assert_eq!(corrupted_words_admitted, 0, "corrupted state admitted a non-intended word");
+    let aborts = run_hammer(HAMMER_OPS_FAST);
+    (checks, states, torn_words_admitted, corrupted_words_admitted, aborts)
+}
+
 #[test]
 fn model_exhaustive_torn_orderings_bitflips_fast() {
-    let (checks, _states, torn_words_admitted, corrupted_words_admitted) =
-        run_model(MODEL_VECTORS_FAST);
+    let (checks, _states, torn_words_admitted, corrupted_words_admitted, _aborts) =
+        n11_run_court_probe();
     assert_eq!(checks, model_checks(MODEL_VECTORS_FAST), "model check count mismatch");
     assert_eq!(torn_words_admitted, 0, "torn word admitted by read law");
     assert_eq!(corrupted_words_admitted, 0, "corrupted state admitted a non-intended word");
@@ -266,8 +287,12 @@ fn model_exhaustive_torn_orderings_bitflips_full() {
 /// law (seq gate only), corrupted torn states MUST admit non-intended words.
 /// If this fails the interlock is not load-bearing and the model court above
 /// is vacuous.
-#[test]
-fn positive_control_naked_read_admits_corruption() {
+/// POSITIVE CONTROL probe: with the checksum interlock dropped from the
+/// model read law (seq gate only), corrupted torn states MUST admit
+/// non-intended words. Returns `true` iff corruption was admitted — if
+/// `false`, the interlock is not load-bearing and the model court is
+/// vacuous. Shared verbatim by the `#[test]` wrapper and the court registry.
+pub(crate) fn n11_positive_control() -> bool {
     let mut rng = Lcg(0x4E41_3131_0000_0001);
     let mut corrupted_words_admitted = 0u64;
 
@@ -313,8 +338,13 @@ fn positive_control_naked_read_admits_corruption() {
             }
         }
     }
+    corrupted_words_admitted > 0
+}
+
+#[test]
+fn positive_control_naked_read_admits_corruption() {
     assert!(
-        corrupted_words_admitted > 0,
+        n11_positive_control(),
         "naked read (no checksum gate) admitted no corruption — control vacuous"
     );
 }
@@ -399,7 +429,8 @@ fn run_hammer(total: u64) -> u64 {
 
 #[test]
 fn hammer_4w4r_abort_recovery_fast() {
-    let _aborts = run_hammer(HAMMER_OPS_FAST);
+    let (_, _, _, _, aborts) = n11_run_court_probe();
+    let _ = aborts;
 }
 
 #[test]
@@ -524,4 +555,66 @@ fn casring_abort_recycles_typed_fast() {
 #[ignore = "nato-tier3"]
 fn casring_abort_recycles_typed_full() {
     let _abandons = run_casring(CASRING_PER_WRITER_FULL);
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring
+// ---------------------------------------------------------------------------
+
+/// N11 torn-write / bus-disconnect court.
+pub struct TornWriteCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl TornWriteCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N11;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Resilience;
+}
+
+impl Court for TornWriteCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N11 torn_write"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n11_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let (checks, states, torn_words_admitted, corrupted_words_admitted, aborts) =
+            n11_run_court_probe();
+        // The probe panics on any read-law violation; all torn orderings
+        // recover (zero admitted words) iff the counters stay zero.
+        let all_recovered = torn_words_admitted == 0 && corrupted_words_admitted == 0;
+        CourtOutcome {
+            verdict: if all_recovered { Verdict::Pass } else { Verdict::Fail },
+            metrics: vec![
+                ("model_checks", MetricValue::U64(checks)),
+                ("torn_states_examined", MetricValue::U64(states)),
+                ("torn_words_admitted", MetricValue::U64(torn_words_admitted)),
+                ("corrupted_words_admitted", MetricValue::U64(corrupted_words_admitted)),
+                ("hammer_aborts", MetricValue::U64(aborts)),
+            ],
+            scoping: ScopingRecord::partial(
+                "torn-write / bus-disconnect: no torn or checksum-valid garbage word is ever \
+                 admitted, and the slot recovers after every mid-sequence abort",
+                "fast tier: 3! orderings x every truncated prefix x 3 fields x 64 flip bits \
+                 over 8 deterministic vectors with an independently derived blake3 seal \
+                 oracle, plus the 4W x 4R hammer abort/recovery court; naked-read positive \
+                 control proves the checksum interlock load-bearing",
+                "donor-verbatim full scale (256 vectors / 884,736 checks, 10^6 hammer ops, \
+                 CasRing typed-refusal leg) behind nato-tier3 ignore",
+            ),
+        }
+    }
 }

@@ -18,7 +18,7 @@
 //!    byte (2) with an `OK` (non-negative) ABI return — the negative
 //!    trap-class i32 space stays reserved for the wasm runtime.
 //! 5. Seal: with `ledger`, `ctt_session_seal` writes the BLAKE3 digest of
-//!    the 34-byte preimage, and the guest-produced 352-byte receipt wire
+//!    the 58-byte (v2) preimage, and the guest-produced 352-byte receipt wire
 //!    record (`guest_seal::encode_receipt_wire`) passes the host verifier
 //!    `VerifiedCourtReceipt::from_bytes_verified`. Without `ledger`, sealing
 //!    refuses with `ERR_SEAL_UNAVAILABLE` (no weak-hash downgrade).
@@ -48,9 +48,9 @@ use chicago_tdd_tools::conformance::guest::{
     ctt_guest_abi_version, ctt_session_attach, ctt_session_drop, ctt_session_new, ctt_session_seal,
     ctt_session_step, linear_memory_end, set_linear_memory_end, DIGEST_LEN, ERR_BAD_HANDLE,
     ERR_BAD_MAGIC, ERR_BAD_MODEL, ERR_BAD_VERSION, ERR_CAP_TOO_SMALL, ERR_NULL_PTR,
-    ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE, ERR_STREAM_ALIGNMENT, ERR_STREAM_EMPTY,
-    ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED, MAX_SESSIONS, SEAL_PREIMAGE_LEN,
-    STEP_STATUS_LEN,
+    ERR_OOB_READ, ERR_OOB_WRITE, ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE,
+    ERR_STREAM_ALIGNMENT, ERR_STREAM_EMPTY, ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED,
+    MAX_SESSIONS, MODULE_DIGEST_LEN, SEAL_PREIMAGE_LEN, SEAL_PREIMAGE_V2_LEN, STEP_STATUS_LEN,
 };
 #[cfg(feature = "ledger")]
 use chicago_tdd_tools::conformance::guest_seal::{encode_receipt_wire, guest_receipt};
@@ -151,17 +151,19 @@ fn attach(handle: u64, words: &[u64]) -> i32 {
 
 // ─── 1. ABI version const ────────────────────────────────────────────────────
 
-/// The ABI revision is the stable documented constant (1) and the exported
+/// The ABI revision is the stable documented constant (2) and the exported
 /// symbol agrees with the crate-visible const.
 #[test]
 fn abi_version_const_is_stable() {
-    assert_eq!(ctt_guest_abi_version(), 1);
+    assert_eq!(ctt_guest_abi_version(), 2);
     assert_eq!(ctt_guest_abi_version(), chicago_tdd_tools::conformance::guest::ABI_VERSION);
     // Fixed record lengths are part of the ABI contract.
     assert_eq!(STEP_STATUS_LEN, 21);
-    assert_eq!(SEAL_PREIMAGE_LEN, 34);
+    assert_eq!(SEAL_PREIMAGE_V2_LEN, 58);
+    assert_eq!(SEAL_PREIMAGE_LEN, 34, "v1 length pinned for the shim tier");
     assert_eq!(DIGEST_LEN, 32);
-    assert_eq!(chicago_tdd_tools::conformance::guest::ABI_VERSION, 1);
+    assert_eq!(MODULE_DIGEST_LEN, 32);
+    assert_eq!(chicago_tdd_tools::conformance::guest::ABI_VERSION, 2);
 }
 
 // ─── 2. session_new from a loader-serialized net buffer ──────────────────────
@@ -263,15 +265,26 @@ fn skipped_tick_is_typed_violation_status_byte_with_non_negative_return() {
 
 // ─── 5. Seal ────────────────────────────────────────────────────────────────
 
-/// Reconstructs the 34-byte seal preimage from known replay facts.
+/// Reconstructs the 58-byte (v2) seal preimage from known replay facts.
+/// `module_digest` mirrors the guest's threaded module identity — the
+/// placeholder here is the same all-zero slot the ABI passes until the
+/// build-time splice (W-ABI2 item 2) lands.
 #[cfg(feature = "ledger")] // only the ledger-tier seal tests digest a preimage
-fn seal_preimage(steps: u32, events: u32, marking: u64, outcome: u8, violation: u8) -> [u8; 34] {
-    let mut p = [0u8; 34];
+fn seal_preimage(
+    steps: u32,
+    events: u32,
+    marking: u64,
+    outcome: u8,
+    violation: u8,
+    module_digest: &[u8; MODULE_DIGEST_LEN],
+) -> [u8; SEAL_PREIMAGE_V2_LEN] {
+    let mut p = [0u8; SEAL_PREIMAGE_V2_LEN];
     p[0..8].copy_from_slice(&u64::from(steps).to_le_bytes());
     p[8..16].copy_from_slice(&u64::from(events).to_le_bytes());
     p[16..24].copy_from_slice(&marking.to_le_bytes());
     p[24] = outcome;
     p[25] = violation;
+    p[26..58].copy_from_slice(module_digest);
     p
 }
 
@@ -305,7 +318,7 @@ fn seal_digest_and_receipt_wire_pass_host_verification() {
     assert_eq!(code, 0);
     assert_eq!(usize::try_from(sealed_len).unwrap(), DIGEST_LEN);
 
-    let expected = blake3::hash(&seal_preimage(3, 3, 1 << 3, 1, 0));
+    let expected = blake3::hash(&seal_preimage(3, 3, 1 << 3, 1, 0, &[0u8; MODULE_DIGEST_LEN]));
     assert_eq!(&sealed[..DIGEST_LEN], expected.as_bytes());
 
     // Guest-produces / host-seals: the 352-byte receipt wire record built
@@ -351,7 +364,7 @@ fn seal_of_faulted_session_carries_skipped_violation_byte() {
     let code =
         unsafe { ctt_session_seal(s.0, sealed.as_mut_ptr(), sealed.len() as u32, &mut sealed_len) };
     assert_eq!(code, 0);
-    let expected = blake3::hash(&seal_preimage(1, 2, 1 << 1, 2, 1));
+    let expected = blake3::hash(&seal_preimage(1, 2, 1 << 1, 2, 1, &[0u8; MODULE_DIGEST_LEN]));
     assert_eq!(
         &sealed[..DIGEST_LEN],
         expected.as_bytes(),
@@ -401,51 +414,64 @@ const FAKE_MEM_BASE: usize = 0x4000_0000;
 const FAKE_MEM_LEN: usize = 0x0001_0000; // 64 KiB guest memory
 
 /// A valid handle with an out-pointer at/past the linear-memory end returns
-/// the typed `ERR_CAP_TOO_SMALL`, never a trap/panic — and the handle stays
-/// live and usable afterwards. Covers `ctt_session_step` (T13's finding),
-/// `ctt_session_seal`'s digest buffer, and the 4-byte `out_len` word.
+/// the typed `ERR_OOB_WRITE` (v2 split; formerly the `ERR_CAP_TOO_SMALL`
+/// overload), never a trap/panic — and the handle stays live and usable
+/// afterwards. Covers `ctt_session_step` (T13's finding),
+/// `ctt_session_seal`'s digest buffer, the 4-byte `out_len` word, and the
+/// v2 read-span law (`ERR_OOB_READ`) on `ctt_session_new`/`attach`.
 #[test]
-fn out_pointer_past_linear_memory_end_is_typed_err_cap_too_small() {
+fn out_pointer_past_linear_memory_end_is_typed_err_oob_write() {
     let _guard = ABI_LOCK.lock().unwrap();
     let s = new_locked_session();
 
+    // The lawful stream must attach BEFORE the fake bound is installed:
+    // real host allocations count as OOB against the fake bound (see the
+    // "in-bounds host buffer vs installed bound" assertion below).
     let stream = golden_stream();
     let code = unsafe { ctt_session_attach(s.0, stream.as_ptr(), stream.len() as u32) };
     assert_eq!(code, 0);
 
     let _bound = BoundGuard::install(FAKE_MEM_BASE + FAKE_MEM_LEN);
 
+    // Read-span law: an input span at/past the end is ERR_OOB_READ.
+    let at_end_ro = (FAKE_MEM_BASE + FAKE_MEM_LEN) as *const u8;
+    let mut handle = 0u64;
+    let code = unsafe { ctt_session_new(at_end_ro, 16, &mut handle) };
+    assert_eq!(code, ERR_OOB_READ, "net buf at memory end must be ERR_OOB_READ");
+    let code = unsafe { ctt_session_attach(s.0, at_end_ro, 8) };
+    assert_eq!(code, ERR_OOB_READ, "stream ptr at memory end must be ERR_OOB_READ");
+
     // Exactly at the end: no byte of the record fits.
     let at_end = (FAKE_MEM_BASE + FAKE_MEM_LEN) as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, at_end, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "out ptr at memory end must be typed, not trap");
+    assert_eq!(code, ERR_OOB_WRITE, "out ptr at memory end must be typed, not trap");
 
     // Straddling the end: 8 bytes inside, the rest past it.
     let straddle = (FAKE_MEM_BASE + FAKE_MEM_LEN - 8) as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, straddle, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "straddling span must be typed, not trap");
+    assert_eq!(code, ERR_OOB_WRITE, "straddling span must be typed, not trap");
 
     // Span arithmetic overflow (ptr + cap wraps usize) is OOB, not ok.
     let near_max = usize::MAX as *mut u8;
     let code = unsafe { ctt_session_step(s.0, 1, near_max, STEP_STATUS_LEN as u32) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "overflowing span must be typed, not trap");
+    assert_eq!(code, ERR_OOB_WRITE, "overflowing span must be typed, not trap");
 
     // Seal digest buffer past the end.
     let mut sealed_len = 0u32;
     let code = unsafe { ctt_session_seal(s.0, at_end, 64, &mut sealed_len) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "seal out_buf past memory end must be typed");
+    assert_eq!(code, ERR_OOB_WRITE, "seal out_buf past memory end must be typed");
 
     // Seal `out_len` word past the end (digest buffer in-bounds at base).
     let out_len_past = (FAKE_MEM_BASE + FAKE_MEM_LEN - 2) as *mut u32;
     let code =
         unsafe { ctt_session_seal(s.0, FAKE_MEM_BASE as *mut u8, 64, out_len_past) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "seal out_len past memory end must be typed");
+    assert_eq!(code, ERR_OOB_WRITE, "seal out_len past memory end must be typed");
 
     // The handle was never consumed by any refused call: still live.
     assert_ne!(linear_memory_end(), 0);
     let mut rec = [0u8; STEP_STATUS_LEN];
     let code = unsafe { ctt_session_step(s.0, 16, rec.as_mut_ptr(), rec.len() as u32) };
-    assert_eq!(code, ERR_CAP_TOO_SMALL, "in-bounds host buffer vs installed bound: still refused");
+    assert_eq!(code, ERR_OOB_WRITE, "in-bounds host buffer vs installed bound: still refused");
     drop(_bound);
 
     // With the bound removed (native tier default), the same call runs.
@@ -515,14 +541,18 @@ fn max_sessions_exhaustion_is_typed_busy_not_panic() {
 fn status_code_table_every_documented_errno_distinct() {
     use chicago_tdd_tools::conformance::guest::{
         ERR_BAD_HANDLE as E9, ERR_BAD_MAGIC as E2, ERR_BAD_MODEL as E7, ERR_BAD_VERSION as E3,
-        ERR_CAP_TOO_SMALL as E11, ERR_NULL_PTR as E1, ERR_RESERVED_NOT_ZERO as E6,
+        ERR_CAP_TOO_SMALL as E11, ERR_DEFERRED_HEAP as E16, ERR_NULL_PTR as E1,
+        ERR_OOB_READ as E14, ERR_OOB_WRITE as E15, ERR_RESERVED_NOT_ZERO as E6,
         ERR_SEAL_UNAVAILABLE as E12, ERR_STREAM_ALIGNMENT as E13, ERR_STREAM_EMPTY as E10,
         ERR_TABLE_FULL as E8, ERR_TRAILING as E5, ERR_TRUNCATED as E4, OK as E0,
     };
-    let codes = [E0, E1, E2, E3, E4, E5, E6, E7, 8, E9, E10, E11, E12, E13];
+    let codes = [E0, E1, E2, E3, E4, E5, E6, E7, 8, E9, E10, E11, E12, E13, E14, E15, E16];
     assert_eq!(E0, 0, "OK must be zero");
     assert_eq!(E8, ERR_TABLE_FULL);
     assert_eq!(E12, ERR_SEAL_UNAVAILABLE);
+    assert_eq!(E14, 14, "ERR_OOB_READ pinned at 14");
+    assert_eq!(E15, 15, "ERR_OOB_WRITE pinned at 15");
+    assert_eq!(E16, 16, "ERR_DEFERRED_HEAP pinned at 16");
     for i in 0..codes.len() {
         for j in (i + 1)..codes.len() {
             assert_ne!(codes[i], codes[j], "errno collision at indices {i},{j}");

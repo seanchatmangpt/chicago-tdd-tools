@@ -1,5 +1,9 @@
 #![cfg(feature = "nato")]
-#![allow(dead_code)] // JUSTIFICATION: court items are consumed by its own cfg(test) courts and the N08 registry slot
+// JUSTIFICATION: court items are consumed by its own cfg(test) courts, the
+// N08 registry slot, and the shared probe referenced by the court registry
+// (`HammingProfileCourt`); the leaky-observer control is referenced by the
+// registry's `ControlProbe`.
+#![allow(dead_code)] // N08 registry slot; probes referenced by the court registry (HammingProfileCourt)
 #![allow(unused_imports)]
 // JUSTIFICATION: ScopingRecord feeds only the cfg(test) courts; kept at module scope for doc-link resolution
 //! N08 — Hamming weight/distance profile court (NATO lane CP-N08).
@@ -102,6 +106,7 @@
 )]
 
 use crate::conformance::pn64::step_branchless;
+use crate::nato::court::{Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict};
 use crate::nato::disclosure::ScopingRecord;
 use crate::nato::rng::Lcg;
 use crate::nato::timing::T_THRESHOLD;
@@ -135,7 +140,7 @@ fn fires(t: f64) -> bool {
 }
 
 /// Collected profile for one payload class.
-struct Profile {
+pub(crate) struct Profile {
     weights: Vec<f64>,
     distances: Vec<f64>,
     weight_hist: [u64; 17],
@@ -225,6 +230,52 @@ fn max_bin_diff(hi: &[u64; 17], lo: &[u64; 17], n: usize) -> f64 {
     (0..17).map(|i| (hi[i] as f64 - lo[i] as f64).abs() / n).fold(0.0_f64, f64::max)
 }
 
+// ---------------------------------------------------------------------------
+// Shared probe: one real tier-1 court run, three consumers (the tier-1
+// #[test] wrapper, the receipt emitter's mint, and the N08 registry adapter).
+// Anti-drift law (plan W-NTW §6): the metrics cannot diverge because every
+// consumer reads the same probe.
+// ---------------------------------------------------------------------------
+
+/// One real tier-1 profile-court run: the HIGH/LOW clean-observer chains
+/// plus the Welch and binned-distribution metrics derived from them.
+pub(crate) struct N08ProbeRun {
+    /// HIGH (0xFFFF) payload-class chain profile.
+    pub hi: Profile,
+    /// LOW (0x0000) payload-class chain profile.
+    pub lo: Profile,
+    /// Welch t over the weight samples.
+    pub t_w: f64,
+    /// Welch t over the distance samples.
+    pub t_d: f64,
+    /// Max per-bin weight-histogram divergence.
+    pub w_bin: f64,
+    /// Max per-bin distance-histogram divergence.
+    pub d_bin: f64,
+}
+
+/// Run the real tier-1 main court (HIGH 0xFFFF vs LOW 0x0000 clean chains at
+/// the calibrated 10k prefix) and derive its metrics. Deterministic: fixed
+/// LCG seed, no wall clock, no environment.
+pub(crate) fn n08_probe() -> N08ProbeRun {
+    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_clean);
+    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_clean);
+    let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+    let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
+    let w_bin = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER1);
+    let d_bin = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER1);
+    N08ProbeRun { hi, lo, t_w, t_d, w_bin, d_bin }
+}
+
+/// The Welch decision rule must have POWER — the leaky-observer mutant MUST
+/// fire. `false` = the court is vacuous.
+pub(crate) fn n08_negative_control_court_has_power() -> bool {
+    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_leaky);
+    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_leaky);
+    let t_leak = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
+    fires(t_leak)
+}
+
 /// Tier-1 main court: the Hamming weight/distance profile of the committed
 /// 16-bit marking must be input-(payload-)independent.
 #[test]
@@ -236,8 +287,9 @@ fn n08_hamming_profile_is_input_independent_tier1() {
     );
     disclosure.validate().expect("tier-1 scoping disclosure must validate");
 
-    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_clean);
-    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_clean);
+    let run = n08_probe();
+    let hi = &run.hi;
+    let lo = &run.lo;
 
     assert_eq!(
         hi.weights.len(),
@@ -252,10 +304,10 @@ fn n08_hamming_profile_is_input_independent_tier1() {
         lo.weights.len()
     );
 
-    let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
-    let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
-    let max_w_bin_diff = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER1);
-    let max_d_bin_diff = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER1);
+    let t_w = run.t_w;
+    let t_d = run.t_d;
+    let max_w_bin_diff = run.w_bin;
+    let max_d_bin_diff = run.d_bin;
 
     // Anti-vacuity: the profile itself must be non-degenerate.
     let populated =
@@ -292,14 +344,10 @@ fn n08_hamming_profile_is_input_independent_tier1() {
 /// have POWER — a leaky-observer mutant MUST fire.
 #[test]
 fn n08_negative_control_court_has_power_tier1() {
-    let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_leaky);
-    let lo = run_chain(SEED, 0x0000, N_TIER1, observe_leaky);
-
-    let t_leak = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
     assert!(
-        fires(t_leak),
+        n08_negative_control_court_has_power(),
         "VACUOUS COURT: Welch rule did not fire on an injected payload leak \
-         (t = {t_leak:.4}, threshold |t| >= {T_THRESHOLD})"
+         (threshold |t| >= {T_THRESHOLD})"
     );
 }
 
@@ -334,12 +382,13 @@ mod receipt_emission {
     /// receipt. Panics if the court fails or the control does not fire —
     /// a failing court must never mint a Pass receipt.
     fn mint() -> CourtReceipt {
-        let hi = run_chain(SEED, 0xFFFF, N_TIER1, observe_clean);
-        let lo = run_chain(SEED, 0x0000, N_TIER1, observe_clean);
-        let t_w = crate::nato::timing::welch_t(&hi.weights, &lo.weights);
-        let t_d = crate::nato::timing::welch_t(&hi.distances, &lo.distances);
-        let w_bin = max_bin_diff(&hi.weight_hist, &lo.weight_hist, N_TIER1);
-        let d_bin = max_bin_diff(&hi.distance_hist, &lo.distance_hist, N_TIER1);
+        // Shared probe (anti-drift law): the same real tier-1 run the
+        // #[test] wrapper and the HammingProfileCourt adapter read.
+        let run = n08_probe();
+        let t_w = run.t_w;
+        let t_d = run.t_d;
+        let w_bin = run.w_bin;
+        let d_bin = run.d_bin;
         assert!(
             accepts(t_w) && accepts(t_d) && w_bin <= BIN_TOL && d_bin <= BIN_TOL,
             "receipt-tier court run must pass; got t_w={t_w} t_d={t_d} \
@@ -468,4 +517,66 @@ fn n08_hamming_profile_is_input_independent_tier2() {
         max_d_bin_diff <= BIN_TOL,
         "POWER-ANALYSIS SIGNAL: distance distribution diverges per-bin by {max_d_bin_diff:.6} (tol {BIN_TOL})"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring (plan W-NTW: N08 registry adapter, mirrors mils.rs:422-475)
+// ---------------------------------------------------------------------------
+
+/// N08 Hamming weight/distance profile court.
+pub struct HammingProfileCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl HammingProfileCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N08;
+    /// Capability pillar. Must match the emitter's mint
+    /// (`emit_receipt`, this file) and the on-disk
+    /// `docs/receipts/N08.json` — adapters align to emitter
+    /// receipts, never to a plan table.
+    pub const PILLAR: Pillar = Pillar::Security;
+}
+
+impl Court for HammingProfileCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N08 hamming_profile"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n08_negative_control_court_has_power
+    }
+
+    fn run(&self, _candidate: &crate::nato::court::CandidateRef) -> CourtOutcome {
+        // Shared probe (anti-drift law): the same real tier-1 run the
+        // #[test] wrapper and the receipt emitter's mint read — the metrics
+        // cannot diverge.
+        let r = n08_probe();
+        let holds = accepts(r.t_w) && accepts(r.t_d) && r.w_bin <= BIN_TOL && r.d_bin <= BIN_TOL;
+        CourtOutcome {
+            verdict: if holds { Verdict::Pass } else { Verdict::Fail },
+            metrics: vec![
+                ("n_per_class", MetricValue::U64(N_TIER1 as u64)),
+                ("welch_t_weight", MetricValue::F64(r.t_w)),
+                ("welch_t_distance", MetricValue::F64(r.t_d)),
+                ("max_bin_diff_weight", MetricValue::F64(r.w_bin)),
+                ("max_bin_diff_distance", MetricValue::F64(r.d_bin)),
+            ],
+            scoping: ScopingRecord::partial(
+                "N08: Hamming weight/distance profile across successive states is input-independent",
+                "registry-tier run: 10,000-step chained kernel profile court per payload \
+                 class (HIGH 0xFFFF / LOW 0x0000), Welch t + 1%-per-bin histogram \
+                 comparison, plus the firing leaky-observer positive control",
+                "calibrated Tier-1 prefix: 10k samples per class vs the 100k spec scale",
+            ),
+        }
+    }
 }

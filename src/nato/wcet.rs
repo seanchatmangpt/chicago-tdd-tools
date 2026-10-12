@@ -1,6 +1,7 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests, so non-test builds legitimately see unused items —
+// and referenced by the court registry.
 #![allow(dead_code)]
 //! N13 — WCET bound court for the PN64 branchless kernel (NATO lane N13).
 //!
@@ -91,6 +92,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use crate::conformance::pn64;
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// Embedded source of the audited hot path (audit cannot desync from src).
 const PN64_SRC: &str = include_str!("../conformance/pn64.rs");
@@ -419,8 +424,12 @@ fn class_words(
 // TEST 1 (always-run) — static table + source audit
 // ---------------------------------------------------------------------------
 
-#[test]
-fn n13_static_instruction_count_table_is_published_and_self_consistent() {
+/// Hoisted body of [`n13_static_instruction_count_table_is_published_and_self_consistent`]
+/// (also the static-table leg of the N13 court adapter's `run`).
+#[allow(clippy::assertions_on_constants)]
+// JUSTIFICATION: the published table IS a compile-time constant receipt —
+// pinning its totals with plain asserts is the court's law, not a tautology.
+pub(crate) fn wcet_static_table_probe() {
     // Cumulative monotonicity: each deeper validity class must cost >= the
     // shallower one (the predicate stages are strictly additive).
     assert!(
@@ -456,11 +465,16 @@ fn n13_static_instruction_count_table_is_published_and_self_consistent() {
     );
 }
 
-/// The include_str! audit leg: the embedded hot-path body carries zero
-/// branch tokens and zero heap tokens. Honesty mechanism — the audited text
-/// is pinned at compile time so this table cannot desync from the source.
 #[test]
-fn n13_hot_path_body_audit_zero_branch_and_heap_tokens() {
+fn n13_static_instruction_count_table_is_published_and_self_consistent() {
+    wcet_static_table_probe();
+}
+
+/// Hoisted body of [`n13_hot_path_body_audit_zero_branch_and_heap_tokens`]
+/// (also the body-audit leg of the N13 court adapter's `run`). Panics on any
+/// violation; returns the extracted branch/heap token-hit counts (always 0
+/// on the real kernel) for the adapter's metrics.
+pub(crate) fn wcet_body_audit_probe() -> (usize, usize) {
     let stripped = strip_comments(PN64_SRC);
     let body = extract_fn_body(&stripped, "step_branchless")
         .expect("N13 audit: step_branchless body not found in embedded pn64.rs — source moved, audit is vacuous");
@@ -490,13 +504,27 @@ fn n13_hot_path_body_audit_zero_branch_and_heap_tokens() {
         heap_hits.is_empty(),
         "N13 FAIL: heap tokens {heap_hits:?} in step_branchless body — kernel allocates on the hot path"
     );
+    (branch_hits.len(), heap_hits.len())
 }
 
-/// The kernel is exercised for real (Chicago: no vacuous static claim) and
-/// its semantics are pinned: worst-corpus calls produce a word whose marking
-/// is the branchless post-fire marking, and unchanged words stay unchanged.
 #[test]
-fn n13_kernel_semantics_pinned_over_corpus() {
+fn n13_hot_path_body_audit_zero_branch_and_heap_tokens() {
+    let (branch_hits, heap_hits) = wcet_body_audit_probe();
+    assert_eq!(branch_hits, 0, "branch token hits must be zero");
+    assert_eq!(heap_hits, 0, "heap token hits must be zero");
+}
+
+#[test]
+fn n13_court_detects_branched_mutant() {
+    // Same contract as mils' n01_court_detects_injected_interference: the
+    // semantically-identical branched mutant MUST be flagged (non-vacuity
+    // by mutation).
+    assert!(wcet_positive_control(), "branched-mutant positive control must fire");
+}
+
+/// Hoisted body of [`n13_kernel_semantics_pinned_over_corpus`] (also the
+/// semantics leg of the N13 court adapter's `run`). Returns the corpus size.
+pub(crate) fn wcet_semantics_probe() -> u64 {
     let corpus = worst_corpus();
     for &(pn, ocel, mask) in &corpus {
         let out = pn64::step_branchless(pn, ocel, mask);
@@ -512,6 +540,13 @@ fn n13_kernel_semantics_pinned_over_corpus() {
             "kernel output diverged from the reference semantics on ({pn:#x}, {ocel:#x}, {mask:#x})"
         );
     }
+    corpus.len() as u64
+}
+
+#[test]
+fn n13_kernel_semantics_pinned_over_corpus() {
+    let corpus_len = wcet_semantics_probe();
+    assert!(corpus_len > 0, "semantics corpus must be non-empty");
 }
 
 // ---------------------------------------------------------------------------
@@ -652,4 +687,133 @@ fn n13_no_input_class_exceeds_bound() {
         );
     }
     let _ = bound_bl;
+}
+
+// ---------------------------------------------------------------------------
+// N13 court adapter (W-NTW): trait wiring per the mils.rs N01 template
+// ---------------------------------------------------------------------------
+
+/// A branched mutant of `pn64::step_branchless` — semantically identical to
+/// the kernel (same accept/reject shape, same commit arithmetic), differing
+/// only in control flow. The positive control's target. Its source text is
+/// embedded so the audit scan runs on
+/// exactly the function the court executes (no desync).
+const BRANCHED_MUTANT_SRC: &str = r"
+fn branched_step(pn: u64, ocel: u64, mask: u64) -> u64 {
+    let m = marking(pn);
+    let next = ((m ^ pre(pn)) | post(pn)) & 0xFFFF;
+    let verb_ok = (ocel & 0xFF) == tid(pn) as u64;
+    let token_ok = (m & pre(pn)) == pre(pn);
+    let inv_ok = u64::from(next) & (mask & 0xFFFF) == 0;
+    if verb_ok {
+        if token_ok && inv_ok {
+            return (pn & !0xFFFFu64) | u64::from(next);
+        }
+    }
+    pn
+}
+";
+
+/// The executed twin of [`BRANCHED_MUTANT_SRC`]: same control flow, same
+/// result. Used only by the positive control (real calls, no vacuous scan).
+#[allow(clippy::collapsible_if)]
+// JUSTIFICATION: the nested `if` is the point — this is the BRANCHED mutant
+// the token scan must flag; collapsing it would erase the defect class.
+fn branched_step(pn: u64, ocel: u64, mask: u64) -> u64 {
+    let m = pn64::marking(pn);
+    let next = ((m ^ pn64::pre(pn)) | pn64::post(pn)) & 0xFFFF;
+    let verb_ok = (ocel & 0xFF) == pn64::tid(pn) as u64;
+    let token_ok = (m & pn64::pre(pn)) == pn64::pre(pn);
+    let inv_ok = u64::from(next) & (mask & 0xFFFF) == 0;
+    if verb_ok {
+        if token_ok && inv_ok {
+            return (pn & !0xFFFFu64) | u64::from(next);
+        }
+    }
+    pn
+}
+
+/// Positive control: a branched re-expression of the same kernel MUST be
+/// flagged by the token scan while remaining semantically identical on the
+/// worst corpus (proving the scan has teeth, not just that it fires on
+/// different semantics). Returns false if the court is vacuous.
+pub(crate) fn wcet_positive_control() -> bool {
+    // (1) The executed mutant agrees with the real kernel everywhere.
+    let corpus = worst_corpus();
+    for &(pn, ocel, mask) in &corpus {
+        if branched_step(pn, ocel, mask) != pn64::step_branchless(pn, ocel, mask) {
+            return false;
+        }
+    }
+    // (2) The token scan on the SAME source text must flag branch tokens.
+    let stripped = strip_comments(BRANCHED_MUTANT_SRC);
+    let Some(body) = extract_fn_body(&stripped, "branched_step") else {
+        return false;
+    };
+    BRANCH_TOKENS.iter().any(|tok| contains_word(&body, tok))
+}
+
+/// N13 WCET bound court (always-run legs: static table + body audit +
+/// corpus semantics; tier-3 measured legs are excluded from the adapter).
+pub struct WcetCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl WcetCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N13;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Timing;
+}
+
+/// Hoisted court run: the three always-run legs, packaged as a
+/// [`CourtOutcome`]. Panics (leg assertions) are the Fail path's evidence;
+/// a clean return is Pass.
+pub(crate) fn wcet_run_court_probe() -> CourtOutcome {
+    wcet_static_table_probe();
+    let (branch_hits, heap_hits) = wcet_body_audit_probe();
+    let corpus_len = wcet_semantics_probe();
+    CourtOutcome {
+        verdict: Verdict::Pass,
+        metrics: vec![
+            ("branch_token_hits", MetricValue::U64(branch_hits as u64)),
+            ("heap_token_hits", MetricValue::U64(heap_hits as u64)),
+            ("semantics_corpus_len", MetricValue::U64(corpus_len)),
+            ("kernel_ops", MetricValue::U64(BRANCHLESS.total() as u64)),
+            ("kernel_depth", MetricValue::U64(BRANCHLESS_DEPTH as u64)),
+            ("spec_target_cycles", MetricValue::U64(SPEC_TARGET_CYCLES as u64)),
+        ],
+        scoping: ScopingRecord::partial(
+            "WCET bound for the PN64 kernel: static op-count table against the \
+             <= 12-cycle spec target, include_str!-pinned zero-branch/zero-heap \
+             body audit, measured worst-case + 8-class lattice within the bound",
+            "static table + compile-time-pinned body audit + 64-word worst-corpus \
+             semantics pinning + branched-mutant positive control",
+            "tier-3 measured legs (dependent-ALU calibration, worst-case timing, \
+             8-class lattice sweep) are #[ignore = \"nato-tier3\"] and NOT in this \
+             adapter run; source-level op counts are the conservative direction",
+        ),
+    }
+}
+
+impl Court for WcetCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N13 wcet_bound"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        wcet_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        wcet_run_court_probe()
+    }
 }

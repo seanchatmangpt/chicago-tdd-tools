@@ -1,6 +1,6 @@
 //! N15 — liveness / starvation-freedom court for the RONR admission surface.
 #![allow(dead_code)]
-// JUSTIFICATION: court items (TOTAL/SLACK/M0/DISPOSITION, fire/reachable/can_reach, StarvationMonitor, run_schedule) are consumed by this module's own cfg(test) courts; deny(warnings) counts test-only refs as dead in non-test builds
+// JUSTIFICATION: court items (TOTAL/SLACK/M0/DISPOSITION, fire/reachable/can_reach, StarvationMonitor, run_schedule) are consumed by this module's own cfg(test) courts and referenced by the court registry (LivenessCourt); deny(warnings) counts test-only refs as dead in non-test builds
 //!
 //! Verbatim port of the liveness law from strata-protocol
 //! `tests/nato/n15_tlc_liveness.rs` (strata fix lane, Apache/MIT per strata
@@ -50,6 +50,7 @@
 use super::disclosure::ScopingRecord;
 use super::transition_tables::{ronr, Shape}; // Shape lives at transition_tables top level, not in ronr
 use crate::conformance::pn64;
+use crate::nato::court::{CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict};
 
 /// Simulation step budget for the bounded scheduler model. `SLACK =
 /// TOTAL / 32` mirrors the strata N15 ring court's documented 1/8-of-fair-
@@ -198,12 +199,132 @@ fn run_schedule(table: &[Shape], start: u16, fair: bool) -> (Vec<usize>, bool) {
     (monitor.starved, false)
 }
 
-#[cfg(test)]
-mod tests {
-    fn admission_surface() -> &'static [Shape] {
-        &ronr::TRANSITIONS[0..6]
+/// The canonical six-transition admission surface (opcodes `0x01`-`0x06`),
+/// shared by the court probe, the positive control, and the cfg(test)
+/// courts, so any drift in the table data moves all of them together.
+pub(crate) fn admission_surface() -> &'static [Shape] {
+    &ronr::TRANSITIONS[0..6]
+}
+
+/// Whether the round-robin schedule from `start` reaches `DISPOSITION`
+/// within `budget` steps (same cursor discipline as [`run_schedule`]).
+pub(crate) fn run_to_disposition_within(table: &[Shape], start: u16, budget: usize) -> bool {
+    let mut cur = start;
+    let mut rr = 0usize;
+    let n = table.len();
+    for _ in 0..budget {
+        if cur & DISPOSITION != 0 {
+            return true;
+        }
+        let enabled: Vec<usize> = (0..n).filter(|&i| cur & table[i].pre == table[i].pre).collect();
+        match (0..n).map(|k| (rr + k) % n).find(|k| enabled.contains(k)) {
+            Some(i) => match fire(cur, &table[i]) {
+                Some(next) => {
+                    cur = next;
+                    rr = i + 1;
+                }
+                None => return false,
+            },
+            None => return false,
+        }
+    }
+    cur & DISPOSITION != 0
+}
+
+/// The starved set produced by the unfair-scheduler adversary from the
+/// debated marking `0x000C`: the anti-vacuity counterexample's observable.
+pub(crate) fn n15_unfair_starved_set() -> Vec<usize> {
+    let start: u16 = ronr::N_MAIN_MOTION | ronr::N_SECONDED | ronr::N_DEBATABLE; // 0x000C
+    run_schedule(admission_surface(), start, false).0
+}
+
+/// Positive control (the probe has power): the unfair-scheduler adversary
+/// MUST starve `ronr_previous_question` past SLACK. Returns `true` only if
+/// the diamond is genuinely excluded for the adversary, the monitor SEES
+/// exactly previous_question (index 4) starved, no disposition is reached,
+/// and the SAME start under the fair scheduler dispositions cleanly.
+pub(crate) fn n15_positive_control() -> bool {
+    let surface = admission_surface();
+    let start: u16 = ronr::N_MAIN_MOTION | ronr::N_SECONDED | ronr::N_DEBATABLE; // 0x000C
+    if can_reach(start, DISPOSITION, &surface[0..4]) {
+        return false;
+    }
+    let (starved, dispositioned) = run_schedule(surface, start, false);
+    if dispositioned || starved != vec![4usize] {
+        return false;
+    }
+    let (fair_starved, fair_dispositioned) = run_schedule(surface, start, true);
+    fair_dispositioned && fair_starved.is_empty()
+}
+
+/// The court probe (hoisted legs of the fair-schedule law): exhaustive
+/// box-diamond + starvation-freedom under round-robin from EVERY reachable
+/// marking of the admission surface, with the SLACK bound enforced.
+/// Returns `true` only if the reachable set is non-empty and every marking
+/// dispositions within SLACK steps and starves nothing.
+pub(crate) fn n15_run_court_probe() -> bool {
+    let surface = admission_surface();
+    let markings = reachable(M0, surface);
+    if markings.is_empty() {
+        return false;
+    }
+    markings.iter().all(|&m| {
+        let (starved, dispositioned) = run_schedule(surface, m, true);
+        dispositioned
+            && starved.is_empty()
+            && run_to_disposition_within(surface, m, SLACK)
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring
+// ---------------------------------------------------------------------------
+
+/// N15 liveness / starvation-freedom court.
+pub struct LivenessCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl LivenessCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N15;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Proof;
+}
+
+impl Court for LivenessCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
     }
 
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N15 liveness_starvation_freedom"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n15_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let verdict = if n15_run_court_probe() { Verdict::Pass } else { Verdict::Fail };
+        CourtOutcome {
+            verdict,
+            metrics: vec![
+                ("reachable_markings", MetricValue::U64(reachable(M0, admission_surface()).len() as u64)),
+                ("slack", MetricValue::U64(SLACK as u64)),
+                ("total_steps", MetricValue::U64(TOTAL as u64)),
+            ],
+            scoping: scoping(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
     use super::*;
 
     #[test]
@@ -243,20 +364,13 @@ mod tests {
         // Exhaustive: from EVERY reachable marking of the admission surface,
         // the fair round-robin schedule reaches adoption within SLACK steps
         // and starves nothing (box-diamond under the documented fairness).
-        let markings = reachable(M0, admission_surface());
-        assert!(!markings.is_empty(), "reachable set from 0x0081 must be non-empty");
-        for &m in &markings {
-            let (starved, dispositioned) = run_schedule(admission_surface(), m, true);
-            assert!(dispositioned, "marking {m:#06x} did not reach adoption within {TOTAL} steps");
-            assert!(
-                starved.is_empty(),
-                "marking {m:#06x} starved transitions {starved:?} under round-robin"
-            );
-            // The SLACK bound is not decorative: the run must disposition
-            // well inside TOTAL/32, not merely inside TOTAL.
-            let fast = run_to_disposition_within(admission_surface(), m, SLACK);
-            assert!(fast, "marking {m:#06x} failed to disposition within SLACK ({SLACK})");
-        }
+        // Body hoisted into `n15_run_court_probe` (shared with the court
+        // registry adapter and the receipt emitter).
+        assert!(
+            n15_run_court_probe(),
+            "fair round-robin schedule must disposition within SLACK and starve nothing \
+             from every reachable marking"
+        );
     }
 
     #[test]
@@ -316,29 +430,13 @@ mod tests {
         // marking 0x000C. previous_question stays enabled at every return
         // to 0x000C, its enabled streak passes SLACK, and the monitor SEES
         // the starvation. Without this trip the fairness law could be
-        // silently vacuous.
-        let start: u16 = ronr::N_MAIN_MOTION | ronr::N_SECONDED | ronr::N_DEBATABLE; // 0x000C
-                                                                                     // The diamond is genuinely excluded for the adversary: restricted to
-                                                                                     // indices < 4 (stated/second/amend/adopt_amendment), the schedule is
-                                                                                     // trapped in the {0x000C, 0x0014} amend cycle and can never fire
-                                                                                     // previous_question or adopt_main_motion, so no reachable marking
-                                                                                     // carries the adoption bit.
+        // silently vacuous. Body hoisted into `n15_positive_control`
+        // (shared with the court registry adapter).
         assert!(
-            !can_reach(start, DISPOSITION, &admission_surface()[0..4]),
-            "adversary must never reach adoption (the diamond is genuinely excluded)"
+            n15_positive_control(),
+            "unfair scheduler must starve previous_question past SLACK while the fair \
+             schedule dispositions cleanly from the same marking"
         );
-        let (starved, dispositioned) = run_schedule(admission_surface(), start, false);
-        assert!(!dispositioned, "unfair schedule must not disposition");
-        assert_eq!(
-            starved,
-            vec![4usize],
-            "exactly previous_question (index 4) must be seen starved past SLACK"
-        );
-        // The SAME start under the fair scheduler dispositions cleanly —
-        // the trip is the scheduler's unfairness, not the net's deadlock.
-        let (fair_starved, fair_dispositioned) = run_schedule(admission_surface(), start, true);
-        assert!(fair_dispositioned, "fair schedule dispositions from 0x000C");
-        assert!(fair_starved.is_empty(), "fair schedule starves nothing");
     }
 
     #[test]
@@ -440,32 +538,6 @@ mod tests {
         reachable(m, table).iter().any(|r| r & disposition != 0)
     }
 
-    /// Whether the round-robin schedule from `start` reaches `DISPOSITION`
-    /// within `budget` steps (same cursor discipline as [`run_schedule`]).
-    fn run_to_disposition_within(table: &[Shape], start: u16, budget: usize) -> bool {
-        let mut cur = start;
-        let mut rr = 0usize;
-        let n = table.len();
-        for _ in 0..budget {
-            if cur & DISPOSITION != 0 {
-                return true;
-            }
-            let enabled: Vec<usize> =
-                (0..n).filter(|&i| cur & table[i].pre == table[i].pre).collect();
-            match (0..n).map(|k| (rr + k) % n).find(|k| enabled.contains(k)) {
-                Some(i) => match fire(cur, &table[i]) {
-                    Some(next) => {
-                        cur = next;
-                        rr = i + 1;
-                    }
-                    None => return false,
-                },
-                None => return false,
-            }
-        }
-        cur & DISPOSITION != 0
-    }
-
     /// Real-receipt emission for the N15 dossier slot (opt-in via
     /// `CTT_EMIT_RECEIPTS=1`): runs the box-diamond + starvation court for
     /// real — exhaustive reachable-marking enumeration, the round-robin
@@ -486,25 +558,23 @@ mod tests {
 
         // Positive control: the unfair-scheduler adversary MUST trip the
         // starvation monitor on previous_question — panics otherwise.
-        let start: u16 = ronr::N_MAIN_MOTION | ronr::N_SECONDED | ronr::N_DEBATABLE; // 0x000C
-        assert!(!can_reach(start, DISPOSITION, &admission_surface()[0..4]));
-        let (starved, dispositioned) = run_schedule(admission_surface(), start, false);
-        assert!(!dispositioned);
-        assert_eq!(starved, vec![4usize], "control: previous_question must be seen starved");
+        // Shares the hoisted probe with the court registry adapter so the
+        // emitter's control can never diverge from the adapter's.
+        assert!(
+            n15_positive_control(),
+            "control: unfair scheduler must starve previous_question past SLACK"
+        );
+        let starved = n15_unfair_starved_set();
         let control = ControlResult::MutantCaught {
             mutant_id: "unfair-scheduler".to_string(),
             detection_channel: "StarvationMonitor enabled-streak >= SLACK".to_string(),
         };
 
         // Real court run: exhaustive box-diamond + starvation-freedom under
-        // the round-robin scheduler (panics on any violation).
+        // the round-robin scheduler (panics on any violation). Shares the
+        // hoisted probe with the court registry adapter.
+        assert!(n15_run_court_probe(), "fair schedule violated the box-diamond law");
         let markings = reachable(M0, admission_surface());
-        assert!(!markings.is_empty());
-        for &m in &markings {
-            let (starved, dispositioned) = run_schedule(admission_surface(), m, true);
-            assert!(dispositioned, "marking {m:#06x} did not reach adoption");
-            assert!(starved.is_empty(), "marking {m:#06x} starved {starved:?}");
-        }
 
         let outcome = CourtOutcome {
             verdict: Verdict::Pass,

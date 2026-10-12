@@ -68,13 +68,20 @@
     clippy::manual_midpoint,
     clippy::identity_op,
     clippy::format_collect,
-    clippy::trivially_copy_pass_by_ref
+    clippy::trivially_copy_pass_by_ref,
+    dead_code // hoisted court probes/controls (W-NTW §3): referenced by the
+              // #[cfg(test)] wrappers and referenced by the court registry
 )]
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use crate::nato::court::{
+    CandidateRef, Court, CourtId, CourtOutcome, ControlProbe, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// Typed failure of the N07 cache-interference court.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -339,6 +346,135 @@ pub fn run_pass_bounded(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Court wiring (W-NTW §3/§4): hoisted probe + positive control + trait impl
+// ---------------------------------------------------------------------------
+
+/// Tick-chain law as a pure predicate (hoisted from `n07_tick_chain_law`):
+/// +1 mod 256 across the wrap boundary, upper bits preserved.
+pub(crate) fn n07_tick_chain_law_holds() -> bool {
+    let o = 0x4100_0046_0055_01FE;
+    advance_tick(o) == 0x4100_0046_0055_01FF
+        && advance_tick(0x4100_0046_0055_01FF) == 0x4100_0046_0055_0100
+        && advance_tick(OCEL0) & 0xFF == 0x03
+}
+
+/// Conservation law as a pure predicate over one pass (hoisted from
+/// `n07_conservation_under_eviction_storm_small`): no transition lost, the
+/// storm output stream is bit-identical to the idle reference, and the final
+/// state matches.
+pub(crate) fn n07_conservation_holds(p: &PassMeasurement) -> bool {
+    p.storm_seq.len() == StormConfig::SMALL.transitions as usize
+        && p.checksum_storm == p.checksum_idle_ref
+        && p
+            .storm_seq
+            .iter()
+            .zip(p.idle_seq.iter())
+            .all(|(&out, &ref_out)| out == ref_out)
+        && p.storm_seq.last() == p.idle_seq.last()
+}
+
+/// cfg mutant sequencer: the SAME chain law as `timed_chain`, but one
+/// committed word mid-run is flipped (a corrupted-commit mutant — the
+/// failure class the conservation court exists to catch). Not a test-local
+/// tautology: the mutant output is judged by the court's own detection
+/// channels (order-sensitive checksum + per-index identity).
+fn timed_chain_with_midrun_corruption(n_transitions: u64, flip_index: u64) -> Vec<u64> {
+    let (_, _, mut seq) = timed_chain(n_transitions);
+    let i = (flip_index as usize).min(seq.len() - 1);
+    seq[i] ^= 0x8000_0000_0000_0001;
+    seq
+}
+
+/// The N07 court probe (W-NTW §4): one bounded small-tier eviction-storm
+/// pass. Conservation and latency-ratio evaluation live in
+/// [`CacheCourt::run`] / [`n07_conservation_holds`].
+///
+/// # Errors
+/// Typed [`CacheCourtError`] when the deadlock bound is exceeded or the
+/// sequencer is lost.
+pub(crate) fn n07_run_court_probe() -> Result<PassMeasurement, CacheCourtError> {
+    run_pass_bounded(StormConfig::SMALL, Duration::from_secs(120))
+}
+
+/// The N07 positive control (hoisted from
+/// `n07_cache_court_positive_control`): a corrupted-sequencer mutant MUST
+/// diverge under the conservation court's detection channels, and the clean
+/// run MUST pass them. Returns false if either leg fails (court vacuous).
+pub(crate) fn n07_positive_control() -> bool {
+    let n = 1_000u64;
+    // Clean leg: two independent clean runs are bit-identical.
+    let (_, _, clean_a) = timed_chain(n);
+    let (_, _, clean_b) = timed_chain(n);
+    let clean_ok = clean_a == clean_b
+        && PassMeasurement::checksum(&clean_a) == PassMeasurement::checksum(&clean_b);
+    // Mutant leg: a mid-run committed-word flip must be DETECTED — by the
+    // checksum channel and by the per-index identity channel at the flip.
+    let reference = timed_chain(n).2;
+    let mutant = timed_chain_with_midrun_corruption(n, n / 2);
+    let checksum_caught =
+        PassMeasurement::checksum(&mutant) != PassMeasurement::checksum(&reference);
+    let index_caught = mutant
+        .iter()
+        .zip(reference.iter())
+        .enumerate()
+        .any(|(i, (&m, &r))| m != r && i == (n / 2) as usize);
+    clean_ok && checksum_caught && index_caught
+}
+
+/// N07 — cache side-channel (cache-interference) court (W-NTW §2 adapter,
+/// mils template).
+pub struct CacheCourt;
+
+/// Court identity constants.
+impl CacheCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N07;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Timing;
+}
+
+impl Court for CacheCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N07 cache_sidechannel"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n07_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        // Law: conservation + chain -> Pass; anything else (deadlock bound,
+        // sequencer lost, divergent stream, broken chain law) -> Fail.
+        let verdict = match n07_run_court_probe() {
+            Ok(p) if n07_conservation_holds(&p) && n07_tick_chain_law_holds() => Verdict::Pass,
+            _ => Verdict::Fail,
+        };
+        CourtOutcome {
+            verdict,
+            metrics: Vec::new(),
+            scoping: ScopingRecord::partial(
+                "Prime+Probe-style concurrent eviction vs sequencer; latency invariance \
+                 assertion",
+                "cache-INTERFERENCE court: 4 LCG-strided eviction threads streaming 2x-L2 \
+                 buffers against a 50k-transition chained sequencer; output-stream \
+                 conservation absolute, tick chain law asserted, latency ratio reported \
+                 (not gated), liveness bounded by a 120 s deadlock bound",
+                "attacker-controlled cache-set residency timing (true Prime+Probe) out of \
+                 scope in-repo; full 1M-transition calibration behind nato-tier3 ignore",
+            ),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)] // JUSTIFICATION: test code only
 mod tests {
@@ -346,11 +482,8 @@ mod tests {
 
     #[test]
     fn n07_tick_chain_law() {
-        // +1 mod 256 across the wrap boundary, upper bits preserved.
-        let o = 0x4100_0046_0055_01FE;
-        assert_eq!(advance_tick(o), 0x4100_0046_0055_01FF);
-        assert_eq!(advance_tick(0x4100_0046_0055_01FF), 0x4100_0046_0055_0100);
-        assert_eq!(advance_tick(OCEL0) & 0xFF, 0x03);
+        // Wrapper over the hoisted probe predicate (W-NTW §3).
+        assert!(n07_tick_chain_law_holds(), "tick chain law drifted: +1 mod 256 or upper-bit preservation violated");
     }
 
     #[test]
@@ -388,9 +521,9 @@ mod tests {
 
     #[test]
     fn n07_conservation_under_eviction_storm_small() {
-        // Small fast variant: same storm shape, bounded wall time.
-        let p = run_pass_bounded(StormConfig::SMALL, Duration::from_secs(120))
-            .expect("deadlock bound exceeded or sequencer lost");
+        // Wrapper over the hoisted probe (W-NTW §3): small fast variant,
+        // same storm shape, bounded wall time.
+        let p = n07_run_court_probe().expect("deadlock bound exceeded or sequencer lost");
 
         // --- Conservation court (absolute) ---
         assert_eq!(
@@ -431,50 +564,14 @@ mod tests {
         );
     }
 
-    /// cfg(test) mutant sequencer: the SAME chain law as `timed_chain`, but
-    /// one committed word mid-run is flipped (a corrupted-commit mutant —
-    /// the failure class the conservation court exists to catch). Not a
-    /// test-local tautology: the mutant output is judged by the court's own
-    /// detection channels (order-sensitive checksum + per-index identity).
-    fn timed_chain_with_midrun_corruption(n_transitions: u64, flip_index: u64) -> Vec<u64> {
-        let (_, _, mut seq) = timed_chain(n_transitions);
-        let i = (flip_index as usize).min(seq.len() - 1);
-        seq[i] ^= 0x8000_0000_0000_0001;
-        seq
-    }
-
-    /// The N07 positive control, in the same shape as the other NATO courts'
-    /// `*_positive_control` probes: a corrupted-sequencer mutant MUST diverge
-    /// under the conservation court's detection channels, and the clean run
-    /// MUST pass them. Returns false if either leg fails (court vacuous).
-    fn n07_cache_court_positive_control() -> bool {
-        let n = 1_000u64;
-        // Clean leg: two independent clean runs are bit-identical.
-        let (_, _, clean_a) = timed_chain(n);
-        let (_, _, clean_b) = timed_chain(n);
-        let clean_ok = clean_a == clean_b
-            && PassMeasurement::checksum(&clean_a) == PassMeasurement::checksum(&clean_b);
-        // Mutant leg: a mid-run committed-word flip must be DETECTED — by the
-        // checksum channel and by the per-index identity channel at the flip.
-        let reference = timed_chain(n).2;
-        let mutant = timed_chain_with_midrun_corruption(n, n / 2);
-        let checksum_caught =
-            PassMeasurement::checksum(&mutant) != PassMeasurement::checksum(&reference);
-        let index_caught = mutant
-            .iter()
-            .zip(reference.iter())
-            .enumerate()
-            .any(|(i, (&m, &r))| m != r && i == (n / 2) as usize);
-        clean_ok && checksum_caught && index_caught
-    }
-
     #[test]
     fn n07_positive_control_corrupted_sequencer_is_caught() {
-        // The real positive control: a flipped committed word MUST produce a
-        // conservation divergence the court detects, and the clean run MUST
-        // pass — else the conservation assertion is vacuous decoration.
+        // Wrapper over the hoisted positive control (W-NTW §3): a flipped
+        // committed word MUST produce a conservation divergence the court
+        // detects, and the clean run MUST pass — else the conservation
+        // assertion is vacuous decoration.
         assert!(
-            n07_cache_court_positive_control(),
+            n07_positive_control(),
             "N07 positive control failed: a corrupted sequencer diverged undetected, \
              or the clean run failed the conservation law"
         );

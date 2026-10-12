@@ -4,6 +4,16 @@
 //! from `src/conformance/guest.rs` (do not renumber — hosts already key on
 //! these values). Codes `14..=19` are merger-guest extensions, appended in
 //! the next free range so the two families never collide.
+//!
+//! # Namespace note (ctt ABI v2)
+//!
+//! The ctt guest ABI is now v2 (`src/conformance/guest.rs`, probe returns 2) and
+//! defines `ERR_OOB_READ = 14`, `ERR_OOB_WRITE = 15`, `ERR_DEFERRED_HEAP = 16` — the
+//! same numeric values as this crate's `MGI1` extension range `14..=19` (`ERR_BAD_SCALE`,
+//! `ERR_DIM`, `ERR_OVERFLOW`). These are independent vocabularies on different wire
+//! surfaces (CTTG wire vs MGI1 wire): no runtime conflict exists, but cross-referencing
+//! a numeric code between the two tables is invalid. See also the ABI v2 collision note
+//! in `docs/diataxis/settlement/03-reference.md`.
 
 /// ok — no error.
 pub const OK: i32 = 0;

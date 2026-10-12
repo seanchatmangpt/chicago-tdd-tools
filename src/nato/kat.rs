@@ -1,6 +1,7 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests and referenced by the court registry (KatCourt), so
+// non-test builds legitimately see unused items.
 #![allow(dead_code)]
 //! N17 port — PIPELINE-KAT court over [`crate::ledger::signing::signer::Signer`]
 //! (ML-DSA-65, NIST FIPS 204).
@@ -91,6 +92,10 @@
 
 use crate::ledger::signing::signer::Signer;
 use crate::ledger::signing::signer::{PUBLIC_KEY_LEN, SEED_LEN, SIGNATURE_LEN};
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// FIPS 204 wire sizes this court asserts.
 const SIG_LEN: usize = SIGNATURE_LEN;
@@ -213,25 +218,93 @@ fn golden_frozen_vectors_reproduce_bit_for_bit_across_3_runs() {
     }
 }
 
-/// Self-pinning: 3 independent derivations of seed->pk->sig must be
-/// byte-identical. This is the discipline that holds before the coordinator
-/// pins the golden slots.
-#[test]
-fn self_pinning_determinism_x3() {
+/// Determinism pin leg (hoisted): the frozen golden slots reproduce
+/// bit-for-bit, 3 independent derivations are byte-identical, and the slot
+/// and court derivation paths agree. Returns `false` on any drift.
+pub(crate) fn n17_determinism_pin() -> bool {
     let (pk_a, sig_a) = golden_derivation();
     let (pk_b, sig_b) = golden_derivation();
     let (_, sig_c) = golden_derivation();
-    assert_eq!(pk_a, pk_b, "seed->pk must be byte-identical across derivations");
-    assert_eq!(sig_a, sig_b, "seed+subject->sig must be byte-identical across derivations");
-    assert_eq!(sig_b, sig_c, "seed+subject->sig must be byte-identical (run 3)");
-    // The golden slot test uses the same derivation path; assert the two
-    // entry points agree so the slot can never diverge from this court.
-    let (pk_slot, sig_slot) = {
-        let s = Signer::from_seed(GOLDEN_SEED);
-        (s.public_key(), s.sign(&GOLDEN_SUBJECT))
-    };
-    assert_eq!(pk_a, pk_slot, "slot derivation must equal court derivation");
-    assert_eq!(sig_a, sig_slot, "slot derivation must equal court derivation");
+    if pk_a != pk_b || sig_a != sig_b || sig_b != sig_c {
+        return false;
+    }
+    // The golden slot test uses the same derivation path; the two entry
+    // points must agree so the slot can never diverge from this court.
+    let (pk_slot, sig_slot) = golden_derivation();
+    if pk_a != pk_slot || sig_a != sig_slot {
+        return false;
+    }
+    // The pinned golden slots themselves must reproduce bit-for-bit.
+    let s = Signer::from_seed(GOLDEN_SEED);
+    s.public_key() == to_arr::<PK_LEN>(unhex(GOLDEN_PK_HEX))
+        && s.sign(&GOLDEN_SUBJECT) == to_arr::<SIG_LEN>(unhex(GOLDEN_SIG_HEX))
+}
+
+/// Legitimate-accept leg (hoisted): the golden signature over the golden
+/// subject must verify. Returns `false` on refusal.
+pub(crate) fn n17_legitimate_accept() -> bool {
+    let s = Signer::from_seed(GOLDEN_SEED);
+    let pk = s.public_key();
+    let sig = s.sign(&GOLDEN_SUBJECT);
+    Signer::verify(&pk, &GOLDEN_SUBJECT, &sig)
+}
+
+/// Sampled flip-reject leg (hoisted): each of 64 sampled single-bit flips
+/// of the golden signature (stride across the full 3309-byte signature,
+/// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8) must be REJECTED,
+/// and the un-corrupted original must still verify after the sweep.
+pub(crate) fn n17_sampled_flip_reject() -> bool {
+    let s = Signer::from_seed(GOLDEN_SEED);
+    let pk = s.public_key();
+    let good = s.sign(&GOLDEN_SUBJECT);
+    if !Signer::verify(&pk, &GOLDEN_SUBJECT, &good) {
+        return false;
+    }
+    for i in 0..64usize {
+        let byte_idx = (i * SIG_LEN) / 64;
+        let bit = i % 8;
+        let mut bad = good;
+        bad[byte_idx] ^= 1 << bit;
+        if Signer::verify(&pk, &GOLDEN_SUBJECT, &bad) {
+            return false;
+        }
+    }
+    Signer::verify(&pk, &GOLDEN_SUBJECT, &good)
+}
+
+/// The court probe: all hoisted N17 legs (determinism pin, legitimate
+/// accept, sampled flip-reject), shared by the `#[test]` wrappers and the
+/// court registry adapter so they can never diverge.
+pub(crate) fn n17_run_court_probe() -> bool {
+    n17_determinism_pin() && n17_legitimate_accept() && n17_sampled_flip_reject()
+}
+
+/// Positive control (the probe has power): a sampled single-bit flip of
+/// the golden signature MUST be rejected — and the uncorrupted signature
+/// must verify — so the court refuses to run if verify loses its teeth.
+pub(crate) fn n17_positive_control() -> bool {
+    let s = Signer::from_seed(GOLDEN_SEED);
+    let pk = s.public_key();
+    let good = s.sign(&GOLDEN_SUBJECT);
+    if !Signer::verify(&pk, &GOLDEN_SUBJECT, &good) {
+        return false;
+    }
+    let mut bad = good;
+    bad[0] ^= 0x01;
+    !Signer::verify(&pk, &GOLDEN_SUBJECT, &bad)
+}
+
+/// Self-pinning: 3 independent derivations of seed->pk->sig must be
+/// byte-identical. This is the discipline that holds before the coordinator
+/// pins the golden slots. Body hoisted into [`n17_determinism_pin`]
+/// (shared with the court registry adapter).
+#[test]
+fn self_pinning_determinism_x3() {
+    assert!(
+        n17_determinism_pin(),
+        "seed->pk and seed+subject->sig must be byte-identical across derivations, \
+         slot and court paths must agree, and the frozen golden slots must reproduce"
+    );
 }
 
 /// Print the derivation for the coordinator to pin. Not a passive print:
@@ -247,42 +320,89 @@ fn golden_vector_slot_unpinned_prints_derivation() {
 
 // ─── Verify accept / reject ──────────────────────────────────────────────────
 
-/// Verify-accept on the legitimate deterministic signature.
+/// Verify-accept on the legitimate deterministic signature. Body hoisted
+/// into [`n17_legitimate_accept`] (shared with the court registry adapter).
 #[test]
 fn kat_verify_accepts_legitimate() {
-    let s = Signer::from_seed(GOLDEN_SEED);
-    let pk = s.public_key();
-    let sig = s.sign(&GOLDEN_SUBJECT);
     assert!(
-        Signer::verify(&pk, &GOLDEN_SUBJECT, &sig),
+        n17_legitimate_accept(),
         "legitimate PIPELINE-KAT signature must verify"
     );
 }
 
 /// Verify-REJECT on each of 64 sampled single-bit flips of the golden
 /// signature. Sample: stride across the full 3309-byte signature,
-/// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8.
+/// flip index = (i * SIGNATURE_LEN) / 64, bit = i % 8. Body hoisted into
+/// [`n17_sampled_flip_reject`] (shared with the court registry adapter).
 #[test]
 fn kat_rejects_64_sampled_single_bit_flips() {
-    let s = Signer::from_seed(GOLDEN_SEED);
-    let pk = s.public_key();
-    let good = s.sign(&GOLDEN_SUBJECT);
-    assert!(Signer::verify(&pk, &GOLDEN_SUBJECT, &good));
-    let mut flips = 0;
-    for i in 0..64usize {
-        let byte_idx = (i * SIG_LEN) / 64;
-        let bit = i % 8;
-        let mut bad = good;
-        bad[byte_idx] ^= 1 << bit;
-        assert!(
-            !Signer::verify(&pk, &GOLDEN_SUBJECT, &bad),
-            "corrupted signature (byte {byte_idx}, bit {bit}) must be REJECTED"
-        );
-        flips += 1;
+    assert!(
+        n17_sampled_flip_reject(),
+        "all 64 sampled corrupted signatures must be REJECTED and the original must \
+         still verify"
+    );
+}
+
+// ─── Court wiring ────────────────────────────────────────────────────────────
+
+/// N17 PIPELINE-KAT court.
+pub struct KatCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl KatCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N17;
+    /// Capability pillar.
+    ///
+    /// Pillar disclosure: the 5-value `Pillar` enum has no Crypto variant
+    /// (extending it would be a law change), so this cryptographic
+    /// known-answer court is classified `Pillar::Security`, following the
+    /// N04 Dossier precedent for pillar-adjacent courts.
+    pub const PILLAR: Pillar = Pillar::Security;
+}
+
+impl Court for KatCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
     }
-    assert_eq!(flips, 64);
-    // The un-corrupted original still verifies after the sweep.
-    assert!(Signer::verify(&pk, &GOLDEN_SUBJECT, &good));
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N17 pipeline_kat"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n17_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let verdict = if n17_run_court_probe() { Verdict::Pass } else { Verdict::Fail };
+        CourtOutcome {
+            verdict,
+            metrics: vec![
+                ("determinism_runs", MetricValue::U64(3)),
+                ("sampled_flips", MetricValue::U64(64)),
+                ("sig_len", MetricValue::U64(SIG_LEN as u64)),
+                ("pk_len", MetricValue::U64(PK_LEN as u64)),
+            ],
+            scoping: ScopingRecord::partial(
+                "official NIST ACVP ML-DSA-65 known-answer conformance (ACVP-JSON \
+                 prompt/expectedResult corpus from usnistgov/ACVP-Server)",
+                "PIPELINE-KAT over `Signer` (ML-DSA-65): frozen golden pk/sig reproduced \
+                 bit-for-bit, 3-run seed->pk->sig determinism, verify-accept on the \
+                 legitimate signature, and verify-REJECT on 64 sampled single-bit \
+                 flips (positive control: a sampled flip must be rejected)",
+                "self-pinning PIPELINE-KAT of OUR pipeline, NOT official NIST ACVP \
+                 reference vectors; the ACVP corpus is unavailable offline and no \
+                 network fetch is performed at test time; classified Pillar::Security \
+                 because the Pillar enum has no Crypto variant",
+            ),
+        }
+    }
 }
 
 // ─── Subject binding (75-variant census) ─────────────────────────────────────

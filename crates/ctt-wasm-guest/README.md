@@ -45,7 +45,13 @@ cargo build --target wasm32-unknown-unknown --release -p ctt-wasm-guest
 
 Artifact: `target/wasm32-unknown-unknown/release/ctt_wasm_guest.wasm`
 
-## ABI surface (v1, `ctt_guest_abi_version() == 1`)
+## ABI surface (v2, `ctt_guest_abi_version() == 2`)
+
+> v1 note: the v1 seal layout (34-byte preimage, zero reserved at `26..34`) fails closed
+> under a v1 parser when handed a v2 preimage — the digest occupies `26..58`. The
+> authoritative discriminator is the `ctt_guest_abi_version()` probe (returns 2); call it
+> before the first `ctt_session_new`. The strata temprun bridge still consumes the v1
+> layout until its rebase.
 
 Buffers are `(ptr: u32, len: u32)` pairs in guest linear memory,
 little-endian, tightly packed. Handles are
@@ -57,7 +63,7 @@ little-endian, tightly packed. Handles are
 | `ctt_session_new(net_buf, net_len, out_handle)` | wire-format `CTTG` buffer → `u64` handle | errno table below |
 | `ctt_session_attach(host, stream_ptr, stream_len)` | flat LE u64 OCEL64 event words (zero-length rejected: `ERR_STREAM_EMPTY`) | errno table below |
 | `ctt_session_step(handle, quota, out_status, out_cap)` | → 21-byte step status record (1B outcome: 0 Yielded / 1 Complete / 2 Violation; 4B remaining_events; 4B steps_executed; 4B events_total; 8B final_marking) | errno table below |
-| `ctt_session_seal(handle, out_buf, out_cap, out_len)` | → 34-byte seal preimage (8B steps + 8B events + 8B final_marking + 1B outcome + 1B violation code + 8B reserved (zero)), BLAKE3-digested when `ledger` is on | errno table below |
+| `ctt_session_seal(handle, out_buf, out_cap, out_len)` | → 58-byte (v2) seal preimage (8B steps + 8B events + 8B final_marking + 1B outcome + 1B violation code + 32B module digest at `26..58`, consuming the v1 zero-reserved `26..34`; v1-exact 26-byte prefix unchanged), BLAKE3-digested when `ledger` is on | errno table below |
 | `ctt_session_drop(handle)` | — | errno table below |
 
 ### Status (errno) table
@@ -78,11 +84,14 @@ runtime, never returned by an ABI fn in v1).
 | 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` slots occupied |
 | 9 | `ERR_BAD_HANDLE` | handle is free, out of range, or generation-stale |
 | 10 | `ERR_STREAM_EMPTY` | attach of a zero-length stream |
-| 11 | `ERR_CAP_TOO_SMALL` | capacity below the record's fixed length, or the out-buffer span falls at/past the installed linear-memory bound |
+| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length (pure capacity meaning at v2) |
 | 12 | `ERR_SEAL_UNAVAILABLE` | sealing requested without the `ledger` feature |
 | 13 | `ERR_STREAM_ALIGNMENT` | stream byte length not a multiple of 8 |
+| 14 | `ERR_OOB_READ` | an input span (`net_buf`/`stream_ptr`) reaches at/past the installed linear-memory bound |
+| 15 | `ERR_OOB_WRITE` | an out-buffer span reaches at/past the installed linear-memory bound (the former v1 `ERR_CAP_TOO_SMALL` overload) |
+| 16 | `ERR_DEFERRED_HEAP` | a heap-requiring path was requested under the deferred-heap ABI tier (reserved; not yet returned) |
 
-Codes 0..=13, no reserved slot.
+Codes 0..=16, no reserved slot.
 
 ### Cooperative-yield statuses (`guest_yield`)
 

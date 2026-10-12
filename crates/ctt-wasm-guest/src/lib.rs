@@ -51,7 +51,7 @@
 // defined in the parent are exported from this cdylib.
 pub use chicago_tdd_tools::conformance::guest::*;
 
-// ABI version probe (`ctt_guest_abi_version`, v1) is re-exported from the
+// ABI version probe (`ctt_guest_abi_version`, v2) is re-exported from the
 // parent's `conformance::guest` module above — do NOT redefine it here;
 // a duplicate #[no_mangle] symbol breaks the cdylib link.
 
@@ -60,7 +60,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn abi_version_is_stable_v1() {
-        assert_eq!(ctt_guest_abi_version(), 1);
+    fn abi_version_is_stable_v2() {
+        assert_eq!(ctt_guest_abi_version(), 2);
     }
 }

@@ -23,7 +23,7 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
 tdir="${CARGO_TARGET_DIR:-/tmp/nato_lanes/target_N06}"
-out="${N06_OUT:-docs/receipts/N06.json}"
+out="${N06_OUT:-docs/lanes/N06_disasm.json}"
 crate_name="chicago-tdd-tools"
 symbol_fragment="kernel_step"
 

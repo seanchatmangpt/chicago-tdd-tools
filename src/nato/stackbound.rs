@@ -1,6 +1,7 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests, so non-test builds legitimately see unused items —
+// and referenced by the court registry.
 #![allow(dead_code)]
 //! N16 — stack-bound court for the PN64 hot path (NATO lane N16).
 //!
@@ -76,7 +77,6 @@
     clippy::format_collect,
     clippy::trivially_copy_pass_by_ref
 )]
-#[cfg(test)]
 use std::collections::HashMap;
 #[cfg(test)]
 use std::process::Command;
@@ -86,6 +86,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use crate::conformance::pn64;
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// Embedded source under audit (compile-time embedded: audit cannot desync).
 const AUDITED_SOURCE: (&str, &str) =
@@ -307,8 +311,10 @@ fn callees(body: &str) -> Vec<String> {
 // Tier 1a (always) — zero recursion via iterative call-graph cycle detection
 // ---------------------------------------------------------------------------
 
-#[test]
-fn n16_static_audit_zero_recursion() {
+/// Hoisted body of [`n16_static_audit_zero_recursion`] (also the
+/// zero-recursion leg of the N16 court adapter's `run`). Returns
+/// (fn_count, call_edges) for the adapter's metrics; panics on any cycle.
+pub(crate) fn stackbound_zero_recursion_probe() -> (usize, usize) {
     let (file, src) = AUDITED_SOURCE;
     let stripped = strip_comments(src);
     let (stripped, cfg_removed) = strip_cfg_test_modules(&stripped);
@@ -373,6 +379,14 @@ fn n16_static_audit_zero_recursion() {
         edges_total > 0 || graph.len() > 1,
         "N16 audit: extracted call graph has no edges and one node — cycle check carried no bits"
     );
+    (graph.len(), edges_total)
+}
+
+#[test]
+fn n16_static_audit_zero_recursion() {
+    let (fn_count, edges) = stackbound_zero_recursion_probe();
+    assert!(fn_count > 0, "extracted fn census must be non-empty");
+    assert!(edges > 0 || fn_count > 1, "call graph must carry edges");
 }
 
 // ---------------------------------------------------------------------------
@@ -397,9 +411,11 @@ const HEAP_TOKENS: &[&str] = &[
     ".into()",
 ];
 
-#[test]
-fn n16_static_audit_zero_heap_on_state_paths() {
-    let (file, src) = AUDITED_SOURCE;
+/// Hoisted heap-token audit over an arbitrary source text: every extracted
+/// fn body is scanned for [`HEAP_TOKENS`]; any `Box<` in the stripped module
+/// is also a violation (state words are fixed-layout). Returns the violation
+/// strings (empty = clean).
+fn heap_violations_in(file: &str, src: &str) -> Vec<String> {
     let stripped = strip_comments(src);
     let (stripped, _cfg) = strip_cfg_test_modules(&stripped);
     let (fns, _) = extract_fns(&stripped);
@@ -415,15 +431,35 @@ fn n16_static_audit_zero_heap_on_state_paths() {
             }
         }
     }
-    // Type positions too: any `Box<` in the stripped state-word module is a
-    // violation — state words are fixed-layout.
     if stripped.contains("Box<") {
         violations.push(format!("{file} contains `Box<`"));
     }
+    violations
+}
+
+/// Hoisted body of [`n16_static_audit_zero_heap_on_state_paths`] (also the
+/// zero-heap leg of the N16 court adapter's `run`).
+pub(crate) fn stackbound_heap_audit_probe() -> usize {
+    let (file, src) = AUDITED_SOURCE;
+    let violations = heap_violations_in(file, src);
     assert!(
         violations.is_empty(),
         "N16 FAIL: heap-allocation tokens on state path: {violations:#?}"
     );
+    0
+}
+
+#[test]
+fn n16_static_audit_zero_heap_on_state_paths() {
+    assert_eq!(stackbound_heap_audit_probe(), 0);
+}
+
+#[test]
+fn n16_court_detects_injected_heap_token() {
+    // Same contract as mils' n01_court_detects_injected_interference: the
+    // injected `Vec::` state-path token MUST be flagged (non-vacuity by
+    // mutation).
+    assert!(stackbound_positive_control(), "injected-Vec:: positive control must fire");
 }
 
 // ---------------------------------------------------------------------------
@@ -531,4 +567,95 @@ fn n16_measured_min_stack_ladder_via_child_probes() {
     eprintln!(
         "N16 measured min surviving stack: {min_ok} bytes (ladder {LADDER:?}; recursion depth = 1 proven by tier 1a; whole-chain footprint at page granularity, release-profile figure)"
     );
+}
+
+// ---------------------------------------------------------------------------
+// N16 court adapter (W-NTW): trait wiring per the mils.rs N01 template
+// ---------------------------------------------------------------------------
+
+/// A heap-allocating mutant (a `Vec::` token on a state path) whose source
+/// text is embedded so the audit scan runs on exactly the audited shape.
+const HEAP_MUTANT_SRC: &str = r"
+fn heap_mutant(pn: u64, ocel: u64, mask: u64) -> u64 {
+    let log = Vec::new();
+    log.push(pn);
+    let m = marking(pn);
+    let next = ((m ^ pre(pn)) | post(pn)) & 0xFFFF;
+    next
+}
+";
+
+/// Positive control: an injected `Vec::` token on a state-path body MUST be
+/// flagged by the heap audit. Returns false if the court is vacuous.
+pub(crate) fn stackbound_positive_control() -> bool {
+    !heap_violations_in("mutant.rs", HEAP_MUTANT_SRC).is_empty()
+}
+
+/// N16 stack-bound court (always-run legs: zero recursion + zero heap
+/// tokens on state paths; tier-3 measured stack probes excluded).
+///
+/// Pillar note: the 5-value [`Pillar`] enum has no dedicated
+/// resource/stack pillar; per the plan's N04 precedent this court is
+/// classified [`Pillar::Dossier`], disclosed here and in the run's
+/// [`ScopingRecord`].
+pub struct StackBoundCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl StackBoundCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N16;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Dossier;
+}
+
+/// Hoisted court run: the two always-run legs, packaged as a
+/// [`CourtOutcome`]. Panics (leg assertions) are the Fail path's evidence;
+/// a clean return is Pass.
+pub(crate) fn stackbound_run_court_probe() -> CourtOutcome {
+    let (fn_count, edges) = stackbound_zero_recursion_probe();
+    let heap_hits = stackbound_heap_audit_probe();
+    CourtOutcome {
+        verdict: Verdict::Pass,
+        metrics: vec![
+            ("fns_audited", MetricValue::U64(fn_count as u64)),
+            ("call_edges", MetricValue::U64(edges as u64)),
+            ("recursion_cycles", MetricValue::U64(0)),
+            ("heap_token_violations", MetricValue::U64(heap_hits as u64)),
+        ],
+        scoping: ScopingRecord::partial(
+            "stack bound for the PN64 hot path: zero recursion (call-graph \
+             cycle detection) and zero heap allocation on state paths, with a \
+             measured minimum surviving thread stack",
+            "iterative DFS cycle detection + heap-token audit over the \
+             compile-time-embedded source, plus injected-`Vec::` mutant \
+             positive control",
+            "measured legs (32 KiB workload, child-process stack ladder \
+             32768 -> 4096) are #[ignore = \"nato-tier3\"] and NOT in this \
+             adapter run; pillar mapped to Dossier per the N04 precedent \
+             (no dedicated pillar variant); no total-frame-bytes claim",
+        ),
+    }
+}
+
+impl Court for StackBoundCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N16 stack_bound"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        stackbound_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        stackbound_run_court_probe()
+    }
 }

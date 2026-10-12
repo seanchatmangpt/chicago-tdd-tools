@@ -1,6 +1,9 @@
 #![cfg(feature = "nato")]
 #![allow(dead_code)]
-// JUSTIFICATION: court items are consumed by its own cfg(test) courts and the N12 registry slot
+// JUSTIFICATION: court items are consumed by its own cfg(test) courts, the
+// N12 registry slot, and the shared probe referenced by the court registry
+// (`ClockGlitchCourt`); the backstep control is referenced by the registry's
+// `ControlProbe`.
 // NATO court-harness modules use domain literals, metric casts, and
 // court-assertion panics by design; the style-class lints below are allowed
 // at module scope with this justification rather than 300+ inline permits
@@ -36,6 +39,10 @@
     clippy::or_fun_call,
     clippy::nonminimal_bool,
     clippy::manual_is_multiple_of,
+    // JUSTIFICATION: court-leg refusal arithmetic is pinned by donor-verbatim
+    // literals (`(glitch_count * 2 + 2) / 3`), newly always-compiled after the
+    // shared-probe hoist; `div_ceil` would obscure the 2-of-3-class split.
+    clippy::manual_div_ceil,
     clippy::identity_op,
     clippy::trivially_copy_pass_by_ref
 )]
@@ -78,8 +85,12 @@ use std::fmt;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
-#[cfg(test)]
+// JUSTIFICATION: the shared N12 court probe (n12_run_court_probe) runs in the
+// always-compiled portion under `feature = "nato"`, which implies the
+// `conformance` feature (Cargo.toml nato feature graph), so the pn64 surface
+// is available outside cfg(test).
 use crate::conformance::pn64;
+use crate::nato::court::{Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict};
 use crate::nato::disclosure::ScopingRecord;
 
 // ---------------------------------------------------------------------------
@@ -432,12 +443,34 @@ fn adjudicate(prev: HwTick, next: HwTick) -> bool {
 // Courts
 // ---------------------------------------------------------------------------
 
-/// Court 1: feed a real forward chain through the strict law with glitches
-/// injected at ~1% (every 100th position, cycling the classes: backwards
-/// replay, 0-jump, huge real jump). Every fed pair is adjudicated exactly
-/// once; the accepted frontier advances ONLY on lawful forward motion.
-#[test]
-fn court1_jitter_injection_regression_refused_forward_admitted() {
+// ---------------------------------------------------------------------------
+// Shared probe (plan W-NTW): ONE real fast-tier court run — court 1 (jitter
+// injection), court 2 (frozen-clock bounded liveness), court 3 (pn64 ordering
+// law) — with three consumers (the #[test] wrappers, the receipt emitter's
+// opt-in run, and the N12 registry adapter). Anti-drift law (§6): the legs
+// cannot diverge because every consumer runs the same probe.
+// ---------------------------------------------------------------------------
+
+/// Counts pinned by the court legs' own assertions, returned from one shared
+/// probe run for the registry adapter's metrics.
+pub(crate) struct N12ProbeRun {
+    /// Court 3: firings committed under the accepted-frontier order.
+    pub court3_committed: usize,
+    /// Court 3: regression-stamped positions that were typed-refused.
+    pub court3_refused_stamps: usize,
+}
+
+/// Run the real fast-tier N12 court legs for real — court 1, court 2, and
+/// court 3 — panicking on any violation. Every leg's assertions are the
+/// verbatim court assertions; reaching the end means all three legs hold.
+/// Court probe: panics on law violation are the court's verdict law
+    /// (donor-verbatim from the tier tests this was hoisted from).
+    pub(crate) fn n12_run_court_probe() -> N12ProbeRun {
+    // Court 1: feed a real forward chain through the strict law with
+    // glitches injected at ~1% (every 100th position, cycling the classes:
+    // backwards replay, 0-jump, huge real jump). Every fed pair is
+    // adjudicated exactly once; the accepted frontier advances ONLY on
+    // lawful forward motion.
     const N: usize = 1_000;
     const GLITCH_PERIOD: usize = 100;
 
@@ -500,15 +533,12 @@ fn court1_jitter_injection_regression_refused_forward_admitted() {
         glitch_count / 3,
         "every huge-jump glitch must be LAWFULLY ADMITTED (ordered), never dropped"
     );
-}
 
-/// Court 2: frozen-clock detection with bounded liveness. A frozen source
-/// is refused one pair at a time (`Regression`) inside the first liveness
-/// window; from the bound onward the typed `FrozenClock` verdict fires and
-/// keeps firing (bounded liveness: the verdict is bounded, the refusal is
-/// permanent). A healthy real source NEVER trips the bound.
-#[test]
-fn court2_frozen_clock_bounded_liveness() {
+    // Court 2: frozen-clock detection with bounded liveness. A frozen source
+    // is refused one pair at a time (`Regression`) inside the first liveness
+    // window; from the bound onward the typed `FrozenClock` verdict fires
+    // and keeps firing (bounded liveness: the verdict is bounded, the
+    // refusal is permanent). A healthy real source NEVER trips the bound.
     let anchor = forward_chain(2);
     let stuck = anchor[0].as_nanos();
     let later = anchor[1].as_nanos();
@@ -555,18 +585,14 @@ fn court2_frozen_clock_bounded_liveness() {
         assert!(s.is_ok(), "healthy clock must never yield FrozenClock: {s:?}");
         assert!(live.stuck_count() < FROZEN_CLOCK_LIVENESS_BOUND);
     }
-}
 
-/// Court 3: the ordering law over [`crate::conformance::pn64`] transitions.
-/// PN64 firings are stamped with clock samples and applied through
-/// [`pn64::step_branchless`]; a transition stamped at a REFUSED tick is not
-/// applied (word bit-exact unchanged), and the committed transition stream
-/// is deterministic under the accepted-frontier order. The enabled
-/// transition alone commits; every regression-stamped position refuses.
-#[test]
-fn court3_ordering_law_pn64_transitions() {
-    // Enabled transition: marking holds the precondition token; verb
-    // (activity low byte) matches tid.
+    // Court 3: the ordering law over [`crate::conformance::pn64`]
+    // transitions. PN64 firings are stamped with clock samples and applied
+    // through [`pn64::step_branchless`]; a transition stamped at a REFUSED
+    // tick is not applied (word bit-exact unchanged), and the committed
+    // transition stream is deterministic under the accepted-frontier order.
+    // The enabled transition alone commits; every regression-stamped
+    // position refuses.
     let pn = pn64::pack(0x0002, 0x0002, 0x0004, 0x07, 0x00);
     assert!(pn64::enabled(pn), "fixture transition must start enabled");
     let ocel = 0x0107u64;
@@ -625,7 +651,37 @@ fn court3_ordering_law_pn64_transitions() {
     assert_eq!(pn64::tid(word), pn64::tid(word2), "transition identity survives replay");
     assert_eq!(committed, committed2);
     assert_eq!(refused_stamps, refused2);
+
+    N12ProbeRun { court3_committed: committed, court3_refused_stamps: refused_stamps }
 }
+
+/// Court 1 (default tier): the shared probe's jitter-injection leg plus the
+/// frozen-clock and ordering legs — one shared fast-tier run, so the test
+/// surface and the registry adapter can never drift.
+#[test]
+fn n12_shared_probe_court1_leg() {
+    n12_run_court_probe();
+}
+
+/// Court 2 (default tier): frozen-clock bounded liveness — the shared
+/// probe's court-2 leg (see [`n12_run_court_probe`]).
+#[test]
+fn n12_shared_probe_court2_leg() {
+    n12_run_court_probe();
+}
+
+/// Court 3 (default tier): the pn64 ordering law — the shared probe's
+/// court-3 leg (see [`n12_run_court_probe`]); its committed/refused counts
+/// feed the registry adapter's metrics.
+#[test]
+fn n12_shared_probe_court3_leg() {
+    let r = n12_run_court_probe();
+    assert!(
+        r.court3_committed >= 1 && r.court3_refused_stamps > 0,
+        "the ordering-law leg must commit at least one firing and exercise refusals"
+    );
+}
+
 
 /// Court 4 (positive control): the injected non-monotonic source MUST be
 /// caught. [`BackstepClock`] oscillates between two real anchor values
@@ -633,9 +689,9 @@ fn court3_ordering_law_pn64_transitions() {
 /// backwards step or a 0-jump, and the gate must refuse ALL of them with
 /// the exact typed pair, frontier never moving. The unprotected mutant
 /// (regression predicate dropped) must admit every one of them — proving
-/// the check is load-bearing.
-#[test]
-fn court4_positive_control_backstep_clock_is_caught() {
+/// the check is load-bearing. Returns `true` iff every refusal/mutant
+/// assertion held (panics on any violation otherwise).
+pub(crate) fn n12_positive_control() -> bool {
     let anchor = forward_chain(2);
     let (b, a) = (anchor[0].as_nanos(), anchor[1].as_nanos());
     assert!(b < a, "anchors must be ordered (b earlier, a later)");
@@ -685,6 +741,16 @@ fn court4_positive_control_backstep_clock_is_caught() {
     assert_eq!(
         mutant_admits, 32,
         "the mutant must admit every sample the gate refuses — check is load-bearing"
+    );
+    true
+}
+
+/// Court 4 (default-tier wrapper): the shared positive control must hold.
+#[test]
+fn court4_positive_control_backstep_clock_is_caught() {
+    assert!(
+        n12_positive_control(),
+        "VACUOUS COURT: the BackstepClock mutant survived the strict-forward gate"
     );
 }
 
@@ -793,8 +859,8 @@ mod receipt_emission {
         };
 
         // Real fast-tier courts: panics on any violation.
-        super::court1_jitter_injection_regression_refused_forward_admitted();
-        super::court2_frozen_clock_bounded_liveness();
+        super::n12_shared_probe_court1_leg();
+        super::n12_shared_probe_court2_leg();
 
         // Metrics: counts pinned by the courts' own assertions, derived from
         // this real run — never wall-clock readings.
@@ -831,6 +897,73 @@ mod receipt_emission {
         let path = dir.join("N12.json");
         if let Err(e) = std::fs::write(&path, json) {
             println!("skipping N12 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring (plan W-NTW: N12 registry adapter, mirrors mils.rs:422-475)
+// ---------------------------------------------------------------------------
+
+/// N12 clock-glitch resilience court.
+pub struct ClockGlitchCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl ClockGlitchCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N12;
+    /// Capability pillar. Must match the emitter's mint
+    /// (`emit_receipt`, this file) and the on-disk
+    /// `docs/receipts/N12.json` — adapters align to emitter
+    /// receipts, never to a plan table.
+    pub const PILLAR: Pillar = Pillar::Resilience;
+}
+
+// Metrics are informational and deliberately diverge from the
+        // opt-in emitter's set (see emit_receipt_when_opted_in): this
+        // adapter reports live court-3 probe counts; the emitter reports
+        // court-1/court-4 constants. Verdict agreement is carried by the
+        // shared probe (n12_run_court_probe) + the court_id/pillar/verdict/
+        // name field legs, not by metric-key parity (W-NTW §6).
+impl Court for ClockGlitchCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N12 clock_glitch"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n12_positive_control
+    }
+
+    fn run(&self, _candidate: &crate::nato::court::CandidateRef) -> CourtOutcome {
+        // Shared probe (anti-drift law): the same real fast-tier run the
+        // #[test] wrappers and the opt-in receipt emitter read. All three
+        // legs assert internally; reaching here means they hold.
+        let r = n12_run_court_probe();
+        CourtOutcome {
+            verdict: Verdict::Pass,
+            metrics: vec![
+                ("court1_chain_len", MetricValue::U64(1_000)),
+                ("court1_glitch_period", MetricValue::U64(100)),
+                (
+                    "frozen_clock_liveness_bound",
+                    MetricValue::U64(FROZEN_CLOCK_LIVENESS_BOUND as u64),
+                ),
+                ("court3_committed", MetricValue::U64(r.court3_committed as u64)),
+                ("court3_refused_stamps", MetricValue::U64(r.court3_refused_stamps as u64)),
+            ],
+            // The host-note leg (no counter register on this host) stays a
+            // disclosure, not a verdict input: the partial scoping record
+            // names the RDTSC/raw-cycle bound.
+            scoping: crate::nato::tick::scoping_record(),
         }
     }
 }

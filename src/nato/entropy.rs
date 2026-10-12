@@ -1,6 +1,7 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests, so non-test builds legitimately see unused items —
+// and referenced by the court registry.
 #![allow(dead_code)]
 //! Entropy-starvation court over the ledger signer's entropy seam.
 //!
@@ -82,6 +83,10 @@ use crate::ledger::signing::signer::Signer;
 
 use crate::ledger::error::{RefusalDigest, SealError};
 use crate::ledger::signing::signer::SEED_LEN;
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 /// Number of injected-failure trials.
 const INJECTED_TRIALS: usize = 1_000;
@@ -180,8 +185,10 @@ fn refusal_text_is_in_fixed_vocabulary(text: &str) -> bool {
 /// 1,000 injected-failure trials: every off-contract seed length produces a
 /// typed `EntropyRefused` error with an opaque 32-byte refusal digest.
 /// Zero `Ok`, zero panic.
-#[test]
-fn injected_failure_trials_all_refuse_typed_with_opaque_digest() {
+/// Hoisted body of [`injected_failure_trials_all_refuse_typed_with_opaque_digest`]
+/// (also the injected-trials leg of the N18 court adapter's `run`). Returns
+/// the refusal count; panics on any trial that does not refuse typed.
+pub(crate) fn entropy_injected_trials_probe() -> usize {
     let mut refusals = 0usize;
     for trial in 0..INJECTED_TRIALS {
         // Sweep the whole off-contract space deterministically: lengths
@@ -220,28 +227,43 @@ fn injected_failure_trials_all_refuse_typed_with_opaque_digest() {
         refusals, INJECTED_TRIALS,
         "every injected trial must refuse (loop skips at most the on-contract sweep hits)"
     );
+    refusals
 }
 
-/// Refusal digests are cause-keyed and reproducible (the signer's law, not
-/// fresh entropy): the same cause reproduces the same digest; the injected
-/// off-contract lengths are distinct causes and so carry distinct digests
-/// (no digest reuse across distinct refusals).
 #[test]
-fn refusal_digests_are_reproducible_and_distinct_per_cause() {
+fn injected_failure_trials_all_refuse_typed_with_opaque_digest() {
+    let refusals = entropy_injected_trials_probe();
+    assert_eq!(refusals, INJECTED_TRIALS);
+}
+
+/// Positive control (hoisted from
+/// [`refusal_digests_are_reproducible_and_distinct_per_cause`]): refusal
+/// digests must be cause-keyed and reproducible — the same cause reproduces
+/// the same digest and distinct causes never collide. Returns false if the
+/// court's digest comparison has no teeth.
+pub(crate) fn entropy_positive_control() -> bool {
     // Reproducible: same cause -> same digest.
-    assert_eq!(
-        refusal_digest_of("ml-dsa seed length refused (33)"),
-        refusal_digest_of("ml-dsa seed length refused (33)"),
-        "same cause must reproduce the same refusal digest"
-    );
+    if refusal_digest_of("ml-dsa seed length refused (33)")
+        != refusal_digest_of("ml-dsa seed length refused (33)")
+    {
+        return false;
+    }
     // Distinct: the injected sweep's distinct causes never collide.
     let mut seen: Vec<[u8; 32]> = Vec::new();
     for trial in 0..64usize {
         let cause = format!("ml-dsa seed length refused ({})", trial * 7 + 1);
         let r = refusal_digest_of(&cause);
-        assert!(!seen.contains(&r.0), "refusal digest reused across distinct causes ({cause})");
+        if seen.contains(&r.0) {
+            return false;
+        }
         seen.push(r.0);
     }
+    true
+}
+
+#[test]
+fn refusal_digests_are_reproducible_and_distinct_per_cause() {
+    assert!(entropy_positive_control(), "digest reproducibility/distinctness must hold");
 }
 
 /// The on-contract length is the ONLY length the seam accepts.
@@ -293,5 +315,91 @@ fn entropy_court_never_panics() {
     }
     for i in 0..8 {
         let _ = refusal_digest_of(&format!("never-panics probe {i}"));
+    }
+}
+
+// ---------------------------------------------------------------------------
+// N18 court adapter (W-NTW): trait wiring per the mils.rs N01 template
+// ---------------------------------------------------------------------------
+
+/// N18 entropy-starvation court (always-run legs: injected-failure trials
+/// with the fixed-vocabulary check + seam length contract; the live-signer
+/// trials and reproducibility/distinctness law are the control and the
+/// always-run wrapper tests).
+///
+/// Pillar note: entropy starvation is admitted under [`Pillar::Security`]
+/// per the plan's mapping (the 5-value pillar enum has no dedicated
+/// variant); the replica-seam injection (work order NATO-ENTROPY-SEAM-01)
+/// is disclosed in the run's [`ScopingRecord`].
+pub struct EntropyCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl EntropyCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N18;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Security;
+}
+
+/// Hoisted court run: the injected-failure trials (every off-contract seed
+/// length refuses typed with an opaque digest in the fixed vocabulary),
+/// packaged as a [`CourtOutcome`]. Panics (trial assertions) are the Fail
+/// path's evidence; a clean return is Pass.
+pub(crate) fn entropy_run_court_probe() -> CourtOutcome {
+    let refusals = entropy_injected_trials_probe();
+    let seam_ok = entropy_seam(SEED_LEN).is_ok();
+    let mut off_contract_refusals = 0usize;
+    for len in [0usize, 1, 8, 16, 31, 33, 48, 64, 256] {
+        if entropy_seam(len).is_err() {
+            off_contract_refusals += 1;
+        }
+    }
+    let all_refused = off_contract_refusals == 9 && seam_ok;
+    CourtOutcome {
+        verdict: if all_refused { Verdict::Pass } else { Verdict::Fail },
+        metrics: vec![
+            ("injected_refusals", MetricValue::U64(refusals as u64)),
+            ("injected_trials", MetricValue::U64(INJECTED_TRIALS as u64)),
+            ("off_contract_refusals", MetricValue::U64(off_contract_refusals as u64)),
+            (
+                "on_contract_accepted",
+                MetricValue::Bool(entropy_seam(SEED_LEN).is_ok()),
+            ),
+        ],
+        scoping: ScopingRecord::partial(
+            "entropy-starvation refusal behavior at the ledger signer's \
+             entropy seam: off-contract seeds refuse typed with opaque, \
+             cause-keyed digests in a fixed diagnostic vocabulary; the \
+             healthy branch runs 1,000 live trials against the real signer",
+            "1,000 injected-failure trials + seam length-contract census + \
+             digest reproducibility/distinctness positive control",
+            "failure branch exercised through a byte-exact replica of the \
+             length check, not the (non-parameterizable) true seam — work \
+             order NATO-ENTROPY-SEAM-01; pillar mapped to Security per plan \
+             (no dedicated pillar variant); OS entropy quality NOT proven",
+        ),
+    }
+}
+
+impl Court for EntropyCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N18 entropy_starvation"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        entropy_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        entropy_run_court_probe()
     }
 }

@@ -92,5 +92,5 @@ pub use court::{
 pub use disclosure::{ScopingRecord, ScopingValidationError};
 pub use receipt::{ControlResult, CourtReceipt, ReceiptParseError};
 pub use receipts::{load_dir, persist, PersistError};
-pub use registry::{CourtEntry, COURT_NAMES};
+pub use registry::{CourtEntry, COURT_NAMES, COURT_REGISTRY};
 pub use rng::Lcg;

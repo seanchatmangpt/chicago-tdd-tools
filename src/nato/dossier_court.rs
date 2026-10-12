@@ -247,6 +247,15 @@ impl DossierCourt {
         DossierCourt { receipts, subject_sha: subject_sha.to_string() }
     }
 
+    /// Zero-arg control instance for the registry ctor shape: the
+    /// deterministic 20-receipt control set (`sample_control_set`), which the
+    /// admission predicate admits by construction. Not a real subject
+    /// dossier — registry sweeps and courts that need a zero-arg N20 use
+    /// this; real dossiers go through [`DossierCourt::new`].
+    pub fn control_default() -> Self {
+        DossierCourt { receipts: sample_control_set(), subject_sha: "control-subject".to_string() }
+    }
+
     /// Compute the dossier root and seal it with the ML-DSA-65 signer.
     /// Returns (root, signature); the signature is over the domain-separated
     /// subject `dossier_subject(&root)` — the same subject the landed
@@ -291,7 +300,7 @@ impl Court for DossierCourt {
     }
 
     fn name(&self) -> &'static str {
-        "N20"
+        "N20 dossier_aggregate"
     }
 
     /// Positive control: a KNOWN-BAD receipt set (one receipt flipped to

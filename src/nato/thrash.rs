@@ -1,6 +1,8 @@
 #![cfg(feature = "nato")]
 // Court harness library: probes and full-tier entry points run under
-// `#[ignore]`d tests, so non-test builds legitimately see unused items.
+// `#[ignore]`d tests and the court registry, so non-test builds legitimately
+// see unused items; the probe/control fns are dead to test builds only and
+// referenced by the court registry.
 #![allow(dead_code, unused_imports)]
 // unused_imports: ConsensusError is doc-link-referenced (`ConsensusError`) but not constructed outside tests
 //! N14 — CAST-32A multi-core interference court (NATO lane N14).
@@ -113,6 +115,10 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use crate::nato::court::{
+    CandidateRef, ControlProbe, Court, CourtId, CourtOutcome, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 use crate::nato::torn::ring::{CasRing, ConsensusError, SlotId};
 
 // ---------------------------------------------------------------------------
@@ -616,11 +622,26 @@ fn n14_cast32a_thrash_full() {
 /// producer structurally stuck on claim) MUST deadlock-detect via the
 /// bounded watchdog as a typed DeadlockBound. If this fails, the watchdog
 /// is not load-bearing and the liveness leg above is vacuous.
+/// POSITIVE CONTROL probe: the watchdog-less wedged shim (all slots leaked,
+/// producer structurally stuck on claim) MUST deadlock-detect via the
+/// bounded watchdog as a typed `DeadlockBound` at the 250 ms bound. Returns
+/// `true` iff the typed deadlock was detected — if `false`, the watchdog is
+/// not load-bearing and the liveness court is vacuous. Shared verbatim by
+/// the `#[test]` wrapper and the court registry.
+pub(crate) fn n14_positive_control() -> bool {
+    let wedge_bound = Duration::from_millis(250);
+    match run_wedged_shim(wedge_bound) {
+        Err(ThrashCourtError::DeadlockBound { bound }) => bound == wedge_bound,
+        _ => false,
+    }
+}
+
 #[test]
 fn n14_positive_control_wedged_shim_deadlock_detected() {
-    let wedge_bound = Duration::from_millis(250);
-    let err = run_wedged_shim(wedge_bound).expect_err("wedged shim must deadlock-detect");
-    assert_eq!(err, ThrashCourtError::DeadlockBound { bound: wedge_bound });
+    assert!(
+        n14_positive_control(),
+        "wedged shim did not deadlock-detect as typed DeadlockBound — control vacuous"
+    );
 }
 
 /// Real-receipt emission for the N14 dossier slot (opt-in via
@@ -720,6 +741,73 @@ mod receipt_emission {
         let path = dir.join("N14.json");
         if let Err(e) = std::fs::write(&path, json) {
             println!("skipping N14 receipt emission: cannot write {}: {e}", path.display());
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Court wiring
+// ---------------------------------------------------------------------------
+
+/// N14 CAST-32A multi-core interference court.
+pub struct Cast32ThrashCourt;
+
+/// Court identity constants (the `Court` trait exposes them
+/// dyn-safely via `id()`/`pillar()`).
+impl Cast32ThrashCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N14;
+    /// Capability pillar.
+    /// Pillar-alignment law: emitter (`CourtReceipt::record`) and
+    /// docs/receipts/N14.json both mint Resilience; the plan table's
+    /// "Timing" was wrong for the standing record.
+    pub const PILLAR: Pillar = Pillar::Resilience;
+}
+
+impl Court for Cast32ThrashCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N14 cast32a_thrash"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n14_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        // All three legs (completion/zero-deadlock, typed-refusals-only /
+        // zero SDC, conservation) are asserted inside run_court; a typed
+        // DeadlockBound/CourtLost is a FAIL, not a harness hang.
+        let summary = run_court(ThrashConfig::small()).ok();
+        CourtOutcome {
+            verdict: if summary.is_some() { Verdict::Pass } else { Verdict::Fail },
+            metrics: vec![
+                ("transitions", MetricValue::U64(TRANSITIONS_SMALL)),
+                ("producers", MetricValue::U64(PRODUCERS)),
+                ("consumers", MetricValue::U64(CONSUMERS as u64)),
+                (
+                    "conservation_checksum",
+                    MetricValue::U64(summary.map_or(0, |s| s.conservation_checksum)),
+                ),
+            ],
+            scoping: ScopingRecord::partial(
+                "N14 CAST-32A: 16 adversarial threads vs sequencer; bounded max latency, \
+                 zero deadlock",
+                "tier-1 small run: 50k-transition CasRing MPMC 4x4 pipeline under 4 evictors \
+                 + 4 spinners; completion, typed-refusals-only (zero SDC), and conservation \
+                 legs all asserted inside run_court; wedged-shim positive control proves the \
+                 watchdog load-bearing",
+                "tier-1 small prefix of the donor 1M-transition/16-thread tier-3 court; \
+                 no wall-clock latency bound asserted at this tier (measures the machine, \
+                 not the subject)",
+            ),
         }
     }
 }

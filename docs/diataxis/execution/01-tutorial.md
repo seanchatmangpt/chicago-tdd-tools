@@ -33,11 +33,11 @@ crate):
 
 | Export | C signature | Purpose |
 |---|---|---|
-| `ctt_guest_abi_version` | `() -> u32` | Probe; returns `ABI_VERSION = 1` |
+| `ctt_guest_abi_version` | `() -> u32` | Probe; returns `ABI_VERSION = 2` |
 | `ctt_session_new` | `(net_buf: *const u8, net_len: u32, out_handle: *mut u64) -> i32` | Parse, validate, and compile a wire-format model buffer into a `ConformanceSession` in a table slot |
 | `ctt_session_attach` | `(handle: u64, stream_ptr: *const u8, stream_len: u32) -> i32` | Bind a flat LE `u64` OCEL64 event stream (length must be a multiple of 8, nonempty) |
 | `ctt_session_step` | `(handle: u64, quota: u32, out_status: *mut u8, out_cap: u32) -> i32` | Replay at most `quota` events; write the fixed 21-byte step status record |
-| `ctt_session_seal` | `(handle: u64, out_buf: *mut u8, out_cap: u32, out_len: *mut u32) -> i32` | Write the 32-byte BLAKE3 digest of the 34-byte seal preimage (requires `ledger`) |
+| `ctt_session_seal` | `(handle: u64, out_buf: *mut u8, out_cap: u32, out_len: *mut u32) -> i32` | Write the 32-byte BLAKE3 digest of the 58-byte (v2) seal preimage (requires `ledger`) |
 | `ctt_session_drop` | `(handle: u64) -> i32` | Free the slot; the generation counter makes ABA reuse observable as `ERR_BAD_HANDLE` |
 
 Key wire facts (module header of `guest.rs`):
@@ -136,11 +136,13 @@ over-ceiling (`OverCeiling`) with typed refusals. The BEAM supervisor owns polic
 
 ## Step 6: Seal
 
-`ctt_session_seal` writes the 32-byte BLAKE3 digest of the fixed 34-byte preimage
+`ctt_session_seal` writes the 32-byte BLAKE3 digest of the fixed 58-byte (v2) preimage
 (8B LE `steps_executed` | 8B LE `events_total` | 8B LE `final_marking` | 1B outcome |
-1B violation code | 8B zero reserved). With the `ledger` feature off, sealing is **refused**
+1B violation code | 32B module digest in `26..58`; the v1-exact 26-byte prefix is unchanged,
+and the v1 zero-reserved field `26..34` is consumed by the digest). With the `ledger`
+feature off, sealing is **refused**
 with `ERR_SEAL_UNAVAILABLE` rather than downgraded — a non-cryptographic "receipt" is a
-receipt-shaped lie, so v1 ships no fallback digest. Violation codes are the 0..=8 table in
+receipt-shaped lie, so no version ships a fallback digest. Violation codes are the 0..=8 table in
 `guest.rs::violation` (NONE, SKIPPED, OUT_OF_ORDER, UNDECLARED, FORBIDDEN_BIT,
 TRACE_MALFORMED, TOO_MANY_PLACES, MODEL_TOO_LARGE, OTHER).
 

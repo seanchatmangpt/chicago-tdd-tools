@@ -45,7 +45,7 @@ reference over 200,000 pseudorandom words plus structured corners (`pn64.rs` tes
 
 > **Divergence note (explicit).** An earlier operator spec described a return-word scheme in
 > which the guest communicates outcome in return words 0-3. That is the **superseded E13
-> design**. The landed ABI (`src/conformance/guest.rs`, `ABI_VERSION = 1`) is different: every
+> design**. The landed ABI (`src/conformance/guest.rs`, `ABI_VERSION = 2`) is different: every
 > ABI function returns an `i32` status (0 = ok, positive = guest errno), and bulk results
 > travel through out-parameters written into linear memory (the 21-byte step status record,
 > the 32-byte seal digest, the `u64` handle out-parameter). The ABI functions themselves never
@@ -53,9 +53,9 @@ reference over 200,000 pseudorandom words plus structured corners (`pn64.rs` tes
 > unreachable states. If you are integrating against a doc that says "return words 0-3", that
 > doc predates the landed surface — this page and `guest.rs` win.
 
-### Status errno table (0..=13)
+### Status errno table (0..=16, ABI v2)
 
-`guest.rs:114-129`. Zero is success; positive values are guest errnos; negatives never appear.
+`guest.rs:138-156`. Zero is success; positive values are guest errnos; negatives never appear.
 
 | Code | Name | Meaning |
 |-----:|------|---------|
@@ -70,12 +70,25 @@ reference over 200,000 pseudorandom words plus structured corners (`pn64.rs` tes
 | 8 | `ERR_TABLE_FULL` | all `MAX_SESSIONS` (8) slots occupied |
 | 9 | `ERR_BAD_HANDLE` | handle is free, out of range, or generation-stale |
 | 10 | `ERR_STREAM_EMPTY` | attach of a zero-length stream |
-| 11 | `ERR_CAP_TOO_SMALL` | capacity below the record's fixed length, or the out-buffer span falls at/past the installed linear-memory bound |
+| 11 | `ERR_CAP_TOO_SMALL` | out-buffer capacity below the record's fixed length (pure capacity meaning at v2) |
 | 12 | `ERR_SEAL_UNAVAILABLE` | sealing requested without the `ledger` feature |
 | 13 | `ERR_STREAM_ALIGNMENT` | stream byte length not a multiple of 8 |
+| 14 | `ERR_OOB_READ` | an input span (`net_buf`/`stream_ptr`) reaches at/past the installed linear-memory bound |
+| 15 | `ERR_OOB_WRITE` | an out-buffer span reaches at/past the installed linear-memory bound (the former v1 `ERR_CAP_TOO_SMALL` overload) |
+| 16 | `ERR_DEFERRED_HEAP` | a heap-requiring path was requested under the deferred-heap ABI tier (reserved; not yet returned) |
 
 A test pins the table's stability and uniqueness (`status_table_is_stable_and_unique`) and
 asserts every code is non-negative.
+
+> **v1 → v2 (explicit).** At v1, `ERR_CAP_TOO_SMALL` (11) doubled as the out-span OOB
+> refusal; v2 (W-ABI2 item 4) splits that overload out into `ERR_OOB_READ` (14) /
+> `ERR_OOB_WRITE` (15), so 11 is pure capacity again. The seal preimage also grew from 34 to
+> 58 bytes: the v1-exact 26-byte prefix is unchanged, and the v1 reserved-zero field
+> (`26..34`) is consumed by the 32-byte module digest (`26..58`). The v1 `reserved == 0` law
+> and the v2 digest law are mutually exclusive on those bytes — a v1 parser validating
+> `reserved == 0` fails closed on a v2 preimage. The authoritative version discriminator is
+> the `ctt_guest_abi_version()` probe (returns 2); a host MUST call it before the first
+> `ctt_session_new`.
 
 ### Step status record v1 (out-buffer of `ctt_session_step`)
 
@@ -102,10 +115,11 @@ via the sealed summary's violation code, not the step record.
   DSL bytes (trailing bytes rejected).
 - **Stream** (`ctt_session_attach` input): flat LE `u64` OCEL64 words; nonempty; length a
   multiple of 8.
-- **Seal preimage** (`ctt_session_seal`): fixed 34 bytes — `8B LE steps_executed |
+- **Seal preimage** (`ctt_session_seal`, v2): fixed 58 bytes — `8B LE steps_executed |
   8B LE events_total | 8B LE final_marking | 1B outcome (0 Incomplete / 1 Complete /
-  2 Faulted) | 1B violation code | 8B zero reserved`; the out-buffer receives the 32-byte
-  BLAKE3 digest (`DIGEST_LEN`), only with the `ledger` feature.
+  2 Faulted) | 1B violation code | 32B module digest in `26..58` (the v1 zero-reserved field
+  `26..34` is consumed; v1-exact 26-byte prefix unchanged)`; the out-buffer receives the
+  32-byte BLAKE3 digest (`DIGEST_LEN`), only with the `ledger` feature.
 - **Violation codes** (seal-preimage byte): 0 `NONE`, 1 `SKIPPED`, 2 `OUT_OF_ORDER`,
   3 `UNDECLARED`, 4 `FORBIDDEN_BIT`, 5 `TRACE_MALFORMED`, 6 `TOO_MANY_PLACES`,
   7 `MODEL_TOO_LARGE`, 8 `OTHER` (`guest.rs::violation`).

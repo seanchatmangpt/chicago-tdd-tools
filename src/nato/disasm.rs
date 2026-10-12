@@ -63,10 +63,17 @@
     clippy::manual_midpoint,
     clippy::identity_op,
     clippy::format_collect,
-    clippy::trivially_copy_pass_by_ref
+    clippy::trivially_copy_pass_by_ref,
+    dead_code // hoisted court probes/controls (W-NTW §3): referenced by the
+              // #[cfg(test)] wrappers and referenced by the court registry
 )]
 
 use serde::{Deserialize, Serialize};
+
+use crate::nato::court::{
+    CandidateRef, Court, CourtId, CourtOutcome, ControlProbe, MetricValue, Pillar, Verdict,
+};
+use crate::nato::disclosure::ScopingRecord;
 
 // --- Typed N06 receipt model ---------------------------------------------
 
@@ -156,36 +163,151 @@ pub fn kernel_step(pn: u64, ocel: u64, invariant_mask: u64) -> u64 {
     crate::conformance::pn64::step_branchless(pn, ocel, invariant_mask)
 }
 
+// ---------------------------------------------------------------------------
+// Court wiring (W-NTW §3/§4): hoisted probe + positive control + trait impl
+// ---------------------------------------------------------------------------
+
+/// Run the real audit (census over the emitted `kernel_step` symbol via
+/// `scripts/n06_disasm_audit.sh`) and parse its receipt as typed JSON.
+///
+/// Hoisted (W-NTW §3) from the former test-local `run_audit` + census body so
+/// the court adapter and any emitter share ONE probe: metrics cannot diverge.
+fn run_audit() -> N06Receipt {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let script = root.join("scripts/n06_disasm_audit.sh");
+    let out = std::env::temp_dir().join(format!("n06_receipt_{}.json", std::process::id()));
+    let status = std::process::Command::new("bash")
+        .arg(&script)
+        .env("N06_OUT", &out)
+        .status()
+        .expect("failed to spawn scripts/n06_disasm_audit.sh");
+    let text = std::fs::read_to_string(&out)
+        .expect("N06 receipt unreadable (audit script did not write it)");
+    let _ = std::fs::remove_file(&out);
+    assert!(status.success(), "audit script exited nonzero; receipt: {text}");
+    serde_json::from_str(&text).expect("N06 receipt is not valid typed JSON")
+}
+
+/// The N06 court probe (W-NTW §4): runs the real disassembly census and
+/// returns the typed receipt. Verdict mapping lives in
+/// [`DisasmCourt::run`]: `accepted()` -> Pass; typed skip -> Fail with an
+/// honest ScopingRecord disclosure (never a silent pass).
+pub(crate) fn n06_run_court_probe() -> N06Receipt {
+    run_audit()
+}
+
+/// N06 positive control (hoisted from the mutant legs of
+/// `n06_receipt_model_acceptance_rules`): the acceptance rule MUST accept a
+/// clean Pass receipt and a typed skip, and MUST reject a reason-less skip
+/// and a census `Fail`. A violation on any leg means the court logic is
+/// vacuous and the control gate refuses the run.
+pub(crate) fn n06_positive_control() -> bool {
+    let pass = N06Receipt {
+        lane: "N06".into(),
+        status: ReceiptStatus::Pass,
+        skip_reason: None,
+        reason: None,
+        wasm: None,
+        native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
+    };
+    let skipped = N06Receipt {
+        lane: "N06".into(),
+        status: ReceiptStatus::Skipped,
+        skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
+        reason: None,
+        wasm: Some(TierReceipt {
+            count: 0,
+            bound: 0,
+            skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
+        }),
+        native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
+    };
+    let skip_no_reason = N06Receipt { skip_reason: None, ..skipped.clone() };
+    let fail = N06Receipt {
+        lane: "N06".into(),
+        status: ReceiptStatus::Fail,
+        skip_reason: None,
+        reason: Some("native census nonzero".into()),
+        wasm: None,
+        native: Some(TierReceipt { count: 3, bound: 0, skip_reason: None }),
+    };
+    // Also: the wire format the script emits must round-trip.
+    let json = serde_json::to_string(&pass).expect("serialize");
+    let back: N06Receipt = serde_json::from_str(&json).expect("deserialize");
+
+    pass.accepted()
+        && skipped.accepted()
+        && !skip_no_reason.accepted()
+        && !fail.accepted()
+        && back == pass
+        && back.status == ReceiptStatus::Pass
+}
+
+/// N06 — branchless disassembly court (W-NTW §2 adapter, mils template).
+pub struct DisasmCourt;
+
+/// Court identity constants.
+impl DisasmCourt {
+    /// Court identifier.
+    pub const ID: CourtId = CourtId::N06;
+    /// Capability pillar.
+    pub const PILLAR: Pillar = Pillar::Timing;
+}
+
+impl Court for DisasmCourt {
+    fn id(&self) -> CourtId {
+        Self::ID
+    }
+
+    fn pillar(&self) -> Pillar {
+        Self::PILLAR
+    }
+
+    fn name(&self) -> &'static str {
+        "N06 branchless_disasm"
+    }
+
+    fn positive_control(&self) -> ControlProbe {
+        n06_positive_control
+    }
+
+    fn run(&self, _candidate: &CandidateRef) -> CourtOutcome {
+        let receipt = n06_run_court_probe();
+        // Verdict law: ONLY a real Pass is a Pass. A typed skip is an honest
+        // Fail carrying the skip disclosure — never a silent pass.
+        let verdict = if receipt.status == ReceiptStatus::Pass && receipt.accepted() {
+            Verdict::Pass
+        } else {
+            Verdict::Fail
+        };
+        let native_count = receipt.native.as_ref().map_or(0, |n| n.count);
+        CourtOutcome {
+            verdict,
+            metrics: vec![
+                ("native_branch_count", MetricValue::U64(native_count)),
+                ("accepted", MetricValue::Bool(receipt.accepted())),
+            ],
+            scoping: ScopingRecord::partial(
+                "zero conditional branches in the emitted PN64 step symbol across all tiers",
+                "objdump census over the #[inline(never)] kernel_step symbol in the \
+                 release wasm + native builds via scripts/n06_disasm_audit.sh, plus a \
+                 xorshift64* semantic equivalence corpus against the branched reference",
+                "census is build-artifact-scoped (this host/toolchain); a tier that \
+                 cannot run is a typed skip surfaced as Fail + this disclosure, never \
+                 a silent pass; formal all-inputs branch-freedom proof out of scope",
+            ),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)] // JUSTIFICATION: test code only
 mod tests {
     use super::*;
 
-    fn repo_root() -> std::path::PathBuf {
-        // src/nato/<this file> -> crate root (CARGO_MANIFEST_DIR).
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-    }
-
-    /// Run the real audit script and parse its receipt as typed JSON.
-    fn run_audit() -> N06Receipt {
-        let root = repo_root();
-        let script = root.join("scripts/n06_disasm_audit.sh");
-        let out = std::env::temp_dir().join(format!("n06_receipt_{}.json", std::process::id()));
-        let status = std::process::Command::new("bash")
-            .arg(&script)
-            .env("N06_OUT", &out)
-            .status()
-            .expect("failed to spawn scripts/n06_disasm_audit.sh");
-        let text = std::fs::read_to_string(&out)
-            .expect("N06 receipt unreadable (audit script did not write it)");
-        let _ = std::fs::remove_file(&out);
-        assert!(status.success(), "audit script exited nonzero; receipt: {text}");
-        serde_json::from_str(&text).expect("N06 receipt is not valid typed JSON")
-    }
-
     #[test]
     fn n06_branchless_disasm_census() {
-        let receipt = run_audit();
+        let receipt = n06_run_court_probe();
         assert!(
             receipt.accepted(),
             "N06 receipt not accepted: status = {:?}, skip_reason = {:?}, \
@@ -203,50 +325,14 @@ mod tests {
 
     /// The receipt model round-trips and the acceptance rule rejects Fail
     /// and malformed shapes (court logic tested directly, no subprocess).
+    /// Wrapper over the hoisted positive control (W-NTW §3).
     #[test]
     fn n06_receipt_model_acceptance_rules() {
-        let pass = N06Receipt {
-            lane: "N06".into(),
-            status: ReceiptStatus::Pass,
-            skip_reason: None,
-            reason: None,
-            wasm: None,
-            native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
-        };
-        assert!(pass.accepted());
-
-        let skipped = N06Receipt {
-            lane: "N06".into(),
-            status: ReceiptStatus::Skipped,
-            skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
-            reason: None,
-            wasm: Some(TierReceipt {
-                count: 0,
-                bound: 0,
-                skip_reason: Some(SkipReason::ToolchainUnavailable { tool: "wasm-objdump".into() }),
-            }),
-            native: Some(TierReceipt { count: 0, bound: 0, skip_reason: None }),
-        };
-        assert!(skipped.accepted());
-
-        let skip_no_reason = N06Receipt { skip_reason: None, ..skipped };
-        assert!(!skip_no_reason.accepted(), "Skipped without a typed reason must not be accepted");
-
-        let fail = N06Receipt {
-            lane: "N06".into(),
-            status: ReceiptStatus::Fail,
-            skip_reason: None,
-            reason: Some("native census nonzero".into()),
-            wasm: None,
-            native: Some(TierReceipt { count: 3, bound: 0, skip_reason: None }),
-        };
-        assert!(!fail.accepted());
-
-        // Round-trip through the wire format the script emits.
-        let json = serde_json::to_string(&pass).expect("serialize");
-        let back: N06Receipt = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(back, pass);
-        assert_eq!(back.status, ReceiptStatus::Pass);
+        assert!(
+            n06_positive_control(),
+            "N06 positive control failed: acceptance rule rejected a clean pass/typed skip, \
+             accepted a reason-less skip or census Fail, or the wire format drifted"
+        );
     }
 
     #[test]
