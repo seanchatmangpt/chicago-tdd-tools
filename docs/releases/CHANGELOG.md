@@ -33,13 +33,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`--features ledger,nato`); stale bin/feature references in
   `docs/features/LEDGER.md`, `docs/features/MERGER_MATRIX.md` and
   `src/ledger/dossier_wire.rs` doc comments updated to the excised state.
+- **Wave-7 closeout** (`1d2f553`/`934a70c`/`e0411dd`/`3ff36fc`/
+  `c47e3ca`): CHANGELOG wave-4/wave-6 entries landed in-file (wave list
+  completed, orphan wave-list fragment repaired); pillar-law authority
+  note corrected — the landed PILLAR consts pinned by the
+  `pillar_mapping_matches_the_matrix` test are the law, the 4 real-run
+  emitter receipts witness it, the other 17 persisted receipts (N15's
+  control receipt mints Proof) are the synthetic control set, not pillar
+  evidence; NATO_COURTS duplicate remnant line removed; findings
+  register SK6/SX6 synced to PARTIAL (F2/F3 + V5 envelope landed),
+  SK2/SK3 restored to QUEUED; over-length lines wrapped; guest README
+  rebase-landed note (strata `59ed80c`, pending merge to strata main);
+  sealed dossier refreshed (`sealed_at` + signature, merkle root
+  unchanged).
+- **Findings-register prose repair** (`c83cf62`): SX5/SX6 disposition
+  prose garbles in `docs/jira/v26.10.12/adversarial-findings.md`
+  corrected (audit findings).
+- **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
+  + zero-ambient WCET timer (see Fixed).
 
 ## [26.10.12] continued - 2026-10-11
 Endgame audit-wave convergence: 20-lane adversarial audit with repairs,
 all with on-disk test receipts. Waves: 1 (`8ab234a` + `1fc1c72`);
 2 (`5189603`); 3 (`70575e8` + `e465c1a`); 4 (`2c80a9e`, W-NTW +
 W-ABI2); strata rebase (`59ed80c`); 5 (`451f4a8`); 6 (`b8dac24` +
-`0f33671` + `934a70c` + `e0411dd`).
+`0f33671` + `934a70c` + `e0411dd`); 7 (`1d2f553` + `934a70c` +
+`e0411dd` + `3ff36fc` + `c47e3ca`); 8 (`31b5ed3`).
 
 ### Added
 - **Prelude assert macros**: prelude gains 8 new assert macros

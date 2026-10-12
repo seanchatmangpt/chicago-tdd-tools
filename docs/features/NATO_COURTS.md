@@ -131,7 +131,9 @@ court — and `verdict` in that serialized form is one of
 `Admitted` | `Refused` | `NotRun`. A missing receipt file degrades the N20
 dossier to `Refused`, never a silent pass. (`docs/receipts/` is populated
 by court runs under the `nato` feature **and** the opt-in gate
-`CTT_EMIT_RECEIPTS=1`; it is not checked in as static content.)
+`CTT_EMIT_RECEIPTS=1`; the 20 committed `N{01..20}.json` files are the
+synthetic control set + the four real-run receipts, refreshed only by the
+opt-in emitter.)
 
 ## The N01–N20 court matrix
 
@@ -170,7 +172,7 @@ landed CTT-side as test-court lanes; the Erlang/OTP tiers of those four
 remain strata-side. Pillar law is the landed `Court::PILLAR` consts, pinned by the
 `pillar_mapping_matches_the_matrix` test; the emitter-carve-out receipts
 (`docs/receipts/N{08,12,14,15}.json`) witness it for the four real-run
-courts — the other 17 persisted receipts are the synthetic control set
+courts — the other 16 persisted receipts are the synthetic control set
 (`sample_control_set()`), not pillar evidence.
 N06 specifically: the court probe adjudicates the real
 `scripts/n06_disasm_audit.sh` output and maps a typed skip to `Verdict::Fail`
