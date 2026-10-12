@@ -158,6 +158,9 @@ test-assurance-integration:
     # NATO sweep timeout lives in .config/nextest.toml overrides
     # (registry_sweep_runs_all_twenty alone takes ~60s).
     timeout 600s cargo nextest run --test nato_courts_tests --features nato
+    # hyper_advanced integration (contract/Receipt/swarm): 19 tests, ~30ms —
+    # cheap enough to gate here rather than rot locally.
+    timeout 600s cargo nextest run --test hyper_advanced_integration
     # ledger sealing + dossier-lib courts (entropy_court_lite needs ~7s,
     # so these use cargo test, not nextest's 5s default timeout)
     timeout 600s cargo test --features ledger,nato --test ledger_sealing_tests
