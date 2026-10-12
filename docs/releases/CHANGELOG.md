@@ -51,6 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrected (audit findings).
 - **Wave-8 NATO timing repairs** (`31b5ed3`): n13 measured-leg fold fix
   + zero-ambient WCET timer (see Fixed).
+- **Wave-11 closeout** (`5656ef7`/`aba8a5f`): three local-only
+  assurance suites (adversarial_as4 4-feature combo — the cfg header
+  makes `--features nato` alone a silent 0-test run — blake3_receipt
+  tests, nato_courts_tests) wired into `just test-assurance-integration`
+  + a CI assurance-integration job with PR path filters; wave-7 audit
+  repairs — alert no-logging fallback tests, fail-loud Weaver-report
+  parsing, netting_settler never-partial law (i64 fit moved to the
+  scratch phase), thermal/unified honest docs, ReceiptAssertions tests.
 - **Wave-10 closeout** (`6b4d13d`/`58c3ba0`): run_with_config honesty
   note (params accepted, not forwarded — loom default model); 11
   CONFORMANCE.md cites refreshed + compile()'s forbidden_mask
