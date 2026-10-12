@@ -129,7 +129,7 @@ Most modules have no dependencies (zero-cost). Optional features are feature-gat
 
 ## Macros
 
-**Test Macros**: `test!`, `async_test!`, `async_test_with_timeout!`, `fixture_test!`, `fixture_test_with_timeout!`, `performance_test!`, `param_test!` (requires `parameterized-testing`), `otel_test!` (requires `otel`), `weaver_test!`, `weaver_test_with_timeout!` (requires `weaver`).
+**Test Macros**: `test!`, `async_test!`, `async_test_with_timeout!`, `fixture_test!`, `fixture_test_with_timeout!`, `performance_test!`, `param_test!` (requires `parameterized-testing`), `otel_test!` (requires `otel`), `weaver_test!` (requires `weaver`; skip-gated, no timeout variant).
 
 **Assertion Macros**: `assert_ok!`, `assert_err!`, `assert_within_tick_budget!`, `assert_in_range!`, `assert_eq_msg!`, `assert_guard_constraint!`.
 

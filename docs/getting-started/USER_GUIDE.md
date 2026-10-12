@@ -65,7 +65,6 @@ Test macros: AAA pattern enforcement. Zero-boilerplate tests. Assertion macros. 
 - **`param_test! { #[case(...)] fn test(...) { ... } }`**: Parameterized tests with rstest (requires `parameterized-testing` feature)
 - **`otel_test!(name, { /* AAA */ })`**: OTEL span/metric validation tests (requires `otel` feature)
 - **`weaver_test!(name, { /* AAA */ })`**: Weaver live validation tests (1s timeout default, requires `weaver` feature)
-- **`weaver_test_with_timeout!(name, timeout_secs, { /* AAA */ })`**: Weaver tests with custom timeout
 
 ### Assertion Macros
 
@@ -242,7 +241,7 @@ OTEL/Weaver: Span/metric validation. Schema conformance. Live validation.
 
 **Weaver Validation**: `WeaverValidator::new(registry_path).start()?` / `stop()?`. Use `with_config(registry_path, otlp_grpc_port, admin_port)` for custom config.
 
-**Macros**: `otel_test!(name, { /* AAA */ })` for OTEL tests, `weaver_test!(name, { /* AAA */ })` for Weaver tests (1s timeout), `weaver_test_with_timeout!(name, timeout_secs, { /* AAA */ })` for custom timeout.
+**Macros**: `otel_test!(name, { /* AAA */ })` for OTEL tests, `weaver_test!(name, { /* AAA */ })` for Weaver tests (skip-gated; no timeout variant exists)
 
 **Patterns**: Span validation (required attributes), metric validation (schema conformance), live validation (weaver).
 
@@ -272,7 +271,7 @@ Alert helpers: Visual problem indicators. Standard log crate integration.
 
 **Behavior Verification**: Tests verify what code does, not how. Verify state changes, outputs, execution order.
 
-**Timeout Management**: Use `async_test_with_timeout!`, `fixture_test_with_timeout!`, `weaver_test_with_timeout!` with 30s timeout for integration tests.
+**Timeout Management**: Use `async_test_with_timeout!`, `fixture_test_with_timeout!` with 30s timeout for integration tests (`weaver_test!` is skip-gated, no timeout variant).
 
 ## Common Patterns
 

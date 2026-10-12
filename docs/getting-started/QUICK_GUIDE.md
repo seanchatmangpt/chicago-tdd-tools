@@ -213,10 +213,10 @@ weaver_test!(test_weaver_validation, {
 ### Weaver Test with Custom Timeout (requires `weaver` feature)
 
 ```rust
-use chicago_tdd_tools::{weaver_test_with_timeout, prelude::*};
+use chicago_tdd_tools::weaver_test;
 use std::path::PathBuf;
 
-weaver_test_with_timeout!(test_weaver_integration, 30, {
+weaver_test!(test_weaver_integration, {
     // Arrange: Create validator
     let registry_path = PathBuf::from("registry/");
     let mut validator = chicago_tdd_tools::weaver::WeaverValidator::new(registry_path);

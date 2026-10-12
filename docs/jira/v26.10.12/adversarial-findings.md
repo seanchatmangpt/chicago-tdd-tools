@@ -308,3 +308,19 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   Verified green: 102 lib conformance tests, 18 integration tests, 781
   all-assurance lib tests, clippy/fmt clean; audit found no existing test
   relied on prefix-completion-conforming.
+
+### W13 REGISTER ADDITIONS (audit wave-14)
+
+- **core::receipt TestReceipt** (PARTIAL-QUEUED): signature covers
+  identity fields only (receipt_id/contract_name/timestamp/result) —
+  code_hash/invariants_checked/effects_exercised/environment/timing are
+  NOT tamper-covered; signature is unkeyed SHA-256 (recomputable).
+  Keyed verification exists only on `governance::TaskReceipt`. Docs
+  now disclose; hardening (full-field signature or keyed verify) queued.
+- **cli_proof TempWorkspace** (COVERAGE-QUEUED): drop-cleanup is
+  tempfile-RAII-delegated and unwitnessed by any test.
+- **N04 AUDITED_MODULES scope** (DISCLOSED W13): 14/26 nato modules
+  scanned; timing/env-gated courts exempt by design (disclosed
+  in zero_ambient.rs); extending to eligible pure modules queued.
+- **weaver_test_with_timeout! hallucinated cites** (FIXED W14): all
+  live-doc cites purged.

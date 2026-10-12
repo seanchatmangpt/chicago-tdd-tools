@@ -60,7 +60,7 @@ Registry validation fails with: [error details]
 ### 3. Link to Issue in Documentation
 
 Once issue is filed, update documentation:
-- Add issue link to `docs/REGISTRY_VALIDATION_FIX.md`
+- Add issue link to `docs/features/REGISTRY_VERSION_PINNING.md`
 - Document workaround until fix is available
 - Update when upstream fix is released
 

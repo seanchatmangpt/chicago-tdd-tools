@@ -55,9 +55,7 @@ Complete API reference for Chicago TDD Tools, organized by module.
   - Expands to: `#[tokio::test] async fn $name() { /* timeout wrapper */ }`
   - Timeout: 1s default
 
-- **`weaver_test_with_timeout!(name, timeout_secs, body)`**: Weaver tests with custom timeout
-  - Signature: `weaver_test_with_timeout!($name:ident, $timeout_secs:expr, $body:block)`
-  - Use for: Integration tests requiring longer timeouts
+- **`weaver_test!(name, body)`**: Weaver live-check test (skip-gated; no timeout variant exists).
 
 ### Assertion Macros
 

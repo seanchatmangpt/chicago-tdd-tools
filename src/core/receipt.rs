@@ -7,7 +7,7 @@
 //! - Invariants checked (Qᵢ)
 //! - Timing windows (τ for hot, durations for warm/cold)
 //! - Effect envelope exercised
-//! - Optional cryptographic signature (SHA-3 + Ed25519)
+//! - Optional cryptographic signature (SHA-256 (unkeyed, identity fields only))
 //!
 //! Receipts make tests observable operations with cryptographic provenance,
 //! like everything else in the AHI architecture.
@@ -303,7 +303,7 @@ impl TestReceipt {
     ///
     /// 1. its signature verifies (`verify_signature()` — the content hash over
     ///    `receipt_id-contract_name-timestamp-result` recomputes to the stored
-    ///    signature, so the receipt has not been tampered with), **and**
+    ///    signature, so the receipt has a consistent signature over its identity fields (receipt_id/contract/timestamp/result — other fields are NOT signature-covered; tamper detection is partial by design)), **and**
     /// 2. the recorded outcome is not an unresolved deviation: `Fail` and
     ///    `Error` outcomes leave the deviation unexplained by the receipt
     ///    itself, so the receipt cannot close over them. `Pass` and `Skip`
