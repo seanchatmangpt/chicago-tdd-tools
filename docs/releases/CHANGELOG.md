@@ -28,8 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `src/ledger/dossier_wire.rs` doc comments updated to the excised state.
 
 ## [26.10.12] continued - 2026-10-11
-Endgame audit-wave convergence (`8ab234a` + `1fc1c72`): 20-lane adversarial
-audit with repairs, all with on-disk test receipts.
+Endgame audit-wave convergence (`8ab234a` + `1fc1c72`, wave 1; `5189603`,
+wave 2): 20-lane adversarial audit with repairs, all with on-disk test
+receipts.
 
 ### Added
 - **Prelude assert macros**: prelude gains 8 new assert macros
@@ -52,6 +53,17 @@ audit with repairs, all with on-disk test receipts.
 - **Tests**: validation/builders +16 tests (budget-exceeded error paths,
   yaml/toml, fake-data builders); +2 guest-telemetry R44 tests; real
   type-level arithmetic tests + `should_panic` bound test.
+- **Swarm Wave tests** (`5189603`): `Wave::execute` happy/fail-fast/Andon
+  paths covered (0 to 3 tests); `task_assignments` made bounded with
+  release-on-completion plus `clear_assignments_for`; swarm module doc
+  de-overclaimed (no gossip/consensus; idle-fraction heuristic).
+- **Property validator + determinism** (`5189603`): +5 tests (test_counter,
+  seeded determinism both arms, `max_shrink_iters` plumb-through);
+  validator-closure `property_all_data_valid` made non-vacuous; exact LCG
+  pin replaces a tautology (18 to 23 tests).
+- **Core law coverage** (`5189603`): +23 tests across contract, fail_fast
+  and invariants (phases 3/4/6/7/8/10 both arms, `PhaseResult`, finalize,
+  52-variant Display sample).
 
 ### Changed
 - **Zero-import guest dep cleanup**: `ctt-wasm-guest` uuid "js" dependency
@@ -70,6 +82,13 @@ audit with repairs, all with on-disk test receipts.
   (production-grade, 100+, scaffold ggen claim, Admitted|Refused|NotRun
   serialization); fabricated CTRT tokens corrected; bins gain module docs
   and named `EXIT_FAILURE` consts.
+- **Wave-2 de-overclaim** (`5189603`): HYPER_ADVANCED_MICROKERNEL.md 8
+  fabricated symbol cites replaced with real APIs, version line marked
+  historical; sector_stacks/ARCHITECTURE/GETTING_STARTED/FMEA claims
+  corrected; advanced_features example emits stdout; weaver runbook
+  strings corrected.
+- **NATO dossier re-sealed** (`5189603`): dossier re-sealed over the real
+  N08/N12/N14/N15 receipts (previously control-set stand-ins).
 - **Debris removed**: `operator_registry.rs.backup`, `wip/`,
   `check_output.txt`; `__pycache__/` gitignored.
 
@@ -80,6 +99,23 @@ audit with repairs, all with on-disk test receipts.
 - **Guest telemetry R44 bounds**: `write_event_words` routed through the R44
   `out_span_oob` law (`ERR_CAP_TOO_SMALL`).
 - **WCET sort comparators** use `total_cmp`.
+- **MCP typed errors** (`5189603`): `build()` returns `Result` (typed
+  `McpTestError::Configuration`); stdio piping reports typed `anyhow`
+  errors; snapshot tests feature-gated; error_tests bounded to 60s with
+  child reaping (hang fixed).
+- **spec-harness `generate_receipt` bin** (`5189603`): rewritten against
+  the current `SpecConformanceReceipt` (was 6 compile errors).
+- **MemBoundGuard mutex serialization** (`5189603`): parallel tests shared
+  the `LINEAR_MEMORY_END` static, causing a nondeterministic 1-fail flake;
+  access now serialized; deterministic guest suite 662/0.
+- **git_hook_installer duplicate-main** (`5189603`): duplicate main
+  under all-features fixed.
+- **mu-kernel ASCII env fold** (`5189603`): Unicode uppercase of "mu"
+  broke strict-mode env derivation; folded to ASCII.
+- Wave-2 gates (`5189603`): `cargo test --lib --all-features` 1134/0;
+  `just lint` clean; guest suite 662/0 deterministic; merger 25/0; mcp
+  testing suite green (no hang); spec-harness 21/0 + all-targets compile;
+  test-conformance 46/0; test-nato 139/0; doctests 117/0.
 - Gates: `cargo test --lib --all-features` 1093 passed / 0 failed; `just
   lint` clean; merger 25/0; ledger_tests 25/0; conformance_tests 23/0;
   guest_abi 14/0; `just release-validate-version`: consistent 26.10.12

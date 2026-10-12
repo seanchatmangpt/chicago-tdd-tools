@@ -49,16 +49,29 @@ for FILE in $STAGED_FILES; do
         continue
     fi
 
-    # Count unwrap() calls in added lines
-    # grep -c prints 0 AND exits 1 on zero matches; the `|| echo 0` then emitted a
-    # second 0, corrupting the integer test below ("0\n0"). Drop the fallback:
-    # `|| true` inside the substitution keeps set -e alive when grep -c exits 1
-    # (zero matches); ${:-0} then normalizes the empty result.
-    UNWRAPS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.unwrap\(\)' 2>/dev/null || true)
+    # Count unwrap()/expect() calls in added lines.
+    #
+    # Pattern form `[(]` (literal bracket expression), NOT `\(\)`: in a BRE,
+    # `\(...\)` is a GROUP, so `\.unwrap\(\)` is `.unwrap` + empty group and
+    # matches any `.unwrap*` prefix (`.unwrap_or_else`, `.unwrap_or`, ...) —
+    # false positives. A bare `(` is a literal in BRE; `[(]` is literal in
+    # BOTH BRE and ERE and in ugrep (where `\(` is a hard error, silently
+    # zeroed below). `.expect(` kept under the same audit fix.
+    #
+    # SELF-TEST (patterns below, against staged + lines):
+    #   '+let v = r.unwrap();'                          -> MATCHES   (the real call)
+    #   '+//!         .unwrap_or_else(|e| panic!("x"))' -> NO MATCH  (different method)
+    #   '+let e = r.expect("msg");'                     -> MATCHES   (expect is checked too)
+    #   '+//! .expect("doc")' inside //! doc comments   -> MATCHES (INTENDED:
+    #      doc examples must also be clean or #[allow]-annotated)
+    #
+    # Counting: grep -c prints 0 AND exits 1 on zero matches; the old
+    # `|| echo 0` emitted a second 0, corrupting the integer test ("0\n0").
+    # `|| true` keeps set -e alive; ${:-0} normalizes the empty result.
+    UNWRAPS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.unwrap[(]' 2>/dev/null || true)
     UNWRAPS=${UNWRAPS:-0}
 
-    # Count expect() calls in added lines
-    EXPECTS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.expect\(' 2>/dev/null || true)
+    EXPECTS=$(git diff --cached "$FILE" | grep -E '^\+' | grep -c '\.expect[(]' 2>/dev/null || true)
     EXPECTS=${EXPECTS:-0}
 
     if [ "$UNWRAPS" -gt 0 ] || [ "$EXPECTS" -gt 0 ]; then

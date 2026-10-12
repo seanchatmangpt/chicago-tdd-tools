@@ -90,7 +90,9 @@ pub enum PhaseLabel {
     QualityDashboard,
 }
 
-/// Receipt data with version and checksum for self-validation.
+/// Receipt data with version and checksum for receipt-shape completeness:
+/// the fields document the receipt contract this phase emits; consumers
+/// read them from the serialized receipt, not from this in-memory struct.
 #[derive(Debug, Clone)]
 struct ReceiptData {
     /// Receipt schema version

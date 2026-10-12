@@ -182,21 +182,12 @@ pub mod implementation {
     /// Container startup delay in milliseconds
     ///
     /// **Kaizen improvement**: Extracted magic number `100` to named constant.
-    /// This delay allows Docker CLI-created containers to be ready before exec operations.
-    /// Pattern: Use named constants for timing values that may need adjustment.
-    #[allow(dead_code)]
-    const CONTAINER_STARTUP_DELAY_MS: u64 = 100;
-
     /// Initial delay for container startup retry in milliseconds (100ms)
     const CONTAINER_RETRY_INITIAL_DELAY_MS: u64 = 100;
 
     /// Maximum retries for container startup check
     const CONTAINER_STARTUP_MAX_RETRIES: u32 = 3;
 
-    /// Maximum total wait time for container startup (sum of all retries with backoff)
-    /// Initial: 100ms, Retry 1: 200ms, Retry 2: 400ms = 700ms total
-    #[allow(dead_code)]
-    const CONTAINER_STARTUP_MAX_WAIT_MS: u64 = 700;
     use testcontainers::core::ContainerPort;
     use testcontainers::runners::SyncRunner;
     use testcontainers::Container;
@@ -273,7 +264,9 @@ pub mod implementation {
                         // If we get here and it's not the last attempt, retry with delay
                         if attempt < MAX_RETRIES {
                             // Small delay to reduce contention when multiple tests check Docker simultaneously
-                            thread::sleep(Duration::from_millis(100 * u64::from(attempt + 1)));
+                            thread::sleep(Duration::from_millis(
+                                CONTAINER_RETRY_INITIAL_DELAY_MS * u64::from(attempt + 1),
+                            ));
                             continue;
                         }
                         // Last attempt failed - return error
@@ -285,7 +278,9 @@ pub mod implementation {
                     Err(e) => {
                         if attempt < MAX_RETRIES {
                             // Small delay to reduce contention
-                            thread::sleep(Duration::from_millis(100 * u64::from(attempt + 1)));
+                            thread::sleep(Duration::from_millis(
+                                CONTAINER_RETRY_INITIAL_DELAY_MS * u64::from(attempt + 1),
+                            ));
                             continue;
                         }
                         if e.kind() == std::io::ErrorKind::NotFound {

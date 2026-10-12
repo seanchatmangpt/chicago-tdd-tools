@@ -377,11 +377,55 @@ cargo run --example swarm_coordination
 
 ---
 
+### 14. Star TOML Configuration Testing (`star-toml/main.rs`)
+
+How to parse, validate, and layer TOML configurations with fail-fast admission.
+
+**Run:**
+```bash
+# Default profile
+cargo run --example star_toml -- --config examples/star-toml/samples/default.toml
+
+# Layer the development profile (port override triggers a warning, still admitted)
+cargo run --example star_toml -- --config examples/star-toml/samples/default.toml --config examples/star-toml/samples/dev.toml
+
+# Layer the production profile (TLS + strict checking, admitted cleanly)
+cargo run --example star_toml -- --config examples/star-toml/samples/default.toml --config examples/star-toml/samples/prod.toml
+
+# Invalid configuration is refused (exit code 1)
+cargo run --example star_toml -- --config examples/star-toml/samples/invalid_port.toml
+
+# Override keys via STAR_TOML_-prefixed environment variables
+STAR_TOML_WORKERS=8 cargo run --example star_toml -- --config examples/star-toml/samples/default.toml
+```
+
+**Test:**
+```bash
+cargo test --example star_toml --all-features       # inline unit/property/snapshot/perf tests
+cargo test --test star_toml_e2e --all-features      # 64-test E2E integration suite
+```
+
+**📖 Full Documentation:** [star-toml/README.md](star-toml/README.md)
+
+**Use this when:**
+- Loading layered TOML configuration (files + environment overrides)
+- Enforcing validation invariants with fail-fast refusal semantics
+- Testing config loading with real files and real subprocesses (Chicago style)
+
+**Features:**
+- Trusted config loader with deterministic layering and deep merge
+- `Validate` trait invariants (ranges, non-empty, TLS paths)
+- Admitted/warned/refused status with non-zero exit on refusal
+- Property tests for merge idempotence and overlay precedence
+- Snapshot tests for stable config projections and tick-budget performance checks
+
+---
+
 ## Explanation
 
 Explanation guides help you understand concepts, background, and design decisions.
 
-### 14. Go the Extra Mile (`go_extra_mile.rs`)
+### 15. Go the Extra Mile (`go_extra_mile.rs`)
 
 **Philosophy:** 1st/2nd/3rd Idea Progression
 
@@ -411,7 +455,7 @@ cargo run --example go_extra_mile --features otel,weaver
 
 ---
 
-### 15. Advanced Features (`advanced_features.rs`)
+### 16. Advanced Features (`advanced_features.rs`)
 
 **Concepts:** Advanced Rust features for zero-cost abstractions
 
@@ -447,7 +491,7 @@ All examples include comprehensive reference sections documenting:
 - Error conditions
 - Usage examples
 
-### 16. Hyper-Advanced Microkernel (`hyper_advanced_microkernel.rs`)
+### 17. Hyper-Advanced Microkernel (`hyper_advanced_microkernel.rs`)
 
 **μ-kernel verification substrate demonstrating all 6 hyper-advanced tracks.**
 
@@ -474,7 +518,7 @@ cargo run --example hyper_advanced_microkernel
 
 ---
 
-### 17. All Phases Pipeline (`all_phases_pipeline.rs`)
+### 18. All Phases Pipeline (`all_phases_pipeline.rs`)
 
 **Complete 12-phase hyper-advanced verification pipeline in one run.**
 
@@ -500,7 +544,7 @@ cargo run --example all_phases_pipeline
 
 ---
 
-### 18. Operator Registry (`operator_registry.rs`) - **NEW in v26.10.11**
+### 19. Operator Registry (`operator_registry.rs`) - **NEW in v26.10.11**
 
 **Global operator registry with guard system and pattern registration.**
 
@@ -600,7 +644,14 @@ Examples require different feature flags:
 | `testcontainers` | `testcontainers_example` | Docker container support |
 | `otel` | `otel_weaver_testing`, `go_extra_mile` | OpenTelemetry validation |
 | `weaver` | `otel_weaver_testing`, `go_extra_mile` | Weaver semantic convention validation |
+| `conformance` | `conformance_quickstart` | Conformance kernel (POWL model checking, verdicts) |
 | `async` | (Used in tests) | Async fixture support |
+
+Run the conformance example with:
+
+```bash
+cargo run --example conformance_quickstart --features conformance
+```
 
 **Bundles:**
 - `testing-extras`: `property-testing` + `snapshot-testing` + `fake-data` (most common)
