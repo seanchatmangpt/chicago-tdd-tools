@@ -83,13 +83,6 @@ pub enum LedgerError {
         got: usize,
     },
 
-    /// Extra bytes remained after the final record was consumed.
-    #[error("{count} trailing byte(s) after final record")]
-    TrailingBytes {
-        /// Number of unconsumed trailing bytes.
-        count: usize,
-    },
-
     /// The stream magic did not match the expected 4-byte prefix.
     #[error("bad magic: expected ledger magic, found {}", bad_magic_hex(.0))]
     BadMagic([u8; 4]),
@@ -122,8 +115,7 @@ pub enum LedgerError {
         actual: u64,
     },
 
-    /// A range-checked enum byte held an unassigned value (distinct from
-    /// [`LedgerError::InvalidTag`], which carries the byte offset).
+    /// A range-checked enum byte held an unassigned value.
     #[error("invalid enum tag {found:#04x} for field '{field}'")]
     InvalidEnum {
         /// Which field carried the bad value.
@@ -143,17 +135,6 @@ pub enum LedgerError {
         offset: usize,
         /// Non-zero value found.
         value: u64,
-    },
-
-    /// A discriminating tag byte held an unassigned value.
-    #[error("invalid tag {tag:#04x} for field '{field}' at offset {offset}")]
-    InvalidTag {
-        /// Which field carried the bad tag.
-        field: &'static str,
-        /// The unassigned tag value.
-        tag: u8,
-        /// Byte offset of the tag.
-        offset: usize,
     },
 
     /// A name field failed validation.
@@ -294,10 +275,6 @@ pub enum SealError {
     #[error("key custody violation: {0}")]
     KeyCustody(String),
 
-    /// Canonical serialization of the payload failed.
-    #[error("serialization failure: {0}")]
-    Serialization(String),
-
     /// The entropy source refused to supply sealing material; carries the
     /// opaque 32-byte refusal receipt.
     #[error("entropy source refused: refusal digest {0}")]
@@ -312,12 +289,6 @@ mod tests {
     fn test_ledger_error_too_short_display() {
         let e = LedgerError::TooShort { need: 16, got: 4 };
         assert_eq!(e.to_string(), "record too short: need 16 bytes, got 4");
-    }
-
-    #[test]
-    fn test_ledger_error_trailing_bytes_display() {
-        let e = LedgerError::TrailingBytes { count: 7 };
-        assert_eq!(e.to_string(), "7 trailing byte(s) after final record");
     }
 
     #[test]
@@ -338,15 +309,6 @@ mod tests {
         let e = LedgerError::ReservedNonzero { offset: 42, value: 0xff };
         assert!(e.to_string().contains("offset 42"), "{}", e);
         assert!(e.to_string().contains("0xff"), "{}", e);
-    }
-
-    #[test]
-    fn test_ledger_error_invalid_tag_display() {
-        let e = LedgerError::InvalidTag { field: "kind", tag: 0x7f, offset: 12 };
-        let s = e.to_string();
-        assert!(s.contains("'kind'"), "{}", s);
-        assert!(s.contains("0x7f"), "{}", s);
-        assert!(s.contains("offset 12"), "{}", s);
     }
 
     #[test]
@@ -432,9 +394,6 @@ mod tests {
 
         let e = SealError::KeyCustody("key not held".into());
         assert!(e.to_string().contains("key not held"), "{}", e);
-
-        let e = SealError::Serialization("bad canonical form".into());
-        assert!(e.to_string().contains("bad canonical form"), "{}", e);
 
         let e = SealError::EntropyRefused(RefusalDigest([0xab; 32]));
         let s = e.to_string();

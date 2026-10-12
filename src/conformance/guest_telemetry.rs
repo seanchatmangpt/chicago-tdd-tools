@@ -332,9 +332,7 @@ mod tests {
         // unset, and a parallel guard's installed bound would otherwise race
         // the span check into a spurious ERR_OOB_WRITE (witnessed under
         // full-workspace parallel run).
-        let _lock = bound_lock()
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _lock = bound_lock().lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let words = emit_trajectory(&sample_summary(), &sample_events());
         let mut buf = vec![0u8; words.len() * 8];
         // SAFETY: `buf` is a live, word-aligned allocation of `words.len() * 8` bytes.

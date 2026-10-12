@@ -187,8 +187,11 @@ pub fn verify_sealed_file(sealed: &SealedDossier, public_key: &[u8; 1952]) -> Se
 
 // ─── Exit codes ──────────────────────────────────────────────────────────────
 
-/// Process exit codes for the ledger CLI. Zero is success; 10-18 are the
-/// ledger failure classes, one class per code.
+/// Process exit codes for the ledger CLI. Zero is success; 10-19 are the
+/// ledger failure classes, one class per code. Signature-verdict failures
+/// surface as [`crate::ledger::signing::SealVerdict::Invalid`] from
+/// `verify_sealed_file` (a verdict, not a `LedgerError`), so no exit-code
+/// class is minted for them — adding one would be a dead variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum LedgerExitCode {
@@ -265,7 +268,6 @@ mod tests {
     fn exit_code_table_maps_every_ledger_error_variant() {
         let cases: &[(LedgerError, u8)] = &[
             (LedgerError::TooShort { need: 16, got: 4 }, LedgerExitCode::MalformedReceipt as u8),
-            (LedgerError::TrailingBytes { count: 2 }, LedgerExitCode::MalformedReceipt as u8),
             (LedgerError::BadMagic([0u8; 4]), LedgerExitCode::MalformedReceipt as u8),
             (
                 LedgerError::UnsupportedVersion { found: 9, supported: 1 },
@@ -273,10 +275,6 @@ mod tests {
             ),
             (
                 LedgerError::ReservedNonzero { offset: 0, value: 1 },
-                LedgerExitCode::MalformedReceipt as u8,
-            ),
-            (
-                LedgerError::InvalidTag { field: "kind", tag: 0x7f, offset: 0 },
                 LedgerExitCode::MalformedReceipt as u8,
             ),
             (

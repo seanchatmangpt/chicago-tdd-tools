@@ -115,7 +115,7 @@ the canonical `CompiledNet` is `net::CompiledNet` (mod.rs:13-14).
 | `Marking64 = u64` alias | distinct from `state::Marking64` | session.rs:58 |
 | `from_powl_file(&Path)` | load + validate + compile in one call | session.rs:156 |
 | `from_model(&PowlModel)` | from an already-loaded model | session.rs:166 |
-| `set_forbidden_mask(u64)` | masked to 0xFFFF, pre-first-step only | session.rs:219 |
+| `set_forbidden_mask(u64)` | masked to 0xFFFF; read on every step | session.rs:215 |
 | `attach_stream(&[u64])` | empty stream -> `TraceMalformed{len:0}` | session.rs:236 (refusal :241) |
 | `step_budget(u32) -> YieldStatus` | never `Err`; violations latch `Phase::Faulted` and re-report via `YieldStatus::Violation` | session.rs:257 |
 | `resume(u32)` | continue after a yield | session.rs:305 |

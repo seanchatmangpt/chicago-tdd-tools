@@ -455,7 +455,6 @@ fn law08_proof_path_over_max_steps_is_rejected() {
 fn law09_exit_code_table_covers_every_error_variant() {
     let cases: &[(LedgerError, u8)] = &[
         (LedgerError::TooShort { need: 16, got: 4 }, LedgerExitCode::MalformedReceipt as u8),
-        (LedgerError::TrailingBytes { count: 7 }, LedgerExitCode::MalformedReceipt as u8),
         (LedgerError::BadMagic([0xde, 0xad, 0xbe, 0xef]), LedgerExitCode::MalformedReceipt as u8),
         (
             LedgerError::UnsupportedVersion { found: 9, supported: 1 },
@@ -463,10 +462,6 @@ fn law09_exit_code_table_covers_every_error_variant() {
         ),
         (
             LedgerError::ReservedNonzero { offset: 42, value: 0xff },
-            LedgerExitCode::MalformedReceipt as u8,
-        ),
-        (
-            LedgerError::InvalidTag { field: "kind", tag: 0x7f, offset: 12 },
             LedgerExitCode::MalformedReceipt as u8,
         ),
         (

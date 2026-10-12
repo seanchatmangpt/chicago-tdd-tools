@@ -59,6 +59,11 @@ pub struct CompiledNet {
     pub places: u8,
     /// Packed pre/post masks, one word per transition (index = tid mod 256).
     pub words: Vec<u64>,
+    /// Bit set for every place declared via [`NetBuilder::forbidden_place`]
+    /// (bit i = place i). Feed this to [`super::state::StateSpace`] /
+    /// session's `set_forbidden_mask` so the declaration is enforced, not
+    /// just recorded.
+    pub forbidden_mask: u64,
 }
 
 impl NetSpec {
@@ -141,12 +146,19 @@ impl NetSpec {
             words.push(((u64::from(post_mask) & 0xFFFF) << 16) | u64::from(pre_mask));
         }
 
+        let forbidden_mask = self
+            .places
+            .iter()
+            .enumerate()
+            .filter(|(_, p)| p.forbidden)
+            .fold(0u64, |acc, (i, _)| acc | (1u64 << i));
         Ok(CompiledNet {
             // JUSTIFICATION: place count is capped at MAX_PLACES = 64 above,
             // so it always fits a u8.
             #[allow(clippy::cast_possible_truncation)]
             places: self.places.len() as u8,
             words,
+            forbidden_mask,
         })
     }
 
@@ -370,5 +382,35 @@ mod tests {
             .add_post("b")
             .build();
         assert_eq!(spec.initial_marking().0, 0b111);
+    }
+
+    /// The forbidden-place declaration survives compile as a mask and is
+    /// enforceable: feeding it to StateSpace::forbidden_reachable finds the
+    /// declared place. (Audit W3: the flag was write-only before this wiring.)
+    #[test]
+    fn forbidden_place_declaration_survives_compile_as_mask() {
+        let net = NetSpec::builder()
+            .place("p0")
+            .forbidden_place("p1")
+            .place("p2")
+            .transition("t0", "act")
+            .add_pre("p0")
+            .add_post("p1")
+            .build()
+            .compile()
+            .expect("valid net");
+        assert_eq!(net.forbidden_mask, 0b010, "bit 1 (place p1) must be set");
+        assert_eq!(net.words.len(), 1);
+        // Enforce it through the real reachability court: initial outside the
+        // forbidden place, mask = the compiled declaration.
+        let mask = net.forbidden_mask;
+        let ss =
+            super::super::state::StateSpace::new(net, super::super::state::Marking64(0b001), mask)
+                .expect("valid initial");
+        let hits = ss.forbidden_reachable().expect("reach under cap");
+        assert!(
+            hits.iter().any(|m| m.0 & 0b010 != 0),
+            "the declared forbidden place must be found reachable"
+        );
     }
 }

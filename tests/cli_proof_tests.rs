@@ -4,7 +4,7 @@
 //! final state. No mocks. No stubs.
 //!
 //! Run with:
-//!   cargo test --test cli_proof_tests --features cli-proof
+//!   `cargo test --test cli_proof_tests --features cli-proof`
 
 #![cfg(feature = "cli-proof")]
 #![allow(missing_docs)]

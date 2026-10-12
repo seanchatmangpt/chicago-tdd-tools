@@ -480,7 +480,7 @@ mod tests {
     /// marking with every bit set is inside the net.
     #[test]
     fn state_space_admits_64_place_net_with_full_width_marking() {
-        let net = CompiledNet { places: 64, words: vec![] };
+        let net = CompiledNet { places: 64, words: vec![], forbidden_mask: 0 };
         let ss = StateSpace::new(net, Marking64(u64::MAX), 0).expect("64 places admit");
         let reach = ss.reach().expect("single-state search under cap");
         assert_eq!(reach.count, 1);
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn constructor_rejects_oversized_nets_and_bad_initials() {
-        let big = CompiledNet { places: 65, words: vec![] };
+        let big = CompiledNet { places: 65, words: vec![], forbidden_mask: 0 };
         let err = StateSpace::new(big, Marking64(0), 0)
             .expect_err("65 places exceed the u64 marking encoding");
         assert!(matches!(err, ConformanceError::TooManyPlaces { limit: 64 }));
