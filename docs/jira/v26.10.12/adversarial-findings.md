@@ -16,7 +16,7 @@
 |------|---------|--------------------|-------------|
 | SK1 | FALSIFIED | PN64 fold is non-associative and `fire` panics outside the 1-safe domain; conservation only holds on the restricted 1-safe sub-domain. | DOCUMENTED (domain precondition now stated at `src/conformance/pn64.rs:16-24`; conservation guard test landed) |
 | SK2 | FALSIFIED | `wire_ctrt` is constant-*flow* (data-independent control), not constant-*time*; observable |t| spans 10-3842 flow steps. | CLOSED - relabel landed (Diataxis reference pages now say constant-flow; `docs/features/CONFORMANCE.md` carries no CT claim) |
-| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide on the admission predicate. The keys.rs raw `from_seed` surface was reworked in 1fc1c72; only `Signer::from_seed` remains publicly reachable (`src/ledger/signing/signer.rs:141`), bypassing key-id admission. | QUEUED (re-scoped: signer.rs:141 sliver only) |
+| SK3 | FALSIFIED | Raw-context collision: two raw contexts can collide on the admission predicate. The keys.rs raw `from_seed` surface was reworked in 1fc1c72; only `Signer::from_seed` remains publicly reachable (`src/ledger/signing/signer.rs:141`), bypassing key-id admission. | CLOSED (W26, e54b891: from_seed seed-screening sliver landed; keystore-sealing half remains open — see line-146 summary + closing register) |
 | SK4 | FALSIFIED | Payload covert channel: payload bytes influence flow structure observable to a stream reader; BEAM and Rust runtimes diverge on the same fixture. | QUEUED |
 | SK5 | FALSIFIED | Key rotation replay amnesty: `KeyStore::rotate` (`src/ledger/signing/keys.rs:264`) admits pre-rotation receipts (replay amnesty), and seed persistence is fail-open on write failure. | PARTIAL |
 | SK6 | FALSIFIED | Receipts are module-identity-blind (no module hash bound into `R.identity`), and out-pointers are trusted on read without re-verification. | PARTIAL (F2/F3 landed 532f38a + 2c80a9e: out-pointer bounds + errnos 14-16; F1 module digest placeholder until build-time splice) |
@@ -315,7 +315,7 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
 
 ### W13 REGISTER ADDITIONS (audit wave-14)
 
-- **core::receipt TestReceipt** (PARTIAL-QUEUED): signature covers
+- **core::receipt TestReceipt** (PARTIAL-QUEUED — UPDATE: CLOSED per W26, e54b891 full-field signing; see closing register): signature covers
   identity fields only (receipt_id/contract_name/timestamp/result) —
   code_hash/invariants_checked/effects_exercised/environment/timing are
   NOT tamper-covered; signature is unkeyed SHA-256 (recomputable).

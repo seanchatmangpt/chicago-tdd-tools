@@ -36,9 +36,12 @@ pub struct DomainFixture {
 }
 
 impl DomainFixture {
+    // W27 probe note: TestFixture::new() returns FixtureResult<Self> in the real
+    // API; unwrap the Result before construction (shown flat here for brevity).
     pub fn new(config: DomainConfig) -> Self {
+        let base = TestFixture::new().expect("fixture setup"); // JUSTIFICATION: illustrative cookbook snippet
         Self {
-            base: TestFixture::new()?, // W27 probe: new() returns FixtureResult<Self>,
+            base,
             context: DomainContext::from(config),
         }
     }
@@ -73,9 +76,10 @@ pub fn teardown() { /* duplicated */ }
 // ✅ RIGHT: Wrap and extend
 use chicago_tdd_tools::core::fixture::TestFixture;
 
-pub fn setup_domain() -> DomainFixture {
-    // Uses base fixture internally
-    DomainFixture::new(TestFixture::new()?)
+pub fn setup_domain() -> Result<DomainFixture, chicago_tdd_tools::core::fixture::FixtureError> {
+    // W27 probe note: TestFixture::new() returns FixtureResult<Self>; propagate, don't `?` into a `-> Self` fn.
+    let base = TestFixture::new()?;
+    Ok(DomainFixture::new(base))
 }
 ```
 

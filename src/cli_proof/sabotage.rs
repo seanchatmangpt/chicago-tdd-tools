@@ -1,6 +1,6 @@
 //! [`SabotageFixture`] — adversarial file corruption helpers for fail-closed testing.
 //!
-//! W27 probe scoping: `write_garbage`/`bit_flip`/`corrupt_json` write corrupted bytes; remove deletes (no write); truncate empties — no mocks, no stubs.
+//! W27 probe scoping: `write_garbage`/`bit_flip`/`corrupt_json` write corrupted bytes; `remove` deletes (no write); `truncate` empties — no mocks, no stubs.
 
 use std::fs;
 use std::path::Path;

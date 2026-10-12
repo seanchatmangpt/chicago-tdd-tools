@@ -922,8 +922,15 @@ truth); findings ledger W26/W27 register additions + closures.
 
 ### Wave 28 addendum (2026-10-12, closing verification + repairs)
 
-- Closing sweep at 049aa30: full lib 1151/0 (18 ignored), doctests 146/0, check/fmt/docs-check clean, assurance 17/17 legs, nato lib 865/0, benches/examples/lock green, crates suites green, mdbook + /tmp consumer witness 5/0. One gate red at HEAD: `just lint` exit 101 (doc_markdown backticks, cli_proof) — fixed in 89fc3b4.
-- Repairs (89fc3b4): QUICK_GUIDE phantom-state note (claimed in 91e9af8/049aa30 messages, never on disk — now landed); findings-ledger internal contradictions (SK3/SK5/TestReceipt double-stated, corrupted summary sentence); docs/README PERFECT_WEAVER_LIVE_CHECK framing; hamming.rs false "admits 100% by construction" claim (measured ~0.13); generator.rs false const justification (new() now const fn); invariants.rs call-site scoping to src/ + examples/; workspace/sabotage doc backticks.
+- Closing sweep at 049aa30: full lib 1151/0 (18 ignored), doctests 146/0, check/fmt/docs-check
+  clean, assurance 17/17 legs, nato lib 865/0, benches/examples/lock green, crates suites green,
+  mdbook + /tmp consumer witness 5/0. One gate red at HEAD: `just lint` exit 101 (doc_markdown
+  backticks, cli_proof) — fixed in 89fc3b4.
+- Repairs (89fc3b4): QUICK_GUIDE phantom-state note (claimed in 91e9af8/049aa30 messages, never on
+  disk — now landed); findings-ledger internal contradictions (SK3/SK5/TestReceipt double-stated,
+  corrupted summary sentence); docs/README PERFECT_WEAVER_LIVE_CHECK framing; hamming.rs false "admits
+  100% by construction" claim (measured ~0.13); generator.rs false const justification (new() now
+  const fn); invariants.rs call-site scoping to src/ + examples/; workspace/sabotage doc backticks.
 - Residues (25ff66f): validation_results.rs doc splice; extension-layer.md snippet comma.
 - Commit-message audit verdict on last 8 commits: only real defect class was message overclaim (QUICK_GUIDE claimed-but-not-landed); diffs otherwise sound.
 
