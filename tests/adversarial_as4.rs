@@ -12,7 +12,14 @@
 
 #![allow(missing_docs)]
 #![allow(unsafe_code, warnings)]
+// JUSTIFICATION: test-side FFI plumbing at the guest ABI boundary — lengths are
+// small by construction (test fixtures, never user input), so usize->u32/u16
+// truncation casts and `&buf as *const _`-style raw-pointer borrows are safe.
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::borrow_as_ptr)]
 #![cfg(all(feature = "nato", feature = "wasm-guest", feature = "ocel-ingest-json"))]
+
+use std::fmt::Write as _;
 
 use chicago_tdd_tools::conformance::guest as abi;
 use chicago_tdd_tools::conformance::{ConformanceSession, ReportOutcome, YieldStatus};
@@ -83,7 +90,7 @@ fn wire_stream(words: &[u64]) -> Vec<u8> {
 }
 
 /// Independent replay summary key for differential comparison.
-fn summary_key(s: &chicago_tdd_tools::conformance::ReplaySummary) -> (u32, usize, u64, u8) {
+const fn summary_key(s: &chicago_tdd_tools::conformance::ReplaySummary) -> (u32, usize, u64, u8) {
     let oc = match s.outcome {
         ReportOutcome::Incomplete => 0u8,
         ReportOutcome::Complete => 1,
@@ -112,14 +119,8 @@ fn as4_attack1_fuel_exhaustion_differential() {
         let mut s = ConformanceSession::from_powl_str_model(dsl);
         s.attach_stream(&stream).expect("split-run stream attaches");
         let mut yields = 0u32;
-        loop {
-            match s.step_budget(quota) {
-                YieldStatus::Yielded { .. } => {
-                    yields += 1;
-                    continue;
-                }
-                _ => break,
-            }
+        while let YieldStatus::Yielded { .. } = s.step_budget(quota) {
+            yields += 1;
         }
         if quota < 8 {
             assert!(yields >= 1, "quota {quota} on 8 events must yield at least once");
@@ -282,8 +283,7 @@ fn as4_attack3_session_table_exhaustion_and_generation() {
     let per_cycle = t0.elapsed() / cycles as u32;
     let forge_secs = per_cycle * u32::MAX; // Duration * u32 is fine
     eprintln!(
-        "AS4 gen-wrap: per-cycle {:?}; 2^32-cycle forge of stale handle on one slot = {:?}",
-        per_cycle, forge_secs
+        "AS4 gen-wrap: per-cycle {per_cycle:?}; 2^32-cycle forge of stale handle on one slot = {forge_secs:?}"
     );
     // Note: the table is full here (7 live + the churn uses slot of `fresh`),
     // the churn loop works because new() reuses the just-dropped slot.
@@ -352,7 +352,7 @@ fn as4_attack4_dossier_at_10x_scale() {
     }
     let (root84, _) = {
         let mut d = DossierBuilder::new();
-        d.add_court(name84.clone(), ledger.head()).expect("add 84-char court");
+        d.add_court(name84, ledger.head()).expect("add 84-char court");
         d.seal_with_proofs().expect("seal")
     };
     let _ = root84;
@@ -363,22 +363,23 @@ fn as4_attack4_dossier_at_10x_scale() {
     let mut encoded = l_receipt("x", 0).encode();
     // Overwrite the 100-byte name field (offset 220) with an 85-byte name
     // + 15 zero bytes: exactly what encode() must never produce.
-    for b in encoded[NAME_ABS_OVERRIDE..NAME_ABS_OVERRIDE + 100].iter_mut() {
-        *b = 0;
-    }
+    encoded[NAME_ABS_OVERRIDE..NAME_ABS_OVERRIDE + 100].fill(0);
     let n = too_long_name.len();
     encoded[NAME_ABS_OVERRIDE..NAME_ABS_OVERRIDE + n].copy_from_slice(too_long_name.as_bytes());
     // The verify path must refuse it typed, not truncate.
     let verdict =
         chicago_tdd_tools::ledger::receipt::VerifiedCourtReceipt::from_bytes_verified(&encoded);
     match verdict {
-        Err(chicago_tdd_tools::ledger::error::LedgerError::InvalidName {
-            reason: chicago_tdd_tools::ledger::error::NameError::TooLong,
-            ..
-        }) => {} // canonical typed refusal
-        // An 85-byte name also trips the zero-trailer law before the length
-        // check; either way the record is refused typed, never truncated.
-        Err(chicago_tdd_tools::ledger::error::LedgerError::ZeroTrailerViolation) => {}
+        // Canonical typed refusal; an 85-byte name may also trip the
+        // zero-trailer law before the length check — either way the record is
+        // refused typed, never truncated.
+        Err(
+            chicago_tdd_tools::ledger::error::LedgerError::InvalidName {
+                reason: chicago_tdd_tools::ledger::error::NameError::TooLong,
+                ..
+            }
+            | chicago_tdd_tools::ledger::error::LedgerError::ZeroTrailerViolation,
+        ) => {}
         other => panic!("NAME_MAX+1 name must be refused typed, got: {other:?}"),
     }
 }
@@ -437,9 +438,13 @@ fn as4_attack5_concurrent_emit_inspect_torn_reads() {
         .iter()
         .map(|r| serde_json::to_value(r).expect("serialize receipt"))
         .collect();
+    let mut root_hex = String::with_capacity(root.len() * 2);
+    for b in &root {
+        let _ = write!(root_hex, "{b:02x}");
+    }
     let doc = serde_json::json!({
         "format": "CTT-DOSSIER-v1",
-        "merkle_root": root.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+        "merkle_root": root_hex,
         "key_id": "k0",
         "signature": [],
         "court_receipts": receipt_values,
@@ -501,7 +506,7 @@ fn as4_attack5_concurrent_emit_inspect_torn_reads() {
     std::fs::remove_file(&path).ok();
 }
 
-fn good_len_marker(good: &[u8]) -> usize {
+const fn good_len_marker(good: &[u8]) -> usize {
     good.len()
 }
 
@@ -531,10 +536,11 @@ fn as4_attack2_ingestion_1m() {
             if e > 0 {
                 j.push(',');
             }
-            j.push_str(&format!(
+            let _ = write!(
+                j,
                 "\"e{e}\":{{\"ocel:timestamp\":{},\"ocel:activity\":\"TestStarted\",\"ocel:caseId\":\"c{c:05}\"}}",
                 1_700_000_000_000_000_000u64 + (c as u64) * 1_000_000 + i as u64
-            ));
+            );
             e += 1;
         }
     }
@@ -546,7 +552,7 @@ fn as4_attack2_ingestion_1m() {
         if c > 0 {
             j.push(',');
         }
-        j.push_str(&format!("\"o{c:05}\":{{\"ocel:type\":\"Fixture\"}}"));
+        let _ = write!(j, "\"o{c:05}\":{{\"ocel:type\":\"Fixture\"}}");
     }
     j.push_str("}}");
     let gen = t0.elapsed();
@@ -557,7 +563,7 @@ fn as4_attack2_ingestion_1m() {
     let log = import_ocel_json(&j).expect("1M-event import must succeed");
     let import_t = t1.elapsed();
     assert_eq!(log.events.len(), 1_000_000);
-    eprintln!("AS4 ingest: import_ocel_json {:?}", import_t);
+    eprintln!("AS4 ingest: import_ocel_json {import_t:?}");
 
     // --- pack ---
     let t2 = std::time::Instant::now();
@@ -567,7 +573,7 @@ fn as4_attack2_ingestion_1m() {
     let _ = &vocab;
 
     let total = t0.elapsed();
-    eprintln!("AS4 ingest: TOTAL {:?}", total);
+    eprintln!("AS4 ingest: TOTAL {total:?}");
 }
 
 // ---- trait-path helper so ConformanceSession can be built from a DSL string.
@@ -579,6 +585,6 @@ impl FromDsl for ConformanceSession {
     fn from_powl_str_model(dsl: &str) -> Self {
         let model = chicago_tdd_tools::conformance::PowlModel::from_powl_str(dsl)
             .expect("chain DSL must parse");
-        ConformanceSession::from_model(&model).expect("chain DSL must compile")
+        Self::from_model(&model).expect("chain DSL must compile")
     }
 }

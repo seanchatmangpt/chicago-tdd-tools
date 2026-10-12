@@ -17,7 +17,7 @@
 use chicago_tdd_tools::conformance::{ConformanceSession, ReportOutcome, YieldStatus};
 
 /// Minimal POWL DSL model: a three-atom sequence, one activity per system.
-const POWL_FIXTURE: &str = r#"
+const POWL_FIXTURE: &str = r"
 # Three-atom linear process: handle -> fork -> approve
 activity handle  = log.handle
 activity fork    = robot.fork
@@ -28,7 +28,7 @@ sequence {
     fork
     approve
 }
-"#;
+";
 
 /// OCEL64 event word: activity id in bits [7:0], tick in bits [15:8].
 fn event(tid: u8, tick: u8) -> u64 {
@@ -63,7 +63,7 @@ fn main() {
     };
 
     // 5. Assert the structured verdict: every event replayed, no violation.
-    assert_eq!(report.steps_executed, words.len() as u32);
+    assert_eq!(report.steps_executed, u32::try_from(words.len()).expect("step count fits u32"));
     assert_eq!(report.events_total, words.len());
     assert_eq!(report.outcome, ReportOutcome::Complete);
     println!("verdict: CONFORMING ({} steps)", report.steps_executed);

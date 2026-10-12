@@ -123,7 +123,7 @@ fn dfs_atoms(node: &PowlNode, out: &mut Vec<String>) {
 
 /// Load the phase model and return its DFS atom sequence.
 fn phase_atoms(stem: &str) -> Vec<String> {
-    let model = PowlModel::from_powl_file(&model_path(stem));
+    let model = PowlModel::from_powl_file(model_path(stem));
     // For the golden-pipeline tests the model MUST compile; callers that test
     // the TooManyPlaces refusal call the loader directly.
     let model = model.unwrap_or_else(|e| panic!("{stem}: model must load: {e}"));
@@ -162,7 +162,7 @@ fn session_words(names: &[String], atoms: &[String]) -> Vec<u64> {
 /// and fixture stems are separate because violation fixtures replay against
 /// the NORMATIVE BASE model (no `*_violation.powl` exists).
 fn composed_words(model_stem: &str, fixture_stem: &str) -> Vec<u64> {
-    let model = PowlModel::from_powl_file(&model_path(model_stem))
+    let model = PowlModel::from_powl_file(model_path(model_stem))
         .unwrap_or_else(|e| panic!("{model_stem}: model must load: {e}"));
     let text = std::fs::read_to_string(fixture_path(fixture_stem))
         .unwrap_or_else(|e| panic!("read {fixture_stem}: {e}"));
@@ -323,7 +323,7 @@ fn assert_violation(
 #[test]
 fn import_refuses_landed_fixtures_typed() {
     let mut stems: Vec<String> =
-        PHASES.iter().flat_map(|p| [format!("{p}"), format!("{p}_violation")]).collect();
+        PHASES.iter().flat_map(|p| [p.to_string(), format!("{p}_violation")]).collect();
     stems.push("master_trace".to_string());
     for stem in &stems {
         let text = std::fs::read_to_string(fixture_path(stem))
@@ -366,7 +366,7 @@ fn phase1_phase2_models_refuse_place_budget() {
     // the place-budget refusal (both counts exceed the 15-transition budget).
     for (stem, atom_count) in [("phase1_intake", 20usize), ("phase2_antitrust", 22)] {
         let atoms = {
-            let model = PowlModel::from_powl_file(&model_path(stem))
+            let model = PowlModel::from_powl_file(model_path(stem))
                 .unwrap_or_else(|e| panic!("{stem}: model must load: {e}"));
             let mut a = Vec::new();
             dfs_atoms(&model.root, &mut a);
@@ -521,7 +521,7 @@ const PHASE10_ATOMS: [&str; 18] = [
 /// the parallel(10) -> closure -> root -> parallel(5) -> seal order.
 #[test]
 fn phase10_model_loads_and_composition_shape_holds() {
-    let model = PowlModel::from_powl_file(&model_path("phase10_sealing"))
+    let model = PowlModel::from_powl_file(model_path("phase10_sealing"))
         .unwrap_or_else(|e| panic!("phase10 model must load: {e}"));
     assert_eq!(model.activities.len(), 18, "phase10 declares 18 activities");
 
@@ -653,7 +653,7 @@ fn powl_nodes(node: &PowlNode) -> usize {
 /// cap rule is NOT needed).
 #[test]
 fn phase9_composition_loads_within_node_budget() {
-    let model = PowlModel::from_powl_file(&model_path("phase9_conformance"))
+    let model = PowlModel::from_powl_file(model_path("phase9_conformance"))
         .unwrap_or_else(|e| panic!("phase9 model must load: {e}"));
     let mut atoms = Vec::new();
     dfs_atoms(&model.root, &mut atoms);

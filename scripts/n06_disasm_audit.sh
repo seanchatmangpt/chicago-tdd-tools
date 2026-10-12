@@ -10,7 +10,7 @@
 #      the fully-inlined conformance::pn64::step_branchless body. Zero
 #      conditional branches (b.*, cbz/cbnz, tbz/tbnz) in that symbol.
 #
-# Emits a typed JSON receipt to $N06_OUT (default docs/receipts/N06.json),
+# Emits a typed JSON receipt to $N06_OUT (default docs/lanes/N06_disasm.json),
 # deserializable into src/nato/disasm.rs::N06Receipt.
 #   status PASS  — every executed tier at census 0
 #   status SKIPPED — a tier could not run (typed skip_reason); executed
@@ -22,7 +22,10 @@ set -u
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
-tdir="${CARGO_TARGET_DIR:-/tmp/nato_lanes/target_N06}"
+# Private lock space under the repo target/ dir: inherits rust-cache on CI
+# (a /tmp default was cold every run — CI-cost audit 2026-10-12) while
+# staying disjoint from the harness's own target lock.
+tdir="${CARGO_TARGET_DIR:-$repo_root/target/n06-lanes}"
 out="${N06_OUT:-docs/lanes/N06_disasm.json}"
 crate_name="chicago-tdd-tools"
 symbol_fragment="kernel_step"

@@ -467,6 +467,13 @@ fn pillar_mapping_matches_the_matrix() {
 }
 
 #[test]
+/// Registry sweep over all 20 courts.
+///
+/// Determinism note — the three not-guaranteed-Pass courts: N05 is
+/// statistical, N06 is host-dependent, and N19 is artifact-dependent
+/// (its receipt artifact `target/nato_reproducible_receipt.json` is
+/// minted by `bash bin/nato_reproducible_build.sh`; running that
+/// flips N19 to Pass). All other courts must Pass unconditionally.
 fn registry_sweep_runs_all_twenty_and_matches_real_receipts() {
     // Registry shape: 20 entries in canonical id order, ids unique.
     assert_eq!(COURT_REGISTRY.len(), 20, "the registry must hold all 20 courts");
@@ -519,6 +526,11 @@ fn registry_sweep_runs_all_twenty_and_matches_real_receipts() {
                     matches!(receipt.verdict, Verdict::Refused | Verdict::Fail),
                     "N19 non-Pass must be Refused or Fail, got {:?}",
                     receipt.verdict
+                );
+                eprintln!(
+                    "N19 Refused/Fail: receipt artifact absent (machine-dependent, \
+                     not a regression). Run bash bin/nato_reproducible_build.sh \
+                     to flip to Pass."
                 );
             } else {
                 assert_eq!(

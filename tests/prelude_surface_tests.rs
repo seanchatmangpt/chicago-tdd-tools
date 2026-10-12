@@ -390,7 +390,10 @@ mod core_prelude_surface {
             .transition::<UnlockedState, DoUnlock>()
             .unwrap_or_else(|e| panic!("transition: {e}"));
         assert_eq!(StateMachine::<UnlockedState>::current_state(), "UnlockedState");
-        drop(sm);
+        // Type-level assertion: the linear state machine is now the unlocked
+        // one — replacing the dropped non-drop `sm` binding with a compile-time
+        // proof of the post-transition type state.
+        let _unlocked: StateMachine<UnlockedState> = sm;
     }
 
     /// `validation::*` glob — coverage report over real items.
@@ -519,7 +522,8 @@ mod prelude_macros {
     performance_test!(macro_performance_test, {
         let ticks = measure_ticks(|| 21_u32 * 2);
         assert_eq!(ticks.0, 42);
-        assert!(ticks.1 <= u64::MAX);
+        // NOTE: elapsed ticks may legitimately be 0 for a fast closure
+        // (documented in measure_ticks) — no upper bound is assertable here.
     });
 
     // `async_test!` — async body on the real tokio runtime.
