@@ -574,7 +574,9 @@ docs:
     timeout 20s cargo doc --no-deps --all-features --open
 
 docs-build:
-    timeout 20s cargo doc --no-deps --all-features
+    # 20s was witnessed insufficient: a cold all-features doc build takes
+    # ~1m24s (audit W13 receipt). docs.yml CI runs this recipe.
+    timeout 180s cargo doc --no-deps --all-features
 
 # Validate documentation (version numbers, build commands, links, style)
 docs-check:

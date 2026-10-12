@@ -42,7 +42,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Documentation SLAs
 
-**Docs (with open)**: 20s SLA (documentation generation can take longer). Task: `docs`. **Docs Build**: 20s SLA. Task: `docs-build`.
+**Docs (with open)**: 20s SLA (documentation generation can take longer). Task: `docs`. **Docs Build**: 180s SLA. Task: `docs-build`.
 
 ## Workflow SLAs
 
