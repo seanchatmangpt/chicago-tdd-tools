@@ -91,7 +91,7 @@ Background, context, and understanding of how/why things work:
 - **[Kaizen Improvement Plan](process/KAIZEN_IMPROVEMENT_PLAN.md)** - Plan for error message consistency (historical snapshot — retired cargo-make era)
 - **[RDF Integration Summary](process/RDF_INTEGRATION_SUMMARY.md)** - Core data structures for semantic workflows
 
-### Analysis & Research
+### Analysis & Research (HISTORICAL — 2025-era RCA/FMEA notes; do not cite as current status)
 - **[FMEA Executive Summary](analysis/FMEA_EXECUTIVE_SUMMARY.md)** - Unit test GitHub Actions FMEA
 - **[FMEA: GitHub Actions](analysis/FMEA_GITHUB_ACTIONS.md)** - Workflow failure mode analysis
 - **[FMEA: Root Cause Analysis Report](analysis/FMEA_ROOT_CAUSE_ANALYSIS.md)** - Risk mitigation and prevention details
