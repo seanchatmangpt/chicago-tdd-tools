@@ -682,3 +682,14 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   (serde_yaml_ng still carries unsafe-libyaml); git-hooks feature is
   dead weight (comment claims a retired binary; nothing consumes git2 —
   removal candidate); chacha20 yanked (no substitution available).
+- W50e GIT2 REMOVAL — SUPERSEDES W50c BUMP (0f17ceb): the W50c "git2 →
+  ^0.21" dependency bump was never landed; W50e instead removed the
+  git-hooks feature and git2 entirely (ERC-delete: zero consumers; the
+  comment-referenced git_hook_installer binary was retired in wave-8).
+  RUSTSEC-2026-0183/0184 therefore drop out of the closure rather than
+  being patched. W50g (2214e90) corrected the CHANGELOG bullet to
+  "REMOVED entirely, not bumped to 0.21". Same commit: star_toml_e2e
+  fixture race fixed (per-process unique suffixes), wasm4pm-compat
+  26.8.7 stderr rebless (accepted bump-volatile fragility — see the
+  trybuild skeptic note; option to filter help-lines registered). The
+  "git-hooks removal candidate" work order above is CLOSED.
