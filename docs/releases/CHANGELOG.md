@@ -938,6 +938,22 @@ truth); findings ledger W26/W27 register additions + closures.
   `CTT_MODULE_DIGEST` build-time splice — doc-promised, implementation
   sequenced with V5.
 
+### Waves 36-37 addendum (2026-10-12, W-ABI2 substrate + merger repairs)
+
+- guest-abi-v1 shim landed (70a42ef): ABI probe cfg-selected 1/2; 34-byte
+  legacy seal-preimage body under v1 (module_digest ignored, disclosed).
+  CTT_MODULE_DIGEST 32-byte static landed: seal passes it by name; all-zero
+  means "module identity not yet attested" (pin-tested pre-splice). The
+  build-time splice pipeline is designed and queued (ctt-splice-digest).
+- Merger golden repairs ACTUALLY landed this time (the W34 message had
+  claimed them; the edits had not survived): phase4/phase6 goldens + the
+  phase8 violation-skeleton arm assert conformance_report().is_conforming().
+- Coordinator doc fixes: ARCHITECTURE.md typed-channel note, HYPER_ADVANCED
+  τ attribution (8 = HOT_PATH_TICK_BUDGET), zero_ambient 20-module scoping.
+- CI: assurance.yml pin disclosure states the remaining blocker — nightly
+  emit-dossier waits on the affidavit main push (operator action).
+- Findings-ledger W36-W37 register landed at 8da88af.
+
 ### Wave 28 addendum (2026-10-12, closing verification + repairs)
 
 - Closing sweep at 049aa30: full lib 1151/0 (18 ignored), doctests 146/0, check/fmt/docs-check
