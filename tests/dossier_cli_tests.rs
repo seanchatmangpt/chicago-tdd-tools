@@ -53,7 +53,9 @@ use chicago_tdd_tools::nato::receipt::CourtReceipt;
 
 /// Deterministic signer per seed byte (real ML-DSA-65 key, no mocks).
 fn signer(seed: u8) -> Signer {
-    Signer::from_seed([seed; 32])
+    // Byte-seeded signers here are non-degenerate (seeded, not all-zero/all-ones);
+    // the degenerate-seed screen itself is courted in ledger_sealing_tests.
+    Signer::from_seed([seed; 32]).expect("non-degenerate byte seed")
 }
 
 /// One valid 352-byte chained record for `court_id` (Pass, budget met).

@@ -176,6 +176,10 @@ test-assurance-integration:
     # so these use cargo test, not nextest's 5s default timeout)
     timeout 600s cargo test --features ledger,nato --test ledger_sealing_tests
     timeout 600s cargo test --features ledger,nato --test dossier_cli_tests
+    timeout 600s cargo test --features ledger,nato --test ledger_tests
+    # chicago_test! macro expansion courts (W26 coverage gap closure)
+    timeout 600s cargo test --test chicago_test_macro_tests
+    timeout 600s cargo test --test trybuild
 
 # NATO courts: fast tier (always-run courts; tier-3 via nato-courts-full)
 test-nato:
