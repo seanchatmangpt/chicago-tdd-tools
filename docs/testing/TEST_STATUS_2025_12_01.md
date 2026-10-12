@@ -84,7 +84,7 @@ cargo check --examples --all-features
 
 ### Required
 - ✅ Rust 1.70+
-- ✅ cargo-make (`cargo install cargo-make`)
+- ✅ just (`cargo install just`; replaces the retired cargo-make — this report's original wording below is historical)
 
 ### Optional (for integration tests)
 - Docker (for testcontainers and Weaver integration tests)

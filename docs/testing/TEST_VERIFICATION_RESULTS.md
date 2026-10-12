@@ -98,7 +98,7 @@ All examples now compile without errors or warnings:
 - Operator registry ✅
 
 **Build System:**
-- cargo-make integration ✅
+- just build-system integration ✅ (replaces cargo-make)
 - Timeout enforcement ✅
 - Pre-commit hooks ✅
 
@@ -209,7 +209,7 @@ All examples now compile without errors or warnings:
 ## Test Environment
 
 - **Rust Version:** 1.85+ (latest stable)
-- **cargo-make:** v0.37.24
+- **just:** installed (cargo-make retired)
 - **Docker:** Not available (expected for some tests)
 - **Weaver:** v0.19.0 (bootstrapped successfully)
 - **Registry:** OpenTelemetry semantic conventions (cloned successfully)
