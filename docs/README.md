@@ -87,7 +87,7 @@ Background, context, and understanding of how/why things work:
 - **[Kaizen Weaver Readiness](process/KAIZEN_WEAVER_READINESS.md)** - Continuous improvement for Weaver (historical snapshot — retired cargo-make era)
 - **[Dog Fooding](process/DOG_FOODING.md)** - Using Chicago TDD Tools to test itself
 - **[CI/Unit Test Fixes Summary](process/CI_FIXES_SUMMARY.md)** - Final status of CI/Unit test fixes (historical snapshot, 2025-11-14)
-- **[GitHub Actions Improvements Summary](process/GITHUB_ACTIONS_SUMMARY.md)** - Comprehensive CI/CD overhaul
+- **[GitHub Actions Improvements Summary](process/GITHUB_ACTIONS_SUMMARY.md)** - Comprehensive CI/CD overhaul (historical snapshot — overhaul-era summary)
 - **[Kaizen Improvement Plan](process/KAIZEN_IMPROVEMENT_PLAN.md)** - Plan for error message consistency (historical snapshot — retired cargo-make era)
 - **[RDF Integration Summary](process/RDF_INTEGRATION_SUMMARY.md)** - Core data structures for semantic workflows
 
