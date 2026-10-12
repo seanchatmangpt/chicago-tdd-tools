@@ -67,7 +67,7 @@ use chicago_tdd_tools::core::fixture::TestFixture;
 /// Test fixtures provide isolated test state. This example demonstrates:
 /// - Creating a fixture with proper error handling
 /// - Accessing fixture properties (test counter)
-/// - Automatic cleanup on drop
+/// - Cleanup is NOT automatic — TestFixture has no Drop impl (W27 probe); Box drops automatically, but resources need your own cleanup() impl or Drop
 ///
 /// ## Reference
 ///

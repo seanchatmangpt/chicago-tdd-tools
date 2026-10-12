@@ -60,7 +60,7 @@
 //! - `SnapshotAssert`: Snapshot assertion wrapper
 //!
 //! **Key Functions**:
-//! - `SnapshotAssert::assert_matches(data, name)` - Assert string snapshot matches
+//! - `SnapshotAssert::assert_matches(&data, name) — takes a reference (W27 probe)` - Assert string snapshot matches
 //! - `SnapshotAssert::assert_json_matches(data, name)` - Assert JSON snapshot matches
 //! - `SnapshotAssert::assert_debug_matches(data, name)` - Assert debug snapshot matches
 //! - `SnapshotAssert::with_settings(config, test)` - Configure settings for snapshot
@@ -106,7 +106,7 @@ mod tests {
     //
     // ## Reference
     //
-    // - **Function**: `SnapshotAssert::assert_matches(data, name)`
+    // - **Function**: `SnapshotAssert::assert_matches(&data, name) — takes a reference (W27 probe)`
     // - **Parameters**:
     //   - `data`: String or `&str` to snapshot
     //   - `name`: Snapshot name (used for file naming)
