@@ -31,14 +31,9 @@ Centralize each constant in the module that owns it. Re-export from `lib.rs` so 
 pub const DEFAULT_UNIT_TEST_TIMEOUT_SECONDS: u64 = 1;
 pub const DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS: u64 = 30;
 
-// src/lib.rs - Re-export for visibility
-pub use core::macros::{
-    DEFAULT_UNIT_TEST_TIMEOUT_SECONDS,
-    DEFAULT_INTEGRATION_TEST_TIMEOUT_SECONDS,
-};
-
-// Any module needing the timeout imports it
-use chicago_tdd_tools::DEFAULT_UNIT_TEST_TIMEOUT_SECONDS;
+// Any module needing the timeout imports it from the owning module's
+// public path (no crate-root re-export exists for these constants):
+use chicago_tdd_tools::core::macros::DEFAULT_UNIT_TEST_TIMEOUT_SECONDS;
 ```
 
 ## Implementation Checklist

@@ -167,19 +167,21 @@ fn test_http_request_span_complies_with_conventions() {
 ### Full Integration Test: Database Query + Observability
 
 ```rust
-use chicago_tdd_tools::integration::testcontainers::GenericContainer;
+use chicago_tdd_tools::integration::testcontainers::{ContainerClient, GenericContainer};
 use chicago_tdd_tools::observability::fixtures::WeaverTestFixture;
 
 #[test]
 fn test_database_query_with_instrumentation() {
     // Arrange: Real database container + Weaver
-    let db_container = GenericContainer::new(client, "postgres", "latest")
+    let client = ContainerClient::new();
+    let db_container = GenericContainer::new(&client, "postgres", "latest")
         .expect("Docker not available");
 
     let mut weaver = WeaverTestFixture::new()
         .expect("Weaver not available");
 
-    let db_url = db_container.get_connection_string();
+    let port = db_container.get_host_port(5432)?;
+    let db_url = format!("postgres://localhost:{port}/db");
 
     // Act: Execute query (which emits spans through the fixture tracer)
     let tracer = weaver
@@ -306,7 +308,7 @@ Before shipping code that emits telemetry, verify:
 
 ```rust
 use chicago_tdd_tools::{
-    integration::testcontainers::GenericContainer,
+    integration::testcontainers::{ContainerClient, GenericContainer},
     observability::fixtures::WeaverTestFixture,
     test,
 };
@@ -314,9 +316,11 @@ use chicago_tdd_tools::{
 // Pattern 5 (Real Collaborators) + Observability
 test!(test_user_service_with_full_observability, {
     // Arrange: Database + Weaver
-    let db = GenericContainer::new(client, "postgres", "latest")?;
+    let client = ContainerClient::new();
+    let db = GenericContainer::new(&client, "postgres", "latest")?;
     let mut weaver = WeaverTestFixture::new()?;
-    let db_url = db.get_connection_string();
+    let port = db.get_host_port(5432)?;
+    let db_url = format!("postgres://localhost:{port}/db");
 
     let tracer = weaver
         .tracer("user-service", "your-service")?;
