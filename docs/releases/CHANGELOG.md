@@ -920,6 +920,24 @@ references, stale counts/line cites, overclaimed laws narrowed to reality,
 ARCHITECTURE/README/API_REFERENCE coverage refreshed to declared-module
 truth); findings ledger W26/W27 register additions + closures.
 
+### Wave 34 addendum (2026-10-12, 20-lane finish wave)
+
+- Queue items closed (fa6a633): validate.rs JSON activity-resolution law
+  (W27 re-check order closed; 25/0 suite); W24 typed `PipelineError`
+  channel (Display byte-identical; 5/0); N04 extension (AUDITED_MODULES
+  15→20 + 5 justified allowlist entries, exact-count pin; n04 4/0);
+  nightly AFFIDAVIT_DIR pinned checkout + step env (pin re-verified against
+  origin/main); latex UNWRITTEN-STUB disclosures; tests/temp_workspace_tests.rs
+  (9/0, incl. both W27 escape-behavior pins); nextest star_toml_e2e
+  terminate-after aligned to 1; thermal τ budget disclosures.
+- In-wave skeptic repairs: QUICK_GUIDE note corrected a third time
+  (StateMachine IS prelude-exported via the src/lib.rs:383 glob); two merger
+  goldens gained `is_conforming()` asserts; stale merger header prose;
+  tests/README inventory gained temp_workspace_tests.rs.
+- Registered (still open, W-ABI2 gaps): `guest-abi-v1` shim and
+  `CTT_MODULE_DIGEST` build-time splice — doc-promised, implementation
+  sequenced with V5.
+
 ### Wave 28 addendum (2026-10-12, closing verification + repairs)
 
 - Closing sweep at 049aa30: full lib 1151/0 (18 ignored), doctests 146/0, check/fmt/docs-check
