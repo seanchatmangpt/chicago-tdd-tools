@@ -64,6 +64,8 @@
     clippy::trivially_copy_pass_by_ref
 )]
 
+use std::collections::HashSet;
+
 use crate::ledger::error::{DossierError, LedgerError};
 #[cfg(test)]
 use crate::ledger::proof::empty_root;
@@ -107,6 +109,9 @@ pub struct CourtLedgerBuilder {
     head: [u8; 32],
     receipts: Vec<ChainedCourtReceipt>,
     stored_hashes: Vec<[u8; 32]>,
+    /// Membership index over `stored_hashes`; keeps replay refusal O(1) per
+    /// append instead of a linear Vec scan (O(N) per append, O(N²) per chain).
+    stored_hash_set: HashSet<[u8; 32]>,
 }
 
 impl CourtLedgerBuilder {
@@ -118,6 +123,7 @@ impl CourtLedgerBuilder {
             head: [0u8; 32],
             receipts: Vec::new(),
             stored_hashes: Vec::new(),
+            stored_hash_set: HashSet::new(),
         }
     }
 
@@ -152,7 +158,7 @@ impl CourtLedgerBuilder {
         }
         let stored = receipt.stored_hash();
         let actual_parent = receipt.prev_hash();
-        if self.stored_hashes.contains(&stored) {
+        if self.stored_hash_set.contains(&stored) {
             return Err(LedgerError::ChainDiscontinuity {
                 expected_parent: self.head,
                 actual: actual_parent,
@@ -169,6 +175,7 @@ impl CourtLedgerBuilder {
         h.update(&stored);
         self.head = *h.finalize().as_bytes();
         self.stored_hashes.push(stored);
+        self.stored_hash_set.insert(stored);
         self.receipts.push(receipt);
         Ok(())
     }
