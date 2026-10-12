@@ -1,4 +1,7 @@
-# Comprehensive Observability Testing Guide - v1.2.0
+# Comprehensive Observability Testing Guide
+
+> Version-agnostic guide: check `Cargo.toml` for the current crate version and
+> `src/observability/otel/types.rs` for the current OTEL types.
 
 ## What is Observability Testing?
 
@@ -88,7 +91,7 @@ Chicago TDD Tools provides comprehensive observability testing capabilities:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["otel", "weaver"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["otel", "weaver"] }
 ```
 
 ### Step 2: Create Test
@@ -113,25 +116,24 @@ fn test_http_instrumentation() -> Result<(), Box<dyn std::error::Error>> {
 ```rust
 use chicago_tdd_tools::observability::otel::types::*;
 
-let expected_span = Span {
-    name: "http.request".to_string(),
-    context: SpanContext {
-        trace_id: TraceId(1),
-        span_id: SpanId(1),
-        trace_flags: 1,
-    },
-    attributes: vec![
-        ("http.method".to_string(), "GET".to_string()),
-        ("http.status_code".to_string(), "200".to_string()),
-    ],
-    // ...
-};
+let mut attributes = Attributes::new();
+attributes.insert("http.method".to_string(), "GET".to_string());
+attributes.insert("http.status_code".to_string(), "200".to_string());
+
+let expected_span = Span::new_active(
+    SpanContext::root(TraceId(1), SpanId(1), 0),
+    "http.request".to_string(),
+    1000, // start_time_ms
+    attributes,
+    Vec::new(), // events
+    SpanStatus::Ok,
+);
 ```
 
 ### Step 4: Run Tests
 
 ```bash
-cargo make test
+just test
 ```
 
 ## Common Patterns
@@ -321,7 +323,14 @@ Span creation is negligible (~1μs per span):
 ```rust
 // This is fast enough for tests
 for i in 0..10000 {
-    let span = Span::new(format!("operation_{}", i));
+    let span = Span::new_active(
+        SpanContext::root(TraceId(1), SpanId(i as u64), 0),
+        format!("operation_{}", i),
+        1000,
+        Attributes::new(),
+        Vec::new(),
+        SpanStatus::Ok,
+    );
 }
 ```
 
@@ -332,7 +341,7 @@ Weaver validation takes ~100-500ms depending on schema size:
 ```rust
 // Use Weaver only for integration tests, not unit tests
 #[test]
-#[ignore]  // Run with: cargo make test -- --ignored
+#[ignore]  // Run with: just test -- --ignored
 #[cfg(feature = "weaver")]
 fn test_with_weaver_validation() {
     // Weaver validation here
@@ -387,7 +396,7 @@ mod observability_tests {
 
     #[test]
     #[cfg(feature = "weaver")]
-    #[ignore]  // Run with: cargo make test -- --ignored
+    #[ignore]  // Run with: just test -- --ignored
     fn test_weaver_validation() -> Result<(), Box<dyn std::error::Error>> {
         use chicago_tdd_tools::observability::TestConfig;
         use std::path::PathBuf;
@@ -440,11 +449,11 @@ See [OTEL & Weaver Guide](./otel-weaver-guide.md) for latest patterns.
 
 - **GitHub Issues**: Report bugs and feature requests
 - **Documentation**: Check guides for specific patterns
-- **Examples**: See `examples/otel_testing.rs`
+- **Examples**: See `examples/otel_weaver_testing.rs` (the old `examples/otel_testing.rs` path is stale and no longer exists)
 
 ---
 
 **Next Steps**:
 1. Read [OTEL & Weaver Guide](./otel-weaver-guide.md)
 2. Try [OTEL Integration Example](../../examples/otel_weaver_testing.rs)
-3. Run integration tests: `cargo make test`
+3. Run integration tests: `just test`

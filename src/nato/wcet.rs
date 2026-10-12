@@ -22,7 +22,7 @@
 //! 2. **Measured confirmation** (`#[ignore = "nato-tier3"]`) — dependent-ALU
 //!    chain ns/cycle calibration (median over batches, `black_box` on the
 //!    constant, 0.1–5.0 ns/cycle plausibility gate, corruption filter: batches
-//!    > 25x median discarded and asserted < 0.5%) + worst-case-input timing
+//!    > 25x median discarded and asserted < 2%) + worst-case-input timing
 //!    asserted against `static_ops x ns_per_cycle x 64` (disclosed margin).
 //! 3. **8-class lattice sweep** (`#[ignore = "nato-tier3"]`) — no input class
 //!    exceeds the bound: the conforming x enabled x invariant-clear lattice

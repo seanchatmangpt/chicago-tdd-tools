@@ -377,7 +377,7 @@ cargo run --example swarm_coordination
 
 ---
 
-### 14. Star TOML Configuration Testing (`star-toml/main.rs`)
+### 14. Star TOML Configuration Testing (`star-toml/main.rs` (demonstrates typed refusal: exits 1 on an invalid config by design))
 
 How to parse, validate, and layer TOML configurations with fail-fast admission.
 

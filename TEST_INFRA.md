@@ -83,7 +83,7 @@ tests/
 ```
 
 ### Integration Test Runner
-The test suites are run using `cargo nextest` or `cargo test` managed by the `cargo-make` build engine. For compile-fail assertions (such as verifying that a lineage corruption halts compilation), `trybuild` is used to verify compilation failures and check stderr output.
+The test suites are run using `cargo nextest` or `cargo test` managed by the `just` build engine. For compile-fail assertions (such as verifying that a lineage corruption halts compilation), `trybuild` is used to verify compilation failures and check stderr output.
 
 ### Directory Layout
 - **Unit Tests**: Co-located within `src/` modules for isolated validation.

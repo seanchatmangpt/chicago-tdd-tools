@@ -14,12 +14,11 @@
 # - The 64-node cap is loader-wide and applies to each compiled net; if
 #   composing all 10 phase nets exceeds it, compose via per-phase
 #   ConformanceSession runs chained by case-ID ranges — cap relaxation is
-#   PROHIBITED (plan:2394-2396). The Wave-4 composition replaces these
-#   placeholders with inlined phase roots or the chained-session harness.
+#   PROHIBITED (plan:2394-2396). 
 # - Case-id namespacing for the master trace: `p{N}-<phase-local-case-id>`
 #   (E-M09 §3, plan:2401-2402), e.g. p1-case-intake, p7-case-settlement-1.
 #
-# Phase files (authored, Wave 1):
+# Phase files (authored):
 #   phase1_intake.powl         (E-M01, 34 nodes)
 #   phase2_antitrust.powl      (E-M02, 34 nodes)
 #   phase3_capital.powl        (E-M08,  9 nodes)

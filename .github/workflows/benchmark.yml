@@ -73,10 +73,6 @@ jobs:
         with:
           key: benchmark
 
-      - name: Install cargo-make
-        uses: taiki-e/install-action@v2.85.6
-        with:
-          tool: cargo-make
 
       # Run benchmarks (if benchmarking feature exists)
       - name: Run benchmarks

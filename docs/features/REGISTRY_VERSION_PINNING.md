@@ -29,7 +29,7 @@ Add to `chicago-tdd-tools.toml`:
 registry_version = "v1.25.0"
 ```
 
-**Note**: Configuration file support is planned but not yet implemented. Use environment variable for now.
+**Note**: The version can be pinned via `chicago-tdd-tools.toml` or overridden with the `WEAVER_REGISTRY_VERSION` environment variable (read in `src/core/config/loading.rs`).
 
 ## Available Versions
 
@@ -58,11 +58,11 @@ git ls-remote --tags https://github.com/open-telemetry/semantic-conventions.git
 
 ## How It Works
 
-> **AUDIT NOTE (W15):** the env var is read in `src/core/config/loading.rs`
-> (`WEAVER_REGISTRY_VERSION_ENV`); the bootstrap script reads only
-> `WEAVER_VERSION` (the tool release). Config-file pin support is now
-> implemented (see `src/core/config/loading.rs`); the "planned" caveat
-> below is stale.
+> **AUDIT NOTE (W15):** `WEAVER_REGISTRY_VERSION` is read only in
+> `src/core/config/loading.rs`; `build.rs` and the bootstrap script do
+> not read it (the script reads `WEAVER_VERSION` — the tool release).
+
+
 
 
 1. **Build-time** (`build.rs`): Reads `WEAVER_REGISTRY_VERSION` env var, clones specific version

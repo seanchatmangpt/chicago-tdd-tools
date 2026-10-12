@@ -1,4 +1,7 @@
-# OpenTelemetry and Weaver Testing Guide - v1.2.0
+# OpenTelemetry and Weaver Testing Guide
+
+> Version-agnostic guide: check `Cargo.toml` for the current crate version and
+> `src/observability/otel/types.rs` for the current OTEL types.
 
 ## Overview
 
@@ -23,7 +26,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-chicago-tdd-tools = { version = "1.2.0", features = ["otel", "weaver"] }
+chicago-tdd-tools = { version = "26.10.12", features = ["otel", "weaver"] }
 ```
 
 ### Simple OTEL Span Test
@@ -76,26 +79,26 @@ OTEL spans represent a unit of work in your application:
 #[cfg(feature = "otel")]
 #[test]
 fn test_span_creation() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    // Create a span
-    let span = Span {
-        name: "test_operation".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(12345),
-            span_id: SpanId(67890),
-            trace_flags: 1,
-        },
-        start_time: 0,
-        end_time: 100,
-        attributes: vec![],
-        events: vec![],
-        status: "Ok".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
+
+    // Create a completed span
+    let span = Span::new_completed(
+        SpanContext::root(TraceId(12345), SpanId(67890), 0),
+        "test_operation".to_string(),
+        0,   // start_time_ms
+        100, // end_time_ms
+        Attributes::new(),
+        Vec::new(), // events
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
 
     // Validate span structure
     assert!(!span.name.is_empty());
     assert!(span.context.trace_id.0 != 0);
+    assert!(span.is_completed());
 }
 ```
 
@@ -107,20 +110,19 @@ Metrics measure quantitative aspects of your application:
 #[cfg(feature = "otel")]
 #[test]
 fn test_metric_creation() {
-    use chicago_tdd_tools::observability::otel::types::Metric;
+    use chicago_tdd_tools::observability::otel::types::{Attributes, Metric, MetricValue};
 
     // Create a metric
     let metric = Metric {
         name: "http_requests_total".to_string(),
-        description: "Total HTTP requests".to_string(),
-        value: 42,
-        unit: "requests".to_string(),
-        timestamp: 1704110400000,
+        value: MetricValue::Counter(42),
+        timestamp_ms: 1704110400000,
+        attributes: Attributes::new(),
     };
 
     // Validate metric
     assert!(!metric.name.is_empty());
-    assert!(metric.value >= 0);
+    assert!(matches!(metric.value, MetricValue::Counter(42)));
 }
 ```
 
@@ -201,32 +203,32 @@ The Weaver integration uses Weaver's `live-check` command to run an ephemeral OT
 #[cfg(feature = "otel")]
 #[test]
 fn test_http_span_attributes() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    let span = Span {
-        name: "http.request".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(1),
-            span_id: SpanId(1),
-            trace_flags: 1,
-        },
-        start_time: 1000,
-        end_time: 1100,
-        attributes: vec![
-            ("http.method".to_string(), "GET".to_string()),
-            ("http.url".to_string(), "/api/users".to_string()),
-            ("http.status_code".to_string(), "200".to_string()),
-        ],
-        events: vec![],
-        status: "Ok".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
 
-    // Verify required attributes are present
-    let attrs: std::collections::HashMap<_, _> =
-        span.attributes.iter().cloned().collect();
+    let mut attributes = Attributes::new();
+    attributes.insert("http.method".to_string(), "GET".to_string());
+    attributes.insert("http.url".to_string(), "/api/users".to_string());
+    attributes.insert("http.status_code".to_string(), "200".to_string());
 
-    assert_eq!(attrs.get("http.method").map(|s| s.as_str()), Some("GET"));
-    assert_eq!(attrs.get("http.status_code").map(|s| s.as_str()), Some("200"));
+    let span = Span::new_completed(
+        SpanContext::root(TraceId(1), SpanId(1), 0),
+        "http.request".to_string(),
+        1000,
+        1100,
+        attributes,
+        Vec::new(),
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
+
+    // Verify required attributes are present
+    assert_eq!(span.attributes.get("http.method").map(|s| s.as_str()), Some("GET"));
+    assert_eq!(
+        span.attributes.get("http.status_code").map(|s| s.as_str()),
+        Some("200")
+    );
 }
 ```
 
@@ -236,31 +238,28 @@ fn test_http_span_attributes() {
 #[cfg(feature = "otel")]
 #[test]
 fn test_error_span_recording() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    let error_span = Span {
-        name: "database.error".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(1),
-            span_id: SpanId(2),
-            trace_flags: 1,
-        },
-        start_time: 1000,
-        end_time: 1050,
-        attributes: vec![
-            ("error".to_string(), "true".to_string()),
-            ("error.type".to_string(), "ConnectionTimeout".to_string()),
-        ],
-        events: vec![],
-        status: "Error".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
 
-    // Verify error attributes
-    assert!(error_span.attributes
-        .iter()
-        .any(|(k, v)| k == "error" && v == "true"));
+    let mut attributes = Attributes::new();
+    attributes.insert("error".to_string(), "true".to_string());
+    attributes.insert("error.type".to_string(), "ConnectionTimeout".to_string());
 
-    assert_eq!(error_span.status, "Error");
+    let error_span = Span::new_completed(
+        SpanContext::root(TraceId(1), SpanId(2), 0),
+        "database.error".to_string(),
+        1000,
+        1050,
+        attributes,
+        Vec::new(),
+        SpanStatus::Error,
+    )
+    .expect("valid span");
+
+    // Verify error attributes
+    assert_eq!(error_span.attributes.get("error").map(|s| s.as_str()), Some("true"));
+    assert_eq!(error_span.status, SpanStatus::Error);
 }
 ```
 
@@ -270,41 +269,39 @@ fn test_error_span_recording() {
 #[cfg(feature = "otel")]
 #[test]
 fn test_parent_child_span_relationship() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
+    };
 
     // Parent span
-    let parent_span = Span {
-        name: "process_order".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(100),
-            span_id: SpanId(1),
-            trace_flags: 1,
-        },
-        start_time: 0,
-        end_time: 1000,
-        attributes: vec![],
-        events: vec![],
-        status: "Ok".to_string(),
-    };
+    let parent_span = Span::new_completed(
+        SpanContext::root(TraceId(100), SpanId(1), 0),
+        "process_order".to_string(),
+        0,
+        1000,
+        Attributes::new(),
+        Vec::new(),
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
 
-    // Child span (same trace ID, different span ID)
-    let child_span = Span {
-        name: "validate_payment".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(100), // Same trace
-            span_id: SpanId(2),     // Different span
-            trace_flags: 1,
-        },
-        start_time: 100,
-        end_time: 500,
-        attributes: vec![],
-        events: vec![],
-        status: "Ok".to_string(),
-    };
+    // Child span (same trace ID, parent-linked span ID)
+    let child_span = Span::new_completed(
+        SpanContext::child(TraceId(100), SpanId(2), SpanId(1), 0),
+        "validate_payment".to_string(),
+        100,
+        500,
+        Attributes::new(),
+        Vec::new(),
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
 
     // Verify trace relationship
     assert_eq!(parent_span.context.trace_id, child_span.context.trace_id);
     assert_ne!(parent_span.context.span_id, child_span.context.span_id);
+    assert!(child_span.context.is_child());
+    assert_eq!(child_span.context.parent_span_id(), Some(SpanId(1)));
 }
 ```
 
@@ -348,14 +345,18 @@ fn test_operation_failure() {
 ### 3. Include Timing Information
 
 ```rust
-let span = Span {
-    name: "api_call".to_string(),
-    start_time: 1704110400000,     // milliseconds since epoch
-    end_time: 1704110400100,       // operation took 100ms
-    // ...
-};
+let span = Span::new_completed(
+    SpanContext::root(TraceId(1), SpanId(1), 0),
+    "api_call".to_string(),
+    1704110400000, // start_time_ms, milliseconds since epoch
+    1704110400100, // end_time_ms: operation took 100ms
+    Attributes::new(),
+    Vec::new(),
+    SpanStatus::Ok,
+)
+.expect("valid span");
 
-let duration_ms = span.end_time - span.start_time;
+let duration_ms = span.end_time_ms().expect("completed") - span.start_time_ms();
 assert!(duration_ms > 0);
 ```
 
@@ -385,31 +386,16 @@ fn test_span() {
 #[cfg(feature = "otel")]
 #[test]
 fn test_request_tracing() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId};
+    use chicago_tdd_tools::observability::otel::types::{SpanContext, SpanId, TraceId};
 
     let trace_id = TraceId(12345);
 
     // All spans in this request share the same trace ID
-    let span1 = Span {
-        context: SpanContext {
-            trace_id,
-            span_id: SpanId(1),
-            trace_flags: 1,
-        },
-        // ...
-    };
-
-    let span2 = Span {
-        context: SpanContext {
-            trace_id,  // Same trace
-            span_id: SpanId(2),
-            trace_flags: 1,
-        },
-        // ...
-    };
+    let span1 = SpanContext::root(trace_id, SpanId(1), 0);
+    let span2 = SpanContext::child(trace_id, SpanId(2), SpanId(1), 0);
 
     // Verify all spans in the trace can be linked
-    assert_eq!(span1.context.trace_id, span2.context.trace_id);
+    assert_eq!(span1.trace_id, span2.trace_id);
 }
 ```
 
@@ -423,7 +409,7 @@ Error: WeaverBinaryNotFound
 
 **Solution**: Install Weaver
 ```bash
-cargo make weaver-bootstrap
+just weaver-bootstrap
 # or
 cargo install weaver
 ```
@@ -461,34 +447,38 @@ chicago-tdd-tools = { features = ["otel"] }
 #[cfg(feature = "otel")]
 #[test]
 fn test_http_server_span() {
-    use chicago_tdd_tools::observability::otel::types::{Span, SpanContext, TraceId, SpanId};
-
-    // Simulate HTTP server span
-    let request_span = Span {
-        name: "http.server.request".to_string(),
-        context: SpanContext {
-            trace_id: TraceId(0x4bf92f3577b34da6),
-            span_id: SpanId(0x00f067aa0ba902b7),
-            trace_flags: 1,
-        },
-        start_time: 1704110400000,
-        end_time: 1704110400150,
-        attributes: vec![
-            ("http.method".to_string(), "GET".to_string()),
-            ("http.url".to_string(), "http://localhost:8080/api/v1/users".to_string()),
-            ("http.status_code".to_string(), "200".to_string()),
-            ("http.response_time_ms".to_string(), "150".to_string()),
-        ],
-        events: vec![],
-        status: "Ok".to_string(),
+    use chicago_tdd_tools::observability::otel::types::{
+        Attributes, Span, SpanContext, SpanStatus, TraceId, SpanId,
     };
 
-    // Validate attributes
-    let attrs: std::collections::HashMap<_, _> =
-        request_span.attributes.iter().cloned().collect();
+    // Simulate HTTP server span
+    let mut attributes = Attributes::new();
+    attributes.insert("http.method".to_string(), "GET".to_string());
+    attributes
+        .insert("http.url".to_string(), "http://localhost:8080/api/v1/users".to_string());
+    attributes.insert("http.status_code".to_string(), "200".to_string());
+    attributes.insert("http.response_time_ms".to_string(), "150".to_string());
 
-    assert_eq!(attrs.get("http.method").map(|s| s.as_str()), Some("GET"));
-    assert_eq!(attrs.get("http.status_code").map(|s| s.as_str()), Some("200"));
+    let request_span = Span::new_completed(
+        SpanContext::root(TraceId(0x4bf92f3577b34da6), SpanId(0x00f067aa0ba902b7), 0),
+        "http.server.request".to_string(),
+        1704110400000,
+        1704110400150,
+        attributes,
+        Vec::new(),
+        SpanStatus::Ok,
+    )
+    .expect("valid span");
+
+    // Validate attributes
+    assert_eq!(
+        request_span.attributes.get("http.method").map(|s| s.as_str()),
+        Some("GET")
+    );
+    assert_eq!(
+        request_span.attributes.get("http.status_code").map(|s| s.as_str()),
+        Some("200")
+    );
 }
 ```
 

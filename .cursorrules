@@ -54,17 +54,17 @@ Never trust text, only test results. All code is production-ready with error han
 
 ## Completion Workflow (Mandatory)
 
-1. **Run Tests Immediately**: `cargo make test` before completion claims. If tests fail: STOP, extract failing test names, create rich todos, fix tests, re-run tests. Only proceed when all tests pass.
+1. **Run Tests Immediately**: `just test` before completion claims. If tests fail: STOP, extract failing test names, create rich todos, fix tests, re-run tests. Only proceed when all tests pass.
 
 2. **Rich Todos**: For each failing test, include: test name, error message, file/line, root cause, proposed fix, status. Batch create 5-10+ related todos in single call.
 
 3. **Fix Systematically**: Read failure message → Identify root cause → Fix issue → Run specific test → Verify fix → Update todo status → Remove when fixed.
 
-4. **Re-Run All Tests**: `cargo make test` to verify all fixes worked. If still failing, return to step 2.
+4. **Re-Run All Tests**: `just test` to verify all fixes worked. If still failing, return to step 2.
 
 5. **Verify Completion**: All tests pass, no compilation errors, no test failures, all failing tests fixed and removed from todos, no pending test-related todos. Never mark complete without running tests first.
 
-**Quick Feedback**: `cargo make check` (~1s), `cargo make test-unit` (~1s), `cargo make test test_name` (single test). Full validation: `cargo make test`, `cargo make pre-commit`.
+**Quick Feedback**: `just check` (~1s), `just test-unit` (~1s), `just test test_name` (single test). Full validation: `just test`, `just pre-commit`.
 
 ## Prohibited Patterns
 
