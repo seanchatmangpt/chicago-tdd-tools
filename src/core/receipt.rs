@@ -434,9 +434,6 @@ fn capture_enabled_features() -> String {
     if cfg!(feature = "logging") {
         features.push("logging");
     }
-    if cfg!(feature = "workflow-engine") {
-        features.push("workflow-engine");
-    }
     if cfg!(feature = "mutation-testing") {
         features.push("mutation-testing");
     }

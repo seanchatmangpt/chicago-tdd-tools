@@ -43,7 +43,6 @@ exclude = [
 ]
 
 [dependencies]
-lsp-types = { version = "0.97", optional = true }
 # Async runtime
 # Tokio features optimized for testing: rt (basic runtime), rt-multi-thread (parallel execution),
 # macros (async test macros). Minimal feature set for testing use case.
@@ -180,13 +179,11 @@ blake3 = "1"             # For blake3_receipt_tests — building synthetic bcinr
 # Note: cargo-mutants is a CLI tool, install via: cargo install cargo-mutants
 
 [features]
-governance-tests = ["dep:lsp-types"]
 # Default features: Minimal set for best DX
 # logging: Alert helpers integration with log crate (enabled by default)
 default = ["logging"]
 
 # Core features (always available - no dependencies)
-workflow-engine = [] # Enable workflow-specific features
 mutation-testing = [] # Enable mutation testing (no external dependencies)
 async = ["dep:tokio"] # Enable async performance measurement utilities (tokio runtime)
 benchmarking = [] # Enable criterion benchmarking (install criterion separately for benches/)
