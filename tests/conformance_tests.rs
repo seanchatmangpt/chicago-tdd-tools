@@ -332,6 +332,66 @@ fn unknown_activity_in_powl_file_refuses() {
     }
 }
 
+/// At-limit admission (T4): exactly 15 atoms need 16 places — the PN64
+/// marking-field budget — so the cap is inclusive (`from_model` admits).
+/// Companion refusal: `oversized_powl_model_refuses_at_place_budget` (16 atoms).
+#[test]
+fn fifteen_atom_sequence_compiles_at_place_budget() {
+    let mut src = String::from("# 15 atoms: at the 16-place budget\n");
+    for i in 0..15 {
+        src.push_str(&format!("activity big{i} = sys.big{i}\n"));
+    }
+    src.push_str("\nsequence {\n");
+    for i in 0..15 {
+        src.push_str(&format!("    big{i}\n"));
+    }
+    src.push_str("}\n");
+    let (path, _dir) = write_powl_fixture("at_place_budget.powl", &src);
+    let s = session_from_file(&path);
+    assert_eq!(s.net().len(), 15);
+    // The full chain replays to Complete + conforming: a 15-step proof at the
+    // place budget.
+    let stream: Vec<u64> = (0..15).map(|i| event(i as u8, i as u8 + 1)).collect();
+    let mut s = s;
+    s.attach_stream(&stream).expect("15-event stream attaches");
+    match s.step_budget(32) {
+        YieldStatus::Complete(summary) => {
+            assert_eq!(summary.steps_executed, 15);
+            assert_eq!(summary.final_marking, 1 << 15);
+        }
+        other => panic!("expected Complete, got {other:?}"),
+    }
+    assert!(s.conformance_report().is_conforming(), "at-budget chain conforms");
+}
+
+/// At-limit parse (T4): a 64-node model (`MAX_POWL_NODES`) parses Ok; the
+/// session then refuses it at the 16-place budget, not the 64-node budget.
+#[test]
+fn sixty_four_node_model_parses_and_refuses_at_place_budget() {
+    let count = chicago_tdd_tools::conformance::loader::MAX_POWL_NODES - 1;
+    let mut src = String::new();
+    for i in 0..count {
+        src.push_str(&format!("activity n{i} = sys.n{i}\n"));
+    }
+    src.push_str("sequence { ");
+    for i in 0..count {
+        if i > 0 {
+            src.push(' ');
+        }
+        src.push_str(&format!("n{i}"));
+    }
+    src.push_str(" }");
+    let model = chicago_tdd_tools::conformance::loader::PowlModel::from_powl_str(&src)
+        .expect("64-node model parses");
+    assert_eq!(model.node_count(), chicago_tdd_tools::conformance::loader::MAX_POWL_NODES);
+    let err = ConformanceSession::from_model(&model)
+        .expect_err("64 atoms need 65 places, past the 16-place budget");
+    assert!(
+        matches!(err, ConformanceError::TooManyPlaces { .. }),
+        "expected TooManyPlaces, got {err:?}"
+    );
+}
+
 #[test]
 fn oversized_powl_model_refuses_at_place_budget() {
     // 16 atoms need 17 places; the PN64 marking field budget is 16.
@@ -539,5 +599,63 @@ fn trajectory_identity_is_model_relative_not_absolute() {
     match pair.step_budget(16) {
         YieldStatus::Violation(ConformanceError::Skipped { step }) => assert_eq!(step, 0),
         other => panic!("expected Skipped, got {other:?}"),
+    }
+}
+
+// ─── T20: error-variant coverage gaps ───────────────────────────────────────
+//
+// BcinrValidation (cross-cutting pass-through) previously had zero coverage.
+// Note: `ConformanceError::DependencyCycle` has zero raise sites anywhere in
+// `src/` — flagged dead code (see T20 report); no reachability test exists
+// because none is possible.
+
+#[test]
+fn t20_bcincr_validation_display_is_populated() {
+    let e = ConformanceError::BcinrValidation { message: "witness diagnostic".into() };
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("BCINR validation failed"), "{s}");
+    assert!(s.contains("witness diagnostic"), "{s}");
+}
+
+#[test]
+fn t20_bcincr_validation_reachable_from_report_explain() {
+    use chicago_tdd_tools::conformance::report::Deviation;
+    // Real public API: explain() with an out-of-range deviation index raises
+    // the cross-cutting BcinrValidation pass-through.
+    let mut report = ConformanceReport::new(
+        2,
+        2,
+        vec![
+            Deviation::NotEnabled { step: 1, tid: 0, marking: 0b10 },
+            Deviation::NotEnabled { step: 2, tid: 1, marking: 0b01 },
+        ],
+    );
+    report.explain(0).expect("index 0 is in range");
+    match report.explain(9) {
+        Err(ConformanceError::BcinrValidation { message }) => {
+            assert!(message.contains("out of range"), "{message}");
+        }
+        other => panic!("expected BcinrValidation, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_bcincr_validation_reachable_from_net_compile_duplicate_place() {
+    use chicago_tdd_tools::conformance::net::NetSpec;
+    // Real public API: compiling a net with a duplicated place name raises
+    // BcinrValidation with the validator's diagnostic.
+    let spec = NetSpec::builder()
+        .place("p0")
+        .place("p0")
+        .transition("t", "act")
+        .add_pre("p0")
+        .build();
+    let err = spec.compile().expect_err("duplicate place name must be refused");
+    match err {
+        ConformanceError::BcinrValidation { message } => {
+            assert!(message.contains("duplicate place name"), "{message}");
+        }
+        other => panic!("expected BcinrValidation, got {other:?}"),
     }
 }

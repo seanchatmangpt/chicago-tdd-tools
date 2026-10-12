@@ -28,7 +28,7 @@
 #![allow(clippy::unwrap_used)]
 
 use chicago_tdd_tools::ledger::dossier::{CourtLedgerBuilder, DossierBuilder, DossierRoot};
-use chicago_tdd_tools::ledger::error::{LedgerError, NameError};
+use chicago_tdd_tools::ledger::error::{DossierError, LedgerError, NameError};
 use chicago_tdd_tools::ledger::proof::{
     empty_root, leaf_hash, node_hash, CourtProof, ProofStep, MAX_PROOF_STEPS,
 };
@@ -623,4 +623,121 @@ fn law11_encode_accepts_exactly_name_max_boundary() {
     let verified =
         VerifiedCourtReceipt::from_bytes_verified(&bytes).expect("boundary record must verify");
     assert_eq!(verified.receipt().name, name, "84-byte name must round-trip losslessly");
+}
+
+// ─── T20: error-variant coverage gaps (error vocabulary law) ────────────────
+//
+// Each uncovered variant is (a) constructed to check Display is non-empty and
+// carries its variant-identifying phrase, and (b) driven through the real
+// public API that raises it — no variant is covered by construction alone.
+
+#[test]
+fn t20_cross_court_append_display_and_reachability() {
+    // Display: non-empty, carries the variant-identifying phrase.
+    let e = LedgerError::CrossCourtAppend { expected: "court-a".into(), actual: "court-b".into() };
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("cross-court append"), "{s}");
+
+    // Reachability: a real append of a foreign court's receipt is refused.
+    let mut ledger = CourtLedgerBuilder::new("ledger-tests-other");
+    let foreign = threaded_receipt(1, [0u8; 32]); // named for a different court
+    match ledger.append(foreign) {
+        Err(LedgerError::CrossCourtAppend { expected, actual }) => {
+            assert_eq!(expected, "ledger-tests-other");
+            assert_eq!(actual, "ledger-tests-sample");
+        }
+        other => panic!("expected CrossCourtAppend, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_empty_chain_display_and_reachability() {
+    let e = LedgerError::EmptyChain { court_id: "court-a".into() };
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("empty chain"), "{s}");
+
+    let ledger = CourtLedgerBuilder::new("ledger-tests-empty");
+    match ledger.build() {
+        Err(LedgerError::EmptyChain { court_id }) => assert_eq!(court_id, "ledger-tests-empty"),
+        other => panic!("expected EmptyChain, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_duplicate_court_display_and_reachability() {
+    let e = DossierError::DuplicateCourt("dup".into());
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("duplicate court"), "{s}");
+
+    let mut b = DossierBuilder::new();
+    b.add_court("ledger-tests-dup", head(1)).expect("first add");
+    match b.add_court("ledger-tests-dup", head(2)) {
+        Err(DossierError::DuplicateCourt(c)) => assert_eq!(c, "ledger-tests-dup"),
+        other => panic!("expected DuplicateCourt, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_verification_failed_display_and_reachability() {
+    let e = DossierError::VerificationFailed("court-x".into());
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("failed verification"), "{s}");
+
+    // Reachability: a proof whose leaf hashes to a different root.
+    let root = DossierRoot([9u8; 32]);
+    let proof = CourtProof {
+        court_id: "ledger-tests-vf".into(),
+        head: [1u8; 32],
+        path: Vec::new(),
+    };
+    match proof.verify(&root) {
+        Err(DossierError::VerificationFailed(c)) => assert_eq!(c, "ledger-tests-vf"),
+        other => panic!("expected VerificationFailed, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_empty_dossier_display_and_reachability() {
+    let s = DossierError::EmptyDossier.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("dossier is empty"), "{s}");
+
+    match DossierBuilder::new().seal() {
+        Err(DossierError::EmptyDossier) => {}
+        other => panic!("expected EmptyDossier, got {other:?}"),
+    }
+}
+
+#[test]
+fn t20_malformed_proof_exact_variant_on_oversized_path() {
+    let s = DossierError::MalformedProof.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("malformed proof"), "{s}");
+
+    // Reachability with the exact variant (existing tamper tests only assert
+    // `is_err`): a path longer than MAX_PROOF_STEPS is refused as malformed.
+    let root = DossierRoot([0u8; 32]);
+    let proof = CourtProof {
+        court_id: "ledger-tests-mp".into(),
+        head: [0u8; 32],
+        path: vec![ProofStep { sibling: [0u8; 32], is_left: false }; MAX_PROOF_STEPS + 1],
+    };
+    assert_eq!(proof.verify(&root), Err(DossierError::MalformedProof));
+}
+
+#[test]
+fn t20_chain_discontinuity_display_is_populated() {
+    // ChainDiscontinuity reachability is already exercised by Law 10; here we
+    // pin its Display contract.
+    let e = LedgerError::ChainDiscontinuity {
+        expected_parent: [0u8; 32],
+        actual: [1u8; 32],
+    };
+    let s = e.to_string();
+    assert!(!s.is_empty());
+    assert!(s.contains("chain discontinuity"), "{s}");
 }
