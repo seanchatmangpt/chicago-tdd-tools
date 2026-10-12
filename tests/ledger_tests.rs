@@ -787,3 +787,61 @@ fn t20_chain_discontinuity_display_is_populated() {
     assert!(!s.is_empty());
     assert!(s.contains("chain discontinuity"), "{s}");
 }
+
+// ===========================================================================
+// DoD §2 item 2 — standing ≥10k-iteration mutation loop over the CTRT wire
+// deserializer. Deterministic LCG (fixed seed, no wall-clock/env); asserts
+// every mutated record is REFUSED typed (never accepted silently), and that
+// each lawful record still verifies after the loop (no state pollution).
+#[test]
+fn wire_fuzz_10k_single_byte_mutations_all_refused_typed() {
+    use chicago_tdd_tools::ledger::receipt::VerifiedCourtReceipt;
+    use chicago_tdd_tools::nato::rng::Lcg;
+
+    #[allow(clippy::unwrap_used)] // JUSTIFICATION: test code only
+    fn build_lawful_record() -> [u8; 352] {
+        let body = CourtReceiptV1::new(
+            [7u8; 32],
+            [3u8; 32],
+            ReceiptMetrics {
+                timestamp_ms: 1,
+                run_id: 7,
+                total_ticks: 1,
+                wall_ms: 1,
+                thermal: ThermalClass::Warm,
+                outcome: CourtOutcome::Pass,
+                budget_met: true,
+            },
+            [0; 32],
+            [5u8; 32],
+            [0; 32],
+            "fuzz-court",
+        )
+        .unwrap();
+        ChainedCourtReceipt::from_receipt(&body)
+            .expect("chain record")
+            .encode()
+    }
+
+    let lawful = build_lawful_record();
+    let mut rng = Lcg::new(0x9E37_79B9_7F45_3E55);
+    let mut refused = 0u32;
+    for case in 0..10_000u32 {
+        let mut bytes = lawful;
+        // one deterministic single-byte mutation per case
+        let idx = (rng.next_u64() % 352) as usize;
+        let flip = 1u8 << (rng.next_u64() % 8);
+        bytes[idx] ^= flip;
+        match VerifiedCourtReceipt::from_bytes_verified(&bytes) {
+            Err(_) => refused += 1,
+            Ok(_) => {
+                // impossible for a single-bit flip to be a no-op; any
+                // acceptance is a defect — fail loudly with the case index
+                panic!("case {case}: mutated record accepted at byte {idx}");
+            }
+        }
+    }
+    assert_eq!(refused, 10_000, "every mutation must be refused typed");
+    // loop leaves the deserializer stateless: the lawful record still verifies
+    assert!(VerifiedCourtReceipt::from_bytes_verified(&lawful).is_ok());
+}
