@@ -248,8 +248,15 @@ pub fn set_channel_capacity(capacity: Option<usize>) {
         state.capacity
     );
     state.capacity = capacity;
+}
 
-    /// Audit W5: set_run_id refuses empty and oversized ids.
+// Audit W5: set_run_id refuses empty and oversized ids. (Landed outside
+// any fn body — a #[test] nested inside set_channel_capacity was dead
+// code: never discovered by the harness. Found by the wave-22 audit.)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
     #[test]
     fn set_run_id_validates_input() {
         set_run_id("baseline".to_string());
