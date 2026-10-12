@@ -214,7 +214,7 @@ Chicago TDD provides `TestFixture` for automatic cleanup:
 ```rust
 test!(test_with_cleanup, {
     // Create fixture - sets up
-    let fixture = TestFixture::new()?;
+    let mut fixture = TestFixture::new()?; // mut: set_metadata takes &mut self (W27 probe: the snippet was not compilable as printed)
 
     // Use the fixture
     fixture.set_metadata("key".to_string(), "value".to_string());
@@ -356,7 +356,7 @@ Using all 5 patterns, write tests for:
 // supplies.
 test!(test_register_success, {
     // Arrange
-    let fixture = TestFixture::new()?;
+    let mut fixture = TestFixture::new()?; // mut: set_metadata takes &mut self (W27 probe: the snippet was not compilable as printed)
     let db = RealUserDatabase::connect_temp()?;  // Real database (via your fixture provider)
     let mut service = UserService::new(db);
 

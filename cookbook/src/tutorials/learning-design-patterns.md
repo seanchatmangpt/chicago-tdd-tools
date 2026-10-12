@@ -132,7 +132,7 @@ fn use_provider(provider: &Provider) {
     println!("{:?}", data);  // data would be dangling
 }
 
-// Without GATs, it might compile (dangerous!)
+// Without GATs this variant uses `&self` too — the borrow checker ALREADY rejects drop-then-use (E0505; W27 probe verified by compilation). GATs' advantage here is returning owned/inferred-lifetime data, not dangling-use prevention
 ```
 
 ### When to Use GATs
