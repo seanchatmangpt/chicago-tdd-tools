@@ -1,4 +1,4 @@
-//! Integration tests for `#[chicago_test]` (proc_macros/src/chicago_test.rs).
+//! Integration tests for `#[chicago_test]` (`proc_macros/src/chicago_test.rs`).
 //!
 //! Real expansion, Chicago style: the macro runs for real against an existing
 //! ticket fixture, the generated test executes its body through

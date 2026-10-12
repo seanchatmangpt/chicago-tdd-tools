@@ -293,13 +293,13 @@ pub mod prelude {
     // Re-export core struct contents for backward compatibility and sub-crate compilation
     pub use crate::core::assertions::*;
     pub use crate::core::builders::*;
-pub use crate::core::receipt::ReceiptJsonError;
-pub use crate::swarm::SwarmError;
-#[cfg(feature = "ledger")]
-pub use crate::ledger::dossier_wire::DossierWireError;
     pub use crate::core::fixture::*;
     pub use crate::core::governance::*;
+    pub use crate::core::receipt::ReceiptJsonError;
     pub use crate::core::state::*;
+    #[cfg(feature = "ledger")]
+    pub use crate::ledger::dossier_wire::DossierWireError;
+    pub use crate::swarm::SwarmError;
     // Re-export macros in prelude for use without manual root import
     pub use crate::{
         alert_critical, alert_debug, alert_info, alert_success, alert_warning, assert_approx_eq,

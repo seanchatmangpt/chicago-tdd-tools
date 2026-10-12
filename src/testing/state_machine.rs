@@ -42,7 +42,7 @@ pub trait State: Sized + 'static {
 /// # Example
 ///
 /// ```rust
-/// use chicago_tdd_tools::testing::state_machine::{State, Transition};
+/// use chicago_tdd_tools::testing::state_machine::{State, StateMachineError, Transition};
 /// use std::marker::PhantomData;
 ///
 /// // Define states

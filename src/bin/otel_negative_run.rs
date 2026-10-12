@@ -1,4 +1,4 @@
-//! OTEL negative-path smoke binary: sends a well-formed OTLP event missing one attribute to the same live endpoint as otel_production_run (AUDIT NOTE W27: no unreachable-endpoint step, no malformed transport frame, no typed refusals asserted — the negative case rides the batch exporter; header corrected) (see `just otel-weaver-live-negative`).
+//! OTEL negative-path smoke binary: sends a well-formed OTLP event missing one attribute to the same live endpoint as `otel_production_run` (AUDIT NOTE W27: no unreachable-endpoint step, no malformed transport frame, no typed refusals asserted — the negative case rides the batch exporter; header corrected) (see `just otel-weaver-live-negative`).
 #![allow(warnings)]
 #[cfg(feature = "weaver")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {

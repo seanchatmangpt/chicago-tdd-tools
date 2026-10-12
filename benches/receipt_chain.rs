@@ -52,14 +52,17 @@ use chicago_tdd_tools::ledger::receipt::{
     ChainedCourtReceipt, CourtOutcome, CourtReceiptV1, ReceiptMetrics,
 };
 
-/// Builds an n-long chain of 352B ChainedCourtReceipt records, each linking
+/// Builds an n-long chain of 352B `ChainedCourtReceipt` records, each linking
 /// to its parent's chain hash (the ledger's real chaining shape).
+#[allow(clippy::cast_possible_truncation)] // JUSTIFICATION: bench indices are far below u8/usize bounds
 fn court_chain(n: u64) -> Vec<ChainedCourtReceipt> {
     let mut parent = [0u8; 32]; // genesis
+    #[allow(clippy::cast_possible_truncation)]
+    // JUSTIFICATION: bench sizes are far below usize bounds
     let mut out = Vec::with_capacity(n as usize);
     for i in 0..n {
         let receipt = CourtReceiptV1::new(
-            [i as u8; 32], // subject_hash
+            [i as u8; 32], // subject_hash (bench: i far below u8 bounds)
             parent,        // parent_receipt_hash = previous chain hash
             ReceiptMetrics {
                 timestamp_ms: i,

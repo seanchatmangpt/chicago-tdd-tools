@@ -77,10 +77,8 @@ impl DiagnosticSink for OcelCollector {
         let raw = Evidence::<TestOcelEvent, Raw, TestSuiteWitness>::from_boundary(event);
         match self.admit_event(&raw) {
             Ok(admitted) => {
-                let mut events = self
-                    .events
-                    .lock()
-                    .map_err(|e| GovernanceError::Lock(e.to_string()))?;
+                let mut events =
+                    self.events.lock().map_err(|e| GovernanceError::Lock(e.to_string()))?;
                 events.push(admitted);
             }
             Err(refusal) => {

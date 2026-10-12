@@ -99,7 +99,7 @@ fn abi_map(code: i32) -> i32 {
     #[cfg(feature = "guest-abi-v1")]
     {
         match code {
-            14 | 15 | 16 => 11,
+            14..=16 => 11,
             other => other,
         }
     }
