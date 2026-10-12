@@ -168,10 +168,10 @@ R-numbered receipts were not visible to this lane at write time.
 | SX9 | HELD (ALIVE) | `deserialize_ct` survives SK2's exact methodology: thrash run 178/192 \|t\|<4.5, the 14 excursions flip sign between same-path classes (noise, not leak); branch-free below the public length gate, verdict table compiled to csel. Caveat: single-run cold Welch is drift-sensitive; future verification uses thrash/interleaved. | VERIFIED (R34; methodology note recorded) |
 | SX10 | PARTIAL | SMT/hand recovery of fold constants trivially succeeds - REA resistance is cost-elevation only (delay, not impossibility); consistent with SK9. No correctness violation. | DESIGN (document as cost-elevation, not confidentiality) |
 
-Tally: SX3, SX4, SX6, SX7, SX8 FALSIFIED (SX8 FIXED); SX1
-FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED (vacuous); SX5
-UNSUPPORTED; SX9 HELD (kernel ALIVE); SX10 PARTIAL. No lane remains
-IN-PROGRESS.
+Tally: SX3, SX4 (FIXED 1e2e840), SX6, SX7, SX8 (FIXED 8b92c3e) FALSIFIED;
+SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
+(vacuous); SX5 UNSUPPORTED (R37 screening landed: 1a16e25); SX9 HELD
+(kernel ALIVE); SX10 PARTIAL. No lane remains open.
 
 ### SX1 - No conservation mechanism; unsigned lease admission
 

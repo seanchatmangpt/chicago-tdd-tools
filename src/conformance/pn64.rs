@@ -21,7 +21,7 @@
 //! not accumulate. Token conservation (`|m'| == |m| - |W-| + |W+|`) and the
 //! standard 1-safe reasoning therefore hold only on the restricted domain of
 //! 1-safe nets — at most one token per place — where coalescing can never
-//! fire. The [`tests::fire_token_conservation`] guard below enumerates the
+//! fire. The `fire_token_conservation` test guard below enumerates the
 //! conserved sub-domain explicitly.
 
 /// Low 16-bit field mask (marking, `W-`, `W+`).
