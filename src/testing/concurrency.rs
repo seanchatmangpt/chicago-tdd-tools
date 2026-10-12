@@ -68,13 +68,15 @@ impl ConcurrencyTest {
         });
     }
 
-    /// Run a concurrent test with custom model configuration
+    /// Run a concurrent test under the default loom model.
     ///
-    /// Allows customization of loom's model checking behavior.
+    /// Audit W6 honesty note: the `max_threads`/`max_branches` parameters
+    /// are accepted for API stability but NOT forwarded — loom's default
+    /// model configuration is used (see the loom docs for `loom::config`).
     ///
     /// # Arguments
     ///
-    /// * `max_threads` - Maximum number of threads to simulate
+    /// * `max_threads` - accepted, currently unused
     /// * `test_fn` - A function that sets up and runs concurrent code
     pub fn run_with_config<F>(_max_threads: usize, _max_branches: usize, test_fn: F)
     where

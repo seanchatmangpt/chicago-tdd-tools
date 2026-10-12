@@ -180,9 +180,12 @@ Branchless, `no_std`-compatible hot path. Bit layout [15:0] m / [31:16] W- /
 
 ## Net / State Space / Validation
 
-- `net::NetBuilder` (net.rs:186-238): `CompiledNet::builder()` net.rs:67,
-  `place` :193, `forbidden_place` :200, `transition` :208, `add_pre` :220,
-  `add_post` :229, `build` :238; `NetSpec::compile()` net.rs:92,
+- `net::NetBuilder` (net.rs:198-250): `CompiledNet::builder()` net.rs:67,
+  `place` :205, `forbidden_place` :212, `transition` :220, `add_pre` :232,
+  `add_post` :241, `build` :250; `NetSpec::compile()` net.rs:92,
+  `compile()` emits `CompiledNet.forbidden_mask` (bit i set per
+  `forbidden_place` declaration), feedable to `StateSpace::new` /
+  session's `set_forbidden_mask` so declarations are enforced.
   `initial_marking()` net.rs:158.
 - `state::StateSpace` (state.rs:41): `new` state.rs:58, `with_max_markings`
   :93 (const), `enabled_mask` :103, `fire` :117, `try_fire` :129, `reach()`
