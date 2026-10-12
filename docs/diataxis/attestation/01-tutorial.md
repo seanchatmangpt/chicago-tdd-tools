@@ -1,8 +1,3 @@
----
-title: "Tutorial: Build and Seal a STANAG 4107 Dossier"
-quadrant: tutorial
----
-
 # Tutorial: Build and Seal a STANAG 4107 Dossier
 
 Seal twenty NATO court receipts into a signed `CTT-DOSSIER-v1` document, then verify the ML-DSA-65 signature and Merkle root. Every command below was executed against the current tree on 2026-10-11; the expected Merkle root `783308d9…6671e` is the value sealed in the landed dossier.

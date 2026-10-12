@@ -1,8 +1,3 @@
----
-title: "Reference: CTRT Wire Formats and Machine Codes"
-quadrant: reference
----
-
 # Reference: CTRT Wire Formats and Machine Codes
 
 Two distinct 352-byte layouts share the `CTRT` magic. This document maps both as they exist in code, plus the complete machine-code table. All multi-byte integers are little-endian.

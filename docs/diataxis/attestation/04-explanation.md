@@ -1,8 +1,3 @@
----
-title: "Explanation: Deontic Context Binding"
-quadrant: explanation
----
-
 # Explanation: Deontic Context Binding
 
 Why a covenant breach fails at verify: `/Users/sac/affidavit/src/deontic.rs` (FR-PQC-06) makes the deontic parameters — jurisdiction, constraint set, lease epoch — *part of the signed message's context*, so they are covered by the ML-DSA-65 signature itself, not checked beside it.

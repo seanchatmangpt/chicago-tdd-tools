@@ -94,7 +94,8 @@ case AshGraphLaw.Capability.Shacl.run(data: {:text, data}, shapes: shapes) do
   {:ok, %{conforms: true}} -> :ok
   {:ok, %{conforms: false, results: results}} -> {:refused, results}
   {:error, refusal} -> {:refused, refusal}
-  # ...
+  # exhaustive: AshGraphLaw.Result.Shacl models only :conforms and :results;
+  # run/2 returns {:ok, t()} | {:error, Refusal.t()} (capability/shacl.ex:135-137)
 end
 ```
 

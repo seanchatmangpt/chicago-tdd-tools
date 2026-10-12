@@ -136,9 +136,15 @@ sequence {
                xor { a03_covenant_conflicts silent } }
     sequence { a04_naics_map
                loop { a05_cet1_buffers } redo { silent } max 3 }
-    # ...
+    sequence { a06_isda_positions
+               a07_facilities
+               a08_repo_collateral
+               loop { a09_intercompany } redo { silent } max 255
+               a10_irc368_election }
   }
-  # ...
+  sequence { a11_supervisor_init a12_temprun_leaf a13_pn64_load }
+  sequence { a14_merkle_root a15_lease_issue }
+  parallel { court_n01 court_n05 court_n09 court_n13 court_n17 }
 }
 ```
 

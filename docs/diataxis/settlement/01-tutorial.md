@@ -127,7 +127,7 @@ micro-dollars):
 Run its courts:
 
 ```bash
-cargo test -p chicago-tdd-tools-merger-guests 2>/dev/null || \
+cargo test -p merger-guests 2>/dev/null || \
   cargo test --test fault_injection --test zero_import -p merger-guests
 ```
 

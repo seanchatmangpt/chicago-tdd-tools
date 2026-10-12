@@ -1,8 +1,3 @@
----
-title: "How-To: Operate the Replay Nullifier Filter"
-quadrant: how-to
----
-
 # How-To: Operate the Replay Nullifier Filter
 
 Operations for the CTRT anti-replay filter in `/Users/sac/affidavit/src/replay_nullifier.rs` and its CLI wiring in `/Users/sac/affidavit/src/handlers.rs` (`pub fn emit`, `format == "ctrt"` branch).

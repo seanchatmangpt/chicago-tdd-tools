@@ -41,8 +41,13 @@ as:
 
 ```turtle
 sh:path ex:thresholdPctOfRevenue ; sh:datatype xsd:decimal ;
-    sh:minInclusive "0.0"^^xsd:decimal ; sh:maxInclusive "100.0"^^xsd:decimal ...
+    sh:minCount 1 ; sh:maxCount 1 ;
+    sh:minInclusive "0.0"^^xsd:decimal ; sh:maxInclusive "100.0"^^xsd:decimal ;
+sh:path ex:carveOut ;
+    sh:in ( ex:GeneralEconomic ex:IndustryWide ex:AnnouncementEffect
+            ex:ChangeOfLaw ex:Pandemic ex:NaturalDisaster ) ;
 ex:MaeDefinition a ex:MaterialAdverseEffect ;
+    ex:measuredAgainstTarget ex:BetaHoldings ;
     ex:thresholdPctOfRevenue "10.0"^^xsd:decimal ;
     ex:measuredOverMonths 12 ;
     ex:carveOut ex:IndustryWide , ex:AnnouncementEffect ;

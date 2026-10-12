@@ -19,7 +19,7 @@ the code, the code wins and the divergence is flagged.
 - Landed scales, verbatim from `fixed.rs:31-37`: `S_MONEY=10^6`,
   `S_RATIO=10^8`, `S_HHI=10^4`, `S_SHARES=10^6`.
 
-## Scales and tags (`src/fixed.rs`)
+## Scales and tags (`crates/merger-guests/src/fixed.rs`)
 
 | Constant | Value | Unit |
 |---|---|---|
@@ -82,7 +82,7 @@ Parse law order: magic → reserved → scale → (leaf checks dims/leaf_id).
 | 9 | fractional_shares | `mgi_fractional_shares_compute` | MG4 |
 | 10 | pn64_audit | `mgi_pn64_audit_compute` | MG4 |
 
-## errno table 0..=19 (`src/errno.rs`)
+## errno table 0..=19 (`crates/merger-guests/src/errno.rs`)
 
 Codes 0-13 are the landed `ctt_*` guest semantics (do not renumber; hosts key
 on these). Codes 14-19 are merger-guest extensions appended in the next free
