@@ -84,7 +84,6 @@ log = { version = "^0.4", optional = true }
 # When to use: Weaver live validation, checking Weaver admin API endpoints
 # Enables: HTTP requests to Weaver admin API
 # Dependency: Requires weaver feature (automatically enabled)
-reqwest = { version = "^0.11", optional = true, features = ["blocking"] }
 
 # Temporary file/directory creation (optional, weaver feature)
 # When to use: Weaver test fixtures, temporary report directories
@@ -280,7 +279,6 @@ otel = ["dep:tokio"]
 # Dependency: Requires otel feature (automatically enabled)
 weaver = [
   "otel",
-  "dep:reqwest",
   "dep:opentelemetry",
   "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
