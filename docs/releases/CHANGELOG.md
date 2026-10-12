@@ -35,7 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (RUSTSEC-2026-0258) and rustls-pemfile (RUSTSEC-2025-0134) from the
   weaver closure.
 - `h2` 0.4.14 → 0.4.20; `rustls` → 0.23.45 (closes RUSTSEC-2026-0285).
-- `git2`/`git-hooks` feature REMOVED entirely (dead weight — zero consumers; the promised git_hook_installer binary was retired in wave-8). Removes git2 0.21 and its RUSTSEC-2026-0183/0184 advisories from the closure.
+- `git2`/`git-hooks` feature REMOVED entirely (dead weight — zero consumers; the promised
+  git_hook_installer binary was retired in wave-8). Removes git2 0.21 and its
+  RUSTSEC-2026-0183/0184 advisories from the closure.
 - `serde_yaml` → `serde_yaml_ng` 0.10 (serde_yaml itself deprecated).
 - Remaining audit warnings (disclosed): unsafe-libyaml unmaintained
   (RUSTSEC-2024-0449 — serde_yaml_ng depends on it too; yaml-driver
@@ -1048,7 +1050,8 @@ truth); findings ledger W26/W27 register additions + closures.
   100% by construction" claim (measured ~0.13); generator.rs false const justification (new() now
   const fn); invariants.rs call-site scoping to src/ + examples/; workspace/sabotage doc backticks.
 - Residues (25ff66f): validation_results.rs doc splice; extension-layer.md snippet comma.
-- Commit-message audit verdict on last 8 commits: only real defect class was message overclaim (QUICK_GUIDE claimed-but-not-landed); diffs otherwise sound.
+- Commit-message audit verdict on last 8 commits: only real defect class was message
+  overclaim (QUICK_GUIDE claimed-but-not-landed); diffs otherwise sound.
 
 ### Waves 21-27 addendum, part 2 (2026-10-12, closing saturation)
 

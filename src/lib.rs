@@ -219,10 +219,19 @@ pub use sector_stacks::{academic, claims, OperationReceipt, OperationStatus, Sec
 // Typed error channels (DoD §2.3 wave): crate-root re-exports so consumers
 // can `match` on the error variants without deep path imports.
 pub use crate::core::builders::BuilderError;
+pub use crate::core::governance::GovernanceError;
 pub use crate::core::receipt::ReceiptJsonError;
+pub use crate::core::verification_pipeline::PipelineError;
 #[cfg(feature = "nato")]
 pub use crate::ledger::dossier_wire::DossierWireError;
+#[cfg(any(feature = "ledger", feature = "nato"))]
+pub use crate::ledger::SealError;
+#[cfg(feature = "otel")]
+pub use crate::observability::otel::OtelError;
+#[cfg(feature = "weaver")]
+pub use crate::observability::weaver::WeaverError;
 pub use crate::swarm::SwarmError;
+pub use crate::testing::state_machine::StateMachineError;
 pub use swarm::{
     ComposedOperation, OperationChain, SwarmCoordinator, SwarmMember, TaskReceipt, TaskRequest,
     TaskStatus,
@@ -333,12 +342,17 @@ pub mod prelude {
 
     #[cfg(feature = "otel")]
     pub use crate::observability::otel::{
-        MetricValidator, OtelValidationError, OtelValidationResult, SpanValidator,
+        MetricValidator, OtelError, OtelValidationError, OtelValidationResult, SpanValidator,
     };
     // Note: otel::poka_yoke is NOT re-exported via glob to avoid conflicts with testcontainers::poka_yoke
 
     #[cfg(feature = "weaver")]
-    pub use crate::observability::weaver::{WeaverValidationError, WeaverValidationResult};
+    pub use crate::observability::weaver::{
+        WeaverError, WeaverValidationError, WeaverValidationResult,
+    };
+
+    // Typed error channels (DoD §2.3 wave): prelude-level error re-exports.
+    pub use crate::core::verification_pipeline::PipelineError;
 
     // Unified observability API (new)
     #[cfg(any(feature = "otel", feature = "weaver"))]

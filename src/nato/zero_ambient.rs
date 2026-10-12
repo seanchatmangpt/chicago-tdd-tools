@@ -125,6 +125,10 @@ pub const AUDITED_MODULES: &[(&str, &str)] = &[
     ("tick.rs", include_str!("tick.rs")),
     ("thrash.rs", include_str!("thrash.rs")),
 ];
+// Compile-time pin (W51 audit): the audited set must never silently drift
+// from the 20-module enumerated surface; the runtime test below re-asserts
+// the same law with a message.
+const _: () = assert!(AUDITED_MODULES.len() == 20, "AUDITED_MODULES drifted from 20");
 
 /// Ambient-authority symbols banned on every state path.
 pub const BANNED: &[&str] = &["std::env", "std::fs", "std::net", "std::process", "SystemTime"];

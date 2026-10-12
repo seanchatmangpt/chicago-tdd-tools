@@ -693,3 +693,28 @@ OPERATOR-GATED (cannot certify from this repo): final dossier re-seal
   26.8.7 stderr rebless (accepted bump-volatile fragility — see the
   trybuild skeptic note; option to filter help-lines registered). The
   "git-hooks removal candidate" work order above is CLOSED.
+
+## W51 REGISTER ADDENDUM (2026-10-12, f33985d audit wave + repairs)
+
+- W50h (119b2c1): CHANGELOG Waves 49-50 addendum committed (CHANGELOG-only
+  commit; recorded here for register completeness — audit wave flagged its
+  absence).
+- W51a (f33985d): CHANGELOG §2.3 claim scoped to the named public surface
+  with the two private-fn residues named (import_xml parse_variant, loader
+  take); addendum cross-ref direction fixed (CHANGELOG-only commit).
+- W51 audit wave (20 read-only lanes, HEAD f33985d): 16 PASS, 2 partial,
+  2 FAIL-class findings — all repaired same-tick:
+  (1) CONFORMANCE.md stale cites (net.rs initial_marking 158→180;
+      pn64 ct_eq/ct_lte/step_branchless 102/117/152→112/127/162);
+  (2) CHANGELOG overlong lines :38 (217 chars) and :1051 (155 chars) wrapped;
+  (3) this addendum (W50h/W51a register completeness + queue ordering note);
+  (4) crate-root/prelude typed-error exports completed (GovernanceError,
+      PipelineError, StateMachineError, OtelError, WeaverError, SealError
+      added to lib.rs root; OtelError/WeaverError/PipelineError to prelude)
+      — closes the residual gap in the DoD §2.3 named-surface claim.
+- Operator-queue ordering (authoritative, supersedes the :615-617 five-step
+  wording): (1) CTT push → (2) affidavit main push → (3) strata push
+  (fix/kg-42-status-code) → (4) dossier re-seal → (5) v26.10.12 re-tag →
+  (6) crates.io publish (proc_macros first). Operator-gated items remain 4
+  (dossier re-seal, re-tag, publish, affidavit push); the DoD register's
+  "7 operator-gated" prose is superseded by this count.

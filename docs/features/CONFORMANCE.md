@@ -178,8 +178,8 @@ Branchless, `no_std`-compatible hot path. Bit layout [15:0] m / [31:16] W- /
 | `marking` / `pre` / `post` / `tid` / `flags` | pn64.rs:23 / 30 / 37 / 44 / 57 |
 | `pack(mark, pre, post, tid, flags)` | pn64.rs:65 |
 | `enabled` / `fire` | pn64.rs:77 / 85 |
-| `ct_eq` / `ct_lte` | pn64.rs:102 / 117 |
-| `step_branchless(pn, ocel, invariant_mask)` | pn64.rs:152 |
+| `ct_eq` / `ct_lte` | pn64.rs:112 / 127 |
+| `step_branchless(pn, ocel, invariant_mask)` | pn64.rs:162 |
 
 ## Net / State Space / Validation
 
@@ -189,7 +189,7 @@ Branchless, `no_std`-compatible hot path. Bit layout [15:0] m / [31:16] W- /
   `compile()` emits `CompiledNet.forbidden_mask` (bit i set per
   `forbidden_place` declaration), feedable to `StateSpace::new` /
   session's `set_forbidden_mask` so declarations are enforced.
-  `initial_marking()` net.rs:158.
+  `initial_marking()` net.rs:180.
 - `state::StateSpace` (state.rs:41): `new` state.rs:58, `with_max_markings`
   :93 (const), `enabled_mask` :103, `fire` :117, `try_fire` :129, `reach()`
   :160, `is_safe()` :199, `deadlock_free()` :217, `forbidden_reachable()`
