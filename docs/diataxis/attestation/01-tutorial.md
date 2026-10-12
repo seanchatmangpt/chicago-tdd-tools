@@ -1,4 +1,7 @@
 # Tutorial: Build and Seal a STANAG 4107 Dossier
+> **FRESHNESS NOTE (2026-10-12):** the dossier was re-sealed after this page was
+> written — the expected merkle root below is stale; the live root is in
+> docs/nato/NATO_STANAG_4107_DOSSIER.json (`just dossier-verify` recomputes it).
 
 Seal twenty NATO court receipts into a signed `CTT-DOSSIER-v1` document, then verify the ML-DSA-65 signature and Merkle root. Every command below was executed against the current tree on 2026-10-11; the expected Merkle root `783308d9…6671e` is the value sealed in the landed dossier.
 

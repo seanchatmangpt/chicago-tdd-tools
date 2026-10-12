@@ -592,38 +592,12 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_async_test_with_timeout_macro_expansion() {
-        // Verify async_test_with_timeout macro expands correctly
-        let _ = stringify! {
-            async_test_with_timeout!(test_with_custom_timeout, 30, {
-                let x = 1;
-                assert_eq!(x, 1);
-            });
-        };
-    }
-
-    #[test]
-    fn test_fixture_test_with_timeout_macro_expansion() {
-        // Verify fixture_test_with_timeout macro expands correctly
-        let _ = stringify! {
-            fixture_test_with_timeout!(test_fixture_with_timeout, fixture, 30, {
-                let counter = fixture.test_counter();
-                assert!(counter >= 0);
-            });
-        };
-    }
-
-    #[cfg(feature = "weaver")]
-    #[test]
-    fn test_weaver_test_with_timeout_macro_expansion() {
-        // Verify weaver_test_with_timeout macro expands correctly
-        let _ = stringify! {
-            weaver_test_with_timeout!(test_weaver_with_timeout, 30, {
-                // Test body
-            });
-        };
-    }
+    // AUDIT NOTE (W10): three former "macro expansion" tests here wrapped
+    // macro invocations in stringify! — tokens are captured, never parsed
+    // or expanded, so those tests carried zero bits (one even cited a
+    // never-defined weaver_test_with_timeout!). Retired under ERRC; the
+    // real coverage lives in test_fixture_basic (real fixture_test! run)
+    // and test_timeout_enforcement_works (real tokio timeout) below.
 
     // Test to verify timeout enforcement works (FM9: Defense in depth verification)
     // FMEA Fix: Verifies that tokio::time::timeout actually enforces timeouts.

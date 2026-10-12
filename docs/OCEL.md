@@ -25,7 +25,7 @@ Events are admitted through the `wasm4pm-compat` Evidence lifecycle, ensuring th
 At the end of a run, the log is sealed with a BLAKE3 digest and can be exported as a `.ocel.jsonl` file for consumption by standard process mining tools.
 
 ### 4. Self-Teaching Loop
-When `ocel-generation-discovery` is enabled, completed runs are graduated for discovery (`graduate_for_discovery` mints a `GraduationCandidate`; a write-only `ProcessModelStore` holds candidate models). Model inference and the replay path are NOT yet wired — conformance today is enforced explicitly via `ConformanceSession` replay against an authored model.
+When `ocel-generation-discovery` is enabled, runs can be graduated for discovery (`graduate_for_discovery` mints a `GraduationCandidate`; a write-only `ProcessModelStore` holds candidate models; currently exercised from tests, no production call site). Model inference and the replay path are NOT yet wired — conformance today is enforced explicitly via `ConformanceSession` replay against an authored model.
 
 ## Configuration
 

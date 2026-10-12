@@ -58,8 +58,8 @@ The test infrastructure covers the following 9 core features of the governance f
 
 1. **Admission Law Macro** (`[retired] assert_admitted!`, `assert_partially_admitted!`): Ensures target modules compile and initialize only when meeting defined admission metadata and credentials.
 2. **Lineage Law Macro** (`assert_lineage_intact!`, `[retired] assert_crown_receipt!`): Validates the historical dependency lineage at compile-time to prevent broken links or modifications.
-3. **Drift Law Macro** (`assert_no_drift!`, `assert_drift_within!`): Enforces boundary limits on configuration parameters, metrics, or execution times relative to baseline tolerances.
-4. **Anti-Circumvention Macro** (`assert_no_bypass!`): Scans compiler AST structures to block bypass attempts, such as redefining or bypassing the official diagnostic emission paths.
+3. **Drift Law Macro** ([retired] `assert_no_drift!`, [retired] `assert_drift_within!`): Enforces boundary limits on configuration parameters, metrics, or execution times relative to baseline tolerances.
+4. **Anti-Circumvention Macro** ([retired] `assert_no_bypass!`): Scans compiler AST structures to block bypass attempts, such as redefining or bypassing the official diagnostic emission paths.
 5. **Diagnostic Emission Channel & Sink**: A thread-safe queue and sink system that buffers and writes diagnostics to log destinations or telemetry channels without blocking hot paths.
 6. **LSP Integration Provider**: Translates internal compiler/runtime diagnostics into standard Language Server Protocol (LSP) formatted payloads for IDE display.
 7. **Diagnostic Code Registry**: Manages registered prefix domains (e.g., ADM, LIN, DRF) to guarantee uniqueness, description mappings, and ANDON documentation generation.

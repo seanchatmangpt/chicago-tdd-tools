@@ -1,4 +1,7 @@
 # Tutorial: Drive a Temprun Session from a Saga Step
+> **FRESHNESS NOTE (2026-10-12):** the W-ABI2 bridge rebase has landed (strata
+> 59ed80c) — the 'OPEN ABI re-base' framing and the 352-byte Sealed wire rows
+> below are superseded; Sealed now carries a 32-byte digest only.
 
 > Landed reality as of stratus v26.10.x. Every surface here is read from
 > `/Users/sac/strata/stratus/lib/stratus/temprun/worker.ex` and

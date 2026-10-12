@@ -165,14 +165,13 @@ test-assurance-integration:
     timeout 600s cargo nextest run --test prelude_surface_tests
     timeout 600s cargo nextest run --test dependency_lock_guard --features receipt-validation
     timeout 600s cargo nextest run --test cli_proof_tests --features cli-proof
-    timeout 600s cargo nextest run --test ocel_tests --features ocel-generation,ocel-generation-discovery
+    timeout 600s cargo nextest run --test ocel_tests --features ocel-generation,ocel-generation-discovery,uuid-v4
     timeout 600s cargo nextest run --test observability_fixtures_tests --features weaver,otel
     timeout 600s cargo nextest run --test star_toml_e2e --features property-testing,snapshot-testing,uuid-v4
     timeout 600s cargo nextest run --test go_extra_mile_tests --features property-testing,snapshot-testing
-    # v1_3_0_integration NOT gated: legacy v1.3.0-era suite — its stored
-    # snapshot expects redaction placeholders ([TIMESTAMP]/[UUID]/...) the
-    # current redaction path no longer emits; re-minting is a legacy-decision
-    # for the operator, not a CI gate. Local-only, disclosed.
+    timeout 600s cargo nextest run --test v1_3_0_integration --features cli-testing,snapshot-testing,uuid-v4
+    # (v1_3_0 was previously excluded: a stale v26.6.11-era snapshot and a
+    # uuid-length assert fixed since — re-minted + gated, audit W10.)
     # ledger sealing + dossier-lib courts (entropy_court_lite needs ~7s,
     # so these use cargo test, not nextest's 5s default timeout)
     timeout 600s cargo test --features ledger,nato --test ledger_sealing_tests

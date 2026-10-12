@@ -1,0 +1,258 @@
+[
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace Lcg::next_u64 -> u64 with 0\n@@ -66,18 +66,17 @@\n \n     /// Create an LCG from a fixed seed. Same seed, same sequence.\n     pub const fn new(seed: u64) -> Self {\n         Lcg { state: seed }\n     }\n \n     /// Advance and return the raw 64-bit state.\n     pub fn next_u64(&mut self) -> u64 {\n-        self.state = self.state.wrapping_mul(Self::M).wrapping_add(Self::C);\n-        self.state\n+        0 /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n         if n == 0 {\n             return 0;\n         }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::next_u64",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 76
+        },
+        "start": {
+          "column": 5,
+          "line": 72
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/nato/rng.rs:74:9: replace Lcg::next_u64 -> u64 with 0",
+    "package": "chicago-tdd-tools",
+    "replacement": "0",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 75
+      },
+      "start": {
+        "column": 9,
+        "line": 74
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace Lcg::next_u64 -> u64 with 1\n@@ -66,18 +66,17 @@\n \n     /// Create an LCG from a fixed seed. Same seed, same sequence.\n     pub const fn new(seed: u64) -> Self {\n         Lcg { state: seed }\n     }\n \n     /// Advance and return the raw 64-bit state.\n     pub fn next_u64(&mut self) -> u64 {\n-        self.state = self.state.wrapping_mul(Self::M).wrapping_add(Self::C);\n-        self.state\n+        1 /* ~ changed by cargo-mutants ~ */\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n         if n == 0 {\n             return 0;\n         }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::next_u64",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 76
+        },
+        "start": {
+          "column": 5,
+          "line": 72
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/nato/rng.rs:74:9: replace Lcg::next_u64 -> u64 with 1",
+    "package": "chicago-tdd-tools",
+    "replacement": "1",
+    "span": {
+      "end": {
+        "column": 19,
+        "line": 75
+      },
+      "start": {
+        "column": 9,
+        "line": 74
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace Lcg::sample -> u64 with 0\n@@ -73,14 +73,11 @@\n     pub fn next_u64(&mut self) -> u64 {\n         self.state = self.state.wrapping_mul(Self::M).wrapping_add(Self::C);\n         self.state\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n-        if n == 0 {\n-            return 0;\n-        }\n-        (self.next_u64() >> 32) % n\n+        0 /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/nato/rng.rs:81:9: replace Lcg::sample -> u64 with 0",
+    "package": "chicago-tdd-tools",
+    "replacement": "0",
+    "span": {
+      "end": {
+        "column": 36,
+        "line": 84
+      },
+      "start": {
+        "column": 9,
+        "line": 81
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace Lcg::sample -> u64 with 1\n@@ -73,14 +73,11 @@\n     pub fn next_u64(&mut self) -> u64 {\n         self.state = self.state.wrapping_mul(Self::M).wrapping_add(Self::C);\n         self.state\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n-        if n == 0 {\n-            return 0;\n-        }\n-        (self.next_u64() >> 32) % n\n+        1 /* ~ changed by cargo-mutants ~ */\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/nato/rng.rs:81:9: replace Lcg::sample -> u64 with 1",
+    "package": "chicago-tdd-tools",
+    "replacement": "1",
+    "span": {
+      "end": {
+        "column": 36,
+        "line": 84
+      },
+      "start": {
+        "column": 9,
+        "line": 81
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace == with != in Lcg::sample\n@@ -73,14 +73,14 @@\n     pub fn next_u64(&mut self) -> u64 {\n         self.state = self.state.wrapping_mul(Self::M).wrapping_add(Self::C);\n         self.state\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n-        if n == 0 {\n+        if n != /* ~ changed by cargo-mutants ~ */ 0 {\n             return 0;\n         }\n         (self.next_u64() >> 32) % n\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/nato/rng.rs:81:14: replace == with != in Lcg::sample",
+    "package": "chicago-tdd-tools",
+    "replacement": "!=",
+    "span": {
+      "end": {
+        "column": 16,
+        "line": 81
+      },
+      "start": {
+        "column": 14,
+        "line": 81
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace % with / in Lcg::sample\n@@ -76,11 +76,11 @@\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n         if n == 0 {\n             return 0;\n         }\n-        (self.next_u64() >> 32) % n\n+        (self.next_u64() >> 32) / /* ~ changed by cargo-mutants ~ */ n\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/nato/rng.rs:84:33: replace % with / in Lcg::sample",
+    "package": "chicago-tdd-tools",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 84
+      },
+      "start": {
+        "column": 33,
+        "line": 84
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace % with + in Lcg::sample\n@@ -76,11 +76,11 @@\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n         if n == 0 {\n             return 0;\n         }\n-        (self.next_u64() >> 32) % n\n+        (self.next_u64() >> 32) + /* ~ changed by cargo-mutants ~ */ n\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/nato/rng.rs:84:33: replace % with + in Lcg::sample",
+    "package": "chicago-tdd-tools",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 34,
+        "line": 84
+      },
+      "start": {
+        "column": 33,
+        "line": 84
+      }
+    }
+  },
+  {
+    "diff": "--- src/nato/rng.rs\n+++ replace >> with << in Lcg::sample\n@@ -76,11 +76,11 @@\n     }\n \n     /// Uniform sample in `0..n` via `(next() >> 32) % n`. Returns 0 when\n     /// `n == 0` (nothing to sample) — never panics.\n     pub fn sample(&mut self, n: u64) -> u64 {\n         if n == 0 {\n             return 0;\n         }\n-        (self.next_u64() >> 32) % n\n+        (self.next_u64() << /* ~ changed by cargo-mutants ~ */ 32) % n\n     }\n }\n",
+    "file": "src/nato/rng.rs",
+    "function": {
+      "function_name": "Lcg::sample",
+      "return_type": "-> u64",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 85
+        },
+        "start": {
+          "column": 5,
+          "line": 78
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/nato/rng.rs:84:26: replace >> with << in Lcg::sample",
+    "package": "chicago-tdd-tools",
+    "replacement": "<<",
+    "span": {
+      "end": {
+        "column": 28,
+        "line": 84
+      },
+      "start": {
+        "column": 26,
+        "line": 84
+      }
+    }
+  }
+]

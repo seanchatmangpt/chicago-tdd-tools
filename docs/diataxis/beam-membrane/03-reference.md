@@ -1,4 +1,9 @@
 # Reference: The Temprun Port Protocol
+> **FRESHNESS NOTE (2026-10-12):** this table documents the pre-rebase worker
+> record layout; the rebased bridge relays the GUEST layout verbatim
+> (outcome u8 | remaining u32 | steps u32 | events u32 | marking u64) and the
+> 352-byte Sealed wire is deleted. Reconciled round-trip court: strata
+> guest_roundtrip_court.rs.
 
 > Landed reality: `/Users/sac/strata/stratus/lib/stratus/temprun/worker.ex`
 > (Port protocol v1) aligned to

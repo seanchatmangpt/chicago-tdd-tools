@@ -1,4 +1,8 @@
 # How To: Operate the Replay Nullifier Filter
+> **FRESHNESS NOTE (2026-10-12):** the nullifier persistence story below predates
+> affidavit's v2 snapshot format (header + HMAC-BLAKE3 auth, fail-closed open,
+> 0600 key file). The truncate-to-recover guidance is obsolete — see
+> replay_nullifier.rs in the affidavit checkout for the current format.
 
 Operations for the CTRT anti-replay filter in `/Users/sac/affidavit/src/replay_nullifier.rs` and its CLI wiring in `/Users/sac/affidavit/src/handlers.rs` (`pub fn emit`, `format == "ctrt"` branch).
 

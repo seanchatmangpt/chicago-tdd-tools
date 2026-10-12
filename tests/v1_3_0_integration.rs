@@ -133,7 +133,11 @@ fn test_user_authentication_flow_with_metadata() {
         let user_id = TestData::uuid();
 
         assert_eq!(email, "john.doe@example.com");
-        assert_eq!(user_id.len(), 36); // UUID format
+        #[cfg(feature = "uuid-v4")]
+        assert_eq!(user_id.len(), 36);
+        // Zero-ambient fallback (no uuid-v4): "id-" + 32 hex = 35 chars.
+        #[cfg(not(feature = "uuid-v4"))]
+        assert_eq!(user_id.len(), 35); // UUID format
 
         // Return values before scope ends
         (email, user_id)
