@@ -1,3 +1,5 @@
+> **HISTORICAL (W27 probe): generated 2025-11-15. Its headline "Critical Finding" (build_yaml/build_toml missing) is STALE — both methods exist at src/core/builders.rs:395/:417 with tests; the 1.3.0 version-match claim is also stale (crate is 26.10.12). Do not cite as current.
+
 > 💡 Explanation
 # Mdbook Verification - Executive Summary
 

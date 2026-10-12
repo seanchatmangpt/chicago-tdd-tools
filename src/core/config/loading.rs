@@ -126,7 +126,7 @@ const _: () = {
 
 /// Find config file in project hierarchy
 ///
-/// **FMEA Fix FM3 (RPN 175)**: Logs info when searching for config file, shows searched paths.
+/// **FMEA Fix FM3 (RPN 175)**: Logs (at DEBUG level, and only when CARGO_MANIFEST_DIR is set — W27 probe corrected the earlier "info" claim) when the config search fails, showing searched paths.
 /// This improves detection of config file location issues from 7 (Very Low) to 4 (Moderately High).
 fn find_config_file() -> Option<PathBuf> {
     const MAX_DEPTH: usize = 5;
