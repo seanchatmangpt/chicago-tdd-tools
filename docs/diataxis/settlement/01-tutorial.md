@@ -32,12 +32,12 @@ passing silently.
 
 | File | Role |
 |---|---|
-| `examples/merger_matrix/models/phase7_settlement.powl` | normative base model: 9 activities, 14/64 node budget (`MAX_POWL_NODES`, `src/conformance/loader.rs:47`) |
+| `examples/merger_matrix/models/phase7_settlement.powl` | normative base model: 9 activities, 14/64 node budget (`MAX_POWL_NODES`, `src/conformance/loader.rs:50`) |
 | `examples/merger_matrix/conformance/phase7_settlement.ocel.json` | golden fixture — looped shape (intake/elimination fires twice) |
 | `examples/merger_matrix/conformance/phase7_settlement_violation.ocel.json` | violation fixture — same looped skeleton |
 | `tests/merger_conformance_tests.rs` | the landed courts; Phase 7 entries: `phase7_golden_pipeline_completes`, `phase7_landed_fixtures_loop_repetition_faults_skipped` |
 | `src/conformance/session.rs` | `ConformanceSession`, `set_forbidden_mask`, latch/freeze semantics |
-| `src/conformance/state.rs:225` | `StateSpace::forbidden_reachable` — the DvP trap checker |
+| `src/conformance/state.rs:228` | `StateSpace::forbidden_reachable` — the DvP trap checker |
 | `crates/merger-guests/src/netting_engine.rs` | the conservation kernel (leaf_id 2, `mgi_netting_engine_compute`) |
 
 ## Step 1 — Run the landed courts

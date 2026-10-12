@@ -32,7 +32,7 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 **Note**: Coverage tasks are manual only, NOT part of commit/push verification.
 
-**Coverage (cargo-llvm-cov)**: 30s SLA. Task: `coverage`. **Coverage Report (HTML)**: 30s SLA. Task: `coverage-report`. **Coverage (cargo-tarpaulin)**: 30s SLA. Task: `coverage-tarpaulin`.
+**Coverage (cargo-llvm-cov)**: 600s SLA (Justfile). **Coverage Report (HTML)**: 600s SLA. **Coverage (cargo-tarpaulin)**: 900s SLA. Task: `coverage`.  Task: `coverage-tarpaulin`.
 
 ## Security SLAs
 
@@ -46,17 +46,17 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Workflow SLAs
 
-**Pre-Commit**: ~10s expected total (fmt: 5s, lint: 5s, test-unit: 1s). Task: `pre-commit`.
+**Pre-Commit**: ~10s expected total (fmt: 5s, lint: 5s, test-unit: 300s (timeout SLA; actual run ~1s)). Task: `pre-commit`.
 
-**Pre-Push**: ~60s expected total (check: 5s, lint: 5s, TODO/error handling: <1s, fmt: 5s, test-unit: 1s, audit: 15s). Recommended task sequence: `pre-commit`, `check`, `lint`, `audit`.
+**Pre-Push**: ~60s expected total (check: 5s, lint: 5s, TODO/error handling: <1s, fmt: 5s, test-unit: 300s (timeout SLA; actual run ~1s), audit: 15s). Recommended task sequence: `pre-commit`, `check`, `lint`, `audit`.
 
-**CI Pipeline**: ~120s expected total (fmt: 5s, lint: 5s, test-unit: 1s, audit-all: 30s). Task: `ci`. Note: Does not include integration tests (use `test-all` for full suite including 60s integration tests).
+**CI Pipeline**: ~120s expected total (fmt: 5s, lint: 5s, test-unit: 300s (timeout SLA; actual run ~1s), audit-all: 30s). Task: `ci`. Note: Does not include integration tests (use `test-all` for full suite including 60s integration tests).
 
 **Release**: ~180s expected total (ci: 120s, docs-build: 180s). Task: `release`.
 
-**Development Workflow**: ~15s expected total (check: 5s, fmt: 5s, test-unit: 1s). Task: `dev`.
+**Development Workflow**: ~15s expected total (check: 5s, fmt: 5s, test-unit: 300s (timeout SLA; actual run ~1s)). Task: `dev`.
 
-**Full Validation**: ~20s expected total (build: 5s, test: 1s, lint: 5s). Task: `all`.
+**Full Validation**: ~20s expected total (build: 5s, test: 300s (timeout SLA; actual run ~1s), lint: 5s). Task: `all`.
 
 ## Git Hook SLAs
 
@@ -64,7 +64,7 @@ _Removed_: Git hook installer has been retired; developers run `just` tasks dire
 
 ## Rationale
 
-**1s for Unit Tests**: Fast feedback loop, forces test optimization, prevents slow tests from accumulating, actual execution ~0.05s (well under SLA).
+**300s timeout for Unit Tests** (`just test-unit`/`just test` recipes): fast feedback in practice (~1s actual run under nextest); the 300s number is the recipe timeout SLA, not a per-test budget. The per-test slow-timeout is 5s (`.config/nextest.toml`). Forces test optimization; prevents slow tests from accumulating.
 
 **30s for Integration Tests**: Docker container startup takes 5-10s, network operations can take time, integration tests excluded from normal iteration, only run when needed.
 
@@ -104,7 +104,7 @@ _Removed_: Git hook installer has been retired; developers run `just` tasks dire
 
 ## Summary
 
-**Key Associations**: Unit Tests = 1s = Fast Feedback. Integration Tests = 60s = Docker Operations (increased from 30s for fail-fast hardening). Build Tasks = 5s = Normal Operations. Security Audit = 15s = Network Operations. Documentation = 20s = Generation Time. Coverage = 30s = Analysis Time.
+**Key Associations**: Unit Tests = 300s recipe timeout = Fast Feedback in practice (~1s actual; 5s per-test nextest slow-timeout). Integration Tests = 60s = Docker Operations (increased from 30s for fail-fast hardening). Build Tasks = 5s = Normal Operations. Security Audit = 15s = Network Operations. Documentation = 20s = Generation Time. Coverage = 600s/900s = Analysis Time.
 
 **Pattern**: All tasks have explicit timeout SLAs. Timeouts enforced at multiple layers (task-level, test-level, runner-level). Actual times well under SLA. Timeouts prevent hangs and ensure fast feedback.
 

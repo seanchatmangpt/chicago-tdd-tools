@@ -95,7 +95,7 @@ session latches, so set the mask right after compile, before
 
 ### Checking reachability of a forbidden marking
 
-`StateSpace::forbidden_reachable` (`src/conformance/state.rs:225`) does a BFS
+`StateSpace::forbidden_reachable` (`src/conformance/state.rs:228`) does a BFS
 over the lowered net's markings from the initial marking, returning the first
 forbidden marking found (any marking whose bits intersect the mask) or `None`:
 

@@ -139,7 +139,7 @@ assert_eq!(model.node_count(), 34); // under MAX_POWL_NODES = 64
 `from_powl_file` (loader.rs, Public API section) is the module's single
 declared IO boundary; unreadable files refuse with `ConformanceError::Io`.
 Oversized models refuse with `ConformanceError::ModelTooLarge` when the tree
-exceeds `MAX_POWL_NODES = 64` (loader.rs:47). The phase-1 net is 34/64.
+exceeds `MAX_POWL_NODES = 64` (loader.rs:50). The phase-1 net is 34/64.
 
 The landed phase net
 `examples/merger_matrix/models/phase1_intake.powl` encodes the legal workflow

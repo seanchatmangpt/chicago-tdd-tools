@@ -60,7 +60,7 @@ Semantics pinned by the parser:
 
 ### Node cap
 
-`MAX_POWL_NODES: usize = 64` (loader.rs:47). Counted after parse via
+`MAX_POWL_NODES: usize = 64` (loader.rs:50). Counted after parse via
 `count_nodes` over the root (root included; `Loop` counts 1 + body + redo).
 Exceeding it refuses `ConformanceError::ModelTooLarge { found, limit }`.
 The merger fixture nets report their budget in a header comment

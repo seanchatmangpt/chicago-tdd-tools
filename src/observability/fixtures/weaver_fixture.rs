@@ -40,7 +40,7 @@ impl WeaverTestFixture {
         if let Some(ref path) = config.registry_path {
             if !path.exists() {
                 return Err(ObservabilityError::RegistryNotFound(format!(
-                    "Semantic conventions registry not found at {}. Run `cargo make weaver-bootstrap` or provide an existing registry path.",
+                    "Semantic conventions registry not found at {}. Run `just weaver-bootstrap` or provide an existing registry path.",
                     path.display()
                 )));
             }
@@ -118,8 +118,6 @@ impl WeaverTestFixture {
     ///
     /// **TRIZ Solution**: Resolves async/blocking contradiction by handling context
     /// switching internally (Principle #13: The Other Way Round, Principle #24: Intermediary).
-    ///
-    /// # Errors
     ///
     /// For blocking contexts, use `finish()` instead.
     ///

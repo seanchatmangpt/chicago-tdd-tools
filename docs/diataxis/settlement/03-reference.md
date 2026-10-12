@@ -155,6 +155,6 @@ replay.
 
 - Linear session net budget: `MAX_PETRI_PLACES - 1` = 15 transitions;
   `TooManyPlaces { limit: 16 }` beyond that (`src/conformance/session.rs:111`).
-- POWL loader node cap: `MAX_POWL_NODES = 64` (`src/conformance/loader.rs:47`).
+- POWL loader node cap: `MAX_POWL_NODES = 64` (`src/conformance/loader.rs:50`).
 - Forbidden mask: `set_forbidden_mask(u64)`, truncated to 16-bit markings;
   read on every step — mid-stream install changes classification of subsequent steps (`session.rs:223`).

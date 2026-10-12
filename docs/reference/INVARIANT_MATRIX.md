@@ -41,7 +41,7 @@
 
 | # | Failure Mode | Cause | Reaction | Exit |
 |---|---|---|---|---|
-| 2.1 | **ClockBackward** | Measured τ decreases between samples | Emit `InvariantViolation::Thermal`; abort measurement | ❌ FAIL |
+| 2.1 | **ClockBackward** | Measured τ decreases between samples | Variant DEFINED but NOT emitted at the measurement site (audit W25: validation/performance.rs never constructs it) — enforcement is aspirational, registered as a work order | ❌ FAIL (declared) |
 | 2.2 | **ClockMonsterJump** | τ increases by > sanity threshold (e.g., > 1e9 ticks) | Emit invariant violation; mark measurement invalid | ❌ FAIL |
 | 2.3 | **ThermalBoundExceeded** | τ > `MAX_TICKS` configured | **Test-level SLA failure** (not invariant; expected for slow tests); record in receipt | ❌ FAIL (user-level) |
 | 2.4 | **CannotMeasureThermal** | Measurement infrastructure broken (RDTSC unavailable, etc.) | Emit `InvariantViolation::Thermal`; no "degraded mode" | ❌ FAIL |
@@ -127,7 +127,7 @@
 | # | Failure Mode | Cause | Reaction | Exit |
 |---|---|---|---|---|
 | 7.1 | **PartialPipelineSuccess** | Pipeline returns `OK` but not all configured phases ran | Should be impossible if earlier phases enforce; if detected → failure | ❌ FAIL |
-| 7.2 | **PipelineConfigInvalid** | Attempted to use "relaxed" or unvalidated config | Removed from API; compile-time error if attempted | ❌ FAIL (compile-time) |
+| 7.2 | **PipelineConfigInvalid** | Attempted to use "relaxed" or unvalidated config | NOT removed — PipelineConfig::relaxed() is a live supported constructor (audit W24/W25); the variant is constructed only in fail_fast.rs tests; refusal policy is aspirational | ❌ FAIL (compile-time) |
 | 7.3 | **PipelinePhaseSkipped** | Contract phase 5 defined but pipeline skips it | Pipeline entry validation rejects; emit invariant violation | ❌ FAIL |
 | 7.4 | **PipelineInternalStateCorruption** | Pipeline state machine reached invalid intermediate state | Sealed API prevents this; if detected, panic in debug | ❌ FAIL |
 | 7.5 | **PipelineResultAmbiguous** | Multiple conflicting results (e.g., phase A passed, phase A failed) | Use Result-based composition; impossible by construction | ❌ FAIL |
