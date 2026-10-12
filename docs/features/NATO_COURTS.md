@@ -172,9 +172,8 @@ remain strata-side. Pillar law is the landed `Court::PILLAR` consts, pinned by t
 (`docs/receipts/N{08,12,14,15}.json`) witness it for the four real-run
 courts — the other 17 persisted receipts are the synthetic control set
 (`sample_control_set()`), not pillar evidence.
-(`docs/receipts/N*.json`) and the landed `Court::PILLAR` consts; where the
-spec pillar has no enum variant, the in-code mapping is disclosed in the row
-(N16 Resource->`Dossier`, N17/N18 Crypto->`Security`, per the N04
+Where the spec pillar has no enum variant, the in-code mapping is disclosed
+in the row (N16 Resource->`Dossier`, N17/N18 Crypto->`Security`, per the N04
 Authority->`Dossier` precedent).
 
 ## Files on disk (src/nato/)

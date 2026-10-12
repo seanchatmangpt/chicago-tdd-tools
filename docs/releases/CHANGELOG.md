@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Justfile dossier recipes (`verify-ledger`, `emit-dossier`, `dossier-verify`,
   `dossier-inspect`) route through the `affi` binary.
 ### Changed
+
+- **Wave-6 closeout** (`b8dac24`/`934a70c`): CHANGELOG wave-4 entries
+  landed (they had been claimed but not written); docs/lanes/ boundary
+  law; pillar-law authority note (consts + mapping test are the law;
+  17 persisted receipts are the synthetic control set); findings
+  register SK6/SX6 synced to PARTIAL; SK2/SK3 restored to QUEUED.
 - `tests/dossier_cli_tests.rs` is a library-only court
   (`--features ledger,nato`); stale bin/feature references in
   `docs/features/LEDGER.md`, `docs/features/MERGER_MATRIX.md` and
