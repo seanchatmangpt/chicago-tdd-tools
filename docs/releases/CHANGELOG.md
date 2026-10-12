@@ -16,8 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ctdd_ledger` / `cq` CLI binaries** (`src/bin/ctdd_ledger.rs`, `src/bin/cq.rs`)
   and the `ledger-cli` feature + clap dependency, excised in the V2 cleanup.
   The domain surface remains in the library (`src/ledger/`, notably
-  `dossier_wire.rs`); the CLI verbs are re-landed in the external `affi` binary (Phase D M2: `receipt validate`, `receipt chain-verify`, `dossier seal`,
-  `dossier verify` behind the `ctdd` feature), and the
+  `dossier_wire.rs`); the CLI verbs are re-landed in the external `affi`
+  binary (Phase D M2: `receipt validate`, `receipt chain-verify`,
+  `dossier seal`, `dossier verify` behind the `ctdd` feature), and the
   Justfile dossier recipes (`verify-ledger`, `emit-dossier`, `dossier-verify`,
   `dossier-inspect`) route through the `affi` binary.
 ### Changed
