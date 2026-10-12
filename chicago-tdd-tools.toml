@@ -130,6 +130,9 @@ commands_per_container = 5
 hot_path_tick_budget = 8
 
 [guards]
+# WARNING (audit W12): these keys are read at startup but currently inert —
+# no guard enforcement consumes them; edit the MAX_RUN_LEN/MAX_BATCH_SIZE
+# constants instead.
 # Guard constraint enforcement configuration
 # Enforces MAX_RUN_LEN ≤ 8 (Chatman Constant) and MAX_BATCH_SIZE constraints
 

@@ -35,7 +35,10 @@
 //! struct DatabaseProvider;
 //!
 //! #[cfg(feature = "async")]
-//! impl chicago_tdd_tools::core::async_fixture::private::Sealed for DatabaseProvider {}
+//! // NOTE: `private::Sealed` is crate-private — this impl is illustrative of
+    // the trait's SHAPE only; the trait cannot be implemented outside this crate.
+    // External code uses DefaultAsyncFixtureProvider.
+    // impl chicago_tdd_tools::core::async_fixture::private::Sealed for DatabaseProvider {}
 //!
 //! #[cfg(feature = "async")]
 //! impl AsyncFixtureProvider for DatabaseProvider {

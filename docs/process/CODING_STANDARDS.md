@@ -5,10 +5,10 @@ This document defines the coding standards enforced across the Chicago TDD Tools
 ## Code Style Standards
 
 ### Formatting
-- **Tool**: `cargo make fmt` (uses `rustfmt`)
+- **Tool**: `just fmt` (uses `rustfmt`)
 - **Enforcement**: CI/CD pipeline fails if code is not formatted
 - **Standard**: Rust standard formatting (enforced by rustfmt)
-- **Action**: Run `cargo make fmt` before committing
+- **Action**: Run `just fmt` before committing
 
 ### Naming Conventions
 - **Functions**: `snake_case` (Rust convention)
@@ -139,14 +139,14 @@ This document defines the coding standards enforced across the Chicago TDD Tools
 ## Automated Enforcement
 
 ### CI/CD Pipeline
-- **Formatting**: `cargo make fmt` check (fails if not formatted)
-- **Linting**: `cargo make lint` (fails on clippy warnings)
-- **Tests**: `cargo make test` (fails on test failures)
+- **Formatting**: `just fmt` check (fails if not formatted)
+- **Linting**: `just lint` (fails on clippy warnings)
+- **Tests**: `just test` (fails on test failures)
 - **Coverage**: Coverage tracking and alerts
 - **unwrap/expect**: Automated check for production code
 
 ### Pre-commit Hooks
-- **Installation**: `cargo make install-hooks`
+- **Installation**: `just install-hooks`
 - **Checks**: Format, lint, unwrap/expect detection
 - **Enforcement**: Hooks prevent committing non-compliant code
 
@@ -196,7 +196,7 @@ This document defines the coding standards enforced across the Chicago TDD Tools
 
 ## Summary
 
-**Code Style**: Format with `cargo make fmt`, use Rust naming conventions
+**Code Style**: Format with `just fmt`, use Rust naming conventions
 **Error Handling**: `Result<T, E>` in production, `unwrap()`/`expect()` only in tests
 **Documentation**: 100% coverage for public APIs, consistent style
 **Testing**: `test!` macro, AAA pattern, 80% minimum coverage

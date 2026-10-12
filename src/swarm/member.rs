@@ -1,7 +1,10 @@
 //! Swarm Member: Individual Agent in the Swarm
 //!
 //! Represents a single agent participating in the swarm. Each member has
-//! capabilities (sectors it can handle), state, and communication with other members.
+//! capabilities (sectors it can handle), a lifecycle state, task capacity,
+//! and a last-heartbeat timestamp. Members are passive records: all
+//! coordination happens in `SwarmCoordinator`; there is no direct
+//! member-to-member communication.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

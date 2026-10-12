@@ -212,8 +212,8 @@ Run tests in random order to detect order dependencies:
 cargo nextest run --shuffle
 
 # Or run tests multiple times with different seeds
-cargo make test -- --test-threads=1
-cargo make test -- --test-threads=8
+just test -- --test-threads=1
+just test -- --test-threads=8
 ```
 
 ### Test Isolation Check
@@ -289,10 +289,10 @@ CI runs tests in different configurations:
 
 ```yaml
 # Run tests single-threaded (serial)
-cargo make test -- --test-threads=1
+just test -- --test-threads=1
 
 # Run tests with max parallelism
-cargo make test -- --test-threads=8
+just test -- --test-threads=8
 
 # Run with cargo-nextest (better timeout handling)
 cargo nextest run

@@ -20,6 +20,7 @@ forms are real and in active use:
 # From crates.io (what ggen's crates use in production):
 [dev-dependencies]
 chicago-tdd-tools = { version = "26.10.12", features = ["testing-extras"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "time", "sync"] }  # required by fixture_test!/async_test! examples
 
 # From a sibling checkout on disk (what this repo's own examples/ and castle use):
 [dev-dependencies]

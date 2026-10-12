@@ -143,9 +143,9 @@ chicago-tdd-tools = { version = "1.2.0", features = ["feature-name"] }
 
 **Correct**:
 ```bash
-cargo make test
-cargo make check
-cargo make test-integration
+just test
+just check
+just test-integration
 ```
 
 **Incorrect**:
@@ -284,7 +284,7 @@ test!(my_first_test, {
 Run the test:
 
 ```bash
-cargo make test
+just test
 ```
 
 **See Also**:

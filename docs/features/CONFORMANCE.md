@@ -342,3 +342,10 @@ examples/conformance_quickstart.rs:33-36).
 - The POWL DSL is not a general Petri-net text format; the separate
   `ParsedNet::from_net_str` mini-format (loader.rs:693-720) lowers to the
   validated `model::PetriNet` (loader.rs:726-736).
+
+## See Also
+
+- [NATO Courts](NATO_COURTS.md) — N02/N03 courts run over the
+  transition-table substrate.
+- [Court-Receipt Ledger](LEDGER.md) — ledger sealing court receipts
+  over conformance runs.

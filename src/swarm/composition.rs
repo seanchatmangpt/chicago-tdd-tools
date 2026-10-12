@@ -1,8 +1,11 @@
-//! Knowledge Hook Composition: Chaining Operations Across Sectors
+//! Knowledge Hook Composition: Ordered Operations Across Sectors
 //!
-//! Enables composing operations from multiple sectors into deterministic chains.
-//! A composed operation chains knowledge hooks in sequence, with output of one
-//! becoming input to the next.
+//! Defines ordered chains of operations across sectors. `OperationChain`
+//! tracks steps sorted by `order` with a cursor (`current`/`advance`), but
+//! it is a bookkeeping structure only: it does not execute steps and does
+//! not pipe data between them. `CompositionStep.input`/`output` are
+//! declarative placeholders; results are recorded out-of-band via
+//! `ComposedOperation::record_step_result`.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

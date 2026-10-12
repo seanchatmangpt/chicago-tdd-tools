@@ -1,4 +1,7 @@
 > 💡 Explanation
+> **HISTORICAL SNAPSHOT (2025-11-14).** Numbers ("289/289 passing") and
+> timeout values reflect that date; the current gate is `just ci-local`
+> (nextest global timeout 180s). Do not cite as current status.
 # Summary: CI/Unit Test Fixes - Final Status
 
 **Date**: 2025-11-14

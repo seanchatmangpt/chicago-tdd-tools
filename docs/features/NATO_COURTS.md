@@ -245,3 +245,11 @@ Rule: a court's tier is fixed by its runtime cost, not its importance —
 the tier-1 slice must be a sound (weaker but true) prefix of the tier-2/3
 run, and the mapping is recorded in the receipt so no tier silently claims
 another tier's strength.
+
+## See Also
+
+- [Conformance Checking (POWL Replay)](CONFORMANCE.md) — the PN64/POWL
+  kernel the transition-table courts audit.
+- [Court-Receipt Ledger](LEDGER.md) — the BLAKE3/Merkle/ML-DSA-65 ledger
+  sealing the receipts N20 aggregates.
+- `src/nato/README.md` — the per-court matrix this page mirrors.
