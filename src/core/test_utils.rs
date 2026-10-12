@@ -137,10 +137,18 @@ impl TempDir {
     pub fn new(prefix: &str) -> Result<Self, std::io::Error> {
         let temp_dir = std::env::temp_dir();
         #[cfg(feature = "uuid-v4")]
-        let uuid = uuid::Uuid::new_v4();
+        let unique_name = format!("{prefix}-{}", uuid::Uuid::new_v4());
+        // Without uuid-v4, fall back to a process-unique name: a constant would
+        // collide (AlreadyExists) whenever two TempDirs are created in parallel
+        // (threads or concurrent test binaries). Counter is process-global and
+        // monotonic; pid disambiguates across processes.
         #[cfg(not(feature = "uuid-v4"))]
-        let uuid = String::from("id-0");
-        let unique_name = format!("{prefix}-{uuid}");
+        let unique_name = {
+            static COUNTER: std::sync::atomic::AtomicU64 =
+                std::sync::atomic::AtomicU64::new(0);
+            let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            format!("{prefix}-id-{}-{}", std::process::id(), n)
+        };
         let path = temp_dir.join(unique_name);
 
         std::fs::create_dir_all(&path)?;
