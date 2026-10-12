@@ -124,7 +124,7 @@
 //! | 8    | `ERR_TABLE_FULL`        | all `MAX_SESSIONS` slots occupied |
 //! | 9    | `ERR_BAD_HANDLE`        | handle is free, out of range, or generation-stale |
 //! | 10   | `ERR_STREAM_EMPTY`      | attach of a zero-length stream |
-//! | 11   | `ERR_CAP_TOO_SMALL`     | out-buffer capacity below the record's fixed length |
+//! | 11   | `ERR_CAP_TOO_SMALL`     | out-buffer capacity below the record's fixed length, or the out-buffer span falls at/past the installed linear-memory bound |
 //! | 12   | `ERR_SEAL_UNAVAILABLE`  | sealing requested without the `ledger` feature |
 //! | 13   | `ERR_STREAM_ALIGNMENT`  | stream byte length not a multiple of 8 |
 //!
@@ -198,7 +198,8 @@ pub const ERR_TABLE_FULL: i32 = 8;
 pub const ERR_BAD_HANDLE: i32 = 9;
 /// Attach of a zero-length stream.
 pub const ERR_STREAM_EMPTY: i32 = 10;
-/// Out-buffer capacity below the record's fixed length.
+/// Out-buffer capacity below the record's fixed length, or out-buffer span
+/// at/past the installed linear-memory bound.
 pub const ERR_CAP_TOO_SMALL: i32 = 11;
 /// Sealing requested without the `ledger` feature.
 pub const ERR_SEAL_UNAVAILABLE: i32 = 12;
@@ -290,6 +291,49 @@ impl Table {
 }
 
 static TABLE: std::sync::Mutex<Table> = std::sync::Mutex::new(Table::new());
+
+// ---------------------------------------------------------------------------
+// Linear-memory bound (out-pointer span validation)
+// ---------------------------------------------------------------------------
+
+/// Installed end of guest linear memory (exclusive). `0` = no bound
+/// installed: the native host tier passes real allocations, so there is
+/// nothing to validate against. The embedding runtime installs the bound
+/// from the Wasm memory size at instantiation; the ABI then refuses any
+/// out-pointer whose span reaches at/past the bound with a typed errno
+/// instead of a store trap. A stale bound is a fail-closed hazard only for
+/// addresses inside a *grown* memory tail, so the embedder must refresh it
+/// after every `memory.grow` — the refusal is typed (`ERR_CAP_TOO_SMALL`),
+/// never silent.
+static LINEAR_MEMORY_END: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// Installs the guest linear-memory end bound (exclusive). Called by the
+/// embedding runtime at instantiation and after every `memory.grow`. `0`
+/// removes the bound (native host tier).
+pub fn set_linear_memory_end(end: usize) {
+    LINEAR_MEMORY_END.store(end, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// The installed linear-memory end (`0` = unbounded / native tier).
+#[must_use]
+pub fn linear_memory_end() -> usize {
+    LINEAR_MEMORY_END.load(std::sync::atomic::Ordering::SeqCst)
+}
+
+/// True when the `[ptr, ptr+cap)` span falls at/past the installed
+/// linear-memory bound (or the span computation overflows). With no bound
+/// installed (`0`, native host tier) no span can be out of bounds.
+fn out_span_oob(ptr: *const u8, cap: usize) -> bool {
+    let end = LINEAR_MEMORY_END.load(std::sync::atomic::Ordering::SeqCst);
+    if end == 0 {
+        return false;
+    }
+    match (ptr as usize).checked_add(cap) {
+        None => true,
+        Some(span_end) => span_end > end,
+    }
+}
 
 /// Runs `f` with exclusive `&mut` access to the table, serializing
 /// concurrent callers through [`TABLE`]'s mutex.
@@ -556,6 +600,12 @@ pub unsafe extern "C" fn ctt_session_step(
     if (out_cap as usize) < STEP_STATUS_LEN {
         return ERR_CAP_TOO_SMALL;
     }
+    // Out-pointer span must lie inside linear memory (T13/SK6-F2): a valid
+    // handle with an out-pointer at/past the memory end is a typed errno,
+    // not a Wasm store trap.
+    if out_span_oob(out_status, out_cap as usize) {
+        return ERR_CAP_TOO_SMALL;
+    }
     let status = with_table(|t| match resolve(t, handle) {
         Err(_) => None,
         Ok(slot) => t.slots[slot].session.as_mut().map(|s| s.step_budget(quota)),
@@ -628,6 +678,11 @@ pub unsafe extern "C" fn ctt_session_seal(
         return ERR_NULL_PTR;
     }
     if (out_cap as usize) < DIGEST_LEN {
+        return ERR_CAP_TOO_SMALL;
+    }
+    // Same out-pointer span law as [`ctt_session_step`] (T13/SK6-F2),
+    // covering both the digest buffer and the 4-byte `out_len` word.
+    if out_span_oob(out_buf, out_cap as usize) || out_span_oob(out_len.cast(), 4) {
         return ERR_CAP_TOO_SMALL;
     }
     let preimage = with_table(|t| match resolve(t, handle) {

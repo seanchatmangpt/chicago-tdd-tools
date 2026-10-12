@@ -46,10 +46,11 @@ use std::sync::Mutex;
 
 use chicago_tdd_tools::conformance::guest::{
     ctt_guest_abi_version, ctt_session_attach, ctt_session_drop, ctt_session_new, ctt_session_seal,
-    ctt_session_step, DIGEST_LEN, ERR_BAD_HANDLE, ERR_BAD_MAGIC, ERR_BAD_MODEL, ERR_BAD_VERSION,
-    ERR_CAP_TOO_SMALL, ERR_NULL_PTR, ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE,
-    ERR_STREAM_ALIGNMENT, ERR_STREAM_EMPTY, ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED,
-    MAX_SESSIONS, SEAL_PREIMAGE_LEN, STEP_STATUS_LEN,
+    ctt_session_step, linear_memory_end, set_linear_memory_end, DIGEST_LEN, ERR_BAD_HANDLE,
+    ERR_BAD_MAGIC, ERR_BAD_MODEL, ERR_BAD_VERSION, ERR_CAP_TOO_SMALL, ERR_NULL_PTR,
+    ERR_RESERVED_NOT_ZERO, ERR_SEAL_UNAVAILABLE, ERR_STREAM_ALIGNMENT, ERR_STREAM_EMPTY,
+    ERR_TABLE_FULL, ERR_TRAILING, ERR_TRUNCATED, MAX_SESSIONS, SEAL_PREIMAGE_LEN,
+    STEP_STATUS_LEN,
 };
 #[cfg(feature = "ledger")]
 use chicago_tdd_tools::conformance::guest_seal::{encode_receipt_wire, guest_receipt};
@@ -375,6 +376,83 @@ fn seal_without_ledger_is_refused_not_downgraded() {
     let code =
         unsafe { ctt_session_seal(s.0, sealed.as_mut_ptr(), sealed.len() as u32, &mut sealed_len) };
     assert_eq!(code, ERR_SEAL_UNAVAILABLE);
+}
+
+// ─── 5b. Out-pointer span law (T13/SK6-F2) ──────────────────────────────────
+
+/// Restores the process-global linear-memory bound even when an assertion
+/// fires (the bound is static state shared by the whole suite).
+struct BoundGuard;
+
+impl BoundGuard {
+    fn install(end: usize) -> Self {
+        set_linear_memory_end(end);
+        Self
+    }
+}
+
+impl Drop for BoundGuard {
+    fn drop(&mut self) {
+        set_linear_memory_end(0);
+    }
+}
+
+const FAKE_MEM_BASE: usize = 0x4000_0000;
+const FAKE_MEM_LEN: usize = 0x0001_0000; // 64 KiB guest memory
+
+/// A valid handle with an out-pointer at/past the linear-memory end returns
+/// the typed `ERR_CAP_TOO_SMALL`, never a trap/panic — and the handle stays
+/// live and usable afterwards. Covers `ctt_session_step` (T13's finding),
+/// `ctt_session_seal`'s digest buffer, and the 4-byte `out_len` word.
+#[test]
+fn out_pointer_past_linear_memory_end_is_typed_err_cap_too_small() {
+    let _guard = ABI_LOCK.lock().unwrap();
+    let s = new_locked_session();
+
+    let stream = golden_stream();
+    let code = unsafe { ctt_session_attach(s.0, stream.as_ptr(), stream.len() as u32) };
+    assert_eq!(code, 0);
+
+    let _bound = BoundGuard::install(FAKE_MEM_BASE + FAKE_MEM_LEN);
+
+    // Exactly at the end: no byte of the record fits.
+    let at_end = (FAKE_MEM_BASE + FAKE_MEM_LEN) as *mut u8;
+    let code = unsafe { ctt_session_step(s.0, 1, at_end, STEP_STATUS_LEN as u32) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "out ptr at memory end must be typed, not trap");
+
+    // Straddling the end: 8 bytes inside, the rest past it.
+    let straddle = (FAKE_MEM_BASE + FAKE_MEM_LEN - 8) as *mut u8;
+    let code = unsafe { ctt_session_step(s.0, 1, straddle, STEP_STATUS_LEN as u32) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "straddling span must be typed, not trap");
+
+    // Span arithmetic overflow (ptr + cap wraps usize) is OOB, not ok.
+    let near_max = usize::MAX as *mut u8;
+    let code = unsafe { ctt_session_step(s.0, 1, near_max, STEP_STATUS_LEN as u32) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "overflowing span must be typed, not trap");
+
+    // Seal digest buffer past the end.
+    let mut sealed_len = 0u32;
+    let code = unsafe { ctt_session_seal(s.0, at_end, 64, &mut sealed_len) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "seal out_buf past memory end must be typed");
+
+    // Seal `out_len` word past the end (digest buffer in-bounds at base).
+    let out_len_past = (FAKE_MEM_BASE + FAKE_MEM_LEN - 2) as *mut u32;
+    let code =
+        unsafe { ctt_session_seal(s.0, FAKE_MEM_BASE as *mut u8, 64, out_len_past) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "seal out_len past memory end must be typed");
+
+    // The handle was never consumed by any refused call: still live.
+    assert_ne!(linear_memory_end(), 0);
+    let mut rec = [0u8; STEP_STATUS_LEN];
+    let code = unsafe { ctt_session_step(s.0, 16, rec.as_mut_ptr(), rec.len() as u32) };
+    assert_eq!(code, ERR_CAP_TOO_SMALL, "in-bounds host buffer vs installed bound: still refused");
+    drop(_bound);
+
+    // With the bound removed (native tier default), the same call runs.
+    let mut rec = [0u8; STEP_STATUS_LEN];
+    let code = unsafe { ctt_session_step(s.0, 16, rec.as_mut_ptr(), rec.len() as u32) };
+    assert_eq!(code, 0);
+    assert_eq!(rec[0], 1, "session completed normally after bound removal");
 }
 
 // ─── 6. Drop / reuse / stale handle ─────────────────────────────────────────
