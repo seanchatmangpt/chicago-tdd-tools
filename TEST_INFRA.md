@@ -1,4 +1,10 @@
 # E2E Test Infrastructure Document
+> **HISTORICAL (2026-10).** Written against the Foundation Milestone spec
+> (docs/archive/2026-10/ORIGINAL_REQUEST.md, CA-6..CA-9). Most macros listed
+> here were retired; the 104-case test inventory (§5-§7) was a plan, not a
+> record of tests that exist. Current ground truth: CLAUDE.md,
+> docs/process/CODE_REVIEW_CHECKLIST.md, and `just test`. Do not cite this
+> file as evidence of present capability.
 
 ## 1. Test Philosophy
 
