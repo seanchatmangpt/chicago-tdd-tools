@@ -8,9 +8,9 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Test SLAs
 
-**Unit Tests**: 1s per test execution. Actual: ~0.05s (well under SLA). Profile: `default` in `.config/nextest.toml`. Tasks: `test`, `test-unit`. Note: Excludes testcontainers integration tests (too slow, require Docker).
+**Unit Tests**: 5s per test (nextest default profile) execution. Actual: ~0.05s (well under SLA). Profile: `default` in `.config/nextest.toml`. Tasks: `test`, `test-unit`. Note: Excludes testcontainers integration tests (too slow, require Docker).
 
-**Integration Tests**: 60s per test execution (increased from 30s for fail-fast hardening). Profile: `integration` in `.config/nextest.toml`. Tasks: `test-integration`. Note: Requires Docker, only run when needed. Breakdown: Docker check (5s) + Container creation (1-2s per container) + Test execution (10-20s) + Slow daemon buffer (30s).
+**Integration Tests**: 30s per test (nextest integration profile); 60s task-level timeout on the `test-integration` recipe. Profile: `integration` in `.config/nextest.toml`. Tasks: `test-integration`. Note: Requires Docker, only run when needed. Breakdown: Docker check (5s) + Container creation (1-2s per container) + Test execution (10-20s) + Slow daemon buffer (30s).
 
 **Integration Test Dependencies**:
 - **Docker Check**: 5s timeout with 2 retries (100ms, 200ms backoff) to prevent hanging on Docker unavailability
@@ -20,13 +20,13 @@ All tasks have explicit timeout SLAs to prevent hangs and ensure fast feedback. 
 
 ## Build SLAs
 
-**Check**: 5s SLA, ~0.8s actual. Task: `check`. **Build (Debug)**: 5s SLA. Task: `build`. **Build (Release)**: 30s SLA (release builds slower). Task: `build-release`. **Clean**: 5s SLA. Task: `clean`.
+**Check**: 30s SLA, ~0.8s actual. Task: `check`. **Build (Debug)**: 5s SLA. Task: `build`. **Build (Release)**: 30s SLA (release builds slower). Task: `build-release`. **Clean**: 5s SLA. Task: `clean`.
 
 ## Code Quality SLAs
 
-**Formatting**: 5s SLA, ~0.6s actual. Task: `fmt`. Applied via cargo-make tasks and CI pipelines.
+**Formatting**: 30s SLA, ~0.6s actual. Task: `fmt`. Applied via just recipes and CI pipelines.
 
-**Linting (Clippy)**: 5s SLA, ~1.2s actual. Task: `lint`. Executed by `cargo make pre-commit`, `cargo make ci`, and CI workflows.
+**Linting (Clippy)**: 300s SLA (clippy 300s + dylint 300s), ~1.2s actual. Task: `lint`. Executed by `just pre-commit`, `just ci`, and CI workflows.
 
 ## Coverage SLAs
 
@@ -100,7 +100,7 @@ _Removed_: Git hook installer has been retired; developers run cargo-make tasks 
 
 ## Monitoring
 
-**Verify SLAs**: `time cargo make test-unit`, `time cargo make check`, `time cargo make lint`, `time cargo make pre-commit`, `time cargo make ci`, `time cargo make test-integration`.
+**Verify SLAs**: `time just test-unit`, `time just check`, `time just lint`, `time just pre-commit`, `time just ci`, `time just test-integration`.
 
 ## Summary
 

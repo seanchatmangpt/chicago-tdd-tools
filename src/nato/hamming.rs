@@ -24,7 +24,7 @@
 //! # Delivered court
 //!
 //! Deterministic chained kernel steps per payload class (LCG `u64`,
-//! Knuth MMIX multiplier (via crate::nato::rng::Lcg) via `crate::nato::rng::Lcg`), two classes:
+//! Knuth MMIX multiplier (via crate::nato::rng::Lcg), two classes:
 //!
 //! * HIGH: OCEL64 object-id payload fields forced to `0xFFFF` (max weight).
 //! * LOW:  same fields forced to `0x0000` (zero weight).
