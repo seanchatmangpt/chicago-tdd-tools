@@ -1,3 +1,4 @@
+> **HISTORICAL (W27 probe): the summary metrics on this page contradict its own table (recomputed totals differ for before/after/critical/low rows); preserved verbatim as an archive. Do not cite the roll-up numbers.**
 > 💡 Explanation
 # FMEA Summary Table - Root Cause Analysis
 ## Chicago TDD Tools: Unit Test GitHub Actions

@@ -1,4 +1,4 @@
-//! OTEL production run smoke binary: emits a realistic OTLP span/metric sequence against the configured endpoint (see `just otel-production-run`).
+//! OTEL production run smoke binary: emits a realistic OTLP SPAN sequence (no metric exporter in this bin — header corrected by W27 probe) against the configured endpoint (see `just otel-production-run`).
 #![allow(warnings)]
 #[cfg(feature = "weaver")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
