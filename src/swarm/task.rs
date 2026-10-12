@@ -98,7 +98,7 @@ pub struct TaskReceipt {
     pub execution_time_ms: u64,
     /// Timestamp of completion
     pub timestamp: String,
-    /// Merkle root of result (for determinism verification)
+    /// Merkle root of result (AUDIT NOTE W27: dead scaffolding — zero producers/readers; no code computes a root into it, so the determinism-verification semantics is doc-only)
     pub result_merkle: String,
     /// Metadata from execution
     pub metadata: HashMap<String, String>,

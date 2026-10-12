@@ -71,7 +71,8 @@
 //! activity, bits [15:8] tick`, per `session.rs`). A zero-length stream is
 //! rejected exactly as the kernel rejects it (`TraceMalformed` semantics ->
 //! status `ERR_STREAM_EMPTY`). A byte length that is not a multiple of 8 is
-//! `ERR_TRUNCATED`.
+//! `ERR_STREAM_ALIGNMENT` (the v2 errno; the v1-era `ERR_TRUNCATED` name was
+//! for short-buffer, a different refusal).
 //!
 //! # Step status step record (ABI v2; layout unchanged from v1) (`ctt_session_step` out-buffer)
 //!

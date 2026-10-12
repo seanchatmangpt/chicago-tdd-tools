@@ -509,7 +509,7 @@ impl ValidCoverageRange {
 /// Type-level state marker: Configuration is incomplete
 ///
 /// **Poka-yoke**: This marker type indicates that configuration is still being built.
-/// The builder pattern prevents accessing incomplete configurations.
+/// The builder returns `Option` at build time — incomplete configurations surface as `None` (runtime check; the state markers are reserved, not enforced).
 pub struct Incomplete;
 
 /// Type-level state marker: Configuration is complete
@@ -521,7 +521,10 @@ pub struct Complete;
 /// Configuration builder with type state
 ///
 /// **Poka-yoke**: Builder pattern prevents incomplete configurations.
-/// The type system ensures all required fields are set before building.
+/// Runtime check: `build()` returns `Option` — None when required fields are
+/// missing (AUDIT NOTE W27: the `Incomplete`/`Complete` markers are vestigial;
+/// no setter transitions to `Complete`, so enforcement is the runtime check,
+/// not the type system).
 pub struct ConfigBuilder<State> {
     /// Unit test timeout
     unit_timeout: Option<PositiveTimeout>,

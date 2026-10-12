@@ -69,14 +69,16 @@ pub type Marking64 = u64;
 /// Atom `i` becomes transition `tid = i` consuming place `i` and producing
 /// place `i + 1`; the initial marking is place 0. Each entry of `words` is a
 /// PN64 word carrying that transition's `W-`/`W+`/`tid`; the marking field
-/// of the stored words is the *initial* marking and is never mutated — the
-/// live marking travels in [`ConformanceSession::marking`].
+/// stores `1 << i` (the transition's pre-place) and is NEVER READ —
+/// `classify_and_commit` strips it (`& !pn64::MASK16`) and substitutes the
+/// live marking before evaluating any lane (W27 doc-truth fix); the live
+/// marking travels in [`ConformanceSession::marking`].
 ///
 /// Session-local linear net, distinct by design from the canonical
 /// `super::net::CompiledNet` (which `super::state` consumes).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompiledNet {
-    /// One PN64 word per atom transition (marking field = initial marking).
+    /// One PN64 word per atom transition (marking field = `1 << i` pre-place mask; dead payload, replaced by the live marking at step time).
     pub words: Vec<u64>,
     /// Transition ids declared by this net (== `0..words.len()`).
     pub tids: Vec<u8>,
@@ -183,7 +185,7 @@ impl ConformanceSession {
         let words = (0..n)
             .map(|i| {
                 pn64::pack(
-                    1u16 << i,       // initial marking field (never mutated)
+                    1u16 << i,       // pre-place mask; dead payload (overwritten with the live marking at step time)
                     1u16 << i,       // W-: consume place i
                     1u16 << (i + 1), // W+: produce place i+1
                     i as u8,         // tid = atom index

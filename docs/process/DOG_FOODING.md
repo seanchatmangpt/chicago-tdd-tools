@@ -12,7 +12,7 @@ Using the testing framework to test itself. Every feature tested using the frame
 
 ## How Framework Tests Itself
 
-**Macros Test Macros**: `test!` tested using itself. `assert_ok!` tested using itself. AAA pattern enforced.
+**Macros Test Macros**: `test!` tested using itself. `assert_ok!` tested using itself. AAA style by convention (not mechanically enforced).
 
 **Assertions Test Assertions**: Assertion macros tested using themselves. Error messages validated. Framework validates own behavior.
 
@@ -42,7 +42,7 @@ Using the testing framework to test itself. Every feature tested using the frame
 
 **Behavior Verification**: Framework tests verify what framework does (macros work, fixtures provide isolation, builders create data). Observable outputs verified.
 
-**AAA Pattern**: All framework tests follow AAA pattern. Arrange-Act-Assert structure enforced.
+**AAA Pattern**: Framework tests are WRITTEN in AAA style by convention; it is not mechanically enforced — `test!` is a thin `#[test]` wrapper with no structural analysis (W27 probe correction; the compile-time AAA state machine is the separate `core::state` TestState types).
 
 ## Benefits
 

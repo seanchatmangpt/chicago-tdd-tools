@@ -1,3 +1,5 @@
+> **HISTORICAL (W27 probe): this guide documents a TestFixture API that does not exist in the current tree (generic TestFixture<T> at src/core/fixture.rs; no next_id/create_temp_dir/AtomicUsize). The pre-commit hook checks only unwrap/expect. Preserve as an isolation-pattern narrative; do not cite its API surface.
+
 # Test Isolation Guide
 
 **FMEA Fix**: Test Data Corruption (RPN: 168 → 34, 80% reduction)

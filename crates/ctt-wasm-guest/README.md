@@ -25,7 +25,7 @@ can be proven to host it (the `pn_kernel` precedent). Verify with
    ABI call runs at most one bounded slice (`YieldDirective` quota,
    `0 < quota <= MAX_REDUCTION_QUOTA = 1_000_000`; default 2000, matching
    the BEAM's per-process reduction budget), then returns an honest status.
-   Panic == trap == fail-closed: `panic = "abort"`, no `catch_unwind`, a
+   Panic == trap == fail-closed: unwind in-workspace builds; a guest panic still traps at the wasm boundary (fail-closed at the ABI; see the crate Cargo.toml audit note), a
    trapped guest emits no receipt and half-commits nothing.
 3. **Trajectory enforcement** — the model is parsed by the real
    `PowlModel::from_powl_str` and compiled by the real

@@ -1,14 +1,14 @@
 //! Property-Based Invariant Validation
 //!
 //! Uses proptest to exhaustively verify that invariant violations are always detected.
-//! All properties are derived from the 47 failure modes in INVARIANT_MATRIX.md.
+//! Properties are INSPIRED BY the INVARIANT_MATRIX.md failure-mode catalog — which is itself HISTORICAL-bannered (its 47-count disagrees with the 52 typed violations in core::invariants; no per-property traceability link exists — AUDIT NOTE W27).
 //!
 //! This module tests the invariant detection mechanisms themselves, ensuring:
 //! - Thermal validators reject backward clocks and monster jumps
 //! - Effect validators enforce closed-world assumptions
 //! - State validators prevent invalid transitions
 //! - Consensus validators enforce 2/3 Byzantine quorum
-//! - And 43 more failure modes across all 12 phases
+//! - And additional catalog rows; the landed properties span phases 2-9 and 11-12 (no phase 1/10 properties)
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)] // Test code: unwrap is acceptable

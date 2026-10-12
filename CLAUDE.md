@@ -406,7 +406,7 @@ just coverage                # Coverage report
 ## Recent Highlights
 
 - **v26.10.12**: Current workspace version — conformance kernel (pn64/POWL), court-receipt ledger (BLAKE3/Merkle/ML-DSA-65), 20-court NATO assurance matrix, zero-import WASM guest, merger-matrix fixtures
-- **v26.9.x**: Signing-key rotation + dependabot hardening (see `docs/releases/`)
+- **v26.9.x**: Signing-key rotation + dependabot hardening (see `docs/security/signing-key-rotation-v26.9.24.md`; no [26.9.x] CHANGELOG section exists — pointer corrected by W27 probe)
 - **v26.6.121**: OCEL 2.0 process mining, governance module, wave orchestration, 43 YAWL patterns
 - **v26.6.30**: Proc macros exposed in public API
 - **v26.6.29**: Track E feedback loop with Weaver integration
