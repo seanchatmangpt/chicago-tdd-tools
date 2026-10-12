@@ -509,6 +509,8 @@ let _network: Effects<NetworkRead> = Effects::new();
 
 ### State Machine Testing (Track 4)
 
+<!-- AUDIT NOTE (W27 closing probe): `StateMachine<Init>` / `transition::<Connected, Connect>` below are ILLUSTRATIVE TYPES — no such types exist in the crate; the landed type-state surface is `TestState<Arrange/Act/Assert>` (src/core/state.rs). Snippet kept for concept only. -->
+
 ```rust
 use chicago_tdd_tools::prelude::*;
 

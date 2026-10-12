@@ -38,7 +38,7 @@ Goal-focused guides to accomplish specific tasks:
 - **[Agent Governance Architecture](governance_architecture.md)** - Diagnostic channel, laws, and sector stacks (`core::governance`)
 - **[ANDON Operating Principle](ANDON.md)** - Mandatory-interrupt semantics for `Severity::Andon` diagnostics
 - **[Weaver Live Check](features/WEAVER_LIVE_CHECK.md)** - Weaver integration testing
-- **[Perfect Weaver Live Check](features/PERFECT_WEAVER_LIVE_CHECK.md)** - Perfect implementation with diagrams
+- **[Perfect Weaver Live Check](features/PERFECT_WEAVER_LIVE_CHECK.md)** - Aspirational/perfect-state design (partially landed, per its own banner)
 - **[Timeout Enforcement](features/TIMEOUT_ENFORCEMENT.md)** - Timeout handling patterns
 - **[Registry Version Pinning](features/REGISTRY_VERSION_PINNING.md)** - Managing registry versions
 - **[Upstream Issue Reporting](features/UPSTREAM_ISSUE_REPORTING.md)** - Reporting upstream issues

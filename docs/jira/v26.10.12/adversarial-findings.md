@@ -143,7 +143,7 @@ plus the domain/identity doc edits in the shared working tree):
 - SK8: sentinel replacement + regression tests (`src/conformance/session.rs`,
   `tests/conformance_tests.rs`).
 
-Queued: SK3 (re-scoped to signer.rs:141), SK4, SK10, NATO-ENTROPY-SEAM-01 (entropy.rs replica-seam work order — self-attested in-source; audit W13 flagged single-source location SK5: PARTIAL (persistence half landed 1fc1c72; rotation key-epoch binding queued). SK6/SX6: PARTIAL (see rows). SK2: CLOSED (relabel landed).
+Queued: SK3 (CLOSED for the seed-screening sliver per W26; the keystore-sealing half of the original order remains open — see row), SK4, SK10, NATO-ENTROPY-SEAM-01 (entropy.rs replica-seam work order — self-attested in-source). Other statuses: SK5: PARTIAL (persistence half landed 1fc1c72; rotation key-epoch binding queued). SK6/SX6: PARTIAL (see rows). SK2: CLOSED (relabel landed).
 
 Note on fix IDs: the coordinator's R29-R34 batch corresponds to the landed
 set above; per-R mapping is not reproduced in this receipt because the
@@ -366,7 +366,7 @@ SX1 FALSIFIED-BY-ABSENCE (fix landed: strata 514308f); SX2 FALSIFIED
   enforced check is the prohibited pattern (its own success test runs at
   50k ticks). Needs either a doc-scoped honest disclaimer or a re-scoped
   gate law. Source: audit W25.
-- CLOSED (W26): TestReceipt partial-signature — sign/verify now cover all
+- CLOSED (W26): TestReceipt partial-signature (UPDATE: CLOSED per W26 — e54b891 full-field signing) — sign/verify now cover all
   receipt fields; metadata-mutation court added (commit e54b891).
 - CLOSED (W26): SK3 signer sliver — Signer::from_seed screens all-zero/
   all-ones seeds typed (commit e54b891).

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 ///
 /// The directory is deleted when this value is dropped.
 ///
-/// W27 PROBE (runtime-verified): path arguments are joined to the root via PathBuf::join — an ABSOLUTE `rel` argument ESCAPES the workspace (writes outside the sandbox). Callers must pass relative paths; anchoring/refusal is a registered work order.
+/// W27 PROBE (runtime-verified): path arguments are joined to the root via `PathBuf::join` — an ABSOLUTE `rel` argument ESCAPES the workspace (writes outside the sandbox). Callers must pass relative paths; anchoring/refusal is a registered work order.
 pub struct TempWorkspace {
     dir: tempfile::TempDir,
 }

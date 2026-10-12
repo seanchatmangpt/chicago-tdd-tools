@@ -12,8 +12,7 @@ pub struct TestGenerator {
 impl TestGenerator {
     /// Create new test generator
     #[must_use]
-    #[allow(clippy::missing_const_for_fn)] // Cannot be const - Vec::new() is not const
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { tests: Vec::new() }
     }
 

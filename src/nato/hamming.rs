@@ -34,10 +34,11 @@
 //! payload and nothing else. Each step draws a fresh PN64 transition whose
 //! `W-` is a subset of the current marking, so token availability always
 //! holds; the activity byte is `(LCG byte | tid)` — the SAME tid the PN word
-//! carries, so the verb gate admits 100% of steps by construction (AUDIT NOTE
-//! W27 probe: this is a deliberately simplified self-consistent chain, NOT a
-//! realistic verb-refusal mix; distance-0 mass comes from marking fixpoint
-//! saturation, not refusals). We record (1) the Hamming weight of the 16-bit marking and (2)
+//! carries, admits a step only when `lcg_byte ⊆ tid` (a probabilistic ~subset
+//! condition, measured admit rate well below 1.0) (AUDIT NOTE
+//! W27 probe correction: this is a deliberately simplified self-consistent
+//! chain, NOT a realistic verb-refusal mix; distance-0 mass comes from marking
+//! fixpoint saturation, not refusals). We record (1) the Hamming weight of the 16-bit marking and (2)
 //! the Hamming distance between successive markings.
 //!
 //! Distributions are compared across classes two ways:
