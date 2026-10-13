@@ -1,0 +1,64 @@
+# Cluster reference pins for chicago-tdd-tools.
+# Every value below is copied verbatim from its cited source; no invented claims.
+# as-of: 2026-10-13
+# status vocabulary: ok | stale-unmerged | stale-drift
+# standing vocabulary: UNKNOWN | PARTIAL_ALIVE | ALIVE (per repo standing rules;
+#   UNBACKED (out-of-repo) markers in the source doc map to UNKNOWN)
+
+[pin.strata]
+value = "59ed80c"
+kind = "sha"
+source = "crates/ctt-wasm-guest/README.md:62"
+live_checkout = "/Users/sac/strata"
+live_kind = "git-ancestor"
+status = "stale-unmerged"
+standing = "UNKNOWN"
+note = "README:62 itself says 'pending merge to strata main'; verified unmerged (git merge-base --is-ancestor 59ed80c main -> exit 1, commit lives on branch fix/kg-42-status-code) on 2026-10-13."
+
+[pin.ash_graphlaw]
+value = "26.10.8"
+kind = "version"
+source = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:73"
+source_alt = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:29,122"
+live_checkout = "/Users/sac/ash_graphlaw"
+live_source = "/Users/sac/ash_graphlaw/mix.exs"
+live_kind = "elixir"
+status = "ok"
+standing = "UNKNOWN"
+note = "Doc marks this pin UNBACKED (out-of-repo) at line 122; live mix.exs @version matches 26.10.8 as of 2026-10-13."
+
+[pin.ash_pplan]
+value = "26.10.8-1"
+kind = "version"
+source = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:74"
+source_alt = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:36,123"
+live_checkout = "/Users/sac/ash_pplan"
+live_source = "/Users/sac/ash_pplan/mix.exs"
+live_kind = "elixir"
+status = "ok"
+standing = "UNKNOWN"
+note = "Doc marks this pin UNBACKED (out-of-repo) at line 123; live mix.exs @version matches 26.10.8-1 as of 2026-10-13."
+
+[pin.ash_a2a]
+value = "26.10.8"
+kind = "version"
+source = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:74"
+source_alt = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:36,123"
+live_checkout = "/Users/sac/ash_a2a"
+live_source = "/Users/sac/ash_a2a/mix.exs"
+live_kind = "elixir"
+status = "ok"
+standing = "UNKNOWN"
+note = "Doc marks this pin UNBACKED (out-of-repo) at line 123; live mix.exs version matches 26.10.8 as of 2026-10-13."
+
+[pin.temprun]
+value = "26.10.11"
+kind = "version"
+source = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:75"
+source_alt = "docs/releases/ANNOUNCEMENT_ARCH_REVIEW_v26.10.11.md:44,124"
+live_checkout = "/Users/sac/strata"
+live_source = "/Users/sac/strata/temprun/Cargo.toml"
+live_kind = "cargo"
+status = "stale-drift"
+standing = "UNKNOWN"
+note = "Doc (lines 44,75,124) claims temprun 26.10.11; live /Users/sac/strata/temprun/Cargo.toml carries version 26.10.10. DRIFT: doc is one patch ahead of the live crate."
