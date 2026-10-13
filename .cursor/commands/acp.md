@@ -327,11 +327,11 @@ git push
 
 ## Documentation References
 
-- **[Build System Practices](../rules/build-system-practices.mdc)** - Build commands and workflows
+- **[Build System Practices] -- removed 2026-10-13 (no equivalent in docs tree)** - Build commands and workflows
 - **[Verify Tests Command](./verify-tests.md)** - Detailed test failure handling
 - **[Chicago TDD Standards](../rules/chicago-tdd-standards.mdc)** - Testing standards
-- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start guide
-- **[User Guide](../../docs/USER_GUIDE.md)** - Complete usage guide
+- **[Getting Started Guide](../../docs/getting-started/GETTING_STARTED.md)** - Quick start guide
+- **[User Guide](../../docs/getting-started/USER_GUIDE.md)** - Complete usage guide
 
 ## Quick Reference
 

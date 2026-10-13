@@ -13,10 +13,10 @@ Step 1: Identify Test Type → Step 2: Choose Pattern → Step 3: Implement Test
 ## Documentation Reference
 
 For complete testing documentation, see:
-- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start with verified examples
-- **[User Guide](../../docs/USER_GUIDE.md)** - Comprehensive testing guide with patterns
-- **[API Reference](../../docs/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](../../docs/ARCHITECTURE.md)** - Design principles
+- **[Getting Started Guide](../../docs/getting-started/GETTING_STARTED.md)** - Quick start with verified examples
+- **[User Guide](../../docs/getting-started/USER_GUIDE.md)** - Comprehensive testing guide with patterns
+- **[API Reference](../../docs/reference/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](../../docs/reference/ARCHITECTURE.md)** - Design principles
 
 ## Core Principle: 80/20 Rule
 
@@ -101,7 +101,7 @@ chicago_test!(test_error_recovery, {
 - [ ] Error recovery tested
 - [ ] Edge cases covered
 
-**Reference**: See [User Guide - Best Practices](../../docs/USER_GUIDE.md#best-practices)
+**Reference**: See [User Guide - Best Practices](../../docs/getting-started/USER_GUIDE.md#best-practices)
 
 ---
 
@@ -406,7 +406,7 @@ chicago_test!(test_reverse_property, {
 - [ ] Sufficient iterations (100+)
 - [ ] Property violation detection works
 
-**Reference**: See [User Guide - Property-Based Testing](../../docs/USER_GUIDE.md#property-based-testing)
+**Reference**: See [User Guide - Property-Based Testing](../../docs/getting-started/USER_GUIDE.md#property-based-testing)
 
 ---
 
@@ -468,7 +468,7 @@ chicago_test!(test_integration_real_database, {
 - [ ] Cleanup verified
 - [ ] Integration points tested
 
-**Reference**: See [User Guide - Testcontainers Integration](../../docs/USER_GUIDE.md#testcontainers-integration)
+**Reference**: See [User Guide - Testcontainers Integration](../../docs/getting-started/USER_GUIDE.md#testcontainers-integration)
 
 ---
 
@@ -550,7 +550,7 @@ mod expert_tests {
 
 ## Common Junior Mistakes to Avoid
 
-See [User Guide - Anti-patterns](../../docs/USER_GUIDE.md#anti-patterns) for complete list.
+See [User Guide - Anti-patterns](../../docs/getting-started/USER_GUIDE.md#anti-patterns) for complete list.
 
 1. ❌ **Only testing happy path** - Most bugs are in error paths (80% of bugs)
 2. ❌ **Not testing boundary conditions** - Edge cases cause production bugs
@@ -567,10 +567,10 @@ See [User Guide - Anti-patterns](../../docs/USER_GUIDE.md#anti-patterns) for com
 
 - **Miri**: Memory safety testing (`cargo miri test`)
 - **Loom**: Concurrency testing (`cargo test --features loom`)
-- **Property-based**: `chicago-tdd-tools` property testing features (see [User Guide](../../docs/USER_GUIDE.md#property-based-testing))
+- **Property-based**: `chicago-tdd-tools` property testing features (see [User Guide](../../docs/getting-started/USER_GUIDE.md#property-based-testing))
 - **Fuzzing**: `cargo fuzz` for random input testing
 - **Sanitizers**: AddressSanitizer, ThreadSanitizer
-- **Testcontainers**: Real Docker containers (see [User Guide](../../docs/USER_GUIDE.md#testcontainers-integration))
+- **Testcontainers**: Real Docker containers (see [User Guide](../../docs/getting-started/USER_GUIDE.md#testcontainers-integration))
 
 ---
 
@@ -587,7 +587,7 @@ Expert-level testing focuses on the **80/20 rule**: Test the 20% of cases that c
 
 ## Documentation
 
-- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start with verified examples
-- **[User Guide](../../docs/USER_GUIDE.md)** - Complete testing guide with patterns
-- **[API Reference](../../docs/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](../../docs/ARCHITECTURE.md)** - Design principles
+- **[Getting Started Guide](../../docs/getting-started/GETTING_STARTED.md)** - Quick start with verified examples
+- **[User Guide](../../docs/getting-started/USER_GUIDE.md)** - Complete testing guide with patterns
+- **[API Reference](../../docs/reference/API_REFERENCE.md)** - Complete API documentation
+- **[Architecture](../../docs/reference/ARCHITECTURE.md)** - Design principles

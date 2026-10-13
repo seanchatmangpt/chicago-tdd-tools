@@ -33,7 +33,7 @@ cargo make test
 
 **If this step succeeds**: Skip to Step 5 (Verify Completion)
 
-**Note**: Always use `cargo make test`, never `cargo test` directly. See [Build System Practices](../rules/build-system-practices.mdc).
+**Note**: Always use `cargo make test`, never `cargo test` directly. See [Build System Practices] -- removed 2026-10-13 (no equivalent in docs tree).
 
 #### 1.1: Collect Baseline Data (DMAIC Measurement)
 
@@ -173,7 +173,7 @@ cargo make check
 - Missing features: Enable feature flags in `Cargo.toml`
 - Syntax errors: Fix syntax issues
 
-**Reference**: See [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting)
+**Reference**: See [User Guide - Troubleshooting](../../docs/getting-started/USER_GUIDE.md#troubleshooting)
 
 #### 3.2: Fix Test Failures
 
@@ -206,7 +206,7 @@ cargo make test test_name
 - Async issues: Ensure proper async handling
 - Feature flags: Enable required features
 
-**Reference**: See [User Guide - Best Practices](../../docs/USER_GUIDE.md#best-practices)
+**Reference**: See [User Guide - Best Practices](../../docs/getting-started/USER_GUIDE.md#best-practices)
 
 #### 3.3: Fix Panics
 
@@ -260,7 +260,7 @@ cargo make test test_name
 
 **Common Fixes**:
 - Mock external APIs
-- Use test fixtures (see [User Guide - Test Fixtures](../../docs/USER_GUIDE.md#test-fixtures))
+- Use test fixtures (see [User Guide - Test Fixtures](../../docs/getting-started/USER_GUIDE.md#test-fixtures))
 - Optimize algorithms
 - Increase timeout for legitimate slow operations
 
@@ -462,7 +462,7 @@ cargo make test-examples
 
 **Use when**: Verifying example code works
 
-**Reference**: See [Getting Started Guide](../../docs/GETTING_STARTED.md) for examples
+**Reference**: See [Getting Started Guide](../../docs/getting-started/GETTING_STARTED.md) for examples
 
 ### Run Property-Based Tests
 
@@ -472,7 +472,7 @@ cargo make test-property
 
 **Use when**: Testing with `property-testing` feature enabled
 
-**Reference**: See [User Guide - Property-Based Testing](../../docs/USER_GUIDE.md#property-based-testing)
+**Reference**: See [User Guide - Property-Based Testing](../../docs/getting-started/USER_GUIDE.md#property-based-testing)
 
 ### Run Mutation Tests
 
@@ -482,7 +482,7 @@ cargo make test-mutation
 
 **Use when**: Testing with `mutation-testing` feature enabled
 
-**Reference**: See [User Guide - Mutation Testing](../../docs/USER_GUIDE.md#mutation-testing)
+**Reference**: See [User Guide - Mutation Testing](../../docs/getting-started/USER_GUIDE.md#mutation-testing)
 
 ### Run Single-Threaded Tests
 
@@ -607,7 +607,7 @@ cargo make test   # All tests pass
 - Review test isolation
 - Check for race conditions
 
-**Reference**: See [User Guide - Troubleshooting](../../docs/USER_GUIDE.md#troubleshooting)
+**Reference**: See [User Guide - Troubleshooting](../../docs/getting-started/USER_GUIDE.md#troubleshooting)
 
 ### If Compilation Errors Persist
 
@@ -617,7 +617,7 @@ cargo make test   # All tests pass
 - Verify dependencies
 - Consider if architecture change needed
 
-**Reference**: See [Build System Practices](../rules/build-system-practices.mdc)
+**Reference**: See [Build System Practices] -- removed 2026-10-13 (no equivalent in docs tree)
 
 ## Best Practices
 
@@ -630,13 +630,13 @@ cargo make test   # All tests pass
 
 ## Documentation References
 
-- **[Build System Practices](../rules/build-system-practices.mdc)** - Build commands
+- **[Build System Practices] -- removed 2026-10-13 (no equivalent in docs tree)** - Build commands
 - **[Chicago TDD Standards](../rules/chicago-tdd-standards.mdc)** - Testing standards
 - **[Expert Testing Patterns](./expert-testing-patterns.md)** - Expert patterns
 - **[DMAIC Problem Solving](./dmaic-problem-solving.md)** - Use DMAIC measurement and control steps integrated into this workflow
-- **[Getting Started Guide](../../docs/GETTING_STARTED.md)** - Quick start
-- **[User Guide](../../docs/USER_GUIDE.md)** - Complete guide
-- **[API Reference](../../docs/API_REFERENCE.md)** - API documentation
+- **[Getting Started Guide](../../docs/getting-started/GETTING_STARTED.md)** - Quick start
+- **[User Guide](../../docs/getting-started/USER_GUIDE.md)** - Complete guide
+- **[API Reference](../../docs/reference/API_REFERENCE.md)** - API documentation
 
 ## Quick Reference
 
