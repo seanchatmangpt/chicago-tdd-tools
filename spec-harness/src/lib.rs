@@ -39,6 +39,7 @@ use serde::{Deserialize, Serialize};
 pub mod chapter02; // Core Chatman Equation properties
 pub mod chapter03; // Knowledge hooks and YAWL patterns
 pub mod chapter07; // Chatman Equation realization
+pub mod nato_rdf; // NATO court receipt -> RDF lift (SPARQL gate bridge)
 pub mod receipt; // Receipt generation and merkle proofs
 
 pub use receipt::{SpecConformanceReceipt, TheoremResult};
