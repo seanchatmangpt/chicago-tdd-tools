@@ -73,12 +73,12 @@ jobs:
           key: pr-assurance
 
       - name: 🔨 Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: just
 
       - name: 🧪 Install cargo-nextest
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: cargo-nextest
 
@@ -139,7 +139,7 @@ jobs:
           key: assurance-integration
 
       - name: 🔨 Install just + cargo-nextest
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: just,cargo-nextest
 
@@ -170,7 +170,7 @@ jobs:
           key: merger-guest-build
 
       - name: 🔨 Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: just
 
@@ -201,12 +201,12 @@ jobs:
           key: nightly-full-assurance
 
       - name: 🔨 Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: just
 
       - name: 🧪 Install cargo-nextest
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: cargo-nextest
 
@@ -272,7 +272,7 @@ jobs:
           key: guest-build
 
       - name: 🔨 Install just
-        uses: taiki-e/install-action@v2.85.6
+        uses: taiki-e/install-action@v2.87.29
         with:
           tool: just
 
