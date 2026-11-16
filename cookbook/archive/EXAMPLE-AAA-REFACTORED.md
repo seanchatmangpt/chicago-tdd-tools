@@ -95,8 +95,8 @@ Purpose: Demonstrates all three test macros using AAA structure
 ## Related Patterns
 
 - **Foundation**: Start here (prerequisite for all other patterns)
-- **Next**: [Pattern 2: Error Path Testing](testing-patterns/error-path-testing.md) (test both success + failure)
-- **Use with**: [Pattern 5: Real Collaborators](testing-patterns/real-collaborators.md) (test with real code)
+- **Next**: [Pattern 2: Error Path Testing](../src/testing-patterns/error-path-testing.md) (test both success + failure)
+- **Use with**: [Pattern 5: Real Collaborators](../src/testing-patterns/real-collaborators.md) (test with real code)
 
 ## Production Checklist
 

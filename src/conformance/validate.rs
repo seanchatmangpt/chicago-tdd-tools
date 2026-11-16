@@ -258,6 +258,37 @@ mod tests {
         );
     }
 
+    // At-limit positive for `ArityBelowMinimum` (T4): the trigger is
+    // `children.is_empty()`, so arity 1 is the admitted boundary.
+    #[test]
+    fn arity_one_blocks_are_admitted() {
+        use std::collections::BTreeMap;
+
+        use crate::conformance::loader::{ActivityDecl, PowlModel, PowlNode};
+
+        let mk = |root: PowlNode| PowlModel {
+            activities: BTreeMap::from([(
+                "a0".to_string(),
+                ActivityDecl { source: "s".to_string(), event: "e0".to_string() },
+            )]),
+            declaration_order: vec!["a0".to_string()],
+            root,
+        };
+
+        assert_eq!(
+            validate(&mk(PowlNode::Sequence(vec![PowlNode::Activity("a0".into())]))),
+            Ok(())
+        );
+        assert_eq!(
+            validate(&mk(PowlNode::Xor(vec![PowlNode::Activity("a0".into())]))),
+            Ok(())
+        );
+        assert_eq!(
+            validate(&mk(PowlNode::Parallel(vec![PowlNode::Activity("a0".into())]))),
+            Ok(())
+        );
+    }
+
     // Loop termination is a type-level guarantee (`Loop.max` is `u8`);
     // activity references are resolved at validate time (module docs).
     // A bounded loop over declared activities admits.

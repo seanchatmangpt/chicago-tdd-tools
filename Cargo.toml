@@ -360,6 +360,13 @@ name = "ctdd_combinatorial_plan"
 path = "src/bin/ctdd_combinatorial_plan.rs"
 required-features = ["combinatorial-plan-cli"]
 
+# JSON-in/JSON-out court-runner CLI over the NATO court registry; gated on
+# the nato feature so bare `cargo build` skips it.
+[[bin]]
+name = "run_court"
+path = "src/bin/run_court.rs"
+required-features = ["nato"]
+
 # Maximized linting configuration (Rust 1.78+)
 # **Poka-Yoke Design**: Warnings are treated as errors to prevent defects at compile time.
 # Type-first thinking: Compiler enforces correctness. If it compiles, invariants are enforced.
