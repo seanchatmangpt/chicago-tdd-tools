@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install pinned nightly for real ggen
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
+        uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
           toolchain: nightly-2026-06-22
 
